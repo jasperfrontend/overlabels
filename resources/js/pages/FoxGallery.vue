@@ -19,12 +19,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
+  <!-- trigger redeploy -->
   <Head title="Foxes Gallery" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
       <div class="mx-auto max-w-3xl py-8">
         <h1 class="text-2xl font-bold mb-6">Fox Gallery</h1>
-        <pre>{{ props.foxes }}</pre>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div
             v-for="fox in props.foxes.data"
@@ -53,8 +53,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- Pagination controls -->
-        <div v-if="props.foxes?.meta && props.foxes?.meta.links" class="flex justify-center mt-6 gap-2">
-          <template v-for="(link, idx) in props.foxes.meta.links">
+        <div v-if="props.foxes.links && props.foxes.next_page_url" class="flex justify-center mt-6 gap-2">
+          <template v-for="(link, idx) in props.foxes.links">
             <button
               v-if="link.url"
               :key="idx"
