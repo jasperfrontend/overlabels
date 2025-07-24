@@ -25,5 +25,22 @@ Route::get('/phpinfo', function () {
     phpinfo();
 });
 
+Route::get('/debug/user', function () {
+    return response()->json([
+        'user' => auth()->user(),
+        'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
+        'users_count' => \App\Models\User::count(),
+    ]);
+})->middleware(['auth']);
+
+Route::get('/debug/basic', function () {
+    return response()->json([
+        'laravel_version' => app()->version(),
+        'environment' => app()->environment(),
+        'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
+        'config_cached' => app()->configurationIsCached(),
+    ]);
+});
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
