@@ -25,6 +25,22 @@ const breadcrumbs: BreadcrumbItem[] = [
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
       <div class="mx-auto max-w-3xl py-8">
         <h1 class="text-2xl font-bold mb-6">Fox Gallery</h1>
+        <!-- Pagination controls -->
+        <div v-if="props.foxes.links && props.foxes.next_page_url || props.foxes.prev_page_url" class="flex justify-center mt-6 mb-6 gap-2">
+          <template v-for="(link, idx) in props.foxes.links">
+            <button
+              v-if="link.url"
+              :key="idx"
+              :disabled="link.active"
+              @click="$inertia.visit(link.url)"
+              v-html="link.label"
+              class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
+              :class="{ 'font-bold text-blue-700': link.active, 'opacity-50 cursor-not-allowed': !link.url }"
+            />
+            <span v-else :key="`sep-${idx}`" class="px-2" v-html="link.label" />
+          </template>
+        </div>
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div
             v-for="fox in props.foxes.data"
