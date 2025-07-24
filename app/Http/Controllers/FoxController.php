@@ -55,7 +55,9 @@ class FoxController extends Controller
                 'folder' => 'foxes',
                 'transformation' => [
                     'width' => 640,
-                    'crop' => 'scale',
+                    'height' => 480,
+                    'crop' => 'auto', // AI-powered smart cropping
+                    'gravity' => 'auto', // Auto-detect most important part
                     'quality' => 'auto',
                     'fetch_format' => 'auto'
                 ],
