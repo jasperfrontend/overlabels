@@ -6,5 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Fox extends Model
 {
-    protected $fillable = ['api_url', 'local_file'];
+    protected $fillable = [
+        'api_url', 
+        'local_file', 
+        'cloudinary_url', 
+        'cloudinary_public_id'
+    ];
 }

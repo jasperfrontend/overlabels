@@ -1,25 +1,32 @@
 <?php
 
 namespace App\Http\Controllers;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 
 use App\Models\Fox;
 use Illuminate\Http\Request;
-use Illuminate\Http\Client;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-
+use Cloudinary\Cloudinary;
+use Cloudinary\Transformation\Resize;
+use Cloudinary\Api\Upload\UploadApi;
 
 class FoxController extends Controller
 {
+    private function getCloudinary()
+    {
+        return new Cloudinary([
+            'cloud' => [
+                'cloud_name' => config('services.cloudinary.cloud_name'),
+                'api_key' => config('services.cloudinary.api_key'),
+                'api_secret' => config('services.cloudinary.api_secret'),
+            ]
+        ]);
+    }
+
     public function index(Request $request)
     {
         try {
-            $manager = new ImageManager(new Driver());
-
             // Step 1: Fetch from API
             Log::info('Fetching fox from API...');
             $response = Http::get('https://randomfox.ca/floof/');
@@ -27,43 +34,59 @@ class FoxController extends Controller
             Log::info('Fox API URL: ' . $url);
 
             $info = pathinfo($url);
-            $file = $info['basename'];
-            $publicDisk = Storage::disk('public');
+            $filename = $info['basename'];
+            $publicId = 'foxes/' . pathinfo($filename, PATHINFO_FILENAME); // Remove extension, Cloudinary will handle it
 
-            // Step 2: Download & resize
-            Log::info('Downloading and processing image...');
-            $image = $manager->read(file_get_contents($url));
-            $image->scale(width: 640);
-
-            // Step 3: Save as JPEG (of PNG, afhankelijk van $file extensie)
-            $imageData = (string) $image->toJpeg(90);
-
-            if (!$publicDisk->exists($file)) {
-                Log::info('Saving file to storage: ' . $file);
-                $publicDisk->put($file, $imageData);
-            } else {
-                Log::info('File already exists: ' . $file);
+            // Step 2: Check if we already have this fox
+            $existingFox = Fox::where('api_url', $url)->first();
+            if ($existingFox && $existingFox->cloudinary_url) {
+                Log::info('Fox already exists in database with Cloudinary URL');
+                return Inertia::render('Fox', [
+                    'foxPic' => $existingFox->cloudinary_url,
+                ]);
             }
+
+            // Step 3: Upload to Cloudinary
+            Log::info('Uploading to Cloudinary...');
+            $cloudinary = $this->getCloudinary();
+            
+            $uploadResult = $cloudinary->uploadApi()->upload($url, [
+                'public_id' => $publicId,
+                'folder' => 'foxes',
+                'transformation' => [
+                    'width' => 640,
+                    'crop' => 'scale',
+                    'quality' => 'auto',
+                    'fetch_format' => 'auto'
+                ],
+                'overwrite' => false, // Don't overwrite if already exists
+                'resource_type' => 'image'
+            ]);
+
+            $cloudinaryUrl = $uploadResult['secure_url'];
+            Log::info('Cloudinary URL: ' . $cloudinaryUrl);
 
             // Step 4: Save/Update in database
             Log::info('Saving to database...');
-            Fox::updateOrCreate(
+            $fox = Fox::updateOrCreate(
                 ['api_url' => $url],
-                ['local_file' => $file]
+                [
+                    'local_file' => $filename,
+                    'cloudinary_url' => $cloudinaryUrl,
+                    'cloudinary_public_id' => $uploadResult['public_id']
+                ]
             );
-
-            $uploaded_file = asset('storage/' . $file);
-            Log::info('Final asset URL: ' . $uploaded_file);
+            Log::info('Fox saved with ID: ' . $fox->id);
 
             return Inertia::render('Fox', [
-                'foxPic' => $uploaded_file,
+                'foxPic' => $cloudinaryUrl,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Fox controller error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             
-            // Return a fallback using external URL
+            // Fallback to external URL if Cloudinary fails
             $response = Http::get('https://randomfox.ca/floof/');
             $fallbackUrl = $response->json()['image'] ?? 'https://images.unsplash.com/photo-1494947665470-20322015e3a8?w=640';
             

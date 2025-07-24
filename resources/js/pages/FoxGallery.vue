@@ -16,6 +16,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/foxes',
   },
 ];
+
+// Helper function to get the best image URL
+const getImageUrl = (fox) => {
+  return fox.cloudinary_url || fox.api_url || `/storage/${fox.local_file}`;
+};
 </script>
 
 <template>
@@ -33,13 +38,13 @@ const breadcrumbs: BreadcrumbItem[] = [
           >
             <div class="text-center">
             <a
-              :href="`/storage/${fox.local_file}`"
+              :href="getImageUrl(fox)"
               target="_blank"
               rel="noopener"
               class="text-xs text-blue-300 hover:underline break-all"
             >
             <img
-              :src="`/storage/${fox.local_file}`"
+              :src="getImageUrl(fox)"
               :alt="`Fox ${fox.id}`"
               class="aspect-video object-cover w-full rounded-md mb-2"
             />
