@@ -42,5 +42,15 @@ Route::get('/debug/basic', function () {
     ]);
 });
 
+Route::get('/debug/counts', function () {
+    return response()->json([
+        'users_count' => \App\Models\User::count(),
+        'foxes_count' => \App\Models\Fox::count(),
+        'latest_user' => \App\Models\User::latest()->first(),
+        'latest_fox' => \App\Models\Fox::latest()->first(),
+        'database_name' => \DB::connection()->getDatabaseName(),
+    ]);
+});
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
