@@ -18,7 +18,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // Helper function to get the best image URL
-const getImageUrl = (fox) => {
+const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; }) => {
   return fox.cloudinary_url || fox.api_url || `/storage/${fox.local_file}`;
 };
 </script>
