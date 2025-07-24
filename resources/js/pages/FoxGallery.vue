@@ -33,13 +33,13 @@ const breadcrumbs: BreadcrumbItem[] = [
           >
             <div class="text-center">
             <a
-              :href="fox.api_url"
+              :href="`/storage/${fox.local_file}`"
               target="_blank"
               rel="noopener"
               class="text-xs text-blue-300 hover:underline break-all"
             >
             <img
-              :src="fox.api_url"
+              :src="`/storage/${fox.local_file}`"
               :alt="`Fox ${fox.id}`"
               class="aspect-video object-cover w-full rounded-md mb-2"
             />
