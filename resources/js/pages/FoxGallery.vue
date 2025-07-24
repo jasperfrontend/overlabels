@@ -38,7 +38,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
               :disabled="link.active"
               @click="$inertia.visit(link.url)"
               v-html="link.label"
-              class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
+              class="px-3 cursor-pointer py-1 border rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
               :class="{ 'font-bold text-blue-700': link.active, 'opacity-50 cursor-not-allowed': !link.url }"
             />
             <button v-else :key="`sep-${idx}`" class="px-2" v-html="link.label" />
@@ -79,7 +79,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
               :disabled="link.active"
               @click="$inertia.visit(link.url)"
               v-html="link.label"
-              class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
+              class="px-3 py-1 cursor-pointer border rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
               :class="{ 'font-bold text-blue-700': link.active, 'opacity-50 cursor-not-allowed': !link.url }"
             />
             <span v-else :key="`sep-${idx}`" class="px-2" v-html="link.label" />
