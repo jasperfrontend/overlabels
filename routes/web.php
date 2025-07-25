@@ -34,16 +34,6 @@ Route::get('/auth/redirect/twitch', function () {
     $driver = Socialite::driver('twitch');
     
     return $driver->scopes([
-        'user:read:email',
-    ])->redirect();
-});
-
-// Initiate login with Twitch
-Route::get('/auth/redirect/twitchextended', function () {
-    /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
-    $driver = Socialite::driver('twitch');
-
-    return $driver->scopes([
         'user:read:email',            // To get email
         'user:read:follows',          // Who they follow
         'user:read:subscriptions',    // (requires Partner status)
@@ -52,6 +42,7 @@ Route::get('/auth/redirect/twitchextended', function () {
         'channel:read:goals',         // Follower/sub goals
     ])->redirect();
 });
+
 
 Route::get('/auth/callback/twitch', function () {
     $twitchUser = Socialite::driver('twitch')->user();

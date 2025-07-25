@@ -26,6 +26,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
 };
 
 export interface User {
+    description: any;
     twitch_data: any;
     id: number;
     name: string;
