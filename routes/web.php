@@ -46,6 +46,15 @@ Route::get('/auth/redirect/twitch', function () {
 
 Route::get('/auth/callback/twitch', function () {
     $twitchUser = Socialite::driver('twitch')->user();
+    
+    // Create the TwitchApiService instance
+    $twitchService = new \App\Services\TwitchApiService();
+    
+    // Get extended data using the access token
+    $extendedData = $twitchService->getExtendedUserData(
+        $twitchUser->token, 
+        $twitchUser->getId()
+    );
 
     // First, try to find user by twitch_id
     $user = User::where('twitch_id', $twitchUser->getId())->first();
@@ -62,7 +71,7 @@ Route::get('/auth/callback/twitch', function () {
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-                'twitch_data' => $twitchUser->user,
+                'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
             ]);
         } else {
             // Completely new user - create them
@@ -74,7 +83,7 @@ Route::get('/auth/callback/twitch', function () {
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-                'twitch_data' => $twitchUser->user,
+                'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
             ]);
         }
     } else {
@@ -85,7 +94,7 @@ Route::get('/auth/callback/twitch', function () {
             'access_token' => $twitchUser->token,
             'refresh_token' => $twitchUser->refreshToken,
             'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-            'twitch_data' => $twitchUser->user,
+            'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
         ]);
     }
 
@@ -93,6 +102,24 @@ Route::get('/auth/callback/twitch', function () {
 
     return redirect('/dashboard');
 });
+
+Route::get('/debug/twitch', function () {
+    $user = auth()->user();
+    
+    if (!$user || !$user->access_token) {
+        return response()->json(['error' => 'No authenticated user or access token']);
+    }
+    
+    $twitchService = new \App\Services\TwitchApiService();
+    $freshData = $twitchService->getExtendedUserData($user->access_token, $user->twitch_id);
+    
+    return response()->json([
+        'stored_twitch_data' => $user->twitch_data,
+        'fresh_api_data' => $freshData,
+        'access_token_expires' => $user->token_expires_at,
+        'token_valid' => $user->token_expires_at && $user->token_expires_at->isFuture(),
+    ]);
+})->middleware(['auth']);
 
 Route::post('/logout', function () {
     Auth::logout();
