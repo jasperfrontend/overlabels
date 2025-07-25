@@ -35,20 +35,14 @@ import { Head, Link } from '@inertiajs/vue3';
             </nav>
         </header>
         <div class="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
-            <main class="flex w-full max-w-[335px] flex-col-reverse overflow-hidden rounded-lg lg:max-w-4xl lg:flex-row">
-                <div class="flex w-full flex-col items-center justify-center gap-4 p-6 lg:w-1/2 lg:p-8">
+            <main class="flex w-full max-w-[500px] flex-col-reverse overflow-hidden rounded-lg lg:max-w-4xl lg:flex-row">
+                <div class="flex w-full flex-col items-center text-center justify-center gap-4 p-6 lg:p-8">
                     <h1 class="text-3xl font-bold text-[#1b1b18] dark:text-[#EDEDEC]">
                         Welcome to the Fox Gallery
                     </h1>
                     <p class="text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
                         Explore a collection of adorable fox images and learn more about these fascinating creatures.
                     </p>
-                    <Link
-                        :href="route('login')"
-                        class="block rounded-sm bg-[#1b1b18] px-5 py-2 text-sm font-semibold text-white hover:bg-[#191400] dark:bg-[#EDEDEC] dark:text-[#1b1b18] dark:hover:bg-[#EDEDEC]/90"
-                    >
-                        Please login to view the gallery
-                    </Link>
                     <LoginSocial />
                 </div>
 

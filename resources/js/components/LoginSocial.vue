@@ -1,11 +1,10 @@
 <template>
-  <v-btn
-    variant="outlined"
-    class="bg-primary p-2 px-4 font-bold text-muted rounded cursor-pointer"
+  <a
+    class="p-2 px-4 font-bold rounded cursor-pointer bg-purple-700 hover:bg-purple-900 text-purple-100 hover:text-purple-300 ring-offset-1 ring-1 focus:ring-purple-500"
     @click="loginWithTwitch"
   >
     Login with Twitch
-  </v-btn>
+  </a>
 </template>
 
 <script setup>

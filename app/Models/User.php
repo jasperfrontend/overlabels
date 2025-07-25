@@ -21,6 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'twitch_id',        // Add this
+        'avatar',           // Add this
+        'access_token',     // Add this
+        'refresh_token',    // Add this
+        'token_expires_at', // Add this
+        'twitch_data',      // Add this
     ];
 
     /**

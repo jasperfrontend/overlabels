@@ -30,28 +30,73 @@ Route::get('/phpinfo', function () {
 
 // Initiate login with Twitch
 Route::get('/auth/redirect/twitch', function () {
-    return Socialite::driver('twitch')
-        ->scopes([
-            'user:read:email',
-        ])
-        ->redirect();
+    /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+    $driver = Socialite::driver('twitch');
+    
+    return $driver->scopes([
+        'user:read:email',
+    ])->redirect();
+});
+
+// Initiate login with Twitch
+Route::get('/auth/redirect/twitchextended', function () {
+    /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+    $driver = Socialite::driver('twitch');
+
+    return $driver->scopes([
+        'user:read:email',            // To get email
+        'user:read:follows',          // Who they follow
+        'user:read:subscriptions',    // (requires Partner status)
+        'channel:read:subscriptions', // Who is subscribed to them
+        'channel:read:redemptions',   // Channel point stuff
+        'channel:read:goals',         // Follower/sub goals
+    ])->redirect();
 });
 
 Route::get('/auth/callback/twitch', function () {
     $twitchUser = Socialite::driver('twitch')->user();
 
-    $user = User::firstOrCreate(
-        ['twitch_id' => $twitchUser->getId()],
-        [
+    // First, try to find user by twitch_id
+    $user = User::where('twitch_id', $twitchUser->getId())->first();
+    
+    if (!$user) {
+        // If no user found by twitch_id, check if email already exists
+        $user = User::where('email', $twitchUser->getEmail())->first();
+        
+        if ($user) {
+            // User exists with this email but no twitch_id - link the accounts
+            $user->update([
+                'twitch_id' => $twitchUser->getId(),
+                'avatar' => $twitchUser->getAvatar(),
+                'access_token' => $twitchUser->token,
+                'refresh_token' => $twitchUser->refreshToken,
+                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
+                'twitch_data' => $twitchUser->user,
+            ]);
+        } else {
+            // Completely new user - create them
+            $user = User::create([
+                'name' => $twitchUser->getNickname(),
+                'email' => $twitchUser->getEmail(),
+                'twitch_id' => $twitchUser->getId(),
+                'avatar' => $twitchUser->getAvatar(),
+                'access_token' => $twitchUser->token,
+                'refresh_token' => $twitchUser->refreshToken,
+                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
+                'twitch_data' => $twitchUser->user,
+            ]);
+        }
+    } else {
+        // User found by twitch_id - update their tokens and info
+        $user->update([
             'name' => $twitchUser->getNickname(),
-            'email' => $twitchUser->getEmail(),
             'avatar' => $twitchUser->getAvatar(),
             'access_token' => $twitchUser->token,
             'refresh_token' => $twitchUser->refreshToken,
             'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
             'twitch_data' => $twitchUser->user,
-        ]
-    );
+        ]);
+    }
 
     Auth::login($user);
 
