@@ -28,10 +28,8 @@ class FoxController extends Controller
     {
         try {
             // Step 1: Fetch from API
-            Log::info('Fetching fox from API...');
             $response = Http::get('https://randomfox.ca/floof/');
             $url = $response->json()['image'];
-            Log::info('Fox API URL: ' . $url);
 
             $info = pathinfo($url);
             $filename = $info['basename'];
@@ -40,14 +38,12 @@ class FoxController extends Controller
             // Step 2: Check if we already have this fox
             $existingFox = Fox::where('api_url', $url)->first();
             if ($existingFox && $existingFox->cloudinary_url) {
-                Log::info('Fox already exists in database with Cloudinary URL');
                 return Inertia::render('Fox', [
                     'foxPic' => $existingFox->cloudinary_url,
                 ]);
             }
 
             // Step 3: Upload to Cloudinary
-            Log::info('Uploading to Cloudinary...');
             $cloudinary = $this->getCloudinary();
             
             $uploadResult = $cloudinary->uploadApi()->upload($url, [
@@ -66,10 +62,8 @@ class FoxController extends Controller
             ]);
 
             $cloudinaryUrl = $uploadResult['secure_url'];
-            Log::info('Cloudinary URL: ' . $cloudinaryUrl);
 
             // Step 4: Save/Update in database
-            Log::info('Saving to database...');
             $fox = Fox::updateOrCreate(
                 ['api_url' => $url],
                 [
@@ -78,7 +72,6 @@ class FoxController extends Controller
                     'cloudinary_public_id' => $uploadResult['public_id']
                 ]
             );
-            Log::info('Fox saved with ID: ' . $fox->id);
 
             return Inertia::render('Fox', [
                 'foxPic' => $cloudinaryUrl,
