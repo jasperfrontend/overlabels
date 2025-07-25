@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoxController;
 use Inertia\Inertia;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -21,9 +24,44 @@ Route::get('/foxes', [FoxController::class, 'gallery'])
     // ->middleware(['auth', 'verified'])
     ->name('foxes');
 
-// Route::get('/phpinfo', function () {
-//     phpinfo();
-// });
+Route::get('/phpinfo', function () {
+    phpinfo();
+});
+
+// Initiate login with Twitch
+Route::get('/auth/redirect/twitch', function () {
+    return Socialite::driver('twitch')
+        ->scopes([
+            'user:read:email',
+        ])
+        ->redirect();
+});
+
+Route::get('/auth/callback/twitch', function () {
+    $twitchUser = Socialite::driver('twitch')->user();
+
+    $user = User::firstOrCreate(
+        ['twitch_id' => $twitchUser->getId()],
+        [
+            'name' => $twitchUser->getNickname(),
+            'email' => $twitchUser->getEmail(),
+            'avatar' => $twitchUser->getAvatar(),
+            'access_token' => $twitchUser->token,
+            'refresh_token' => $twitchUser->refreshToken,
+            'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
+            'twitch_data' => $twitchUser->user,
+        ]
+    );
+
+    Auth::login($user);
+
+    return redirect('/dashboard');
+});
+
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/');
+});
 
 // Route::get('/debug/user', function () {
 //     return response()->json([

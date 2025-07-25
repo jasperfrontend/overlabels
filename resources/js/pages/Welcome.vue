@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoginSocial from '@/components/LoginSocial.vue';
 import { Head, Link } from '@inertiajs/vue3';
 </script>
 
@@ -48,6 +49,7 @@ import { Head, Link } from '@inertiajs/vue3';
                     >
                         Please login to view the gallery
                     </Link>
+                    <LoginSocial />
                 </div>
 
             </main>

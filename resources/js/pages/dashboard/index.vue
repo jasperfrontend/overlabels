@@ -4,6 +4,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
 import Hello from '@/components/Hello.vue';
+import { usePage } from '@inertiajs/vue3'
+const user = usePage().props.auth.user
 
 defineProps(['userName'])
 
@@ -23,6 +25,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
           
           <Hello class="p-2" :name="userName" />
+
+            <div>
+              <h1>Welcome, {{ user.name }}</h1>
+              <img :src="user.avatar" width="64" />
+              <pre>{{ user?.twitch_data }}</pre>
+            </div>
 
           <p class="p-2">I really just set up a full Dashboard running on Vue3 with Laravel as backend in 1 click. Impressive.</p>
         </div>

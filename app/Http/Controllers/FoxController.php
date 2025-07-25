@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Cloudinary\Cloudinary;
-use Cloudinary\Transformation\Resize;
-use Cloudinary\Api\Upload\UploadApi;
 
 class FoxController extends Controller
 {
