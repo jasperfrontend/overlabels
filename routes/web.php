@@ -18,39 +18,39 @@ Route::get('/fox', [FoxController::class, 'index'])
     ->name('fox');
 
 Route::get('/foxes', [FoxController::class, 'gallery'])
-    ->middleware(['auth', 'verified'])
+    // ->middleware(['auth', 'verified'])
     ->name('foxes');
 
-Route::get('/phpinfo', function () {
-    phpinfo();
-});
+// Route::get('/phpinfo', function () {
+//     phpinfo();
+// });
 
-Route::get('/debug/user', function () {
-    return response()->json([
-        'user' => auth()->user(),
-        'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
-        'users_count' => \App\Models\User::count(),
-    ]);
-})->middleware(['auth']);
+// Route::get('/debug/user', function () {
+//     return response()->json([
+//         'user' => auth()->user(),
+//         'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
+//         'users_count' => \App\Models\User::count(),
+//     ]);
+// })->middleware(['auth']);
 
-Route::get('/debug/basic', function () {
-    return response()->json([
-        'laravel_version' => app()->version(),
-        'environment' => app()->environment(),
-        'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
-        'config_cached' => app()->configurationIsCached(),
-    ]);
-});
+// Route::get('/debug/basic', function () {
+//     return response()->json([
+//         'laravel_version' => app()->version(),
+//         'environment' => app()->environment(),
+//         'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
+//         'config_cached' => app()->configurationIsCached(),
+//     ]);
+// });
 
-Route::get('/debug/counts', function () {
-    return response()->json([
-        'users_count' => \App\Models\User::count(),
-        'foxes_count' => \App\Models\Fox::count(),
-        'latest_user' => \App\Models\User::latest()->first(),
-        'latest_fox' => \App\Models\Fox::latest()->first(),
-        'database_name' => \DB::connection()->getDatabaseName(),
-    ]);
-});
+// Route::get('/debug/counts', function () {
+//     return response()->json([
+//         'users_count' => \App\Models\User::count(),
+//         'foxes_count' => \App\Models\Fox::count(),
+//         'latest_user' => \App\Models\User::latest()->first(),
+//         'latest_fox' => \App\Models\Fox::latest()->first(),
+//         'database_name' => \DB::connection()->getDatabaseName(),
+//     ]);
+// });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

@@ -24,16 +24,6 @@ const mainNavItems: NavItem[] = [
         href: '/foxes',
         icon: Dog,
     },
-    {
-        title: 'Debug User',
-        href: '/debug/user',
-        icon: Bug,
-    },
-    {
-        title: 'Debug Basic',
-        href: '/debug/basic',
-        icon: Bug,
-    },
 ];
 
 const footerNavItems: NavItem[] = [
