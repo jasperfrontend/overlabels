@@ -20,6 +20,7 @@ const isConnecting = ref(false);
 const isWebSocketConnected = ref(false);
 const events = ref<Array<any>>([]);
 const subscriptionStatus = ref<any>(null);
+// @ts-ignore
 const echo = ref<Echo | null>(null);
 
 // Auto-scroll container
@@ -32,20 +33,18 @@ const initializeEcho = () => {
   console.log('🔄 Initializing Echo connection...');
 
   // Configure Laravel Echo
-  window.Pusher = Pusher;
+  (window as any).Pusher = Pusher;
   
-  const scheme = import.meta.env.VITE_REVERB_SCHEME || 'http';
-  const host = import.meta.env.VITE_REVERB_HOST || 'localhost';
-  const port = import.meta.env.VITE_REVERB_PORT || 8080;
-  
-  console.log('Echo config:', { scheme, host, port });
-  
-  echo.value = new Echo({
-    broadcaster: 'pusher',
+  const pusherConfig = {
+    broadcaster: 'pusher' as const,
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'eu',
     forceTLS: true
-  });
+  };
+  
+  console.log('Pusher config:', pusherConfig);
+  
+  echo.value = new Echo(pusherConfig);
 
   // Listen for connection state changes
   echo.value.connector.pusher.connection.bind('connected', () => {
@@ -142,7 +141,7 @@ const connect = async () => {
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to connect', error: error.message },
+      data: { message: 'Failed to connect', error: error },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });
@@ -191,7 +190,7 @@ const disconnect = async () => {
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to disconnect', error: error.message },
+      data: { message: 'Failed to disconnect', error: error },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });

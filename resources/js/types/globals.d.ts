@@ -1,4 +1,6 @@
 import { AppPageProps } from '@/types/index';
+import Pusher from 'pusher-js';
+import Echo from 'laravel-echo';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -22,5 +24,14 @@ declare module 'vue' {
         $inertia: typeof Router;
         $page: Page;
         $headManager: ReturnType<typeof createHeadManager>;
+    }
+}
+
+declare global {
+    let route: typeof route;
+    
+    interface Window {
+        Pusher: typeof Pusher;
+        Echo: typeof Echo;
     }
 }
