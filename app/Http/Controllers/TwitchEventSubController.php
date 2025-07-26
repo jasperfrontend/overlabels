@@ -37,7 +37,7 @@ class TwitchEventSubController extends Controller
 
         try {
             // The callback URL that Twitch will send events to
-            $callbackUrl = config('app.url') . '/twitch/webhook';
+            $callbackUrl = config('app.url') . '/api/twitch/webhook';
             
             // Subscribe to follow events
             $followSub = $this->eventSubService->subscribeToFollows(
@@ -56,12 +56,7 @@ class TwitchEventSubController extends Controller
             $results = [
                 'follow_subscription' => $followSub,
                 'sub_subscription' => $subSub,
-                'callback_url' => $callbackUrl,
-                'debug' => [
-                    'user_id' => $user->twitch_id,
-                    'access_token_length' => strlen($user->access_token),
-                    'access_token_start' => substr($user->access_token, 0, 10) . '...',
-                ]
+                'callback_url' => $callbackUrl
             ];
 
             Log::info('EventSub connection attempt', $results);
@@ -73,10 +68,11 @@ class TwitchEventSubController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('EventSub connection failed: ' . $e->getMessage());
+            
             return response()->json([
                 'error' => 'Failed to connect to EventSub',
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -137,21 +133,18 @@ class TwitchEventSubController extends Controller
             $data = json_decode($body, true);
             $messageType = $request->header('Twitch-Eventsub-Message-Type');
 
-            // Log EVERYTHING for debugging
-            Log::info('=== TWITCH WEBHOOK RECEIVED ===', [
-                'method' => $request->method(),
-                'url' => $request->fullUrl(),
+            Log::info('Twitch webhook received', [
                 'message_type' => $messageType,
-                'all_headers' => $request->headers->all(),
-                'body_raw' => $body,
-                'body_decoded' => $data,
-                'has_challenge' => isset($data['challenge']),
+                'headers' => $request->headers->all(),
+                'body_size' => strlen($body),
+                'data_keys' => array_keys($data ?? [])
             ]);
 
-            // Handle webhook verification challenge
+            // Handle webhook verification challenge (MUST respond within 10 seconds)
             if ($messageType === 'webhook_callback_verification' && isset($data['challenge'])) {
-                Log::info('🎯 RESPONDING TO CHALLENGE', ['challenge' => $data['challenge']]);
+                Log::info('Twitch webhook challenge received', ['challenge' => $data['challenge']]);
                 
+                // Return ONLY the challenge string, no JSON, no quotes
                 return response($data['challenge'], 200, ['Content-Type' => 'text/plain']);
             }
 
@@ -177,8 +170,8 @@ class TwitchEventSubController extends Controller
             return response('OK', 200);
 
         } catch (\Exception $e) {
-            Log::error('WEBHOOK ERROR: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            Log::error('Webhook handling failed: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString()
             ]);
             return response('Error', 500);
         }

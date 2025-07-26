@@ -229,6 +229,10 @@ const getEventTypeClass = (type: string) => {
       return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
     case 'channel.subscribe':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+    case 'stream.online':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    case 'channel.raid':
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
     case 'system':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
     case 'error':
@@ -368,6 +372,9 @@ onUnmounted(() => {
                 <div class="space-y-1">
                   <div v-if="event.type === 'channel.follow'" class="text-sm">
                     <strong>{{ event.data.user_name }}</strong> started following!
+                    <span v-if="event.data.followed_at" class="text-muted-foreground text-xs block">
+                      {{ new Date(event.data.followed_at).toLocaleString() }}
+                    </span>
                   </div>
                   
                   <div v-else-if="event.type === 'channel.subscribe'" class="text-sm">
@@ -375,6 +382,17 @@ onUnmounted(() => {
                     <span v-if="event.data.tier" class="text-muted-foreground">
                       (Tier {{ Math.floor(event.data.tier / 1000) }})
                     </span>
+                  </div>
+                  
+                  <div v-else-if="event.type === 'stream.online'" class="text-sm">
+                    🔴 <strong>Stream went live!</strong>
+                    <span v-if="event.data.type" class="text-muted-foreground">
+                      ({{ event.data.type }})
+                    </span>
+                  </div>
+                  
+                  <div v-else-if="event.type === 'channel.raid'" class="text-sm">
+                    ⚡ <strong>{{ event.data.from_broadcaster_user_name }}</strong> raided with {{ event.data.viewers }} viewers!
                   </div>
                   
                   <div v-else-if="event.type === 'system'" class="text-sm">
@@ -386,7 +404,7 @@ onUnmounted(() => {
                   </div>
                   
                   <div v-else class="text-sm">
-                    Unknown event type: {{ event.type }}
+                    {{ event.type }}: {{ JSON.stringify(event.data).substring(0, 100) }}...
                   </div>
                 </div>
                 
