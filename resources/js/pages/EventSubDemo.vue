@@ -41,14 +41,10 @@ const initializeEcho = () => {
   console.log('Echo config:', { scheme, host, port });
   
   echo.value = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY || 'my-app-key',
-    wsHost: host,
-    wsPort: port,
-    wssPort: port,
-    forceTLS: scheme === 'https',
-    enabledTransports: ['ws', 'wss'],
-    disableStats: true,
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'eu',
+    forceTLS: true
   });
 
   // Listen for connection state changes
@@ -146,7 +142,7 @@ const connect = async () => {
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to connect', error: error },
+      data: { message: 'Failed to connect', error: error.message },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });
@@ -195,7 +191,7 @@ const disconnect = async () => {
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to disconnect', error: error },
+      data: { message: 'Failed to disconnect', error: error.message },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });
