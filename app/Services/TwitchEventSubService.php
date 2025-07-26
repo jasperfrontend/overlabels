@@ -51,7 +51,8 @@ class TwitchEventSubService
             Log::error('Failed to create EventSub subscription', [
                 'status' => $response->status(),
                 'response' => $response->body(),
-                'payload' => $payload
+                'payload' => $payload,
+                'headers' => $response->headers()
             ]);
 
             return null;

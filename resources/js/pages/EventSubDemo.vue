@@ -29,6 +29,8 @@ const eventsContainer = ref<HTMLElement | null>(null);
 const initializeEcho = () => {
   if (echo.value) return;
 
+  console.log('🔄 Initializing Echo connection...');
+
   // Configure Laravel Echo
   window.Pusher = Pusher;
   
@@ -51,24 +53,29 @@ const initializeEcho = () => {
 
   // Listen for connection state changes
   echo.value.connector.pusher.connection.bind('connected', () => {
-    console.log('WebSocket connected');
+    console.log('✅ WebSocket connected');
     isWebSocketConnected.value = true;
   });
 
   echo.value.connector.pusher.connection.bind('disconnected', () => {
-    console.log('WebSocket disconnected');
+    console.log('❌ WebSocket disconnected');
     isWebSocketConnected.value = false;
   });
 
   echo.value.connector.pusher.connection.bind('failed', () => {
-    console.log('WebSocket connection failed');
+    console.log('💥 WebSocket connection failed');
+    isWebSocketConnected.value = false;
+  });
+
+  echo.value.connector.pusher.connection.bind('error', (error: any) => {
+    console.log('🚨 WebSocket error:', error);
     isWebSocketConnected.value = false;
   });
 
   // Listen for Twitch events
   echo.value.channel('twitch-events')
     .listen('.twitch.event', (event: any) => {
-      console.log('Received Twitch event:', event);
+      console.log('🎉 Received Twitch event:', event);
       
       // Add to events list
       events.value.unshift({
@@ -85,6 +92,8 @@ const initializeEcho = () => {
       // Auto scroll to top
       scrollToTop();
     });
+
+  console.log('🎧 Echo initialized and listening for events');
 };
 
 // Scroll to top of events
@@ -98,6 +107,7 @@ const scrollToTop = () => {
 const connect = async () => {
   if (isConnecting.value) return;
   
+  console.log('🔌 Starting EventSub connection...');
   isConnecting.value = true;
   
   try {
@@ -110,9 +120,10 @@ const connect = async () => {
     });
     
     const data = await response.json();
+    console.log('📡 EventSub API Response:', data);
     
     if (response.ok) {
-      console.log('Connected to EventSub:', data);
+      console.log('✅ Connected to EventSub:', data);
       
       // Add a connection event to the log
       events.value.unshift({
@@ -126,25 +137,29 @@ const connect = async () => {
       // Check status to determine if we're actually connected
       await checkStatus();
     } else {
+      console.error('❌ EventSub connection failed:', data);
       throw new Error(data.error || 'Failed to connect');
     }
   } catch (error) {
-    console.error('Connection failed:', error);
+    console.error('💥 Connection failed:', error);
     
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to connect', error: error.message },
+      data: { message: 'Failed to connect', error: error },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });
   } finally {
     isConnecting.value = false;
+    console.log('🏁 EventSub connection attempt finished');
   }
 };
 
 // Disconnect from EventSub
 const disconnect = async () => {
+  console.log('🔌 Disconnecting from EventSub...');
+  
   try {
     const response = await fetch('/eventsub/disconnect', {
       method: 'POST',
@@ -155,10 +170,11 @@ const disconnect = async () => {
     });
     
     const data = await response.json();
+    console.log('📡 Disconnect API Response:', data);
     
     if (response.ok) {
       isConnected.value = false;
-      console.log('Disconnected from EventSub:', data);
+      console.log('✅ Disconnected from EventSub:', data);
       
       events.value.unshift({
         id: Date.now(),
@@ -170,15 +186,16 @@ const disconnect = async () => {
       
       subscriptionStatus.value = null;
     } else {
+      console.error('❌ Disconnect failed:', data);
       throw new Error(data.error || 'Failed to disconnect');
     }
   } catch (error) {
-    console.error('Disconnect failed:', error);
+    console.error('💥 Disconnect failed:', error);
     
     events.value.unshift({
       id: Date.now(),
       type: 'error',
-      data: { message: 'Failed to disconnect', error: error.message },
+      data: { message: 'Failed to disconnect', error: error },
       timestamp: new Date().toISOString(),
       receivedAt: new Date().toLocaleTimeString()
     });
@@ -187,21 +204,26 @@ const disconnect = async () => {
 
 // Check subscription status
 const checkStatus = async () => {
+  console.log('🔍 Checking EventSub status...');
+  
   try {
     const response = await fetch('/eventsub/status');
     const data = await response.json();
+    console.log('📊 Status response:', data);
     
     if (response.ok) {
       subscriptionStatus.value = data;
       isConnected.value = data.total > 0;
+      console.log(`📈 EventSub status: ${data.total} active subscriptions`);
     }
   } catch (error) {
-    console.error('Status check failed:', error);
+    console.error('💥 Status check failed:', error);
   }
 };
 
 // Clear events log
 const clearEvents = () => {
+  console.log('🧹 Clearing events log');
   events.value = [];
 };
 
@@ -223,11 +245,13 @@ const getEventTypeClass = (type: string) => {
 
 // Lifecycle
 onMounted(() => {
+  console.log('🚀 Component mounted, initializing...');
   initializeEcho();
   checkStatus();
 });
 
 onUnmounted(() => {
+  console.log('💀 Component unmounting, cleaning up...');
   if (echo.value) {
     echo.value.disconnect();
   }
@@ -241,16 +265,31 @@ onUnmounted(() => {
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Twitch EventSub Demo</h1>
+        
         <div class="flex items-center gap-4">
-          <!-- Connection Status -->
-          <div class="flex items-center gap-2">
-            <div 
-              class="h-3 w-3 rounded-full transition-colors"
-              :class="isConnected ? 'bg-green-500' : 'bg-red-500'"
-            />
-            <span class="text-sm font-medium">
-              {{ isConnected ? 'Connected' : 'Disconnected' }}
-            </span>
+          <!-- Status Indicators -->
+          <div class="flex items-center gap-4">
+            <!-- EventSub Status -->
+            <div class="flex items-center gap-2">
+              <div 
+                class="h-3 w-3 rounded-full transition-colors"
+                :class="isConnected ? 'bg-green-500' : 'bg-red-500'"
+              />
+              <span class="text-sm font-medium">
+                EventSub: {{ isConnected ? 'Connected' : 'Disconnected' }}
+              </span>
+            </div>
+            
+            <!-- WebSocket Status -->
+            <div class="flex items-center gap-2">
+              <div 
+                class="h-2 w-2 rounded-full transition-colors"
+                :class="isWebSocketConnected ? 'bg-blue-500' : 'bg-gray-400'"
+              />
+              <span class="text-xs text-muted-foreground">
+                WebSocket: {{ isWebSocketConnected ? 'Connected' : 'Disconnected' }}
+              </span>
+            </div>
           </div>
           
           <!-- Action Buttons -->

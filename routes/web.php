@@ -9,6 +9,9 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
+Route::post('/twitch/webhook', [App\Http\Controllers\TwitchEventSubController::class, 'webhook'])
+    ->withoutMiddleware(['web', 'csrf']);
+
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -45,6 +48,7 @@ Route::get('/auth/redirect/twitch', function () {
         'channel:read:subscriptions', // Who is subscribed to them
         'channel:read:redemptions',   // Channel point stuff
         'channel:read:goals',         // Follower/sub goals
+        'channel:moderate',           // Required for some EventSub actions
         'moderator:read:followers',   // Channel follower details
     ])->redirect();
 });

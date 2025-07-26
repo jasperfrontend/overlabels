@@ -129,30 +129,50 @@ class TwitchEventSubController extends Controller
     public function webhook(Request $request)
     {
         try {
-            // Verify the webhook signature (important for security)
-            if (!$this->verifyTwitchSignature($request)) {
-                Log::warning('Invalid Twitch webhook signature');
-                return response('Invalid signature', 403);
-            }
-
             $body = $request->getContent();
             $data = json_decode($body, true);
+            $messageType = $request->header('Twitch-Eventsub-Message-Type');
 
-            // Handle webhook verification challenge
-            if (isset($data['challenge'])) {
-                Log::info('Twitch webhook challenge received');
+            Log::info('Twitch webhook received', [
+                'message_type' => $messageType,
+                'headers' => $request->headers->all(),
+                'body_size' => strlen($body),
+                'data_keys' => array_keys($data ?? [])
+            ]);
+
+            // Handle webhook verification challenge (MUST respond within 10 seconds)
+            if ($messageType === 'webhook_callback_verification' && isset($data['challenge'])) {
+                Log::info('Twitch webhook challenge received', ['challenge' => $data['challenge']]);
+                
+                // Return ONLY the challenge string, no JSON, no quotes
                 return response($data['challenge'], 200, ['Content-Type' => 'text/plain']);
             }
 
-            // Handle actual events
-            if (isset($data['event'])) {
+            // For all other message types, verify signature
+            if ($messageType !== 'webhook_callback_verification') {
+                if (!$this->verifyTwitchSignature($request)) {
+                    Log::warning('Invalid Twitch webhook signature', ['message_type' => $messageType]);
+                    return response('Invalid signature', 403);
+                }
+            }
+
+            // Handle actual events (notifications)
+            if ($messageType === 'notification' && isset($data['event'])) {
+                Log::info('Twitch event notification received');
                 $this->handleTwitchEvent($data);
+            }
+
+            // Handle revocations
+            if ($messageType === 'revocation') {
+                Log::warning('Twitch subscription revoked', ['data' => $data]);
             }
 
             return response('OK', 200);
 
         } catch (\Exception $e) {
-            Log::error('Webhook handling failed: ' . $e->getMessage());
+            Log::error('Webhook handling failed: ' . $e->getMessage(), [
+                'exception' => $e->getTraceAsString()
+            ]);
             return response('Error', 500);
         }
     }
