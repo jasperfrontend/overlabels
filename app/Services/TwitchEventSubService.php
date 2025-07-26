@@ -40,6 +40,14 @@ class TwitchEventSubService
                 'Content-Type' => 'application/json',
             ])->post($this->baseUrl, $payload);
 
+            // Add detailed logging here
+            Log::info('Twitch EventSub API Response', [
+                'status_code' => $response->status(),
+                'headers' => $response->headers(),
+                'body' => $response->body(),
+                'payload_sent' => $payload
+            ]);
+            
             if ($response->successful()) {
                 Log::info('EventSub subscription created', [
                     'type' => $eventType,
