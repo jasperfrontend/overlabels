@@ -140,10 +140,19 @@ class TwitchEventSubService
     }
 
     /**
-     * Subscribe to channel follow events (Version 2 with moderator permissions)
+     * Subscribe to channel follow events (Version 2 - REQUIRES APP TOKEN)
      */
     public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
+        // Get app access token for follow events (REQUIRED by Twitch)
+        $appToken = $this->getAppAccessToken();
+        if (!$appToken) {
+            return [
+                'error' => true,
+                'message' => 'Could not get app access token for follow events'
+            ];
+        }
+
         $payload = [
             'type' => 'channel.follow',
             'version' => '2', // Use version 2
@@ -158,8 +167,8 @@ class TwitchEventSubService
             ]
         ];
 
-        // Use user access token for follow events
-        return $this->createSubscription($userAccessToken, $payload);
+        // Use APP access token for follow events (not user token)
+        return $this->createSubscription($appToken, $payload);
     }
 
     /**
