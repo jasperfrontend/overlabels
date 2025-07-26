@@ -10,6 +10,28 @@ class TwitchEventSubService
     private string $clientId;
     private string $baseUrl = 'https://api.twitch.tv/helix/eventsub/subscriptions';
     
+
+    private function getAppAccessToken(): ?string
+    {
+        try {
+            $response = Http::post('https://id.twitch.tv/oauth2/token', [
+                'client_id' => $this->clientId,
+                'client_secret' => config('services.twitch.client_secret'),
+                'grant_type' => 'client_credentials',
+                'scope' => '' // App tokens don't need scopes for EventSub
+            ]);
+
+            if ($response->successful()) {
+                return $response->json()['access_token'];
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to get app access token: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function __construct()
     {
         $this->clientId = config('services.twitch.client_id');
@@ -127,6 +149,19 @@ class TwitchEventSubService
      */
     public function subscribeToFollows(string $accessToken, string $userId, string $callbackUrl): ?array
     {
+        $payload = [
+            'type' => 'channel.follow',
+            'version' => '2', // Use version 2
+            'condition' => [
+                'broadcaster_user_id' => $userId,
+                'moderator_user_id' => $userId // Add this for your own channel
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret', 'fallback-secret')
+            ]
+        ];
         return $this->createSubscription($accessToken, 'channel.follow', $userId, $callbackUrl);
     }
 
@@ -135,6 +170,12 @@ class TwitchEventSubService
      */
     public function subscribeToSubscriptions(string $accessToken, string $userId, string $callbackUrl): ?array
     {
-        return $this->createSubscription($accessToken, 'channel.subscribe', $userId, $callbackUrl);
+        // Use app access token for this one
+        $appToken = $this->getAppAccessToken();
+        if (!$appToken) {
+            return ['error' => true, 'message' => 'Could not get app access token'];
+        }
+
+        return $this->createSubscription($appToken, 'channel.subscribe', $userId, $callbackUrl);
     }
 }
