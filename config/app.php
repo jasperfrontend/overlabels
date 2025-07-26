@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://overlabels.test'),
+    'url' => env('APP_URL', 'https://95421ad933f6.ngrok-free.app'),
 
     /*
     |--------------------------------------------------------------------------
