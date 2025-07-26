@@ -9,9 +9,6 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
-Route::post('/twitch/webhook', [App\Http\Controllers\TwitchEventSubController::class, 'webhook'])
-    ->withoutMiddleware(['web', 'csrf']);
-
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
