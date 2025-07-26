@@ -133,12 +133,18 @@ class TwitchEventSubController extends Controller
             $data = json_decode($body, true);
             $messageType = $request->header('Twitch-Eventsub-Message-Type');
 
-            Log::info('Twitch webhook received', [
+            // Store webhook activity in cache so we can see it in browser
+            $webhookLog = [
+                'timestamp' => now()->toISOString(),
                 'message_type' => $messageType,
+                'has_challenge' => isset($data['challenge']),
+                'challenge' => $data['challenge'] ?? null,
+                'event_type' => $data['subscription']['type'] ?? null,
                 'headers' => $request->headers->all(),
-                'body_size' => strlen($body),
-                'data_keys' => array_keys($data ?? [])
-            ]);
+            ];
+
+            Cache::put('last_webhook_activity', $webhookLog, 300); // Store for 5 minutes
+
 
             // Handle webhook verification challenge (MUST respond within 10 seconds)
             if ($messageType === 'webhook_callback_verification' && isset($data['challenge'])) {
@@ -170,11 +176,18 @@ class TwitchEventSubController extends Controller
             return response('OK', 200);
 
         } catch (\Exception $e) {
-            Log::error('Webhook handling failed: ' . $e->getMessage(), [
-                'exception' => $e->getTraceAsString()
-            ]);
+            Cache::put('webhook_error', $e->getMessage(), 300);
             return response('Error', 500);
         }
+    }
+
+    public function webhookStatus()
+    {
+    return response()->json([
+            'last_activity' => Cache::get('last_webhook_activity'),
+            'challenge_received' => Cache::get('webhook_challenge_received', false),
+            'error' => Cache::get('webhook_error'),
+        ]);
     }
 
     /**
