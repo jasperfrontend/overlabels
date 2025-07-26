@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Fox;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -22,7 +21,7 @@ class FoxController extends Controller
         ]);
     }
 
-    public function index(Request $request)
+    public function index()
     {
         try {
             // Step 1: Fetch from API

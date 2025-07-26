@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { ImgHTMLAttributes, ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { XIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next';
 
 const modalShow = ref(false)
@@ -90,6 +90,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
       <div class="mx-auto max-w-3xl py-8">
         <h1 class="text-2xl font-bold mb-6">Fox Gallery</h1>
+        <!-- <pre>{{ props.foxes }}</pre> -->
         <!-- Pagination controls -->
         <div v-if="props.foxes.first_page_url || props.foxes.last_page_url" class="flex justify-center mt-6 mb-6 gap-2">
           <template v-for="(link, idx) in props.foxes.links">
@@ -169,7 +170,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
             <!-- Close button -->
             <button
               @click="closeModal"
-              class="absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
+              class="cursor-pointer absolute top-4 right-4 z-10 p-2 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
             >
               <XIcon class="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-200" />
             </button>
@@ -178,7 +179,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
             <button
               v-if="canNavigatePrev"
               @click="navigatePrev"
-              class="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
+              class="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
             >
               <ChevronLeftIcon class="w-6 h-6 text-white group-hover:-translate-x-0.5 transition-transform duration-200" />
             </button>
@@ -186,7 +187,7 @@ const getImageUrl = (fox: { cloudinary_url: any; api_url: any; local_file: any; 
             <button
               v-if="canNavigateNext"
               @click="navigateNext"
-              class="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
+              class="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full transition-all duration-200 backdrop-blur-sm group"
             >
               <ChevronRightIcon class="w-6 h-6 text-white group-hover:translate-x-0.5 transition-transform duration-200" />
             </button>

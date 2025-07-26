@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoxController;
+use App\Http\Controllers\TwitchDataController;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,10 @@ Route::get('/foxes', [FoxController::class, 'gallery'])
     // ->middleware(['auth', 'verified'])
     ->name('foxes');
 
+Route::get('/twitchdata', [TwitchDataController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('twitchdata');
+
 Route::get('/phpinfo', function () {
     phpinfo();
 });
@@ -40,6 +45,7 @@ Route::get('/auth/redirect/twitch', function () {
         'channel:read:subscriptions', // Who is subscribed to them
         'channel:read:redemptions',   // Channel point stuff
         'channel:read:goals',         // Follower/sub goals
+        'moderator:read:followers',   // Channel follower details
     ])->redirect();
 });
 
@@ -103,55 +109,10 @@ Route::get('/auth/callback/twitch', function () {
     return redirect('/dashboard');
 });
 
-Route::get('/debug/twitch', function () {
-    $user = auth()->user();
-    
-    if (!$user || !$user->access_token) {
-        return response()->json(['error' => 'No authenticated user or access token']);
-    }
-    
-    $twitchService = new \App\Services\TwitchApiService();
-    $freshData = $twitchService->getExtendedUserData($user->access_token, $user->twitch_id);
-    
-    return response()->json([
-        'stored_twitch_data' => $user->twitch_data,
-        'fresh_api_data' => $freshData,
-        'access_token_expires' => $user->token_expires_at,
-        'token_valid' => $user->token_expires_at && $user->token_expires_at->isFuture(),
-    ]);
-})->middleware(['auth']);
-
 Route::post('/logout', function () {
     Auth::logout();
     return redirect('/');
 });
-
-// Route::get('/debug/user', function () {
-//     return response()->json([
-//         'user' => auth()->user(),
-//         'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
-//         'users_count' => \App\Models\User::count(),
-//     ]);
-// })->middleware(['auth']);
-
-// Route::get('/debug/basic', function () {
-//     return response()->json([
-//         'laravel_version' => app()->version(),
-//         'environment' => app()->environment(),
-//         'database_works' => \DB::connection()->getPdo() ? 'yes' : 'no',
-//         'config_cached' => app()->configurationIsCached(),
-//     ]);
-// });
-
-// Route::get('/debug/counts', function () {
-//     return response()->json([
-//         'users_count' => \App\Models\User::count(),
-//         'foxes_count' => \App\Models\Fox::count(),
-//         'latest_user' => \App\Models\User::latest()->first(),
-//         'latest_fox' => \App\Models\Fox::latest()->first(),
-//         'database_name' => \DB::connection()->getDatabaseName(),
-//     ]);
-// });
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
