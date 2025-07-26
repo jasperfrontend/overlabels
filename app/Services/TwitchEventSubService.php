@@ -40,32 +40,42 @@ class TwitchEventSubService
                 'Content-Type' => 'application/json',
             ])->post($this->baseUrl, $payload);
 
-            // Add detailed logging here
+            // Always log the response for debugging
             Log::info('Twitch EventSub API Response', [
+                'event_type' => $eventType,
                 'status_code' => $response->status(),
-                'headers' => $response->headers(),
-                'body' => $response->body(),
+                'response_body' => $response->body(),
                 'payload_sent' => $payload
             ]);
-            
+
             if ($response->successful()) {
-                Log::info('EventSub subscription created', [
-                    'type' => $eventType,
-                    'response' => $response->json()
-                ]);
                 return $response->json();
             }
 
-            Log::error('Failed to create EventSub subscription', [
+            // Return error info instead of null
+            return [
+                'error' => true,
                 'status' => $response->status(),
-                'response' => $response->body(),
-                'payload' => $payload,
-                'headers' => $response->headers()
+                'message' => $response->body(),
+                'payload' => $payload
+            ];
+
+            // This is the important part - log the actual error
+            Log::error('EventSub subscription FAILED', [
+                'event_type' => $eventType,
+                'status' => $response->status(),
+                'response_body' => $response->body(),
+                'response_headers' => $response->headers(),
+                'payload_sent' => $payload
             ]);
 
             return null;
         } catch (\Exception $e) {
-            Log::error('Error creating EventSub subscription: ' . $e->getMessage());
+            Log::error('EventSub subscription exception', [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
     }

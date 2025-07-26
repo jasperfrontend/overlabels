@@ -56,7 +56,12 @@ class TwitchEventSubController extends Controller
             $results = [
                 'follow_subscription' => $followSub,
                 'sub_subscription' => $subSub,
-                'callback_url' => $callbackUrl
+                'callback_url' => $callbackUrl,
+                'debug' => [
+                    'user_id' => $user->twitch_id,
+                    'access_token_length' => strlen($user->access_token),
+                    'access_token_start' => substr($user->access_token, 0, 10) . '...',
+                ]
             ];
 
             Log::info('EventSub connection attempt', $results);
@@ -68,11 +73,10 @@ class TwitchEventSubController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('EventSub connection failed: ' . $e->getMessage());
-            
             return response()->json([
                 'error' => 'Failed to connect to EventSub',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }
