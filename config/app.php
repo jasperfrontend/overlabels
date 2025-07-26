@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'twitch_webhook_secret' => env('TWITCH_WEBHOOK_SECRET', 'fallback-secret'),
+
 ];

@@ -114,5 +114,14 @@ Route::post('/logout', function () {
     return redirect('/');
 });
 
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
+    Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
+    Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
+    Route::get('/eventsub/status', [App\Http\Controllers\TwitchEventSubController::class, 'status'])->name('eventsub.status');
+});
+
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

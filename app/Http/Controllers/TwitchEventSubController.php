@@ -1,0 +1,222 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\TwitchEventSubService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+
+class TwitchEventSubController extends Controller
+{
+    private TwitchEventSubService $eventSubService;
+
+    public function __construct(TwitchEventSubService $eventSubService)
+    {
+        $this->eventSubService = $eventSubService;
+    }
+
+    /**
+     * Show the EventSub demo page
+     */
+    public function index()
+    {
+        return Inertia::render('EventSubDemo');
+    }
+
+    /**
+     * Connect to EventSub (create subscriptions)
+     */
+    public function connect(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || !$user->access_token || !$user->twitch_id) {
+            return response()->json(['error' => 'User not authenticated with Twitch'], 401);
+        }
+
+        try {
+            // The callback URL that Twitch will send events to
+            $callbackUrl = config('app.url') . '/api/twitch/webhook';
+            
+            // Subscribe to follow events
+            $followSub = $this->eventSubService->subscribeToFollows(
+                $user->access_token, 
+                $user->twitch_id, 
+                $callbackUrl
+            );
+
+            // Subscribe to subscription events
+            $subSub = $this->eventSubService->subscribeToSubscriptions(
+                $user->access_token, 
+                $user->twitch_id, 
+                $callbackUrl
+            );
+
+            $results = [
+                'follow_subscription' => $followSub,
+                'sub_subscription' => $subSub,
+                'callback_url' => $callbackUrl
+            ];
+
+            Log::info('EventSub connection attempt', $results);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'EventSub subscriptions created',
+                'data' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('EventSub connection failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to connect to EventSub',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Disconnect from EventSub (remove all subscriptions)
+     */
+    public function disconnect(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || !$user->access_token) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        try {
+            // Get all current subscriptions
+            $subscriptions = $this->eventSubService->getSubscriptions($user->access_token);
+            
+            if (!$subscriptions || !isset($subscriptions['data'])) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No subscriptions to remove'
+                ]);
+            }
+
+            $deletedCount = 0;
+            foreach ($subscriptions['data'] as $subscription) {
+                if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
+                    $deletedCount++;
+                }
+            }
+
+            Log::info('EventSub disconnection', ['deleted_subscriptions' => $deletedCount]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Removed {$deletedCount} subscriptions"
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('EventSub disconnection failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to disconnect from EventSub',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle incoming webhooks from Twitch
+     */
+    public function webhook(Request $request)
+    {
+        try {
+            // Verify the webhook signature (important for security)
+            if (!$this->verifyTwitchSignature($request)) {
+                Log::warning('Invalid Twitch webhook signature');
+                return response('Invalid signature', 403);
+            }
+
+            $body = $request->getContent();
+            $data = json_decode($body, true);
+
+            // Handle webhook verification challenge
+            if (isset($data['challenge'])) {
+                Log::info('Twitch webhook challenge received');
+                return response($data['challenge'], 200, ['Content-Type' => 'text/plain']);
+            }
+
+            // Handle actual events
+            if (isset($data['event'])) {
+                $this->handleTwitchEvent($data);
+            }
+
+            return response('OK', 200);
+
+        } catch (\Exception $e) {
+            Log::error('Webhook handling failed: ' . $e->getMessage());
+            return response('Error', 500);
+        }
+    }
+
+    /**
+     * Verify that the webhook came from Twitch
+     */
+    private function verifyTwitchSignature(Request $request): bool
+    {
+        $signature = $request->header('Twitch-Eventsub-Message-Signature');
+        $timestamp = $request->header('Twitch-Eventsub-Message-Timestamp');
+        $body = $request->getContent();
+        $secret = config('app.twitch_webhook_secret', 'fallback-secret');
+
+        if (!$signature || !$timestamp) {
+            return false;
+        }
+
+        $message = $request->header('Twitch-Eventsub-Message-Id') . $timestamp . $body;
+        $expectedSignature = 'sha256=' . hash_hmac('sha256', $message, $secret);
+
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * Process incoming Twitch events
+     */
+    private function handleTwitchEvent(array $data): void
+    {
+        $eventType = $data['subscription']['type'] ?? 'unknown';
+        $event = $data['event'] ?? [];
+
+        Log::info('Twitch event received', [
+            'type' => $eventType,
+            'event' => $event
+        ]);
+
+        // Broadcast the event to connected WebSocket clients
+        // We'll implement this broadcast functionality next
+        broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
+    }
+
+    /**
+     * Get current subscription status
+     */
+    public function status(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || !$user->access_token) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        try {
+            $subscriptions = $this->eventSubService->getSubscriptions($user->access_token);
+            
+            return response()->json([
+                'subscriptions' => $subscriptions['data'] ?? [],
+                'total' => $subscriptions['total'] ?? 0
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get EventSub status: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to get status'], 500);
+        }
+    }
+}
