@@ -37,7 +37,7 @@ class TwitchEventSubController extends Controller
 
         try {
             // The callback URL that Twitch will send events to
-            $callbackUrl = config('app.url') . '/api/twitch/webhook';
+            $callbackUrl = config('app.url') . '/twitch/webhook';
             
             // Subscribe to follow events
             $followSub = $this->eventSubService->subscribeToFollows(
