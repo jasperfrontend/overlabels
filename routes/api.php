@@ -19,3 +19,20 @@ Route::post('/test-webhook', function(Request $request) {
     ]);
     return response('Test OK', 200);
 });
+
+Route::post('/test-challenge', function(Request $request) {
+    $challenge = $request->input('challenge', 'test-challenge-123');
+    
+    Log::info('Test challenge endpoint called', [
+        'challenge' => $challenge,
+        'headers' => $request->headers->all(),
+        'method' => $request->method()
+    ]);
+    
+    // Test the same response method as your webhook
+    http_response_code(200);
+    header('Content-Type: text/plain');
+    header('Content-Length: ' . strlen($challenge));
+    echo $challenge;
+    exit();
+});

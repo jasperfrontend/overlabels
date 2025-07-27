@@ -90,8 +90,18 @@ class TwitchEventSubController extends Controller
         }
 
         try {
-            // Get all current subscriptions
-            $subscriptions = $this->eventSubService->getSubscriptions($user->access_token);
+            // Get app access token (since subscriptions were created with app token)
+            $appToken = $this->eventSubService->getAppAccessToken();
+            
+            if (!$appToken) {
+                return response()->json([
+                    'error' => 'Could not get app access token for cleanup',
+                    'message' => 'Failed to get app token'
+                ], 500);
+            }
+
+            // Get all current subscriptions using app token
+            $subscriptions = $this->eventSubService->getSubscriptions($appToken);
             
             if (!$subscriptions || !isset($subscriptions['data'])) {
                 return response()->json([
@@ -101,17 +111,35 @@ class TwitchEventSubController extends Controller
             }
 
             $deletedCount = 0;
+            $errors = [];
+            
             foreach ($subscriptions['data'] as $subscription) {
-                if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
+                if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
                     $deletedCount++;
+                    Log::info('Deleted EventSub subscription', [
+                        'id' => $subscription['id'], 
+                        'type' => $subscription['type'],
+                        'status' => $subscription['status']
+                    ]);
+                } else {
+                    $errors[] = "Failed to delete subscription: {$subscription['id']}";
+                    Log::warning('Failed to delete subscription', [
+                        'id' => $subscription['id'],
+                        'type' => $subscription['type']
+                    ]);
                 }
             }
 
-            Log::info('EventSub disconnection', ['deleted_subscriptions' => $deletedCount]);
+            Log::info('EventSub disconnection completed', [
+                'deleted_subscriptions' => $deletedCount,
+                'errors_count' => count($errors)
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => "Removed {$deletedCount} subscriptions"
+                'message' => "Removed {$deletedCount} subscriptions",
+                'deleted_count' => $deletedCount,
+                'errors' => $errors
             ]);
 
         } catch (\Exception $e) {

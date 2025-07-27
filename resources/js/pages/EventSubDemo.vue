@@ -202,7 +202,8 @@ const checkStatus = async () => {
   console.log('🔍 Checking EventSub status...');
   
   try {
-    const response = await fetch('/eventsub/status');
+    // Use the same endpoint as your working backend check
+    const response = await fetch('/eventsub/check-status'); // Changed from '/eventsub/status'
     const data = await response.json();
     console.log('📊 Status response:', data);
     
