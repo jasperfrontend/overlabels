@@ -191,6 +191,33 @@ class TwitchEventSubController extends Controller
             Log::info('Step 5 complete');
 
             // Step 6: Handle challenge if present
+            // if ($isChallenge) {
+            //     Log::info('Step 6: Processing challenge', [
+            //         'challenge' => $data['challenge'],
+            //         'subscription_type' => $data['subscription']['type'] ?? 'unknown'
+            //     ]);
+                
+            //     // Update webhook log
+            //     $webhookLog['status'] = 'challenge_responded';
+            //     Cache::put('last_webhook_activity', $webhookLog, 300);
+            //     Cache::put('webhook_challenge_received', true, 300);
+                
+            //     $challenge = $data['challenge'];
+                
+            //     Log::info('Step 6: Sending challenge response', [
+            //         'challenge' => $challenge,
+            //         'length' => strlen($challenge)
+            //     ]);
+                
+            //     // Return ONLY the challenge string with minimal headers
+            //     return response($challenge, 200, [
+            //         'Content-Type' => 'text/plain; charset=utf-8',
+            //         'Content-Length' => (string)strlen($challenge),
+            //         'Cache-Control' => 'no-cache'
+            //     ]);
+            // }
+            
+            // Step 6: Handle challenge if present
             if ($isChallenge) {
                 Log::info('Step 6: Processing challenge', [
                     'challenge' => $data['challenge'],
@@ -202,16 +229,40 @@ class TwitchEventSubController extends Controller
                 Cache::put('last_webhook_activity', $webhookLog, 300);
                 Cache::put('webhook_challenge_received', true, 300);
                 
-                Log::info('Step 6: Sending challenge response', [
-                    'challenge' => $data['challenge'],
-                    'length' => strlen($data['challenge'])
+                $challenge = $data['challenge'];
+                
+                Log::info('Step 6: About to send challenge response', [
+                    'challenge' => $challenge,
+                    'length' => strlen($challenge),
+                    'method' => 'ultra_simple'
                 ]);
                 
-                // Return ONLY the challenge string
-                return response($data['challenge'], 200, [
-                    'Content-Type' => 'text/plain',
-                    'Content-Length' => strlen($data['challenge'])
-                ]);
+                try {
+                    // Ultra-simple response - bypass Laravel response system
+                    http_response_code(200);
+                    header('Content-Type: text/plain');
+                    header('Content-Length: ' . strlen($challenge));
+                    echo $challenge;
+                    
+                    Log::info('Step 6: Challenge response sent successfully', [
+                        'challenge' => $challenge,
+                        'headers_sent' => headers_sent()
+                    ]);
+                    
+                    exit(); // Important: exit immediately to prevent Laravel from adding anything
+                    
+                } catch (\Exception $e) {
+                    Log::error('Step 6: Failed to send challenge response', [
+                        'error' => $e->getMessage(),
+                        'challenge' => $challenge
+                    ]);
+                    
+                    // Fallback to Laravel response
+                    return response($challenge, 200, [
+                        'Content-Type' => 'text/plain',
+                        'Content-Length' => strlen($challenge)
+                    ]);
+                }
             }
 
             // Step 7: Handle other message types
@@ -279,6 +330,122 @@ class TwitchEventSubController extends Controller
             'challenge_received' => Cache::get('webhook_challenge_received', false),
             'error' => Cache::get('webhook_error'),
         ]);
+    }
+
+    /**
+     * Check and log the current status of all subscriptions
+     */
+    public function checkStatus(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || !$user->access_token) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        try {
+            // Get app access token to check app-created subscriptions
+            $appToken = $this->eventSubService->getAppAccessToken();
+            
+            if (!$appToken) {
+                return response()->json(['error' => 'Could not get app token'], 500);
+            }
+
+            // Check subscriptions with app token
+            $subscriptions = $this->eventSubService->getSubscriptions($appToken);
+            
+            Log::info('Current EventSub subscriptions status (app token)', [
+                'total' => $subscriptions['total'] ?? 0,
+                'subscriptions' => collect($subscriptions['data'] ?? [])->map(function($sub) {
+                    return [
+                        'id' => $sub['id'],
+                        'type' => $sub['type'],
+                        'status' => $sub['status'],
+                        'created_at' => $sub['created_at'],
+                        'callback' => $sub['transport']['callback'] ?? 'unknown'
+                    ];
+                })->toArray()
+            ]);
+            
+            return response()->json([
+                'subscriptions' => $subscriptions['data'] ?? [],
+                'total' => $subscriptions['total'] ?? 0,
+                'breakdown' => collect($subscriptions['data'] ?? [])->groupBy('status')->map->count(),
+                'token_type' => 'app_token'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to check EventSub status: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to get status'], 500);
+        }
+    }
+
+    /**
+     * Clean up ALL EventSub subscriptions (both user and app token created)
+     */
+    public function cleanupAll(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user || !$user->access_token) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
+        $deletedCount = 0;
+        $errors = [];
+
+        try {
+            // Get app access token
+            $appToken = $this->eventSubService->getAppAccessToken();
+            
+            if ($appToken) {
+                // Clean up app token subscriptions
+                $appSubscriptions = $this->eventSubService->getSubscriptions($appToken);
+                
+                if ($appSubscriptions && isset($appSubscriptions['data'])) {
+                    foreach ($appSubscriptions['data'] as $subscription) {
+                        if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
+                            $deletedCount++;
+                            Log::info('Deleted app token subscription', ['id' => $subscription['id'], 'type' => $subscription['type']]);
+                        } else {
+                            $errors[] = "Failed to delete app subscription: {$subscription['id']}";
+                        }
+                    }
+                }
+            }
+
+            // Also try with user token
+            $userSubscriptions = $this->eventSubService->getSubscriptions($user->access_token);
+            
+            if ($userSubscriptions && isset($userSubscriptions['data'])) {
+                foreach ($userSubscriptions['data'] as $subscription) {
+                    if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
+                        $deletedCount++;
+                        Log::info('Deleted user token subscription', ['id' => $subscription['id'], 'type' => $subscription['type']]);
+                    } else {
+                        $errors[] = "Failed to delete user subscription: {$subscription['id']}";
+                    }
+                }
+            }
+
+            Log::info('EventSub cleanup completed', ['deleted_count' => $deletedCount, 'errors' => $errors]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Cleaned up {$deletedCount} subscriptions",
+                'deleted_count' => $deletedCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('EventSub cleanup failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Failed to cleanup subscriptions',
+                'message' => $e->getMessage(),
+                'deleted_count' => $deletedCount
+            ], 500);
+        }
     }
 
     /**

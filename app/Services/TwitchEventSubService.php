@@ -19,8 +19,9 @@ class TwitchEventSubService
 
     /**
      * Get an app access token for EventSub subscriptions that require it
+     * Made public so controller can use it for status checks
      */
-    private function getAppAccessToken(): ?string
+    public function getAppAccessToken(): ?string
     {
         try {
             $response = Http::post('https://id.twitch.tv/oauth2/token', [
@@ -45,7 +46,7 @@ class TwitchEventSubService
             return null;
         }
     }
-
+    
     /**
      * Subscribe to a Twitch EventSub event
      */
