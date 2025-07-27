@@ -129,8 +129,32 @@ const connect = async () => {
         receivedAt: new Date().toLocaleTimeString()
       });
       
-      // Check status to determine if we're actually connected
+      // Check status immediately to get initial state
       await checkStatus();
+      
+      // Set up automatic status refreshing
+      // Check again after 5 seconds (when verification should be complete)
+      setTimeout(async () => {
+        console.log('🔄 Auto-refreshing status after verification window...');
+        await checkStatus();
+      }, 5000);
+      
+      // Continue checking every 10 seconds for the first minute
+      // (in case verification takes longer)
+      let refreshCount = 0;
+      const refreshInterval = setInterval(async () => {
+        refreshCount++;
+        console.log(`🔄 Auto-refresh ${refreshCount}/6...`);
+        
+        await checkStatus();
+        
+        // Stop after 6 refreshes (1 minute total)
+        if (refreshCount >= 6) {
+          clearInterval(refreshInterval);
+          console.log('✅ Auto-refresh complete');
+        }
+      }, 10000);
+      
     } else {
       console.error('❌ EventSub connection failed:', data);
       throw new Error(data.error || 'Failed to connect');
