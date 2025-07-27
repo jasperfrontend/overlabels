@@ -267,6 +267,17 @@ const getEventTypeClass = (type: string) => {
   }
 };
 
+// test - remove after
+const testEvent = async () => {
+  try {
+    const response = await fetch('/eventsub/test-event');
+    const data = await response.json();
+    console.log('Test event sent:', data);
+  } catch (error) {
+    console.error('Test event failed:', error);
+  }
+};
+
 // Lifecycle
 onMounted(() => {
   console.log('🚀 Component mounted, initializing...');
@@ -370,6 +381,9 @@ onUnmounted(() => {
           ref="eventsContainer"
           class="h-96 overflow-y-auto p-4 space-y-3"
         >
+          <Button @click="testEvent" variant="outline">
+            Test Fake Event
+          </Button>
           <div v-if="events.length === 0" class="text-center text-muted-foreground py-8">
             No events yet. Connect to EventSub and interact with your Twitch channel!
           </div>
