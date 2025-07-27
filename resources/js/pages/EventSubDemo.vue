@@ -267,17 +267,6 @@ const getEventTypeClass = (type: string) => {
   }
 };
 
-// test - remove after
-const testEvent = async () => {
-  try {
-    const response = await fetch('/eventsub/test-event');
-    const data = await response.json();
-    console.log('Test event sent:', data);
-  } catch (error) {
-    console.error('Test event failed:', error);
-  }
-};
-
 // Lifecycle
 onMounted(() => {
   console.log('🚀 Component mounted, initializing...');
@@ -303,7 +292,7 @@ onUnmounted(() => {
         
         <div class="flex items-center gap-4">
           <!-- Status Indicators -->
-          <div class="flex items-center gap-4">
+          <div class="flex flex-col items-start">
             <!-- EventSub Status -->
             <div class="flex items-center gap-2">
               <div 
@@ -318,13 +307,14 @@ onUnmounted(() => {
             <!-- WebSocket Status -->
             <div class="flex items-center gap-2">
               <div 
-                class="h-2 w-2 rounded-full transition-colors"
+                class="h-3 w-3 rounded-full transition-colors"
                 :class="isWebSocketConnected ? 'bg-blue-500' : 'bg-gray-400'"
               />
-              <span class="text-xs text-muted-foreground">
+              <span class="text-sm font-medium">
                 WebSocket: {{ isWebSocketConnected ? 'Connected' : 'Disconnected' }}
               </span>
             </div>
+
           </div>
           
           <!-- Action Buttons -->
@@ -332,6 +322,7 @@ onUnmounted(() => {
             @click="connect" 
             :disabled="isConnected || isConnecting"
             variant="default"
+            class="cursor-pointer"
           >
             {{ isConnecting ? 'Connecting...' : 'Connect' }}
           </Button>
@@ -340,13 +331,15 @@ onUnmounted(() => {
             @click="disconnect" 
             :disabled="!isConnected"
             variant="outline"
+            class="cursor-pointer"
           >
             Disconnect
           </Button>
           
           <Button 
             @click="clearEvents" 
-            variant="outline"
+            variant="ghost"
+            class="cursor-pointer bg-accent"
           >
             Clear Events
           </Button>
@@ -381,9 +374,7 @@ onUnmounted(() => {
           ref="eventsContainer"
           class="h-96 overflow-y-auto p-4 space-y-3"
         >
-          <Button @click="testEvent" variant="outline">
-            Test Fake Event
-          </Button>
+
           <div v-if="events.length === 0" class="text-center text-muted-foreground py-8">
             No events yet. Connect to EventSub and interact with your Twitch channel!
           </div>
