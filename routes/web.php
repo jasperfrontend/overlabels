@@ -14,20 +14,42 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('dashboard');
 
 Route::get('/fox', [FoxController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('fox');
 
 Route::get('/foxes', [FoxController::class, 'gallery'])
-    // ->middleware(['auth', 'verified'])
     ->name('foxes');
 
 Route::get('/twitchdata', [TwitchDataController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('twitchdata');
+
+Route::get('/widgets', [TwitchDataController::class, 'widget'])
+    ->middleware(['auth'])
+    ->name('widgets');
+
+Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
+    ->middleware(['auth']);
+
 
 Route::get('/phpinfo', function () {
     phpinfo();
@@ -117,9 +139,9 @@ Route::post('/logout', function () {
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
     Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
     Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
+    Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
     Route::get('/eventsub/status', [App\Http\Controllers\TwitchEventSubController::class, 'status'])->name('eventsub.status');
     Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
     Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);

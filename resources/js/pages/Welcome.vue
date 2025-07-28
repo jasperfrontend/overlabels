@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import LoginSocial from '@/components/LoginSocial.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
+import type { AppPageProps } from '@/types'
+import { computed, onMounted } from 'vue';
+import { router } from '@inertiajs/vue3'
+
+const page = usePage<AppPageProps>()
+const auth = computed(() => page.props.auth);
+onMounted(() => {
+  if (auth.value?.user) {
+    router.visit('/dashboard')
+  }
+})
 </script>
 
 <template>
+<div>
     <Head title="Welcome">
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
@@ -26,4 +38,5 @@ import { Head } from '@inertiajs/vue3';
         </div>
         <div class="hidden h-14.5 lg:block"></div>
     </div>
+</div>
 </template>

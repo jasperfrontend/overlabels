@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-vue-next';
 import type { Config } from 'ziggy-js';
 
 export interface Auth {
+    csrf: string | null | undefined;
     user: User;
 }
 
@@ -23,9 +24,11 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     auth: Auth;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+    flash: FlashMessage;
 };
 
 export interface User {
+    access_token: any;
     description: any;
     twitch_data: any;
     id: number;

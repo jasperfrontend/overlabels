@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class TwitchApiService
 {
@@ -159,42 +160,119 @@ class TwitchApiService
     }
 
     /**
-     * Get all extended data for a user
+     * Get Twitch channel info from the authenticated account (bio, profile pic, tags)
+     */
+    protected function getCachedChannelInfo(string $accessToken, string $userId): array
+    {
+        return Cache::remember("twitch_channel_info_{$userId}", now()->addHours(12), function () use ($accessToken, $userId) {
+            return $this->getChannelInfo($accessToken, $userId) ?? [];
+        });
+    }
+
+    /**
+     * Get Channels that user is following from the authenticated account
+     */
+    protected function getCachedFollowedChannels(string $accessToken, string $userId): array
+    {
+        return Cache::remember("twitch_followed_channels_{$userId}", now()->addMinutes(10), function () use ($accessToken, $userId) {
+            return $this->getFollowedChannels($accessToken, $userId) ?? [];
+        });
+    }
+
+    /**
+     * Get Followers from the authenticated account
+     */
+    protected function getCachedChannelFollowers(string $accessToken, string $userId): array
+    {
+        return Cache::remember("twitch_channel_followers_{$userId}", now()->addMinutes(10), function () use ($accessToken, $userId) {
+            return $this->getChannelFollowers($accessToken, $userId) ?? [];
+        });
+    }
+
+    /**
+     * Get Subscribers from the authenticated account
+     */
+    protected function getCachedSubscribers(string $accessToken, string $userId): array
+    {
+        return Cache::remember("twitch_subscribers_{$userId}", now()->addMinutes(5), function () use ($accessToken, $userId) {
+            return $this->getChannelSubscribers($accessToken, $userId) ?? [];
+        });
+    }
+
+    /**
+     * Get Goals from the authenticated account
+     */
+    protected function getCachedGoals(string $accessToken, string $userId): array
+    {
+        return Cache::remember("twitch_goals_{$userId}", now()->addMinutes(5), function () use ($accessToken, $userId) {
+            return $this->getChannelGoals($accessToken, $userId) ?? [];
+        });
+    }
+
+    /**
+     * Get all extended data for a user. Each item has its own cache and caching duration
      */
     public function getExtendedUserData(string $accessToken, string $userId): array
     {
-        $data = [];
-
-        // Get channel info
-        $channelInfo = $this->getChannelInfo($accessToken, $userId);
-        if ($channelInfo) {
-            $data['channel'] = $channelInfo;
-        }
-
-        // Get followed channels
-        $followedChannels = $this->getFollowedChannels($accessToken, $userId);
-        if ($followedChannels) {
-            $data['followed_channels'] = $followedChannels;
-        }
-
-        // Get channel followers
-        $ChannelFollowers = $this->getChannelFollowers($accessToken, $userId);
-        if ($ChannelFollowers) {
-            $data['channel_followers'] = $ChannelFollowers;
-        }
-
-        // Get subscribers (might fail if not Partner/Affiliate)
-        $subscribers = $this->getChannelSubscribers($accessToken, $userId);
-        if ($subscribers) {
-            $data['subscribers'] = $subscribers;
-        }
-
-        // Get channel goals
-        $goals = $this->getChannelGoals($accessToken, $userId);
-        if ($goals) {
-            $data['goals'] = $goals;
-        }
-
-        return $data;
+        return [
+            'channel' => $this->getCachedChannelInfo($accessToken, $userId),
+            'followed_channels' => $this->getCachedFollowedChannels($accessToken, $userId),
+            'channel_followers' => $this->getCachedChannelFollowers($accessToken, $userId),
+            'subscribers' => $this->getCachedSubscribers($accessToken, $userId),
+            'goals' => $this->getCachedGoals($accessToken, $userId),
+        ];
     }
+
+    /**
+     * Clear all Twitch API User Data Caches
+     */
+    public function clearAllUserCaches(string $userId): void
+    {
+        Cache::forget("twitch_channel_info_{$userId}");
+        Cache::forget("twitch_followed_channels_{$userId}");
+        Cache::forget("twitch_channel_followers_{$userId}");
+        Cache::forget("twitch_subscribers_{$userId}");
+        Cache::forget("twitch_goals_{$userId}");
+    }
+
+    /**
+     * Clear Twitch API Channel Info Caches
+     */
+    public function clearChannelInfoCaches(string $userId): void
+    {
+        Cache::forget("twitch_channel_info_{$userId}");
+    }
+
+    /**
+     * Clear Twitch API Followed Channels Caches
+     */
+    public function clearFollowedChannelsCaches(string $userId): void
+    {
+        Cache::forget("twitch_followed_channels_{$userId}");
+    }
+
+    /**
+     * Clear Twitch API Channel Followers Caches
+     */
+    public function clearChannelFollowersCaches(string $userId): void
+    {
+        Cache::forget("twitch_channel_followers_{$userId}");
+    }
+
+    /**
+     * Clear Twitch API Subscribers Caches
+     */
+    public function clearSubscribersCaches(string $userId): void
+    {
+        Cache::forget("twitch_subscribers_{$userId}");
+    }
+
+    /**
+     * Clear Twitch API Goals Caches
+     */
+    public function clearGoalsCaches(string $userId): void
+    {
+        Cache::forget("twitch_goals_{$userId}");
+    }
+
 }
