@@ -152,17 +152,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/template-generator', [TemplateTagController::class, 'index'])
         ->name('template.generator');
     
-    // Generate tags from current Twitch data
+    // Generate standardized tags from current Twitch data
     Route::post('/template-tags/generate', [TemplateTagController::class, 'generateTags'])
         ->name('template.generate');
     
     // Preview a specific tag with current data
     Route::get('/template-tags/{tag}/preview', [TemplateTagController::class, 'previewTag'])
         ->name('template.preview');
-    
-    // Update a template tag
-    Route::patch('/template-tags/{tag}', [TemplateTagController::class, 'updateTag'])
-        ->name('template.update');
     
     // Clear all template tags
     Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
@@ -171,6 +167,10 @@ Route::middleware(['auth'])->group(function () {
     // Get all template tags (API endpoint)
     Route::get('/api/template-tags', [TemplateTagController::class, 'getAllTags'])
         ->name('template.api.all');
+    
+    // Export standardized tags for sharing
+    Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
+        ->name('template.export');
 });
 
 

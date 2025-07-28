@@ -244,7 +244,7 @@ onMounted(() => {
             </p>
           </div>
           
-          <div class="h-96 overflow-y-auto p-4">
+          <div class="h-fit overflow-y-auto p-4">
             <div v-if="!hasExistingTags" class="text-center text-muted-foreground py-8">
               No template tags generated yet. Click "Generate Tags" to create them from your Twitch data.
             </div>
@@ -340,7 +340,7 @@ onMounted(() => {
         </div>
 
         <!-- Right Panel: JSON Data Viewer -->
-        <div class="rounded-lg border bg-background overflow-hidden">
+        <div class="rounded-lg border bg-background overflow-hidden relative">
           <div class="border-b bg-muted/50 p-4">
             <h2 class="text-xl font-semibold">Your Twitch API Data</h2>
             <p class="text-sm text-muted-foreground">

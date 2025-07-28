@@ -1,5 +1,6 @@
 <?php
 // app/Http/Controllers/TemplateTagController.php
+// Simplified version without editing - focused on portability
 
 namespace App\Http\Controllers;
 
@@ -46,7 +47,7 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Generate template tags from current Twitch data
+     * Generate standardized template tags from current Twitch data
      */
     public function generateTags(Request $request)
     {
@@ -63,13 +64,13 @@ class TemplateTagController extends Controller
                 return response()->json(['error' => 'No Twitch data available'], 400);
             }
 
-            // Parse the JSON and generate tags
+            // Parse the JSON and generate STANDARDIZED tags
             $parsedData = $this->parser->parseJsonAndCreateTags($twitchData);
 
-            // Save to database
+            // Save to database (will overwrite existing with same names)
             $saved = $this->parser->saveTagsToDatabase($parsedData);
 
-            Log::info('Template tags generated', [
+            Log::info('Standardized template tags generated', [
                 'user_id' => $user->id,
                 'categories_created' => $saved['categories'],
                 'tags_created' => $saved['tags'],
@@ -78,7 +79,7 @@ class TemplateTagController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Generated {$saved['tags']} template tags in {$saved['categories']} categories",
+                'message' => "Generated {$saved['tags']} standardized template tags in {$saved['categories']} categories",
                 'data' => [
                     'categories' => $saved['categories'],
                     'tags' => $saved['tags'],
@@ -122,7 +123,8 @@ class TemplateTagController extends Controller
                 'tag' => $tag->display_tag,
                 'output' => $output,
                 'data_type' => $tag->data_type,
-                'json_path' => $tag->json_path
+                'json_path' => $tag->json_path,
+                'display_name' => $tag->display_name
             ]);
 
         } catch (\Exception $e) {
@@ -139,46 +141,7 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Update a template tag's formatting options
-     */
-    public function updateTag(Request $request, TemplateTag $tag)
-    {
-        $request->validate([
-            'display_name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|max:1000',
-            'formatting_options' => 'sometimes|array',
-            'is_active' => 'sometimes|boolean'
-        ]);
-
-        try {
-            $tag->update($request->only([
-                'display_name',
-                'description', 
-                'formatting_options',
-                'is_active'
-            ]));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Template tag updated successfully',
-                'tag' => $tag
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error updating template tag', [
-                'tag_id' => $tag->id,
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to update template tag',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Delete all template tags (useful for regenerating)
+     * Clear all template tags (useful for regenerating)
      */
     public function clearAllTags(Request $request)
     {
@@ -231,6 +194,39 @@ class TemplateTagController extends Controller
                 'error' => 'Failed to get template tags',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Export standard tags for template portability
+     */
+    public function exportStandardTags()
+    {
+        try {
+            $standardTags = TemplateTag::standard()
+                ->with('category')
+                ->orderBy('tag_name')
+                ->get()
+                ->map(function($tag) {
+                    return [
+                        'tag_name' => $tag->tag_name,
+                        'display_tag' => $tag->display_tag,
+                        'json_path' => $tag->json_path,
+                        'data_type' => $tag->data_type,
+                        'category' => $tag->category->name,
+                        'version' => $tag->version
+                    ];
+                });
+
+            return response()->json([
+                'version' => '1.0',
+                'generated_at' => now()->toISOString(),
+                'total_tags' => $standardTags->count(),
+                'tags' => $standardTags
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to export tags'], 500);
         }
     }
 }

@@ -1,4 +1,5 @@
-<?php 
+<?php
+// app/Models/TemplateTag.php
 
 namespace App\Models;
 
@@ -17,6 +18,10 @@ class TemplateTag extends Model
         'display_tag',
         'json_path',
         'data_type',
+        'tag_type',
+        'version',
+        'is_editable',
+        'original_tag_name',
         'display_name',
         'description',
         'sample_data',
@@ -28,6 +33,7 @@ class TemplateTag extends Model
         'sample_data' => 'array',
         'formatting_options' => 'array',
         'is_active' => 'boolean',
+        'is_editable' => 'boolean',  // NEW
     ];
 
     /**
@@ -36,6 +42,49 @@ class TemplateTag extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(TemplateTagCategory::class, 'category_id');
+    }
+
+    /**
+     * Scope for standard (non-editable) tags
+     */
+    public function scopeStandard($query)
+    {
+        return $query->where('tag_type', 'standard');
+    }
+
+    /**
+     * Scope for custom (user-editable) tags
+     */
+    public function scopeCustom($query)
+    {
+        return $query->where('tag_type', 'custom');
+    }
+    
+    /**
+     * Create a custom variant of this tag
+     */
+    public function createCustomVariant(string $newTagName, array $customOptions = []): self
+    {
+        if ($this->tag_type === 'custom') {
+            throw new \Exception('Cannot create custom variant of a custom tag');
+        }
+
+        return self::create([
+            'category_id' => $this->category_id,
+            'tag_name' => $newTagName,
+            'display_tag' => "[[[{$newTagName}]]]",
+            'json_path' => $this->json_path,
+            'data_type' => $this->data_type,
+            'tag_type' => 'custom',
+            'version' => '1.0',
+            'is_editable' => true,
+            'original_tag_name' => $this->tag_name,
+            'display_name' => $customOptions['display_name'] ?? $this->display_name,
+            'description' => $customOptions['description'] ?? "Custom variant of {$this->tag_name}",
+            'sample_data' => $this->sample_data,
+            'formatting_options' => array_merge($this->formatting_options ?? [], $customOptions['formatting_options'] ?? []),
+            'is_active' => true,
+        ]);
     }
 
     /**

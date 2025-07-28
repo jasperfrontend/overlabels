@@ -11,15 +11,22 @@ use Illuminate\Support\Facades\Log;
 class JsonTemplateParserService
 {
     /**
-     * Parse JSON data and generate template tags
+     * Generate only STANDARD tags that are consistent for everyone
      */
     public function parseJsonAndCreateTags(array $jsonData): array
     {
         $createdTags = [];
         $categories = [];
 
-        // Recursively parse the JSON structure
+        // Parse with standard naming conventions
         $this->parseLevel($jsonData, '', $createdTags, $categories);
+
+        // Mark all generated tags as 'standard' and non-editable
+        foreach ($createdTags as &$tag) {
+            $tag['tag_type'] = 'standard';
+            $tag['version'] = '1.0';
+            $tag['is_editable'] = false;
+        }
 
         return [
             'categories' => $categories,
@@ -27,7 +34,39 @@ class JsonTemplateParserService
             'total_tags' => count($createdTags)
         ];
     }
+    
+    /**
+     * Get standardized tag name (consistent naming for everyone)
+     */
+    private function getStandardizedTagName(string $rawName, string $category = ''): string
+    {
+        // Define standard naming conventions
+        $standardNames = [
+            // Channel data
+            'broadcaster_name' => 'channel.name',
+            'broadcaster_login' => 'channel.login', 
+            'broadcaster_id' => 'channel.id',
+            'game_name' => 'channel.game',
+            'title' => 'channel.title',
+            
+            // Followers
+            'total' => 'followers.total',
+            'user_name' => 'followers.latest.name',
+            'followed_at' => 'followers.latest.date',
+            
+            // Subscribers  
+            'points' => 'subscribers.points',
+            'plan_name' => 'subscribers.latest.tier',
+            
+            // Add more standardizations as needed
+        ];
 
+        $fullKey = $category ? "{$category}.{$rawName}" : $rawName;
+        
+        return $standardNames[$rawName] ?? 
+               $standardNames[$fullKey] ?? 
+               ($category ? "{$category}.{$rawName}" : $rawName);
+    }
     /**
      * Recursively parse each level of the JSON
      */
