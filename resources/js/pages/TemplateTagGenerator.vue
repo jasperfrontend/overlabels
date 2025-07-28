@@ -45,7 +45,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Template Generator',
+    title: 'Template Tag Generator',
     href: '/template-generator',
   },
 ];
@@ -262,7 +262,7 @@ onMounted(() => {
       </div>
 
       <!-- Info Panel -->
-      <div class="rounded-lg border bg-muted/50 p-4">
+      <div class="rounded-lg border bg-muted/20 p-4">
         <p class="text-sm text-muted-foreground">
           This tool analyzes your Twitch API data and generates template tags that you can use in your OBS overlays. 
           Click "Generate Tags" to create tags from your current data, then use the tags on the left in your HTML templates.
@@ -355,7 +355,7 @@ onMounted(() => {
                         <!-- Tooltip positioned to the left -->
                         <div 
                           v-if="tagPreviews[tag.id] && !isLoadingPreview[tag.id]"
-                          class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-lg border z-50 max-w-xs"
+                          class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-lg border z-50 min-w-xs max-w-sm"
                           @mouseenter="keepTooltip(tag.id)"
                           @mouseleave="clearPreview(tag.id)"
                         >

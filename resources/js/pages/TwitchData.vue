@@ -14,10 +14,6 @@ const toastType = ref('info')
 
 const auth = computed(() => page.props.auth);
 const avatar = ref(auth.value.user?.avatar);
-
-//console.log("auth:",auth.value);
-
-
 const twitch = "https://www.twitch.tv/"
 const props = defineProps({
   twitchData: {
@@ -102,10 +98,10 @@ watch(
                 />
             </a>
           </div>
-          <h2 class="text-2xl font-bold text-accent-foreground mb-4 text-center">
+          <h2 class="text-2xl font-bold text-accent-foreground text-center">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" class="hover:text-muted-foreground" target="_blank">{{ props.twitchData.channel.broadcaster_name }}</a>
           </h2>
-
+          <div class="text-sm text-muted-foreground text-center mb-4">{{ props.twitchData.user.description }}</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
               <div 
