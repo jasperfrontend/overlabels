@@ -10,7 +10,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "cerbero/json-parser": "^1.1",
         "cloudinary/cloudinary_php": "^3.1",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",

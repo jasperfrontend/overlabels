@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoxController;
 use App\Http\Controllers\TwitchDataController;
+use App\Http\Controllers\TemplateTagController;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
@@ -138,7 +139,7 @@ Route::post('/logout', function () {
 });
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
     Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
     Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
@@ -146,6 +147,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
     Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
     Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
+
+    // Template tag generator interface
+    Route::get('/template-generator', [TemplateTagController::class, 'index'])
+        ->name('template.generator');
+    
+    // Generate tags from current Twitch data
+    Route::post('/template-tags/generate', [TemplateTagController::class, 'generateTags'])
+        ->name('template.generate');
+    
+    // Preview a specific tag with current data
+    Route::get('/template-tags/{tag}/preview', [TemplateTagController::class, 'previewTag'])
+        ->name('template.preview');
+    
+    // Update a template tag
+    Route::patch('/template-tags/{tag}', [TemplateTagController::class, 'updateTag'])
+        ->name('template.update');
+    
+    // Clear all template tags
+    Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
+        ->name('template.clear');
+    
+    // Get all template tags (API endpoint)
+    Route::get('/api/template-tags', [TemplateTagController::class, 'getAllTags'])
+        ->name('template.api.all');
 });
 
 

@@ -37,24 +37,24 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div class="title flex justify-between rounded-md bg-slate-200 dark:bg-slate-700 py-0.5 px-2.5 
                             border border-transparent text-sm dark:text-white transition-all shadow-sm"
                 >
-                  <span>[[[followers]]]</span> <span class="group-data rounded-full text-xs bg-amber-500 py-0.5 px-1.5">group. no output</span>
+                  <span>[[[channel_followers]]]</span> <span class="group-data rounded-full text-xs bg-amber-500 py-0.5 px-1.5">group. no output</span>
                 </div>
                 <div class="title flex justify-between rounded-md bg-slate-200 dark:bg-slate-700 py-0.5 px-2.5 
                             border border-transparent text-sm dark:text-white transition-all shadow-sm"
                 >
-                  <span>[[[followers=10]]]</span> <span class="group-data rounded-full text-xs bg-amber-500 py-0.5 px-1.5">10 latest followers</span>
+                  <span>[[[channel_followers=10]]]</span> <span class="group-data rounded-full text-xs bg-amber-500 py-0.5 px-1.5">10 latest channel_followers</span>
                 </div>
                 <div class="body flex flex-col gap-1 mt-1 ml-3">
                   <div class="flex justify-between rounded-md bg-slate-300 dark:bg-slate-800 py-0.5 px-2.5 border border-transparent text-sm dark:text-white transition-all shadow-sm">
-                    <span>[[[followers.total]]]</span> 
+                    <span>[[[channel_followers.total]]]</span> 
                     <span class="representing-data rounded-full text-xs bg-green-600 py-0.5 px-1.5">1534</span>
                   </div>
                   <div class="flex justify-between rounded-md bg-slate-300 dark:bg-slate-800 py-0.5 px-2.5 border border-transparent text-sm dark:text-white transition-all shadow-sm">
-                    <span>[[[followers.latest]]]</span> 
+                    <span>[[[channel_followers.latest]]]</span> 
                     <span class="representing-data rounded-full text-xs bg-green-600 py-0.5 px-1.5">JasperSpins</span>
                   </div>
                   <div class="flex justify-between rounded-md bg-slate-300 dark:bg-slate-800 py-0.5 px-2.5 border border-transparent text-sm dark:text-white transition-all shadow-sm">
-                    <span>[[[followers.latest.followed_at="d-m-y H:i"]]]</span> 
+                    <span>[[[channel_followers.latest.followed_at="d-m-y H:i"]]]</span> 
                     <span class="representing-data rounded-full text-xs bg-green-600 py-0.5 px-1.5">27-07-2025 13:32</span>
                   </div>
                 </div>
