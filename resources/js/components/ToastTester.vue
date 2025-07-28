@@ -1,7 +1,7 @@
 <!-- App.vue -->
 <template>
   <ToastProvider :duration="5000" swipe-direction="right">
-    <div class="min-h-screen bg-gray-50 p-8">
+    <div class="bg-accent p-8">
       <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
         <h1 class="text-2xl font-bold mb-6">Reka UI Notifications Demo</h1>
         

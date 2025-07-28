@@ -2,14 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
-import { usePage } from '@inertiajs/vue3'
-import { ref } from 'vue';
 import ToastTester from '@/components/ToastTester.vue';
-
-const user = usePage().props.auth.user
-const showEmail = ref(false)
-defineProps(['userName'])
 
 const breadcrumbs: BreadcrumbItem[] = [
   {

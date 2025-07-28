@@ -1,4 +1,3 @@
-<!-- NotificationToast.vue (Enhanced version) -->
 <template>
   <ToastRoot
     :duration="notification.duration"
