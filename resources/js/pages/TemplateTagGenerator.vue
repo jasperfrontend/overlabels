@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
+import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
@@ -53,6 +54,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 const isGenerating = ref(false);
 const tagPreviews = ref<Record<number, TagPreview>>({});
 const isLoadingPreview = ref<Record<number, boolean>>({});
+
+// Toast state
+const toastMessage = ref('');
+const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
+const showToast = ref(false);
 
 // Computed
 const organizedTags = computed(() => props.existingTags);
@@ -148,12 +154,34 @@ const previewTag = async (tagId: number) => {
   }
 };
 
-// Copy tag to clipboard
+// Clear a tag preview
+const clearPreview = (tagId: number) => {
+  // Remove the preview for this specific tag
+  const { [tagId]: removed, ...rest } = tagPreviews.value;
+  tagPreviews.value = rest;
+  
+  // Also clear loading state if it exists
+  const { [tagId]: removedLoading, ...restLoading } = isLoadingPreview.value;
+  isLoadingPreview.value = restLoading;
+};
+
+// Keep tooltip visible when hovering over the tooltip itself
+const keepTooltip = (tagId: number) => {
+  // This prevents the tooltip from disappearing when the user moves
+  // their mouse from the eye icon to the tooltip content
+  // The tooltip will stay until they move away from both
+};
+
+// Hide toast
+const hideToast = () => {
+  showToast.value = false;
+};
 const copyTag = async (tagName: string) => {
   try {
     await navigator.clipboard.writeText(`[[[${tagName}]]]`);
-    console.log(`✅ Copied: [[[${tagName}]]]`);
-    // You could add a toast notification here if you have one
+    showToast.value = true;
+    toastMessage.value = `Copied tag: ${tagName}`;
+    toastType.value = 'info';
   } catch (error) {
     console.error('Failed to copy:', error);
     // Fallback for older browsers
@@ -196,6 +224,14 @@ onMounted(() => {
 <template>
   <Head title="Template Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
+    <!-- Toast Component -->
+    <RekaToast 
+      v-if="showToast" 
+      :message="toastMessage" 
+      :type="toastType"
+      @update:visible="hideToast"
+    />
+    
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
@@ -244,7 +280,7 @@ onMounted(() => {
             </p>
           </div>
           
-          <div class="h-fit overflow-y-auto p-4">
+          <div class="h-96 overflow-y-auto p-4">
             <div v-if="!hasExistingTags" class="text-center text-muted-foreground py-8">
               No template tags generated yet. Click "Generate Tags" to create them from your Twitch data.
             </div>
@@ -302,16 +338,33 @@ onMounted(() => {
                     </div>
                     
                     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        @click="previewTag(tag.id)"
-                        :disabled="isLoadingPreview[tag.id] || false"
-                        variant="ghost"
-                        size="sm"
-                        class="cursor-pointer"
-                      >
-                        <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-3 h-3 animate-spin" />
-                        <Eye v-else class="w-3 h-3" />
-                      </Button>
+                      <!-- Preview with Tooltip -->
+                      <div class="relative">
+                        <Button
+                          @mouseenter="previewTag(tag.id)"
+                          @mouseleave="clearPreview(tag.id)"
+                          variant="ghost"
+                          size="sm"
+                          class="cursor-pointer"
+                          :title="'Hover to preview current output'"
+                        >
+                          <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-3 h-3 animate-spin" />
+                          <Eye v-else class="w-3 h-3" />
+                        </Button>
+                        
+                        <!-- Tooltip positioned to the left -->
+                        <div 
+                          v-if="tagPreviews[tag.id] && !isLoadingPreview[tag.id]"
+                          class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-lg border z-50 max-w-xs"
+                          @mouseenter="keepTooltip(tag.id)"
+                          @mouseleave="clearPreview(tag.id)"
+                        >
+                          <div class="font-medium text-xs text-muted-foreground mb-1">Current Output:</div>
+                          <div class="font-mono break-words">{{ tagPreviews[tag.id].output }}</div>
+                          <!-- Tooltip arrow pointing right -->
+                          <div class="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-popover"></div>
+                        </div>
+                      </div>
                       
                       <Button
                         @click="copyTag(tag.tag_name)"
@@ -323,16 +376,6 @@ onMounted(() => {
                       </Button>
                     </div>
                   </div>
-                  
-                  <!-- Tag Preview -->
-                  <template v-for="tag in categoryData.tags" :key="`preview-${tag.id}`">
-                    <div 
-                      v-if="tagPreviews[tag.id]"
-                      class="ml-6 p-2 bg-muted/30 rounded text-sm"
-                    >
-                      <strong>Current Output:</strong> {{ tagPreviews[tag.id].output }}
-                    </div>
-                  </template>
                 </div>
               </div>
             </div>
@@ -340,7 +383,7 @@ onMounted(() => {
         </div>
 
         <!-- Right Panel: JSON Data Viewer -->
-        <div class="rounded-lg border bg-background overflow-hidden relative">
+        <div class="rounded-lg border bg-background overflow-hidden">
           <div class="border-b bg-muted/50 p-4">
             <h2 class="text-xl font-semibold">Your Twitch API Data</h2>
             <p class="text-sm text-muted-foreground">

@@ -29,10 +29,6 @@ Route::get('/twitchdata', [TwitchDataController::class, 'index'])
     ->middleware(['auth'])
     ->name('twitchdata');
 
-Route::get('/widgets', [TwitchDataController::class, 'widget'])
-    ->middleware(['auth'])
-    ->name('widgets');
-
 Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
     ->middleware(['auth']);
 
