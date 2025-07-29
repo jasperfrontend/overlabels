@@ -37,7 +37,7 @@ class OverlayHashController extends Controller
                 ];
             });
 
-        return Inertia::render('OverlayHashes/Index', [
+        return Inertia::render('overlayhashes/index', [
             'hashes' => $hashes,
         ]);
     }
