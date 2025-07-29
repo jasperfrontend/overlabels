@@ -50,7 +50,7 @@ const isDark = ref(document.documentElement.classList.contains('dark'))
 
 // Default templates that match the backend's returnDefaultHtmlOverlay
 function getDefaultHtmlTemplate(): string {
-  return `<!DOCTYPE html>
+  return String.raw`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,25 +95,23 @@ function getDefaultHtmlTemplate(): string {
         setTimeout(() => {
             window.location.reload();
         }, 30000);
-    </script>
+    <\/script>
 </body>
 </html>`
 }
 
 function getDefaultCssTemplate(): string {
-  return `* {
+  return String.raw`* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background: transparent;
     color: white;
     overflow: hidden;
 }
-
 .overlay-container {
     padding: 20px;
     background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
@@ -124,7 +122,6 @@ body {
     max-width: 400px;
     margin: 20px;
 }
-
 .overlay-title {
     font-size: 1.5em;
     font-weight: bold;
@@ -132,7 +129,6 @@ body {
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
-
 .stat-row {
     display: flex;
     justify-content: space-between;
@@ -140,25 +136,21 @@ body {
     padding: 8px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .stat-label {
     font-weight: 500;
     opacity: 0.8;
 }
-
 .stat-value {
     font-weight: bold;
     color: #FFD700;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
-
 .timestamp {
     text-align: center;
     font-size: 0.8em;
     opacity: 0.6;
     margin-top: 15px;
 }
-
 .setup-note {
     background: rgba(255, 255, 255, 0.1);
     padding: 10px;
@@ -302,6 +294,11 @@ const resetToDefault = () => {
   }
 }
 
+const previewLive = () => {
+  const url = `/overlay/${props.overlayHash.slug}/${props.overlayHash.hash_key}`
+  window.open(url, '_blank')
+}
+
 // Watch for theme changes
 watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
   isDark.value = newDark
@@ -331,6 +328,12 @@ watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
             <Save class="w-4 h-4 mr-2" />
             {{ isSaving ? 'Saving...' : 'Save Template' }}
           </Button>
+
+          <Button @click="previewLive" class="w-full" variant="secondary">
+            <Eye class="w-4 h-4 mr-2" />
+            Preview Live
+          </Button>
+
           
           <Button @click="resetToDefault" class="w-full" variant="outline">
             Reset to Default
