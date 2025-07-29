@@ -10,12 +10,3 @@ Route::get('/user', function (Request $request) {
 
 // Twitch webhook endpoint - must be accessible without authentication
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook']);
-
-Route::post('/test-webhook', function(Request $request) {
-    \Log::info('Test webhook called', [
-        'method' => $request->method(),
-        'body' => $request->getContent(),
-        'headers' => $request->headers->all()
-    ]);
-    return response('Test OK', 200);
-});

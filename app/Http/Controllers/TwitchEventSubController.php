@@ -60,8 +60,6 @@ class TwitchEventSubController extends Controller
                 'callback_url' => $callbackUrl
             ];
 
-            Log::info('EventSub connection attempt', $results);
-
             return response()->json([
                 'success' => true,
                 'message' => 'EventSub subscriptions created',
@@ -116,11 +114,7 @@ class TwitchEventSubController extends Controller
             foreach ($subscriptions['data'] as $subscription) {
                 if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
                     $deletedCount++;
-                    Log::info('Deleted EventSub subscription', [
-                        'id' => $subscription['id'], 
-                        'type' => $subscription['type'],
-                        'status' => $subscription['status']
-                    ]);
+
                 } else {
                     $errors[] = "Failed to delete subscription: {$subscription['id']}";
                     Log::warning('Failed to delete subscription', [
@@ -129,11 +123,6 @@ class TwitchEventSubController extends Controller
                     ]);
                 }
             }
-
-            Log::info('EventSub disconnection completed', [
-                'deleted_subscriptions' => $deletedCount,
-                'errors_count' => count($errors)
-            ]);
 
             return response()->json([
                 'success' => true,
@@ -157,29 +146,14 @@ class TwitchEventSubController extends Controller
      */
     public function webhook(Request $request)
     {
-        // Log the very start
-        Log::info('=== WEBHOOK START ===', [
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-            'headers' => $request->headers->all(),
-            'ip' => $request->ip(),
-        ]);
 
         try {
             // Step 1: Get the raw body
-            Log::info('Step 1: Getting request body');
             $body = $request->getContent();
-            Log::info('Step 1 complete', ['body_length' => strlen($body)]);
 
             // Step 2: Parse JSON
-            Log::info('Step 2: Parsing JSON');
             $data = json_decode($body, true);
             $jsonError = json_last_error();
-            Log::info('Step 2 complete', [
-                'json_error' => $jsonError,
-                'has_data' => !empty($data),
-                'data_keys' => $data ? array_keys($data) : []
-            ]);
 
             if ($jsonError !== JSON_ERROR_NONE) {
                 Log::error('JSON parsing failed', [
@@ -190,21 +164,13 @@ class TwitchEventSubController extends Controller
             }
 
             // Step 3: Get message type
-            Log::info('Step 3: Getting message type');
             $messageType = $request->header('Twitch-Eventsub-Message-Type');
-            Log::info('Step 3 complete', ['message_type' => $messageType]);
 
             // Step 4: Check if it's a challenge
-            Log::info('Step 4: Checking for challenge');
             $isChallenge = $messageType === 'webhook_callback_verification' && isset($data['challenge']);
-            Log::info('Step 4 complete', [
-                'is_challenge' => $isChallenge,
-                'has_challenge_key' => isset($data['challenge']),
-                'challenge_value' => $data['challenge'] ?? 'NOT_SET'
-            ]);
+
 
             // Step 5: Store webhook activity
-            Log::info('Step 5: Storing webhook activity');
             $webhookLog = [
                 'timestamp' => now()->toISOString(),
                 'message_type' => $messageType,
@@ -216,67 +182,24 @@ class TwitchEventSubController extends Controller
             ];
 
             Cache::put('last_webhook_activity', $webhookLog, 300);
-            Log::info('Step 5 complete');
 
             // Step 6: Handle challenge if present
-            // if ($isChallenge) {
-            //     Log::info('Step 6: Processing challenge', [
-            //         'challenge' => $data['challenge'],
-            //         'subscription_type' => $data['subscription']['type'] ?? 'unknown'
-            //     ]);
-                
-            //     // Update webhook log
-            //     $webhookLog['status'] = 'challenge_responded';
-            //     Cache::put('last_webhook_activity', $webhookLog, 300);
-            //     Cache::put('webhook_challenge_received', true, 300);
-                
-            //     $challenge = $data['challenge'];
-                
-            //     Log::info('Step 6: Sending challenge response', [
-            //         'challenge' => $challenge,
-            //         'length' => strlen($challenge)
-            //     ]);
-                
-            //     // Return ONLY the challenge string with minimal headers
-            //     return response($challenge, 200, [
-            //         'Content-Type' => 'text/plain; charset=utf-8',
-            //         'Content-Length' => (string)strlen($challenge),
-            //         'Cache-Control' => 'no-cache'
-            //     ]);
-            // }
-            
-            // Step 6: Handle challenge if present
             if ($isChallenge) {
-                Log::info('Step 6: Processing challenge', [
-                    'challenge' => $data['challenge'],
-                    'subscription_type' => $data['subscription']['type'] ?? 'unknown'
-                ]);
-                
+
                 // Update webhook log
                 $webhookLog['status'] = 'challenge_responded';
                 Cache::put('last_webhook_activity', $webhookLog, 300);
                 Cache::put('webhook_challenge_received', true, 300);
                 
                 $challenge = $data['challenge'];
-                
-                Log::info('Step 6: About to send challenge response', [
-                    'challenge' => $challenge,
-                    'length' => strlen($challenge),
-                    'method' => 'ultra_simple'
-                ]);
-                
+
                 try {
                     // Ultra-simple response - bypass Laravel response system
                     http_response_code(200);
                     header('Content-Type: text/plain');
                     header('Content-Length: ' . strlen($challenge));
                     echo $challenge;
-                    
-                    Log::info('Step 6: Challenge response sent successfully', [
-                        'challenge' => $challenge,
-                        'headers_sent' => headers_sent()
-                    ]);
-                    
+
                     exit(); // Important: exit immediately to prevent Laravel from adding anything
                     
                 } catch (\Exception $e) {
@@ -294,42 +217,34 @@ class TwitchEventSubController extends Controller
             }
 
             // Step 7: Handle other message types
-            Log::info('Step 7: Processing non-challenge message');
-            
+
             // For all other message types, verify signature
             if ($messageType !== 'webhook_callback_verification') {
-                Log::info('Step 7a: Verifying signature');
                 if (!$this->verifyTwitchSignature($request)) {
                     Log::warning('Invalid Twitch webhook signature', ['message_type' => $messageType]);
                     return response('Invalid signature', 403);
                 }
-                Log::info('Step 7a: Signature verified');
             }
 
             // Handle actual events (notifications)
             if ($messageType === 'notification' && isset($data['event'])) {
-                Log::info('Step 7b: Processing event notification');
                 $this->handleTwitchEvent($data);
                 
                 // Update webhook log
                 $webhookLog['status'] = 'event_processed';
                 $webhookLog['event_data'] = $data['event'];
                 Cache::put('last_webhook_activity', $webhookLog, 300);
-                Log::info('Step 7b: Event processed');
             }
 
             // Handle revocations
             if ($messageType === 'revocation') {
-                Log::info('Step 7c: Processing revocation');
                 Log::warning('Twitch subscription revoked', ['data' => $data]);
                 
                 // Update webhook log
                 $webhookLog['status'] = 'subscription_revoked';
                 Cache::put('last_webhook_activity', $webhookLog, 300);
-                Log::info('Step 7c: Revocation processed');
             }
 
-            Log::info('=== WEBHOOK SUCCESS ===');
             return response('OK', 200);
 
         } catch (\Exception $e) {
@@ -382,19 +297,6 @@ class TwitchEventSubController extends Controller
             // Check subscriptions with app token
             $subscriptions = $this->eventSubService->getSubscriptions($appToken);
             
-            Log::info('Current EventSub subscriptions status (app token)', [
-                'total' => $subscriptions['total'] ?? 0,
-                'subscriptions' => collect($subscriptions['data'] ?? [])->map(function($sub) {
-                    return [
-                        'id' => $sub['id'],
-                        'type' => $sub['type'],
-                        'status' => $sub['status'],
-                        'created_at' => $sub['created_at'],
-                        'callback' => $sub['transport']['callback'] ?? 'unknown'
-                    ];
-                })->toArray()
-            ]);
-            
             return response()->json([
                 'subscriptions' => $subscriptions['data'] ?? [],
                 'total' => $subscriptions['total'] ?? 0,
@@ -434,7 +336,6 @@ class TwitchEventSubController extends Controller
                     foreach ($appSubscriptions['data'] as $subscription) {
                         if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
                             $deletedCount++;
-                            Log::info('Deleted app token subscription', ['id' => $subscription['id'], 'type' => $subscription['type']]);
                         } else {
                             $errors[] = "Failed to delete app subscription: {$subscription['id']}";
                         }
@@ -449,14 +350,11 @@ class TwitchEventSubController extends Controller
                 foreach ($userSubscriptions['data'] as $subscription) {
                     if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
                         $deletedCount++;
-                        Log::info('Deleted user token subscription', ['id' => $subscription['id'], 'type' => $subscription['type']]);
                     } else {
                         $errors[] = "Failed to delete user subscription: {$subscription['id']}";
                     }
                 }
             }
-
-            Log::info('EventSub cleanup completed', ['deleted_count' => $deletedCount, 'errors' => $errors]);
 
             return response()->json([
                 'success' => true,
@@ -503,11 +401,6 @@ class TwitchEventSubController extends Controller
     {
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
-
-        Log::info('Twitch event received', [
-            'type' => $eventType,
-            'event' => $event
-        ]);
 
         // Broadcast the event to connected WebSocket clients
         // We'll implement this broadcast functionality next

@@ -32,7 +32,6 @@ class TwitchEventSubService
 
             if ($response->successful()) {
                 $data = $response->json();
-                Log::info('App access token obtained successfully');
                 return $data['access_token'];
             }
 
@@ -59,20 +58,8 @@ class TwitchEventSubService
                 'Content-Type' => 'application/json',
             ])->post($this->baseUrl, $payload);
 
-            // Always log the response for debugging
-            Log::info('Twitch EventSub API Response', [
-                'event_type' => $payload['type'] ?? 'unknown',
-                'status_code' => $response->status(),
-                'response_body' => $response->body(),
-                'payload_sent' => $payload
-            ]);
-
             if ($response->successful()) {
                 $responseData = $response->json();
-                Log::info('EventSub subscription created successfully', [
-                    'type' => $payload['type'] ?? 'unknown',
-                    'response' => $responseData
-                ]);
                 return $responseData;
             }
 

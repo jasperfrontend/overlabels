@@ -42,23 +42,44 @@ class JsonTemplateParserService
     {
         // Define standard naming conventions
         $standardNames = [
+            // User data
+            'user_id' => 'user.id',
+            'user_login' => 'user.login',
+            'user_name' => 'user.display_name',
+            'user_type' => 'user.broadcaster_type',
+            'user_description' => 'user.description',
+            'user_avatar' => 'user.profile_image_url',
+            'user_offline_banner' => 'user.offline_image_url',
+            'user_email' => 'user.email',
+            'user_created' => 'user.created_at',
+
             // Channel data
-            'broadcaster_name' => 'channel.name',
-            'broadcaster_login' => 'channel.login', 
-            'broadcaster_id' => 'channel.id',
-            'game_name' => 'channel.game',
-            'title' => 'channel.title',
+            'channel_name' => 'channel.broadcaster_name',
+            'channel_login' => 'channel.broadcaster_login', 
+            'channel_id' => 'channel.broadcaster_id',
+            'channel_game' => 'channel.game_name',
+            'channel_title' => 'channel.title',
+            'channel_delay' => 'channel.delay',
+            'channel_tags' => 'channel.tags',
             
+            // Followed channels
+            'followed_total' => 'followed_channels.total',
+            'followed_latest_name' => 'followed_channels.data[0].broadcaster_name',
+            'followed_latest_date' => 'followed_channels.data[0].followed_at',
+
             // Followers
-            'total' => 'followers.total',
-            'user_name' => 'followers.latest.name',
-            'followed_at' => 'followers.latest.date',
+            'followers_total' => 'channel_followers.total',
+            'followers_latest_name' => 'channel_followers.data[0].user_name',
+            'followers_latest_date' => 'channel_followers.data[0].followed_at',
             
             // Subscribers  
-            'points' => 'subscribers.points',
-            'plan_name' => 'subscribers.latest.tier',
-            
-            // Add more standardizations as needed
+            'subscribers_points' => 'subscribers.points',
+            'subscribers_total' => 'subscribers.total',
+            'subscribers_latest_tier' => 'subscribers.data[0].tier',
+            'subscribers_latest_plan_name' => 'subscribers.data[0].plan_name',
+            'subscribers_latest_is_gift' => 'subscribers.data[0].is_gift',
+            'subscribers_latest_gifter_name' => 'subscribers.data[0].gifter_name',
+
         ];
 
         $fullKey = $category ? "{$category}.{$rawName}" : $rawName;
