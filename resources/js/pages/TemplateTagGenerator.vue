@@ -280,7 +280,7 @@ onMounted(() => {
             </p>
           </div>
           
-          <div class="h-96 overflow-y-auto p-4">
+          <div class="overflow-y-auto p-4">
             <div v-if="!hasExistingTags" class="text-center text-muted-foreground py-8">
               No template tags generated yet. Click "Generate Tags" to create them from your Twitch data.
             </div>
@@ -391,7 +391,7 @@ onMounted(() => {
             </p>
           </div>
           
-          <div class="h-96 overflow-y-auto p-4">
+          <div class="overflow-y-auto p-4">
             <pre class="text-xs whitespace-pre-wrap font-mono">{{ JSON.stringify(twitchData, null, 2) }}</pre>
           </div>
         </div>

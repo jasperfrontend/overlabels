@@ -30,7 +30,7 @@ const mainNavItems: NavItem[] = [
         icon: TwitchIcon,
     },
     {
-        title: 'Template Generator', // Add this new item
+        title: 'Template Tag Generator', // Add this new item
         href: '/template-generator',
         icon: Code,
     },
