@@ -29,8 +29,13 @@ const mainNavItems: NavItem[] = [
         href: '/twitchdata',
         icon: TwitchIcon,
     },
+    {  
+        title: 'Template Builder',
+        href: '/template-builder',
+        icon: Code,
+    },
     {
-        title: 'Template Tag Generator', // Add this new item
+        title: 'Template Tag Generator',
         href: '/template-generator',
         icon: Code,
     },

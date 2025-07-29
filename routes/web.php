@@ -208,6 +208,33 @@ Route::middleware(['auth'])->group(function () {
     // Delete an overlay hash permanently
     Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
         ->name('overlay.hashes.destroy');
+
+    // Template Builder Routes
+    Route::get('/template-builder/{hashKey?}', [App\Http\Controllers\TemplateBuilderController::class, 'index'])
+        ->name('template.builder')
+        ->where('hashKey', '[a-zA-Z0-9]{64}'); // Match hash_key format
+    
+    // API endpoints for template builder
+    Route::prefix('api/template')->group(function () {
+        Route::get('/tags', [App\Http\Controllers\TemplateBuilderController::class, 'getAvailableTags'])
+            ->name('api.template.tags');
+        
+        Route::post('/validate', [App\Http\Controllers\TemplateBuilderController::class, 'validateTemplate'])
+            ->name('api.template.validate');
+        
+        Route::post('/save', [App\Http\Controllers\TemplateBuilderController::class, 'saveTemplate'])
+            ->name('api.template.save');
+        
+        Route::get('/load/{hashKey}', [App\Http\Controllers\TemplateBuilderController::class, 'loadTemplate'])
+            ->name('api.template.load')
+            ->where('hashKey', '[a-zA-Z0-9]{64}');
+        
+        Route::post('/preview', [App\Http\Controllers\TemplateBuilderController::class, 'previewTemplate'])
+            ->name('api.template.preview');
+        
+        Route::post('/export', [App\Http\Controllers\TemplateBuilderController::class, 'exportTemplate'])
+            ->name('api.template.export');
+    });
 });
 
 
