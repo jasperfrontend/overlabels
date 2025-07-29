@@ -327,13 +327,29 @@ class JsonTemplateParserService
                 $category = TemplateTagCategory::where('name', $tagData['category_name'])->first();
                 
                 if ($category) {
-                    $tag = TemplateTag::updateOrCreate(
-                        [
-                            'category_id' => $category->id,
-                            'tag_name' => $tagData['tag_name']
-                        ],
-                        array_merge($tagData, ['category_id' => $category->id])
-                    );
+                    // Check if tag already exists
+                    $existingTag = TemplateTag::where([
+                        'category_id' => $category->id,
+                        'tag_name' => $tagData['tag_name']
+                    ])->first();
+
+                    if ($existingTag) {
+                        // Tag exists - only update structure, NOT sample data
+                        $existingTag->update([
+                            'display_tag' => $tagData['display_tag'],
+                            'json_path' => $tagData['json_path'],
+                            'data_type' => $tagData['data_type'],
+                            'display_name' => $tagData['display_name'],
+                            'description' => $tagData['description'],
+                            'formatting_options' => $tagData['formatting_options'],
+                            'is_active' => true,
+                            // DON'T update sample_data here!
+                        ]);
+                    } else {
+                        // New tag - create with sample data
+                        TemplateTag::create(array_merge($tagData, ['category_id' => $category->id]));
+                    }
+                    
                     $saved['tags']++;
                 } else {
                     $saved['errors'][] = "Category not found for tag: {$tagData['tag_name']}";
