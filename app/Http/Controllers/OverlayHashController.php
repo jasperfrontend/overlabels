@@ -37,7 +37,7 @@ class OverlayHashController extends Controller
                 ];
             });
 
-        return Inertia::render('overlayhashes/index', [
+        return Inertia::render('OverlayHashes/Index', [
             'hashes' => $hashes,
         ]);
     }
@@ -167,19 +167,30 @@ class OverlayHashController extends Controller
     }
 
     /**
-     * Serve overlay content using hash authentication
+     * Serve overlay content using hash authentication with slug
      * This is the public endpoint that doesn't require Laravel authentication
      */
-    public function serveOverlay(Request $request, string $hashKey)
+    public function serveOverlay(Request $request, string $slug, string $hashKey)
     {
         $clientIp = $request->ip();
         
-        // Find and validate the hash
+        // Find and validate the hash (we still use the hashKey for security)
         $hash = OverlayHash::findValidHash($hashKey, $clientIp);
         
         if (!$hash) {
             // Return completely empty response for invalid hashes (as requested)
             return response('', 404);
+        }
+
+        // Optional: Verify the slug matches (for consistency, but not required for security)
+        if ($hash->slug !== $slug) {
+            // You could redirect to correct URL or just continue - up to you
+            // For now, let's just log it and continue
+            Log::info('Slug mismatch in overlay request', [
+                'expected_slug' => $hash->slug,
+                'provided_slug' => $slug,
+                'hash_id' => $hash->id
+            ]);
         }
 
         // Get the user who owns this hash
@@ -202,6 +213,8 @@ class OverlayHashController extends Controller
             // For now, return a simple JSON response to test the hash system
             return response()->json([
                 'overlay_name' => $hash->overlay_name,
+                'overlay_slug' => $hash->slug,
+                'shareable_url_template' => $hash->getShareableUrl(),
                 'user_name' => $user->name,
                 'access_count' => $hash->access_count,
                 'twitch_data_available' => !empty($twitchData),
@@ -226,7 +239,7 @@ class OverlayHashController extends Controller
     /**
      * Test endpoint to verify hash authentication (for debugging)
      */
-    public function testHash(Request $request, string $hashKey)
+    public function testHash(Request $request, string $slug, string $hashKey)
     {
         $clientIp = $request->ip();
         $hash = OverlayHash::findValidHash($hashKey, $clientIp);
@@ -238,6 +251,8 @@ class OverlayHashController extends Controller
         return response()->json([
             'valid' => true,
             'overlay_name' => $hash->overlay_name,
+            'overlay_slug' => $hash->slug,
+            'shareable_url' => $hash->getShareableUrl(),
             'access_count' => $hash->access_count,
             'last_accessed' => $hash->last_accessed_at,
         ]);

@@ -47,15 +47,27 @@ Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 're
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
     ->middleware(['auth']);
 
-// This is the main endpoint that OBS will use
-Route::get('/overlay/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'serveOverlay'])
+// NEW: Now supports URLs like /overlay/bright-dancing-star-golden-fox/abc123...
+Route::get('/overlay/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'serveOverlay'])
     ->name('overlay.serve')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Matches: word-word-word-word-word pattern
     ->where('hashKey', '[a-zA-Z0-9]{64}'); // Ensures hash is exactly 64 alphanumeric characters
 
-// Test endpoint for debugging hash authentication
-Route::get('/test-hash/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
+// Test endpoint for debugging hash authentication (with fun slug)
+Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
     ->name('overlay.test')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Same pattern as above
     ->where('hashKey', '[a-zA-Z0-9]{64}');
+
+// Backward compatibility: Keep old routes working (optional)
+Route::get('/overlay/{hashKey}', function($hashKey) {
+    // Find the hash and redirect to new slug-based URL
+    $hash = \App\Models\OverlayHash::where('hash_key', $hashKey)->first();
+    if ($hash) {
+        return redirect("/overlay/{$hash->slug}/{$hashKey}", 301);
+    }
+    return response('', 404);
+})->where('hashKey', '[a-zA-Z0-9]{64}');
 
 Route::get('/phpinfo', function () {
     phpinfo();
