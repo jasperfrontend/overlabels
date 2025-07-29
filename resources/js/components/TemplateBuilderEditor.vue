@@ -35,58 +35,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// State
-const htmlTemplate = ref(props.existingTemplate.html || `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overlay Template</title>
-</head>
-<body>
-    <div class="overlay-container">
-        <h1>[[[channel_name]]]</h1>
-        <div class="stats">
-            <div class="follower-count">
-                Followers: [[[followers_total]]]
-            </div>
-            <div class="latest-follower">
-                Latest: [[[followers_latest_name]]]
-            </div>
-        </div>
-    </div>
-</body>
-</html>`)
-
-const cssTemplate = ref(props.existingTemplate.css || `body {
-    font-family: 'Arial', sans-serif;
-    background: transparent;
-    color: white;
-    margin: 0;
-    padding: 20px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-}
-
-.overlay-container {
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    max-width: 400px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.stats {
-    margin-top: 20px;
-}
-
-.follower-count, .latest-follower {
-    font-size: 18px;
-    margin: 10px 0;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-}`)
+// State - Now uses the beautiful default from backend
+const htmlTemplate = ref(props.existingTemplate.html || getDefaultHtmlTemplate())
+const cssTemplate = ref(props.existingTemplate.css || getDefaultCssTemplate())
 
 const showPreview = ref(true)
 const isSaving = ref(false)
@@ -96,6 +47,128 @@ const isValidating = ref(false)
 
 // Theme detection
 const isDark = ref(document.documentElement.classList.contains('dark'))
+
+// Default templates that match the backend's returnDefaultHtmlOverlay
+function getDefaultHtmlTemplate(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[[[overlay_name]]]</title>
+</head>
+<body>
+    <div class="overlay-container">
+        <div class="overlay-title">[[[overlay_name]]]</div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Channel:</span>
+            <span class="stat-value">[[[channel_name]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Followers:</span>
+            <span class="stat-value">[[[followers_total]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Latest Follower:</span>
+            <span class="stat-value">[[[followers_latest_name]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Subscribers:</span>
+            <span class="stat-value">[[[subscribers_total]]]</span>
+        </div>
+        
+        <div class="timestamp">
+            Last updated: [[[timestamp]]]
+        </div>
+        
+        <div class="setup-note">
+            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh every 30 seconds for live data
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>`
+}
+
+function getDefaultCssTemplate(): string {
+  return `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: transparent;
+    color: white;
+    overflow: hidden;
+}
+
+.overlay-container {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    margin: 20px;
+}
+
+.overlay-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.timestamp {
+    text-align: center;
+    font-size: 0.8em;
+    opacity: 0.6;
+    margin-top: 15px;
+}
+
+.setup-note {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 0.85em;
+    text-align: center;
+    border-left: 4px solid #FFD700;
+}`
+}
 
 // CodeMirror extensions
 const htmlExtensions = computed(() => [
@@ -204,7 +277,9 @@ const saveTemplate = async () => {
     
     if (result.success) {
       saveMessage.value = 'Template saved successfully!'
-      setTimeout(() => saveMessage.value = '', 3000)
+      setTimeout(() => {
+        saveMessage.value = ''
+      }, 3000)
     } else {
       saveMessage.value = result.message || 'Failed to save template'
     }
@@ -216,108 +291,94 @@ const saveTemplate = async () => {
   }
 }
 
-const previewOverlay = () => {
-  const url = `/overlay/${props.overlayHash.slug}/${props.overlayHash.hash_key}`
-  window.open(url, '_blank')
+const resetToDefault = () => {
+  if (confirm('Are you sure you want to reset to the default template? This will overwrite your current changes.')) {
+    htmlTemplate.value = getDefaultHtmlTemplate()
+    cssTemplate.value = getDefaultCssTemplate()
+    saveMessage.value = 'Reset to default template!'
+    setTimeout(() => {
+      saveMessage.value = ''
+    }, 3000)
+  }
 }
 
 // Watch for theme changes
-onMounted(() => {
-  const observer = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains('dark')
-  })
-  
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class']
-  })
+watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
+  isDark.value = newDark
 })
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Control Bar -->
-    <Card>
-      <CardHeader>
-        <div class="flex items-center justify-between">
-          <div>
-            <CardTitle>{{ overlayHash.overlay_name }}</CardTitle>
-            <p class="text-sm text-muted-foreground mt-1">
-              Editing template for overlay: {{ overlayHash.slug }}
-            </p>
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Left sidebar with template tags and actions -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Action buttons -->
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base flex items-center gap-2">
+            <Play class="w-4 h-4" />
+            Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <Button @click="validateTemplate" :disabled="isValidating" class="w-full">
+            <AlertCircle v-if="isValidating" class="w-4 h-4 mr-2 animate-spin" />
+            <CheckCircle v-else class="w-4 h-4 mr-2" />
+            {{ isValidating ? 'Validating...' : 'Validate Template' }}
+          </Button>
+          
+          <Button @click="saveTemplate" :disabled="isSaving" class="w-full" variant="default">
+            <Save class="w-4 h-4 mr-2" />
+            {{ isSaving ? 'Saving...' : 'Save Template' }}
+          </Button>
+          
+          <Button @click="resetToDefault" class="w-full" variant="outline">
+            Reset to Default
+          </Button>
+          
+          <!-- Save message -->
+          <div v-if="saveMessage" class="text-sm text-center p-2 rounded-md" 
+               :class="saveMessage.includes('success') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'">
+            {{ saveMessage }}
           </div>
-          <div class="flex gap-2">
-            <Button 
-              @click="validateTemplate" 
-              :disabled="isValidating"
-              variant="outline"
-              size="sm"
-            >
-              <AlertCircle class="w-4 h-4 mr-2" />
-              {{ isValidating ? 'Validating...' : 'Validate' }}
-            </Button>
-            <Button 
-              @click="previewOverlay" 
-              variant="outline"
-              size="sm"
-            >
-              <Eye class="w-4 h-4 mr-2" />
-              Preview Live
-            </Button>
-            <Button 
-              @click="saveTemplate" 
-              :disabled="isSaving"
-              size="sm"
-            >
-              <Save class="w-4 h-4 mr-2" />
-              {{ isSaving ? 'Saving...' : 'Save Template' }}
-            </Button>
+        </CardContent>
+      </Card>
+
+      <!-- Template validation results -->
+      <Card v-if="validationResults">
+        <CardHeader>
+          <CardTitle class="text-base flex items-center gap-2">
+            <AlertCircle class="w-4 h-4" />
+            Validation Results
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div v-if="validationResults.success" class="text-green-600 dark:text-green-400 text-sm">
+            ✅ Template is valid!
           </div>
-        </div>
-      </CardHeader>
-    </Card>
+          <div v-else class="space-y-2">
+            <div v-if="validationResults.errors?.length" class="text-red-600 dark:text-red-400 text-sm">
+              <strong>Errors:</strong>
+              <ul class="list-disc list-inside">
+                <li v-for="error in validationResults.errors" :key="error">{{ error }}</li>
+              </ul>
+            </div>
+            <div v-if="validationResults.warnings?.length" class="text-yellow-600 dark:text-yellow-400 text-sm">
+              <strong>Warnings:</strong>
+              <ul class="list-disc list-inside">
+                <li v-for="warning in validationResults.warnings" :key="warning">{{ warning }}</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-    <!-- Success/Error Messages -->
-    <div v-if="saveMessage" 
-         :class="saveMessage.includes('success') ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'"
-         class="border rounded-lg p-4">
-      {{ saveMessage }}
-    </div>
-
-    <!-- Validation Results -->
-    <Card v-if="validationResults" class="border-yellow-200">
-      <CardHeader>
-        <CardTitle class="flex items-center gap-2">
-          <component :is="validationResults.success ? CheckCircle : AlertCircle" 
-                     :class="validationResults.success ? 'text-green-600' : 'text-red-600'" 
-                     class="w-5 h-5" />
-          Template Validation
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div v-if="validationResults.errors?.length" class="mb-4">
-          <h4 class="font-medium text-red-800 mb-2">Errors:</h4>
-          <ul class="list-disc list-inside text-red-700 space-y-1">
-            <li v-for="error in validationResults.errors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
-        <div v-if="validationResults.warnings?.length">
-          <h4 class="font-medium text-yellow-800 mb-2">Warnings:</h4>
-          <ul class="list-disc list-inside text-yellow-700 space-y-1">
-            <li v-for="warning in validationResults.warnings" :key="warning">{{ warning }}</li>
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Main Editor Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Template Tags Sidebar -->
-      <Card class="lg:col-span-1">
+      <!-- Available template tags -->
+      <Card>
         <CardHeader>
           <CardTitle class="text-base">Template Tags</CardTitle>
-          <p class="text-sm text-muted-foreground">
-            Click to insert into HTML
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Click to insert template tags into your HTML
           </p>
         </CardHeader>
         <CardContent class="space-y-4">
@@ -339,84 +400,93 @@ onMounted(() => {
           </div>
         </CardContent>
       </Card>
+    </div>
 
-      <!-- Editor Area -->
-      <div class="lg:col-span-3 space-y-6">
-        <Tabs default-value="html" class="w-full">
-          <TabsList class="grid w-full grid-cols-3">
-            <TabsTrigger value="html" class="flex items-center gap-2">
-              <Code class="w-4 h-4" />
-              HTML
-            </TabsTrigger>
-            <TabsTrigger value="css" class="flex items-center gap-2">
-              <Palette class="w-4 h-4" />
-              CSS
-            </TabsTrigger>
-            <TabsTrigger value="preview" class="flex items-center gap-2">
-              <Eye class="w-4 h-4" />
-              Preview
-            </TabsTrigger>
-          </TabsList>
+    <!-- Editor Area -->
+    <div class="lg:col-span-3 space-y-6">
+      <Tabs default-value="html" class="w-full">
+        <TabsList class="grid w-full grid-cols-3">
+          <TabsTrigger value="html" class="flex items-center gap-2">
+            <Code class="w-4 h-4" />
+            HTML
+          </TabsTrigger>
+          <TabsTrigger value="css" class="flex items-center gap-2">
+            <Palette class="w-4 h-4" />
+            CSS
+          </TabsTrigger>
+          <TabsTrigger value="preview" class="flex items-center gap-2">
+            <Eye class="w-4 h-4" />
+            Preview
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="html" class="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle class="text-base">HTML Template</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="border rounded-lg overflow-hidden">
-                  <Codemirror
-                    v-model="htmlTemplate"
-                    :style="{ height: '500px' }"
-                    :autofocus="true"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="htmlExtensions"
-                    placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        <TabsContent value="html" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">HTML Template</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Use template tags like <code>[[[channel_name]]]</code> for dynamic content
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="border rounded-lg overflow-hidden">
+                <Codemirror
+                  v-model="htmlTemplate"
+                  :style="{ height: '500px' }"
+                  :autofocus="true"
+                  :indent-with-tab="true"
+                  :tab-size="2"
+                  :extensions="htmlExtensions"
+                  placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="css" class="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle class="text-base">CSS Styles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="border rounded-lg overflow-hidden">
-                  <Codemirror
-                    v-model="cssTemplate"
-                    :style="{ height: '500px' }"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="cssExtensions"
-                    placeholder="Enter your CSS styles here..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        <TabsContent value="css" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">CSS Styles</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Style your overlay with CSS. Use transparent backgrounds for OBS compatibility.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="border rounded-lg overflow-hidden">
+                <Codemirror
+                  v-model="cssTemplate"
+                  :style="{ height: '500px' }"
+                  :indent-with-tab="true"
+                  :tab-size="2"
+                  :extensions="cssExtensions"
+                  placeholder="Enter your CSS styles here..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="preview" class="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle class="text-base">Live Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="border rounded-lg bg-gray-50 dark:bg-gray-900">
-                  <iframe
-                    :srcdoc="previewHtml"
-                    class="w-full h-[500px] border-0"
-                    sandbox="allow-same-origin"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+        <TabsContent value="preview" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">Live Preview</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                This preview shows how your overlay will look with sample data
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="border rounded-lg bg-gray-50 dark:bg-gray-900">
+                <iframe
+                  :srcdoc="previewHtml"
+                  class="w-full h-[500px] border-0"
+                  sandbox="allow-same-origin"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   </div>
 </template>

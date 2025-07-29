@@ -40,20 +40,26 @@ class TemplateBuilderController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if ($overlayHash && isset($overlayHash->metadata['html_template'])) {
-                $existingTemplate = [
-                    'html' => $overlayHash->metadata['html_template'] ?? '',
-                    'css' => $overlayHash->metadata['css_template'] ?? ''
-                ];
+            if ($overlayHash) {
+                // Check if custom template exists
+                if (isset($overlayHash->metadata['html_template'])) {
+                    $existingTemplate = [
+                        'html' => $overlayHash->metadata['html_template'] ?? '',
+                        'css' => $overlayHash->metadata['css_template'] ?? ''
+                    ];
+                } else {
+                    // No custom template exists - provide the beautiful default template!
+                    $existingTemplate = $this->getDefaultTemplate();
+                }
             }
         }
 
         return Inertia::render('TemplateBuilder', [
             'overlayHash' => $overlayHash ? [
-                'hash_key' => $overlayHash->hash_key, // Still need this for API calls
-                'overlay_name' => $overlayHash->overlay_name,
+                'id' => $overlayHash->id,
+                'hash_key' => $overlayHash->hash_key,
                 'slug' => $overlayHash->slug,
-                'id' => $overlayHash->id
+                'overlay_name' => $overlayHash->overlay_name,
             ] : null,
             'existingTemplate' => $existingTemplate,
             'availableTags' => $this->getTemplateTagsForFrontend(),
@@ -62,20 +68,147 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Get all available template tags for the frontend
+     * Get the beautiful default template that matches returnDefaultHtmlOverlay
+     * This ensures consistency between the actual overlay output and template builder
+     */
+    private function getDefaultTemplate(): array
+    {
+        $defaultHtml = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[[[overlay_name]]]</title>
+</head>
+<body>
+    <div class="overlay-container">
+        <div class="overlay-title">[[[overlay_name]]]</div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Channel:</span>
+            <span class="stat-value">[[[channel_name]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Followers:</span>
+            <span class="stat-value">[[[followers_total]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Latest Follower:</span>
+            <span class="stat-value">[[[followers_latest_name]]]</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Subscribers:</span>
+            <span class="stat-value">[[[subscribers_total]]]</span>
+        </div>
+        
+        <div class="timestamp">
+            Last updated: [[[timestamp]]]
+        </div>
+        
+        <div class="setup-note">
+            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh every 30 seconds for live data
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>';
+
+        $defaultCss = '* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: transparent;
+    color: white;
+    overflow: hidden;
+}
+
+.overlay-container {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    margin: 20px;
+}
+
+.overlay-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.timestamp {
+    text-align: center;
+    font-size: 0.8em;
+    opacity: 0.6;
+    margin-top: 15px;
+}
+
+.setup-note {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 0.85em;
+    text-align: center;
+    border-left: 4px solid #FFD700;
+}';
+
+        return [
+            'html' => $defaultHtml,
+            'css' => $defaultCss
+        ];
+    }
+
+    /**
+     * Get available template tags
      */
     public function getAvailableTags(): JsonResponse
     {
-        $tags = $this->getTemplateTagsForFrontend();
-        
         return response()->json([
             'success' => true,
-            'tags' => $tags
+            'tags' => $this->getTemplateTagsForFrontend()
         ]);
     }
 
     /**
-     * Validate template syntax and check for errors
+     * Validate template syntax and content
      */
     public function validateTemplate(Request $request): JsonResponse
     {
@@ -91,14 +224,11 @@ class TemplateBuilderController extends Controller
             ], 422);
         }
 
-        $htmlTemplate = $request->input('html_template');
-        $cssTemplate = $request->input('css_template', '');
-
         // Validate HTML template
-        $htmlValidation = $this->templateParser->validateTemplate($htmlTemplate);
+        $htmlValidation = $this->templateParser->validateTemplate($request->input('html_template'));
         
-        // Basic CSS validation (you could enhance this)
-        $cssValidation = $this->validateCssTemplate($cssTemplate);
+        // Validate CSS template
+        $cssValidation = $this->validateCssTemplate($request->input('css_template', ''));
 
         $allErrors = array_merge(
             $htmlValidation['syntax_issues'] ?? [],
@@ -203,11 +333,22 @@ class TemplateBuilderController extends Controller
             ], 404);
         }
 
+        // Check if custom template exists, otherwise provide default
+        $template = [
+            'html' => $overlayHash->metadata['html_template'] ?? '',
+            'css' => $overlayHash->metadata['css_template'] ?? ''
+        ];
+
+        // If no custom template exists, provide the beautiful default
+        if (empty($template['html'])) {
+            $template = $this->getDefaultTemplate();
+        }
+
         return response()->json([
             'success' => true,
             'template' => [
-                'html' => $overlayHash->metadata['html_template'] ?? '',
-                'css' => $overlayHash->metadata['css_template'] ?? '',
+                'html' => $template['html'],
+                'css' => $template['css'],
                 'overlay_name' => $overlayHash->overlay_name,
                 'slug' => $overlayHash->slug,
                 'hash_key' => $overlayHash->hash_key, // Still provide for preview URLs
@@ -392,6 +533,7 @@ class TemplateBuilderController extends Controller
     private function generateSampleTwitchData(): array
     {
         return [
+            'overlay_name' => 'My Awesome Overlay',
             'channel_name' => 'StreamerName',
             'followers_total' => '1,234',
             'followers_latest_name' => 'NewFollower123',
@@ -400,12 +542,8 @@ class TemplateBuilderController extends Controller
             'stream_title' => 'Playing Awesome Game - Come Join!',
             'stream_category' => 'Just Chatting',
             'stream_uptime' => '2:34:56',
-            'chat_latest_message' => 'Hello everyone! 👋',
-            'chat_latest_username' => 'ViewerName',
-            'donations_latest_amount' => '$5.00',
-            'donations_latest_name' => 'GenerousViewer',
-            'donations_latest_message' => 'Keep up the great content!',
-            'timestamp' => now()->toISOString()
+            'chat_latest_message' => 'Hello everyone!',
+            'timestamp' => date('Y-m-d H:i:s')
         ];
     }
 }
