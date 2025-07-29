@@ -17,6 +17,7 @@ class OverlayHash extends Model
         'user_id',
         'hash_key',
         'overlay_name',
+        'slug',
         'description',
         'is_active',
         'last_accessed_at',
@@ -74,6 +75,15 @@ class OverlayHash extends Model
     }
 
     /**
+     * Generate a fun, unique slug using the FunSlugGenerationService
+     */
+    public static function generateSlug(): string
+    {
+        $slugService = app(\App\Services\FunSlugGenerationService::class);
+        return $slugService->generateUniqueSlug();
+    }
+
+    /**
      * Create a new overlay hash for a user
      */
     public static function createForUser(
@@ -88,6 +98,7 @@ class OverlayHash extends Model
             'user_id' => $userId,
             'hash_key' => self::generateSecureHash(),
             'overlay_name' => $overlayName,
+            'slug' => self::generateSlug(), // Now uses fun slug generation!
             'description' => $description,
             'expires_at' => $expiresAt,
             'allowed_ips' => $allowedIps,
@@ -160,11 +171,19 @@ class OverlayHash extends Model
     }
 
     /**
-     * Get the full overlay URL for this hash
+     * Get the full overlay URL for this hash (with slug!)
      */
     public function getOverlayUrl(): string
     {
-        return config('app.url') . "/overlay/{$this->hash_key}";
+        return config('app.url') . "/overlay/{$this->slug}/{$this->hash_key}";
+    }
+
+    /**
+     * Get the shareable overlay URL template (without the user's hash)
+     */
+    public function getShareableUrl(): string
+    {
+        return config('app.url') . "/overlay/{$this->slug}/YOUR_HASH_HERE";
     }
 
     /**
