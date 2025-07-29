@@ -29,19 +29,6 @@ class TwitchDataController extends Controller
         ]);
     }
 
-    public function widget(Request $request)
-    {
-        $user = $request->user();
-        if (!$user || !$user->access_token) {
-            Log::error('No authenticated user or access token');
-            abort(403);
-        }
-        $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-        return Inertia::render('Widgets', [
-            'twitchWidgetData' => $twitchData,
-        ]);
-    }
-
     private function getUserOrAbort(Request $request)
     {
         $user = $request->user();
