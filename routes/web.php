@@ -47,6 +47,15 @@ Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 're
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
     ->middleware(['auth']);
 
+// This is the main endpoint that OBS will use
+Route::get('/overlay/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'serveOverlay'])
+    ->name('overlay.serve')
+    ->where('hashKey', '[a-zA-Z0-9]{64}'); // Ensures hash is exactly 64 alphanumeric characters
+
+// Test endpoint for debugging hash authentication
+Route::get('/test-hash/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
+    ->name('overlay.test')
+    ->where('hashKey', '[a-zA-Z0-9]{64}');
 
 Route::get('/phpinfo', function () {
     phpinfo();
@@ -167,6 +176,26 @@ Route::middleware(['auth'])->group(function () {
     // Export standardized tags for sharing
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');
+
+    // Overlay Hash Management Interface
+    Route::get('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'index'])
+        ->name('overlay.hashes.index');
+    
+    // Create new overlay hash
+    Route::post('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'store'])
+        ->name('overlay.hashes.store');
+    
+    // Revoke an overlay hash
+    Route::post('/overlay-hashes/{hash}/revoke', [App\Http\Controllers\OverlayHashController::class, 'revoke'])
+        ->name('overlay.hashes.revoke');
+    
+    // Regenerate an overlay hash
+    Route::post('/overlay-hashes/{hash}/regenerate', [App\Http\Controllers\OverlayHashController::class, 'regenerate'])
+        ->name('overlay.hashes.regenerate');
+    
+    // Delete an overlay hash permanently
+    Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
+        ->name('overlay.hashes.destroy');
 });
 
 

@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Dog, Folder, LayoutGrid, Radio, Shuffle, TwitchIcon, Code } from 'lucide-vue-next';
+import { BookOpen, Dog, Folder, LayoutGrid, Radio, Shuffle, TwitchIcon, Code, Shield } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -38,6 +38,11 @@ const mainNavItems: NavItem[] = [
         title: 'EventSub Demo',
         href: '/eventsub-demo',
         icon: Radio,
+    },
+    {
+        title: 'Overlay Hashes',
+        href: '/overlay-hashes',
+        icon: Shield,
     },
 ];
 
