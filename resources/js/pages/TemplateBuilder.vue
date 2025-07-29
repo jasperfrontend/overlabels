@@ -49,7 +49,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 if (props.overlayHash) {
   breadcrumbs.push({
     title: props.overlayHash.overlay_name,
-    href: route('template.builder', props.overlayHash.hash_key),
+    href: route('template.builder', props.overlayHash.slug), // Now uses slug!
   })
 }
 </script>
@@ -75,8 +75,8 @@ if (props.overlayHash) {
         <h2 class="text-lg font-medium mb-4">Select an Overlay to Edit</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <a v-for="hash in userOverlayHashes" 
-             :key="hash.hash_key"
-             :href="route('template.builder', hash.hash_key)"
+             :key="hash.slug"
+             :href="route('template.builder', hash.slug)"
              class="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <div class="font-medium">{{ hash.overlay_name }}</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">{{ hash.slug }}</div>

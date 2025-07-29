@@ -209,29 +209,36 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
         ->name('overlay.hashes.destroy');
 
-    // Template Builder Routes
-    Route::get('/template-builder/{hashKey?}', [App\Http\Controllers\TemplateBuilderController::class, 'index'])
+    // Template Builder Interface - NOW USES SLUG INSTEAD OF HASH_KEY!
+    Route::get('/template-builder/{slug?}', [App\Http\Controllers\TemplateBuilderController::class, 'index'])
         ->name('template.builder')
-        ->where('hashKey', '[a-zA-Z0-9]{64}'); // Match hash_key format
+        ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*'); // Match the fun slug pattern: word-word-word-word-word
     
     // API endpoints for template builder
     Route::prefix('api/template')->group(function () {
+        
+        // Get available template tags
         Route::get('/tags', [App\Http\Controllers\TemplateBuilderController::class, 'getAvailableTags'])
             ->name('api.template.tags');
         
+        // Validate template syntax
         Route::post('/validate', [App\Http\Controllers\TemplateBuilderController::class, 'validateTemplate'])
             ->name('api.template.validate');
         
+        // Save template to overlay hash (still uses hash_key internally for security)
         Route::post('/save', [App\Http\Controllers\TemplateBuilderController::class, 'saveTemplate'])
             ->name('api.template.save');
         
-        Route::get('/load/{hashKey}', [App\Http\Controllers\TemplateBuilderController::class, 'loadTemplate'])
+        // Load existing template from slug
+        Route::get('/load/{slug}', [App\Http\Controllers\TemplateBuilderController::class, 'loadTemplate'])
             ->name('api.template.load')
-            ->where('hashKey', '[a-zA-Z0-9]{64}');
+            ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
         
+        // Preview template with sample data
         Route::post('/preview', [App\Http\Controllers\TemplateBuilderController::class, 'previewTemplate'])
             ->name('api.template.preview');
         
+        // Export template as standalone HTML file
         Route::post('/export', [App\Http\Controllers\TemplateBuilderController::class, 'exportTemplate'])
             ->name('api.template.export');
     });

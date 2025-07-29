@@ -194,7 +194,7 @@ const saveTemplate = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
       },
       body: JSON.stringify({
-        overlay_hash_key: props.overlayHash.hash_key, // Changed from overlay_hash_id
+        overlay_slug: props.overlayHash.slug, // Now uses slug for safety!
         html_template: htmlTemplate.value,
         css_template: cssTemplate.value
       })

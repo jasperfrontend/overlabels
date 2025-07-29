@@ -23,9 +23,9 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Show the template builder interface (Inertia)
+     * Show the template builder interface (Inertia) - NOW USES SLUG!
      */
-    public function index(Request $request, string $hashKey = null): Response
+    public function index(Request $request, string $slug = null): Response
     {
         $overlayHash = null;
         $existingTemplate = [
@@ -33,9 +33,9 @@ class TemplateBuilderController extends Controller
             'css' => ''
         ];
 
-        // If hashKey is provided, load existing template
-        if ($hashKey) {
-            $overlayHash = OverlayHash::where('hash_key', $hashKey)
+        // If slug is provided, load existing template
+        if ($slug) {
+            $overlayHash = OverlayHash::where('slug', $slug)
                 ->where('user_id', Auth::id())
                 ->where('is_active', true)
                 ->first();
@@ -50,7 +50,7 @@ class TemplateBuilderController extends Controller
 
         return Inertia::render('TemplateBuilder', [
             'overlayHash' => $overlayHash ? [
-                'hash_key' => $overlayHash->hash_key,
+                'hash_key' => $overlayHash->hash_key, // Still need this for API calls
                 'overlay_name' => $overlayHash->overlay_name,
                 'slug' => $overlayHash->slug,
                 'id' => $overlayHash->id
@@ -122,12 +122,12 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Save template to an overlay hash
+     * Save template to an overlay hash - USES SLUG TO FIND OVERLAY
      */
     public function saveTemplate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'overlay_hash_key' => 'required|string|size:64', // Changed from overlay_hash_id
+            'overlay_slug' => 'required|string', // Changed to use slug
             'html_template' => 'required|string',
             'css_template' => 'nullable|string'
         ]);
@@ -139,8 +139,8 @@ class TemplateBuilderController extends Controller
             ], 422);
         }
 
-        // Find the overlay hash by hash_key
-        $overlayHash = OverlayHash::where('hash_key', $request->input('overlay_hash_key'))
+        // Find the overlay hash by slug (safe for streaming!)
+        $overlayHash = OverlayHash::where('slug', $request->input('overlay_slug'))
             ->where('user_id', Auth::id())
             ->where('is_active', true)
             ->first();
@@ -148,7 +148,7 @@ class TemplateBuilderController extends Controller
         if (!$overlayHash) {
             return response()->json([
                 'success' => false,
-                'message' => 'Overlay hash not found or you do not have permission to edit it.'
+                'message' => 'Overlay not found or you do not have permission to edit it.'
             ], 404);
         }
 
@@ -171,8 +171,8 @@ class TemplateBuilderController extends Controller
 
         $overlayHash->update(['metadata' => $metadata]);
 
-        Log::info('Template saved for overlay hash', [
-            'hash_key' => $overlayHash->hash_key,
+        Log::info('Template saved for overlay via slug', [
+            'slug' => $overlayHash->slug,
             'user_id' => Auth::id(),
             'template_size_html' => strlen($request->input('html_template')),
             'template_size_css' => strlen($request->input('css_template', ''))
@@ -181,17 +181,17 @@ class TemplateBuilderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Template saved successfully!',
-            'overlay_hash_key' => $overlayHash->hash_key,
-            'overlay_slug' => $overlayHash->slug
+            'overlay_slug' => $overlayHash->slug,
+            'overlay_name' => $overlayHash->overlay_name
         ]);
     }
 
     /**
-     * Load existing template from hash_key
+     * Load existing template from slug
      */
-    public function loadTemplate(string $hashKey): JsonResponse
+    public function loadTemplate(string $slug): JsonResponse
     {
-        $overlayHash = OverlayHash::where('hash_key', $hashKey)
+        $overlayHash = OverlayHash::where('slug', $slug)
             ->where('user_id', Auth::id())
             ->where('is_active', true)
             ->first();
@@ -210,7 +210,7 @@ class TemplateBuilderController extends Controller
                 'css' => $overlayHash->metadata['css_template'] ?? '',
                 'overlay_name' => $overlayHash->overlay_name,
                 'slug' => $overlayHash->slug,
-                'hash_key' => $overlayHash->hash_key,
+                'hash_key' => $overlayHash->hash_key, // Still provide for preview URLs
                 'last_updated' => $overlayHash->metadata['template_updated_at'] ?? $overlayHash->updated_at
             ]
         ]);
@@ -324,7 +324,7 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Get user's overlay hashes for selection
+     * Get user's overlay hashes for selection - USES SLUG FOR NAVIGATION
      */
     private function getUserOverlayHashes(): array
     {
@@ -335,8 +335,8 @@ class TemplateBuilderController extends Controller
             ->map(function($hash) {
                 return [
                     'id' => $hash->id,
-                    'hash_key' => $hash->hash_key,
-                    'slug' => $hash->slug,
+                    'hash_key' => $hash->hash_key, // Keep for API calls that need it
+                    'slug' => $hash->slug, // Use for navigation
                     'overlay_name' => $hash->overlay_name,
                     'created_at' => $hash->created_at->diffForHumans()
                 ];
