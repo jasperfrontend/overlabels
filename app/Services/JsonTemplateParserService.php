@@ -37,57 +37,99 @@ class JsonTemplateParserService
     
     /**
      * Get standardized tag name (consistent naming for everyone)
+     * This function maps raw JSON paths to user-friendly, standardized tag names
      */
-    private function getStandardizedTagName(string $rawName, string $category = ''): string
+    private function getStandardizedTagName(string $jsonPath): string
     {
         // Define standard naming conventions
+        // Format: 'json_path' => 'standardized_tag_name'
         $standardNames = [
-            // User data
-            'user_id' => 'user.id',
-            'user_login' => 'user.login',
-            'user_name' => 'user.display_name',
-            'user_type' => 'user.broadcaster_type',
-            'user_description' => 'user.description',
-            'user_avatar' => 'user.profile_image_url',
-            'user_offline_banner' => 'user.offline_image_url',
-            'user_email' => 'user.email',
-            'user_created' => 'user.created_at',
+            // User data mappings
+            'user.id' => 'user_id',
+            'user.login' => 'user_login', 
+            'user.display_name' => 'user_name',
+            'user.type' => 'user_type',
+            'user.broadcaster_type' => 'user_broadcaster_type',
+            'user.description' => 'user_description',
+            'user.profile_image_url' => 'user_avatar',
+            'user.offline_image_url' => 'user_offline_banner',
+            'user.view_count' => 'user_view_count',
+            'user.email' => 'user_email',
+            'user.created_at' => 'user_created',
 
-            // Channel data
-            'channel_name' => 'channel.broadcaster_name',
-            'channel_login' => 'channel.broadcaster_login', 
-            'channel_id' => 'channel.broadcaster_id',
-            'channel_game' => 'channel.game_name',
-            'channel_title' => 'channel.title',
-            'channel_delay' => 'channel.delay',
-            'channel_tags' => 'channel.tags',
+            // Channel data mappings
+            'channel.broadcaster_id' => 'channel_id',
+            'channel.broadcaster_login' => 'channel_login', 
+            'channel.broadcaster_name' => 'channel_name',
+            'channel.broadcaster_language' => 'channel_language',
+            'channel.game_id' => 'channel_game_id',
+            'channel.game_name' => 'channel_game',
+            'channel.title' => 'channel_title',
+            'channel.delay' => 'channel_delay',
+            'channel.tags' => 'channel_tags',
+            'channel.content_classification_labels' => 'channel_content_labels',
+            'channel.is_branded_content' => 'channel_is_branded',
             
-            // Followed channels
-            'followed_total' => 'followed_channels.total',
-            'followed_latest_name' => 'followed_channels.data[0].broadcaster_name',
-            'followed_latest_date' => 'followed_channels.data[0].followed_at',
-
-            // Followers
-            'followers_total' => 'channel_followers.total',
-            'followers_latest_name' => 'channel_followers.data[0].user_name',
-            'followers_latest_date' => 'channel_followers.data[0].followed_at',
+            // Followers mappings - IMPORTANT: These fix your duplicate issue!
+            'channel_followers.total' => 'followers_total',
+            'channel_followers.data.0.user_id' => 'followers_latest_id',
+            'channel_followers.data.0.user_login' => 'followers_latest_login',
+            'channel_followers.data.0.user_name' => 'followers_latest_name',
+            'channel_followers.data.0.followed_at' => 'followers_latest_date',
             
-            // Subscribers  
-            'subscribers_points' => 'subscribers.points',
-            'subscribers_total' => 'subscribers.total',
-            'subscribers_latest_tier' => 'subscribers.data[0].tier',
-            'subscribers_latest_plan_name' => 'subscribers.data[0].plan_name',
-            'subscribers_latest_is_gift' => 'subscribers.data[0].is_gift',
-            'subscribers_latest_gifter_name' => 'subscribers.data[0].gifter_name',
+            // Followed channels mappings
+            'followed_channels.total' => 'followed_total',
+            'followed_channels.data.0.broadcaster_id' => 'followed_latest_id',
+            'followed_channels.data.0.broadcaster_login' => 'followed_latest_login',
+            'followed_channels.data.0.broadcaster_name' => 'followed_latest_name',
+            'followed_channels.data.0.followed_at' => 'followed_latest_date',
+            
+            // Subscribers mappings - IMPORTANT: These fix your duplicate issue!
+            'subscribers.points' => 'subscribers_points',
+            'subscribers.total' => 'subscribers_total',
+            'subscribers.data.0.broadcaster_id' => 'subscribers_latest_broadcaster_id',
+            'subscribers.data.0.broadcaster_login' => 'subscribers_latest_broadcaster_login',
+            'subscribers.data.0.broadcaster_name' => 'subscribers_latest_broadcaster_name',
+            'subscribers.data.0.gifter_id' => 'subscribers_latest_gifter_id',
+            'subscribers.data.0.gifter_login' => 'subscribers_latest_gifter_login',
+            'subscribers.data.0.gifter_name' => 'subscribers_latest_gifter_name',
+            'subscribers.data.0.is_gift' => 'subscribers_latest_is_gift',
+            'subscribers.data.0.plan_name' => 'subscribers_latest_plan_name',
+            'subscribers.data.0.tier' => 'subscribers_latest_tier',
+            'subscribers.data.0.user_id' => 'subscribers_latest_user_id',
+            'subscribers.data.0.user_name' => 'subscribers_latest_user_name',
+            'subscribers.data.0.user_login' => 'subscribers_latest_user_login',
 
+            // Goals mappings (empty in your case, but good to have)
+            'goals.data.0.type' => 'goals_latest_type',
+            'goals.data.0.target' => 'goals_latest_target',
+            'goals.data.0.current' => 'goals_latest_current',
         ];
 
-        $fullKey = $category ? "{$category}.{$rawName}" : $rawName;
+        // First, try exact match
+        if (isset($standardNames[$jsonPath])) {
+            return $standardNames[$jsonPath];
+        }
+
+        // If no exact match, try to build a logical name
+        // Convert dots to underscores and handle common patterns
+        $parts = explode('.', $jsonPath);
         
-        return $standardNames[$rawName] ?? 
-               $standardNames[$fullKey] ?? 
-               ($category ? "{$category}.{$rawName}" : $rawName);
+        // Handle array access like "data.0.field_name" -> prefix with parent + "latest_" + field
+        if (count($parts) >= 3 && $parts[count($parts) - 2] === '0' && $parts[count($parts) - 3] === 'data') {
+            // This is accessing first item in data array
+            // Get the parent object name (like 'channel_followers', 'subscribers', etc.)
+            $parentParts = array_slice($parts, 0, count($parts) - 3);
+            $parentName = implode('_', $parentParts);
+            $fieldName = end($parts);
+            
+            return $parentName . '_latest_' . $fieldName;
+        }
+        
+        // Handle nested objects - join with underscores
+        return implode('_', $parts);
     }
+
     /**
      * Recursively parse each level of the JSON
      */
@@ -110,7 +152,10 @@ class JsonTemplateParserService
                 }
             } else {
                 // This is a primitive value (string, number, boolean)
-                $this->createTag($key, $newPath, $value, $createdTags, $categories, $parentKey);
+                // FIX: Get standardized name for this path
+                $standardizedName = $this->getStandardizedTagName($newPath);
+                
+                $this->createTag($standardizedName, $newPath, $value, $createdTags, $categories, $parentKey);
             }
         }
     }
@@ -135,14 +180,16 @@ class JsonTemplateParserService
         if (!empty($value)) {
             // If it's an array of objects, create tags for the first object's structure
             if (is_array($value[0])) {
-                // Create a "latest" tag that points to the first item
-                $this->createTag("{$key}.latest", "{$path}.0", $value[0], $createdTags, $categories, $key, 'object');
-                
                 // Create tags for each property of the first object
                 foreach ($value[0] as $objKey => $objValue) {
+                    $fullPath = "{$path}.0.{$objKey}";
+                    
+                    // Use getStandardizedTagName for array items
+                    $standardizedName = $this->getStandardizedTagName($fullPath);
+                    
                     $this->createTag(
-                        "{$key}.latest.{$objKey}",
-                        "{$path}.0.{$objKey}",
+                        $standardizedName,
+                        $fullPath,
                         $objValue,
                         $createdTags,
                         $categories,
@@ -152,16 +199,23 @@ class JsonTemplateParserService
             }
         }
 
-        // Create a tag for array length
-        $this->createTag(
-            "{$key}.count",
-            $path,
-            count($value),
-            $createdTags,
-            $categories,
-            $key,
-            'array_count'
-        );
+        // Create a tag for array length - FIX: Handle total field properly
+        if (isset($value) && is_array($value)) {
+            // For arrays with a separate 'total' field (like channel_followers, followed_channels)
+            // The count tag will be handled by parseLevel when it encounters the 'total' field
+            // So we just create a simple count tag here for the array length
+            $countTagName = $this->getStandardizedTagName($path) . '_count';
+            
+            $this->createTag(
+                $countTagName,
+                $path,
+                count($value),
+                $createdTags,
+                $categories,
+                $key,
+                'array_count'
+            );
+        }
     }
 
     /**
@@ -181,10 +235,10 @@ class JsonTemplateParserService
     }
 
     /**
-     * Create a template tag
+     * Create a template tag - UPDATED to use standardized naming
      */
     private function createTag(
-        string $tagName, 
+        string $tagName,  // This is now the standardized name
         string $jsonPath, 
         $sampleValue, 
         array &$createdTags, 
@@ -192,6 +246,11 @@ class JsonTemplateParserService
         string $categoryName, 
         string $dataType = null
     ): void {
+        // If no tagName provided, try to standardize the jsonPath
+        if (empty($tagName)) {
+            $tagName = $this->getStandardizedTagName($jsonPath);
+        }
+
         // Determine data type if not provided
         if (!$dataType) {
             $dataType = $this->getDataType($sampleValue);
@@ -203,10 +262,18 @@ class JsonTemplateParserService
         // Ensure category exists
         $this->createCategory($categoryName, $categories);
 
+        // Debug logging to see what's being created
+        Log::info('Creating template tag', [
+            'tag_name' => $tagName,
+            'json_path' => $jsonPath,
+            'category' => $categoryName,
+            'sample_value' => $sampleValue
+        ]);
+
         // Create the tag data
         $createdTags[] = [
             'category_name' => $categoryName,
-            'tag_name' => $tagName,
+            'tag_name' => $tagName,  // Now uses standardized name!
             'display_tag' => $displayTag,
             'json_path' => $jsonPath,
             'data_type' => $dataType,
@@ -216,6 +283,8 @@ class JsonTemplateParserService
             'formatting_options' => $this->getFormattingOptions($dataType, $tagName)
         ];
     }
+
+    // ... rest of your methods remain the same ...
 
     /**
      * Determine the data type of a value
