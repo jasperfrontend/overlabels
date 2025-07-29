@@ -55,7 +55,7 @@ watch(
 <template>
   <Head title="Your Twitch Data" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex flex-col items-center gap-8 px-4 py-10" v-if="props.twitchData">
+    <div class="flex flex-col items-center gap-8 px-4 py-10">
       <div class="w-full max-w-4xl">
         <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
         <h1 class="text-4xl font-extrabold tracking-tight text-center mb-6">
@@ -88,7 +88,8 @@ watch(
             <RefreshIcon />
           </RefreshButton>
         </div>
-        <div class="rounded-xl border bg-background p-6 shadow-lg" v-if="props.twitchData.channel.broadcaster_login">
+
+        <div class="rounded-xl border bg-background p-6 shadow-lg" v-if="props.twitchData?.channel?.broadcaster_login">
           <div class="grid place-content-center">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" target="_blank">
               <img 
@@ -149,7 +150,7 @@ watch(
           </div>
         </div>
         <div v-else>No cached data. Please hit Refresh All</div>
-        <div class="mt-10" v-if="props.twitchData.subscribers.data">
+        <div class="mt-10" v-if="props.twitchData?.subscribers?.data">
           <h3 class="text-lg font-semibold mb-2">Subscribers</h3>
           <ul class="space-y-2 grid grid-cols-3 gap-2">
             <a 
@@ -175,16 +176,6 @@ watch(
         </div>
         <div v-else>No cached data. Please hit Refresh All</div>
 
-        <!-- Optional: raw JSON dump for nerdy debug mode -->
-        <details class="mt-8">
-          <summary class="cursor-pointer text-sm text-muted-foreground underline">
-            Show raw JSON data
-          </summary>
-          <pre class="mt-2 max-h-96 overflow-auto bg-muted text-xs p-4 rounded-xl whitespace-pre-wrap" v-if="props.twitchData">
-            {{ props.twitchData }}
-          </pre>
-          <div v-else>No cached data. Please hit Refresh All</div>
-        </details>
       </div>
     </div>
   </AppLayout>
