@@ -58,13 +58,13 @@ if (props.overlayHash) {
   <Head title="Template Builder" />
   
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="space-y-6">
+    <div class="p-4">
       <!-- Header -->
       <div>
         <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
           Template Builder
         </h1>
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p class="mt-1 text-sm mb-4 text-gray-600 dark:text-gray-400">
           Create custom HTML/CSS templates for your overlays using our CodePen-style editor.
         </p>
       </div>
@@ -77,7 +77,7 @@ if (props.overlayHash) {
           <a v-for="hash in userOverlayHashes" 
              :key="hash.slug"
              :href="route('template.builder', hash.slug)"
-             class="block p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+             class="block p-4 border rounded-lg hover:bg-gray-50 bg-accent border-accent-foreground hover:border-cyan-600 dark:hover:bg-gray-700 transition-colors">
             <div class="font-medium">{{ hash.overlay_name }}</div>
             <div class="text-sm text-gray-500 dark:text-gray-400">{{ hash.slug }}</div>
             <div class="text-xs text-gray-400 mt-1">{{ hash.created_at }}</div>
