@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge.vue';
+import HelpFab from '@/components/HelpFab.vue';
 
 import { 
   Dialog, 
@@ -519,5 +520,8 @@ const formatHashKey = (hashKey: string, show: boolean) => {
         </Card>
       </div>
     </div>
+
+    <HelpFab slug="overlay-hashes" />
+
   </AppLayout>
 </template>

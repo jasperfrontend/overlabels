@@ -48,12 +48,6 @@ const breadcrumbs: BreadcrumbItem[] = [
   }
 ]
 
-
-const slug = computed(() => {
-  const path = window.location.pathname;
-  return path.replace(/^\/+|\/+$/g, '') || 'home';
-});
-
 if (props.overlayHash) {
   breadcrumbs.push({
     title: props.overlayHash.overlay_name,
