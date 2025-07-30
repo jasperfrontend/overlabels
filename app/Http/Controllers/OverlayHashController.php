@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\OverlayHash;
+use App\Services\DefaultTemplateProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,13 @@ use Carbon\Carbon;
 
 class OverlayHashController extends Controller
 {
+
+    private DefaultTemplateProviderService $defaultTemplateProvider;
+
+    public function __construct(DefaultTemplateProviderService $defaultTemplateProvider)
+    {
+        $this->defaultTemplateProvider = $defaultTemplateProvider;
+    }
     /**
      * Display the overlay hash management interface
      */
@@ -167,6 +175,64 @@ class OverlayHashController extends Controller
     }
 
     /**
+     * Serve overlay data in various formats
+     */
+    public function show(Request $request, string $hashKey)
+    {
+        try {
+            // Find the overlay hash
+            $hash = OverlayHash::where('hash_key', $hashKey)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$hash) {
+                return response('Overlay not found', 404);
+            }
+
+            // Increment access count
+            $hash->increment('access_count');
+
+            // Get fresh Twitch data
+            $twitchService = app(\App\Services\TwitchApiService::class);
+            $twitchData = $twitchService->getOverlayData($hash->user);
+
+            // Prepare overlay data
+            $overlayData = [
+                'overlay_name' => $hash->overlay_name,
+                'overlay_slug' => $hash->slug,
+                'user_name' => $hash->user->name,
+                'access_count' => $hash->access_count,
+                'timestamp' => now()->toISOString(),
+                'data' => $twitchData
+            ];
+
+            // Determine output format
+            $format = $this->determineOutputFormat($request);
+
+            // Return different formats based on request
+            switch ($format) {
+                case 'json':
+                    return $this->returnJsonResponse($overlayData);
+                    
+                case 'csv':
+                    return $this->returnCsvResponse($overlayData);
+                    
+                case 'html':
+                default:
+                    return $this->returnHtmlOverlay($hash, $overlayData);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error serving overlay', [
+                'hash_key' => $hashKey,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return response('', 500);
+        }
+    }
+
+    /**
      * Serve overlay content using hash authentication with slug
      * DUAL-MODE: Returns HTML overlay OR JSON API based on request
      */
@@ -251,7 +317,7 @@ class OverlayHashController extends Controller
         // Check query parameter first (?format=json)
         if ($request->has('format')) {
             $format = strtolower($request->get('format'));
-            if (in_array($format, ['json', 'html', 'csv'])) { // Removed XML
+            if (in_array($format, ['json', 'html', 'csv'])) {
                 return $format;
             }
         }
@@ -267,7 +333,7 @@ class OverlayHashController extends Controller
             return 'csv';
         }
         
-        // Default to HTML for browsers/OBS (this fixes your issue!)
+        // Default to HTML for browsers/OBS
         return 'html';
     }
 
@@ -285,7 +351,7 @@ class OverlayHashController extends Controller
                 'access_count' => $data['access_count'],
                 'last_updated' => $data['timestamp'],
             ],
-            'twitch' => $data['data'], // Full Twitch API data
+            'twitch' => $data['data'],
             'api_info' => [
                 'format' => 'json',
                 'documentation' => 'Add ?format=html for overlay, ?format=csv for CSV export',
@@ -328,6 +394,7 @@ class OverlayHashController extends Controller
 
     /**
      * Return HTML overlay with template parsing!
+     * Now uses the centralized DefaultTemplateProviderService
      */
     private function returnHtmlOverlay(OverlayHash $hash, array $data): \Illuminate\Http\Response
     {
@@ -336,7 +403,7 @@ class OverlayHashController extends Controller
         $cssTemplate = $hash->metadata['css_template'] ?? null;
         
         if (!$htmlTemplate) {
-            // No custom template - return a default overlay
+            // No custom template - return default overlay using the service
             return $this->returnDefaultHtmlOverlay($hash, $data);
         }
         
@@ -350,126 +417,29 @@ class OverlayHashController extends Controller
         
         return response($fullHtml, 200)
             ->header('Content-Type', 'text/html')
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate') // Always fresh data
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
     }
 
     /**
-     * Return a beautiful default HTML overlay when no template is set
+     * Return the beautiful default HTML overlay using DefaultTemplateProviderService
+     * This replaces the old hardcoded template and ensures consistency!
      */
     private function returnDefaultHtmlOverlay(OverlayHash $hash, array $data): \Illuminate\Http\Response
     {
-        $twitch = $data['data'];
-        
-        $html = '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>' . htmlspecialchars($twitch['channel']['broadcaster_name']) . '</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: transparent;
-            color: white;
-            overflow: hidden;
-        }
-        
-        .overlay-container {
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
-            border-radius: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            margin: 20px;
-        }
-        
-        .overlay-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-align: center;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .stat-label {
-            font-weight: 500;
-            opacity: 0.8;
-        }
-        
-        .stat-value {
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .timestamp {
-            text-align: center;
-            font-size: 0.8em;
-            opacity: 0.6;
-            margin-top: 15px;
-        }
-        
-        .setup-note {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 0.85em;
-            text-align: center;
-            border-left: 4px solid #FFD700;
-        }
-    </style>
-</head>
-<body>
-    <div class="overlay-container">
-        <div class="overlay-title">' . htmlspecialchars($twitch['channel']['broadcaster_name']) . '</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Channel:</span>
-            <span class="stat-value">' . htmlspecialchars($twitch['channel']['broadcaster_name'] ?? 'N/A') . '</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Followers:</span>
-            <span class="stat-value">' . number_format($twitch['channel_followers']['total'] ?? 0) . '</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Latest Follower:</span>
-            <span class="stat-value">' . htmlspecialchars($twitch['channel_followers']['data'][0]['user_name'] ?? 'None') . '</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Subscribers:</span>
-            <span class="stat-value">' . number_format($twitch['subscribers']['total'] ?? 0) . '</span>
-        </div>
-        
-        <div class="timestamp">
-            Last updated: ' . date('Y-m-d H:i:s') . '
-        </div>
+        // Prepare data for template substitution
+        $templateData = [
+            'overlay_name' => $hash->overlay_name,
+            'channel_name' => $data['data']['channel']['broadcaster_name'] ?? 'N/A',
+            'followers_total' => number_format($data['data']['channel_followers']['total'] ?? 0),
+            'followers_latest_name' => $data['data']['channel_followers']['data'][0]['user_name'] ?? 'None',
+            'subscribers_total' => number_format($data['data']['subscribers']['total'] ?? 0),
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
 
-    </div>
-    
-</body>
-</html>';
+        // Get complete HTML with CSS injected and data substituted
+        $html = $this->defaultTemplateProvider->getCompleteDefaultHtml($templateData);
 
         return response($html, 200)
             ->header('Content-Type', 'text/html')
@@ -496,6 +466,12 @@ class OverlayHashController extends Controller
 <body>
     ' . $parsedHtml . '
     
+    <script>
+        // Auto-refresh for live data updates
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
 </body>
 </html>';
     }

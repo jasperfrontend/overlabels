@@ -13,7 +13,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register DefaultTemplateProviderService as singleton
+        // This ensures we only load template files once per request cycle
+        $this->app->singleton(DefaultTemplateProviderService::class, function ($app) {
+            return new DefaultTemplateProviderService();
+        });
     }
 
     /**

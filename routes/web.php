@@ -221,6 +221,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/tags', [App\Http\Controllers\TemplateBuilderController::class, 'getAvailableTags'])
             ->name('api.template.tags');
         
+        // Get default templates from centralized service
+        Route::get('/defaults', [App\Http\Controllers\TemplateBuilderController::class, 'getDefaultTemplates'])
+            ->name('api.template.defaults');
+        
         // Validate template syntax
         Route::post('/validate', [App\Http\Controllers\TemplateBuilderController::class, 'validateTemplate'])
             ->name('api.template.validate');

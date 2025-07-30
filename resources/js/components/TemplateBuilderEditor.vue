@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Codemirror } from 'vue-codemirror'
 import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
@@ -8,7 +8,7 @@ import { EditorView } from '@codemirror/view'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle } from 'lucide-vue-next'
+import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle, RotateCcw } from 'lucide-vue-next'
 
 interface Props {
   overlayHash: {
@@ -33,116 +33,58 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// State - Now uses the beautiful default from backend
-const htmlTemplate = ref(props.existingTemplate.html || getDefaultHtmlTemplate())
-const cssTemplate = ref(props.existingTemplate.css || getDefaultCssTemplate())
+// State - Uses templates from backend (either existing custom templates or default from service)
+const htmlTemplate = ref(props.existingTemplate.html || '')
+const cssTemplate = ref(props.existingTemplate.css || '')
+const defaultTemplates = ref<{html: string, css: string} | null>(null)
 
+const showPreview = ref(true)
 const isSaving = ref(false)
 const saveMessage = ref('')
 const validationResults = ref<any>(null)
 const isValidating = ref(false)
+const isLoadingDefaults = ref(false)
 
 // Theme detection
 const isDark = ref(document.documentElement.classList.contains('dark'))
 
-// Default templates that match the backend's returnDefaultHtmlOverlay
-function getDefaultHtmlTemplate(): string {
-  return String.raw`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[[[channel_name]]] | Overlabels</title>
-</head>
-<body>
-    <div class="overlay-container">
-        <div class="overlay-title">[[[channel_name]]]</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Followers:</span>
-            <span class="stat-value">[[[followers_total]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Latest Follower:</span>
-            <span class="stat-value">[[[followers_latest_name]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Subscribers:</span>
-            <span class="stat-value">[[[subscribers_total]]]</span>
-        </div>
-        
-        <div class="timestamp">
-            Last updated: [[[timestamp]]]
-        </div>
+// Load default templates from the centralized service when component mounts
+onMounted(async () => {
+  await loadDefaultTemplates()
+})
 
-    </div>
-
-</body>
-</html>`
-}
-
-function getDefaultCssTemplate(): string {
-  return String.raw`* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: "Roboto", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: transparent;
-    color: white;
-    overflow: hidden;
-}
-.overlay-container {
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
-    border-radius: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
-    margin: 20px;
-}
-.overlay-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 15px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.stat-label {
-    font-weight: 500;
-    opacity: 0.8;
-}
-.stat-value {
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-.timestamp {
-    text-align: center;
-    font-size: 0.8em;
-    opacity: 0.6;
-    margin-top: 15px;
-}
-.setup-note {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 15px;
-    font-size: 0.85em;
-    text-align: center;
-    border-left: 4px solid #FFD700;
-}`
+/**
+ * Load default templates from the DefaultTemplateProviderService
+ * This ensures we always have the latest default templates from the actual files
+ */
+const loadDefaultTemplates = async () => {
+  try {
+    isLoadingDefaults.value = true
+    
+    const response = await fetch('/api/template/defaults', {
+      method: 'GET',
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      }
+    })
+    
+    if (response.ok) {
+      const result = await response.json()
+      defaultTemplates.value = result.templates
+      
+      // If current templates are empty, use the defaults
+      if (!htmlTemplate.value && !cssTemplate.value) {
+        htmlTemplate.value = defaultTemplates.value.html
+        cssTemplate.value = defaultTemplates.value.css
+      }
+    } else {
+      console.error('Failed to load default templates from service')
+    }
+  } catch (error) {
+    console.error('Error loading default templates:', error)
+  } finally {
+    isLoadingDefaults.value = false
+  }
 }
 
 // CodeMirror extensions
@@ -242,7 +184,7 @@ const saveTemplate = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
       },
       body: JSON.stringify({
-        overlay_slug: props.overlayHash.slug, // Now uses slug for safety!
+        overlay_slug: props.overlayHash.slug,
         html_template: htmlTemplate.value,
         css_template: cssTemplate.value
       })
@@ -266,20 +208,28 @@ const saveTemplate = async () => {
   }
 }
 
-const resetToDefault = () => {
+const resetToDefault = async () => {
   if (confirm('Are you sure you want to reset to the default template? This will overwrite your current changes.')) {
-    htmlTemplate.value = getDefaultHtmlTemplate()
-    cssTemplate.value = getDefaultCssTemplate()
-    saveMessage.value = 'Reset to default template!'
-    setTimeout(() => {
-      saveMessage.value = ''
-    }, 3000)
+    if (defaultTemplates.value) {
+      htmlTemplate.value = defaultTemplates.value.html
+      cssTemplate.value = defaultTemplates.value.css
+      saveMessage.value = 'Reset to default template!'
+      setTimeout(() => {
+        saveMessage.value = ''
+      }, 3000)
+    } else {
+      // Reload defaults if not loaded yet
+      await loadDefaultTemplates()
+      if (defaultTemplates.value) {
+        htmlTemplate.value = defaultTemplates.value.html
+        cssTemplate.value = defaultTemplates.value.css
+        saveMessage.value = 'Reset to default template!'
+        setTimeout(() => {
+          saveMessage.value = ''
+        }, 3000)
+      }
+    }
   }
-}
-
-const previewLive = () => {
-  const url = `/overlay/${props.overlayHash.slug}/${props.overlayHash.hash_key}`
-  window.open(url, '_blank')
 }
 
 // Watch for theme changes
@@ -311,15 +261,11 @@ watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
             <Save class="w-4 h-4 mr-2" />
             {{ isSaving ? 'Saving...' : 'Save Template' }}
           </Button>
-
-          <Button @click="previewLive" class="w-full" variant="secondary">
-            <Eye class="w-4 h-4 mr-2" />
-            Preview Live
-          </Button>
-
           
-          <Button @click="resetToDefault" class="w-full" variant="outline">
-            Reset to Default
+          <Button @click="resetToDefault" :disabled="isLoadingDefaults" class="w-full" variant="outline">
+            <RotateCcw v-if="isLoadingDefaults" class="w-4 h-4 mr-2 animate-spin" />
+            <RotateCcw v-else class="w-4 h-4 mr-2" />
+            {{ isLoadingDefaults ? 'Loading...' : 'Reset to Default' }}
           </Button>
           
           <!-- Save message -->

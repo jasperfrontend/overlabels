@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OverlayHash;
 use App\Models\TemplateTag;
 use App\Services\OverlayTemplateParserService;
+use App\Services\DefaultTemplateProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -16,14 +17,18 @@ use Inertia\Response;
 class TemplateBuilderController extends Controller
 {
     private OverlayTemplateParserService $templateParser;
+    private DefaultTemplateProviderService $defaultTemplateProvider;
 
-    public function __construct(OverlayTemplateParserService $templateParser)
-    {
+    public function __construct(
+        OverlayTemplateParserService $templateParser,
+        DefaultTemplateProviderService $defaultTemplateProvider
+    ) {
         $this->templateParser = $templateParser;
+        $this->defaultTemplateProvider = $defaultTemplateProvider;
     }
 
     /**
-     * Show the template builder interface (Inertia) - NOW USES SLUG!
+     * Show the template builder interface (Inertia) - NOW USES CENTRALIZED SERVICE!
      */
     public function index(Request $request, string $slug = null): Response
     {
@@ -42,14 +47,14 @@ class TemplateBuilderController extends Controller
 
             if ($overlayHash) {
                 // Check if custom template exists
-                if (isset($overlayHash->metadata['html_template'])) {
+                if (isset($overlayHash->metadata['html_template']) && !empty($overlayHash->metadata['html_template'])) {
                     $existingTemplate = [
-                        'html' => $overlayHash->metadata['html_template'] ?? '',
+                        'html' => $overlayHash->metadata['html_template'],
                         'css' => $overlayHash->metadata['css_template'] ?? ''
                     ];
                 } else {
-                    // No custom template exists - provide the beautiful default template!
-                    $existingTemplate = $this->getDefaultTemplate();
+                    // No custom template exists - use centralized default template service!
+                    $existingTemplate = $this->defaultTemplateProvider->getDefaultTemplates();
                 }
             }
         }
@@ -68,135 +73,6 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Get the default template that matches returnDefaultHtmlOverlay
-     * This ensures consistency between the actual overlay output and template builder
-     */
-    private function getDefaultTemplate(): array
-    {
-        $defaultHtml = '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[[[overlay_name]]]</title>
-</head>
-<body>
-    <div class="overlay-container">
-        <div class="overlay-title">[[[overlay_name]]]</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Channel:</span>
-            <span class="stat-value">[[[channel_name]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Followers:</span>
-            <span class="stat-value">[[[followers_total]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Latest Follower:</span>
-            <span class="stat-value">[[[followers_latest_name]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Subscribers:</span>
-            <span class="stat-value">[[[subscribers_total]]]</span>
-        </div>
-        
-        <div class="timestamp">
-            Last updated: [[[timestamp]]]
-        </div>
-        
-        <div class="setup-note">
-            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
-        </div>
-    </div>
-    
-    <script>
-        // Auto-refresh every 30 seconds for live data
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
-</body>
-</html>';
-
-        $defaultCss = '* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: transparent;
-    color: white;
-    overflow: hidden;
-}
-
-.overlay-container {
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
-    border-radius: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
-    margin: 20px;
-}
-
-.overlay-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 15px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.stat-label {
-    font-weight: 500;
-    opacity: 0.8;
-}
-
-.stat-value {
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.timestamp {
-    text-align: center;
-    font-size: 0.8em;
-    opacity: 0.6;
-    margin-top: 15px;
-}
-
-.setup-note {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 15px;
-    font-size: 0.85em;
-    text-align: center;
-    border-left: 4px solid #FFD700;
-}';
-
-        return [
-            'html' => $defaultHtml,
-            'css' => $defaultCss
-        ];
-    }
-
-    /**
      * Get available template tags
      */
     public function getAvailableTags(): JsonResponse
@@ -205,6 +81,36 @@ body {
             'success' => true,
             'tags' => $this->getTemplateTagsForFrontend()
         ]);
+    }
+
+    /**
+     * Get default templates from the centralized service
+     * This ensures the Vue component always gets the latest default templates
+     */
+    public function getDefaultTemplates(): JsonResponse
+    {
+        try {
+            $templates = $this->defaultTemplateProvider->getDefaultTemplates();
+            
+            return response()->json([
+                'success' => true,
+                'templates' => $templates,
+                'source' => 'DefaultTemplateProviderService - centralized template files'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching default templates', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load default templates',
+                'templates' => [
+                    'html' => '<!-- Default template unavailable -->',
+                    'css' => '/* Default styles unavailable */'
+                ]
+            ], 500);
+        }
     }
 
     /**
@@ -257,7 +163,7 @@ body {
     public function saveTemplate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'overlay_slug' => 'required|string', // Changed to use slug
+            'overlay_slug' => 'required|string',
             'html_template' => 'required|string',
             'css_template' => 'nullable|string'
         ]);
@@ -269,7 +175,7 @@ body {
             ], 422);
         }
 
-        // Find the overlay hash by slug (safe for streaming!)
+        // Find the overlay hash by slug
         $overlayHash = OverlayHash::where('slug', $request->input('overlay_slug'))
             ->where('user_id', Auth::id())
             ->where('is_active', true)
@@ -333,15 +239,15 @@ body {
             ], 404);
         }
 
-        // Check if custom template exists, otherwise provide default
+        // Check if custom template exists, otherwise provide default from service
         $template = [
             'html' => $overlayHash->metadata['html_template'] ?? '',
             'css' => $overlayHash->metadata['css_template'] ?? ''
         ];
 
-        // If no custom template exists, provide the beautiful default
+        // If no custom template exists, provide the beautiful default from service
         if (empty($template['html'])) {
-            $template = $this->getDefaultTemplate();
+            $template = $this->defaultTemplateProvider->getDefaultTemplates();
         }
 
         return response()->json([
@@ -351,7 +257,7 @@ body {
                 'css' => $template['css'],
                 'overlay_name' => $overlayHash->overlay_name,
                 'slug' => $overlayHash->slug,
-                'hash_key' => $overlayHash->hash_key, // Still provide for preview URLs
+                'hash_key' => $overlayHash->hash_key,
                 'last_updated' => $overlayHash->metadata['template_updated_at'] ?? $overlayHash->updated_at
             ]
         ]);
@@ -374,8 +280,8 @@ body {
             ], 422);
         }
 
-        // Generate sample Twitch data for preview
-        $sampleData = $this->generateSampleTwitchData();
+        // Generate sample Twitch data for preview using the service
+        $sampleData = $this->defaultTemplateProvider->getSampleData();
 
         // Parse the template with sample data
         $parsedResult = $this->templateParser->parseTemplateWithDebug(
@@ -476,8 +382,8 @@ body {
             ->map(function($hash) {
                 return [
                     'id' => $hash->id,
-                    'hash_key' => $hash->hash_key, // Keep for API calls that need it
-                    'slug' => $hash->slug, // Use for navigation
+                    'hash_key' => $hash->hash_key,
+                    'slug' => $hash->slug,
                     'overlay_name' => $hash->overlay_name,
                     'created_at' => $hash->created_at->diffForHumans()
                 ];
@@ -525,25 +431,5 @@ body {
         }
 
         return $validation;
-    }
-
-    /**
-     * Generate sample Twitch data for template preview
-     */
-    private function generateSampleTwitchData(): array
-    {
-        return [
-            'overlay_name' => 'My Awesome Overlay',
-            'channel_name' => 'StreamerName',
-            'followers_total' => '1,234',
-            'followers_latest_name' => 'NewFollower123',
-            'subscribers_total' => '567',
-            'viewers_current' => '89',
-            'stream_title' => 'Playing Awesome Game - Come Join!',
-            'stream_category' => 'Just Chatting',
-            'stream_uptime' => '2:34:56',
-            'chat_latest_message' => 'Hello everyone!',
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
     }
 }
