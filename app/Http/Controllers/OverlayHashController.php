@@ -370,7 +370,7 @@ class OverlayHashController extends Controller
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>' . htmlspecialchars($hash->overlay_name) . '</title>
+    <title>' . htmlspecialchars($twitch['channel']['broadcaster_name']) . '</title>
     <style>
         * {
             margin: 0;
@@ -443,7 +443,7 @@ class OverlayHashController extends Controller
 </head>
 <body>
     <div class="overlay-container">
-        <div class="overlay-title">' . htmlspecialchars($hash->overlay_name) . '</div>
+        <div class="overlay-title">' . htmlspecialchars($twitch['channel']['broadcaster_name']) . '</div>
         
         <div class="stat-row">
             <span class="stat-label">Channel:</span>
