@@ -3,6 +3,8 @@ import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { BreadcrumbItem } from '@/types'
 import TemplateBuilderEditor from '@/components/TemplateBuilderEditor.vue'
+import HelpFab from '@/components/HelpFab.vue'
+import { computed } from 'vue'
 
 // Props from Inertia controller
 interface Props {
@@ -45,6 +47,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: route('template.builder'),
   }
 ]
+
+
+const slug = computed(() => {
+  const path = window.location.pathname;
+  return path.replace(/^\/+|\/+$/g, '') || 'home';
+});
 
 if (props.overlayHash) {
   breadcrumbs.push({
@@ -106,5 +114,9 @@ if (props.overlayHash) {
         </a>
       </div>
     </div>
+
+    
+    <HelpFab slug="template-builder" />
+
   </AppLayout>
 </template>
