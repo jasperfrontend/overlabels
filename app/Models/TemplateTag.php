@@ -1,5 +1,4 @@
 <?php
-// app/Models/TemplateTag.php
 
 namespace App\Models;
 

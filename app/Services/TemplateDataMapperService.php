@@ -51,9 +51,9 @@ class TemplateDataMapperService
             
             // Followers mappings
             'channel_followers.total' => 'followers_total',
-            'channel_followers.data.0.user_id' => 'followers_latest_id',
-            'channel_followers.data.0.user_login' => 'followers_latest_login',
-            'channel_followers.data.0.user_name' => 'followers_latest_name',
+            'channel_followers.data.0.user_id' => 'followers_latest_user_id',
+            'channel_followers.data.0.user_login' => 'followers_latest_user_login',
+            'channel_followers.data.0.user_name' => 'followers_latest_user_name',
             'channel_followers.data.0.followed_at' => 'followers_latest_date',
             
             // Followed channels mappings

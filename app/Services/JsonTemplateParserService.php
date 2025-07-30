@@ -23,6 +23,13 @@ class JsonTemplateParserService
         $this->templateDataMapper = $templateDataMapper;
     }
 
+    // Don't recurse too deep over useless Twitch API data to prevent template tag spam
+    private array $limitedArrays = [
+        'followed_channels.data',
+        'channel_followers.data',
+        'subscribers.data',
+    ];
+
     /**
      * Generate only STANDARD tags that are consistent for everyone
      * Now uses the centralized TemplateDataMapperService for mapping logic
@@ -66,17 +73,7 @@ class JsonTemplateParserService
     {
         foreach ($data as $key => $value) {
             $currentPath = $path ? "{$path}.{$key}" : $key;
-            
-            // Debug logging for subscriber-related paths
-            if (str_contains($currentPath, 'subscribers')) {
-                Log::info("Processing subscriber path", [
-                    'path' => $currentPath,
-                    'key' => $key,
-                    'value_type' => gettype($value),
-                    'value' => is_scalar($value) ? $value : (is_array($value) ? 'array[' . count($value) . ']' : 'object')
-                ]);
-            }
-            
+
             if (is_array($value)) {
                 $this->handleArrayValue($key, $value, $currentPath, $createdTags, $categories, $parentKey, $processedPaths);
             } else {
@@ -92,13 +89,13 @@ class JsonTemplateParserService
      */
     private function handleArrayValue(string $key, array $value, string $path, array &$createdTags, array &$categories, string $parentKey, array &$processedPaths = []): void
     {
-        // For arrays with data, process first item to get structure - but ONLY if array has items
+        
+        $isLimitedArray = in_array($path, $this->limitedArrays);
+
         if (!empty($value) && is_array($value)) {
-            // Check if this is an array of objects (not a simple array of values)
-            $firstItem = reset($value); // Get first item safely
-            
+            $firstItem = reset($value);
+
             if (is_array($firstItem) && !empty($firstItem)) {
-                // This is an array of objects - process the first object's structure
                 foreach ($firstItem as $objKey => $objValue) {
                     $fullPath = "{$path}.0.{$objKey}";
                     $this->createTagFromValue($objKey, $objValue, $fullPath, $createdTags, $categories, $key, $processedPaths);
@@ -106,21 +103,15 @@ class JsonTemplateParserService
             }
         }
 
-        // Create a count tag for the array if it has a 'total' field or items
-        // BUT ONLY if we haven't already processed this path
+        // Create a count tag
         if (isset($value['total'])) {
             $totalPath = "{$path}.total";
             if (!in_array($totalPath, $processedPaths)) {
-                // Array has explicit total field - but don't create if already processed
                 $this->createTagFromValue('total', $value['total'], $totalPath, $createdTags, $categories, $key, $processedPaths);
-            } else {
-                Log::info("Skipping duplicate total path", ['path' => $totalPath]);
             }
         } elseif (is_array($value) && !empty($value)) {
-            // Array has items - create count tag only if it's a simple indexed array
             $firstKey = array_key_first($value);
             if (is_numeric($firstKey)) {
-                // This is an indexed array, create count tag
                 $countPath = $path . '_count';
                 if (!in_array($countPath, $processedPaths)) {
                     $this->createTagFromValue('count', count($value), $countPath, $createdTags, $categories, $key, $processedPaths);
@@ -128,8 +119,8 @@ class JsonTemplateParserService
             }
         }
 
-        // Continue parsing the array structure recursively
-        if (is_array($value)) {
+        // Don't recurse through all entries if it's a limited array
+        if (!$isLimitedArray) {
             $this->parseLevel($value, $path, $createdTags, $categories, $key, $processedPaths);
         }
     }
@@ -143,6 +134,15 @@ class JsonTemplateParserService
         // Check if we've already processed this path
         if (in_array($jsonPath, $processedPaths)) {
             Log::info("Skipping duplicate path", ['path' => $jsonPath]);
+            return;
+        }
+
+        // Determine the type of data
+        $dataType = $this->getDataType($value);
+
+        // SKIP array tags (we can't use them directly in template syntax)
+        if ($dataType === 'array') {
+            Log::info("Skipping array type tag", ['path' => $jsonPath, 'tag_name' => $key]);
             return;
         }
         

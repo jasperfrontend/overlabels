@@ -331,19 +331,16 @@ const getDataTypeClass = (dataType: string) => {
       <div v-if="hasExistingTags">
         <h2 class="text-xl font-semibold mb-4">Generated Template Tags</h2>
         
-        <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" 
-             class="mb-6 bg-white dark:bg-gray-800 rounded-lg border p-4">
-          <h3 class="text-lg font-medium mb-3 text-gray-900 dark:text-white">
-            {{ categoryData.category.display_name }}
-          </h3>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <details v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" class="mb-6 bg-white dark:bg-gray-800 rounded-lg border p-4">
+          <summary class="text-lg font-medium cursor-pointer">{{ categoryData.category.display_name }} ({{ categoryData.tags.length }} tags)</summary>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-4 gap-3">
             <div v-for="tag in categoryData.tags" :key="tag.id" 
-                 class="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                class="border rounded-lg p-3 bg-accent border-accent-foreground/25 hover:border-accent-foreground/50 transition">
               
               <!-- Tag Header -->
               <div class="flex items-center justify-between mb-2">
-                <code class="text-sm font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded">
+                <code class="text-sm font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded cursor-pointer" title="click to copy tag" @click="copyTag(tag.tag_name)">
                   {{ tag.display_tag }}
                 </code>
                 
@@ -372,19 +369,16 @@ const getDataTypeClass = (dataType: string) => {
               
               <!-- Tag Info -->
               <div class="space-y-1">
-                <div class="text-sm font-medium">{{ tag.display_name }}</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">{{ tag.description }}</div>
+                <!-- <div class="text-sm font-medium">{{ tag.display_name }}</div> -->
+                <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ tag.description }}</div>
                 
                 <!-- Data Type Badge -->
                 <span :class="getDataTypeClass(tag.data_type)" 
-                      class="inline-block px-2 py-1 text-xs font-medium rounded">
+                      class="inline-block px-2 py-1 text-xs font-medium rounded"
+                      :title="`json path: ${tag.json_path}`">
                   {{ tag.data_type }}
                 </span>
-                
-                <!-- JSON Path -->
-                <div class="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                  {{ tag.json_path }}
-                </div>
+
               </div>
               
               <!-- Preview Output -->
@@ -399,7 +393,7 @@ const getDataTypeClass = (dataType: string) => {
               </div>
             </div>
           </div>
-        </div>
+        </details>
       </div>
 
       <!-- No Tags State -->

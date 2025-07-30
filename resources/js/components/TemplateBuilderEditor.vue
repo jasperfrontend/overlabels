@@ -74,7 +74,9 @@ const loadDefaultTemplates = async () => {
       
       // If current templates are empty, use the defaults
       if (!htmlTemplate.value && !cssTemplate.value) {
+        // @ts-ignore
         htmlTemplate.value = defaultTemplates?.value?.html
+        // @ts-ignore
         cssTemplate.value = defaultTemplates?.value?.css
       }
     } else {
@@ -208,6 +210,11 @@ const saveTemplate = async () => {
   }
 }
 
+const previewLive = () => {
+  const url = `/overlay/${props.overlayHash.slug}/${props.overlayHash.hash_key}`
+  window.open(url, '_blank')
+}
+
 const resetToDefault = async () => {
   if (confirm('Are you sure you want to reset to the default template? This will overwrite your current changes.')) {
     if (defaultTemplates.value) {
@@ -221,7 +228,9 @@ const resetToDefault = async () => {
       // Reload defaults if not loaded yet
       await loadDefaultTemplates()
       if (defaultTemplates.value) {
+        // @ts-ignore
         htmlTemplate.value = defaultTemplates?.value.html
+        // @ts-ignore
         cssTemplate.value = defaultTemplates?.value.css
         saveMessage.value = 'Reset to default template!'
         setTimeout(() => {
@@ -248,31 +257,37 @@ watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
           <CardTitle class="text-base flex items-center gap-2">
             <Play class="w-4 h-4" />
             Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-3">
-          <Button @click="validateTemplate" :disabled="isValidating" class="w-full">
-            <AlertCircle v-if="isValidating" class="w-4 h-4 mr-2 animate-spin" />
-            <CheckCircle v-else class="w-4 h-4 mr-2" />
-            {{ isValidating ? 'Validating...' : 'Validate Template' }}
-          </Button>
-          
-          <Button @click="saveTemplate" :disabled="isSaving" class="w-full" variant="default">
-            <Save class="w-4 h-4 mr-2" />
-            {{ isSaving ? 'Saving...' : 'Save Template' }}
-          </Button>
-          
-          <Button @click="resetToDefault" :disabled="isLoadingDefaults" class="w-full" variant="outline">
-            <RotateCcw v-if="isLoadingDefaults" class="w-4 h-4 mr-2 animate-spin" />
-            <RotateCcw v-else class="w-4 h-4 mr-2" />
-            {{ isLoadingDefaults ? 'Loading...' : 'Reset to Default' }}
-          </Button>
-          
+                      
           <!-- Save message -->
-          <div v-if="saveMessage" class="text-sm text-center p-2 rounded-md" 
-               :class="saveMessage.includes('success') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'">
+          <div v-if="saveMessage" class="text-sm ml-auto text-center px-1 rounded-md" 
+              :class="saveMessage.includes('success') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'">
             {{ saveMessage }}
           </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-3 flex flex-wrap gap-2">
+          <Button @click="previewLive" class="w-auto cursor-pointer" variant="outline">
+            <Eye class="w-4 h-4 mr-2" />
+            Preview
+          </Button>
+          <Button @click="saveTemplate" :disabled="isSaving" class="w-auto cursor-pointer" variant="outline">
+            <Save class="w-4 h-4 mr-2" />
+            {{ isSaving ? '...' : 'Save' }}
+          </Button>
+
+          <Button @click="validateTemplate" :disabled="isValidating" class="w-auto cursor-pointer" variant="outline">
+            <AlertCircle v-if="isValidating" class="w-4 h-4 mr-2 animate-spin" />
+            <CheckCircle v-else class="w-4 h-4 mr-2" />
+            {{ isValidating ? '...' : 'Validate' }}
+          </Button>
+
+          
+          <Button @click="resetToDefault" :disabled="isLoadingDefaults" class="w-auto cursor-pointer" variant="outline">
+            <RotateCcw v-if="isLoadingDefaults" class="w-4 h-4 mr-2 animate-spin" />
+            <RotateCcw v-else class="w-4 h-4 mr-2" />
+            {{ isLoadingDefaults ? '...' : 'Reset' }}
+          </Button>
+
         </CardContent>
       </Card>
 

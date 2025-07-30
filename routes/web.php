@@ -59,16 +59,6 @@ Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashContr
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Same pattern as above
     ->where('hashKey', '[a-zA-Z0-9]{64}');
 
-// Backward compatibility: Keep old routes working (optional)
-Route::get('/overlay/{hashKey}', function($hashKey) {
-    // Find the hash and redirect to new slug-based URL
-    $hash = \App\Models\OverlayHash::where('hash_key', $hashKey)->first();
-    if ($hash) {
-        return redirect("/overlay/{$hash->slug}/{$hashKey}", 301);
-    }
-    return response('', 404);
-})->where('hashKey', '[a-zA-Z0-9]{64}');
-
 Route::get('/phpinfo', function () {
     phpinfo();
 });

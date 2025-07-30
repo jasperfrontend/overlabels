@@ -446,7 +446,7 @@ class OverlayHashController extends Controller
 
 
     /**
-     * Return the beautiful default HTML overlay using DefaultTemplateProviderService
+     * Return the default HTML overlay using DefaultTemplateProviderService
      * Now also uses TemplateDataMapperService for consistent data structure
      */
     private function returnDefaultHtmlOverlay(OverlayHash $hash, array $data): \Illuminate\Http\Response
