@@ -468,18 +468,9 @@ class OverlayHashController extends Controller
         <div class="timestamp">
             Last updated: ' . date('Y-m-d H:i:s') . '
         </div>
-        
-        <div class="setup-note">
-            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
-        </div>
+
     </div>
     
-    <script>
-        // Auto-refresh every 30 seconds for live data
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
 </body>
 </html>';
 
@@ -508,12 +499,6 @@ class OverlayHashController extends Controller
 <body>
     ' . $parsedHtml . '
     
-    <script>
-        // Auto-refresh for live data updates
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
 </body>
 </html>';
     }
