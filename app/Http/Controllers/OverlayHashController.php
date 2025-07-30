@@ -226,13 +226,10 @@ class OverlayHashController extends Controller
             switch ($format) {
                 case 'json':
                     return $this->returnJsonResponse($overlayData);
-                    
                 case 'csv':
                     return $this->returnCsvResponse($overlayData);
-                    
                 case 'html':
                 default:
-                    // NEW: Template parsing with [[[template_tags]]]
                     return $this->returnHtmlOverlay($hash, $overlayData);
             }
 

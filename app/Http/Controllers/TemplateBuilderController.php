@@ -68,7 +68,7 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Get the beautiful default template that matches returnDefaultHtmlOverlay
+     * Get the default template that matches returnDefaultHtmlOverlay
      * This ensures consistency between the actual overlay output and template builder
      */
     private function getDefaultTemplate(): array

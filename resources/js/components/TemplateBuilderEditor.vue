@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
 import { Codemirror } from 'vue-codemirror'
 import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
@@ -8,7 +7,6 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView } from '@codemirror/view'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle } from 'lucide-vue-next'
 
@@ -39,7 +37,6 @@ const props = defineProps<Props>()
 const htmlTemplate = ref(props.existingTemplate.html || getDefaultHtmlTemplate())
 const cssTemplate = ref(props.existingTemplate.css || getDefaultCssTemplate())
 
-const showPreview = ref(true)
 const isSaving = ref(false)
 const saveMessage = ref('')
 const validationResults = ref<any>(null)
@@ -55,16 +52,11 @@ function getDefaultHtmlTemplate(): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[[[overlay_name]]]</title>
+    <title>[[[channel_name]]] | Overlabels</title>
 </head>
 <body>
     <div class="overlay-container">
-        <div class="overlay-title">[[[overlay_name]]]</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Channel:</span>
-            <span class="stat-value">[[[channel_name]]]</span>
-        </div>
+        <div class="overlay-title">[[[channel_name]]]</div>
         
         <div class="stat-row">
             <span class="stat-label">Followers:</span>
@@ -84,18 +76,9 @@ function getDefaultHtmlTemplate(): string {
         <div class="timestamp">
             Last updated: [[[timestamp]]]
         </div>
-        
-        <div class="setup-note">
-            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
-        </div>
+
     </div>
-    
-    <script>
-        // Auto-refresh every 30 seconds for live data
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    <\/script>
+
 </body>
 </html>`
 }
@@ -107,7 +90,7 @@ function getDefaultCssTemplate(): string {
     box-sizing: border-box;
 }
 body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Roboto", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background: transparent;
     color: white;
     overflow: hidden;
