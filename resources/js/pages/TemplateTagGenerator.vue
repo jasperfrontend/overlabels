@@ -3,9 +3,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
+import HelpFab from '@/components/HelpFab.vue';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {
@@ -56,6 +57,7 @@ const isGenerating = ref(false);
 const tagPreviews = ref<Record<number, TagPreview>>({});
 const isLoadingPreview = ref<Record<number, boolean>>({});
 const generationError = ref('');
+const posts = ref('');
 
 // Toast state
 const toastMessage = ref('');
@@ -66,16 +68,20 @@ const showToast = ref(false);
 const organizedTags = computed(() => props.existingTags);
 
 // Show error message if there's an initial error
-onMounted(() => {
+onMounted(async () => {
   if (props.error) {
     showToast.value = true;
     toastMessage.value = props.error;
     toastType.value = 'warning';
   }
-  
-  console.log('🚀 Template Generator mounted');
-  console.log('Twitch Data:', props.twitchData);
-  console.log('Existing Tags:', props.existingTags);
+
+  const path = window.location.pathname
+  const slug = path.replace(/^\/+|\/+$/g, '') || 'home' // fallback
+
+  const res = await fetch(`/api/help-proxy/${slug}`)
+  if (res.ok) {
+    posts.value = await res.json()    
+  }
 });
 
 // Generate template tags from current Twitch data
@@ -247,6 +253,12 @@ const copyTag = async (tagName: string) => {
   }
 };
 
+const slug = computed(() => {
+  const path = window.location.pathname;
+  return path.replace(/^\/+|\/+$/g, '') || 'home';
+});
+
+
 // Get style classes for data types
 const getDataTypeClass = (dataType: string) => {
   switch (dataType) {
@@ -259,8 +271,7 @@ const getDataTypeClass = (dataType: string) => {
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
     case 'datetime':
       return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-    case 'array':
-    case 'array_count':
+    case 'url':
       return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
@@ -269,7 +280,7 @@ const getDataTypeClass = (dataType: string) => {
 </script>
 
 <template>
-  <Head title="Template Generator" />
+  <Head title="Template Tags Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <!-- Toast Component -->
     <RekaToast 
@@ -317,85 +328,96 @@ const getDataTypeClass = (dataType: string) => {
         <p class="mt-2 text-sm text-red-700 dark:text-red-300">{{ generationError }}</p>
       </div>
 
-      <!-- Information Card -->
-      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <h2 class="text-lg font-semibold mb-2">How it works</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-          This tool analyzes your current Twitch data and creates standardized template tags. 
-          These tags can be used in your overlay templates to display dynamic information.
-          Click "Generate Tags" to create tags based on your current Twitch data structure.
-        </p>
-      </div>
-
       <!-- Existing Tags Display -->
-      <div v-if="hasExistingTags">
-        <h2 class="text-xl font-semibold mb-4">Generated Template Tags</h2>
+      <div v-if="hasExistingTags" class="space-y-6">
+        <h2 class="text-xl font-bold mb-2">Generated Template Tags</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">Browse and preview template tags organized by category</p>
         
-        <details v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" class="mb-6 bg-white dark:bg-gray-800 rounded-lg border p-4">
-          <summary class="text-lg font-medium cursor-pointer">{{ categoryData.category.display_name }} ({{ categoryData.tags.length }} tags)</summary>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-4 gap-3">
-            <div v-for="tag in categoryData.tags" :key="tag.id" 
-                class="border rounded-lg p-3 bg-accent border-accent-foreground/25 hover:border-accent-foreground/50 transition">
-              
-              <!-- Tag Header -->
-              <div class="flex items-center justify-between mb-2">
-                <code class="text-sm font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded cursor-pointer" title="click to copy tag" @click="copyTag(tag.tag_name)">
-                  {{ tag.display_tag }}
-                </code>
-                
-                <div class="flex items-center gap-1">
-                  <!-- Copy Button -->
-                  <button 
-                    @click="copyTag(tag.tag_name)"
-                    class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-                    title="Copy tag"
-                  >
-                    <Copy class="w-3 h-3" />
-                  </button>
-                  
-                  <!-- Preview Button -->
-                  <button 
-                    @click="previewTag(tag.id)"
-                    :disabled="isLoadingPreview[tag.id]"
-                    class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-                    title="Preview with real data"
-                  >
-                    <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-3 h-3 animate-spin" />
-                    <Eye v-else class="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-              
-              <!-- Tag Info -->
-              <div class="space-y-1">
-                <!-- <div class="text-sm font-medium">{{ tag.display_name }}</div> -->
-                <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ tag.description }}</div>
-                
-                <!-- Data Type Badge -->
-                <span :class="getDataTypeClass(tag.data_type)" 
-                      class="inline-block px-2 py-1 text-xs font-medium rounded"
-                      :title="`json path: ${tag.json_path}`">
-                  {{ tag.data_type }}
+        <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" 
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md">
+          
+          <!-- Category Header -->
+          <details class="group">
+            <summary class="flex justify-between items-center p-4 cursor-pointer list-none bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <div class="flex items-center">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                  {{ categoryData.category.display_name }}
+                </h3>
+                <span class="ml-3 px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">
+                  {{ categoryData.tags.length }} tags
                 </span>
-
               </div>
-              
-              <!-- Preview Output -->
-              <div v-if="tagPreviews[tag.id]" class="mt-2 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
-                  <button @click="clearPreview(tag.id)" class="text-gray-400 hover:text-gray-600">×</button>
+              <div class="transform transition-transform group-open:rotate-180">
+                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </summary>
+            
+            <!-- Tags Grid -->
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div v-for="tag in categoryData.tags" :key="tag.id" 
+                  class="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-sm">
+                
+                <!-- Tag Header -->
+                <div class="flex justify-between items-start mb-3">
+                  <!-- Tag Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center mb-2">
+                      <code class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" 
+                            title="click to copy tag" 
+                            @click="copyTag(tag.tag_name)">
+                        {{ tag.display_tag }}
+                      </code>
+                      <span :class="getDataTypeClass(tag.data_type)" 
+                            class="ml-2 inline-block px-2 py-1 text-xs font-medium rounded" 
+                            :title="`json path: ${tag.json_path}`">
+                        {{ tag.data_type }}
+                      </span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ tag.description }}</p>
+                  </div>
+                  
+                  <!-- Action Buttons -->
+                  <div class="flex items-center ml-3 space-x-1">
+                    <!-- Copy Button -->
+                    <button @click="copyTag(tag.tag_name)"
+                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            title="Copy tag">
+                      <Copy class="w-4 h-4" />
+                    </button>
+                    
+                    <!-- Preview Button -->
+                    <button @click="previewTag(tag.id)"
+                            :disabled="isLoadingPreview[tag.id]"
+                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                            title="Preview with real data">
+                      <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-4 h-4 animate-spin" />
+                      <Eye v-else class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div class="font-mono text-gray-900 dark:text-gray-100">
-                  {{ tagPreviews[tag.id].output }}
+                
+                <!-- Preview Output -->
+                <div v-if="tagPreviews[tag.id]" class="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
+                    <button @click="clearPreview(tag.id)" 
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="font-mono text-sm text-gray-800 dark:text-gray-200 break-words">
+                    {{ tagPreviews[tag.id].output }}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </details>
+          </details>
+        </div>
       </div>
-
       <!-- No Tags State -->
       <div v-else class="text-center py-12">
         <div class="max-w-md mx-auto">
@@ -420,6 +442,9 @@ const getDataTypeClass = (dataType: string) => {
         </details>
       </div>
     </div>
+
+    <HelpFab :slug="slug" />
+
   </AppLayout>
 </template>
 

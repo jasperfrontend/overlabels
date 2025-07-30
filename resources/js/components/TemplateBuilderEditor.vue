@@ -140,9 +140,23 @@ const tagsByCategory = computed(() => {
 })
 
 // Methods
-const insertTag = (tagName: string) => {
+// const insertTag = (tagName: string) => {
+//   const tag = `[[[${tagName}]]]`
+//   htmlTemplate.value += tag
+// }
+
+const insertTag = async (tagName: string) => {
+  saveMessage.value = ''
   const tag = `[[[${tagName}]]]`
-  htmlTemplate.value += tag
+  try {
+    await navigator.clipboard.writeText(tag)
+    saveMessage.value = `copy success`
+    setTimeout(() => {
+      saveMessage.value = ''
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
 }
 
 const validateTemplate = async () => {
@@ -325,7 +339,7 @@ watch(() => document.documentElement.classList.contains('dark'), (newDark) => {
         <CardHeader>
           <CardTitle class="text-base">Template Tags</CardTitle>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Click to insert template tags into your HTML
+            Click to copy template tags to your clipboard
           </p>
         </CardHeader>
         <CardContent class="space-y-4">

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { 
   Copy, 
   Plus, 
@@ -54,7 +54,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Overlay Hashes',
+    title: 'Secure Overlay Generator',
     href: '/overlay-hashes',
   },
 ];
@@ -219,7 +219,13 @@ const toggleHashKeyVisibility = (hashId: number) => {
 };
 
 // Get status badge props
-const getStatusBadge = (hash: OverlayHash) => {
+type BadgeVariant = "default" | "destructive" | "outline" | "secondary" | "success" | "warning" | null | undefined;
+interface StatusBadge {
+  variant: BadgeVariant;
+  icon: any;
+  text: string;
+}
+const getStatusBadge = (hash: OverlayHash): StatusBadge => {
   if (!hash.is_active) {
     return { variant: 'destructive', icon: Ban, text: 'Revoked' };
   }
@@ -240,15 +246,15 @@ const formatHashKey = (hashKey: string, show: boolean) => {
 </script>
 
 <template>
-  <Head title="Overlay Hashes" />
+  <Head title="Secure Overlay Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Overlay Hashes</h1>
+          <h1 class="text-2xl font-bold">Secure Overlay Generator</h1>
           <p class="text-muted-foreground">
-            Manage secure access hashes for your OBS overlays
+            Manage secure overlay URL and hashcodes for your OBS overlays.
           </p>
         </div>
         
@@ -332,18 +338,32 @@ const formatHashKey = (hashKey: string, show: boolean) => {
             </div>
             <div>
               <h3 class="font-semibold text-blue-900 dark:text-blue-100">
-                How Overlay Hashes Work
+                How Secure Overlays Work
               </h3>
               <p class="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                Each hash creates a secure URL that can access your Twitch data without requiring login. 
-                Use these URLs in OBS Browser Sources to display live overlay data. Hashes can be revoked 
-                or regenerated at any time for security.
+                Each overlay is created with a secure code in the overlay URL that can access your Twitch data without requiring login. 
+                Use these URLs in OBS Browser Sources to display live overlay data. Hashes can be revoked or regenerated at any time for security.
               </p>
+
             </div>
           </div>
         </CardContent>
       </Card>
-
+      <div class="mt-4">
+        <div class="border-4 border-red-600 bg-red-100 dark:bg-red-950 rounded-xl p-6 flex items-center gap-4 shadow-lg">
+          <AlertTriangle class="w-10 h-10 text-red-600 flex-shrink-0" />
+          <div>
+            <h4 class="text-xl font-bold text-red-800 dark:text-red-200 mb-2 uppercase tracking-wide">
+              WARNING: Do NOT show this page on stream!!!!
+            </h4>
+            <p class="text-base text-red-700 dark:text-red-300 font-semibold">
+              Anyone who sees your overlay URL can access your Twitch data and overlays without logging in. 
+              <span class="font-bold underline">Treat this URL like a password</span>—never share it publicly, on stream, or in screenshots.
+              If you think it has leaked, <span class="font-bold">revoke or regenerate the hash immediately</span>.
+            </p>
+          </div>
+        </div>
+      </div>
       <!-- Hashes List -->
       <div class="space-y-4">
         <div v-if="hashes.length === 0" class="text-center py-12">
@@ -367,7 +387,6 @@ const formatHashKey = (hashKey: string, show: boolean) => {
                   {{ hash.description }}
                 </CardDescription>
                 <div class="flex items-center gap-2 mt-2">
-                  
                   <Badge :variant="getStatusBadge(hash).variant" class="text-xs">
                     <component :is="getStatusBadge(hash).icon" class="w-3 h-3 mr-1" />
                     {{ getStatusBadge(hash).text }}

@@ -26,5 +26,9 @@ return [
         'redirect' => env('TWITCH_REDIRECT_URI'),
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10)
     ],
+    'wordpress' => [    
+        'wp_json_url' => env('WP_JSON_URL'),  
+    ],
+
 
 ];

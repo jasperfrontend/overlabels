@@ -29,13 +29,18 @@ const mainNavItems: NavItem[] = [
         href: '/twitchdata',
         icon: TwitchIcon,
     },
+    {
+        title: 'Overlay Generator',
+        href: '/overlay-hashes',
+        icon: Shield,
+    },
     {  
         title: 'Template Builder',
         href: '/template-builder',
         icon: Code,
     },
     {
-        title: 'Template Tag Generator',
+        title: 'Tags Generator',
         href: '/template-generator',
         icon: Code,
     },
@@ -44,11 +49,7 @@ const mainNavItems: NavItem[] = [
         href: '/eventsub-demo',
         icon: Radio,
     },
-    {
-        title: 'Overlay Hashes',
-        href: '/overlay-hashes',
-        icon: Shield,
-    },
+
 ];
 
 const footerNavItems: NavItem[] = [
