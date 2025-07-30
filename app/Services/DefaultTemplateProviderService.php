@@ -184,19 +184,9 @@ class DefaultTemplateProviderService
      */
     public function getSampleData(): array
     {
-        return [
-            'overlay_name' => 'My Awesome Overlay',
-            'channel_name' => 'StreamerName',
-            'followers_total' => '1,234',
-            'followers_latest_name' => 'NewFollower123',
-            'subscribers_total' => '567',
-            'viewers_current' => '89',
-            'stream_title' => 'Playing Awesome Game - Come Join!',
-            'stream_category' => 'Just Chatting',
-            'stream_uptime' => '2:34:56',
-            'chat_latest_message' => 'Hello everyone!',
-            'timestamp' => now()->format('Y-m-d H:i:s')
-        ];
+        // Use the TemplateDataMapperService for consistent sample data
+        $templateDataMapper = app(\App\Services\TemplateDataMapperService::class);
+        return $templateDataMapper->getSampleTemplateData();
     }
 
     /**

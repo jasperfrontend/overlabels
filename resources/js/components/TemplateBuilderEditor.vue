@@ -74,8 +74,8 @@ const loadDefaultTemplates = async () => {
       
       // If current templates are empty, use the defaults
       if (!htmlTemplate.value && !cssTemplate.value) {
-        htmlTemplate.value = defaultTemplates.value.html
-        cssTemplate.value = defaultTemplates.value.css
+        htmlTemplate.value = defaultTemplates?.value?.html
+        cssTemplate.value = defaultTemplates?.value?.css
       }
     } else {
       console.error('Failed to load default templates from service')

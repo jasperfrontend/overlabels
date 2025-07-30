@@ -5,7 +5,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
-import { Copy, Eye, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {
@@ -41,6 +41,7 @@ const props = defineProps<{
   twitchData: Record<string, any>;
   existingTags: Record<string, CategoryData>;
   hasExistingTags: boolean;
+  error?: string; // Added for error handling
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -54,6 +55,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const isGenerating = ref(false);
 const tagPreviews = ref<Record<number, TagPreview>>({});
 const isLoadingPreview = ref<Record<number, boolean>>({});
+const generationError = ref('');
 
 // Toast state
 const toastMessage = ref('');
@@ -63,11 +65,25 @@ const showToast = ref(false);
 // Computed
 const organizedTags = computed(() => props.existingTags);
 
+// Show error message if there's an initial error
+onMounted(() => {
+  if (props.error) {
+    showToast.value = true;
+    toastMessage.value = props.error;
+    toastType.value = 'warning';
+  }
+  
+  console.log('🚀 Template Generator mounted');
+  console.log('Twitch Data:', props.twitchData);
+  console.log('Existing Tags:', props.existingTags);
+});
+
 // Generate template tags from current Twitch data
 const generateTags = async () => {
   if (isGenerating.value) return;
   
   isGenerating.value = true;
+  generationError.value = '';
   
   try {
     const response = await fetch('/template-tags/generate', {
@@ -80,21 +96,36 @@ const generateTags = async () => {
     
     const data = await response.json();
     
-    if (response.ok) {
+    if (response.ok && data.success) {
       console.log('✅ Tags generated:', data);
       
+      // Show success message
+      showToast.value = true;
+      toastMessage.value = `Successfully generated ${data.generated} template tags!`;
+      toastType.value = 'success';
+      
       // Refresh the page to show new tags
-      router.reload({
-        only: ['existingTags', 'hasExistingTags']
-      });
+      setTimeout(() => {
+        router.reload({
+          only: ['existingTags', 'hasExistingTags']
+        });
+      }, 1000);
       
     } else {
       console.error('❌ Generation failed:', data);
-      alert(`Failed to generate tags: ${data.message || 'Unknown error'}`);
+      generationError.value = data.message || data.error || 'Unknown error occurred';
+      
+      showToast.value = true;
+      toastMessage.value = `Failed to generate tags: ${generationError.value}`;
+      toastType.value = 'error';
     }
   } catch (error) {
     console.error('💥 Generation error:', error);
-    alert('Failed to generate tags. Please try again.');
+    generationError.value = 'Network error - please check your connection and try again.';
+    
+    showToast.value = true;
+    toastMessage.value = 'Failed to generate tags. Please try again.';
+    toastType.value = 'error';
   } finally {
     isGenerating.value = false;
   }
@@ -117,16 +148,27 @@ const clearAllTags = async () => {
     
     const data = await response.json();
     
-    if (response.ok) {
+    if (response.ok && data.success) {
       console.log('✅ Tags cleared:', data);
+      
+      showToast.value = true;
+      toastMessage.value = data.message;
+      toastType.value = 'info';
+      
       router.reload();
     } else {
       console.error('❌ Clear failed:', data);
-      alert(`Failed to clear tags: ${data.message || 'Unknown error'}`);
+      
+      showToast.value = true;
+      toastMessage.value = `Failed to clear tags: ${data.message || data.error}`;
+      toastType.value = 'error';
     }
   } catch (error) {
     console.error('💥 Clear error:', error);
-    alert('Failed to clear tags. Please try again.');
+    
+    showToast.value = true;
+    toastMessage.value = 'Failed to clear tags. Please try again.';
+    toastType.value = 'error';
   }
 };
 
@@ -141,13 +183,19 @@ const previewTag = async (tagId: number) => {
     const response = await fetch(`/template-tags/${tagId}/preview`);
     const data = await response.json();
     
-    if (response.ok) {
+    if (response.ok && !data.error) {
       tagPreviews.value = { ...tagPreviews.value, [tagId]: data };
     } else {
       console.error('Preview failed:', data);
+      showToast.value = true;
+      toastMessage.value = `Preview failed: ${data.message || data.error}`;
+      toastType.value = 'error';
     }
   } catch (error) {
     console.error('Preview error:', error);
+    showToast.value = true;
+    toastMessage.value = 'Failed to load preview. Please try again.';
+    toastType.value = 'error';
   } finally {
     // Clear loading state for this specific tag
     isLoadingPreview.value = { ...isLoadingPreview.value, [tagId]: false };
@@ -176,6 +224,7 @@ const keepTooltip = (tagId: number) => {
 const hideToast = () => {
   showToast.value = false;
 };
+
 const copyTag = async (tagName: string) => {
   try {
     await navigator.clipboard.writeText(`[[[${tagName}]]]`);
@@ -191,6 +240,10 @@ const copyTag = async (tagName: string) => {
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
+    
+    showToast.value = true;
+    toastMessage.value = `Copied tag: ${tagName}`;
+    toastType.value = 'info';
   }
 };
 
@@ -213,12 +266,6 @@ const getDataTypeClass = (dataType: string) => {
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   }
 };
-
-onMounted(() => {
-  console.log('🚀 Template Generator mounted');
-  console.log('Twitch Data:', props.twitchData);
-  console.log('Existing Tags:', props.existingTags);
-});
 </script>
 
 <template>
@@ -250,152 +297,150 @@ onMounted(() => {
           </Button>
           
           <Button 
-            @click="clearAllTags" 
-            :disabled="!hasExistingTags"
+            v-if="hasExistingTags"
+            @click="clearAllTags"
             variant="destructive"
             class="cursor-pointer"
           >
             <Trash2 class="w-4 h-4" />
-            Clear All
+            Clear All Tags
           </Button>
         </div>
       </div>
 
-      <!-- Info Panel -->
-      <div class="rounded-lg border bg-muted/20 p-4">
-        <p class="text-sm text-muted-foreground">
-          This tool analyzes your Twitch API data and generates template tags that you can use in your OBS overlays. 
-          Click "Generate Tags" to create tags from your current data, then use the tags on the left in your HTML templates.
+      <!-- Error Display -->
+      <div v-if="generationError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div class="flex items-center gap-2">
+          <AlertCircle class="w-5 h-5 text-red-600 dark:text-red-400" />
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Generation Error</h3>
+        </div>
+        <p class="mt-2 text-sm text-red-700 dark:text-red-300">{{ generationError }}</p>
+      </div>
+
+      <!-- Information Card -->
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h2 class="text-lg font-semibold mb-2">How it works</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          This tool analyzes your current Twitch data and creates standardized template tags. 
+          These tags can be used in your overlay templates to display dynamic information.
+          Click "Generate Tags" to create tags based on your current Twitch data structure.
         </p>
       </div>
 
-      <!-- Main Content Grid -->
-      <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Left Panel: Generated Template Tags -->
-        <div class="rounded-lg border bg-background overflow-hidden">
-          <div class="border-b bg-muted/50 p-4">
-            <h2 class="text-xl font-semibold">Your Template Tags</h2>
-            <p class="text-sm text-muted-foreground">
-              Click any tag to copy it to your clipboard
-            </p>
-          </div>
+      <!-- Existing Tags Display -->
+      <div v-if="hasExistingTags">
+        <h2 class="text-xl font-semibold mb-4">Generated Template Tags</h2>
+        
+        <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" 
+             class="mb-6 bg-white dark:bg-gray-800 rounded-lg border p-4">
+          <h3 class="text-lg font-medium mb-3 text-gray-900 dark:text-white">
+            {{ categoryData.category.display_name }}
+          </h3>
           
-          <div class="overflow-y-auto p-4">
-            <div v-if="!hasExistingTags" class="text-center text-muted-foreground py-8">
-              No template tags generated yet. Click "Generate Tags" to create them from your Twitch data.
-            </div>
-            
-            <div v-else class="space-y-6">
-              <div 
-                v-for="(categoryData, categoryName) in organizedTags" 
-                :key="categoryName"
-                class="space-y-2"
-              >
-                <!-- Category Header -->
-                <h3 class="text-lg font-semibold text-foreground">
-                  {{ categoryData.category.display_name }}
-                  <span 
-                    v-if="categoryData.category.is_group"
-                    class="ml-2 px-2 py-1 text-xs bg-amber-500 text-white rounded-full"
-                  >
-                    Group
-                  </span>
-                </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div v-for="tag in categoryData.tags" :key="tag.id" 
+                 class="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              
+              <!-- Tag Header -->
+              <div class="flex items-center justify-between mb-2">
+                <code class="text-sm font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded">
+                  {{ tag.display_tag }}
+                </code>
                 
-                <!-- Category Tags -->
-                <div class="space-y-1 ml-3">
-                  <div 
-                    v-for="tag in categoryData.tags" 
-                    :key="tag.id"
-                    class="group flex items-center justify-between p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                <div class="flex items-center gap-1">
+                  <!-- Copy Button -->
+                  <button 
+                    @click="copyTag(tag.tag_name)"
+                    class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                    title="Copy tag"
                   >
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2">
-                        <button
-                          @click="copyTag(tag.tag_name)"
-                          class="font-mono text-sm bg-muted px-2 py-1 rounded cursor-pointer hover:bg-muted/80"
-                          :title="`Click to copy: ${tag.display_tag}`"
-                        >
-                          {{ tag.display_tag }}
-                        </button>
-                        
-                        <span 
-                          class="px-2 py-1 text-xs rounded-full"
-                          :class="getDataTypeClass(tag.data_type)"
-                        >
-                          {{ tag.data_type }}
-                        </span>
-                      </div>
-                      
-                      <p class="text-sm text-muted-foreground mt-1">
-                        {{ tag.display_name }}
-                      </p>
-                      
-                      <!-- Sample Data Preview -->
-                      <div v-if="tag.sample_data" class="text-xs text-muted-foreground mt-1">
-                        Sample: {{ JSON.stringify(tag.sample_data).substring(0, 50) }}...
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <!-- Preview with Tooltip -->
-                      <div class="relative">
-                        <Button
-                          @mouseenter="previewTag(tag.id)"
-                          @mouseleave="clearPreview(tag.id)"
-                          variant="ghost"
-                          size="sm"
-                          class="cursor-pointer"
-                          :title="'Hover to preview current output'"
-                        >
-                          <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-3 h-3 animate-spin" />
-                          <Eye v-else class="w-3 h-3" />
-                        </Button>
-                        
-                        <!-- Tooltip positioned to the left -->
-                        <div 
-                          v-if="tagPreviews[tag.id] && !isLoadingPreview[tag.id]"
-                          class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-lg border z-50 min-w-xs max-w-sm"
-                          @mouseenter="keepTooltip(tag.id)"
-                          @mouseleave="clearPreview(tag.id)"
-                        >
-                          <div class="font-medium text-xs text-muted-foreground mb-1">Current Output:</div>
-                          <div class="font-mono break-words">{{ tagPreviews[tag.id].output }}</div>
-                          <!-- Tooltip arrow pointing right -->
-                          <div class="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-popover"></div>
-                        </div>
-                      </div>
-                      
-                      <Button
-                        @click="copyTag(tag.tag_name)"
-                        variant="ghost"
-                        size="sm"
-                        class="cursor-pointer"
-                      >
-                        <Copy class="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
+                    <Copy class="w-3 h-3" />
+                  </button>
+                  
+                  <!-- Preview Button -->
+                  <button 
+                    @click="previewTag(tag.id)"
+                    :disabled="isLoadingPreview[tag.id]"
+                    class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                    title="Preview with real data"
+                  >
+                    <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-3 h-3 animate-spin" />
+                    <Eye v-else class="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Tag Info -->
+              <div class="space-y-1">
+                <div class="text-sm font-medium">{{ tag.display_name }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ tag.description }}</div>
+                
+                <!-- Data Type Badge -->
+                <span :class="getDataTypeClass(tag.data_type)" 
+                      class="inline-block px-2 py-1 text-xs font-medium rounded">
+                  {{ tag.data_type }}
+                </span>
+                
+                <!-- JSON Path -->
+                <div class="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                  {{ tag.json_path }}
+                </div>
+              </div>
+              
+              <!-- Preview Output -->
+              <div v-if="tagPreviews[tag.id]" class="mt-2 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
+                  <button @click="clearPreview(tag.id)" class="text-gray-400 hover:text-gray-600">×</button>
+                </div>
+                <div class="font-mono text-gray-900 dark:text-gray-100">
+                  {{ tagPreviews[tag.id].output }}
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Right Panel: JSON Data Viewer -->
-        <div class="rounded-lg border bg-background overflow-hidden">
-          <div class="border-b bg-muted/50 p-4">
-            <h2 class="text-xl font-semibold">Your Twitch API Data</h2>
-            <p class="text-sm text-muted-foreground">
-              This is the data structure that template tags are generated from
-            </p>
-          </div>
-          
-          <div class="overflow-y-auto p-4">
-            <pre class="text-xs whitespace-pre-wrap font-mono">{{ JSON.stringify(twitchData, null, 2) }}</pre>
-          </div>
+      <!-- No Tags State -->
+      <div v-else class="text-center py-12">
+        <div class="max-w-md mx-auto">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Template Tags Generated</h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-4">
+            Click "Generate Tags" to analyze your Twitch data and create template tags automatically.
+          </p>
+          <Button @click="generateTags" :disabled="isGenerating" variant="default">
+            <RefreshCw v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
+            <RefreshCw v-else class="w-4 h-4 mr-2" />
+            {{ isGenerating ? 'Generating...' : 'Generate Tags Now' }}
+          </Button>
         </div>
+      </div>
+
+      <!-- Debug Info (only in development) -->
+      <div class="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <h3 class="text-sm font-medium mb-2">Debug Information</h3>
+        <details class="text-xs">
+          <summary class="cursor-pointer">Raw Twitch Data Structure</summary>
+          <pre class="mt-2 overflow-x-auto">{{ JSON.stringify(twitchData, null, 2) }}</pre>
+        </details>
       </div>
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+/* Add any component-specific styles here */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

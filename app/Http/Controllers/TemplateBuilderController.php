@@ -6,6 +6,7 @@ use App\Models\OverlayHash;
 use App\Models\TemplateTag;
 use App\Services\OverlayTemplateParserService;
 use App\Services\DefaultTemplateProviderService;
+use App\Services\TemplateDataMapperService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -18,13 +19,16 @@ class TemplateBuilderController extends Controller
 {
     private OverlayTemplateParserService $templateParser;
     private DefaultTemplateProviderService $defaultTemplateProvider;
+    private TemplateDataMapperService $templateDataMapper;
 
     public function __construct(
         OverlayTemplateParserService $templateParser,
-        DefaultTemplateProviderService $defaultTemplateProvider
+        DefaultTemplateProviderService $defaultTemplateProvider,
+        TemplateDataMapperService $templateDataMapper
     ) {
         $this->templateParser = $templateParser;
         $this->defaultTemplateProvider = $defaultTemplateProvider;
+        $this->templateDataMapper = $templateDataMapper;
     }
 
     /**
@@ -284,26 +288,22 @@ class TemplateBuilderController extends Controller
         $sampleData = $this->defaultTemplateProvider->getSampleData();
 
         // Parse the template with sample data
-        $parsedResult = $this->templateParser->parseTemplateWithDebug(
+        $parsedHtml = $this->templateParser->parseTemplateWithDebug(
             $request->input('html_template'),
             $sampleData
         );
 
-        // Inject CSS if provided
-        $finalHtml = $parsedResult['parsed_template'];
-        $cssTemplate = $request->input('css_template', '');
+        $parsedCss = $this->templateParser->parseTemplate(
+            $request->input('css_template', ''),
+            $sampleData
+        );
 
-        if (!empty($cssTemplate)) {
-            // Parse CSS template too (in case it has template tags)
-            $parsedCss = $this->templateParser->parseTemplate($cssTemplate, $sampleData);
-            
-            // Inject CSS into HTML
-            if (strpos($finalHtml, '<style>') !== false) {
-                $finalHtml = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>{$parsedCss}</style>", $finalHtml);
-            } else {
-                $finalHtml = str_replace('</head>', "<style>{$parsedCss}</style>\n</head>", $finalHtml);
-            }
-        }
+        // Wrap into full HTML doc
+        $finalHtml = $this->templateDataMapper->wrapHtmlAndCssIntoDocument(
+            $parsedHtml['parsed_template'],
+            $parsedCss,
+            $sampleData['overlay_name'] ?? 'Overlay Preview'
+        );
 
         return response()->json([
             'success' => true,

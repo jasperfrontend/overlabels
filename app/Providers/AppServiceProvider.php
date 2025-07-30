@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Services\DefaultTemplateProviderService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
 
@@ -17,6 +18,12 @@ class AppServiceProvider extends ServiceProvider
         // This ensures we only load template files once per request cycle
         $this->app->singleton(DefaultTemplateProviderService::class, function ($app) {
             return new DefaultTemplateProviderService();
+        });
+        
+        // Register TemplateDataMapperService as singleton
+        // This handles transformation of nested API data to flat template structure
+        $this->app->singleton(\App\Services\TemplateDataMapperService::class, function ($app) {
+            return new \App\Services\TemplateDataMapperService();
         });
     }
 

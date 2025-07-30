@@ -1,6 +1,4 @@
 <?php
-// app/Http/Controllers/TemplateTagController.php
-// Simplified version without editing - focused on portability
 
 namespace App\Http\Controllers;
 
@@ -33,17 +31,32 @@ class TemplateTagController extends Controller
             abort(403, 'User not authenticated with Twitch');
         }
 
-        // Get current Twitch data
-        $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+        try {
+            // Get current Twitch data with error handling
+            $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
 
-        // Get existing template tags organized by category
-        $existingTags = $this->parser->getOrganizedTemplateTags();
+            // Get existing template tags organized by category
+            $existingTags = $this->parser->getOrganizedTemplateTags();
 
-        return Inertia::render('TemplateTagGenerator', [
-            'twitchData' => $twitchData,
-            'existingTags' => $existingTags,
-            'hasExistingTags' => !empty($existingTags)
-        ]);
+            return Inertia::render('TemplateTagGenerator', [
+                'twitchData' => $twitchData,
+                'existingTags' => $existingTags,
+                'hasExistingTags' => !empty($existingTags)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error loading template generator', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Return with empty data rather than failing completely
+            return Inertia::render('TemplateTagGenerator', [
+                'twitchData' => $this->getEmptyTwitchData(),
+                'existingTags' => $this->parser->getOrganizedTemplateTags(),
+                'hasExistingTags' => false,
+                'error' => 'Failed to load Twitch data. You can still generate template tags.'
+            ]);
+        }
     }
 
     /**
@@ -57,35 +70,35 @@ class TemplateTagController extends Controller
         }
 
         try {
-            // Get fresh Twitch data
+            // Get fresh Twitch data with error handling
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+            
+            // Ensure data arrays exist before processing
+            $twitchData = $this->ensureDataArraysExist($twitchData);
 
-            if (empty($twitchData)) {
-                return response()->json(['error' => 'No Twitch data available'], 400);
-            }
-
-            // Parse the JSON and generate STANDARDIZED tags
-            $parsedData = $this->parser->parseJsonAndCreateTags($twitchData);
-
-            // Save to database (will overwrite existing with same names)
-            $saved = $this->parser->saveTagsToDatabase($parsedData);
-
-            Log::info('Standardized template tags generated', [
+            Log::info('Starting template tag generation', [
                 'user_id' => $user->id,
-                'categories_created' => $saved['categories'],
-                'tags_created' => $saved['tags'],
-                'errors' => $saved['errors']
+                'data_structure' => array_keys($twitchData)
             ]);
+
+            // Generate template tags from the Twitch data
+            $generatedTags = $this->parser->parseJsonAndCreateTags($twitchData);
+
+            Log::info('Template tags generated successfully', [
+                'categories' => count($generatedTags['categories']),
+                'tags' => count($generatedTags['tags'])
+            ]);
+
+            // Save the generated tags to database
+            $saved = $this->parser->saveTagsToDatabase($generatedTags);
+
+            Log::info('Template tags saved to database', $saved);
 
             return response()->json([
                 'success' => true,
-                'message' => "Generated {$saved['tags']} standardized template tags in {$saved['categories']} categories",
-                'data' => [
-                    'categories' => $saved['categories'],
-                    'tags' => $saved['tags'],
-                    'total_tags' => $parsedData['total_tags'],
-                    'errors' => $saved['errors']
-                ]
+                'message' => 'Template tags generated successfully!',
+                'generated' => $generatedTags['total_tags'],
+                'saved' => $saved
             ]);
 
         } catch (\Exception $e) {
@@ -103,7 +116,7 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Get a preview of what a specific tag would output with current data
+     * Preview a specific tag with current data
      */
     public function previewTag(Request $request, TemplateTag $tag)
     {
@@ -115,6 +128,9 @@ class TemplateTagController extends Controller
         try {
             // Get current Twitch data
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+            
+            // Ensure data arrays exist
+            $twitchData = $this->ensureDataArraysExist($twitchData);
 
             // Get the formatted output for this tag
             $output = $tag->getFormattedOutput($twitchData);
@@ -173,60 +189,134 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Get all available template tags for the frontend
+     * Get all template tags (API endpoint)
      */
     public function getAllTags()
     {
         try {
-            $organizedTags = $this->parser->getOrganizedTemplateTags();
-
+            $tags = $this->parser->getOrganizedTemplateTags();
+            
             return response()->json([
                 'success' => true,
-                'data' => $organizedTags,
-                'total_categories' => count($organizedTags),
-                'total_tags' => TemplateTag::where('is_active', true)->count()
+                'tags' => $tags
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Error getting template tags', ['error' => $e->getMessage()]);
-
+            Log::error('Error fetching all template tags', ['error' => $e->getMessage()]);
+            
             return response()->json([
-                'error' => 'Failed to get template tags',
+                'error' => 'Failed to fetch template tags',
                 'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Export standard tags for template portability
+     * Export standardized tags for sharing
      */
     public function exportStandardTags()
     {
         try {
-            $standardTags = TemplateTag::standard()
-                ->with('category')
-                ->orderBy('tag_name')
-                ->get()
-                ->map(function($tag) {
-                    return [
-                        'tag_name' => $tag->tag_name,
-                        'display_tag' => $tag->display_tag,
-                        'json_path' => $tag->json_path,
-                        'data_type' => $tag->data_type,
-                        'category' => $tag->category->name,
-                        'version' => $tag->version
-                    ];
-                });
-
-            return response()->json([
-                'version' => '1.0',
-                'generated_at' => now()->toISOString(),
-                'total_tags' => $standardTags->count(),
-                'tags' => $standardTags
-            ]);
-
+            $tags = $this->parser->getOrganizedTemplateTags();
+            
+            $filename = 'template-tags-' . date('Y-m-d-H-i-s') . '.json';
+            
+            return response()->json($tags)
+                ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+                
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to export tags'], 500);
+            Log::error('Error exporting template tags', ['error' => $e->getMessage()]);
+            
+            return response()->json([
+                'error' => 'Failed to export template tags',
+                'message' => $e->getMessage()
+            ], 500);
         }
+    }
+
+    /**
+     * Ensure all required data arrays exist to prevent "Undefined array key" errors
+     */
+    private function ensureDataArraysExist(array $twitchData): array
+    {
+        // Ensure top-level structures exist
+        $requiredStructures = [
+            'user' => [],
+            'channel' => [],
+            'channel_followers' => ['total' => 0, 'data' => []],
+            'followed_channels' => ['total' => 0, 'data' => []],
+            'subscribers' => ['total' => 0, 'points' => 0, 'data' => []],
+            'goals' => ['data' => []]
+        ];
+
+        foreach ($requiredStructures as $key => $defaultValue) {
+            if (!isset($twitchData[$key])) {
+                $twitchData[$key] = $defaultValue;
+                Log::warning("Missing Twitch data structure: {$key}, using default");
+            }
+        }
+
+        // Ensure data arrays have at least empty objects to prevent index errors
+        $dataArrays = ['channel_followers', 'followed_channels', 'subscribers', 'goals'];
+        
+        foreach ($dataArrays as $arrayKey) {
+            if (isset($twitchData[$arrayKey]['data']) && empty($twitchData[$arrayKey]['data'])) {
+                // Add empty object so index 0 access doesn't fail
+                $twitchData[$arrayKey]['data'] = [[]];
+                Log::info("Added empty data object for {$arrayKey} to prevent index errors");
+            }
+        }
+
+        return $twitchData;
+    }
+
+    /**
+     * Get empty Twitch data structure for fallback
+     */
+    private function getEmptyTwitchData(): array
+    {
+        return [
+            'user' => [
+                'id' => '',
+                'login' => '',
+                'display_name' => '',
+                'type' => '',
+                'broadcaster_type' => '',
+                'description' => '',
+                'profile_image_url' => '',
+                'offline_image_url' => '',
+                'view_count' => 0,
+                'email' => '',
+                'created_at' => ''
+            ],
+            'channel' => [
+                'broadcaster_id' => '',
+                'broadcaster_login' => '',
+                'broadcaster_name' => '',
+                'broadcaster_language' => '',
+                'game_id' => '',
+                'game_name' => '',
+                'title' => '',
+                'delay' => 0,
+                'tags' => [],
+                'content_classification_labels' => [],
+                'is_branded_content' => false
+            ],
+            'channel_followers' => [
+                'total' => 0,
+                'data' => [[]]
+            ],
+            'followed_channels' => [
+                'total' => 0,
+                'data' => [[]]
+            ],
+            'subscribers' => [
+                'total' => 0,
+                'points' => 0,
+                'data' => [[]]
+            ],
+            'goals' => [
+                'data' => [[]]
+            ]
+        ];
     }
 }

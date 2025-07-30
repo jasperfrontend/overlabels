@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OverlayHash;
 use App\Services\DefaultTemplateProviderService;
+use App\Services\TemplateDataMapperService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,11 +15,16 @@ class OverlayHashController extends Controller
 {
 
     private DefaultTemplateProviderService $defaultTemplateProvider;
+    private TemplateDataMapperService $templateDataMapper;
 
-    public function __construct(DefaultTemplateProviderService $defaultTemplateProvider)
-    {
+    public function __construct(
+        DefaultTemplateProviderService $defaultTemplateProvider,
+        TemplateDataMapperService $templateDataMapper
+    ) {
         $this->defaultTemplateProvider = $defaultTemplateProvider;
+        $this->templateDataMapper = $templateDataMapper;
     }
+
     /**
      * Display the overlay hash management interface
      */
@@ -406,14 +412,17 @@ class OverlayHashController extends Controller
             // No custom template - return default overlay using the service
             return $this->returnDefaultHtmlOverlay($hash, $data);
         }
+
+        // Transform Twitch data into template-friendly structure
+        $templateData = $this->templateDataMapper->mapTwitchDataForTemplates($data['data'], $hash->overlay_name);
         
         // Parse the template with [[[template_tags]]]
         $templateParserService = app(\App\Services\OverlayTemplateParserService::class);
-        $parsedHtml = $templateParserService->parseTemplate($htmlTemplate, $data['data']);
-        $parsedCss = $cssTemplate ? $templateParserService->parseTemplate($cssTemplate, $data['data']) : '';
+        $parsedHtml = $templateParserService->parseTemplate($htmlTemplate, $templateData);
+        $parsedCss = $cssTemplate ? $templateParserService->parseTemplate($cssTemplate, $templateData) : '';
         
         // Build complete HTML document
-        $fullHtml = $this->buildCompleteHtmlDocument($parsedHtml, $parsedCss, $hash, $data);
+        $fullHtml = $this->templateDataMapper->buildCompleteHtmlDocument($parsedHtml, $parsedCss, $hash, $data);
         
         return response($fullHtml, 200)
             ->header('Content-Type', 'text/html')
@@ -424,19 +433,12 @@ class OverlayHashController extends Controller
 
     /**
      * Return the beautiful default HTML overlay using DefaultTemplateProviderService
-     * This replaces the old hardcoded template and ensures consistency!
+     * Now also uses TemplateDataMapperService for consistent data structure
      */
     private function returnDefaultHtmlOverlay(OverlayHash $hash, array $data): \Illuminate\Http\Response
     {
-        // Prepare data for template substitution
-        $templateData = [
-            'overlay_name' => $hash->overlay_name,
-            'channel_name' => $data['data']['channel']['broadcaster_name'] ?? 'N/A',
-            'followers_total' => number_format($data['data']['channel_followers']['total'] ?? 0),
-            'followers_latest_name' => $data['data']['channel_followers']['data'][0]['user_name'] ?? 'None',
-            'subscribers_total' => number_format($data['data']['subscribers']['total'] ?? 0),
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
+        // Transform Twitch data into template-friendly structure
+        $templateData = $this->templateDataMapper->mapTwitchDataForTemplates($data['data'], $hash->overlay_name);
 
         // Get complete HTML with CSS injected and data substituted
         $html = $this->defaultTemplateProvider->getCompleteDefaultHtml($templateData);
@@ -448,33 +450,8 @@ class OverlayHashController extends Controller
             ->header('Expires', '0');
     }
 
-    /**
-     * Build complete HTML document with parsed template
-     */
-    private function buildCompleteHtmlDocument(string $parsedHtml, string $parsedCss, OverlayHash $hash, array $data): string
-    {
-        return '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>' . htmlspecialchars($hash->overlay_name) . '</title>
-    <style>
-        ' . $parsedCss . '
-    </style>
-</head>
-<body>
-    ' . $parsedHtml . '
-    
-    <script>
-        // Auto-refresh for live data updates
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
-</body>
-</html>';
-    }
+
+
 
     /**
      * Helper: Flatten nested array for CSV

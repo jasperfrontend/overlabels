@@ -33,18 +33,18 @@ class OverlayTemplateParserService
             
             // Check if the tag exists in our data
             if (isset($data[$tagName])) {
-                return $data[$tagName];
+                return $this->sanitizeOutput($data[$tagName]);
             }
             
             // Handle nested data (like channel.broadcaster_name)
             if (strpos($tagName, '.') !== false) {
                 $value = $this->getNestedValue($data, $tagName);
                 if ($value !== null) {
-                    return $value;
+                    return $this->sanitizeOutput($value);
                 }
             }
             
-            // Return empty string for unknown tags (or you could return the tag itself for debugging)
+            // Return empty string for unknown tags (changed back from debug message)
             return '';
         }, $template);
     }
@@ -73,7 +73,7 @@ class OverlayTemplateParserService
             
             if (isset($data[$tagName])) {
                 $debugInfo['tags_replaced'][] = $tagName;
-                return $data[$tagName];
+                return $this->sanitizeOutput($data[$tagName]);
             }
             
             // Handle nested data
@@ -81,7 +81,7 @@ class OverlayTemplateParserService
                 $value = $this->getNestedValue($data, $tagName);
                 if ($value !== null) {
                     $debugInfo['tags_replaced'][] = $tagName;
-                    return $value;
+                    return $this->sanitizeOutput($value);
                 }
             }
             
@@ -153,7 +153,7 @@ class OverlayTemplateParserService
 
         return $validation;
     }
-
+    
     /**
      * Get example/default template using the centralized service
      * This replaces the old generateExampleTemplate method!
@@ -172,22 +172,13 @@ class OverlayTemplateParserService
     }
 
     /**
-     * Get available template tags (this would typically come from your TemplateTag model)
+     * Get available template tags from the TemplateDataMapperService
+     * This ensures the documentation matches the actual available tags
      */
     public function getAvailableTemplateTags(): array
     {
-        // This could be expanded to read from your TemplateTag model
-        return [
-            'overlay_name' => 'Name of the overlay',
-            'channel_name' => 'Twitch channel name',
-            'followers_total' => 'Total number of followers',
-            'followers_latest_name' => 'Name of the latest follower',
-            'subscribers_total' => 'Total number of subscribers',
-            'viewers_current' => 'Current viewer count',
-            'stream_title' => 'Current stream title',
-            'stream_category' => 'Current stream category',
-            'timestamp' => 'Current timestamp'
-        ];
+        $templateDataMapper = app(\App\Services\TemplateDataMapperService::class);
+        return $templateDataMapper->getAvailableTemplateTags();
     }
 
     /**
@@ -212,8 +203,21 @@ class OverlayTemplateParserService
     /**
      * Helper: Sanitize output to prevent XSS
      */
-    private function sanitizeOutput(string $value): string
+    private function sanitizeOutput($value): string
     {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        // Handle different data types
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+        
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+        
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
+        
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
 }

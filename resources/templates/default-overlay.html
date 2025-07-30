@@ -1,48 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[[[overlay_name]]]</title>
-</head>
-<body>
-    <div class="overlay-container">
-        <div class="overlay-title">[[[overlay_name]]]</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Channel:</span>
-            <span class="stat-value">[[[channel_name]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Followers:</span>
-            <span class="stat-value">[[[followers_total]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Latest Follower:</span>
-            <span class="stat-value">[[[followers_latest_name]]]</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">Subscribers:</span>
-            <span class="stat-value">[[[subscribers_total]]]</span>
-        </div>
-        
-        <div class="timestamp">
-            Last updated: [[[timestamp]]]
-        </div>
-        
-        <div class="setup-note">
-            ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
-        </div>
+<div class="overlay-container">
+    <div class="overlay-title">[[[overlay_name]]]</div>
+    
+    <div class="stat-row">
+        <span class="stat-label">Channel:</span>
+        <span class="stat-value">[[[channel_name]]]</span>
     </div>
     
-    <script>
-        // Auto-refresh every 30 seconds for live data
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
-    </script>
-</body>
-</html>
+    <div class="stat-row">
+        <span class="stat-label">Followers:</span>
+        <span class="stat-value">[[[followers_total]]]</span>
+    </div>
+    
+    <div class="stat-row">
+        <span class="stat-label">Latest Follower:</span>
+        <span class="stat-value">[[[followers_latest_name]]]</span>
+    </div>
+    
+    <div class="stat-row">
+        <span class="stat-label">Subscribers:</span>
+        <span class="stat-value">[[[subscribers_total]]]</span>
+    </div>
+    
+    <div class="timestamp">
+        Last updated: [[[timestamp]]]
+    </div>
+    
+    <div class="setup-note">
+        ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
+    </div>
+</div>
