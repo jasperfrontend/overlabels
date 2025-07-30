@@ -422,7 +422,7 @@ class OverlayHashController extends Controller
         $parsedCss = $cssTemplate ? $templateParserService->parseTemplate($cssTemplate, $templateData) : '';
         
         // Build complete HTML document
-        $fullHtml = $this->templateDataMapper->buildCompleteHtmlDocument($parsedHtml, $parsedCss, $hash, $data);
+        $fullHtml = $this->buildCompleteHtmlDocument($parsedHtml, $parsedCss, $hash, $data);
         
         return response($fullHtml, 200)
             ->header('Content-Type', 'text/html')
@@ -430,6 +430,20 @@ class OverlayHashController extends Controller
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
     }
+
+
+    /**
+     * Build complete HTML document with parsed template
+     */
+    private function buildCompleteHtmlDocument(string $parsedHtml, string $parsedCss, OverlayHash $hash, array $data): string
+    {
+        return $this->templateDataMapper->wrapHtmlAndCssIntoDocument(
+            $parsedHtml,
+            $parsedCss,
+            $hash->overlay_name
+        );
+    }
+
 
     /**
      * Return the beautiful default HTML overlay using DefaultTemplateProviderService

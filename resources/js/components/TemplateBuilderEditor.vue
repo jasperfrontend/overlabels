@@ -116,7 +116,7 @@ const previewHtml = computed(() => {
     if (html.includes('<style>')) {
       html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/g, `<style>${cssTemplate.value}</style>`)
     } else {
-      html = html.replace('</head>', `<style>${cssTemplate.value}</style>\n</head>`)
+      html = html.replace('[[[style]]]', `<style>${cssTemplate.value}</style>`)
     }
   }
   
@@ -221,8 +221,8 @@ const resetToDefault = async () => {
       // Reload defaults if not loaded yet
       await loadDefaultTemplates()
       if (defaultTemplates.value) {
-        htmlTemplate.value = defaultTemplates.value.html
-        cssTemplate.value = defaultTemplates.value.css
+        htmlTemplate.value = defaultTemplates?.value.html
+        cssTemplate.value = defaultTemplates?.value.css
         saveMessage.value = 'Reset to default template!'
         setTimeout(() => {
           saveMessage.value = ''

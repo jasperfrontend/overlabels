@@ -114,18 +114,6 @@ class TemplateDataMapperService
     }
 
     /**
-     * Build complete HTML document with parsed template
-     */
-    public function buildCompleteHtmlDocument(string $parsedHtml, string $parsedCss, OverlayHash $hash, array $data): string
-    {
-        return $this->wrapHtmlAndCssIntoDocument(
-            $parsedHtml,
-            $parsedCss,
-            $hash->overlay_name
-        );
-    }
-
-    /**
      * Get standardized template tag name from JSON path
      * This replaces JsonTemplateParserService::getStandardizedTagName()
      */

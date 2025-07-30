@@ -134,6 +134,13 @@ class TemplateBuilderController extends Controller
             ], 422);
         }
 
+        if (preg_match('/<html|<head|<body|<!DOCTYPE/i', $request->input('html_template'))) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['Please do not include <html>, <head>, or <body> tags — just write the overlay content. Add styling to the CSS editor.']
+            ], 422);
+        }
+
         // Validate HTML template
         $htmlValidation = $this->templateParser->validateTemplate($request->input('html_template'));
         
@@ -292,7 +299,7 @@ class TemplateBuilderController extends Controller
             $request->input('html_template'),
             $sampleData
         );
-
+        
         $parsedCss = $this->templateParser->parseTemplate(
             $request->input('css_template', ''),
             $sampleData
