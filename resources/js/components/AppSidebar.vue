@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Dog, Folder, LayoutGrid, Radio, Shuffle, TwitchIcon, Code, Shield } from 'lucide-vue-next';
+import { BookOpen, Dog, Folder, LayoutGrid, Radio, Shuffle, TwitchIcon, Code, Shield, Building } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -14,16 +14,7 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
-    {
-        title: 'Random fox',
-        href: '/fox',
-        icon: Shuffle,
-    },
-    {
-        title: 'All foxes',
-        href: '/foxes',
-        icon: Dog,
-    },
+
     {
         title: 'Your Twitch Data',
         href: '/twitchdata',
@@ -37,7 +28,7 @@ const mainNavItems: NavItem[] = [
     {  
         title: 'Template Builder',
         href: '/template-builder',
-        icon: Code,
+        icon: Building,
     },
     {
         title: 'Tags Generator',
@@ -54,14 +45,14 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
+        title: 'Bored? fox!',
+        href: '/fox',
+        icon: Shuffle,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Foxes are cute',
+        href: '/foxes',
+        icon: Dog,
     },
 ];
 </script>
