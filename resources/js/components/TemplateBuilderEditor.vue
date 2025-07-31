@@ -8,7 +8,8 @@ import { EditorView } from '@codemirror/view';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle, FileWarningIcon, ExternalLinkIcon, RefreshCcwDot } from 'lucide-vue-next';
+import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle, FileWarningIcon, ExternalLinkIcon, RefreshCcwDot, Keyboard } from 'lucide-vue-next';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 
 interface Props {
     overlayHash: {
@@ -208,7 +209,7 @@ const saveTemplate = async () => {
         const result = await response.json();
 
         if (result.success) {
-            saveMessage.value = 'Template saved successfully!';
+            saveMessage.value = 'Saved successfully!';
             setTimeout(() => {
                 saveMessage.value = '';
             }, 3000);
@@ -270,6 +271,36 @@ watch(
         isDark.value = newDark;
     },
 );
+
+// Initialize keyboard shortcuts
+const { register, getAllShortcuts } = useKeyboardShortcuts();
+const showKeyboardShortcuts = ref(false);
+
+// Register keyboard shortcuts
+onMounted(() => {
+    // Save template with Ctrl+S
+    register('save-template', 'ctrl+s', () => {
+        saveTemplate();
+    }, { description: 'Save template' });
+
+    // Preview with Ctrl+P
+    register('preview-live', 'ctrl+p', () => {
+        previewLive();
+    }, { description: 'Preview in new tab' });
+
+    // Validate template with Ctrl+V
+    register('validate-template', 'ctrl+v', () => {
+        validateTemplate();
+    }, { description: 'Validate template' });
+
+    // Toggle keyboard shortcuts display with Ctrl+K
+    register('toggle-shortcuts', 'ctrl+k', () => {
+        showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
+    }, { description: 'Show keyboard shortcuts' });
+});
+
+// Get all keyboard shortcuts for display
+const keyboardShortcutsList = computed(() => getAllShortcuts());
 </script>
 
 <template>
@@ -282,6 +313,11 @@ watch(
                     <CardTitle class="flex items-center gap-2 text-base">
                         <Play class="h-4 w-4" />
                         Actions
+
+                        <!-- Keyboard shortcuts indicator -->
+                        <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-1 h-6 w-6 p-0">
+                            <Keyboard class="h-4 w-4" />
+                        </Button>
 
                         <!-- Save message -->
                         <div
@@ -301,29 +337,32 @@ watch(
                     <Button
                         @click="saveTemplate"
                         :disabled="isSaving"
-                        class="w-28 cursor-pointer bg-green-300 text-green-800 shadow transition hover:bg-green-400 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800"
+                        class="w-35 cursor-pointer bg-green-300 text-green-800 shadow transition hover:bg-green-400 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800"
                     >
                         <RefreshCcwDot v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
                         <Save v-else class="mr-2 h-4 w-4" />
-                        {{ isSaving ? '&hellip;' : 'Save' }}
+                        {{ isSaving ? 'Save' : 'Save' }}
+                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃S</span>
                     </Button>
 
-                    <Button @click="previewLive" class="w-28 cursor-pointer" variant="outline">
-                        <ExternalLinkIcon />
+                    <Button @click="previewLive" class="w-35 cursor-pointer" variant="outline">
+                        <ExternalLinkIcon class="mr-1 h-4 w-4" />
                         New Tab
+                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃P</span>
                     </Button>
 
-                    <Button @click="validateTemplate" :disabled="isValidating" class="w-28 cursor-pointer" variant="outline">
+                    <Button @click="validateTemplate" :disabled="isValidating" class="w-35 cursor-pointer" variant="outline">
                         <RefreshCcwDot v-if="isValidating" class="mr-2 h-4 w-4 animate-spin" />
                         <CheckCircle v-else class="mr-2 h-4 w-4" />
-                        {{ isValidating ? '&hellip;' : 'Validate' }}
+                        {{ isValidating ? 'Validate' : 'Validate' }}
+                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃V</span>
                     </Button>
 
                     <Button
                         title="Reset your layout. Be careful, this will destroy any changes you have made to this template!"
                         @click="resetToDefault"
                         :disabled="isLoadingDefaults"
-                        class="w-28 cursor-pointer bg-red-400/50 hover:bg-red-500 hover:text-red-100"
+                        class="w-35 cursor-pointer bg-red-400/50 hover:bg-red-500 hover:text-red-100"
                     >
                         <RefreshCcwDot v-if="isLoadingDefaults" class="mr-2 h-4 w-4 animate-spin" />
                         <FileWarningIcon v-else class="h-4 w-4"></FileWarningIcon>
@@ -465,6 +504,36 @@ watch(
                     </Card>
                 </TabsContent>
             </Tabs>
+        </div>
+    </div>
+
+    <!-- Keyboard shortcuts dialog -->
+    <div v-if="showKeyboardShortcuts"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+         @click.self="showKeyboardShortcuts = false">
+        <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
+                <button @click="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id"
+                     class="flex items-center justify-between rounded-md border p-2 text-sm">
+                    <span>{{ shortcut.description }}</span>
+                    <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+                        {{ shortcut.keys }}
+                    </kbd>
+                </div>
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    Press <kbd class="rounded bg-gray-100 px-1 dark:bg-gray-700">Ctrl+K</kbd> to toggle this dialog.<br/><br/>
+                    Keyboard shortcuts do not work when focused on the code editor.<br/>
+                    Click outside first, then hit ctrl+s.
+                </p>
+            </div>
         </div>
     </div>
 </template>
