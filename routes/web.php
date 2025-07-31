@@ -55,6 +55,10 @@ Route::get('/overlay/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashControl
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Matches: word-word-word-word-word pattern
     ->where('hashKey', '[a-zA-Z0-9]{64}'); // Ensures hash is exactly 64 alphanumeric characters
 
+Route::get('/overlay/{slug}/public', [App\Http\Controllers\OverlayHashController::class, 'serveOverlayPublic'])
+    ->name('overlay.serve.public')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*'); // Matches: word-word-word-word-word pattern
+
 // Test endpoint for debugging hash authentication (with fun slug)
 Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
     ->name('overlay.test')
@@ -105,18 +109,6 @@ Route::get('/auth/callback/twitch', action: function () {
         if ($user) {
             // User exists with this email but no twitch_id - link the accounts
             if (isset($twitchUser->refreshToken)) $user->update([
-                'twitch_id' => $twitchUser->getId(),
-                'avatar' => $twitchUser->getAvatar(),
-                'access_token' => $twitchUser->token,
-                'refresh_token' => $twitchUser->refreshToken,
-                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-                'twitch_data' => array_merge($twitchUser->user, $extendedData),
-            ]);
-        } else {
-            // Completely new user - create them
-            $user = User::create([
-                'name' => $twitchUser->getNickname(),
-                'email' => $twitchUser->getEmail(),
                 'twitch_id' => $twitchUser->getId(),
                 'avatar' => $twitchUser->getAvatar(),
                 'access_token' => $twitchUser->token,
