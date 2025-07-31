@@ -4,7 +4,6 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { BreadcrumbItem } from '@/types'
 import TemplateBuilderEditor from '@/components/TemplateBuilderEditor.vue'
 import HelpFab from '@/components/HelpFab.vue'
-import { computed } from 'vue'
 
 // Props from Inertia controller
 interface Props {
@@ -58,7 +57,7 @@ if (props.overlayHash) {
 
 <template>
   <Head title="Template Builder" />
-  
+
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
@@ -72,11 +71,11 @@ if (props.overlayHash) {
       </div>
 
       <!-- Overlay Hash Selector -->
-      <div v-if="!overlayHash && userOverlayHashes.length > 0" 
+      <div v-if="!overlayHash && userOverlayHashes.length > 0"
            class="bg-white dark:bg-gray-800 rounded-lg border p-6">
         <h2 class="text-lg font-medium mb-4">Select an Overlay to Edit</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <a v-for="hash in userOverlayHashes" 
+          <a v-for="hash in userOverlayHashes"
              :key="hash.slug"
              :href="route('template.builder', hash.slug)"
              class="block p-4 border rounded-lg hover:bg-gray-50 bg-accent border-accent-foreground hover:border-cyan-600 dark:hover:bg-gray-700 transition-colors">
@@ -102,14 +101,14 @@ if (props.overlayHash) {
         <p class="text-gray-600 dark:text-gray-400 mb-4">
           You need to create an overlay hash first before you can build templates.
         </p>
-        <a :href="route('overlay.hashes.index')" 
+        <a :href="route('overlay.hashes.index')"
            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           Create Overlay Hash
         </a>
       </div>
     </div>
 
-    
+
     <HelpFab slug="template-builder" />
 
   </AppLayout>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\TwitchApiService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FoxController;
@@ -9,6 +10,7 @@ use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Laravel\Socialite\Two\AbstractProvider;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -65,9 +67,9 @@ Route::get('/phpinfo', function () {
 
 // Initiate login with Twitch
 Route::get('/auth/redirect/twitch', function () {
-    /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+    /** @var AbstractProvider $driver */
     $driver = Socialite::driver('twitch');
-    
+
     return $driver->scopes([
         'user:read:email',            // To get email
         'user:read:follows',          // Who they follow
@@ -81,34 +83,34 @@ Route::get('/auth/redirect/twitch', function () {
 });
 
 
-Route::get('/auth/callback/twitch', function () {
+Route::get('/auth/callback/twitch', action: function () {
     $twitchUser = Socialite::driver('twitch')->user();
-    
+
     // Create the TwitchApiService instance
-    $twitchService = new \App\Services\TwitchApiService();
-    
+    $twitchService = new TwitchApiService();
+
     // Get extended data using the access token
     $extendedData = $twitchService->getExtendedUserData(
-        $twitchUser->token, 
+        $twitchUser->token,
         $twitchUser->getId()
     );
 
-    // First, try to find user by twitch_id
-    $user = User::where('twitch_id', $twitchUser->getId())->first();
-    
+    // First, try to find the user by twitch_id
+    $user = User::where('twitch_id', $twitchUser->getId(), null, false)->first();
+
     if (!$user) {
         // If no user found by twitch_id, check if email already exists
-        $user = User::where('email', $twitchUser->getEmail())->first();
-        
+        $user = User::where('email', $twitchUser->getEmail(), null, false)->first();
+
         if ($user) {
             // User exists with this email but no twitch_id - link the accounts
-            $user->update([
+            if (isset($twitchUser->refreshToken)) $user->update([
                 'twitch_id' => $twitchUser->getId(),
                 'avatar' => $twitchUser->getAvatar(),
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-                'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
+                'twitch_data' => array_merge($twitchUser->user, $extendedData),
             ]);
         } else {
             // Completely new user - create them
@@ -120,7 +122,7 @@ Route::get('/auth/callback/twitch', function () {
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-                'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
+                'twitch_data' => array_merge($twitchUser->user, $extendedData),
             ]);
         }
     } else {
@@ -131,7 +133,7 @@ Route::get('/auth/callback/twitch', function () {
             'access_token' => $twitchUser->token,
             'refresh_token' => $twitchUser->refreshToken,
             'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-            'twitch_data' => array_merge($twitchUser->user, $extendedData), // Merge the data!
+            'twitch_data' => array_merge($twitchUser->user, $extendedData),
         ]);
     }
 
@@ -158,23 +160,23 @@ Route::middleware(['auth'])->group(function () {
     // Template tag generator interface
     Route::get('/template-generator', [TemplateTagController::class, 'index'])
         ->name('template.generator');
-    
+
     // Generate standardized tags from current Twitch data
     Route::post('/template-tags/generate', [TemplateTagController::class, 'generateTags'])
         ->name('template.generate');
-    
+
     // Preview a specific tag with current data
     Route::get('/template-tags/{tag}/preview', [TemplateTagController::class, 'previewTag'])
         ->name('template.preview');
-    
+
     // Clear all template tags
     Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
         ->name('template.clear');
-    
+
     // Get all template tags (API endpoint)
     Route::get('/api/template-tags', [TemplateTagController::class, 'getAllTags'])
         ->name('template.api.all');
-    
+
     // Export standardized tags for sharing
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');
@@ -182,20 +184,20 @@ Route::middleware(['auth'])->group(function () {
     // Overlay Hash Management Interface
     Route::get('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'index'])
         ->name('overlay.hashes.index');
-    
-    // Create new overlay hash
+
+    // Create a new Overlay Hash
     Route::post('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'store'])
         ->name('overlay.hashes.store');
-    
-    // Revoke an overlay hash
+
+    // Revoke an Overlay Hash
     Route::post('/overlay-hashes/{hash}/revoke', [App\Http\Controllers\OverlayHashController::class, 'revoke'])
         ->name('overlay.hashes.revoke');
-    
-    // Regenerate an overlay hash
+
+    // Regenerate an Overlay Hash
     Route::post('/overlay-hashes/{hash}/regenerate', [App\Http\Controllers\OverlayHashController::class, 'regenerate'])
         ->name('overlay.hashes.regenerate');
-    
-    // Delete an overlay hash permanently
+
+    // Delete an Overlay Hash permanently
     Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
         ->name('overlay.hashes.destroy');
 
@@ -203,41 +205,40 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/template-builder/{slug?}', [App\Http\Controllers\TemplateBuilderController::class, 'index'])
         ->name('template.builder')
         ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*'); // Match the fun slug pattern: word-word-word-word-word
-    
+
     // API endpoints for template builder
     Route::prefix('api/template')->group(function () {
-        
+
         // Get available template tags
         Route::get('/tags', [App\Http\Controllers\TemplateBuilderController::class, 'getAvailableTags'])
             ->name('api.template.tags');
-        
-        // Get default templates from centralized service
+
+        // Get default templates from a centralized service
         Route::get('/defaults', [App\Http\Controllers\TemplateBuilderController::class, 'getDefaultTemplates'])
             ->name('api.template.defaults');
-        
+
         // Validate template syntax
         Route::post('/validate', [App\Http\Controllers\TemplateBuilderController::class, 'validateTemplate'])
             ->name('api.template.validate');
-        
+
         // Save template to overlay hash (still uses hash_key internally for security)
         Route::post('/save', [App\Http\Controllers\TemplateBuilderController::class, 'saveTemplate'])
             ->name('api.template.save');
-        
+
         // Load existing template from slug
         Route::get('/load/{slug}', [App\Http\Controllers\TemplateBuilderController::class, 'loadTemplate'])
             ->name('api.template.load')
             ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
-        
+
         // Preview template with sample data
         Route::post('/preview', [App\Http\Controllers\TemplateBuilderController::class, 'previewTemplate'])
             ->name('api.template.preview');
-        
-        // Export template as standalone HTML file
+
+        // Export template as a standalone HTML file
         Route::post('/export', [App\Http\Controllers\TemplateBuilderController::class, 'exportTemplate'])
             ->name('api.template.export');
     });
 });
-
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

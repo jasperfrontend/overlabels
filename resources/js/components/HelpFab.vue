@@ -1,5 +1,5 @@
-<script setup>
-import { ref, onMounted, computed } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogOverlay, DialogContent } from '@/components/ui/dialog'
 import { useMediaQuery } from '@vueuse/core'

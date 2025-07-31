@@ -42,7 +42,7 @@ class TemplateBuilderController extends Controller
             'css' => ''
         ];
 
-        // If slug is provided, load existing template
+        // If a slug is provided, load the existing template
         if ($slug) {
             $overlayHash = OverlayHash::where('slug', $slug)
                 ->where('user_id', Auth::id())
@@ -95,7 +95,7 @@ class TemplateBuilderController extends Controller
     {
         try {
             $templates = $this->defaultTemplateProvider->getDefaultTemplates();
-            
+
             return response()->json([
                 'success' => true,
                 'templates' => $templates,
@@ -105,7 +105,7 @@ class TemplateBuilderController extends Controller
             Log::error('Error fetching default templates', [
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to load default templates',
@@ -137,13 +137,13 @@ class TemplateBuilderController extends Controller
         if (preg_match('/<html|<head|<body|<!DOCTYPE/i', $request->input('html_template'))) {
             return response()->json([
                 'success' => false,
-                'errors' => ['Please do not include <html>, <head>, or <body> tags — just write the overlay content. Add styling to the CSS editor.']
+                'errors' => ['Please do not include html, head or body tags — just write the overlay content. Add styling to the CSS editor.']
             ], 422);
         }
 
         // Validate HTML template
         $htmlValidation = $this->templateParser->validateTemplate($request->input('html_template'));
-        
+
         // Validate CSS template
         $cssValidation = $this->validateCssTemplate($request->input('css_template', ''));
 
@@ -201,7 +201,7 @@ class TemplateBuilderController extends Controller
 
         // Validate templates before saving
         $validation = $this->templateParser->validateTemplate($request->input('html_template'));
-        
+
         if (!$validation['is_valid']) {
             return response()->json([
                 'success' => false,
@@ -276,8 +276,9 @@ class TemplateBuilderController extends Controller
 
     /**
      * Preview template with sample data
+     * @param $parsedResult
      */
-    public function previewTemplate(Request $request): JsonResponse
+    public function previewTemplate(Request $request, $parsedResult): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'html_template' => 'required|string',
@@ -299,7 +300,7 @@ class TemplateBuilderController extends Controller
             $request->input('html_template'),
             $sampleData
         );
-        
+
         $parsedCss = $this->templateParser->parseTemplate(
             $request->input('css_template', ''),
             $sampleData
@@ -321,7 +322,7 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Export template as standalone HTML file
+     * Export template as a standalone HTML file
      */
     public function exportTemplate(Request $request): \Illuminate\Http\Response
     {
@@ -335,14 +336,14 @@ class TemplateBuilderController extends Controller
             return response('Invalid template data', 422);
         }
 
-        // Create complete HTML file
+        // Create a complete HTML file
         $htmlTemplate = $request->input('html_template');
         $cssTemplate = $request->input('css_template', '');
-        
+
         if (!empty($cssTemplate)) {
             // Inject CSS into HTML
-            if (strpos($htmlTemplate, '<style>') !== false) {
-                $htmlTemplate = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>{$cssTemplate}</style>", $htmlTemplate);
+            if (str_contains($htmlTemplate, '<style>')) {
+                $htmlTemplate = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>$cssTemplate</style>", $htmlTemplate);
             } else {
                 $htmlTemplate = str_replace('</head>', "<style>{$cssTemplate}</style>\n</head>", $htmlTemplate);
             }
@@ -416,7 +417,7 @@ class TemplateBuilderController extends Controller
         // Basic syntax checks
         $openBraces = substr_count($css, '{');
         $closeBraces = substr_count($css, '}');
-        
+
         if ($openBraces !== $closeBraces) {
             $validation['is_valid'] = false;
             $validation['errors'][] = 'Mismatched CSS braces - ensure every { has a matching }';
@@ -428,11 +429,11 @@ class TemplateBuilderController extends Controller
         }
 
         // Check for potentially dangerous CSS
-        if (strpos($css, '@import') !== false) {
+        if (str_contains($css, '@import')) {
             $validation['warnings'][] = '@import statements may not work in overlay context';
         }
 
-        if (strpos($css, 'javascript:') !== false) {
+        if (str_contains($css, 'javascript:')) {
             $validation['is_valid'] = false;
             $validation['errors'][] = 'JavaScript URLs are not allowed in CSS for security reasons';
         }

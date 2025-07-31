@@ -33,7 +33,7 @@ class FoxController extends Controller
             $publicId = 'foxes/' . pathinfo($filename, PATHINFO_FILENAME); // Remove extension, Cloudinary will handle it
 
             // Step 2: Check if we already have this fox
-            $existingFox = Fox::where('api_url', $url)->first();
+            $existingFox = Fox::where('api_url', $url, null, false)->first();
             if ($existingFox && $existingFox->cloudinary_url) {
                 return Inertia::render('Fox', [
                     'foxPic' => $existingFox->cloudinary_url,
@@ -42,7 +42,7 @@ class FoxController extends Controller
 
             // Step 3: Upload to Cloudinary
             $cloudinary = $this->getCloudinary();
-            
+
             $uploadResult = $cloudinary->uploadApi()->upload($url, [
                 'public_id' => $publicId,
                 'folder' => 'foxes',
@@ -60,7 +60,7 @@ class FoxController extends Controller
 
             $cloudinaryUrl = $uploadResult['secure_url'];
 
-            // Step 4: Save/Update in database
+            // Step 4: Save/Update in a database
             $fox = Fox::updateOrCreate(
                 ['api_url' => $url],
                 [
@@ -77,11 +77,11 @@ class FoxController extends Controller
         } catch (\Exception $e) {
             Log::error('Fox controller error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             // Fallback to external URL if Cloudinary fails
             $response = Http::get('https://randomfox.ca/floof/');
             $fallbackUrl = $response->json()['image'] ?? 'https://images.unsplash.com/photo-1494947665470-20322015e3a8?w=640';
-            
+
             return Inertia::render('Fox', [
                 'foxPic' => $fallbackUrl,
             ]);

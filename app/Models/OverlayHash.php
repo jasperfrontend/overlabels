@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Services\FunSlugGenerationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Log;
 
 class OverlayHash extends Model
 {
@@ -52,17 +54,17 @@ class OverlayHash extends Model
     {
         // Generate a random string, then hash it for extra security
         $randomString = Str::random(32) . time() . Str::random(32);
-        
+
         // Use Laravel's Hash facade to create a secure hash
         // We'll use a combination approach for maximum security
         $hashedString = Hash::make($randomString);
-        
+
         // Clean the hash to make it URL-safe (remove special characters)
         $cleanHash = preg_replace('/[^a-zA-Z0-9]/', '', $hashedString);
-        
+
         // Ensure it's exactly 64 characters by padding or truncating
         $finalHash = substr(str_pad($cleanHash, 64, '0'), 0, 64);
-        
+
         // Make sure this hash doesn't already exist (extremely unlikely, but good practice)
         while (self::where('hash_key', $finalHash)->exists()) {
             $randomString = Str::random(32) . time() . Str::random(32);
@@ -70,7 +72,7 @@ class OverlayHash extends Model
             $cleanHash = preg_replace('/[^a-zA-Z0-9]/', '', $hashedString);
             $finalHash = substr(str_pad($cleanHash, 64, '0'), 0, 64);
         }
-        
+
         return $finalHash;
     }
 
@@ -79,7 +81,7 @@ class OverlayHash extends Model
      */
     public static function generateSlug(): string
     {
-        $slugService = app(\App\Services\FunSlugGenerationService::class);
+        $slugService = app(FunSlugGenerationService::class);
         return $slugService->generateUniqueSlug();
     }
 
@@ -87,8 +89,8 @@ class OverlayHash extends Model
      * Create a new overlay hash for a user
      */
     public static function createForUser(
-        int $userId, 
-        string $overlayName, 
+        int $userId,
+        string $overlayName,
         ?string $description = null,
         ?Carbon $expiresAt = null,
         ?array $allowedIps = null,
@@ -121,7 +123,7 @@ class OverlayHash extends Model
             return false;
         }
 
-        // Check IP whitelist if configured
+        // Check the IP allowlist if configured
         if ($this->allowed_ips && $clientIp) {
             if (!in_array($clientIp, $this->allowed_ips)) {
                 return false;
@@ -132,7 +134,7 @@ class OverlayHash extends Model
     }
 
     /**
-     * Record an access to this hash
+     * Record access to this hash
      */
     public function recordAccess(?string $clientIp = null): void
     {
@@ -142,7 +144,7 @@ class OverlayHash extends Model
         ]);
 
         // Optionally log access for security monitoring
-        \Log::info('Overlay hash accessed', [
+        Log::info('Overlay hash accessed', [
             'hash_id' => $this->id,
             'user_id' => $this->user_id,
             'overlay_name' => $this->overlay_name,
@@ -166,7 +168,7 @@ class OverlayHash extends Model
     {
         $newHash = self::generateSecureHash();
         $this->update(['hash_key' => $newHash]);
-        
+
         return $newHash;
     }
 
@@ -175,7 +177,7 @@ class OverlayHash extends Model
      */
     public function getOverlayUrl(): string
     {
-        return config('app.url') . "/overlay/{$this->slug}/{$this->hash_key}";
+        return config('app.url') . "/overlay/$this->slug/$this->hash_key";
     }
 
     /**
@@ -183,43 +185,23 @@ class OverlayHash extends Model
      */
     public function getShareableUrl(): string
     {
-        return config('app.url') . "/overlay/{$this->slug}/YOUR_HASH_HERE";
+        return config('app.url') . "/overlay/$this->slug/YOUR_HASH_HERE";
     }
 
     /**
-     * Scope for active hashes only
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true)
-                    ->where(function($q) {
-                        $q->whereNull('expires_at')
-                          ->orWhere('expires_at', '>', now());
-                    });
-    }
-
-    /**
-     * Scope for a specific user
-     */
-    public function scopeForUser($query, int $userId)
-    {
-        return $query->where('user_id', $userId);
-    }
-
-    /**
-     * Find hash by key and validate it
+     * Find a hash by key and validate it
      */
     public static function findValidHash(string $hashKey, ?string $clientIp = null): ?self
     {
         $hash = self::where('hash_key', $hashKey)->first();
-        
+
         if (!$hash || !$hash->isValid($clientIp)) {
             return null;
         }
-        
+
         // Record the access
         $hash->recordAccess($clientIp);
-        
+
         return $hash;
     }
 }
