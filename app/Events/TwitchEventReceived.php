@@ -47,6 +47,7 @@ class TwitchEventReceived implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+
         return [
             'type' => $this->eventType,
             'data' => $this->eventData,
