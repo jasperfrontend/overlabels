@@ -34,16 +34,16 @@ const initializeEcho = () => {
 
   // Configure Laravel Echo
   (window as any).Pusher = Pusher;
-  
+
   const pusherConfig = {
     broadcaster: 'pusher' as const,
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'eu',
     forceTLS: true
   };
-  
-  console.log('Pusher config:', pusherConfig);
-  
+
+  // console.log('Pusher config:', pusherConfig);
+
   echo.value = new Echo(pusherConfig);
 
   // Listen for connection state changes
@@ -71,7 +71,7 @@ const initializeEcho = () => {
   echo.value.channel('twitch-events')
     .listen('.twitch.event', (event: any) => {
       console.log('🎉 Received Twitch event:', event);
-      
+
       // Add to events list
       events.value.unshift({
         ...event,
@@ -79,7 +79,7 @@ const initializeEcho = () => {
         receivedAt: new Date().toLocaleTimeString()
       });
 
-      // Keep only last 50 events
+      // Keep only the last 50 events
       if (events.value.length > 50) {
         events.value = events.value.slice(0, 50);
       }
@@ -101,10 +101,10 @@ const scrollToTop = () => {
 // Connect to EventSub
 const connect = async () => {
   if (isConnecting.value) return;
-  
+
   console.log('🔌 Starting EventSub connection...');
   isConnecting.value = true;
-  
+
   try {
     const response = await fetch('/eventsub/connect', {
       method: 'POST',
@@ -113,13 +113,13 @@ const connect = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
     });
-    
+
     const data = await response.json();
     console.log('📡 EventSub API Response:', data);
-    
+
     if (response.ok) {
       console.log('✅ Connected to EventSub:', data);
-      
+
       // Add a connection event to the log
       events.value.unshift({
         id: Date.now(),
@@ -128,40 +128,40 @@ const connect = async () => {
         timestamp: new Date().toISOString(),
         receivedAt: new Date().toLocaleTimeString()
       });
-      
+
       // Check status immediately to get initial state
       await checkStatus();
-      
+
       // Set up automatic status refreshing
       // Check again after 5 seconds (when verification should be complete)
       setTimeout(async () => {
         console.log('🔄 Auto-refreshing status after verification window...');
         await checkStatus();
       }, 5000);
-      
+
       // Continue checking every 10 seconds for the first minute
       // (in case verification takes longer)
       let refreshCount = 0;
       const refreshInterval = setInterval(async () => {
         refreshCount++;
         console.log(`🔄 Auto-refresh ${refreshCount}/6...`);
-        
+
         await checkStatus();
-        
+
         // Stop after 6 refreshes (1 minute total)
         if (refreshCount >= 6) {
           clearInterval(refreshInterval);
           console.log('✅ Auto-refresh complete');
         }
       }, 10000);
-      
+
     } else {
       console.error('❌ EventSub connection failed:', data);
       throw new Error(data.error || 'Failed to connect');
     }
   } catch (error) {
     console.error('💥 Connection failed:', error);
-    
+
     events.value.unshift({
       id: Date.now(),
       type: 'error',
@@ -178,7 +178,7 @@ const connect = async () => {
 // Disconnect from EventSub
 const disconnect = async () => {
   console.log('🔌 Disconnecting from EventSub...');
-  
+
   try {
     const response = await fetch('/eventsub/disconnect', {
       method: 'POST',
@@ -187,14 +187,14 @@ const disconnect = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
     });
-    
+
     const data = await response.json();
     console.log('📡 Disconnect API Response:', data);
-    
+
     if (response.ok) {
       isConnected.value = false;
       console.log('✅ Disconnected from EventSub:', data);
-      
+
       events.value.unshift({
         id: Date.now(),
         type: 'system',
@@ -202,7 +202,7 @@ const disconnect = async () => {
         timestamp: new Date().toISOString(),
         receivedAt: new Date().toLocaleTimeString()
       });
-      
+
       subscriptionStatus.value = null;
     } else {
       console.error('❌ Disconnect failed:', data);
@@ -210,7 +210,7 @@ const disconnect = async () => {
     }
   } catch (error) {
     console.error('💥 Disconnect failed:', error);
-    
+
     events.value.unshift({
       id: Date.now(),
       type: 'error',
@@ -224,13 +224,13 @@ const disconnect = async () => {
 // Check subscription status
 const checkStatus = async () => {
   console.log('🔍 Checking EventSub status...');
-  
+
   try {
     // Use the same endpoint as your working backend check
     const response = await fetch('/eventsub/check-status'); // Changed from '/eventsub/status'
     const data = await response.json();
     console.log('📊 Status response:', data);
-    
+
     if (response.ok) {
       subscriptionStatus.value = data;
       isConnected.value = data.total > 0;
@@ -289,13 +289,13 @@ onUnmounted(() => {
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Twitch EventSub Demo</h1>
-        
+
         <div class="flex items-center gap-4">
           <!-- Status Indicators -->
           <div class="flex flex-col items-start">
             <!-- EventSub Status -->
             <div class="flex items-center gap-2">
-              <div 
+              <div
                 class="h-3 w-3 rounded-full transition-colors"
                 :class="isConnected ? 'bg-green-500' : 'bg-red-500'"
               />
@@ -303,10 +303,10 @@ onUnmounted(() => {
                 EventSub: {{ isConnected ? 'Connected' : 'Disconnected' }}
               </span>
             </div>
-            
+
             <!-- WebSocket Status -->
             <div class="flex items-center gap-2">
-              <div 
+              <div
                 class="h-3 w-3 rounded-full transition-colors"
                 :class="isWebSocketConnected ? 'bg-blue-500' : 'bg-gray-400'"
               />
@@ -316,28 +316,28 @@ onUnmounted(() => {
             </div>
 
           </div>
-          
+
           <!-- Action Buttons -->
-          <Button 
-            @click="connect" 
+          <Button
+            @click="connect"
             :disabled="isConnected || isConnecting"
             variant="default"
             class="cursor-pointer"
           >
             {{ isConnecting ? 'Connecting...' : 'Connect' }}
           </Button>
-          
-          <Button 
-            @click="disconnect" 
+
+          <Button
+            @click="disconnect"
             :disabled="!isConnected"
             variant="outline"
             class="cursor-pointer"
           >
             Disconnect
           </Button>
-          
-          <Button 
-            @click="clearEvents" 
+
+          <Button
+            @click="clearEvents"
             variant="ghost"
             class="cursor-pointer bg-accent"
           >
@@ -350,8 +350,8 @@ onUnmounted(() => {
       <div v-if="subscriptionStatus" class="rounded-lg border bg-muted/50 p-4">
         <h3 class="font-semibold mb-2">Active Subscriptions ({{ subscriptionStatus.total }})</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div 
-            v-for="sub in subscriptionStatus.subscriptions" 
+          <div
+            v-for="sub in subscriptionStatus.subscriptions"
             :key="sub.id"
             class="text-sm bg-background rounded p-2 border"
           >
@@ -369,8 +369,8 @@ onUnmounted(() => {
             Events will appear here in real-time. Follow your channel or subscribe to see them!
           </p>
         </div>
-        
-        <div 
+
+        <div
           ref="eventsContainer"
           class="h-96 overflow-y-auto p-4 space-y-3"
         >
@@ -378,16 +378,16 @@ onUnmounted(() => {
           <div v-if="events.length === 0" class="text-center text-muted-foreground py-8">
             No events yet. Connect to EventSub and interact with your Twitch channel!
           </div>
-          
-          <div 
-            v-for="event in events" 
+
+          <div
+            v-for="event in events"
             :key="event.id"
             class="border rounded-lg p-3 bg-card"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-2">
-                  <span 
+                  <span
                     class="px-2 py-1 text-xs font-medium rounded-full"
                     :class="getEventTypeClass(event.type)"
                   >
@@ -397,7 +397,7 @@ onUnmounted(() => {
                     {{ event.receivedAt }}
                   </span>
                 </div>
-                
+
                 <!-- Event Details -->
                 <div class="space-y-1">
                   <div v-if="event.type === 'channel.follow'" class="text-sm">
@@ -406,38 +406,38 @@ onUnmounted(() => {
                       {{ new Date(event.data.followed_at).toLocaleString() }}
                     </span>
                   </div>
-                  
+
                   <div v-else-if="event.type === 'channel.subscribe'" class="text-sm">
                     <strong>{{ event.data.user_name }}</strong> subscribed!
                     <span v-if="event.data.tier" class="text-muted-foreground">
                       (Tier {{ Math.floor(event.data.tier / 1000) }})
                     </span>
                   </div>
-                  
+
                   <div v-else-if="event.type === 'stream.online'" class="text-sm">
                     🔴 <strong>Stream went live!</strong>
                     <span v-if="event.data.type" class="text-muted-foreground">
                       ({{ event.data.type }})
                     </span>
                   </div>
-                  
+
                   <div v-else-if="event.type === 'channel.raid'" class="text-sm">
                     ⚡ <strong>{{ event.data.from_broadcaster_user_name }}</strong> raided with {{ event.data.viewers }} viewers!
                   </div>
-                  
+
                   <div v-else-if="event.type === 'system'" class="text-sm">
                     {{ event.data.message }}
                   </div>
-                  
+
                   <div v-else-if="event.type === 'error'" class="text-sm text-red-600">
                     Error: {{ event.data.message }}
                   </div>
-                  
+
                   <div v-else class="text-sm">
                     {{ event.type }}: {{ JSON.stringify(event.data).substring(0, 100) }}...
                   </div>
                 </div>
-                
+
                 <!-- Raw Data (Collapsible) -->
                 <details v-if="event.data" class="mt-2">
                   <summary class="text-xs text-muted-foreground cursor-pointer hover:text-foreground">

@@ -25,7 +25,7 @@ const mainNavItems: NavItem[] = [
         href: '/overlay-hashes',
         icon: Shield,
     },
-    {  
+    {
         title: 'Template Builder',
         href: '/template-builder',
         icon: Building,
@@ -43,18 +43,6 @@ const mainNavItems: NavItem[] = [
 
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Bored? fox!',
-        href: '/fox',
-        icon: Shuffle,
-    },
-    {
-        title: 'Foxes are cute',
-        href: '/foxes',
-        icon: Dog,
-    },
-];
 </script>
 
 <template>

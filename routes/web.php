@@ -3,7 +3,6 @@
 use App\Services\TwitchApiService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\FoxController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TemplateTagController;
 use Inertia\Inertia;
@@ -20,18 +19,18 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
-Route::get('/fox', [FoxController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('fox');
-
-Route::get('/foxes', [FoxController::class, 'gallery'])
-    ->name('foxes');
 
 Route::get('/twitchdata', [TwitchDataController::class, 'index'])
     ->middleware(['auth'])
     ->name('twitchdata');
 
+Route::get('/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
+    ->middleware(['auth']);
+
 Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
+    ->middleware(['auth']);
+
+Route::post('/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
     ->middleware(['auth']);
 
 Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])

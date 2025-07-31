@@ -80,17 +80,17 @@ onMounted(async () => {
 
   const res = await fetch(`/api/help-proxy/${slug}`)
   if (res.ok) {
-    posts.value = await res.json()    
+    posts.value = await res.json()
   }
 });
 
 // Generate template tags from current Twitch data
 const generateTags = async () => {
   if (isGenerating.value) return;
-  
+
   isGenerating.value = true;
   generationError.value = '';
-  
+
   try {
     const response = await fetch('/template-tags/generate', {
       method: 'POST',
@@ -99,28 +99,28 @@ const generateTags = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok && data.success) {
       console.log('✅ Tags generated:', data);
-      
+
       // Show success message
       showToast.value = true;
       toastMessage.value = `Successfully generated ${data.generated} template tags!`;
       toastType.value = 'success';
-      
+
       // Refresh the page to show new tags
       setTimeout(() => {
         router.reload({
           only: ['existingTags', 'hasExistingTags']
         });
       }, 1000);
-      
+
     } else {
       console.error('❌ Generation failed:', data);
       generationError.value = data.message || data.error || 'Unknown error occurred';
-      
+
       showToast.value = true;
       toastMessage.value = `Failed to generate tags: ${generationError.value}`;
       toastType.value = 'error';
@@ -128,7 +128,7 @@ const generateTags = async () => {
   } catch (error) {
     console.error('💥 Generation error:', error);
     generationError.value = 'Network error - please check your connection and try again.';
-    
+
     showToast.value = true;
     toastMessage.value = 'Failed to generate tags. Please try again.';
     toastType.value = 'error';
@@ -142,7 +142,7 @@ const clearAllTags = async () => {
   if (!confirm('Are you sure you want to clear all template tags? This cannot be undone.')) {
     return;
   }
-  
+
   try {
     const response = await fetch('/template-tags/clear', {
       method: 'DELETE',
@@ -151,27 +151,27 @@ const clearAllTags = async () => {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok && data.success) {
       console.log('✅ Tags cleared:', data);
-      
+
       showToast.value = true;
       toastMessage.value = data.message;
       toastType.value = 'info';
-      
+
       router.reload();
     } else {
       console.error('❌ Clear failed:', data);
-      
+
       showToast.value = true;
       toastMessage.value = `Failed to clear tags: ${data.message || data.error}`;
       toastType.value = 'error';
     }
   } catch (error) {
     console.error('💥 Clear error:', error);
-    
+
     showToast.value = true;
     toastMessage.value = 'Failed to clear tags. Please try again.';
     toastType.value = 'error';
@@ -181,14 +181,14 @@ const clearAllTags = async () => {
 // Preview a specific tag
 const previewTag = async (tagId: number) => {
   if (isLoadingPreview.value[tagId]) return;
-  
+
   // Set loading state for this specific tag
   isLoadingPreview.value = { ...isLoadingPreview.value, [tagId]: true };
-  
+
   try {
     const response = await fetch(`/template-tags/${tagId}/preview`);
     const data = await response.json();
-    
+
     if (response.ok && !data.error) {
       tagPreviews.value = { ...tagPreviews.value, [tagId]: data };
     } else {
@@ -213,7 +213,7 @@ const clearPreview = (tagId: number) => {
   // Remove the preview for this specific tag
   const { [tagId]: removed, ...rest } = tagPreviews.value;
   tagPreviews.value = rest;
-  
+
   // Also clear loading state if it exists
   const { [tagId]: removedLoading, ...restLoading } = isLoadingPreview.value;
   isLoadingPreview.value = restLoading;
@@ -246,7 +246,7 @@ const copyTag = async (tagName: string) => {
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
-    
+
     showToast.value = true;
     toastMessage.value = `Copied tag: ${tagName}`;
     toastType.value = 'info';
@@ -283,21 +283,21 @@ const getDataTypeClass = (dataType: string) => {
   <Head title="Template Tags Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <!-- Toast Component -->
-    <RekaToast 
-      v-if="showToast" 
-      :message="toastMessage" 
+    <RekaToast
+      v-if="showToast"
+      :message="toastMessage"
       :type="toastType"
       @update:visible="hideToast"
     />
-    
+
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Template Tag Generator</h1>
-        
+
         <div class="flex items-center gap-2">
-          <Button 
-            @click="generateTags" 
+          <Button
+            @click="generateTags"
             :disabled="isGenerating"
             variant="default"
             class="cursor-pointer"
@@ -306,8 +306,8 @@ const getDataTypeClass = (dataType: string) => {
             <RefreshCw v-else class="w-4 h-4" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags' }}
           </Button>
-          
-          <Button 
+
+          <Button
             v-if="hasExistingTags"
             @click="clearAllTags"
             variant="destructive"
@@ -332,10 +332,10 @@ const getDataTypeClass = (dataType: string) => {
       <div v-if="hasExistingTags" class="space-y-6">
         <h2 class="text-xl font-bold mb-2">Generated Template Tags</h2>
         <p class="text-gray-600 dark:text-gray-400 mb-6">Browse and preview template tags organized by category</p>
-        
-        <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName" 
+
+        <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName"
             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md">
-          
+
           <!-- Category Header -->
           <details class="group">
             <summary class="flex justify-between items-center p-4 cursor-pointer list-none bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -353,31 +353,31 @@ const getDataTypeClass = (dataType: string) => {
                 </svg>
               </div>
             </summary>
-            
+
             <!-- Tags Grid -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="tag in categoryData.tags" :key="tag.id" 
+              <div v-for="tag in categoryData.tags" :key="tag.id"
                   class="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-sm">
-                
+
                 <!-- Tag Header -->
                 <div class="flex justify-between items-start mb-3">
                   <!-- Tag Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center mb-2">
-                      <code class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" 
-                            title="click to copy tag" 
+                      <code class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded-none text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-900 border border-dashed border-cyan-600 hover:border-dashed hover:border-cyan-900 transition"
+                            title="click to copy tag"
                             @click="copyTag(tag.tag_name)">
                         {{ tag.display_tag }}
                       </code>
-                      <span :class="getDataTypeClass(tag.data_type)" 
-                            class="ml-2 inline-block px-2 py-1 text-xs font-medium rounded" 
+                      <span :class="getDataTypeClass(tag.data_type)"
+                            class="ml-2 inline-block px-2 py-1 text-xs font-medium rounded"
                             :title="`json path: ${tag.json_path}`">
                         {{ tag.data_type }}
                       </span>
                     </div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ tag.description }}</p>
                   </div>
-                  
+
                   <!-- Action Buttons -->
                   <div class="flex items-center ml-3 space-x-1">
                     <!-- Copy Button -->
@@ -386,7 +386,7 @@ const getDataTypeClass = (dataType: string) => {
                             title="Copy tag">
                       <Copy class="w-4 h-4" />
                     </button>
-                    
+
                     <!-- Preview Button -->
                     <button @click="previewTag(tag.id)"
                             :disabled="isLoadingPreview[tag.id]"
@@ -397,12 +397,12 @@ const getDataTypeClass = (dataType: string) => {
                     </button>
                   </div>
                 </div>
-                
+
                 <!-- Preview Output -->
                 <div v-if="tagPreviews[tag.id]" class="mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
-                    <button @click="clearPreview(tag.id)" 
+                    <button @click="clearPreview(tag.id)"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * DefaultTemplateProviderService
- * 
+ *
  * Centralized service for managing default overlay templates.
  * This ensures DRY principle - one source of truth for default templates!
- * 
+ *
  * For Laravel beginners:
  * - This is a Service class (part of the Service layer in MVC)
  * - Services contain business logic that can be reused across controllers
@@ -21,20 +21,20 @@ class DefaultTemplateProviderService
 {
     private ?string $defaultHtml = null;
     private ?string $defaultCss = null;
-    
+
     private const DEFAULT_HTML_PATH = 'resources/templates/default-overlay.html';
     private const DEFAULT_CSS_PATH = 'resources/templates/default-overlay.css';
 
     /**
      * Get the default HTML template
-     * Uses caching to avoid reading file multiple times per request
+     * Uses caching to avoid reading the same file multiple times per request
      */
     public function getDefaultHtml(): string
     {
         if ($this->defaultHtml === null) {
             $this->loadDefaultTemplates();
         }
-        
+
         return $this->defaultHtml ?? $this->getFallbackHtml();
     }
 
@@ -47,7 +47,7 @@ class DefaultTemplateProviderService
         if ($this->defaultCss === null) {
             $this->loadDefaultTemplates();
         }
-        
+
         return $this->defaultCss ?? $this->getFallbackCss();
     }
 
@@ -70,21 +70,21 @@ class DefaultTemplateProviderService
     {
         $html = $this->getDefaultHtml();
         $css = $this->getDefaultCss();
-        
+
         // Replace template data if provided (for direct serving)
         if (!empty($data)) {
             foreach ($data as $key => $value) {
                 $html = str_replace("[[[{$key}]]]", htmlspecialchars($value), $html);
             }
         }
-        
+
         // Inject CSS into HTML
         if (strpos($html, '<style>') !== false) {
             $html = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>{$css}</style>", $html);
         } else {
             $html = str_replace('</head>', "<style>{$css}</style>\n</head>", $html);
         }
-        
+
         return $html;
     }
 
@@ -95,16 +95,16 @@ class DefaultTemplateProviderService
     {
         $htmlPath = base_path(self::DEFAULT_HTML_PATH);
         $cssPath = base_path(self::DEFAULT_CSS_PATH);
-        
+
         $validation = [
             'html_exists' => File::exists($htmlPath) && File::isReadable($htmlPath),
             'css_exists' => File::exists($cssPath) && File::isReadable($cssPath),
             'html_path' => $htmlPath,
             'css_path' => $cssPath,
         ];
-        
+
         $validation['all_valid'] = $validation['html_exists'] && $validation['css_exists'];
-        
+
         return $validation;
     }
 
@@ -117,7 +117,7 @@ class DefaultTemplateProviderService
         try {
             $htmlPath = base_path(self::DEFAULT_HTML_PATH);
             $cssPath = base_path(self::DEFAULT_CSS_PATH);
-            
+
             if (File::exists($htmlPath) && File::isReadable($htmlPath)) {
                 $this->defaultHtml = File::get($htmlPath);
             } else {
@@ -127,7 +127,7 @@ class DefaultTemplateProviderService
                     'readable' => File::exists($htmlPath) ? File::isReadable($htmlPath) : false
                 ]);
             }
-            
+
             if (File::exists($cssPath) && File::isReadable($cssPath)) {
                 $this->defaultCss = File::get($cssPath);
             } else {
@@ -137,7 +137,7 @@ class DefaultTemplateProviderService
                     'readable' => File::exists($cssPath) ? File::isReadable($cssPath) : false
                 ]);
             }
-            
+
         } catch (\Exception $e) {
             Log::error('Error loading default templates', [
                 'error' => $e->getMessage(),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -20,9 +21,9 @@ class TwitchApiService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/channels", [
+            ])->get("$this->baseUrl/channels", [
                 'broadcaster_id' => $userId
             ]);
 
@@ -36,7 +37,7 @@ class TwitchApiService
             ]);
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting channel info: ' . $e->getMessage());
             return null;
         }
@@ -46,9 +47,9 @@ class TwitchApiService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/users", [
+            ])->get("$this->baseUrl/users", [
                 'id' => $userId
             ]);
 
@@ -62,7 +63,7 @@ class TwitchApiService
             ]);
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting user info: ' . $e->getMessage());
             return null;
         }
@@ -72,9 +73,9 @@ class TwitchApiService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/channels/followed", [
+            ])->get("$this->baseUrl/channels/followed", [
                 'user_id' => $userId,
                 'first' => $first
             ]);
@@ -84,7 +85,7 @@ class TwitchApiService
             }
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting followed channels: ' . $e->getMessage());
             return null;
         }
@@ -94,18 +95,18 @@ class TwitchApiService
     {
         try {
             $channelInfo = $this->getChannelInfo($accessToken, $userId);
-            
+
             if (!$channelInfo) {
                 Log::warning('Could not get channel info for followers request', ['user_id' => $userId]);
                 return null;
             }
-            
+
             $broadcasterId = $channelInfo['broadcaster_id'];
-            
+
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/channels/followers", [
+            ])->get("$this->baseUrl/channels/followers", [
                 'broadcaster_id' => $broadcasterId,
                 'first' => $first
             ]);
@@ -120,7 +121,7 @@ class TwitchApiService
             ]);
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting channel followers: ' . $e->getMessage());
             return null;
         }
@@ -130,9 +131,9 @@ class TwitchApiService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/subscriptions", [
+            ])->get("$this->baseUrl/subscriptions", [
                 'broadcaster_id' => $userId,
                 'first' => $first
             ]);
@@ -142,7 +143,7 @@ class TwitchApiService
             }
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting subscribers: ' . $e->getMessage());
             return null;
         }
@@ -152,9 +153,9 @@ class TwitchApiService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("{$this->baseUrl}/goals", [
+            ])->get("$this->baseUrl/goals", [
                 'broadcaster_id' => $userId
             ]);
 
@@ -163,7 +164,7 @@ class TwitchApiService
             }
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting channel goals: ' . $e->getMessage());
             return null;
         }
@@ -171,42 +172,42 @@ class TwitchApiService
 
     protected function getCachedChannelInfo(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_channel_info_{$userId}", now()->addHours(12), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_channel_info_$userId", now()->addHours(12), function () use ($accessToken, $userId) {
             return $this->getChannelInfo($accessToken, $userId) ?? [];
         });
     }
 
     protected function getCachedUserInfo(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_user_info_{$userId}", now()->addHours(12), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_user_info_$userId", now()->addHours(12), function () use ($accessToken, $userId) {
             return $this->getUserInfo($accessToken, $userId) ?? [];
         });
     }
 
     protected function getCachedFollowedChannels(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_followed_channels_{$userId}", now()->addMinutes(10), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_followed_channels_$userId", now()->addMinutes(10), function () use ($accessToken, $userId) {
             return $this->getFollowedChannels($accessToken, $userId) ?? [];
         });
     }
 
     protected function getCachedChannelFollowers(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_channel_followers_{$userId}", now()->addMinutes(10), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_channel_followers_$userId", now()->addMinutes(10), function () use ($accessToken, $userId) {
             return $this->getChannelFollowers($accessToken, $userId) ?? [];
         });
     }
 
     protected function getCachedSubscribers(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_subscribers_{$userId}", now()->addMinutes(5), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_subscribers_$userId", now()->addMinutes(5), function () use ($accessToken, $userId) {
             return $this->getChannelSubscribers($accessToken, $userId) ?? [];
         });
     }
 
     protected function getCachedGoals(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_goals_{$userId}", now()->addMinutes(5), function () use ($accessToken, $userId) {
+        return Cache::remember("twitch_goals_$userId", now()->addMinutes(5), function () use ($accessToken, $userId) {
             return $this->getChannelGoals($accessToken, $userId) ?? [];
         });
     }
@@ -223,43 +224,55 @@ class TwitchApiService
         ];
     }
 
+    public function getFreshTwitchData(string $accessToken, string $userId): array
+    {
+        return [
+            'user' => $this->getUserInfo($accessToken, $userId),
+            'channel' => $this->getChannelInfo($accessToken, $userId),
+            'followed_channels' => $this->getFollowedChannels($accessToken, $userId),
+            'channel_followers' => $this->getChannelFollowers($accessToken, $userId),
+            'subscribers' => $this->getChannelSubscribers($accessToken, $userId),
+            'goals' => $this->getChannelGoals($accessToken, $userId),
+        ];
+    }
+
     public function clearAllUserCaches(string $userId): void
     {
-        Cache::forget("twitch_user_info_{$userId}");
-        Cache::forget("twitch_channel_info_{$userId}");
-        Cache::forget("twitch_followed_channels_{$userId}");
-        Cache::forget("twitch_channel_followers_{$userId}");
-        Cache::forget("twitch_subscribers_{$userId}");
-        Cache::forget("twitch_goals_{$userId}");
+        Cache::forget("twitch_user_info_$userId");
+        Cache::forget("twitch_channel_info_$userId");
+        Cache::forget("twitch_followed_channels_$userId");
+        Cache::forget("twitch_channel_followers_$userId");
+        Cache::forget("twitch_subscribers_$userId");
+        Cache::forget("twitch_goals_$userId");
     }
 
     public function clearUserInfoCache(string $userId): void
     {
-        Cache::forget("twitch_user_info_{$userId}");
+        Cache::forget("twitch_user_info_$userId");
     }
 
     public function clearChannelInfoCaches(string $userId): void
     {
-        Cache::forget("twitch_channel_info_{$userId}");
+        Cache::forget("twitch_channel_info_$userId");
     }
 
     public function clearFollowedChannelsCaches(string $userId): void
     {
-        Cache::forget("twitch_followed_channels_{$userId}");
+        Cache::forget("twitch_followed_channels_$userId");
     }
 
     public function clearChannelFollowersCaches(string $userId): void
     {
-        Cache::forget("twitch_channel_followers_{$userId}");
+        Cache::forget("twitch_channel_followers_$userId");
     }
 
     public function clearSubscribersCaches(string $userId): void
     {
-        Cache::forget("twitch_subscribers_{$userId}");
+        Cache::forget("twitch_subscribers_$userId");
     }
 
     public function clearGoalsCaches(string $userId): void
     {
-        Cache::forget("twitch_goals_{$userId}");
+        Cache::forget("twitch_goals_$userId");
     }
 }

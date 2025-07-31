@@ -64,11 +64,19 @@ watch(
 
         <div class="flex flex-row flex-wrap gap-2 justify-between">
 
-          <RefreshButton action="/twitchdata/refresh/all" label="All" variantClass="bg-red-500 hover:bg-red-600 hover:ring-red-500">
+          <button
+            type="submit"
+            class="flex cursor-pointer w-full border gap-4 justify-center items-center transition bg-red-400/50 hover:ring-2 hover:ring-red-700 hover:bg-red-500/50 active:bg-accent p-3 mb-4 rounded-2xl"
+            @click="$inertia.visit('/twitchdata/refresh/expensive')"
+          >
+            <RefreshIcon /> Refresh All Data directly from the Twitch API
+          </button>
+
+          <RefreshButton action="/twitchdata/refresh/user" label="User">
             <RefreshIcon />
           </RefreshButton>
 
-          <RefreshButton action="/twitchdata/refresh/info" label="Bio & Tags">
+          <RefreshButton action="/twitchdata/refresh/info" label="Bio">
             <RefreshIcon />
           </RefreshButton>
 
@@ -92,8 +100,8 @@ watch(
         <div class="rounded-xl border bg-background p-6 shadow-lg" v-if="props.twitchData?.channel?.broadcaster_login">
           <div class="grid place-content-center">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" target="_blank">
-              <img 
-                :src="avatar" 
+              <img
+                :src="avatar"
                 :alt="props.twitchData.channel.broadcaster_name"
                 class="w-20 h-20 rounded-full my-2 inline-block shadow transition hover:ring-2 hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
                 />
@@ -105,8 +113,8 @@ watch(
           <div class="text-sm text-muted-foreground text-center mb-4">{{ props.twitchData.user.description }}</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
-              <div 
-                class="rounded-2xl cursor-pointer border bg-accent/20 p-4 
+              <div
+                class="rounded-2xl cursor-pointer border bg-accent/20 p-4
                       backdrop-blur-sm text-center shadow transition hover:ring-2 hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
               >
                 <p class="text-lg font-semibold text-muted-foreground">
@@ -118,8 +126,8 @@ watch(
               </div>
             </a>
             <a :href="`${twitch}${props.twitchData?.channel_followers?.data[0]?.user_login}`" target="_blank">
-              <div 
-                class="rounded-2xl cursor-pointer border bg-accent/20 p-4 
+              <div
+                class="rounded-2xl cursor-pointer border bg-accent/20 p-4
                       backdrop-blur-sm text-center shadow transition hover:ring-2 hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
               >
                 <p class="text-lg font-semibold text-muted-foreground">
@@ -135,13 +143,13 @@ watch(
           <div>
             <h3 class="text-lg font-semibold mb-2">Channel Tags</h3>
             <div class="flex flex-wrap gap-2">
-              <a 
+              <a
                 v-for="tag in props.twitchData.channel.tags"
                 :href="`https://www.twitch.tv/directory/all/tags/${tag}`"
                 :key="tag"
                 target="_blank"
-                class="inline-block rounded-full border bg-accent/20 px-3 py-1 text-sm 
-                      font-medium text-accent-foreground shadow transition hover:ring-2 
+                class="inline-block rounded-full border bg-accent/20 px-3 py-1 text-sm
+                      font-medium text-accent-foreground shadow transition hover:ring-2
                       hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
               >
                 {{ tag }}
@@ -153,25 +161,26 @@ watch(
         <div class="mt-10" v-if="props.twitchData?.subscribers?.data">
           <h3 class="text-lg font-semibold mb-2">Subscribers</h3>
           <ul class="space-y-2 grid grid-cols-3 gap-2">
-            <a 
+
+            <li
               v-for="(sub, i) in props.twitchData.subscribers.data"
               :key="i"
-              :href="`${twitch}${sub.user_name}`" target="_blank"
-              class="block m-0 p-0"
-            >
-            <li              
-              class="w-auto rounded-2xl cursor-pointer border bg-accent/20 p-2 px-4 backdrop-blur-sm duration-200 shadow transition hover:ring-2 hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
+              class="w-auto rounded-2xl h-16 cursor-pointer border bg-accent/20 p-2 px-4 backdrop-blur-sm duration-200 shadow transition hover:ring-2 hover:ring-gray-700 hover:bg-accent/50 active:bg-accent"
               :class="getTierStyle(sub.tier)"
             >
-              <p class="font-semibold">{{ sub.user_name }}</p>
-              <p class="text-sm">
-                {{ sub.plan_name }}
-                <span v-if="sub.is_gift" class="text-sm italic text-muted-foreground">
-                  (Gifted by {{ sub.gifter_name || 'N/A' }})
+              <a
+                class="flex flex-col m-0 p-0"
+                :href="`${twitch}${sub.user_name}`" target="_blank"
+              >
+                <span class="inline-block font-semibold">{{ sub.user_name }}</span>
+                <span class="inline-block text-sm">
+                  {{ sub.plan_name }}
+                  <span v-if="sub.is_gift" class="text-sm italic text-muted-foreground">
+                    (Gifted by {{ sub.gifter_name || 'N/A' }})
+                  </span>
                 </span>
-              </p>
+              </a>
             </li>
-            </a>
           </ul>
         </div>
         <div v-else>No cached data. Please hit Refresh All</div>
