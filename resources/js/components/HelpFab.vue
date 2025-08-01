@@ -46,7 +46,7 @@ const closeDialog = () => {
       ?
     </Button>
 
-    <Dialog :open="isOpen" @close="closeDialog">
+    <Dialog :open="isOpen">
       <DialogOverlay class="bg-black/50 fixed inset-0 z-40" />
       <DialogContent
         class="fixed z-50 shadow-2xl rounded-xl overflow-hidden"
@@ -57,14 +57,14 @@ const closeDialog = () => {
           'bg-white dark:bg-zinc-900 text-black dark:text-white'
         ]"
       >
-        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
+        <div class="border-b pb-2 border-zinc-200 dark:border-zinc-700 flex justify-between items-center">
           <h2 class="text-lg font-bold">
             {{ activePost ? activePost.title : 'Help Center' }}
           </h2>
           <Button size="sm" variant="ghost" @click="closeDialog">Close ✕</Button>
         </div>
 
-        <div class="overflow-y-auto px-4 py-2">
+        <div class="overflow-y-auto pr-2 py-2">
           <template v-if="!activePost">
             <div
               v-for="post in helpArticles"

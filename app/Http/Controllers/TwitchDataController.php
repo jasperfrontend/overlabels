@@ -24,6 +24,12 @@ class TwitchDataController extends Controller
             abort(403);
         }
         $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+
+        if (empty($twitchData['channel']['broadcaster_login'])) {
+            $this->twitch->clearAllUserCaches($user->twitch_id);
+            $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+        }
+
         return Inertia::render('TwitchData', [
             'twitchData' => $twitchData,
         ]);

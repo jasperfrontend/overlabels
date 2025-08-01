@@ -289,7 +289,6 @@ class OverlayTemplateParserService
 
         // Check for basic HTML structure if it looks like HTML
         if (str_contains($template, '<html') || str_contains($template, '<!DOCTYPE')) {
-            // This looks like a complete HTML document
             if (!str_contains($template, '<head>')) {
                 $validation['warnings'][] = 'HTML document missing <head> section';
             }
@@ -298,22 +297,14 @@ class OverlayTemplateParserService
             }
         }
 
-        // Check for malformed template tags
-        $pattern = '/\[\[\[([a-zA-Z0-9_]*)]]]/';
-        preg_match_all($pattern, $template, $matches);
-
-        $validation['tags_found'] = array_unique($matches[1]);
+        // Find all template tags (including conditionals)
+        $this->validateTemplateTags($template, $validation);
+        $this->validateConditionalBlocks($template, $validation);
 
         // Check for incomplete tags
         if (preg_match('/\[\[\[[^]]*$/', $template)) {
             $validation['is_valid'] = false;
             $validation['syntax_issues'][] = 'Incomplete template tag found - make sure all tags end with ]]]';
-        }
-
-        // Check for nested tags (not supported)
-        if (preg_match('/\[\[\[[^]]*\[\[\[/', $template)) {
-            $validation['is_valid'] = false;
-            $validation['syntax_issues'][] = 'Nested template tags are not supported';
         }
 
         // Check for empty tags
@@ -327,12 +318,123 @@ class OverlayTemplateParserService
             $validation['warnings'][] = 'JavaScript found in template - ensure data is properly sanitized';
         }
 
-        // Check for malformed comparisons
-        if (preg_match('/\[\[\[if:[^><=!]*[><=!][^0-9]/', $template)) {
-            $validation['syntax_issues'][] = 'Invalid comparison operator usage';
+        return $validation;
+    }
+
+    /**
+     * Validate regular template tags
+     */
+    private function validateTemplateTags(string $template, array &$validation): void
+    {
+        // Find regular template tags
+        $pattern = '/\[\[\[([a-zA-Z0-9_]+)]]]/';
+        preg_match_all($pattern, $template, $matches);
+
+        if (!empty($matches[1])) {
+            $validation['tags_found'] = array_merge($validation['tags_found'], array_unique($matches[1]));
+        }
+    }
+
+    /**
+     * Validate conditional blocks and comparison syntax
+     */
+    private function validateConditionalBlocks(string $template, array &$validation): void
+    {
+        // Pattern for valid conditional syntax
+        $conditionalPattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]/';
+
+        preg_match_all($conditionalPattern, $template, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            $tagName = $match[1];
+            $operator = $match[2] ?? null;
+            $compareValue = $match[3] ?? null;
+
+            // Add to found tags
+            $validation['tags_found'][] = $tagName;
+
+            // Validate comparison syntax
+            if ($operator && $compareValue !== null) {
+                $this->validateComparisonSyntax($tagName, $operator, $compareValue, $validation);
+            }
         }
 
-        return $validation;
+        // Check for malformed conditional tags
+        $this->checkMalformedConditionals($template, $validation);
+
+        // Check for unmatched if/else/endif blocks
+        $this->validateConditionalStructure($template, $validation);
+    }
+
+    /**
+     * Validate individual comparison syntax
+     */
+    private function validateComparisonSyntax(string $tagName, string $operator, string $compareValue, array &$validation): void
+    {
+        // Check for invalid numeric operators with string values
+        if (in_array($operator, ['>', '>=', '<', '<='])) {
+            if (!is_numeric($compareValue)) {
+                $validation['warnings'][] = "Tag '$tagName': Using numeric operator '$operator' with non-numeric value '$compareValue'. This will always return false.";
+            }
+        }
+
+        // Check for common mistakes
+        if ($operator === '=' && !in_array($operator, ['==', '!='])) {
+            $validation['syntax_issues'][] = "Tag '$tagName': Use '==' for equality comparison, not '='";
+            $validation['is_valid'] = false;
+        }
+    }
+
+    /**
+     * Check for malformed conditional syntax
+     */
+    private function checkMalformedConditionals(string $template, array &$validation): void
+    {
+        // Find all potential conditional tags
+        preg_match_all('/\[\[\[if:[^]]*]]]/', $template, $allConditionals);
+
+        // Check each one against the valid pattern
+        $validPattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]/';
+
+        foreach ($allConditionals[0] as $conditional) {
+            if (!preg_match($validPattern, $conditional)) {
+                $validation['syntax_issues'][] = "Invalid conditional syntax: $conditional";
+                $validation['is_valid'] = false;
+            }
+        }
+
+        // Check for empty if tags
+        if (preg_match('/\[\[\[if:\s*]]]/', $template)) {
+            $validation['syntax_issues'][] = 'Empty conditional tag found - [[[if:tagname]]] format required';
+            $validation['is_valid'] = false;
+        }
+    }
+
+    /**
+     * Validate conditional block structure (matching if/else/endif)
+     */
+    private function validateConditionalStructure(string $template, array &$validation): void
+    {
+        // Count if/else/endif blocks
+        $ifCount = preg_match_all('/\[\[\[if:/', $template);
+        $endifCount = preg_match_all('/\[\[\[endif]]]/', $template);
+        $elseCount = preg_match_all('/\[\[\[else]]]/', $template);
+
+        if ($ifCount !== $endifCount) {
+            $validation['syntax_issues'][] = "Unmatched conditional blocks: $ifCount [[[if:]]] tags but $endifCount [[[endif]]] tags";
+            $validation['is_valid'] = false;
+        }
+
+        // Check for orphaned else tags
+        if ($elseCount > $ifCount) {
+            $validation['warnings'][] = "More [[[else]]] tags than [[[if:]]] tags - some may be orphaned";
+        }
+
+        // Check for common structural issues
+        if (preg_match('/\[\[\[else]]].*?\[\[\[else]]]/', $template)) {
+            $validation['syntax_issues'][] = 'Multiple [[[else]]] blocks in same conditional - only one [[[else]]] per [[[if:]]] allowed';
+            $validation['is_valid'] = false;
+        }
     }
 
     /**
@@ -365,7 +467,7 @@ class OverlayTemplateParserService
         }
 
         if (is_bool($value)) {
-            return $value ? 'Yes' : 'No';
+            return $value ? 'true' : 'false';
         }
 
         if (is_numeric($value)) {

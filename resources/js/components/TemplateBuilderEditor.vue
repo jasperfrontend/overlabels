@@ -8,7 +8,11 @@ import { EditorView } from '@codemirror/view';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle, FileWarningIcon, ExternalLinkIcon, RefreshCcwDot, Keyboard } from 'lucide-vue-next';
+import {
+  Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle,
+  FileWarningIcon, ExternalLinkIcon, RefreshCcwDot, Keyboard,
+  ChevronDown, ChevronRight, Info
+} from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 
 interface Props {
@@ -38,12 +42,13 @@ const props = defineProps<Props>();
 const htmlTemplate = ref(props.existingTemplate.html || '');
 const cssTemplate = ref(props.existingTemplate.css || '');
 const defaultTemplates = ref<{ html: string; css: string } | null>(null);
-
 const isSaving = ref(false);
 const saveMessage = ref('');
 const validationResults = ref<any>(null);
 const isValidating = ref(false);
 const isLoadingDefaults = ref(false);
+const showConditionalExamples = ref(false);
+const showActionsDropdown = ref(false);
 
 // Theme detection
 const isDark = ref(document.documentElement.classList.contains('dark'));
@@ -299,351 +304,323 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 </script>
 
 <template>
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        <!-- Left sidebar with template tags and actions -->
-        <div class="space-y-6 lg:col-span-1">
-            <!-- Action buttons -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2 text-base">
-                        <Play class="h-4 w-4" />
-                        Actions
-
-                        <!-- Keyboard shortcuts indicator -->
-                        <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-1 h-6 w-6 p-0">
-                            <Keyboard class="h-4 w-4" />
-                        </Button>
-
-                        <!-- Save message -->
-                        <div
-                            v-if="saveMessage"
-                            class="ml-auto rounded-md px-1 text-center text-sm"
-                            :class="
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+    <!-- Left sidebar with template tags and actions -->
+    <div class="space-y-6 lg:col-span-1">
+      <!-- Action buttons -->
+      <Card>
+        <CardHeader class="pb-3">
+          <CardTitle class="flex items-center gap-2 text-base">
+            <Play class="h-4 w-4" />
+            Actions
+            <!-- Keyboard shortcuts indicator -->
+            <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-1 h-6 w-6 p-0">
+              <Keyboard class="h-4 w-4" />
+            </Button>
+            <!-- Save message -->
+            <div
+              v-if="saveMessage"
+              class="ml-auto rounded-md px-1 text-center text-sm"
+              :class="
                                 saveMessage.includes('success')
                                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                     : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                             "
-                        >
-                            {{ saveMessage }}
-                        </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent class="flex flex-wrap gap-2 space-y-3">
-                    <Button
-                        @click="saveTemplate"
-                        :disabled="isSaving"
-                        class="w-35 cursor-pointer bg-green-300 text-green-800 shadow transition hover:bg-green-400 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800"
-                    >
-                        <RefreshCcwDot v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
-                        <Save v-else class="mr-2 h-4 w-4" />
-                        {{ isSaving ? 'Save' : 'Save' }}
-                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃S</span>
-                    </Button>
-
-                    <Button @click="previewLive" class="w-35 cursor-pointer" variant="outline">
-                        <ExternalLinkIcon class="mr-1 h-4 w-4" />
-                        New Tab
-                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃P</span>
-                    </Button>
-
-                    <Button @click="validateTemplate" :disabled="isValidating" class="w-35 cursor-pointer" variant="outline">
-                        <RefreshCcwDot v-if="isValidating" class="mr-2 h-4 w-4 animate-spin" />
-                        <CheckCircle v-else class="mr-2 h-4 w-4" />
-                        {{ isValidating ? 'Validate' : 'Validate' }}
-                        <span class="ml-1 rounded bg-black/10 px-1 text-xs dark:bg-white/10">⌃V</span>
-                    </Button>
-
-                    <Button
-                        title="Reset your layout. Be careful, this will destroy any changes you have made to this template!"
-                        @click="resetToDefault"
-                        :disabled="isLoadingDefaults"
-                        class="w-35 cursor-pointer bg-red-400/50 hover:bg-red-500 hover:text-red-100"
-                    >
-                        <RefreshCcwDot v-if="isLoadingDefaults" class="mr-2 h-4 w-4 animate-spin" />
-                        <FileWarningIcon v-else class="h-4 w-4"></FileWarningIcon>
-                        {{ isLoadingDefaults ? '&hellip;' : 'Reset' }}
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <!-- Template validation results -->
-            <Card v-if="validationResults">
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2 text-base">
-                        <AlertCircle class="h-4 w-4" />
-                        Validation Results
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div v-if="validationResults.success" class="text-sm text-green-600 dark:text-green-400">✅ Template is valid!</div>
-                    <div v-else class="space-y-2">
-                        <div v-if="validationResults.errors?.length" class="text-sm text-red-600 dark:text-red-400">
-                            <strong>Errors:</strong>
-                            <ul class="list-inside list-disc">
-                                <li v-for="error in validationResults.errors" :key="error">{{ error }}</li>
-                            </ul>
-                        </div>
-                        <div v-if="validationResults.warnings?.length" class="text-sm text-yellow-600 dark:text-yellow-400">
-                            <strong>Warnings:</strong>
-                            <ul class="list-inside list-disc">
-                                <li v-for="warning in validationResults.warnings" :key="warning">{{ warning }}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <!-- Available template tags -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-base">Template Tags</CardTitle>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Click to copy template tags to your clipboard</p>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                    <div>
-
-                      <h2 class="mb-2 font-medium">Dynamic Template Tags</h2>
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">if</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:channel_is_branded]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
-                          [[[endif]]]
-                        </code>
-                      </div>
-
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">if/else</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:channel_is_branded]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
-                          [[[else]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">Nah, no sponsor today lol</span> <br />
-                          [[[endif]]]
-                        </code>
-                      </div>
-
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">numeric comparison</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:followers_total >= 2000]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">WOW! Over 2000 followers! You're amazing!</span> <br />
-                          [[[else]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">Help us reach 2000 followers! Currently at [[[followers_total]]]</span> <br />
-                          [[[endif]]]
-                        </code>
-                        <div class="flex items-center gap-2 mt-2">
-                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
-                        </div>
-                      </div>
-
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">string comparison</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:channel_language==en]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">We speak English here!</span> <br />
-                          [[[else]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">Welcome international viewers!</span> <br />
-                          [[[endif]]]
-                        </code>
-                        <div class="flex items-center gap-2 mt-2">
-                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
-                        </div>
-                      </div>
-
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">mixed comparison</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:follower_count>=1000]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">[[[if:channel_language==en]]]</span><br />
-                          <span style="text-indent: 2rem; display: inline-block;">1000+ followers who speak English!</span> <br />
-                          <span style="text-indent: 1rem; display: inline-block;">[[[endif]]]</span><br />
-                          [[[endif]]]
-                        </code>
-                        <div class="flex items-center gap-2 mt-2">
-                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
-                        </div>
-                      </div>
-
-                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
-                        <div>
-                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">nested madness (max 10 levels deep)</span>
-                        </div>
-                        <code class="text-muted-foreground">
-                          [[[if:followers_total>=1000]]]<br />
-                          <span style="text-indent: 1rem; display: inline-block;">[[[if:channel_language==en]]]</span><br />
-                          <span style="text-indent: 2rem; display: inline-block;">[[[if:subscribers_total>=50]]]</span><br />
-                          <span style="text-indent: 3rem; display: inline-block;">Elite English community! 1000+ followers, 50+ subs!</span> <br />
-                          <span style="text-indent: 2rem; display: inline-block;">[[[else]]]</span><br />
-                          <span style="text-indent: 3rem; display: inline-block;">Growing English community! 1000+ followers!</span> <br />
-                          <span style="text-indent: 2rem; display: inline-block;">[[[endif]]]</span><br />
-                          <span style="text-indent: 1rem; display: inline-block;">[[[else]]]</span><br />
-                          <span style="text-indent: 2rem; display: inline-block;">International community with 1000+ followers!</span> <br />
-                          <span style="text-indent: 1rem; display: inline-block;">[[[endif]]]</span><br />
-                          <span style="text-indent: 0rem; display: inline-block;">[[[else]]]</span><br />
-                          <span style="text-indent: 1rem; display: inline-block;">Help us reach 1000 followers! Currently at [[[followers_total]]]</span> <br />
-                          [[[endif]]]
-                        </code>
-                        <div class="flex items-center gap-2 mt-2">
-                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
-                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
-                        </div>
-                      </div>
-
-                    </div>
-                    <div v-for="(tags, category) in tagsByCategory" :key="category">
-                        <h4 class="mb-2 text-sm font-medium">{{ category }}</h4>
-                        <div class="space-y-1">
-                            <Button
-                                v-for="tag in tags"
-                                :key="tag.tag_name"
-                                @click="copyTag(tag.tag_name)"
-                                variant="ghost"
-                                size="sm"
-                                class="h-auto w-full justify-start py-1 text-xs"
-                                :title="tag.description"
-                            >
-                                <code class="text-xs">[[[{{ tag.tag_name }}]]]</code>
-                            </Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-        <!-- Editor Area -->
-        <div class="space-y-6 lg:col-span-3">
-            <Tabs default-value="html" class="w-full">
-                <TabsList class="grid w-full grid-cols-3">
-                    <TabsTrigger value="html" class="flex items-center gap-2">
-                        <Code class="h-4 w-4" />
-                        HTML
-                    </TabsTrigger>
-                    <TabsTrigger value="css" class="flex items-center gap-2">
-                        <Palette class="h-4 w-4" />
-                        CSS
-                    </TabsTrigger>
-                    <TabsTrigger value="preview" class="flex items-center gap-2">
-                        <Eye class="h-4 w-4" />
-                        Preview
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="html" class="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="text-base">HTML Template</CardTitle>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Use template tags like <code>[[[channel_name]]]</code> for dynamic content
-                            </p>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="overflow-hidden rounded-lg border">
-                                <Codemirror
-                                    v-model="htmlTemplate"
-                                    :style="{ height: '500px' }"
-                                    :autofocus="true"
-                                    :indent-with-tab="true"
-                                    :tab-size="2"
-                                    :extensions="htmlExtensions"
-                                    placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="css" class="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="text-base">CSS Styles</CardTitle>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Style your overlay with CSS. Use transparent backgrounds for OBS compatibility.
-                            </p>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="overflow-hidden rounded-lg border">
-                                <Codemirror
-                                    v-model="cssTemplate"
-                                    :style="{ height: '500px' }"
-                                    :indent-with-tab="true"
-                                    :tab-size="2"
-                                    :extensions="cssExtensions"
-                                    placeholder="Enter your CSS styles here..."
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="preview" class="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="text-base">Live Preview</CardTitle>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">This preview shows how your overlay will look with sample data</p>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="rounded-lg border bg-gray-50 dark:bg-gray-900">
-                                <iframe :srcdoc="previewHtml" class="h-[500px] w-full border-0" sandbox="allow-same-origin" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
-        </div>
-    </div>
-
-    <!-- Keyboard shortcuts dialog -->
-    <div v-if="showKeyboardShortcuts"
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-         @click.self="showKeyboardShortcuts = false">
-        <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-            <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
-                <button @click="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+            >
+              {{ saveMessage }}
             </div>
-            <div class="space-y-2">
-                <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id"
-                     class="flex items-center justify-between rounded-md border p-2 text-sm">
-                    <span>{{ shortcut.description }}</span>
-                    <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
-                        {{ shortcut.keys }}
-                    </kbd>
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="pt-0">
+          <!-- Primary action: Save -->
+          <Button
+            @click="saveTemplate"
+            :disabled="isSaving"
+            class="w-full mb-3 cursor-pointer bg-green-600 hover:bg-green-700 text-white shadow"
+          >
+            <RefreshCcwDot v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
+            <Save v-else class="mr-2 h-4 w-4" />
+            {{ isSaving ? 'Saving...' : 'Save' }}
+            <span class="ml-1 rounded bg-black/10 px-1 text-xs">⌃S</span>
+          </Button>
+
+          <!-- Secondary actions dropdown -->
+          <div class="relative">
+            <Button
+              @click="showActionsDropdown = !showActionsDropdown"
+              variant="outline"
+              class="w-full justify-between cursor-pointer"
+            >
+              <span>More Actions</span>
+              <ChevronDown :class="['h-4 w-4 transition-transform', showActionsDropdown ? 'rotate-180' : '']" />
+            </Button>
+
+            <div
+              v-if="showActionsDropdown"
+              class="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-lg dark:bg-gray-800"
+            >
+              <Button
+                @click="previewLive"
+                variant="ghost"
+                class="w-full justify-start cursor-pointer"
+              >
+                <ExternalLinkIcon class="mr-2 h-4 w-4" />
+                Preview in New Tab
+                <span class="ml-auto rounded bg-black/10 px-1 text-xs">⌃P</span>
+              </Button>
+
+              <Button
+                @click="validateTemplate"
+                :disabled="isValidating"
+                variant="ghost"
+                class="w-full justify-start cursor-pointer"
+              >
+                <RefreshCcwDot v-if="isValidating" class="mr-2 h-4 w-4 animate-spin" />
+                <CheckCircle v-else class="mr-2 h-4 w-4" />
+                {{ isValidating ? 'Validating...' : 'Validate' }}
+                <span class="ml-auto rounded bg-black/10 px-1 text-xs">⌃V</span>
+              </Button>
+
+              <div class="border-t my-1"></div>
+
+              <Button
+                @click="resetToDefault; showActionsDropdown = false"
+                :disabled="isLoadingDefaults"
+                variant="ghost"
+                class="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <RefreshCcwDot v-if="isLoadingDefaults" class="mr-2 h-4 w-4 animate-spin" />
+                <FileWarningIcon v-else class="mr-2 h-4 w-4" />
+                {{ isLoadingDefaults ? 'Resetting...' : 'Reset to Default' }}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Template validation results -->
+      <Card v-if="validationResults">
+        <CardHeader>
+          <CardTitle class="flex items-center gap-2 text-base">
+            <AlertCircle class="h-4 w-4" />
+            Validation Results
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div v-if="validationResults.success" class="text-sm text-green-600 dark:text-green-400">✅ Template is valid!</div>
+          <div v-else class="space-y-2">
+            <div v-if="validationResults.errors?.length" class="text-sm text-red-600 dark:text-red-400">
+              <strong>Errors:</strong>
+              <ul class="list-inside list-disc">
+                <li v-for="error in validationResults.errors" :key="error">{{ error }}</li>
+              </ul>
+            </div>
+            <div v-if="validationResults.warnings?.length" class="text-sm text-yellow-600 dark:text-yellow-400">
+              <strong>Warnings:</strong>
+              <ul class="list-inside list-disc">
+                <li v-for="warning in validationResults.warnings" :key="warning">{{ warning }}</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Available template tags -->
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base">Template Tags</CardTitle>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Click to copy template tags to your clipboard</p>
+        </CardHeader>
+        <CardContent class="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+          <!-- Conditional Template Tags - Collapsible -->
+          <div>
+            <Button
+              @click="showConditionalExamples = !showConditionalExamples"
+              variant="ghost"
+              class="w-full justify-between p-0 h-auto mb-2 bg-chart-2/50 hover:bg-chart-2/100 dark:hover:bg-chart-2/90 cursor-pointer"
+            >
+              <h4 class="text-sm font-medium flex items-center p-2 px-0">
+                Conditional Template Tags
+              </h4>
+              <ChevronRight
+                :class="['h-4 w-4 transition-transform', showConditionalExamples ? 'rotate-90' : '']"
+              />
+            </Button>
+
+            <div v-if="showConditionalExamples" class="space-y-3 text-xs">
+              <div class="space-y-1 border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded">
+                <div class="font-medium mb-1">Basic if statement</div>
+                <code class="text-muted-foreground">
+                  [[[if:channel_is_branded]]]<br />
+                  <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
+                  [[[endif]]]
+                </code>
+              </div>
+
+              <div class="space-y-1 border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded">
+                <div class="font-medium mb-1">if/else statement</div>
+                <code class="text-muted-foreground">
+                  [[[if:channel_is_branded]]]<br />
+                  <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
+                  [[[else]]]<br />
+                  <span style="text-indent: 1rem; display: inline-block;">Nah, no sponsor today lol</span> <br />
+                  [[[endif]]]
+                </code>
+              </div>
+
+              <div class="space-y-1 border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded">
+                <div class="font-medium mb-1">Numeric comparison</div>
+                <code class="text-muted-foreground">
+                  [[[if:followers_total >= 2000]]]<br />
+                  <span style="text-indent: 1rem; display: inline-block;">WOW! Over 2000 followers!</span> <br />
+                  [[[else]]]<br />
+                  <span style="text-indent: 1rem; display: inline-block;">Help us reach 2000 followers!</span> <br />
+                  [[[endif]]]
+                </code>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="bg-chart-2 py-0 px-1 rounded text-xs">==</span>
+                  <span class="bg-chart-2 py-0 px-1 rounded text-xs">!=</span>
+                  <span class="bg-chart-2 py-0 px-1 rounded text-xs">>=</span>
+                  <span class="bg-chart-2 py-0 px-1 rounded text-xs">></span>
+                  <span class="bg-chart-2 py-0 px-1 rounded text-xs"><=</span>
                 </div>
-                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                    Press <kbd class="rounded bg-gray-100 px-1 dark:bg-gray-700">Ctrl+K</kbd> to toggle this dialog.<br/><br/>
-                    Keyboard shortcuts do not work when focused on the code editor.<br/>
-                    Click outside first, then hit ctrl+s.
-                </p>
+              </div>
             </div>
-        </div>
+          </div>
+
+          <!-- Regular template tags by category -->
+          <div v-for="(tags, category) in tagsByCategory" :key="category">
+            <h4 class="mb-2 text-sm font-medium">{{ category }}</h4>
+            <div class="space-y-1">
+              <Button
+                v-for="tag in tags"
+                :key="tag.tag_name"
+                @click="copyTag(tag.tag_name)"
+                variant="ghost"
+                size="sm"
+                class="h-auto w-full justify-start py-1 text-xs"
+                :title="tag.description"
+              >
+                <code class="text-xs">[[[{{ tag.tag_name }}]]]</code>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
+
+    <!-- Editor Area -->
+    <div class="space-y-6 lg:col-span-3">
+      <Tabs default-value="html" class="w-full">
+        <TabsList class="grid w-full grid-cols-3">
+          <TabsTrigger value="html" class="flex items-center gap-2">
+            <Code class="h-4 w-4" />
+            HTML
+          </TabsTrigger>
+          <TabsTrigger value="css" class="flex items-center gap-2">
+            <Palette class="h-4 w-4" />
+            CSS
+          </TabsTrigger>
+          <TabsTrigger value="preview" class="flex items-center gap-2">
+            <Eye class="h-4 w-4" />
+            Preview
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="html" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">HTML Template</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Use template tags like <code>[[[channel_name]]]</code> for dynamic content
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="overflow-hidden rounded-lg border">
+                <Codemirror
+                  v-model="htmlTemplate"
+                  :style="{ height: '500px' }"
+                  :autofocus="true"
+                  :indent-with-tab="true"
+                  :tab-size="2"
+                  :extensions="htmlExtensions"
+                  placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="css" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">CSS Styles</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Style your overlay with CSS. Use transparent backgrounds for OBS compatibility.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="overflow-hidden rounded-lg border">
+                <Codemirror
+                  v-model="cssTemplate"
+                  :style="{ height: '500px' }"
+                  :indent-with-tab="true"
+                  :tab-size="2"
+                  :extensions="cssExtensions"
+                  placeholder="Enter your CSS styles here..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="preview" class="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-base">Live Preview</CardTitle>
+              <p class="text-sm text-gray-600 dark:text-gray-400">This preview shows how your overlay will look with sample data</p>
+            </CardHeader>
+            <CardContent>
+              <div class="rounded-lg border bg-gray-50 dark:bg-gray-900">
+                <iframe :srcdoc="previewHtml" class="h-[500px] w-full border-0" sandbox="allow-same-origin" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  </div>
+
+  <!-- Keyboard shortcuts dialog -->
+  <div v-if="showKeyboardShortcuts"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+       @click.self="showKeyboardShortcuts = false">
+    <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
+        <button @click="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-2">
+        <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id"
+             class="flex items-center justify-between rounded-md border p-2 text-sm">
+          <span>{{ shortcut.description }}</span>
+          <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+            {{ shortcut.keys }}
+          </kbd>
+        </div>
+        <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+          Press <kbd class="rounded bg-gray-100 px-1 dark:bg-gray-700">Ctrl+K</kbd> to toggle this dialog.<br/><br/>
+          Keyboard shortcuts do not work when focused on the code editor.<br/>
+          Click outside first, then hit ctrl+s.
+        </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 :deep(.cm-editor) {
-    height: 100%;
+  height: 100%;
 }
 </style>
