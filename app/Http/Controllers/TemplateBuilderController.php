@@ -1,4 +1,40 @@
 <?php
+/**
+ * Class TemplateBuilderController
+ *
+ * This controller manages the creation, validation, and manipulation of overlay templates.
+ * It allows users to build HTML and CSS templates for their overlays and interact dynamically
+ * with the front-end through Inertia.js.
+ *
+ * Key Features:
+ * - Provides the template builder interface with real-time template editing.
+ * - Supports the validation of HTML and CSS templates to ensure correct syntax and security compliance.
+ * - Saves and loads templates for existing overlays using user-specific slugs.
+ * - Offers default templates and sample data for quick customization.
+ * - Enables template preview and export functionality (standalone HTML).
+ *
+ * Dependencies:
+ * - OverlayTemplateParserService: Handles validation and parsing of template syntax.
+ * - DefaultTemplateProviderService: Supplies default HTML and CSS templates.
+ * - TemplateDataMapperService: Wraps templates into complete documents and maps data for templates.
+ *
+ * Middleware:
+ * - `auth` middleware ensures access is restricted to authenticated users.
+ *
+ * Primary Routes:
+ * - GET /template-builder: View the template builder interface.
+ * - GET /template-builder/{slug}: Load an existing overlay template using its slug.
+ * - POST /template-builder/validate: Validate a template's syntax.
+ * - POST /template-builder/save: Save a template for a specific overlay.
+ * - POST /template-builder/preview: Render a live preview of the template.
+ * - GET /template-builder/export: Export a template as standalone HTML.
+ * - GET /template-builder/default-templates: Fetch default templates for editing.
+ * - GET /template-builder/available-tags: Retrieve available template tags for guidance.
+ *
+ * Example Usage:
+ * - Use this controller with Vue front-end for dynamic template management.
+ * - Invoke `validateTemplate` before saving to ensure user-provided templates are secure and functional.
+ */
 
 namespace App\Http\Controllers;
 
@@ -139,6 +175,11 @@ class TemplateBuilderController extends Controller
                 'success' => false,
                 'errors' => ['Please do not include html, head or body tags — just write the overlay content. Add styling to the CSS editor.']
             ], 422);
+        }
+
+        // Check for invalid string comparisons with numeric operators
+        if (preg_match('/\[\[\[if:[a-zA-Z0-9_]+\s*[><]=?\s*[a-zA-Z]+]]]/', $request->input('html_template'))) {
+            $validation['warnings'][] = 'String values cannot use numeric operators (>, >=, <, <=). Use == or != instead.';
         }
 
         // Validate HTML template

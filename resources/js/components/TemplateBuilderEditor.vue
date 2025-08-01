@@ -139,13 +139,8 @@ const tagsByCategory = computed(() => {
     return grouped;
 });
 
-// Methods
-// const insertTag = (tagName: string) => {
-//   const tag = `[[[${tagName}]]]`
-//   htmlTemplate.value += tag
-// }
 
-const insertTag = async (tagName: string) => {
+const copyTag = async (tagName: string) => {
     saveMessage.value = '';
     const tag = `[[[${tagName}]]]`;
     try {
@@ -405,13 +400,95 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                     <p class="text-sm text-gray-600 dark:text-gray-400">Click to copy template tags to your clipboard</p>
                 </CardHeader>
                 <CardContent class="space-y-4">
+                    <div>
+
+                      <h2 class="mb-2 font-medium">Dynamic Template Tags</h2>
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">if</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:channel_is_branded]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
+                          [[[endif]]]
+                        </code>
+                      </div>
+
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">if/else</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:channel_is_branded]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">Woah branded content!</span> <br />
+                          [[[else]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">Nah, no sponsor today lol</span> <br />
+                          [[[endif]]]
+                        </code>
+                      </div>
+
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">numeric comparison</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:followers_total >= 2000]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">WOW! Over 2000 followers! You're amazing!</span> <br />
+                          [[[else]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">Help us reach 2000 followers! Currently at [[[followers_total]]]</span> <br />
+                          [[[endif]]]
+                        </code>
+                        <div class="flex items-center gap-2 mt-2">
+                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
+                        </div>
+                      </div>
+
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">string comparison</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:channel_language==en]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">We speak English here!</span> <br />
+                          [[[else]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">Welcome international viewers!</span> <br />
+                          [[[endif]]]
+                        </code>
+                        <div class="flex items-center gap-2 mt-2">
+                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
+                        </div>
+                      </div>
+
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">mixed comparison</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:follower_count>=1000]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">[[[if:channel_language==en]]]</span><br />
+                          <span style="text-indent: 2rem; display: inline-block;">1000+ followers who speak English!</span> <br />
+                          <span style="text-indent: 1rem; display: inline-block;">[[[endif]]]</span><br />
+                          [[[endif]]]
+                        </code>
+                        <div class="flex items-center gap-2 mt-2">
+                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
+                        </div>
+                      </div>
+
+                    </div>
                     <div v-for="(tags, category) in tagsByCategory" :key="category">
                         <h4 class="mb-2 text-sm font-medium">{{ category }}</h4>
                         <div class="space-y-1">
                             <Button
                                 v-for="tag in tags"
                                 :key="tag.tag_name"
-                                @click="insertTag(tag.tag_name)"
+                                @click="copyTag(tag.tag_name)"
                                 variant="ghost"
                                 size="sm"
                                 class="h-auto w-full justify-start py-1 text-xs"

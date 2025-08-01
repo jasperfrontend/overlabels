@@ -149,7 +149,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
 
     // Template tag generator interface
-    Route::get('/template-generator', [TemplateTagController::class, 'index'])
+    Route::get('/tags-generator', [TemplateTagController::class, 'index'])
         ->name('template.generator');
 
     // Generate standardized tags from current Twitch data

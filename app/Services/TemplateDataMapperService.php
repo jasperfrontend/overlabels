@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * TemplateDataMapperService
- * 
+ *
  * CENTRALIZED service for all template tag mapping and data transformation.
  * This consolidates the mapping logic from JsonTemplateParserService to avoid duplication.
- * 
+ *
  * For Laravel beginners:
  * - This service is the SINGLE SOURCE OF TRUTH for template tag mappings
  * - Both template generation AND template parsing use this same mapping logic
@@ -25,7 +27,7 @@ class TemplateDataMapperService
         return [
             // User data mappings
             'user.id' => 'user_id',
-            'user.login' => 'user_login', 
+            'user.login' => 'user_login',
             'user.display_name' => 'user_name',
             'user.type' => 'user_type',
             'user.broadcaster_type' => 'user_broadcaster_type',
@@ -38,7 +40,7 @@ class TemplateDataMapperService
 
             // Channel data mappings
             'channel.broadcaster_id' => 'channel_id',
-            'channel.broadcaster_login' => 'channel_login', 
+            'channel.broadcaster_login' => 'channel_login',
             'channel.broadcaster_name' => 'channel_name',
             'channel.broadcaster_language' => 'channel_language',
             'channel.game_id' => 'channel_game_id',
@@ -48,21 +50,21 @@ class TemplateDataMapperService
             'channel.tags' => 'channel_tags',
             'channel.content_classification_labels' => 'channel_content_labels',
             'channel.is_branded_content' => 'channel_is_branded',
-            
+
             // Followers mappings
             'channel_followers.total' => 'followers_total',
             'channel_followers.data.0.user_id' => 'followers_latest_user_id',
             'channel_followers.data.0.user_login' => 'followers_latest_user_login',
             'channel_followers.data.0.user_name' => 'followers_latest_user_name',
             'channel_followers.data.0.followed_at' => 'followers_latest_date',
-            
+
             // Followed channels mappings
             'followed_channels.total' => 'followed_total',
             'followed_channels.data.0.broadcaster_id' => 'followed_latest_id',
             'followed_channels.data.0.broadcaster_login' => 'followed_latest_login',
             'followed_channels.data.0.broadcaster_name' => 'followed_latest_name',
             'followed_channels.data.0.followed_at' => 'followed_latest_date',
-            
+
             // Subscribers mappings
             'subscribers.points' => 'subscribers_points',
             'subscribers.total' => 'subscribers_total',
@@ -91,7 +93,7 @@ class TemplateDataMapperService
     /**
     * Wraps the provided HTML body and CSS into a complete HTML document.
     * Used to generate a full HTML page for overlay rendering.
-    * 
+    *
     * @param string $bodyHtml The HTML content to include in the body.
     * @param string $css The CSS styles to inject into the document.
     * @param string $title The title of the HTML document (default: 'Overlay').
@@ -120,7 +122,7 @@ class TemplateDataMapperService
     public function getStandardizedTagName(string $jsonPath): string
     {
         $mappings = $this->getTemplateMappings();
-        
+
         // First, try exact match
         if (isset($mappings[$jsonPath])) {
             return $mappings[$jsonPath];
@@ -128,14 +130,14 @@ class TemplateDataMapperService
 
         // If no exact match, build logical name from path
         $parts = explode('.', $jsonPath);
-        
+
         // Handle array access like "data.0.field_name" -> prefix with parent + "latest_" + field
         if (count($parts) >= 3 && $parts[count($parts) - 2] === '0' && $parts[count($parts) - 3] === 'data') {
             $parentObject = $parts[count($parts) - 4] ?? 'unknown';
             $fieldName = $parts[count($parts) - 1];
             return $parentObject . '_latest_' . $fieldName;
         }
-        
+
         // For simple paths, convert dots to underscores
         return str_replace('.', '_', $jsonPath);
     }
@@ -155,7 +157,7 @@ class TemplateDataMapperService
         // Apply all mappings with error handling
         foreach ($mappings as $jsonPath => $templateTag) {
             $value = $this->getNestedValue($twitchData, $jsonPath);
-            
+
             if ($value !== null) {
                 // Apply formatting based on tag type
                 $templateData[$templateTag] = $this->formatValueForTemplate($value, $templateTag);
@@ -167,7 +169,7 @@ class TemplateDataMapperService
 
         return $templateData;
     }
-    
+
     /**
      * Get sample data for template previews and testing
      * This matches the structure of the real mapped data
@@ -177,7 +179,7 @@ class TemplateDataMapperService
         return [
             'overlay_name' => 'My Awesome Overlay',
             'timestamp' => now()->format('Y-m-d H:i:s'),
-            
+
             // User information
             'user_id' => '123456789',
             'user_login' => 'streamername',
@@ -190,10 +192,10 @@ class TemplateDataMapperService
             'user_view_count' => '123,456',
             'user_email' => 'streamer@example.com',
             'user_created' => '2 years ago',
-            
+
             // Channel information
             'channel_id' => '123456789',
-            'channel_login' => 'streamername',
+            'channel_login' => 'streamer',
             'channel_name' => 'StreamerName',
             'channel_language' => 'en',
             'channel_game_id' => '509658',
@@ -202,23 +204,23 @@ class TemplateDataMapperService
             'channel_delay' => '0',
             'channel_tags' => 'Gaming, Fun, Community',
             'channel_content_labels' => 'None',
-            'channel_is_branded' => 'No',
-            
-            // Followers information
+            'channel_is_branded' => 'false',
+
+            // Follower information
             'followers_total' => '1,234',
             'followers_latest_id' => '987654321',
             'followers_latest_login' => 'newfollower123',
             'followers_latest_name' => 'NewFollower123',
             'followers_latest_date' => '2 hours ago',
-            
+
             // Followed channels information
             'followed_total' => '567',
             'followed_latest_id' => '111222333',
             'followed_latest_login' => 'coolstreamer',
             'followed_latest_name' => 'CoolStreamer',
             'followed_latest_date' => '1 day ago',
-            
-            // Subscribers information
+
+            // Subscriber information
             'subscribers_total' => '89',
             'subscribers_points' => '12,345',
             'subscribers_latest_user_id' => '444555666',
@@ -227,14 +229,14 @@ class TemplateDataMapperService
             'subscribers_latest_broadcaster_id' => '123456789',
             'subscribers_latest_broadcaster_login' => 'streamername',
             'subscribers_latest_broadcaster_name' => 'StreamerName',
-            'subscribers_latest_is_gift' => 'No',
+            'subscribers_latest_is_gift' => 'false',
             'subscribers_latest_tier' => '1000',
             'subscribers_latest_plan_name' => 'Tier 1',
             'subscribers_latest_gifter_id' => 'N/A',
             'subscribers_latest_gifter_login' => 'N/A',
             'subscribers_latest_gifter_name' => 'N/A',
-            
-            // Goals information
+
+            // Goal information
             'goals_latest_type' => 'follower',
             'goals_latest_target' => '2,000',
             'goals_latest_current' => '1,234',
@@ -242,7 +244,7 @@ class TemplateDataMapperService
             'goals_latest_created_at' => '1 week ago',
         ];
     }
-    
+
     /**
      * Get list of all available template tags with descriptions
      * This helps with documentation and validation
@@ -253,7 +255,7 @@ class TemplateDataMapperService
             // Overlay metadata
             'overlay_name' => 'Name of the overlay',
             'timestamp' => 'Current timestamp',
-            
+
             // User information
             'user_id' => 'User ID',
             'user_login' => 'User login name',
@@ -266,7 +268,7 @@ class TemplateDataMapperService
             'user_view_count' => 'Total view count',
             'user_email' => 'User email',
             'user_created' => 'Account creation date',
-            
+
             // Channel information
             'channel_id' => 'Channel ID',
             'channel_login' => 'Channel login name',
@@ -279,21 +281,21 @@ class TemplateDataMapperService
             'channel_tags' => 'Channel tags',
             'channel_content_labels' => 'Content classification labels',
             'channel_is_branded' => 'Whether channel has branded content',
-            
+
             // Followers information
             'followers_total' => 'Total number of followers',
             'followers_latest_id' => 'Latest follower ID',
             'followers_latest_login' => 'Latest follower login',
             'followers_latest_name' => 'Latest follower name',
             'followers_latest_date' => 'Latest follow date',
-            
+
             // Followed channels information
             'followed_total' => 'Total followed channels',
             'followed_latest_id' => 'Latest followed channel ID',
             'followed_latest_login' => 'Latest followed channel login',
             'followed_latest_name' => 'Latest followed channel name',
             'followed_latest_date' => 'Latest follow date',
-            
+
             // Subscribers information
             'subscribers_total' => 'Total number of subscribers',
             'subscribers_points' => 'Subscriber points',
@@ -309,7 +311,7 @@ class TemplateDataMapperService
             'subscribers_latest_gifter_id' => 'Gift giver ID (if applicable)',
             'subscribers_latest_gifter_login' => 'Gift giver login (if applicable)',
             'subscribers_latest_gifter_name' => 'Gift giver name (if applicable)',
-            
+
             // Goals information
             'goals_latest_type' => 'Goal type',
             'goals_latest_target' => 'Goal target',
@@ -332,7 +334,7 @@ class TemplateDataMapperService
                 'tags' => ['user_id', 'user_login', 'user_name', 'user_type', 'user_broadcaster_type', 'user_description', 'user_avatar', 'user_offline_banner', 'user_view_count', 'user_email', 'user_created']
             ],
             'channel' => [
-                'display_name' => 'Channel Information', 
+                'display_name' => 'Channel Information',
                 'description' => 'Channel settings and current stream info',
                 'tags' => ['channel_id', 'channel_login', 'channel_name', 'channel_language', 'channel_game_id', 'channel_game', 'channel_title', 'channel_delay', 'channel_tags', 'channel_content_labels', 'channel_is_branded']
             ],
@@ -363,7 +365,7 @@ class TemplateDataMapperService
             ]
         ];
     }
-    
+
     /**
      * Helper: Get nested value from array using dot notation
      * Enhanced with better error handling for missing data
@@ -379,7 +381,7 @@ class TemplateDataMapperService
             } else {
                 // Log missing data for debugging but don't fail
                 if ($nestedKey !== '0') { // Don't log missing array indices, those are expected
-                    \Illuminate\Support\Facades\Log::debug("Missing nested value for key: {$key} at {$nestedKey}");
+                    Log::debug("Missing nested value for key: {$key} at {$nestedKey}");
                 }
                 return null;
             }
@@ -395,41 +397,44 @@ class TemplateDataMapperService
     {
         // Handle different data types
         if (is_array($value)) {
-            if (in_array($templateTag, ['channel_tags'])) {
+            if ($templateTag == 'channel_tags') {
                 return implode(', ', $value);
             }
             return json_encode($value);
         }
-        
+
         if (is_bool($value)) {
-            return $value ? 'Yes' : 'No';
+            return $value ? 'true' : 'false';
         }
-        
+
+        // format numbers. skip for now.
+        // @TODO: create a ::raw modifier for template tags which skips number formatting
         if (is_numeric($value) && in_array($templateTag, ['followers_total', 'followed_total', 'subscribers_total', 'subscribers_points', 'user_view_count', 'goals_latest_target', 'goals_latest_current'])) {
-            return number_format($value);
+//            return number_format($value);
+            return $value;
         }
 
         // Format dates
         if (str_contains($templateTag, '_date') || str_contains($templateTag, '_created')) {
             return $this->formatDate($value);
         }
-        
+
         return (string) $value;
     }
 
     /**
-     * Get default value for missing data
+     * Get the default value for missing data
      */
     private function getDefaultValue(string $templateTag): string
     {
         if (str_contains($templateTag, 'total') || str_contains($templateTag, 'count') || str_contains($templateTag, 'points')) {
             return '0';
         }
-        
+
         if (str_contains($templateTag, 'is_') || str_contains($templateTag, '_gift')) {
-            return 'No';
+            return 'false';
         }
-        
+
         return 'N/A';
     }
 
@@ -441,7 +446,7 @@ class TemplateDataMapperService
         if (!$dateString) {
             return 'N/A';
         }
-        
+
         try {
             return \Carbon\Carbon::parse($dateString)->diffForHumans();
         } catch (\Exception $e) {

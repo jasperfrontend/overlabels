@@ -48,7 +48,7 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Template Tag Generator',
-    href: '/template-generator',
+    href: '/tags-generator',
   },
 ];
 
