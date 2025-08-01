@@ -481,6 +481,33 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                         </div>
                       </div>
 
+                      <div class="space-y-1 mb-4 text-xs leading-relaxed border-dashed border p-2 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                        <div>
+                          <span class="bg-gray-200 dark:bg-gray-700 p-0.5 px-1 rounded">nested madness (max 10 levels deep)</span>
+                        </div>
+                        <code class="text-muted-foreground">
+                          [[[if:followers_total>=1000]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block;">[[[if:channel_language==en]]]</span><br />
+                          <span style="text-indent: 2rem; display: inline-block;">[[[if:subscribers_total>=50]]]</span><br />
+                          <span style="text-indent: 3rem; display: inline-block;">Elite English community! 1000+ followers, 50+ subs!</span> <br />
+                          <span style="text-indent: 2rem; display: inline-block;">[[[else]]]</span><br />
+                          <span style="text-indent: 3rem; display: inline-block;">Growing English community! 1000+ followers!</span> <br />
+                          <span style="text-indent: 2rem; display: inline-block;">[[[endif]]]</span><br />
+                          <span style="text-indent: 1rem; display: inline-block;">[[[else]]]</span><br />
+                          <span style="text-indent: 2rem; display: inline-block;">International community with 1000+ followers!</span> <br />
+                          <span style="text-indent: 1rem; display: inline-block;">[[[endif]]]</span><br />
+                          <span style="text-indent: 0rem; display: inline-block;">[[[else]]]</span><br />
+                          <span style="text-indent: 1rem; display: inline-block;">Help us reach 1000 followers! Currently at [[[followers_total]]]</span> <br />
+                          [[[endif]]]
+                        </code>
+                        <div class="flex items-center gap-2 mt-2">
+                          <span class="bg-chart-2 py-0 px-1 rounded">==</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;=</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&gt;</span>
+                          <span class="bg-chart-2 py-0 px-1 rounded">&lt;=</span>
+                        </div>
+                      </div>
+
                     </div>
                     <div v-for="(tags, category) in tagsByCategory" :key="category">
                         <h4 class="mb-2 text-sm font-medium">{{ category }}</h4>

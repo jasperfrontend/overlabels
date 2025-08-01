@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\DefaultTemplateProviderService;
-use Illuminate\Support\Facades\Log;
-
 /**
  * OverlayTemplateParserService
  *
@@ -16,8 +13,23 @@ class OverlayTemplateParserService
 
     private function parseConditionalBlocks(string $template, array $data): string
     {
-        // Pattern that handles BOTH simple truthy AND comparison operators
-        $pattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]](.*?)(?:\[\[\[else]]](.*?))?\[\[\[endif]]]/s';
+        $maxIterations = 10;
+        $iteration = 0;
+
+        do {
+            $previousTemplate = $template;
+            $template = $this->parseSingleConditionalPass($template, $data);
+            $iteration++;
+
+        } while ($template !== $previousTemplate && $iteration < $maxIterations);
+
+        return $template;
+    }
+
+    private function parseSingleConditionalPass(string $template, array $data): string
+    {
+        // Only match conditionals that don't contain nested if statements
+        $pattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]((?:(?!\[\[\[if:).)*?)(?:\[\[\[else]]]((?:(?!\[\[\[if:).)*?))?\[\[\[endif]]]/s';
 
         return preg_replace_callback($pattern, function($matches) use ($data) {
             $conditionTag = $matches[1];
@@ -28,13 +40,10 @@ class OverlayTemplateParserService
 
             $tagValue = $this->getTagValue($data, $conditionTag);
 
-            // Handle comparison versus a simple truthy check
             if ($operator && $compareValue !== null) {
-                // Comparison mode: [[[if:tag==value]]]
                 $rightValue = is_numeric($compareValue) ? (float)$compareValue : $compareValue;
                 $result = $this->evaluateComparison($tagValue, $operator, $rightValue);
             } else {
-                // Simple truthy mode: [[[if:tag]]]
                 $result = $this->isTruthy($tagValue);
             }
 
@@ -124,7 +133,7 @@ class OverlayTemplateParserService
     private function getStandardizedTagValue(array $data, string $tagName)
     {
         // Get the template data mapper service
-        $templateDataMapper = app(\App\Services\TemplateDataMapperService::class);
+        $templateDataMapper = app(TemplateDataMapperService::class);
 
         // Transform the raw Twitch data using your existing mapping logic
         $mappedData = $templateDataMapper->mapTwitchDataForTemplates($data, 'overlay');
@@ -147,11 +156,8 @@ class OverlayTemplateParserService
             return !empty(trim($value)) && strtolower($value) !== 'false';
         }
 
-        if (is_array($value)) {
-            return !empty($value);
-        }
-
         return !empty($value);
+
     }
 
     private function parseLoopBlocks(string $template, array $data): string
