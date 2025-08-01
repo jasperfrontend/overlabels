@@ -18,16 +18,16 @@ const helpArticles = ref([])
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 const loadHelpArticles = async () => {
-  try {
-    const res = await fetch(`/api/help-proxy/${props.slug}`)
-    const json = await res.json()
-    helpArticles.value = (Array.isArray(json) ? json : json.data ?? []).map(post => ({
-      ...post,
-      content: post.content ?? post.excerpt ?? '',
-    }))
-  } catch (err) {
-    console.warn('Failed to fetch help articles:', err)
-  }
+  // try {
+  //   const res = await fetch(`/api/help-proxy/${props.slug}`)
+  //   const json = await res.json()
+  //   helpArticles.value = (Array.isArray(json) ? json : json.data ?? []).map(post => ({
+  //     ...post,
+  //     content: post.content ?? post.excerpt ?? '',
+  //   }))
+  // } catch (err) {
+  //   console.warn('Failed to fetch help articles:', err)
+  // }
 }
 
 onMounted(() => {

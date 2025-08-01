@@ -57,7 +57,7 @@ watch(
 </script>
 
 <template>
-  <div v-if="props.twitchData?.channel?.broadcaster_login">
+  <div v-if="props.twitchData">
     <Head title="Your Twitch Data" />
     <AppLayout :breadcrumbs="breadcrumbs">
       <div class="flex flex-col items-center gap-8 px-4 py-10">

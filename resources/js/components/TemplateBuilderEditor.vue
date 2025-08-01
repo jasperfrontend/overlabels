@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Eye, Save, Code, Palette, Play, AlertCircle, CheckCircle,
   FileWarningIcon, ExternalLinkIcon, RefreshCcwDot, Keyboard,
-  ChevronDown, ChevronRight, Info
+  ChevronDown, ChevronRight
 } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 
@@ -360,7 +360,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               class="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-lg dark:bg-gray-800"
             >
               <Button
-                @click="previewLive"
+                @click="previewLive();showActionsDropdown = !showActionsDropdown"
                 variant="ghost"
                 class="w-full justify-start cursor-pointer"
               >
@@ -370,7 +370,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               </Button>
 
               <Button
-                @click="validateTemplate"
+                @click="validateTemplate();showActionsDropdown = !showActionsDropdown"
                 :disabled="isValidating"
                 variant="ghost"
                 class="w-full justify-start cursor-pointer"
@@ -384,10 +384,10 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               <div class="border-t my-1"></div>
 
               <Button
-                @click="resetToDefault; showActionsDropdown = false"
+                @click="resetToDefault();showActionsDropdown = !showActionsDropdown"
                 :disabled="isLoadingDefaults"
                 variant="ghost"
-                class="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                class="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
               >
                 <RefreshCcwDot v-if="isLoadingDefaults" class="mr-2 h-4 w-4 animate-spin" />
                 <FileWarningIcon v-else class="mr-2 h-4 w-4" />
@@ -437,7 +437,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
             <Button
               @click="showConditionalExamples = !showConditionalExamples"
               variant="ghost"
-              class="w-full justify-between p-0 h-auto mb-2 bg-chart-2/50 hover:bg-chart-2/100 dark:hover:bg-chart-2/90 cursor-pointer"
+              class="w-full justify-between p-0 h-auto mb-2 border border-chart-2/50 hover:bg-chart-2/100 dark:hover:bg-chart-2/20 cursor-pointer"
             >
               <h4 class="text-sm font-medium flex items-center p-2 px-0">
                 Conditional Template Tags
