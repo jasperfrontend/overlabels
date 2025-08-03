@@ -4,13 +4,12 @@ namespace App\Services;
 
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
-use App\Services\TemplateDataMapperService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 /**
  * JsonTemplateParserService
- * 
+ *
  * Generates template tags from JSON data and saves them to the database.
  * Now uses TemplateDataMapperService for consistent mapping logic.
  */
@@ -32,7 +31,6 @@ class JsonTemplateParserService
 
     /**
      * Generate only STANDARD tags that are consistent for everyone
-     * Now uses the centralized TemplateDataMapperService for mapping logic
      */
     public function parseJsonAndCreateTags(array $jsonData): array
     {
@@ -42,7 +40,7 @@ class JsonTemplateParserService
 
         // Get category definitions from the mapper service
         $categoryDefinitions = $this->templateDataMapper->getTagCategories();
-        
+
         // Create categories first
         foreach ($categoryDefinitions as $categoryKey => $categoryInfo) {
             $this->createCategory($categoryKey, $categoryInfo['display_name'], $categoryInfo['description'], $categories);
@@ -64,7 +62,7 @@ class JsonTemplateParserService
             'total_tags' => count($createdTags)
         ];
     }
-    
+
     /**
      * Parse a level of JSON data recursively
      * Enhanced with debugging for subscriber data and duplicate prevention
@@ -77,7 +75,7 @@ class JsonTemplateParserService
             if (is_array($value)) {
                 $this->handleArrayValue($key, $value, $currentPath, $createdTags, $categories, $parentKey, $processedPaths);
             } else {
-                // Create tag for this value using the centralized mapper
+                // Create a tag for this value using the centralized mapper
                 $this->createTagFromValue($key, $value, $currentPath, $createdTags, $categories, '', $processedPaths);
             }
         }
@@ -89,10 +87,10 @@ class JsonTemplateParserService
      */
     private function handleArrayValue(string $key, array $value, string $path, array &$createdTags, array &$categories, string $parentKey, array &$processedPaths = []): void
     {
-        
+
         $isLimitedArray = in_array($path, $this->limitedArrays);
 
-        if (!empty($value) && is_array($value)) {
+        if (!empty($value)) {
             $firstItem = reset($value);
 
             if (is_array($firstItem) && !empty($firstItem)) {
@@ -145,43 +143,38 @@ class JsonTemplateParserService
             Log::info("Skipping array type tag", ['path' => $jsonPath, 'tag_name' => $key]);
             return;
         }
-        
+
         // Mark this path as processed
         $processedPaths[] = $jsonPath;
-        
+
         // Use the centralized mapper to get the standardized tag name
         $standardizedTagName = $this->templateDataMapper->getStandardizedTagName($jsonPath);
-        
+
         // Skip if this results in an empty or invalid tag name
         if (empty($standardizedTagName) || $standardizedTagName === $jsonPath) {
             // Log for debugging but don't create invalid tags
             Log::debug("Skipping tag creation for path: {$jsonPath} (no mapping found)");
             return;
         }
-        
+
         // Check if we've already created a tag with this name (additional safety)
         foreach ($createdTags as $existingTag) {
             if ($existingTag['tag_name'] === $standardizedTagName) {
-                Log::info("Skipping duplicate tag name", [
-                    'tag_name' => $standardizedTagName,
-                    'existing_path' => $existingTag['json_path'],
-                    'new_path' => $jsonPath
-                ]);
                 return;
             }
         }
-        
+
         // Determine which category this tag belongs to
         $categoryName = $this->determineCategoryForTag($standardizedTagName);
-        
-        // Ensure category exists
+
+        // Ensure the category exists
         if (!isset($categories[$categoryName])) {
             $categoryDefinitions = $this->templateDataMapper->getTagCategories();
             if (isset($categoryDefinitions[$categoryName])) {
                 $this->createCategory(
-                    $categoryName, 
-                    $categoryDefinitions[$categoryName]['display_name'], 
-                    $categoryDefinitions[$categoryName]['description'], 
+                    $categoryName,
+                    $categoryDefinitions[$categoryName]['display_name'],
+                    $categoryDefinitions[$categoryName]['description'],
                     $categories
                 );
             } else {
@@ -206,14 +199,14 @@ class JsonTemplateParserService
     private function determineCategoryForTag(string $tagName): string
     {
         $categoryDefinitions = $this->templateDataMapper->getTagCategories();
-        
+
         // Check each category to see if this tag belongs to it
         foreach ($categoryDefinitions as $categoryKey => $categoryInfo) {
             if (in_array($tagName, $categoryInfo['tags'])) {
                 return $categoryKey;
             }
         }
-        
+
         // Default category if not found
         if (str_starts_with($tagName, 'user_')) return 'user';
         if (str_starts_with($tagName, 'channel_')) return 'channel';
@@ -222,7 +215,7 @@ class JsonTemplateParserService
         if (str_starts_with($tagName, 'subscribers_')) return 'subscribers';
         if (str_starts_with($tagName, 'goals_')) return 'goals';
         if (str_starts_with($tagName, 'overlay_')) return 'overlay';
-        
+
         return 'other';
     }
 
@@ -247,10 +240,10 @@ class JsonTemplateParserService
      */
     private function createTag(
         string $tagName,
-        string $jsonPath, 
-        $sampleValue, 
-        array &$createdTags, 
-        array &$categories, 
+        string $jsonPath,
+        $sampleValue,
+        array &$createdTags,
+        array &$categories,
         string $categoryName
     ): void {
         // Determine data type
@@ -302,7 +295,7 @@ class JsonTemplateParserService
                     ['name' => $categoryData['name']],
                     $categoryData
                 );
-                
+
                 if ($category->wasRecentlyCreated) {
                     $saved['categories']++;
                 }
@@ -311,10 +304,10 @@ class JsonTemplateParserService
             // Save tags
             foreach ($tagData['tags'] as $tagData) {
                 $category = TemplateTagCategory::where('name', $tagData['category_name'])->first();
-                
+
                 if ($category) {
                     $existingTag = TemplateTag::where('tag_name', $tagData['tag_name'])->first();
-                    
+
                     if ($existingTag) {
                         // Update existing tag with new sample data
                         $existingTag->update([
@@ -385,33 +378,33 @@ class JsonTemplateParserService
         if (is_bool($value)) {
             return 'boolean';
         }
-        
+
         if (is_int($value)) {
             return 'integer';
         }
-        
+
         if (is_float($value)) {
             return 'float';
         }
-        
+
         if (is_array($value)) {
             return 'array';
         }
-        
+
         if (is_string($value)) {
             // Check if it's a date
             if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value)) {
                 return 'datetime';
             }
-            
+
             // Check if it's a URL
             if (filter_var($value, FILTER_VALIDATE_URL)) {
                 return 'url';
             }
-            
+
             return 'string';
         }
-        
+
         return 'unknown';
     }
 
@@ -422,7 +415,7 @@ class JsonTemplateParserService
     {
         // Remove common prefixes for cleaner display names
         $cleanName = preg_replace('/^(user_|channel_|followers_|followed_|subscribers_|goals_|overlay_)/', '', $tagName);
-        
+
         // Convert underscores to spaces and title case
         return Str::title(str_replace('_', ' ', $cleanName));
     }
@@ -434,11 +427,11 @@ class JsonTemplateParserService
     {
         // Use the centralized descriptions from TemplateDataMapperService
         $availableTags = $this->templateDataMapper->getAvailableTemplateTags();
-        
+
         if (isset($availableTags[$tagName])) {
             return $availableTags[$tagName];
         }
-        
+
         // Fallback to generated description
         $baseDescription = match($dataType) {
             'datetime' => 'Date and time value',
@@ -449,7 +442,7 @@ class JsonTemplateParserService
             'array' => 'List of values',
             default => 'Text value'
         };
-        
+
         return "Template tag for {$this->generateDisplayName($tagName)}. {$baseDescription}.";
     }
 
@@ -461,12 +454,12 @@ class JsonTemplateParserService
         if ($dataType === 'array_count') {
             return $value; // Just the count
         }
-        
+
         if (is_array($value)) {
             // Store only first few items for arrays
             return array_slice($value, 0, 3);
         }
-        
+
         return $value;
     }
 

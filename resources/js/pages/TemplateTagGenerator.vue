@@ -3,10 +3,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, Link } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
-import HelpFab from '@/components/HelpFab.vue';
+import Heading from '@/components/Heading.vue';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {
@@ -67,7 +67,7 @@ const showToast = ref(false);
 // Computed
 const organizedTags = computed(() => props.existingTags);
 
-// Show error message if there's an initial error
+// Show an error message if there's an initial error
 onMounted(async () => {
   if (props.error) {
     showToast.value = true;
@@ -219,13 +219,6 @@ const clearPreview = (tagId: number) => {
   isLoadingPreview.value = restLoading;
 };
 
-// Keep tooltip visible when hovering over the tooltip itself
-const keepTooltip = (tagId: number) => {
-  // This prevents the tooltip from disappearing when the user moves
-  // their mouse from the eye icon to the tooltip content
-  // The tooltip will stay until they move away from both
-};
-
 // Hide toast
 const hideToast = () => {
   showToast.value = false;
@@ -263,18 +256,18 @@ const slug = computed(() => {
 const getDataTypeClass = (dataType: string) => {
   switch (dataType) {
     case 'string':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      return 'bg-blue-100/50 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
     case 'integer':
     case 'float':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      return 'bg-green-100/50 text-green-800 dark:bg-green-900/50 dark:text-green-200';
     case 'boolean':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      return 'bg-purple-100/50 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200';
     case 'datetime':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      return 'bg-orange-100/50 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200';
     case 'url':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      return 'bg-yellow-100/50 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      return 'bg-gray-100/50 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200';
   }
 };
 </script>
@@ -293,14 +286,14 @@ const getDataTypeClass = (dataType: string) => {
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Template Tag Generator</h1>
-
-        <div class="flex items-center gap-2">
+        <Heading title="Template Tags Generator" description="Generate template tags from Twitch data" />
+        <div class="flex items-center gap-2 ml-auto">
           <Button
             @click="generateTags"
             :disabled="isGenerating"
             variant="default"
-            class="cursor-pointer"
+            size="lg"
+            class="cursor-pointer rounded-2xl border bg-accent-foreground/60 p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700 dark:hover:bg-accent-foreground"
           >
             <RefreshCw v-if="isGenerating" class="w-4 h-4 animate-spin" />
             <RefreshCw v-else class="w-4 h-4" />
@@ -311,7 +304,8 @@ const getDataTypeClass = (dataType: string) => {
             v-if="hasExistingTags"
             @click="clearAllTags"
             variant="destructive"
-            class="cursor-pointer"
+            size="lg"
+            class="cursor-pointer rounded-2xl border bg-accent-foreground p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
           >
             <Trash2 class="w-4 h-4" />
             Clear All Tags
@@ -330,15 +324,14 @@ const getDataTypeClass = (dataType: string) => {
 
       <!-- Existing Tags Display -->
       <div v-if="hasExistingTags" class="space-y-6">
-        <h2 class="text-xl font-bold mb-2">Generated Template Tags</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">Browse and preview template tags organized by category</p>
+
 
         <div v-for="(categoryData, categoryName) in organizedTags" :key="categoryName"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md">
+            class="rounded-2xl border bg-accent/20 p-0 text-center shadow backdrop-blur-sm transition">
 
           <!-- Category Header -->
           <details class="group">
-            <summary class="flex justify-between items-center p-4 cursor-pointer list-none bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <summary class="flex justify-between items-center p-4 cursor-pointer list-none hover:bg-accent/50 rounded-2xl">
               <div class="flex items-center">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {{ categoryData.category.display_name }}
@@ -357,32 +350,33 @@ const getDataTypeClass = (dataType: string) => {
             <!-- Tags Grid -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="tag in categoryData.tags" :key="tag.id"
-                  class="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-all hover:shadow-sm">
+                  class="text-left border bg-accent dark:bg-accent/30 dark:hover:bg-accent/15 hover:bg-accent/60 rounded-lg p-4 transition-all hover:shadow-sm hover:border-accent ">
 
                 <!-- Tag Header -->
-                <div class="flex justify-between items-start mb-3">
+                <div class="flex justify-between items-start">
                   <!-- Tag Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center mb-2">
-                      <code class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded-none text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-900 border border-dashed border-cyan-600 hover:border-dashed hover:border-cyan-900 transition"
+                      <code class="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded-none text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-900 border border-dashed border-cyan-600/50 hover:border-dashed hover:border-cyan-900 transition"
                             title="click to copy tag"
                             @click="copyTag(tag.tag_name)">
                         {{ tag.display_tag }}
                       </code>
-                      <span :class="getDataTypeClass(tag.data_type)"
-                            class="ml-2 inline-block px-2 py-1 text-xs font-medium rounded"
-                            :title="`json path: ${tag.json_path}`">
-                        {{ tag.data_type }}
-                      </span>
+
                     </div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ tag.description }}</p>
                   </div>
 
                   <!-- Action Buttons -->
                   <div class="flex items-center ml-3 space-x-1">
+                    <span :class="getDataTypeClass(tag.data_type)"
+                          class="mr-2 inline-block px-2 py-1 text-xs font-medium rounded"
+                          :title="`json path: ${tag.json_path}`">
+                      {{ tag.data_type }}
+                    </span>
                     <!-- Copy Button -->
                     <button @click="copyTag(tag.tag_name)"
-                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            class="p-2 rounded-lg cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             title="Copy tag">
                       <Copy class="w-4 h-4" />
                     </button>
@@ -390,7 +384,7 @@ const getDataTypeClass = (dataType: string) => {
                     <!-- Preview Button -->
                     <button @click="previewTag(tag.id)"
                             :disabled="isLoadingPreview[tag.id]"
-                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                            class="p-2 rounded-lg cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                             title="Preview with real data">
                       <RefreshCw v-if="isLoadingPreview[tag.id]" class="w-4 h-4 animate-spin" />
                       <Eye v-else class="w-4 h-4" />
@@ -403,15 +397,15 @@ const getDataTypeClass = (dataType: string) => {
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
                     <button @click="clearPreview(tag.id)"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            class="cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>
                   </div>
-                  <div class="font-mono text-sm text-gray-800 dark:text-gray-200 break-words">
-                    {{ tagPreviews[tag.id].output }}
-                  </div>
+                    <div class="font-mono text-sm text-gray-800 dark:text-gray-200 break-words">
+                      {{ tagPreviews[tag.id].output }}
+                    </div>
                 </div>
               </div>
             </div>
@@ -425,7 +419,7 @@ const getDataTypeClass = (dataType: string) => {
           <p class="text-gray-500 dark:text-gray-400 mb-4">
             Click "Generate Tags" to analyze your Twitch data and create template tags automatically.
           </p>
-          <Button @click="generateTags" :disabled="isGenerating" variant="default">
+          <Button @click="generateTags" :disabled="isGenerating" variant="default" class="cursor-pointer">
             <RefreshCw v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
             <RefreshCw v-else class="w-4 h-4 mr-2" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags Now' }}
@@ -443,17 +437,13 @@ const getDataTypeClass = (dataType: string) => {
       </div>
     </div>
 
-    <HelpFab :slug="slug" />
-
   </AppLayout>
 </template>
 
 <style scoped>
-/* Add any component-specific styles here */
 .animate-spin {
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   from {
     transform: rotate(0deg);

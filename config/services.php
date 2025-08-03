@@ -20,15 +20,10 @@ return [
         'api_secret' => env('CLOUDINARY_API_SECRET'),
         'url' => env('CLOUDINARY_URL'),
     ],
-    'twitch' => [    
-        'client_id' => env('TWITCH_CLIENT_ID'),  
-        'client_secret' => env('TWITCH_CLIENT_SECRET'),  
+    'twitch' => [
+        'client_id' => env('TWITCH_CLIENT_ID'),
+        'client_secret' => env('TWITCH_CLIENT_SECRET'),
         'redirect' => env('TWITCH_REDIRECT_URI'),
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10)
-    ],
-    'wordpress' => [    
-        'wp_json_url' => env('WP_JSON_URL'),  
-    ],
-
-
+    ]
 ];

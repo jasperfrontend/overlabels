@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge.vue';
-import HelpFab from '@/components/HelpFab.vue';
-
+import { useLinkWarning } from '@/composables/useLinkWarning';
 import {
   Dialog,
   DialogContent,
@@ -17,9 +17,9 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { type AppPageProps, type BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 import {
   Copy,
   Plus,
@@ -29,9 +29,11 @@ import {
   ExternalLink,
   AlertTriangle,
   CheckCircle,
+  Check,
   Clock,
   ShieldQuestion
 } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 interface OverlayHash {
   id: number;
@@ -58,6 +60,22 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
+const { triggerLinkWarning } = useLinkWarning();
+const page = usePage<AppPageProps>();
+const toastMessage = ref(null);
+const toastType = ref('info');
+
+watch(
+  () => page.props.flash?.message,
+  (newMessage) => {
+    if (newMessage) {
+      toastMessage.value = newMessage;
+      toastType.value = page.props.flash?.type || 'info';
+    }
+  },
+  { immediate: true },
+);
+
 // State for creating a new hash
 const showCreateDialog = ref(false);
 const createForm = ref({
@@ -78,6 +96,13 @@ const resetCreateForm = () => {
     expires_in_days: null,
     allowed_ips: [],
   };
+};
+
+const openExternalLink = (link: any, target: string ) => {
+  window.open(
+    link,
+    target
+  )
 };
 
 // Create a new overlay hash
@@ -111,11 +136,18 @@ const createHash = async () => {
         only: ['hashes']
       });
 
+      page.props.flash.message = 'Hash created successfully';
+      page.props.flash.type = 'success';
+
     } else {
-      alert(`Failed to create hash: ${data.message || 'Unknown error'}`);
+      console.error('Error creating hash:', data);
+      page.props.flash.message = data.message || 'Unknown error';
+      page.props.flash.type = 'error';
     }
   } catch (error) {
-    alert('Failed to create hash. Please try again.');
+    console.error('Error creating hash:', error);
+    page.props.flash.message = 'Failed to create hash';
+    page.props.flash.type = 'error';
   } finally {
     isCreating.value = false;
   }
@@ -137,12 +169,17 @@ const revokeHash = async (hash: OverlayHash) => {
 
     if (response.ok) {
       router.reload({ only: ['hashes'] });
+      page.props.flash.message = 'Hash revoked successfully';
+      page.props.flash.type = 'success';
     } else {
-      alert('Failed to revoke hash');
+      console.log('Error revoking hash:', response);
+      page.props.flash.message = 'Failed to revoke hash';
+      page.props.flash.type = 'error';
     }
   } catch (error) {
     console.error('Error revoking hash:', error);
-    alert('Failed to revoke hash');
+    page.props.flash.message = 'Failed to revoke hash';
+    page.props.flash.type = 'error';
   }
 };
 
@@ -162,12 +199,17 @@ const regenerateHash = async (hash: OverlayHash) => {
 
     if (response.ok) {
       router.reload({ only: ['hashes'] });
+      page.props.flash.message = 'Hash regenerated successfully';
+      page.props.flash.type = 'success';
     } else {
-      alert('Failed to regenerate hash');
+      console.log('Error regenerating hash:', response);
+      page.props.flash.message = 'Failed to regenerate hash';
+      page.props.flash.type = 'error';
     }
   } catch (error) {
     console.error('Error regenerating hash:', error);
-    alert('Failed to regenerate hash');
+    page.props.flash.message = 'Failed to regenerate hash';
+    page.props.flash.type = 'error';
   }
 };
 
@@ -187,12 +229,17 @@ const deleteHash = async (hash: OverlayHash) => {
 
     if (response.ok) {
       router.reload({ only: ['hashes'] });
+      page.props.flash.message = 'Hash deleted successfully';
+      page.props.flash.type = 'success';
     } else {
-      alert('Failed to delete hash');
+      console.log('Error deleting hash:', response);
+      page.props.flash.message = 'Failed to delete hash';
+      page.props.flash.type = 'error';
     }
   } catch (error) {
     console.error('Error deleting hash:', error);
-    alert('Failed to delete hash');
+    page.props.flash.message = 'Failed to delete hash';
+    page.props.flash.type = 'error';
   }
 };
 
@@ -202,8 +249,12 @@ const copyUrl = async (url: string) => {
     await navigator.clipboard.writeText(url);
     // You could add a toast notification here
     console.log('URL copied to clipboard');
+    page.props.flash.message = 'URL copied to clipboard';
+    page.props.flash.type = 'success';
   } catch (error) {
     console.error('Failed to copy URL:', error);
+    page.props.flash.message = 'Failed to copy URL';
+    page.props.flash.type = 'error';
   }
 };
 
@@ -214,18 +265,19 @@ interface StatusBadge {
   variant: BadgeVariant;
   icon: any;
   text: string;
+  class: string;
 }
 const getStatusBadge = (hash: OverlayHash): StatusBadge => {
   if (!hash.is_active) {
-    return { variant: 'destructive', icon: Ban, text: 'Revoked' };
+    return { variant: 'destructive', icon: Ban, text: 'Revoked', class: 'bg-orange-300/20 border-orange-300/40' };
   }
   if (hash.expires_at && new Date(hash.expires_at) < new Date()) {
-    return { variant: 'destructive', icon: Clock, text: 'Expired' };
+    return { variant: 'destructive', icon: Clock, text: 'Expired', class: 'bg-red-300/20 border-red-300/40' };
   }
   if (hash.is_valid) {
-    return { variant: 'default', icon: CheckCircle, text: 'Active' };
+    return { variant: 'outline', icon: Check, text: 'Active', class: 'bg-green-300/20 border-green-300/40' };
   }
-  return { variant: 'secondary', icon: AlertTriangle, text: 'Invalid' };
+  return { variant: 'secondary', icon: AlertTriangle, text: 'Invalid', class: 'bg-red-300/20 border-red-300/40' };
 };
 </script>
 
@@ -233,13 +285,12 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
   <Head title="Secure Overlay Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
+
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold">Secure Overlay Generator</h1>
-          <p class="text-muted-foreground">
-            Manage secure overlay URLs for your OBS overlays.
-          </p>
+          <Heading title="Secure Overlay Generator" description="Manage secure overlay URLs for your OBS overlays." />
         </div>
 
         <Dialog v-model:open="showCreateDialog">
@@ -314,7 +365,7 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
       </div>
 
       <!-- Info Card -->
-      <Card class="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950 rounded-none border-2">
+      <Card class="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-500/30 rounded-none border-1">
         <CardContent>
           <div class="flex items-start gap-3">
             <div class="rounded-full bg-red-500 p-1">
@@ -350,8 +401,8 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
         </div>
 
         <div v-else>
-          <Card v-for="hash in hashes" :key="hash.id" class="overflow-hidden">
-            <CardHeader class="pb-3">
+          <Card v-for="hash in hashes" :key="hash.id" class="overflow-hidden mb-4 rounded-2xl border bg-accent/40 p-4 shadow backdrop-blur-sm transition hover:bg-accent/40 hover:shadow-lg">
+            <CardHeader>
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <CardTitle class="text-lg">{{ hash.overlay_name }}</CardTitle>
@@ -359,51 +410,65 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
                     {{ hash.description }}
                   </CardDescription>
                   <div class="flex items-center gap-2 mt-2">
-                    <Badge :variant="getStatusBadge(hash).variant" class="text-xs">
+                    <Badge :variant="getStatusBadge(hash).variant" :class="getStatusBadge(hash).class">
                       <component :is="getStatusBadge(hash).icon" class="w-3 h-3 mr-1" />
                       {{ getStatusBadge(hash).text }}
                     </Badge>
-                    <span class="text-xs text-muted-foreground">
-                      {{ hash.access_count }} accesses
-                    </span>
-                    <span v-if="hash.last_accessed_at" class="text-xs text-muted-foreground">
-                      Last: {{ hash.last_accessed_at }}
-                    </span>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-1">
-                  <Button
-                    @click="regenerateHash(hash)"
-                    :disabled="!hash.is_active"
-                    variant="ghost"
-                    size="sm"
-                    class="cursor-pointer"
-                    title="Regenerate hash"
-                  >
-                    <RefreshCw class="w-4 h-4" />
-                  </Button>
+                <div>
+                  <div class="flex items-end content-end text-right justify-between gap-1">
+                    <Button
+                      @click="regenerateHash(hash)"
+                      :disabled="!hash.is_active"
+                      variant="ghost"
+                      size="sm"
+                      class="cursor-pointer"
+                      title="Regenerate hash"
+                    >
+                      <RefreshCw class="w-4 h-4" />
+                    </Button>
 
-                  <Button
-                    @click="revokeHash(hash)"
-                    :disabled="!hash.is_active"
-                    variant="ghost"
-                    size="sm"
-                    class="cursor-pointer text-orange-600 hover:text-orange-700"
-                    title="Revoke hash"
-                  >
-                    <Ban class="w-4 h-4" />
-                  </Button>
+                    <Button
+                      @click="revokeHash(hash)"
+                      :disabled="!hash.is_active"
+                      variant="ghost"
+                      size="sm"
+                      class="cursor-pointer text-orange-600 hover:text-orange-700"
+                      title="Revoke hash"
+                    >
+                      <Ban class="w-4 h-4" />
+                    </Button>
 
-                  <Button
-                    @click="deleteHash(hash)"
-                    variant="ghost"
-                    size="sm"
-                    class="cursor-pointer text-red-600 hover:text-red-700"
-                    title="Delete hash"
-                  >
-                    <Trash2 class="w-4 h-4" />
-                  </Button>
+                    <Button
+                      @click="deleteHash(hash)"
+                      variant="ghost"
+                      size="sm"
+                      class="cursor-pointer text-red-600 hover:text-red-700"
+                      title="Delete hash"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div class="leading-snug">
+                    <div>
+                      <span class="text-xs text-muted-foreground">Created: </span>
+                      <span class="text-xs text-muted-foreground opacity-70">{{ hash.created_at }}</span>
+                    </div>
+                    <div v-if="hash.expires_at">
+                      <span class="text-xs text-muted-foreground">Expires:</span>
+                      <span class="text-xs text-muted-foreground opacity-70">{{ hash.expires_at }}</span>
+                    </div>
+                  </div>
+
+                  <span class="text-xs text-muted-foreground bg-muted rounded px-1 py-0.5 mr-1">
+                    {{ hash.access_count }} views
+                  </span>
+                  <span v-if="hash.last_accessed_at" class="text-xs text-muted-foreground">
+                    Last: {{ hash.last_accessed_at }}
+                  </span>
                 </div>
               </div>
             </CardHeader>
@@ -411,43 +476,29 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
             <CardContent class="space-y-3">
               <!-- Overlay URL -->
               <div class="space-y-2">
-                <Label class="text-sm font-medium">Overlay URL</Label>
+
                 <div class="flex items-center gap-2" v-if="hash.is_active">
-                  <Input
-                    :value="hash.overlay_url"
-                  />
+
                   <Button
                     @click="copyUrl(hash.overlay_url)"
                     variant="outline"
-                    size="sm"
-                    class="cursor-pointer"
+                    size="lg"
+                    class="cursor-pointer rounded-2xl hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700"
                     title="Copy URL"
                   >
-                    <Copy class="w-4 h-4" />
+                    <Copy class="w-4 h-4" /> Copy Overlay URL
                   </Button>
                   <Button
                     :as="'a'"
-                    :href="hash.overlay_url"
+                    @click="triggerLinkWarning(() => openExternalLink(hash.overlay_url, '_blank'), 'Remember: DO NOT EVER show this link on stream! Treat it like a password. If you think it has leaked, revoke or regenerate the hash immediately.')"
                     target="_blank"
-                    variant="outline"
-                    size="sm"
-                    class="cursor-pointer"
+                    variant="secondary"
+                    size="lg"
+                    class="cursor-pointer rounded-2xl hover:ring-2 hover:ring-red-300 hover:bg-red-600/50 dark:hover:ring-red-700"
                     title="Test overlay"
                   >
-                    <ExternalLink class="w-4 h-4" />
+                    <ExternalLink class="w-4 h-4" /> Open Overlay URL
                   </Button>
-                </div>
-              </div>
-
-              <!-- Metadata -->
-              <div class="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
-                <div>
-                  <span class="font-medium">Created:</span>
-                  {{ hash.created_at }}
-                </div>
-                <div v-if="hash.expires_at">
-                  <span class="font-medium">Expires:</span>
-                  {{ hash.expires_at }}
                 </div>
               </div>
 
@@ -457,19 +508,17 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
                   OBS Setup Instructions
                 </summary>
                 <div class="mt-2 p-3 bg-muted rounded border space-y-2">
-                  <p><strong>1.</strong> In OBS, add a new "Browser Source"</p>
-                  <p><strong>2.</strong> Set the URL to: <code class="bg-background px-1 rounded">{{ hash.overlay_url }}</code></p>
-                  <p><strong>3.</strong> Set width/height as needed for your overlay</p>
-                    <p><strong>4.</strong> Check "Refresh browser when scene becomes active" for live updates</p>
-                  </div>
-                </details>
-              </CardContent>
-            </Card>
+                  <p><strong>1.</strong> In OBS, add a new Browser Source</p>
+                  <p><strong>2.</strong> Set the URL to the value you have copied above</p>
+                  <p><strong>3.</strong> Set width&times;height to 1920&times;1080</p>
+                  <p><strong>4.</strong> Check "Refresh browser when scene becomes active" for live updates</p>
+                </div>
+              </details>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
-
-    <HelpFab slug="overlay-hashes" />
 
   </AppLayout>
 </template>

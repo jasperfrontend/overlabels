@@ -211,7 +211,9 @@ class TwitchApiService
             return $this->getChannelGoals($accessToken, $userId) ?? [];
         });
     }
-
+    /*
+     * getExtendedUserData gets the user data from the Laravel Cache.
+     */
     public function getExtendedUserData(string $accessToken, string $userId): array
     {
         return [
@@ -224,6 +226,11 @@ class TwitchApiService
         ];
     }
 
+    /*
+     * getFreshTwitchData gets data directly from the Twitch API. This is an expensive call
+     * because it refreshes ALL your data. The user is advised to use this API request with
+     * caution and to not overuse it.
+     */
     public function getFreshTwitchData(string $accessToken, string $userId): array
     {
         return [

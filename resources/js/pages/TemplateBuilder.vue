@@ -3,9 +3,8 @@ import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { BreadcrumbItem } from '@/types'
 import TemplateBuilderEditor from '@/components/TemplateBuilderEditor.vue'
-import HelpFab from '@/components/HelpFab.vue'
+import Heading from '@/components/Heading.vue';
 
-// Props from Inertia controller
 interface Props {
   overlayHash?: {
     hash_key: string
@@ -61,27 +60,21 @@ if (props.overlayHash) {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-          Template Builder
-        </h1>
-        <p class="mt-1 text-sm mb-4 text-gray-600 dark:text-gray-400">
-          Create custom HTML/CSS templates for your overlays using our CodePen-style editor.
-        </p>
-      </div>
+      <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
+
 
       <!-- Overlay Hash Selector -->
       <div v-if="!overlayHash && userOverlayHashes.length > 0"
-           class="bg-white dark:bg-gray-800 rounded-lg border p-6">
-        <h2 class="text-lg font-medium mb-4">Select an Overlay to Edit</h2>
+           class="mt-6">
+        <h2 class="text-lg font-medium mb-4">Select an overlay to edit</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <a v-for="hash in userOverlayHashes"
              :key="hash.slug"
              :href="route('template.builder', hash.slug)"
-             class="block p-4 border rounded-lg hover:bg-gray-50 bg-accent border-accent-foreground hover:border-cyan-600 dark:hover:bg-gray-700 transition-colors">
+             class="block text-left cursor-pointer rounded-2xl border bg-accent/20 p-4 shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700">
             <div class="font-medium">{{ hash.overlay_name }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">{{ hash.slug }}</div>
-            <div class="text-xs text-gray-400 mt-1">{{ hash.created_at }}</div>
+            <div class="text-sm pt-3 text-gray-500 dark:text-gray-400">{{ hash.slug }}</div>
+            <div class="text-xs text-gray-400/60 pt-2">{{ hash.created_at }}</div>
           </a>
         </div>
       </div>
@@ -107,9 +100,6 @@ if (props.overlayHash) {
         </a>
       </div>
     </div>
-
-
-    <HelpFab slug="template-builder" />
 
   </AppLayout>
 </template>

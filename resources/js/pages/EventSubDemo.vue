@@ -6,6 +6,7 @@ import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -17,6 +18,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 // State
 const isConnected = ref(false);
 const isConnecting = ref(false);
+const isLoading = ref(false);
 const isWebSocketConnected = ref(false);
 const events = ref<Array<any>>([]);
 const subscriptionStatus = ref<any>(null);
@@ -101,7 +103,7 @@ const scrollToTop = () => {
 // Connect to EventSub
 const connect = async () => {
   if (isConnecting.value) return;
-
+  isLoading.value = true;
   console.log('🔌 Starting EventSub connection...');
   isConnecting.value = true;
 
@@ -118,6 +120,7 @@ const connect = async () => {
     console.log('📡 EventSub API Response:', data);
 
     if (response.ok) {
+      isLoading.value = false;
       console.log('✅ Connected to EventSub:', data);
 
       // Add a connection event to the log
@@ -157,9 +160,11 @@ const connect = async () => {
 
     } else {
       console.error('❌ EventSub connection failed:', data);
+      isLoading.value = false;
       throw new Error(data.error || 'Failed to connect');
     }
   } catch (error) {
+    isLoading.value = false;
     console.error('💥 Connection failed:', error);
 
     events.value.unshift({
@@ -170,6 +175,7 @@ const connect = async () => {
       receivedAt: new Date().toLocaleTimeString()
     });
   } finally {
+    isLoading.value = false;
     isConnecting.value = false;
     console.log('🏁 EventSub connection attempt finished');
   }
@@ -177,6 +183,7 @@ const connect = async () => {
 
 // Disconnect from EventSub
 const disconnect = async () => {
+  isLoading.value = true;
   console.log('🔌 Disconnecting from EventSub...');
 
   try {
@@ -193,6 +200,7 @@ const disconnect = async () => {
 
     if (response.ok) {
       isConnected.value = false;
+      isLoading.value = false;
       console.log('✅ Disconnected from EventSub:', data);
 
       events.value.unshift({
@@ -206,9 +214,11 @@ const disconnect = async () => {
       subscriptionStatus.value = null;
     } else {
       console.error('❌ Disconnect failed:', data);
+      isLoading.value = false;
       throw new Error(data.error || 'Failed to disconnect');
     }
   } catch (error) {
+    isLoading.value = false;
     console.error('💥 Disconnect failed:', error);
 
     events.value.unshift({
@@ -288,8 +298,7 @@ onUnmounted(() => {
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header Controls -->
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Twitch EventSub Demo</h1>
-
+        <Heading title="Twitch EventSub Demo" description="A demo of the Twitch EventSub API." />
         <div class="flex items-center gap-4">
           <!-- Status Indicators -->
           <div class="flex flex-col items-start">
@@ -317,29 +326,34 @@ onUnmounted(() => {
 
           </div>
 
-          <!-- Action Buttons -->
+          <span v-if="isLoading" class="text-sm inline-block text-left text-muted-foreground animate-ping">
+            <span role="status" class="w-2 h-2 rounded-full inline-block bg-purple-500">
+              <span class="sr-only">Loading...</span>
+            </span>
+          </span>
           <Button
             @click="connect"
-            :disabled="isConnected || isConnecting"
+            :disabled="isConnected || isConnecting || isLoading"
             variant="default"
-            class="cursor-pointer"
+            class="cursor-pointer rounded-2xl"
           >
             {{ isConnecting ? 'Connecting...' : 'Connect' }}
           </Button>
 
           <Button
             @click="disconnect"
-            :disabled="!isConnected"
+            :disabled="!isConnected || isLoading"
             variant="outline"
-            class="cursor-pointer"
+            class="cursor-pointer rounded-2xl"
           >
             Disconnect
           </Button>
 
           <Button
             @click="clearEvents"
-            variant="ghost"
-            class="cursor-pointer bg-accent"
+            :disabled="events.length === 0 || isLoading"
+            variant="outline"
+            class="cursor-pointer rounded-2xl"
           >
             Clear Events
           </Button>

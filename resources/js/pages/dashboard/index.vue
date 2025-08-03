@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import Heading from '@/components/Heading.vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const breadcrumbs = [
   {
@@ -11,26 +13,26 @@ const breadcrumbs = [
 </script>
 
 <template>
-  <Head title="Welcome to Overlabels First Test Drive!" />
+  <Head :title="breadcrumbs[0].title" description="Dashboard for Overlabels First Test Drive" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 overflow-x-auto">
       <!-- Header Section -->
-      <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h1 class="text-3xl font-bold text-blue-900">Welcome to Overlabels First Test Drive!</h1>
-        <p class="text-blue-800 mt-2">
+      <header class="rounded-2xl border bg-accent/20 p-4 shadow backdrop-blur-sm">
+        <Heading title="Welcome to Overlabels" description="A Twitch overlay generator" />
+        <p class="mt-2 text-sm">
           This is an early-stage demo, and <strong>nothing here is finalized</strong>.
           <br />
-          <span class="font-semibold underline text-red-600">Warning:</span> There is no privacy policy yet, and connecting your Twitch data is at your own risk!
+          <span class="font-semibold text-red-600">Warning:</span> There is no privacy policy yet, and connecting your Twitch data is at your own risk!
         </p>
-      </div>
+      </header>
 
       <!-- Important Notice -->
-      <div class="bg-red-100 p-4 rounded-lg border border-red-200">
-        <h2 class="text-xl font-semibold text-red-700">Important:</h2>
-        <p class="text-red-700 mt-2">
+      <div class="p-4 rounded-lg border bg-accent/20 shadow backdrop-blur-sm">
+        <Heading title="Important Notice" description="Want to get rid of Overlabels?" />
+        <p>
           If you'd like to disconnect this app from Twitch, follow the instructions on
           <a
-            href="https://help.twitch.tv/s/article/twitch-account-settings?language=en_US#connections"
+            href="https://help.twitch.tv/s/article/twitch-account-settings#connections"
             target="_blank"
             class="text-red-600 underline"
           >
@@ -40,28 +42,25 @@ const breadcrumbs = [
       </div>
 
       <!-- How to Get Started -->
-      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h2 class="text-2xl font-bold text-gray-800">Getting Started</h2>
-        <p class="text-gray-700 mt-2">
-          Follow these steps to generate your first overlay:
-        </p>
-        <ol class="list-decimal list-inside mt-4 text-gray-700 space-y-4">
+      <div class="p-4 rounded-lg border">
+        <Heading title="How to get started" description="Follow these steps to get started" />
+        <ol class="list-decimal list-inside mt-4 space-y-4">
           <li>
-            <strong>Visit <Link href="/twitchdata">/twitchdata</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/twitchdata">/twitchdata</Link>:</strong>
             Ensure your Twitch data has been imported successfully. If not, try logging out and back in or use the
             <em>"Refresh All Data directly from the Twitch API"</em> button on that page.
           </li>
           <li>
-            <strong>Visit <Link href="/tags-generator">/tags-generator</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/tags-generator">/tags-generator</Link>:</strong>
             Here, you'll generate template tags for your Twitch account. Since permissions differ for affiliate and partner accounts, template tags need to be customized for your own account.
           </li>
           <li>
-            <strong>Visit <Link href="/overlay-hashes">/overlay-hashes</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/overlay-hashes">/overlay-hashes</Link>:</strong>
             Generate secure overlay URLs. Be sure to read warnings on this page and
             <strong>never share these URLs with anyone</strong>, as they can expose your Twitch data.
           </li>
           <li>
-            <strong>Visit <Link href="/template-builder">/template-builder</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/template-builder">/template-builder</Link>:</strong>
             Use this page to design your OBS overlay with HTML and CSS. A default layout is preloaded to showcase the system's capabilities.
           </li>
         </ol>

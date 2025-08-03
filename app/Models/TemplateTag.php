@@ -58,9 +58,10 @@ class TemplateTag extends Model
     {
         return $query->where('tag_type', 'custom');
     }
-    
+
     /**
      * Create a custom variant of this tag
+     * @throws \Exception
      */
     public function createCustomVariant(string $newTagName, array $customOptions = []): self
     {
@@ -97,7 +98,7 @@ class TemplateTag extends Model
     /**
      * Format the extracted data based on formatting options
      */
-    public function formatData($data)
+    public function formatData($data): string
     {
         if (!$this->formatting_options) {
             return $data;
@@ -128,7 +129,7 @@ class TemplateTag extends Model
     /**
      * Get the complete formatted output for this tag
      */
-    public function getFormattedOutput(array $jsonData)
+    public function getFormattedOutput(array $jsonData): string
     {
         $data = $this->extractDataFromJson($jsonData);
         return $this->formatData($data);

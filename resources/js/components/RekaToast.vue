@@ -1,10 +1,9 @@
 <template>
   <div
     v-if="visible"
-    class="fixed top-4 right-4 z-50 w-full max-w-xs rounded-2xl shadow-xl px-4 py-3 border flex items-start gap-3 text-sm"
+    class="fixed top-0 left-0 z-50 w-full text-center rounded-none shadow-xl px-4 py-3 border flex items-start gap-3 text-sm"
     :class="[
       color.bg,
-      color.border,
       color.text
     ]"
     @mouseover="pauseTimeout"
@@ -12,7 +11,7 @@
   >
     <component :is="icon" class="w-5 h-5 mt-0.5 shrink-0" />
     <span class="flex-1">{{ message }}</span>
-    <button @click="dismiss" class="text-xl leading-none">&times;</button>
+    <button @click="dismiss" class="text-xl leading-none cursor-pointer">&times;</button>
   </div>
 </template>
 

@@ -110,11 +110,11 @@
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
+    --sidebar-background: hsl(247, 44%, 96%);
     --sidebar-foreground: hsl(240 5.3% 26.1%);
     --sidebar-primary: hsl(0 0% 10%);
     --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
+    --sidebar-accent: hsl(243, 40%, 91%);
     --sidebar-accent-foreground: hsl(0 0% 30%);
     --sidebar-border: hsl(0 0% 91%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
@@ -122,7 +122,7 @@
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
+    --background: hsl(0 0% 8%);
     --foreground: hsl(0 0% 98%);
     --card: hsl(0 0% 3.9%);
     --card-foreground: hsl(0 0% 98%);
@@ -130,29 +130,29 @@
     --popover-foreground: hsl(0 0% 98%);
     --primary: hsl(0 0% 98%);
     --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
+    --secondary: hsl(0 0% 23%);
     --secondary-foreground: hsl(0 0% 98%);
     --muted: hsl(0 0% 16.08%);
     --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
+    --accent: hsl(0 0% 23%);
     --accent-foreground: hsl(0 0% 98%);
     --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
+    --border: hsl(0 0% 23%);
+    --input: hsl(0 0% 23%);
     --ring: hsl(0 0% 83.1%);
     --chart-1: hsl(220 70% 50%);
     --chart-2: hsl(160 60% 45%);
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
+    --sidebar-background: hsl(243, 18%, 22%);
     --sidebar-foreground: hsl(0 0% 95.9%);
     --sidebar-primary: hsl(360, 100%, 100%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
+    --sidebar-accent: hsl(245, 18%, 14%);
     --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
+    --sidebar-border: hsl(245, 18%, 14%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
 }

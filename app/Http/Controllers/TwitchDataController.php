@@ -25,6 +25,7 @@ class TwitchDataController extends Controller
         }
         $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
 
+        // If Laravel cache doesn't provide API info, retrieve it from Twitch directly
         if (empty($twitchData['channel']['broadcaster_login'])) {
             $this->twitch->clearAllUserCaches($user->twitch_id);
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
