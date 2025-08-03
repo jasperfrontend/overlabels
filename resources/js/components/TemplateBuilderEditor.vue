@@ -25,6 +25,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { Codemirror } from 'vue-codemirror';
+import { Link } from '@inertiajs/vue3';
 
 interface Props {
   overlayHash: {
@@ -461,16 +462,27 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       <!-- Available template tags -->
       <Card>
         <CardHeader>
-          <CardTitle class="text-base">Template Tags</CardTitle>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Click to copy template tags to your clipboard</p>
+          <div class="flex justify-between items-center">
+            <CardTitle class="text-base">Template Tags</CardTitle>
+            <a
+              title="Read more about Conditional Template Tags"
+              class="ml-2 pt-0.5 px-2 h-6 text-sm cursor-pointer flex bg-sidebar-accent hover:bg-sidebar-accent/70 rounded"
+              href="https://help.overlabels.com/template-builder/conditional-template-tags/#core"
+              target="_blank"
+            >
+              Conditional Tags
+              <ExternalLinkIcon class="h-[14px] w-[14px] ml-1 mt-0.5" />
+            </a>
+          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Click to copy template tags to your clipboard</p>
         </CardHeader>
-        <CardContent class="max-h-[calc(100vh-300px)] space-y-4 overflow-y-auto pr-2">
+        <CardContent class="max-h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
           <!-- Conditional Template Tags - Collapsible -->
           <div>
             <Button
               @click="showConditionalExamples = !showConditionalExamples"
               variant="ghost"
-              class="mb-2 h-auto w-full cursor-pointer justify-between border border-chart-2/50 p-0 hover:bg-chart-2/100 dark:hover:bg-chart-2/20"
+              class="mb-2 h-auto w-full cursor-pointer justify-between border p-0"
             >
               <h4 class="flex items-center p-2 px-0 text-sm font-medium">Conditional Template Tags</h4>
               <ChevronRight :class="['h-4 w-4 transition-transform', showConditionalExamples ? 'rotate-90' : '']" />
@@ -519,15 +531,14 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
           <!-- Regular template tags by category -->
           <div v-for="(tags, category) in tagsByCategory" :key="category">
-            <h4 class="mb-2 text-sm font-medium">{{ category }}</h4>
+            <h4 class="mb-2 font-medium">{{ category }}</h4>
             <div class="space-y-1">
               <Button
                 v-for="tag in tags"
                 :key="tag.tag_name"
                 @click="copyTag(tag.tag_name)"
                 variant="ghost"
-                size="sm"
-                class="h-auto w-full justify-start py-1 text-xs"
+                class="h-auto w-full justify-start py-1 px-0 text-xs"
                 :title="tag.description"
               >
                 <code class="text-xs">[[[{{ tag.tag_name }}]]]</code>

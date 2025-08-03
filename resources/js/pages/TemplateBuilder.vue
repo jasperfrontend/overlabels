@@ -62,10 +62,9 @@ if (props.overlayHash) {
       <!-- Header -->
       <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
 
-
       <!-- Overlay Hash Selector -->
       <div v-if="!overlayHash && userOverlayHashes.length > 0"
-           class="mt-6">
+           class="mt-4">
         <h2 class="text-lg font-medium mb-4">Select an overlay to edit</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <a v-for="hash in userOverlayHashes"
@@ -78,15 +77,15 @@ if (props.overlayHash) {
           </a>
         </div>
       </div>
-
-      <!-- Template Builder Editor -->
-      <TemplateBuilderEditor
-        v-if="overlayHash"
-        :overlay-hash="overlayHash"
-        :existing-template="existingTemplate"
-        :available-tags="availableTags"
-      />
-
+      <div class="mt-4">
+        <!-- Template Builder Editor -->
+        <TemplateBuilderEditor
+          v-if="overlayHash"
+          :overlay-hash="overlayHash"
+          :existing-template="existingTemplate"
+          :available-tags="availableTags"
+        />
+      </div>
       <!-- No overlays message -->
       <div v-if="!overlayHash && userOverlayHashes.length === 0"
            class="bg-white dark:bg-gray-800 rounded-lg border p-8 text-center">

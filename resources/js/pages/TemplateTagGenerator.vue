@@ -285,15 +285,14 @@ const getDataTypeClass = (dataType: string) => {
 
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Header Controls -->
-      <div class="flex items-center justify-between">
+      <div class="flex justify-between flex-col md:flex-row gap-4">
         <Heading title="Template Tags Generator" description="Generate template tags from Twitch data" />
-        <div class="flex items-center gap-2 ml-auto">
+        <div class="flex gap-2">
           <Button
             @click="generateTags"
             :disabled="isGenerating"
             variant="default"
-            size="lg"
-            class="cursor-pointer rounded-2xl border bg-accent-foreground/60 p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700 dark:hover:bg-accent-foreground"
+            class="w-[50%] md:w-auto cursor-pointer rounded-2xl border bg-accent-foreground/60 p-4 text-center shadow backdrop-blur-sm transition hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700 dark:hover:bg-accent-foreground"
           >
             <RefreshCw v-if="isGenerating" class="w-4 h-4 animate-spin" />
             <RefreshCw v-else class="w-4 h-4" />
@@ -304,8 +303,7 @@ const getDataTypeClass = (dataType: string) => {
             v-if="hasExistingTags"
             @click="clearAllTags"
             variant="destructive"
-            size="lg"
-            class="cursor-pointer rounded-2xl border bg-accent-foreground p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+            class="w-[50%] md:w-auto cursor-pointer rounded-2xl border bg-accent-foreground p-4 text-center shadow backdrop-blur-sm transition hover:ring-2 hover:ring-red-300 active:bg-accent dark:hover:ring-red-700"
           >
             <Trash2 class="w-4 h-4" />
             Clear All Tags

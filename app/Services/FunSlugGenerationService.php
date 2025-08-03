@@ -56,12 +56,12 @@ class FunSlugGenerationService
     {
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             $slug = $this->generateRandomSlug();
-            
+
             // Fast lookup: Check if slug exists using indexed query
             if (!$this->slugExists($slug)) {
                 return $slug;
             }
-            
+
             // If we're on later attempts, add some randomness
             if ($attempt > 5) {
                 $slug .= '-' . rand(10, 99);
@@ -70,12 +70,12 @@ class FunSlugGenerationService
                 }
             }
         }
-        
+
         // Fallback: Use timestamp + random number (virtually guaranteed unique)
         $timestamp = substr(time(), -4); // Last 4 digits of timestamp
         $random = rand(1000, 9999);
         $baseSlug = $this->generateRandomSlug();
-        
+
         return $baseSlug . '-' . $timestamp . $random;
     }
 
@@ -89,35 +89,35 @@ class FunSlugGenerationService
         $noun = $this->nouns[array_rand($this->nouns)];
         $adj3 = $this->adjectives3[array_rand($this->adjectives3)];
         $animal = $this->animals[array_rand($this->animals)];
-        
+
         return "{$adj1}-{$adj2}-{$noun}-{$adj3}-{$animal}";
     }
 
     /**
      * Fast slug existence check with caching
-     * Uses database index + Redis caching for performance
+     * Uses database index and Redis caching for performance
      */
     private function slugExists(string $slug): bool
     {
         // Cache key for this slug check
         $cacheKey = "slug_exists:{$slug}";
-        
-        // Check cache first (Redis lookup = ~0.1ms)
+
+        // Check Laravel Cache first (Redis lookup = ~0.1ms)
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached === 'exists';
         }
-        
+
         // Database check with index (should be ~1-2ms even with 500k+ records)
         $exists = DB::table('overlay_hashes')
             ->where('slug', $slug)
             ->exists();
-        
+
         // Cache the result for 1 hour
         // Cache 'not exists' for shorter time in case of race conditions
         $cacheTime = $exists ? 3600 : 300; // 1 hour if exists, 5 min if not
         Cache::put($cacheKey, $exists ? 'exists' : 'not_exists', $cacheTime);
-        
+
         return $exists;
     }
 
@@ -126,22 +126,22 @@ class FunSlugGenerationService
      */
     public function getTotalPossibleCombinations(): int
     {
-        return count($this->adjectives1) * 
-               count($this->adjectives2) * 
-               count($this->nouns) * 
-               count($this->adjectives3) * 
+        return count($this->adjectives1) *
+               count($this->adjectives2) *
+               count($this->nouns) *
+               count($this->adjectives3) *
                count($this->animals);
     }
 
     /**
-     * Get collision risk percentage based on current slug count
+     * Get collision risk percentage based on the current slug count saved in the database
      */
     public function getCollisionRisk(): array
     {
         $totalPossible = $this->getTotalPossibleCombinations();
         $currentCount = DB::table('overlay_hashes')->count();
         $collisionRisk = ($currentCount / $totalPossible) * 100;
-        
+
         return [
             'total_possible' => $totalPossible,
             'current_count' => $currentCount,
@@ -156,14 +156,14 @@ class FunSlugGenerationService
     public function regenerateSlugForOverlay(int $overlayId): string
     {
         $newSlug = $this->generateUniqueSlug();
-        
+
         DB::table('overlay_hashes')
             ->where('id', $overlayId)
             ->update(['slug' => $newSlug]);
-            
+
         // Clear any cached existence check for the new slug
         Cache::forget("slug_exists:{$newSlug}");
-        
+
         return $newSlug;
     }
 
@@ -174,36 +174,36 @@ class FunSlugGenerationService
     {
         $results = [];
         $uncachedSlugs = [];
-        
+
         // Check cache first for all slugs
         foreach ($slugs as $slug) {
             $cacheKey = "slug_exists:{$slug}";
             $cached = Cache::get($cacheKey);
-            
+
             if ($cached !== null) {
                 $results[$slug] = $cached === 'exists';
             } else {
                 $uncachedSlugs[] = $slug;
             }
         }
-        
+
         // Batch database check for uncached slugs
         if (!empty($uncachedSlugs)) {
             $existingSlugs = DB::table('overlay_hashes')
                 ->whereIn('slug', $uncachedSlugs)
                 ->pluck('slug')
                 ->toArray();
-            
+
             foreach ($uncachedSlugs as $slug) {
                 $exists = in_array($slug, $existingSlugs);
                 $results[$slug] = $exists;
-                
+
                 // Cache the result
                 $cacheTime = $exists ? 3600 : 300;
                 Cache::put("slug_exists:{$slug}", $exists ? 'exists' : 'not_exists', $cacheTime);
             }
         }
-        
+
         return $results;
     }
 }
