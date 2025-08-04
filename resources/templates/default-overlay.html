@@ -1,36 +1,18 @@
-[[[style]]] 
-<!-- 
-leave the [[[style]]] tag to see your rendered css in the preview tab. 
-This will be better optimised in future updates 
--->
-<div class="overlay-container">
-    <div class="overlay-title">[[[overlay_name]]]</div>
-    
-    <div class="stat-row">
-        <span class="stat-label">Channel:</span>
-        <span class="stat-value">[[[channel_name]]]</span>
-    </div>
-    
-    <div class="stat-row">
-        <span class="stat-label">Followers:</span>
-        <span class="stat-value">[[[followers_total]]]</span>
-    </div>
-    
-    <div class="stat-row">
-        <span class="stat-label">Latest Follower:</span>
-        <span class="stat-value">[[[followers_latest_name]]]</span>
-    </div>
-    
-    <div class="stat-row">
-        <span class="stat-label">Subscribers:</span>
-        <span class="stat-value">[[[subscribers_total]]]</span>
-    </div>
-    
-    <div class="timestamp">
-        Last updated: [[[timestamp]]]
-    </div>
-    
-    <div class="setup-note">
-        ✨ This is a default overlay! Create a custom template in your dashboard to personalize this.
-    </div>
+<div class="overlay-container gradient">
+  <div class="overlay-title"><span><img class="user-avatar" src="[[[user_avatar]]]" width="36" height="36" alt="" /></span>Hi, I'm [[[channel_name]]]</div>
+
+  <div class="stat-row">
+    <span class="stat-label">Followers:</span>
+    <span class="stat-value">[[[followers_total]]]</span>
+  </div>
+
+  <div class="stat-row">
+    <span class="stat-label">Latest Follower:</span>
+    <span class="stat-value">[[[followers_latest_user_name]]] ([[[followers_latest_date]]])</span>
+  </div>
+
+  <div class="stat-row">
+    <span class="stat-label">Subscribers:</span>
+    <span class="stat-value">[[[subscribers_total]]]</span>
+  </div>
 </div>

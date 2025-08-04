@@ -1,67 +1,98 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-
+html, body {
+  background: #151515;
+}
 body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: transparent;
-    color: white;
-    overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: transparent;
+  color: white;
+  overflow: hidden;
 }
 
 .overlay-container {
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(30, 30, 60, 0.9) 100%);
-    border-radius: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
-    margin: 20px;
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  margin: 20px;
 }
-
+.gradient {
+  background-image: linear-gradient(
+    120deg,
+    hsl(223deg 68% 6%) 0%,
+    hsl(227deg 69% 10%) 2%,
+    hsl(230deg 75% 14%) 3%,
+    hsl(235deg 76% 18%) 4%,
+    hsl(239deg 79% 22%) 6%,
+    hsl(242deg 82% 26%) 7%,
+    hsl(246deg 86% 30%) 9%,
+    hsl(250deg 88% 34%) 10%,
+    hsl(254deg 91% 38%) 12%,
+    hsl(258deg 94% 42%) 14%,
+    hsl(262deg 97% 46%) 16%,
+    hsl(266deg 100% 50%) 20%,
+    hsl(266deg 93% 54%) 24%,
+    hsl(267deg 87% 58%) 29%,
+    hsl(267deg 80% 62%) 34%,
+    hsl(267deg 73% 66%) 41%,
+    hsl(268deg 67% 70%) 48%,
+    hsl(268deg 61% 74%) 56%,
+    hsl(269deg 54% 78%) 64%,
+    hsl(269deg 47% 82%) 73%,
+    hsl(269deg 41% 86%) 82%,
+    hsl(272deg 33% 90%) 91%,
+    hsl(270deg 27% 94%) 100%
+  );
+}
 .overlay-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 15px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
 }
-
+.user-avatar {
+  border-radius: 100px;
+  margin: 0 10px 0 0;
+  position: relative;
+  top: 11px;
+  border: 4px solid rgba(255,255,255,.25);
+}
 .stat-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-label {
-    font-weight: 500;
-    opacity: 0.8;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .stat-value {
-    font-weight: bold;
-    color: #FFD700;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  color: #2b09ae;
 }
 
 .timestamp {
-    text-align: center;
-    font-size: 0.8em;
-    opacity: 0.6;
-    margin-top: 15px;
+  text-align: center;
+  font-size: 0.8em;
+  opacity: 0.6;
+  margin-top: 15px;
 }
 
 .setup-note {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 15px;
-    font-size: 0.85em;
-    text-align: center;
-    border-left: 4px solid #FFD700;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 0.85em;
+  text-align: center;
+  border-left: 4px solid #FFD700;
 }
