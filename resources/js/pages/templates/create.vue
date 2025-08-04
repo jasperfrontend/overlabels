@@ -1,5 +1,5 @@
 <template>
-  <AppLayout title="Create Template">
+  <AppLayout>
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -214,6 +214,7 @@ import { ref } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Modal from '@/components/Modal.vue';
+import axios from 'axios';
 
 const form = useForm({
   name: '',

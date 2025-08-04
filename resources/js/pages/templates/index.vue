@@ -59,8 +59,8 @@
 
           <div class="flex items-center text-sm text-gray-500 mb-3">
             <img
-              :src="template.owner.avatar"
-              :alt="template.owner.name"
+              :src="template?.owner?.avatar"
+              :alt="template?.owner?.name"
               class="w-6 h-6 rounded-full mr-2"
             />
             <span>{{ template.owner.name }}</span>
@@ -121,12 +121,13 @@
 
 <script setup>
 import { ref } from 'vue';
-import { router, Link, usePage } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import debounce from "lodash/debounce"
 import { EyeIcon, GitForkIcon } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
+import axios from 'axios';
 
 const props = defineProps({
   templates: Object,
