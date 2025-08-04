@@ -200,7 +200,7 @@ watch(
 
 <template>
   <Head title="Template Builder" />
-  <AppLayout :title="`Edit ${template.name}`">
+  <AppLayout>
     <!-- Flash Message -->
     <FlashMessage
       :show="showSuccessToast"

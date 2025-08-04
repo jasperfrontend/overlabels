@@ -1,14 +1,14 @@
 <template>
-  <AppLayout title="Access Tokens">
+  <AppLayout>
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-accent/50 border overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <div class="flex justify-between items-center mb-6">
               <h2 class="text-xl font-semibold">Overlay Access Tokens</h2>
               <button
                 @click="showCreateModal = true"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
               >
                 Create New Token
               </button>
@@ -24,19 +24,19 @@
                 <div class="flex justify-between items-start">
                   <div>
                     <h3 class="font-semibold">{{ token.name }}</h3>
-                    <p class="text-sm text-gray-600">
-                      Prefix: <code class="bg-gray-100 px-1">{{ token.prefix }}...</code>
+                    <p class="text-sm text-accent-foreground/50">
+                      Prefix: <code class="bg-accent-foreground/10 px-1">{{ token.prefix }}...</code>
                     </p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-accent-foreground/50">
                       Created: {{ formatDate(token.created_at) }}
                     </p>
-                    <p v-if="token.expires_at" class="text-sm text-gray-600">
+                    <p v-if="token.expires_at" class="text-sm text-accent-foreground/50">
                       Expires: {{ formatDate(token.expires_at) }}
                     </p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-accent-foreground/50">
                       Access Count: {{ token.access_count }}
                     </p>
-                    <p v-if="token.last_used_at" class="text-sm text-gray-600">
+                    <p v-if="token.last_used_at" class="text-sm text-accent-foreground/50">
                       Last Used: {{ formatDate(token.last_used_at) }}
                     </p>
                   </div>
@@ -82,30 +82,31 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700">Token Name</label>
+            <label class="block text-sm font-medium" for="token-name">Token Name</label>
             <input
               v-model="form.name"
               type="text"
-              class="mt-1 block w-full rounded-md border-gray-300"
+              id="token-name"
+              class="mt-1 p-2 border block w-full rounded-md"
               placeholder="My OBS Stream"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Expires At (Optional)</label>
+            <label class="block text-sm font-medium">Expires At (Optional)</label>
             <input
               v-model="form.expires_at"
               type="datetime-local"
-              class="mt-1 block w-full rounded-md border-gray-300"
+              class="mt-1 p-2 border block w-full rounded-md"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Allowed IPs (Optional)</label>
+            <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
             <input
               v-model="ipInput"
               type="text"
-              class="mt-1 block w-full rounded-md border-gray-300"
+              class="mt-1 p-2 border block w-full rounded-md"
               placeholder="192.168.1.1, 10.0.0.1"
               @input="parseIps"
             />
@@ -113,7 +114,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">Abilities</label>
+            <label class="block text-sm font-medium">Abilities</label>
             <div class="space-y-2 mt-2">
               <label class="flex items-center">
                 <input
@@ -160,16 +161,16 @@
       <div class="p-6">
         <h2 class="text-lg font-semibold mb-4">Token Created Successfully!</h2>
         <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-          <p class="text-sm text-yellow-800">
+          <p class="text-lg text-yellow-800">
             Copy this token now. It won't be shown again!
           </p>
         </div>
-        <div class="bg-gray-100 p-4 rounded-md mb-4">
+        <div class="bg-accent p-4 rounded-md mb-4">
           <code class="text-sm break-all">{{ newToken }}</code>
         </div>
         <button
-          @click="copyToken"
-          class="w-full bg-blue-500 text-white py-2 rounded-md"
+          @click="copyToken(); showTokenModal = false"
+          class="w-full bg-blue-500 text-white py-2 rounded-md cursor-pointer"
         >
           Copy Token
         </button>

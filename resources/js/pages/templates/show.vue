@@ -1,15 +1,15 @@
 <template>
-  <AppLayout :title="template.name">
+  <AppLayout>
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-accent overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <!-- Header -->
             <div class="mb-6">
               <div class="flex justify-between items-start">
                 <div>
                   <h1 class="text-2xl font-bold">{{ template.name }}</h1>
-                  <p v-if="template.description" class="text-gray-600 mt-2">
+                  <p v-if="template.description" class=" mt-2">
                     {{ template.description }}
                   </p>
                 </div>
@@ -17,20 +17,20 @@
                   <Link
                     v-if="canEdit"
                     :href="route('templates.edit', template)"
-                    class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600"
+                    class="px-4 py-2 bg-yellow-500/50 border border-yellow-500 text-accent-foreground rounded-md hover:bg-yellow-600/50 cursor-pointer"
                   >
                     Edit
                   </Link>
                   <button
                     @click="forkTemplate"
-                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                    class="px-4 py-2 bg-green-500/50 border border-green-500 text-accent-foreground rounded-md hover:bg-green-600/50 cursor-pointer"
                   >
                     Fork
                   </button>
                   <button
                     v-if="canEdit"
                     @click="deleteTemplate"
-                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                    class="px-4 py-2 bg-red-500/50 border border-red-500 text-accent-foreground rounded-md hover:bg-red-600/50 cursor-pointer"
                   >
                     Delete
                   </button>
@@ -38,7 +38,7 @@
               </div>
 
               <!-- Meta Information -->
-              <div class="mt-4 flex items-center space-x-6 text-sm text-gray-600">
+              <div class="mt-4 flex items-center space-x-6 text-sm ">
                 <div class="flex items-center">
                   <img
                     :src="template.owner.avatar"
@@ -74,11 +74,11 @@
             </div>
 
             <!-- URLs Section -->
-            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="rounded-lg p-4 mb-6 bg-sidebar-accent">
               <h3 class="font-semibold mb-3">Overlay URLs</h3>
               <div class="space-y-3">
-                <div>
-                  <label class="text-sm text-gray-600">Public URL (Preview without data):</label>
+                <div v-if="template.is_public">
+                  <label class="text-sm ">Public URL (Preview without data):</label>
                   <div class="flex items-center mt-1">
                     <input
                       :value="publicUrl"
@@ -93,17 +93,20 @@
                     </button>
                   </div>
                 </div>
+                <div v-else>
+                  <label class="text-sm text-red-400">Private URL. No public preview available.</label>
+                </div>
                 <div>
-                  <label class="text-sm text-gray-600">Authenticated URL (Use with your token):</label>
+                  <label class="text-sm ">Authenticated URL (Use with your token):</label>
                   <div class="flex items-center mt-1">
                     <input
                       :value="authUrl"
                       readonly
-                      class="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-l-md text-sm"
+                      class="flex-1 px-3 py-2  border rounded-l-md text-sm"
                     />
                     <button
                       @click="copyUrl(authUrl)"
-                      class="px-4 py-2 bg-gray-600 text-white rounded-r-md hover:bg-gray-700 text-sm"
+                      class="px-4 py-2 bg-gray-600 rounded-r-md hover:bg-gray-700 text-sm"
                     >
                       Copy
                     </button>
@@ -119,20 +122,20 @@
             <div class="border rounded-lg overflow-hidden">
               <div class="flex border-b">
                 <button
-                  v-for="tab in ['html', 'css', 'js']"
+                  v-for="tab in ['html', 'css']"
                   :key="tab"
                   @click="activeTab = tab"
                   :class="[
                     'px-4 py-2 text-sm font-medium uppercase',
                     activeTab === tab
                       ? 'bg-gray-100 text-gray-900 border-b-2 border-blue-500'
-                      : 'text-gray-600 hover:text-gray-900'
+                      : ' hover:text-gray-300'
                   ]"
                 >
                   {{ tab }}
                 </button>
               </div>
-              <div class="p-4 bg-gray-50">
+              <div class="p-4 bg-sidebar-accent">
                 <pre class="overflow-x-auto"><code class="text-sm">{{ template[activeTab] || 'No content' }}</code></pre>
               </div>
             </div>
@@ -144,7 +147,7 @@
                 <code
                   v-for="tag in template.template_tags"
                   :key="tag"
-                  class="px-2 py-1 bg-gray-100 rounded text-sm"
+                  class="px-2 py-1 bg-black/20 rounded text-sm"
                 >
                   {{ tag }}
                 </code>
@@ -155,7 +158,7 @@
             <div class="mt-6 flex justify-between">
               <Link
                 :href="route('templates.index')"
-                class="text-gray-600 hover:text-gray-900"
+                class=" hover:text-gray-900"
               >
                 ← Back to Templates
               </Link>

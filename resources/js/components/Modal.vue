@@ -13,7 +13,7 @@
         >
           <div
             v-show="show"
-            class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto"
+            class="mb-6 bg-sidebar-accent rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto"
             :class="maxWidthClass"
           >
             <div v-if="show">
