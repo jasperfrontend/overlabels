@@ -40,6 +40,7 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent = 'Invalid or missing authentication token';
+        document.title = 'Invalid or missing authentication token';
     } else {
         // Fetch the parsed overlay content
         fetch('/api/overlay/render', {
@@ -55,8 +56,8 @@
         })
             .then(response => {
                 if (!response.ok) {
+                    document.title = 'Authentication failed';
                     throw new Error('Authentication failed', response);
-
                 }
                 return response.json();
             })
@@ -72,13 +73,7 @@
 
                 // Insert HTML
                 document.getElementById('overlay-content').innerHTML = data.html;
-
-                // Execute JavaScript
-                if (data.js) {
-                    const script = document.createElement('script');
-                    script.textContent = data.js;
-                    document.body.appendChild(script);
-                }
+                document.title = "Powered by Overlabels";
             })
             .catch(error => {
                 document.getElementById('loading').style.display = 'none';

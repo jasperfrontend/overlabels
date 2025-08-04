@@ -76,7 +76,7 @@
     </div>
 
     <!-- Create Token Modal -->
-    <Modal :show="showCreateModal" @close="showCreateModal = false">
+    <Modal :show="showCreateModal" @close="showCreateModal = false" class="z-50">
       <div class="p-6">
         <h2 class="text-lg font-semibold mb-4">Create New Access Token</h2>
 
@@ -183,6 +183,7 @@ import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Modal from '@/components/Modal.vue';
 
 const props = defineProps({
   tokens: Array,

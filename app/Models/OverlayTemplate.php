@@ -107,7 +107,7 @@ class OverlayTemplate extends Model
         $fork->version = 1;
         $fork->view_count = 0;
         $fork->fork_count = 0;
-        $fork->slug = app(FunSlugGenerationService::class)->generate();
+        $fork->slug = app(FunSlugGenerationService::class)->generateUniqueSlug();
         $fork->save();
 
         $this->increment('fork_count');

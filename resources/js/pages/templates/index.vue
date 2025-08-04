@@ -3,7 +3,7 @@
   <AppLayout title="Templates">
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <div class="flex justify-between items-center mb-6">
               <h2 class="text-xl font-semibold">Overlay Templates</h2>
@@ -20,7 +20,7 @@
               <select
                 v-model="filters.filter"
                 @change="applyFilter"
-                class="rounded-md border-gray-300"
+                class="rounded-md"
               >
                 <option value="">All Templates</option>
                 <option value="mine">My Templates</option>
@@ -32,13 +32,13 @@
                 @input="debounceSearch"
                 type="text"
                 placeholder="Search templates..."
-                class="rounded-md border-gray-300 flex-1"
+                class="rounded-md flex-1"
               />
 
               <select
                 v-model="filters.sort"
                 @change="applyFilter"
-                class="rounded-md border-gray-300"
+                class="rounded-md"
               >
                 <option value="created_at">Date Created</option>
                 <option value="name">Name</option>
@@ -55,7 +55,7 @@
                 class="border rounded-lg p-4 hover:shadow-lg transition-shadow"
               >
                 <h3 class="font-semibold text-lg mb-2">{{ template.name }}</h3>
-                <p class="text-gray-600 text-sm mb-3">{{ template.description || 'No description' }}</p>
+                <p class="text-sm mb-3">{{ template.description || 'No description' }}</p>
 
                 <div class="flex items-center text-sm text-gray-500 mb-3">
                   <img
@@ -82,21 +82,21 @@
                 <div class="mt-4 flex gap-2">
                   <Link
                     :href="route('templates.show', template)"
-                    class="text-blue-600 hover:text-blue-800 text-sm"
+                    class="bg-blue-600 hover:bg-blue-800 p-1 px-2 rounded text-sm cursor-pointer"
                   >
                     View
                   </Link>
                   <Link
                     v-if="template.owner_id === $page.props.auth.user.id"
                     :href="route('templates.edit', template)"
-                    class="text-yellow-600 hover:text-yellow-800 text-sm"
+                    class="bg-yellow-600 hover:bg-yellow-800 p-1 px-2 rounded text-sm cursor-pointer"
                   >
                     Edit
                   </Link>
                   <button
                     v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                     @click="forkTemplate(template)"
-                    class="text-green-600 hover:text-green-800 text-sm"
+                    class="bg-green-600 hover:bg-green-800 p-1 px-2 rounded text-sm cursor-pointer"
                   >
                     Fork
                   </button>

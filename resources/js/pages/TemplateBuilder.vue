@@ -2,8 +2,8 @@
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { BreadcrumbItem } from '@/types'
-import TemplateBuilderEditor from '@/components/TemplateBuilderEditor.vue'
 import Heading from '@/components/Heading.vue';
+import TemplateBuilderEditor from '@/components/TemplateBuilderEditor.vue'
 
 interface Props {
   overlayHash?: {

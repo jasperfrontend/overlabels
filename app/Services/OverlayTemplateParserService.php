@@ -56,7 +56,7 @@ class OverlayTemplateParserService
             $tagName = $matches[1];
             $transformation = $matches[2] ?? null;
 
-            // First check if this tag exists in our database
+            // First, check if this tag exists in our database
             if (isset($dbTags[$tagName])) {
                 $jsonPath = $dbTags[$tagName];
                 $value = $this->getValueByPath($data, $jsonPath);

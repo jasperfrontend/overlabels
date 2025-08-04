@@ -183,6 +183,7 @@
 import { ref, computed } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import axios from 'axios';
 
 const props = defineProps({
   template: Object,

@@ -26,13 +26,13 @@
   icon: Code,
   },
   {
-  title: 'Overlay Generator',
-  href: '/overlay-hashes',
+  title: 'Token Generator',
+  href: '/tokens',
   icon: Shield,
   },
   {
   title: 'Template Builder',
-  href: '/template-builder',
+  href: '/templates',
   icon: Building,
   },
 

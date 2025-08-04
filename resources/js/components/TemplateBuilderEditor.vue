@@ -25,7 +25,6 @@ import {
 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { Codemirror } from 'vue-codemirror';
-import { Link } from '@inertiajs/vue3';
 
 interface Props {
   overlayHash: {

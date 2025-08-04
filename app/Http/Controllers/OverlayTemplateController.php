@@ -106,6 +106,13 @@ class OverlayTemplateController extends Controller
 
         $template->delete();
 
+        // For API/JSON requests
+        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+            return response()->json([
+                'message' => 'Template deleted successfully',
+            ]);
+        }
+
         return redirect()->route('templates.index')
             ->with('success', 'Template deleted successfully');
     }
@@ -183,7 +190,6 @@ class OverlayTemplateController extends Controller
             $parsedHtml = $this->parserService->parse($template->html, $twitchData);
             $parsedCss = $this->parserService->parse($template->css, $twitchData);
 
-
             // Record access
             $token->recordAccess(
                 $request->ip(),
@@ -194,7 +200,6 @@ class OverlayTemplateController extends Controller
             return response()->json([
                 'html' => $parsedHtml,
                 'css' => $parsedCss,
-
                 'template' => $template,
                 'isParsed' => true,
             ]);
@@ -220,7 +225,6 @@ class OverlayTemplateController extends Controller
             'description' => 'nullable|string',
             'html' => 'required|string',
             'css' => 'nullable|string',
-            'js' => 'nullable|string',
             'is_public' => 'boolean',
         ]);
 
@@ -230,10 +234,16 @@ class OverlayTemplateController extends Controller
         $template->template_tags = $template->extractTemplateTags();
         $template->save();
 
-        return response()->json([
-            'template' => $template,
-            'message' => 'Template created successfully',
-        ]);
+        // For Inertia requests, redirect to the show page
+        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+            return response()->json([
+                'template' => $template,
+                'message' => 'Template created successfully',
+            ]);
+        }
+
+        return redirect()->route('templates.show', $template)
+            ->with('success', 'Template created successfully!');
     }
 
     /**
@@ -251,7 +261,6 @@ class OverlayTemplateController extends Controller
             'description' => 'nullable|string',
             'html' => 'sometimes|string',
             'css' => 'nullable|string',
-            'js' => 'nullable|string',
             'is_public' => 'sometimes|boolean',
         ]);
 
@@ -263,10 +272,16 @@ class OverlayTemplateController extends Controller
             $template->save();
         }
 
-        return response()->json([
-            'template' => $template,
-            'message' => 'Template updated successfully',
-        ]);
+        // For Inertia requests, redirect to the show page with success message
+        if ($request->wantsJson()) {
+            return response()->json([
+                'template' => $template,
+                'message' => 'Template updated successfully',
+            ]);
+        }
+
+        return redirect()->route('templates.show', $template)
+            ->with('success', 'Template updated successfully!');
     }
 
     /**
@@ -274,7 +289,7 @@ class OverlayTemplateController extends Controller
      */
     public function fork(Request $request, OverlayTemplate $template)
     {
-        // Check if template is public or owned by user
+        // Check if the template is public or set to private by the owner
         if (!$template->is_public && $template->owner_id !== $request->user()->id) {
             abort(403, 'Cannot fork private template');
         }
