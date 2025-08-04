@@ -44,7 +44,7 @@ class OverlayTemplateParserService
      */
     private function parseTemplateTags(string $template, array $data): string
     {
-        // Get all active template tags from database for reference
+        // Get all active template tags from the database for reference
         $dbTags = TemplateTag::where('is_active', true)
             ->pluck('json_path', 'tag_name')
             ->toArray();
@@ -61,7 +61,7 @@ class OverlayTemplateParserService
                 $jsonPath = $dbTags[$tagName];
                 $value = $this->getValueByPath($data, $jsonPath);
             } else {
-                // Try to get value directly if not in database (for backward compatibility)
+                // Try to get value directly if not in the database (for backward compatibility)
                 $value = $this->getTagValue($data, $tagName);
             }
 
@@ -76,7 +76,7 @@ class OverlayTemplateParserService
     }
 
     /**
-     * Get value from data array using JSON path (e.g., "user.display_name")
+     * Get value from a data array using JSON path (e.g., "user.display_name")
      */
     private function getValueByPath(array $data, string $path)
     {
@@ -324,10 +324,10 @@ class OverlayTemplateParserService
             $validation['syntax_issues'][] = "Mismatched foreach/endforeach blocks";
         }
 
-        // Validate that used tags exist in database
+        // Validate that used tags exist in a database
         $dbTags = TemplateTag::where('is_active', true)->pluck('tag_name')->toArray();
         foreach ($validation['tags_found'] as $tag) {
-            // Remove transformation part if present
+            // Remove the transformation part if present
             $tagName = explode('|', $tag)[0];
             if (!in_array($tagName, $dbTags)) {
                 $validation['warnings'][] = "Tag '$tagName' not found in database";
