@@ -56,7 +56,9 @@
         >
           <h3 class="font-semibold text-lg mb-2">{{ template.name }}</h3>
           <p class="text-sm mb-3">{{ template.description || 'No description' }}</p>
-
+          <div class="bg-accent-foreground/5 p-0.5 px-1 rounded-md mb-3 text-sm inline-block">
+            <pre>{{ template.slug }}</pre>
+          </div>
           <div class="flex items-center text-sm text-gray-500 mb-3">
             <img
               :src="template?.owner?.avatar"
@@ -74,7 +76,7 @@
             <div v-if="template.is_public" class="text-green-600">
               Public
             </div>
-            <div v-else class="text-gray-500">
+            <div v-else class="text-orange-400">
               Private
             </div>
           </div>
