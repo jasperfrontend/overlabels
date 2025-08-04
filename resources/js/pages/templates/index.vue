@@ -123,8 +123,8 @@
 <script setup>
 import { ref } from 'vue';
 import { router, Link, usePage } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import Pagination from '@/Components/Pagination.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
 import { debounce } from 'lodash';
 
 const props = defineProps({
