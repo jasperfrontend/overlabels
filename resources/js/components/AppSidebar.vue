@@ -32,7 +32,7 @@
   },
   {
   title: 'Template Builder',
-  href: '/templates',
+  href: '/templates?direction=desc&filter=&search=&sort=created_at',
   icon: Building,
   },
 

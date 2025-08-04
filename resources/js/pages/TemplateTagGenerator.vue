@@ -78,7 +78,7 @@ onMounted(async () => {
   const path = window.location.pathname
   const slug = path.replace(/^\/+|\/+$/g, '') || 'home' // fallback
 
-  const res = await fetch(`/api/help-proxy/${slug}`)
+  const res = await fetch(`/${slug}`)
   if (res.ok) {
     posts.value = await res.json()
   }
