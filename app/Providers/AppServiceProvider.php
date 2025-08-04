@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Services\DefaultTemplateProviderService;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
 
@@ -19,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DefaultTemplateProviderService::class, function ($app) {
             return new DefaultTemplateProviderService();
         });
-        
+
         // Register TemplateDataMapperService as singleton
         // This handles transformation of nested API data to flat template structure
         $this->app->singleton(\App\Services\TemplateDataMapperService::class, function ($app) {
@@ -51,6 +54,21 @@ class AppServiceProvider extends ServiceProvider
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
+
+        // Configure rate limiters
+        RateLimiter::for('overlay', function (Request $request) {
+            return Limit::perMinute(100)->by($request->ip());
+        });
+
+        // You can also add more specific rate limiters
+        RateLimiter::for('overlay-api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Rate limiter for failed authentication attempts
+        RateLimiter::for('overlay-auth-failed', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
 
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
             $event->extendSocialite('discord', \SocialiteProviders\Twitch\Provider::class);

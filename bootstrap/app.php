@@ -2,6 +2,8 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RateLimitOverlayAccess;
+use App\Http\Middleware\ValidateOverlayToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+        ]);
+
+        // Register middleware aliases for use in routes
+        $middleware->alias([
+            'overlay.token' => ValidateOverlayToken::class,
+            'rate.limit.overlay' => RateLimitOverlayAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -2,15 +2,101 @@
 
 namespace App\Services;
 
+use App\Models\TemplateTag;
+use Illuminate\Support\Str;
+
 /**
  * OverlayTemplateParserService
  *
  * Handles parsing of overlay templates with [[[template_tags]]] syntax.
- * This uses DefaultTemplateProviderService for consistent default templates.
+ * Integrates with the existing template tag system stored in the database.
  */
 class OverlayTemplateParserService
 {
+    private TemplateDataMapperService $templateDataMapper;
 
+    public function __construct(TemplateDataMapperService $templateDataMapper)
+    {
+        $this->templateDataMapper = $templateDataMapper;
+    }
+
+    /**
+     * Parse a template string, replacing [[[template_tags]]] with actual data
+     */
+    public function parse(string $template, array $data): string
+    {
+        if (empty($template)) {
+            return '';
+        }
+
+        // First, handle conditional blocks
+        $template = $this->parseConditionalBlocks($template, $data);
+
+        // Then, handle loop blocks
+        $template = $this->parseLoopBlocks($template, $data);
+
+        // Finally, parse regular template tags
+        return $this->parseTemplateTags($template, $data);
+    }
+
+    /**
+     * Parse regular template tags [[[tag_name]]]
+     */
+    private function parseTemplateTags(string $template, array $data): string
+    {
+        // Get all active template tags from database for reference
+        $dbTags = TemplateTag::where('is_active', true)
+            ->pluck('json_path', 'tag_name')
+            ->toArray();
+
+        // Pattern to match [[[tag_name]]] with optional transformations
+        $pattern = '/\[\[\[([a-zA-Z0-9_]+)(?:\|([a-zA-Z0-9_]+))?]]]/';
+
+        return preg_replace_callback($pattern, function($matches) use ($data, $dbTags) {
+            $tagName = $matches[1];
+            $transformation = $matches[2] ?? null;
+
+            // First check if this tag exists in our database
+            if (isset($dbTags[$tagName])) {
+                $jsonPath = $dbTags[$tagName];
+                $value = $this->getValueByPath($data, $jsonPath);
+            } else {
+                // Try to get value directly if not in database (for backward compatibility)
+                $value = $this->getTagValue($data, $tagName);
+            }
+
+            // Apply transformation if specified
+            if ($transformation && $value !== null) {
+                $value = $this->applyTransformation($value, $transformation);
+            }
+
+            // Return sanitized value or empty string if not found
+            return $value !== null ? $this->sanitizeOutput($value) : '';
+        }, $template);
+    }
+
+    /**
+     * Get value from data array using JSON path (e.g., "user.display_name")
+     */
+    private function getValueByPath(array $data, string $path)
+    {
+        $keys = explode('.', $path);
+        $value = $data;
+
+        foreach ($keys as $key) {
+            if (is_array($value) && isset($value[$key])) {
+                $value = $value[$key];
+            } else {
+                return null;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Parse conditional blocks [[[if:condition]]]...[[[else]]]...[[[endif]]]
+     */
     private function parseConditionalBlocks(string $template, array $data): string
     {
         $maxIterations = 10;
@@ -20,15 +106,17 @@ class OverlayTemplateParserService
             $previousTemplate = $template;
             $template = $this->parseSingleConditionalPass($template, $data);
             $iteration++;
-
         } while ($template !== $previousTemplate && $iteration < $maxIterations);
 
         return $template;
     }
 
+    /**
+     * Parse a single pass of conditional blocks
+     */
     private function parseSingleConditionalPass(string $template, array $data): string
     {
-        // Only match conditionals that don't contain nested if statements
+        // Pattern for conditionals with optional comparison
         $pattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]((?:(?!\[\[\[if:).)*?)(?:\[\[\[else]]]((?:(?!\[\[\[if:).)*?))?\[\[\[endif]]]/s';
 
         return preg_replace_callback($pattern, function($matches) use ($data) {
@@ -51,30 +139,120 @@ class OverlayTemplateParserService
         }, $template);
     }
 
+    /**
+     * Parse loop blocks [[[foreach:array_name]]]...[[[endforeach]]]
+     */
+    private function parseLoopBlocks(string $template, array $data): string
+    {
+        $pattern = '/\[\[\[foreach:([a-zA-Z0-9_]+)]]](.*?)\[\[\[endforeach]]]/s';
+
+        return preg_replace_callback($pattern, function($matches) use ($data) {
+            $arrayName = $matches[1];
+            $loopContent = $matches[2];
+            $output = '';
+
+            if (isset($data[$arrayName]) && is_array($data[$arrayName])) {
+                foreach ($data[$arrayName] as $index => $item) {
+                    // Parse the loop content with item data
+                    $itemData = array_merge($data, [
+                        'item' => $item,
+                        'index' => $index,
+                        'loop_index' => $index + 1,
+                    ]);
+
+                    // Replace item references
+                    $parsedContent = preg_replace_callback('/\[\[\[item\.([a-zA-Z0-9_]+)]]]/',
+                        function($m) use ($item) {
+                            return isset($item[$m[1]]) ? $this->sanitizeOutput($item[$m[1]]) : '';
+                        },
+                        $loopContent
+                    );
+
+                    $output .= $parsedContent;
+                }
+            }
+
+            return $output;
+        }, $template);
+    }
+
+    /**
+     * Get tag value from data, supporting nested paths and database lookups
+     */
+    private function getTagValue(array $data, string $tagName)
+    {
+        // First try to get from database tags
+        $dbTag = TemplateTag::where('tag_name', $tagName)->first();
+        if ($dbTag) {
+            return $this->getValueByPath($data, $dbTag->json_path);
+        }
+
+        // Direct lookup
+        if (isset($data[$tagName])) {
+            return $data[$tagName];
+        }
+
+        // Handle nested paths
+        if (str_contains($tagName, '.')) {
+            return $this->getValueByPath($data, $tagName);
+        }
+
+        // Handle array access patterns
+        if (preg_match('/^([a-zA-Z_]+)_(\d+)_([a-zA-Z_]+)$/', $tagName, $matches)) {
+            $arrayKey = $matches[1];
+            $index = (int)$matches[2];
+            $fieldKey = $matches[3];
+
+            if (isset($data[$arrayKey][$index][$fieldKey])) {
+                return $data[$arrayKey][$index][$fieldKey];
+            }
+        }
+
+        // Use the template data mapper for standardized values
+        $mappedData = $this->templateDataMapper->mapTwitchDataForTemplates($data, 'overlay');
+        return $mappedData[$tagName] ?? null;
+    }
+
+    /**
+     * Apply transformation to a value
+     */
+    private function applyTransformation($value, string $transformation): string
+    {
+        return match($transformation) {
+            'upper' => strtoupper($value),
+            'lower' => strtolower($value),
+            'title' => Str::title($value),
+            'number' => number_format((float)$value),
+            'thousands' => number_format((float)$value, 0, '.', ','),
+            'date' => is_numeric($value) ? date('Y-m-d', $value) : date('Y-m-d', strtotime($value)),
+            'time' => is_numeric($value) ? date('H:i:s', $value) : date('H:i:s', strtotime($value)),
+            'datetime' => is_numeric($value) ? date('Y-m-d H:i:s', $value) : date('Y-m-d H:i:s', strtotime($value)),
+            'bool' => $value ? 'Yes' : 'No',
+            'truncate' => Str::limit($value, 50),
+            default => $value
+        };
+    }
+
+    /**
+     * Evaluate comparison operators
+     */
     private function evaluateComparison($leftValue, string $operator, $rightValue): bool
     {
-        // Handle string equality/inequality comparisons
         if ($operator === '==' || $operator === '!=') {
-            // Convert both values to strings for comparison
             $leftStr = (string)$leftValue;
             $rightStr = (string)$rightValue;
-
             return match ($operator) {
                 '==' => $leftStr === $rightStr,
                 '!=' => $leftStr !== $rightStr,
             };
         }
 
-        // Handle numeric comparisons (>, >=, <, <=)
         if (in_array($operator, ['>', '>=', '<', '<='])) {
-            // Only proceed if both values can be treated as numbers
             if (!is_numeric($leftValue) || !is_numeric($rightValue)) {
-                return false; // Non-numeric values can't use numeric operators
+                return false;
             }
-
             $leftNum = (float)$leftValue;
             $rightNum = (float)$rightValue;
-
             return match ($operator) {
                 '>' => $leftNum > $rightNum,
                 '>=' => $leftNum >= $rightNum,
@@ -87,196 +265,35 @@ class OverlayTemplateParserService
     }
 
     /**
-     * Get the value for a template tag from the data array
-     * Handles both simple tags and nested dot notation
+     * Check if a value is truthy
      */
-    private function getTagValue(array $data, string $tagName)
-    {
-        // First, try direct key lookup (the most common case)
-        if (isset($data[$tagName])) {
-            return $data[$tagName];
-        }
-
-        // Handle nested data using dot notation (like your existing method)
-        if (str_contains($tagName, '.')) {
-            return $this->getNestedValue($data, $tagName);
-        }
-
-        // Handle array access patterns like "data.0.field_name"
-        // This matches your TemplateDataMapperService logic
-        if (preg_match('/^([a-zA-Z_]+)\.(\d+)\.([a-zA-Z_]+)$/', $tagName, $matches)) {
-            $arrayKey = $matches[1];      // e.g., "subscribers"
-            $index = (int)$matches[2];    // e.g., 0 for latest
-            $fieldKey = $matches[3];      // e.g., "user_name"
-
-            if (isset($data[$arrayKey][$index]) && is_array($data[$arrayKey])) {
-                $item = $data[$arrayKey][$index];
-                return $item[$fieldKey] ?? null;
-            }
-        }
-
-        // Handle standardized template tag names
-        // This integrates with your TemplateDataMapperService mappings
-        $standardizedValue = $this->getStandardizedTagValue($data, $tagName);
-        if ($standardizedValue !== null) {
-            return $standardizedValue;
-        }
-
-        // Tag isn't found - return null for conditional evaluation
-        return null;
-    }
-
-    /**
-     * Get standardized tag values using the TemplateDataMapperService
-     * This ensures consistency with your existing template mapping logic
-     */
-    private function getStandardizedTagValue(array $data, string $tagName)
-    {
-        // Get the template data mapper service
-        $templateDataMapper = app(TemplateDataMapperService::class);
-
-        // Transform the raw Twitch data using your existing mapping logic
-        $mappedData = $templateDataMapper->mapTwitchDataForTemplates($data, 'overlay');
-
-        // Return the mapped value if it exists
-        return $mappedData[$tagName] ?? null;
-    }
-
     private function isTruthy($value): bool
     {
         if (is_bool($value)) {
             return $value;
         }
-
         if (is_numeric($value)) {
             return $value > 0;
         }
-
         if (is_string($value)) {
             return !empty(trim($value)) && strtolower($value) !== 'false';
         }
-
         return !empty($value);
-
-    }
-
-    private function parseLoopBlocks(string $template, array $data): string
-    {
-        // Match [[[foreach:array_name]]] content [[[endforeach]]] blocks
-        $pattern = '/\[\[\[foreach:([a-zA-Z0-9_]+)]]](.*?)\[\[\[endforeach]]]/s';
-
-        return preg_replace_callback($pattern, function($matches) use ($data) {
-            $arrayTag = $matches[1];
-            $loopContent = $matches[2];
-
-            $arrayData = $this->getTagValue($data, $arrayTag);
-
-            if (!is_array($arrayData)) {
-                return ''; // Not an array, return empty
-            }
-
-            $output = '';
-            foreach ($arrayData as $index => $item) {
-                // Create context for this loop iteration
-                $loopData = array_merge($data, [
-                    'index' => $index,
-                    'item' => $item
-                ], $item); // Merge item data directly
-
-                // Parse the loop content with loop-specific data
-                $output .= $this->parseTemplate($loopContent, $loopData);
-            }
-
-            return $output;
-        }, $template);
     }
 
     /**
-     * Parse a template string, replacing [[[template_tags]]] with actual data
+     * Sanitize output to prevent XSS
      */
-    public function parseTemplate(string $template, array $data): string
+    private function sanitizeOutput($value): string
     {
-        // STEP 1: Parse block-level constructs first (if/foreach/etc.)
-        $template = $this->parseConditionalBlocks($template, $data);
-        $template = $this->parseLoopBlocks($template, $data);
-
-        // Find all template tags in the format [[[tag_name]]]
-        $pattern = '/\[\[\[([a-zA-Z0-9_]+)]]]/';
-
-        return preg_replace_callback($pattern, function($matches) use ($data) {
-            $tagName = $matches[1];
-
-            // Check if the tag exists in our data
-            if (isset($data[$tagName])) {
-                return $this->sanitizeOutput($data[$tagName]);
-            }
-
-            // Handle nested data (like channel.broadcaster_name)
-            if (str_contains($tagName, '.')) {
-                $value = $this->getNestedValue($data, $tagName);
-                if ($value !== null) {
-                    return $this->sanitizeOutput($value);
-                }
-            }
-
-            // Return empty string for unknown or unparsed template tags
-            // @TODO: have this return something better when a currently not-existing debug mode is enabled.
-            return '';
-        }, $template);
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value);
+        }
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 
     /**
-     * Parse template with debug information
-     */
-    public function parseTemplateWithDebug(string $template, array $data): array
-    {
-        $debugInfo = [
-            'tags_found' => [],
-            'tags_replaced' => [],
-            'tags_missing' => [],
-            'original_template_size' => strlen($template)
-        ];
-
-        // Find all template tags
-        $pattern = '/\[\[\[([a-zA-Z0-9_]+)]]]/';
-        preg_match_all($pattern, $template, $matches);
-
-        $debugInfo['tags_found'] = array_unique($matches[1]);
-
-        // Parse template and track replacements
-        $parsedTemplate = preg_replace_callback($pattern, function($matches) use ($data, &$debugInfo) {
-            $tagName = $matches[1];
-
-            if (isset($data[$tagName])) {
-                $debugInfo['tags_replaced'][] = $tagName;
-                return $this->sanitizeOutput($data[$tagName]);
-            }
-
-            // Handle nested data
-            if (str_contains($tagName, '.')) {
-                $value = $this->getNestedValue($data, $tagName);
-                if ($value !== null) {
-                    $debugInfo['tags_replaced'][] = $tagName;
-                    return $this->sanitizeOutput($value);
-                }
-            }
-
-            $debugInfo['tags_missing'][] = $tagName;
-            return '';
-        }, $template);
-
-        $debugInfo['parsed_template_size'] = strlen($parsedTemplate);
-        $debugInfo['tags_replaced'] = array_unique($debugInfo['tags_replaced']);
-        $debugInfo['tags_missing'] = array_unique($debugInfo['tags_missing']);
-
-        return [
-            'parsed_template' => $parsedTemplate,
-            'debug_info' => $debugInfo
-        ];
-    }
-
-    /**
-     * Validate template syntax and structure
+     * Validate template syntax
      */
     public function validateTemplate(string $template): array
     {
@@ -287,193 +304,59 @@ class OverlayTemplateParserService
             'tags_found' => []
         ];
 
-        // Check for basic HTML structure if it looks like HTML
-        if (str_contains($template, '<html') || str_contains($template, '<!DOCTYPE')) {
-            if (!str_contains($template, '<head>')) {
-                $validation['warnings'][] = 'HTML document missing <head> section';
-            }
-            if (!str_contains($template, '<body>')) {
-                $validation['warnings'][] = 'HTML document missing <body> section';
-            }
-        }
+        // Find all template tags
+        preg_match_all('/\[\[\[([a-zA-Z0-9_]+(?:\|[a-zA-Z0-9_]+)?)]]]/', $template, $matches);
+        $validation['tags_found'] = array_unique($matches[1]);
 
-        // Find all template tags (including conditionals)
-        $this->validateTemplateTags($template, $validation);
-        $this->validateConditionalBlocks($template, $validation);
-
-        // Check for incomplete tags
-        if (preg_match('/\[\[\[[^]]*$/', $template)) {
+        // Check for unclosed conditional blocks
+        $ifCount = substr_count($template, '[[[if:');
+        $endifCount = substr_count($template, '[[[endif]]]');
+        if ($ifCount !== $endifCount) {
             $validation['is_valid'] = false;
-            $validation['syntax_issues'][] = 'Incomplete template tag found - make sure all tags end with ]]]';
+            $validation['syntax_issues'][] = "Mismatched if/endif blocks (found $ifCount if blocks and $endifCount endif blocks)";
         }
 
-        // Check for empty tags
-        if (preg_match('/\[\[\[]]]/', $template)) {
+        // Check for unclosed loop blocks
+        $foreachCount = substr_count($template, '[[[foreach:');
+        $endforeachCount = substr_count($template, '[[[endforeach]]]');
+        if ($foreachCount !== $endforeachCount) {
             $validation['is_valid'] = false;
-            $validation['syntax_issues'][] = 'Empty template tags found - [[[tagname]]] format required';
+            $validation['syntax_issues'][] = "Mismatched foreach/endforeach blocks";
         }
 
-        // Warn about potential XSS
-        if (str_contains($template, '<script')) {
-            $validation['warnings'][] = 'JavaScript found in template - ensure data is properly sanitized';
+        // Validate that used tags exist in database
+        $dbTags = TemplateTag::where('is_active', true)->pluck('tag_name')->toArray();
+        foreach ($validation['tags_found'] as $tag) {
+            // Remove transformation part if present
+            $tagName = explode('|', $tag)[0];
+            if (!in_array($tagName, $dbTags)) {
+                $validation['warnings'][] = "Tag '$tagName' not found in database";
+            }
         }
 
         return $validation;
     }
 
     /**
-     * Validate regular template tags
+     * Get available template tags organized by category
      */
-    private function validateTemplateTags(string $template, array &$validation): void
+    public function getAvailableTags(): array
     {
-        // Find regular template tags
-        $pattern = '/\[\[\[([a-zA-Z0-9_]+)]]]/';
-        preg_match_all($pattern, $template, $matches);
-
-        if (!empty($matches[1])) {
-            $validation['tags_found'] = array_merge($validation['tags_found'], array_unique($matches[1]));
-        }
-    }
-
-    /**
-     * Validate conditional blocks and comparison syntax
-     */
-    private function validateConditionalBlocks(string $template, array &$validation): void
-    {
-        // Pattern for valid conditional syntax
-        $conditionalPattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]/';
-
-        preg_match_all($conditionalPattern, $template, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $tagName = $match[1];
-            $operator = $match[2] ?? null;
-            $compareValue = $match[3] ?? null;
-
-            // Add to found tags
-            $validation['tags_found'][] = $tagName;
-
-            // Validate comparison syntax
-            if ($operator && $compareValue !== null) {
-                $this->validateComparisonSyntax($tagName, $operator, $compareValue, $validation);
-            }
-        }
-
-        // Check for malformed conditional tags
-        $this->checkMalformedConditionals($template, $validation);
-
-        // Check for unmatched if/else/endif blocks
-        $this->validateConditionalStructure($template, $validation);
-    }
-
-    /**
-     * Validate individual comparison syntax
-     */
-    private function validateComparisonSyntax(string $tagName, string $operator, string $compareValue, array &$validation): void
-    {
-        // Check for invalid numeric operators with string values
-        if (in_array($operator, ['>', '>=', '<', '<='])) {
-            if (!is_numeric($compareValue)) {
-                $validation['warnings'][] = "Tag '$tagName': Using numeric operator '$operator' with non-numeric value '$compareValue'. This will always return false.";
-            }
-        }
-
-        // Check for common mistakes
-        if ($operator === '=' && !in_array($operator, ['==', '!='])) {
-            $validation['syntax_issues'][] = "Tag '$tagName': Use '==' for equality comparison, not '='";
-            $validation['is_valid'] = false;
-        }
-    }
-
-    /**
-     * Check for malformed conditional syntax
-     */
-    private function checkMalformedConditionals(string $template, array &$validation): void
-    {
-        // Find all potential conditional tags
-        preg_match_all('/\[\[\[if:[^]]*]]]/', $template, $allConditionals);
-
-        // Check each one against the valid pattern
-        $validPattern = '/\[\[\[if:([a-zA-Z0-9_]+)(?:\s*(>=|<=|>|<|==|!=)\s*([a-zA-Z0-9_]+|\d+))?]]]/';
-
-        foreach ($allConditionals[0] as $conditional) {
-            if (!preg_match($validPattern, $conditional)) {
-                $validation['syntax_issues'][] = "Invalid conditional syntax: $conditional";
-                $validation['is_valid'] = false;
-            }
-        }
-
-        // Check for empty if tags
-        if (preg_match('/\[\[\[if:\s*]]]/', $template)) {
-            $validation['syntax_issues'][] = 'Empty conditional tag found - [[[if:tagname]]] format required';
-            $validation['is_valid'] = false;
-        }
-    }
-
-    /**
-     * Validate conditional block structure (matching if/else/endif)
-     */
-    private function validateConditionalStructure(string $template, array &$validation): void
-    {
-        // Count if/else/endif blocks
-        $ifCount = preg_match_all('/\[\[\[if:/', $template);
-        $endifCount = preg_match_all('/\[\[\[endif]]]/', $template);
-        $elseCount = preg_match_all('/\[\[\[else]]]/', $template);
-
-        if ($ifCount !== $endifCount) {
-            $validation['syntax_issues'][] = "Unmatched conditional blocks: $ifCount [[[if:]]] tags but $endifCount [[[endif]]] tags";
-            $validation['is_valid'] = false;
-        }
-
-        // Check for orphaned else tags
-        if ($elseCount > $ifCount) {
-            $validation['warnings'][] = "More [[[else]]] tags than [[[if:]]] tags - some may be orphaned";
-        }
-
-        // Check for common structural issues
-        if (preg_match('/\[\[\[else]]].*?\[\[\[else]]]/', $template)) {
-            $validation['syntax_issues'][] = 'Multiple [[[else]]] blocks in same conditional - only one [[[else]]] per [[[if:]]] allowed';
-            $validation['is_valid'] = false;
-        }
-    }
-
-    /**
-     * Helper: Get nested value from an array using dot notation
-     */
-    private function getNestedValue(array $data, string $key)
-    {
-        $keys = explode('.', $key);
-        $value = $data;
-
-        foreach ($keys as $nestedKey) {
-            if (is_array($value) && isset($value[$nestedKey])) {
-                $value = $value[$nestedKey];
-            } else {
-                return null;
-            }
-        }
-
-        return $value;
-    }
-
-    /**
-     * Helper: Sanitize output to prevent XSS
-     */
-    private function sanitizeOutput($value): string
-    {
-        // Handle different data types
-        if (is_array($value)) {
-            return json_encode($value);
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if (is_numeric($value)) {
-            return (string) $value;
-        }
-
-        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        return TemplateTag::with('category')
+            ->where('is_active', true)
+            ->get()
+            ->groupBy('category.display_name')
+            ->map(function ($tags) {
+                return $tags->map(function ($tag) {
+                    return [
+                        'tag' => $tag->display_tag,
+                        'name' => $tag->display_name,
+                        'description' => $tag->description,
+                        'sample' => $tag->sample_data,
+                        'type' => $tag->data_type,
+                    ];
+                })->values();
+            })
+            ->toArray();
     }
 }

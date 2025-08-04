@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
-class TwitchApiService
+class   TwitchApiService
 {
     private string $clientId;
     private string $baseUrl = 'https://api.twitch.tv/helix';

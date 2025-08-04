@@ -5,6 +5,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TemplateTagController;
+
+use App\Http\Controllers\OverlayAccessTokenController;
+use App\Http\Controllers\OverlayTemplateController;
+use App\Http\Controllers\TemplateBuilderController;
+
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
@@ -48,15 +53,14 @@ Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 're
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
     ->middleware(['auth']);
 
-// NEW: Now supports URLs like /overlay/bright-dancing-star-golden-fox/abc123...
-Route::get('/overlay/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'serveOverlay'])
-    ->name('overlay.serve')
-    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Matches: word-word-word-word-word pattern
-    ->where('hashKey', '[a-zA-Z0-9]{64}'); // Ensures hash is exactly 64 alphanumeric characters
+Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthenticated'])
+    ->name('overlay.authenticated')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
-Route::get('/overlay/{slug}/public', [App\Http\Controllers\OverlayHashController::class, 'serveOverlayPublic'])
-    ->name('overlay.serve.public')
-    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*'); // Matches: word-word-word-word-word pattern
+Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePublic'])
+    ->name('overlay.public')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
+
 
 // Test endpoint for debugging hash authentication (with fun slug)
 Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
@@ -86,51 +90,80 @@ Route::get('/auth/redirect/twitch', function () {
 });
 
 
-Route::get('/auth/callback/twitch', action: function () {
-    $twitchUser = Socialite::driver('twitch')->user();
+Route::get('/auth/callback/twitch', function () {
+    try {
+        $twitchUser = Socialite::driver('twitch')->user();
 
-    // Create the TwitchApiService instance
-    $twitchService = new TwitchApiService();
+        // Create the TwitchApiService instance
+        $twitchService = new TwitchApiService();
 
-    // Get extended data using the access token
-    $extendedData = $twitchService->getExtendedUserData(
-        $twitchUser->token,
-        $twitchUser->getId()
-    );
+        // Get extended data using the access token
+        $extendedData = $twitchService->getExtendedUserData(
+            $twitchUser->token,
+            $twitchUser->getId()
+        );
 
-    // First, try to find the user by twitch_id
-    $user = User::where('twitch_id', $twitchUser->getId(), null, false)->first();
+        // First, try to find the user by twitch_id
+        $user = User::where('twitch_id', $twitchUser->getId())->first();
 
-    if (!$user) {
-        // If no user found by twitch_id, check if email already exists
-        $user = User::where('email', $twitchUser->getEmail(), null, false)->first();
+        if (!$user) {
+            // If no user found by twitch_id, check if email already exists
+            $user = User::where('email', $twitchUser->getEmail())->first();
 
-        if ($user) {
-            // User exists with this email but no twitch_id - link the accounts
-            if (isset($twitchUser->refreshToken)) $user->update([
-                'twitch_id' => $twitchUser->getId(),
+            if ($user) {
+                // User exists with this email but no twitch_id - link the accounts
+                $user->update([
+                    'twitch_id' => $twitchUser->getId(),
+                    'avatar' => $twitchUser->getAvatar(),
+                    'access_token' => $twitchUser->token,
+                    'refresh_token' => $twitchUser->refreshToken ?? null,
+                    'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
+                    'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                ]);
+            } else {
+                // No user exists at all - create a new one
+                $user = User::create([
+                    'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
+                    'email' => $twitchUser->getEmail(),
+                    'twitch_id' => $twitchUser->getId(),
+                    'avatar' => $twitchUser->getAvatar(),
+                    'access_token' => $twitchUser->token,
+                    'refresh_token' => $twitchUser->refreshToken ?? null,
+                    'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
+                    'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                    'email_verified_at' => now(), // Twitch emails are pre-verified
+                    'password' => bcrypt(Str::random(32)), // Random password since they use OAuth
+                ]);
+            }
+        } else {
+            // User found by twitch_id - update their tokens and info
+            $user->update([
+                'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
                 'avatar' => $twitchUser->getAvatar(),
                 'access_token' => $twitchUser->token,
-                'refresh_token' => $twitchUser->refreshToken,
-                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
+                'refresh_token' => $twitchUser->refreshToken ?? null,
+                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
             ]);
         }
-    } else {
-        // User found by twitch_id - update their tokens and info
-        $user->update([
-            'name' => $twitchUser->getNickname(),
-            'avatar' => $twitchUser->getAvatar(),
-            'access_token' => $twitchUser->token,
-            'refresh_token' => $twitchUser->refreshToken,
-            'token_expires_at' => now()->addSeconds($twitchUser->expiresIn),
-            'twitch_data' => array_merge($twitchUser->user, $extendedData),
+
+        // Make sure we have a valid user before attempting login
+        if (!$user) {
+            throw new \Exception('Failed to create or find user');
+        }
+
+        Auth::login($user);
+
+        return redirect('/dashboard');
+
+    } catch (\Exception $e) {
+        \Log::error('Twitch OAuth callback failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
+
+        return redirect('/')->with('error', 'Authentication failed. Please try again.');
     }
-
-    Auth::login($user);
-
-    return redirect('/dashboard');
 });
 
 Route::post('/logout', function () {
@@ -147,6 +180,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
     Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
     Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
+
+    // Access Token Management
+    Route::prefix('tokens')->name('tokens.')->group(function () {
+        Route::get('/', [OverlayAccessTokenController::class, 'index'])->name('index');
+        Route::post('/', [OverlayAccessTokenController::class, 'store'])->name('store');
+        Route::post('/{token}/revoke', [OverlayAccessTokenController::class, 'revoke'])->name('revoke');
+        Route::delete('/{token}', [OverlayAccessTokenController::class, 'destroy'])->name('destroy');
+        Route::get('/{token}/usage', [OverlayAccessTokenController::class, 'usage'])->name('usage');
+    });
+
+    // Template Management - Full resource routes
+    Route::prefix('templates')->name('templates.')->group(function () {
+        Route::get('/', [OverlayTemplateController::class, 'index'])->name('index');
+        Route::get('/create', [OverlayTemplateController::class, 'create'])->name('create');
+        Route::post('/', [OverlayTemplateController::class, 'store'])->name('store');
+        Route::get('/{template}', [OverlayTemplateController::class, 'show'])->name('show');
+        Route::get('/{template}/edit', [OverlayTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{template}', [OverlayTemplateController::class, 'update'])->name('update');
+        Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
+        Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
+    });
+
+    // Template Builder
+    Route::get('/builder/{template?}', [TemplateBuilderController::class, 'index'])->name('builder');
 
     // Template tag generator interface
     Route::get('/tags-generator', [TemplateTagController::class, 'index'])

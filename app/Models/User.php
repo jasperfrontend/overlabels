@@ -27,6 +27,7 @@ class User extends Authenticatable
         'refresh_token',
         'token_expires_at',
         'twitch_data',
+        'email_verified_at',
     ];
 
     /**
@@ -48,9 +49,19 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
             'token_expires_at' => 'datetime',
             'twitch_data' => 'array',
+            'password' => 'hashed',
         ];
+    }
+
+    public function overlayAccessTokens()
+    {
+        return $this->hasMany(OverlayAccessToken::class);
+    }
+
+    public function overlayTemplates()
+    {
+        return $this->hasMany(OverlayTemplate::class, 'owner_id');
     }
 }
