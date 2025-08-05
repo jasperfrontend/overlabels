@@ -23,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const showCreateModal = ref(false);
 const showTokenModal = ref(false);
 const newToken = ref('');
-const ipInput = ref('');
+const ipInput = ref();
 
 const form = ref({
   name: '',
@@ -36,7 +36,9 @@ const parseIps = () => {
   if (ipInput.value) {
     form.value.allowed_ips = ipInput.value
       .split(',')
+      //@ts-ignore
       .map(ip => ip.trim())
+      //@ts-ignore
       .filter(ip => ip);
   } else {
     form.value.allowed_ips = [];
@@ -61,7 +63,7 @@ const copyToken = () => {
   alert('Token copied to clipboard!');
 };
 
-const revokeToken = async (token) => {
+const revokeToken = async (token:string) => {
   if (!confirm('Are you sure you want to revoke this token?')) return;
 
   try {
@@ -73,7 +75,7 @@ const revokeToken = async (token) => {
   }
 };
 
-const deleteToken = async (token) => {
+const deleteToken = async (token:string) => {
   if (!confirm('Are you sure you want to delete this token? This cannot be undone.')) return;
 
   try {
@@ -85,11 +87,11 @@ const deleteToken = async (token) => {
   }
 };
 
-const showUsage = (token) => {
+const showUsage = (token:string) => {
   router.visit(`/tokens/${token.id}/usage`);
 };
 
-const formatDate = (date) => {
+const formatDate = (date:string) => {
   return new Date(date).toLocaleString();
 };
 </script>
@@ -102,7 +104,7 @@ const formatDate = (date) => {
         <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
         <button
           @click="showCreateModal = true"
-          class="text-sm flex cursor-pointer border justify-center items-center bg-green-400/20 border-green-400 hover:bg-green-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-green-400/40 p-2 px-4 rounded-2xl"
+          class="btn btn-primary"
         >
           Create New Token
         </button>
@@ -111,7 +113,7 @@ const formatDate = (date) => {
       <!-- Token List -->
       <div class="space-y-4 bg-accent/15 overflow-hidden shadow-sm sm:rounded-lg">
         <div
-          v-for="token in tokens"q
+          v-for="token in tokens"
           :key="token.id"
           class="border rounded-lg p-4"
         >
@@ -136,20 +138,20 @@ const formatDate = (date) => {
 
               <button
                 @click="showUsage(token)"
-                class="text-sm flex cursor-pointer border justify-center items-center bg-blue-400/20 border-blue-400 hover:bg-blue-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-blue-400/40 p-2 px-4 rounded-2xl"
+                class="btn btn-sm btn-secondary"
               >
                 View Usage
               </button>
               <button
                 v-if="token.is_active"
                 @click="revokeToken(token)"
-                class="text-sm flex cursor-pointer border justify-center items-center bg-orange-400/20 border-orange-400 hover:bg-orange-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:orange-400/40 p-2 px-4 rounded-2xl"
+                class="btn btn-sm btn-warning"
               >
                 Revoke
               </button>
               <button
                 @click="deleteToken(token)"
-                class="text-sm flex cursor-pointer border justify-center items-center bg-red-400/20 border-red-400 hover:bg-red-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-red-400/40 p-2 px-4 rounded-2xl"
+                class="btn btn-sm btn-danger"
               >
                 Delete
               </button>

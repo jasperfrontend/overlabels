@@ -49,7 +49,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 if (props.overlayHash) {
   breadcrumbs.push({
     title: props.overlayHash.overlay_name,
-    href: route('template.builder', props.overlayHash.slug), // Now uses slug!
+    href: route('template.builder', props.overlayHash.slug),
   })
 }
 </script>

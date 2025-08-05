@@ -149,15 +149,15 @@ Route::get('/auth/callback/twitch', function () {
 
         // Make sure we have a valid user before attempting login
         if (!$user) {
-            throw new \Exception('Failed to create or find user');
+            throw new Exception('Failed to create or find user');
         }
 
         Auth::login($user);
 
         return redirect('/dashboard');
 
-    } catch (\Exception $e) {
-        \Log::error('Twitch OAuth callback failed', [
+    } catch (Exception $e) {
+        Log::error('Twitch OAuth callback failed', [
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
@@ -207,23 +207,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Template tag generator interface
     Route::get('/tags-generator', [TemplateTagController::class, 'index'])
-        ->name('template.generator');
+        ->name('tags.generator');
 
     // Generate standardized tags from current Twitch data
     Route::post('/template-tags/generate', [TemplateTagController::class, 'generateTags'])
-        ->name('template.generate');
+        ->name('tags.generate');
 
     // Preview a specific tag with current data
     Route::get('/template-tags/{tag}/preview', [TemplateTagController::class, 'previewTag'])
-        ->name('template.preview');
+        ->name('tags.preview');
 
     // Clear all template tags
     Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
-        ->name('template.clear');
-
-    // Get all template tags (API endpoint)
-    Route::get('/api/template-tags', [TemplateTagController::class, 'getAllTags'])
-        ->name('template.api.all');
+        ->name('tags.clear');
 
     // Export standardized tags for sharing
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])

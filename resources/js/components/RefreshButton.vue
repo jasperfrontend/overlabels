@@ -31,8 +31,8 @@ const handleSubmit = (e: Event) => {
       type="submit"
       :disabled="isLoading"
       :class="[
-        'flex cursor-pointer w-full border gap-4 justify-center items-center transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 hover:bg-accent/50 active:bg-accent p-3 mb-4 rounded-2xl',
-        variantClass || 'bg-accent/20',
+        'btn',
+        variantClass || '',
         isLoading && 'opacity-50 cursor-not-allowed',
       ]"
     >

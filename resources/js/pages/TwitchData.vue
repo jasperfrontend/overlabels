@@ -63,7 +63,7 @@ watch(
       <div class="w-full max-w-4xl">
           <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
           <h1 class="mb-6 text-center text-4xl font-extrabold tracking-tight">Your Twitch Data</h1>
-          <div class="flex flex-row flex-wrap justify-between gap-2">
+          <div class="flex flex-row flex-wrap justify-between gap-2 mb-4">
             <RefreshButton action="/twitchdata/refresh/user" label="User">
               <RefreshIcon />
             </RefreshButton>
@@ -180,7 +180,7 @@ watch(
 
           <button
             type="submit"
-            class="my-4 flex w-full cursor-pointer items-center justify-center gap-4 rounded-2xl border border-red-300 bg-red-400/50 p-3 transition hover:bg-red-500/50 hover:ring-2 hover:ring-red-700 active:bg-red-400"
+            class="btn btn-danger mt-6 w-full"
             @click="confirmExpensiveApiCall"
           >
             <RefreshIcon /> Refresh All Data directly from the Twitch API

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import RekaToast from '@/components/RekaToast.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
-import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
+import { Head, router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
+import RekaToast from '@/components/RekaToast.vue';
+import { Button } from '@/components/ui/button';
+import { type BreadcrumbItem } from '@/types';
+import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {
@@ -182,7 +182,7 @@ const clearAllTags = async () => {
 const previewTag = async (tagId: number) => {
   if (isLoadingPreview.value[tagId]) return;
 
-  // Set loading state for this specific tag
+  // Set a loading state for this specific tag
   isLoadingPreview.value = { ...isLoadingPreview.value, [tagId]: true };
 
   try {
@@ -214,7 +214,7 @@ const clearPreview = (tagId: number) => {
   const { [tagId]: removed, ...rest } = tagPreviews.value;
   tagPreviews.value = rest;
 
-  // Also clear loading state if it exists
+  // Also clear the loading state if it exists
   const { [tagId]: removedLoading, ...restLoading } = isLoadingPreview.value;
   isLoadingPreview.value = restLoading;
 };
@@ -275,39 +275,34 @@ const getDataTypeClass = (dataType: string) => {
 <template>
   <Head title="Template Tags Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <!-- Toast Component -->
     <RekaToast
       v-if="showToast"
       :message="toastMessage"
       :type="toastType"
       @update:visible="hideToast"
     />
-
-    <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-      <!-- Header Controls -->
-      <div class="flex justify-between flex-col md:flex-row gap-4">
+    <div class="p-4">
+      <div class="flex justify-between items-center mb-6">
         <Heading title="Template Tags Generator" description="Generate template tags from Twitch data" />
         <div class="flex gap-2">
-          <Button
+          <button
             @click="generateTags"
             :disabled="isGenerating"
-            variant="default"
-            class="w-[50%] md:w-auto cursor-pointer rounded-2xl border bg-accent-foreground/60 p-4 text-center shadow backdrop-blur-sm transition hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700 dark:hover:bg-accent-foreground"
+            class="btn btn-primary"
           >
             <RefreshCw v-if="isGenerating" class="w-4 h-4 animate-spin" />
-            <RefreshCw v-else class="w-4 h-4" />
+            <RefreshCw v-else class="w-4 h-4 mr-3" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags' }}
-          </Button>
+          </button>
 
-          <Button
+          <button
             v-if="hasExistingTags"
             @click="clearAllTags"
-            variant="destructive"
-            class="w-[50%] md:w-auto cursor-pointer rounded-2xl border bg-accent-foreground p-4 text-center shadow backdrop-blur-sm transition hover:ring-2 hover:ring-red-300 active:bg-accent dark:hover:ring-red-700"
+            class="btn btn-danger"
           >
-            <Trash2 class="w-4 h-4" />
+            <Trash2 class="w-4 h-4 mr-3" />
             Clear All Tags
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -417,11 +412,15 @@ const getDataTypeClass = (dataType: string) => {
           <p class="text-gray-500 dark:text-gray-400 mb-4">
             Click "Generate Tags" to analyze your Twitch data and create template tags automatically.
           </p>
-          <Button @click="generateTags" :disabled="isGenerating" variant="default" class="cursor-pointer">
+          <button
+            @click="generateTags"
+            :disabled="isGenerating"
+            class="btn btn-primary"
+          >
             <RefreshCw v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
             <RefreshCw v-else class="w-4 h-4 mr-2" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags Now' }}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -433,8 +432,8 @@ const getDataTypeClass = (dataType: string) => {
           <pre class="mt-2 overflow-x-auto">{{ JSON.stringify(twitchData, null, 2) }}</pre>
         </details>
       </div>
-    </div>
 
+    </div>
   </AppLayout>
 </template>
 

@@ -1,12 +1,130 @@
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useForm, Link, Head } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types'
+import Modal from '@/components/Modal.vue';
+import axios from 'axios';
+import Heading from '@/components/Heading.vue';
+
+const form = useForm({
+  name: '',
+  description: '',
+  html: '',
+  css: '',
+  js: '',
+  is_public: true,
+});
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'Overlay Creator',
+    href: '/templates/create',
+  }
+]
+
+const showPreview = ref(false);
+const previewHtml = ref('');
+
+const submitForm = () => {
+  form.post(route('templates.store'), {
+    onSuccess: () => {
+      // Will redirect to index or show page
+    },
+  });
+};
+
+const insertTag = (editor) => {
+  // Fetch available tags from the API
+  axios.get('/api/template-tags')
+    .then(response => {
+      const tags = response.data.tags;
+      const tagList = [];
+
+      // Flatten the categorized tags
+      Object.entries(tags).forEach(([categoryTags]) => {
+        categoryTags.forEach(tag => {
+          tagList.push(`${tag.tag} - ${tag.description}`);
+        });
+      });
+
+      const selected = prompt('Select a tag:\n\n' + tagList.join('\n'));
+      if (selected) {
+        const tag = selected.split(' - ')[0];
+        if (editor === 'html') {
+          form.html += tag;
+        } else if (editor === 'css') {
+          form.css += tag;
+        } else if (editor === 'js') {
+          form.js += tag;
+        }
+      }
+    })
+    .catch(() => {
+      // Fallback to manual input
+      const tag = prompt('Enter template tag name (e.g., user_name):');
+      if (tag) {
+        const fullTag = `[[[${tag}]]]`;
+        if (editor === 'html') {
+          form.html += fullTag;
+        } else if (editor === 'css') {
+          form.css += fullTag;
+        } else if (editor === 'js') {
+          form.js += fullTag;
+        }
+      }
+    });
+};
+
+const previewTemplate = () => {
+  // Create a preview with sample data that matches the database tags
+  const sampleData = {
+    user_name: 'SampleStreamer',
+    user_follower_count: '1,234',
+    user_view_count: '45,678',
+    stream_title: 'Playing an awesome game!',
+    stream_game_name: 'Just Chatting',
+    stream_viewer_count: '567',
+    user_broadcaster_type: 'affiliate',
+    channel_subscription_count: '123',
+  };
+
+  // Simple template tag replacement for preview
+  let html = form.html;
+  let css = form.css;
+  let js = form.js;
+
+  // Replace template tags with sample data
+  Object.entries(sampleData).forEach(([tag, value]) => {
+    const tagPattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
+    html = html.replace(tagPattern, value);
+    css = css.replace(tagPattern, value);
+    js = js.replace(tagPattern, value);
+  });
+
+  previewHtml.value = `<!DOCTYPE html>
+  <html lang="en">
+      <head>
+      <style>${css}</style>
+    </head>
+    <body>
+      ${html}
+    </body>
+  </html>`;
+  showPreview.value = true;
+};
+</script>
+
 <template>
-  <AppLayout>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <Head title="Create New Template" />
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6">
             <div class="mb-6">
-              <h2 class="text-2xl font-semibold">Create New Template</h2>
-              <p class="text-gray-600 mt-1">Design a new overlay template with HTML, CSS, and JavaScript</p>
+              <Heading title="Overlay Creator" description="Design a new overlay template with HTML, CSS, and Template Tags" /> /
             </div>
 
             <form @submit.prevent="submitForm">
@@ -154,9 +272,9 @@
                 </div>
                 <p class="text-xs text-gray-500 mt-2">
                   Use [[[tag_name]]] syntax in your templates.
-                  <Link href="/tags-generator" class="text-blue-600 hover:underline">
-                    Generate all available tags
-                  </Link>
+                  <a href="/tags-generator" class="text-blue-600 hover:underline">
+                    All available tags
+                  </a>
                 </p>
               </div>
 
@@ -208,111 +326,3 @@
     </Modal>
   </AppLayout>
 </template>
-
-<script setup>
-import { ref } from 'vue';
-import { useForm, Link } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import Modal from '@/components/Modal.vue';
-import axios from 'axios';
-
-const form = useForm({
-  name: '',
-  description: '',
-  html: '',
-  css: '',
-  js: '',
-  is_public: true,
-});
-
-const showPreview = ref(false);
-const previewHtml = ref('');
-
-const submitForm = () => {
-  form.post(route('templates.store'), {
-    onSuccess: () => {
-      // Will redirect to index or show page
-    },
-  });
-};
-
-const insertTag = (editor) => {
-  // Fetch available tags from the API
-  axios.get('/api/template-tags')
-    .then(response => {
-      const tags = response.data.tags;
-      const tagList = [];
-
-      // Flatten the categorized tags
-      Object.entries(tags).forEach(([category, categoryTags]) => {
-        categoryTags.forEach(tag => {
-          tagList.push(`${tag.tag} - ${tag.description}`);
-        });
-      });
-
-      const selected = prompt('Select a tag:\n\n' + tagList.join('\n'));
-      if (selected) {
-        const tag = selected.split(' - ')[0];
-        if (editor === 'html') {
-          form.html += tag;
-        } else if (editor === 'css') {
-          form.css += tag;
-        } else if (editor === 'js') {
-          form.js += tag;
-        }
-      }
-    })
-    .catch(() => {
-      // Fallback to manual input
-      const tag = prompt('Enter template tag name (e.g., user_name):');
-      if (tag) {
-        const fullTag = `[[[${tag}]]]`;
-        if (editor === 'html') {
-          form.html += fullTag;
-        } else if (editor === 'css') {
-          form.css += fullTag;
-        } else if (editor === 'js') {
-          form.js += fullTag;
-        }
-      }
-    });
-};
-
-const previewTemplate = () => {
-  // Create a preview with sample data that matches the database tags
-  const sampleData = {
-    user_name: 'SampleStreamer',
-    user_follower_count: '1,234',
-    user_view_count: '45,678',
-    stream_title: 'Playing an awesome game!',
-    stream_game_name: 'Just Chatting',
-    stream_viewer_count: '567',
-    user_broadcaster_type: 'affiliate',
-    channel_subscription_count: '123',
-  };
-
-  // Simple template tag replacement for preview
-  let html = form.html;
-  let css = form.css;
-  let js = form.js;
-
-  // Replace template tags with sample data
-  Object.entries(sampleData).forEach(([tag, value]) => {
-    const tagPattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
-    html = html.replace(tagPattern, value);
-    css = css.replace(tagPattern, value);
-    js = js.replace(tagPattern, value);
-  });
-
-  previewHtml.value = `<!DOCTYPE html>
-  <html lang="en">
-      <head>
-      <style>${css}</style>
-    </head>
-    <body>
-      ${html}
-    </body>
-  </html>`;
-  showPreview.value = true;
-};
-</script>

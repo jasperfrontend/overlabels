@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
@@ -44,37 +43,35 @@ const initializeEcho = () => {
     forceTLS: true
   };
 
-  // console.log('Pusher config:', pusherConfig);
-
   echo.value = new Echo(pusherConfig);
 
   // Listen for connection state changes
   echo.value.connector.pusher.connection.bind('connected', () => {
-    console.log('✅ WebSocket connected');
+    console.log('WebSocket connected');
     isWebSocketConnected.value = true;
   });
 
   echo.value.connector.pusher.connection.bind('disconnected', () => {
-    console.log('❌ WebSocket disconnected');
+    console.log('WebSocket disconnected');
     isWebSocketConnected.value = false;
   });
 
   echo.value.connector.pusher.connection.bind('failed', () => {
-    console.log('💥 WebSocket connection failed');
+    console.log('WebSocket connection failed');
     isWebSocketConnected.value = false;
   });
 
   echo.value.connector.pusher.connection.bind('error', (error: any) => {
-    console.log('🚨 WebSocket error:', error);
+    console.log('WebSocket error:', error);
     isWebSocketConnected.value = false;
   });
 
-  // Listen for Twitch events
+  // Listen to Twitch events
   echo.value.channel('twitch-events')
     .listen('.twitch.event', (event: any) => {
-      console.log('🎉 Received Twitch event:', event);
+      console.log('Received Twitch event:', event);
 
-      // Add to events list
+      // Add new events to the events list
       events.value.unshift({
         ...event,
         id: Date.now() + Math.random(),
@@ -90,7 +87,7 @@ const initializeEcho = () => {
       scrollToTop();
     });
 
-  console.log('🎧 Echo initialized and listening for events');
+  console.log('Echo initialized and listening for events');
 };
 
 // Scroll to top of events
@@ -104,7 +101,6 @@ const scrollToTop = () => {
 const connect = async () => {
   if (isConnecting.value) return;
   isLoading.value = true;
-  console.log('🔌 Starting EventSub connection...');
   isConnecting.value = true;
 
   try {
@@ -117,11 +113,10 @@ const connect = async () => {
     });
 
     const data = await response.json();
-    console.log('📡 EventSub API Response:', data);
 
     if (response.ok) {
       isLoading.value = false;
-      console.log('✅ Connected to EventSub:', data);
+      console.log('Connected to EventSub:', data);
 
       // Add a connection event to the log
       events.value.unshift({
@@ -132,13 +127,13 @@ const connect = async () => {
         receivedAt: new Date().toLocaleTimeString()
       });
 
-      // Check status immediately to get initial state
+      // Check status immediately to get the initial state
       await checkStatus();
 
       // Set up automatic status refreshing
       // Check again after 5 seconds (when verification should be complete)
       setTimeout(async () => {
-        console.log('🔄 Auto-refreshing status after verification window...');
+        console.log('Auto-refreshing status after verification window...');
         await checkStatus();
       }, 5000);
 
@@ -147,25 +142,25 @@ const connect = async () => {
       let refreshCount = 0;
       const refreshInterval = setInterval(async () => {
         refreshCount++;
-        console.log(`🔄 Auto-refresh ${refreshCount}/6...`);
+        console.log(`Auto-refresh ${refreshCount}/6...`);
 
         await checkStatus();
 
         // Stop after 6 refreshes (1 minute total)
         if (refreshCount >= 6) {
           clearInterval(refreshInterval);
-          console.log('✅ Auto-refresh complete');
+          console.log('Auto-refresh complete');
         }
       }, 10000);
 
     } else {
-      console.error('❌ EventSub connection failed:', data);
+      console.error('EventSub connection failed:', data);
       isLoading.value = false;
       throw new Error(data.error || 'Failed to connect');
     }
   } catch (error) {
     isLoading.value = false;
-    console.error('💥 Connection failed:', error);
+    console.error('Connection failed:', error);
 
     events.value.unshift({
       id: Date.now(),
@@ -177,14 +172,14 @@ const connect = async () => {
   } finally {
     isLoading.value = false;
     isConnecting.value = false;
-    console.log('🏁 EventSub connection attempt finished');
+    console.log('EventSub connection attempt finished');
   }
 };
 
 // Disconnect from EventSub
 const disconnect = async () => {
   isLoading.value = true;
-  console.log('🔌 Disconnecting from EventSub...');
+  console.log('Disconnecting from EventSub...');
 
   try {
     const response = await fetch('/eventsub/disconnect', {
@@ -201,7 +196,7 @@ const disconnect = async () => {
     if (response.ok) {
       isConnected.value = false;
       isLoading.value = false;
-      console.log('✅ Disconnected from EventSub:', data);
+      console.log('Disconnected from EventSub:', data);
 
       events.value.unshift({
         id: Date.now(),
@@ -213,13 +208,13 @@ const disconnect = async () => {
 
       subscriptionStatus.value = null;
     } else {
-      console.error('❌ Disconnect failed:', data);
+      console.error('Disconnect failed:', data);
       isLoading.value = false;
       throw new Error(data.error || 'Failed to disconnect');
     }
   } catch (error) {
     isLoading.value = false;
-    console.error('💥 Disconnect failed:', error);
+    console.error('Disconnect failed:', error);
 
     events.value.unshift({
       id: Date.now(),
@@ -233,27 +228,22 @@ const disconnect = async () => {
 
 // Check subscription status
 const checkStatus = async () => {
-  console.log('🔍 Checking EventSub status...');
 
   try {
-    // Use the same endpoint as your working backend check
-    const response = await fetch('/eventsub/check-status'); // Changed from '/eventsub/status'
+    const response = await fetch('/eventsub/check-status');
     const data = await response.json();
-    console.log('📊 Status response:', data);
 
     if (response.ok) {
       subscriptionStatus.value = data;
       isConnected.value = data.total > 0;
-      console.log(`📈 EventSub status: ${data.total} active subscriptions`);
     }
   } catch (error) {
-    console.error('💥 Status check failed:', error);
+    console.error('Status check failed:', error);
   }
 };
 
 // Clear events log
 const clearEvents = () => {
-  console.log('🧹 Clearing events log');
   events.value = [];
 };
 
@@ -264,6 +254,10 @@ const getEventTypeClass = (type: string) => {
       return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
     case 'channel.subscribe':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+    case 'channel.cheer':
+      return 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200';
+    case 'extension.bits_transaction.create':
+      return 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200';
     case 'stream.online':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     case 'channel.raid':
@@ -279,13 +273,11 @@ const getEventTypeClass = (type: string) => {
 
 // Lifecycle
 onMounted(() => {
-  console.log('🚀 Component mounted, initializing...');
   initializeEcho();
   checkStatus();
 });
 
 onUnmounted(() => {
-  console.log('💀 Component unmounting, cleaning up...');
   if (echo.value) {
     echo.value.disconnect();
   }
@@ -331,32 +323,29 @@ onUnmounted(() => {
               <span class="sr-only">Loading...</span>
             </span>
           </span>
-          <Button
+          <button
             @click="connect"
             :disabled="isConnected || isConnecting || isLoading"
-            variant="default"
-            class="cursor-pointer rounded-2xl"
+            class="btn btn-primary"
           >
             {{ isConnecting ? 'Connecting...' : 'Connect' }}
-          </Button>
+          </button>
 
-          <Button
+          <button
             @click="disconnect"
             :disabled="!isConnected || isLoading"
-            variant="outline"
-            class="cursor-pointer rounded-2xl"
+            class="btn btn-danger"
           >
             Disconnect
-          </Button>
+          </button>
 
-          <Button
+          <button
             @click="clearEvents"
             :disabled="events.length === 0 || isLoading"
-            variant="outline"
-            class="cursor-pointer rounded-2xl"
+            class="btn btn-cancel"
           >
             Clear Events
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -436,7 +425,15 @@ onUnmounted(() => {
                   </div>
 
                   <div v-else-if="event.type === 'channel.raid'" class="text-sm">
-                    ⚡ <strong>{{ event.data.from_broadcaster_user_name }}</strong> raided with {{ event.data.viewers }} viewers!
+                    <strong>{{ event.data.from_broadcaster_user_name }}</strong> raided with {{ event.data.viewers }} viewers!
+                  </div>
+
+                  <div v-else-if="event.type === 'channel.cheer'" class="text-sm">
+                    <strong>{{ event.data.user_name }}</strong> cheered {{ event.data.bits }} bits: {{ event.data.message }}
+                  </div>
+
+                  <div v-else-if="event.type === 'extension.bits_transaction.create'" class="text-sm">
+                    <strong>{{ event.data.user_name }}</strong> just cheered {{ event.data.product.bits }} bits using {{ event.data.product.name }}!
                   </div>
 
                   <div v-else-if="event.type === 'system'" class="text-sm">
