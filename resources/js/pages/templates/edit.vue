@@ -200,225 +200,216 @@ watch(
 
 <template>
   <Head title="Template Builder" />
-  <AppLayout>
-    <!-- Flash Message -->
-    <FlashMessage
-      :show="showSuccessToast"
-      type="success"
-      title="Template saved successfully!"
-      message="Your changes have been saved."
-      @close="showSuccessToast = false"
-    />
+  <AppLayout :breadcrumbs="breadcrumbs">
 
     <div class="p-4">
     <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
       <div class="mt-4">
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6">
 
-            <form @submit.prevent="submitForm">
-              <!-- Template Name -->
-              <div class="mb-4">
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                  Template Name *
-                </label>
-                <input
-                  id="name"
-                  v-model="form.name"
-                  type="text"
-                  class="p-2 rounded border w-full  hover:shadow-sm transition"
-                  required
-                />
-                <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
-                  {{ form.errors.name }}
-                </div>
+          <form @submit.prevent="submitForm">
+            <!-- Template Name -->
+            <div class="mb-4">
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                Template Name *
+              </label>
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                class="p-2 rounded border w-full  hover:shadow-sm transition"
+                required
+              />
+              <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
+                {{ form.errors.name }}
               </div>
+            </div>
 
-              <!-- Description -->
-              <div class="mb-4">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  v-model="form.description"
-                  rows="3"
-                  class="p-2 rounded border w-full hover:shadow-sm transition"
-                />
-                <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
-                  {{ form.errors.description }}
-                </div>
+            <!-- Description -->
+            <div class="mb-4">
+              <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                id="description"
+                v-model="form.description"
+                rows="3"
+                class="p-2 rounded border w-full hover:shadow-sm transition"
+              />
+              <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
+                {{ form.errors.description }}
               </div>
+            </div>
 
-              <!-- Code Editors -->
-              <div class="space-y-6">
-                <!-- HTML Editor -->
-                <div>
-                  <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                      HTML *
-                    </label>
-                    <div class="space-x-2">
-                      <button
-                        type="button"
-                        @click="formatCode('html')"
-                        class="text-sm text-gray-600 hover:text-gray-800"
-                      >
-                        Format
-                      </button>
-                      <button
-                        type="button"
-                        @click="insertTag('html')"
-                        class="text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        Insert Template Tag
-                      </button>
-                    </div>
-                  </div>
-                  <div class="border rounded-md overflow-hidden">
-
-                    <div class="overflow-hidden rounded-lg border">
-                      <Codemirror
-                        v-model="form.html"
-                        :style="{ height: '500px' }"
-                        :autofocus="true"
-                        :indent-with-tab="true"
-                        :tab-size="2"
-                        :extensions="htmlExtensions"
-                        placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
-                      />
-                    </div>
-
-                  </div>
-                  <div v-if="form.errors.html" class="text-red-600 text-sm mt-1">
-                    {{ form.errors.html }}
-                  </div>
-                </div>
-
-                <!-- CSS Editor -->
-                <div>
-                  <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                      CSS
-                    </label>
-                    <div class="space-x-2">
-                      <button
-                        type="button"
-                        @click="formatCode('css')"
-                        class="text-sm text-gray-600 hover:text-gray-800"
-                      >
-                        Format
-                      </button>
-                      <button
-                        type="button"
-                        @click="insertTag('css')"
-                        class="text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        Insert Template Tag
-                      </button>
-                    </div>
-                  </div>
-                  <div class="border rounded-md overflow-hidden">
-                    <div class="overflow-hidden rounded-lg border">
-                      <Codemirror
-                        v-model="form.css"
-                        :style="{ height: '500px' }"
-                        :indent-with-tab="true"
-                        :tab-size="2"
-                        :extensions="cssExtensions"
-                        placeholder="Enter your CSS styles here..."
-                      />
-                    </div>
-                  </div>
-                  <div v-if="form.errors.css" class="text-red-600 text-sm mt-1">
-                    {{ form.errors.css }}
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Visibility -->
-              <div class="mt-6">
-                <label class="flex items-center">
-                  <input
-                    v-model="form.is_public"
-                    type="checkbox"
-                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">
-                    Make this template public (others can view and fork it)
-                  </span>
-                </label>
-              </div>
-
-              <!-- Template Info -->
-              <div class="mt-6 grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-md text-sm">
-                <div>
-                  <span class="text-gray-600">Created:</span>
-                  <span class="ml-2">{{ new Date(template.created_at).toLocaleDateString() }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-600">Last updated:</span>
-                  <span class="ml-2">{{ new Date(template.updated_at).toLocaleDateString() }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-600">Views:</span>
-                  <span class="ml-2">{{ template.view_count }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-600">Forks:</span>
-                  <span class="ml-2">{{ template.fork_count }}</span>
-                </div>
-              </div>
-
-              <!-- Available Tags Help -->
-              <div class="mt-6 p-4 bg-gray-50 rounded-md">
-                <p class="text-xs text-gray-500 mt-2">
-                  <a href="/tags-generator" target="_blank" class="text-blue-600 hover:underline">
-                    View all available tags
-                  </a>
-                </p>
-                <div v-if="template.template_tags && template.template_tags.length > 0" class="mt-3">
-                  <p class="text-sm text-gray-600 mb-1">Currently used tags:</p>
-                  <div class="flex flex-wrap gap-1">
-                    <code
-                      v-for="tag in template.template_tags"
-                      :key="tag"
-                      class="bg-yellow-100 px-2 py-1 rounded text-xs"
+            <!-- Code Editors -->
+            <div class="space-y-6">
+              <!-- HTML Editor -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="block text-sm font-medium text-gray-700">
+                    HTML *
+                  </label>
+                  <div class="space-x-2">
+                    <button
+                      type="button"
+                      @click="formatCode('html')"
+                      class="text-sm text-gray-600 hover:text-gray-800"
                     >
-                      [[[{{ tag }}]]]
-                    </code>
+                      Format
+                    </button>
+                    <button
+                      type="button"
+                      @click="insertTag('html')"
+                      class="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Insert Template Tag
+                    </button>
                   </div>
+                </div>
+                <div class="border rounded-md overflow-hidden">
+
+                  <div class="overflow-hidden rounded-lg border">
+                    <Codemirror
+                      v-model="form.html"
+                      :style="{ height: '500px' }"
+                      :autofocus="true"
+                      :indent-with-tab="true"
+                      :tab-size="2"
+                      :extensions="htmlExtensions"
+                      placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                    />
+                  </div>
+
+                </div>
+                <div v-if="form.errors.html" class="text-red-600 text-sm mt-1">
+                  {{ form.errors.html }}
                 </div>
               </div>
 
-              <!-- Form Actions -->
-              <div class="mt-6 flex justify-between">
-                <Link
-                  :href="route('templates.show', template)"
-                  class="text-gray-600 hover:text-gray-900"
-                >
-                  ← Back to Template
-                </Link>
-                <div class="space-x-3">
-                  <button
-                    type="button"
-                    @click="previewTemplate"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Preview
-                  </button>
-                  <button
-                    type="submit"
-                    :disabled="form.processing || !form.isDirty"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Save Changes
-                  </button>
+              <!-- CSS Editor -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="block text-sm font-medium text-gray-700">
+                    CSS
+                  </label>
+                  <div class="space-x-2">
+                    <button
+                      type="button"
+                      @click="formatCode('css')"
+                      class="text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Format
+                    </button>
+                    <button
+                      type="button"
+                      @click="insertTag('css')"
+                      class="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Insert Template Tag
+                    </button>
+                  </div>
+                </div>
+                <div class="border rounded-md overflow-hidden">
+                  <div class="overflow-hidden rounded-lg border">
+                    <Codemirror
+                      v-model="form.css"
+                      :style="{ height: '500px' }"
+                      :indent-with-tab="true"
+                      :tab-size="2"
+                      :extensions="cssExtensions"
+                      placeholder="Enter your CSS styles here..."
+                    />
+                  </div>
+                </div>
+                <div v-if="form.errors.css" class="text-red-600 text-sm mt-1">
+                  {{ form.errors.css }}
                 </div>
               </div>
-            </form>
-          </div>
+
+            </div>
+
+            <!-- Visibility -->
+            <div class="mt-6">
+              <label class="flex items-center">
+                <input
+                  v-model="form.is_public"
+                  type="checkbox"
+                  class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <span class="ml-2 text-sm">
+                  Make this template public (others can view and fork it)
+                </span>
+              </label>
+            </div>
+
+            <!-- Template Info -->
+            <div class="mt-6 grid grid-cols-2 gap-4 p-4 bg-accent/30 rounded-md text-sm">
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Created:</span>
+                <span class="ml-2">{{ new Date(template.created_at).toLocaleDateString() }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Last updated:</span>
+                <span class="ml-2">{{ new Date(template.updated_at).toLocaleDateString() }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Views:</span>
+                <span class="ml-2">{{ template.view_count }}</span>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Forks:</span>
+                <span class="ml-2">{{ template.fork_count }}</span>
+              </div>
+            </div>
+
+            <!-- Available Tags Help -->
+            <div class="mt-6 p-4 bg-accent/30 rounded-md">
+              <p class="text-xs mt-2">
+                <a href="/tags-generator" target="_blank" class="text-blue-300 hover:underline">
+                  View all available tags
+                </a>
+              </p>
+              <div v-if="template.template_tags && template.template_tags.length > 0" class="mt-3">
+                <p class="text-sm mb-1">Currently used tags:</p>
+                <div class="flex flex-wrap gap-1">
+                  <code
+                    v-for="tag in template.template_tags"
+                    :key="tag"
+                    class="bg-cyan-100/10 px-2 py-1 rounded text-xs"
+                  >
+                    [[[{{ tag }}]]]
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="mt-6 flex justify-between">
+              <Link
+                :href="route('templates.show', template)"
+                class="hover:text-white/50 transition cursor-pointer"
+              >
+                ← Back to Template
+              </Link>
+              <div class="space-x-3">
+                <button
+                  type="button"
+                  @click="previewTemplate"
+                  class="px-4 py-2 border border-gray-300 rounded-md hover:bg-white/20 transition cursor-pointer"
+                >
+                  Preview
+                </button>
+                <button
+                  type="submit"
+                  :disabled="form.processing || !form.isDirty"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </form>
+
         </div>
       </div>
     </div>

@@ -1,78 +1,191 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import axios from 'axios';
+import AppLayout from '@/layouts/AppLayout.vue';
+import Modal from '@/components/Modal.vue';
+import Heading from '@/components/Heading.vue';
+import { type BreadcrumbItem } from '@/types';
+import { EyeIcon, CodeSquareIcon, CalendarIcon, ClockArrowUpIcon, AlarmClockOffIcon  } from 'lucide-vue-next';
+
+const props = defineProps({
+  tokens: Array,
+});
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'Overlay Access Tokens',
+    href: '/tokens',
+  },
+];
+
+
+const showCreateModal = ref(false);
+const showTokenModal = ref(false);
+const newToken = ref('');
+const ipInput = ref('');
+
+const form = ref({
+  name: '',
+  expires_at: null,
+  allowed_ips: [],
+  abilities: ['read'],
+});
+
+const parseIps = () => {
+  if (ipInput.value) {
+    form.value.allowed_ips = ipInput.value
+      .split(',')
+      .map(ip => ip.trim())
+      .filter(ip => ip);
+  } else {
+    form.value.allowed_ips = [];
+  }
+};
+
+const createToken = async () => {
+  try {
+    const response = await axios.post('/tokens', form.value);
+    newToken.value = response.data.plain_token;
+    showCreateModal.value = false;
+    showTokenModal.value = true;
+    router.reload({ only: ['tokens'] });
+  } catch (error) {
+    console.error('Failed to create token:', error);
+    alert('Failed to create token');
+  }
+};
+
+const copyToken = () => {
+  navigator.clipboard.writeText(newToken.value);
+  alert('Token copied to clipboard!');
+};
+
+const revokeToken = async (token) => {
+  if (!confirm('Are you sure you want to revoke this token?')) return;
+
+  try {
+    await axios.post(`/tokens/${token.id}/revoke`);
+    router.reload({ only: ['tokens'] });
+  } catch (error) {
+    console.error('Failed to revoke token:', error);
+    alert('Failed to revoke token');
+  }
+};
+
+const deleteToken = async (token) => {
+  if (!confirm('Are you sure you want to delete this token? This cannot be undone.')) return;
+
+  try {
+    await axios.delete(`/tokens/${token.id}`);
+    router.reload({ only: ['tokens'] });
+  } catch (error) {
+    console.error('Failed to delete token:', error);
+    alert('Failed to delete token');
+  }
+};
+
+const showUsage = (token) => {
+  router.visit(`/tokens/${token.id}/usage`);
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleString();
+};
+</script>
+
 <template>
-  <AppLayout>
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-accent/50 border overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-semibold">Overlay Access Tokens</h2>
-              <button
-                @click="showCreateModal = true"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-              >
-                Create New Token
-              </button>
+  <Head title="Your Secure Tokens" />
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="p-4">
+      <div class="flex justify-between items-center mb-6">
+        <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
+        <button
+          @click="showCreateModal = true"
+          class="text-sm flex cursor-pointer border justify-center items-center bg-green-400/20 border-green-400 hover:bg-green-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-green-400/40 p-2 px-4 rounded-2xl"
+        >
+          Create New Token
+        </button>
+      </div>
+
+      <!-- Token List -->
+      <div class="space-y-4 bg-accent/15 overflow-hidden shadow-sm sm:rounded-lg">
+        <div
+          v-for="token in tokens"q
+          :key="token.id"
+          class="border rounded-lg p-4"
+        >
+          <div class="flex justify-self-start gap-4 items-start">
+            <div>
+              <h3 class="font-semibold">{{ token.name }}</h3>
+            </div>
+            <div class="mt-0.5">
+              <p class="text-sm text-accent-foreground/50">
+                <CodeSquareIcon class="inline-block w-4 h-4 mr-1 -mt-0.5" />
+                Prefix: <code class="bg-accent-foreground/10 px-1">{{ token.prefix }}...</code>
+              </p>
+            </div>
+            <div class="mt-0.5">
+              <p class="text-sm text-accent-foreground/50" title="Access Count">
+                <EyeIcon class="inline-block w-4 h-4 mr-1 -mt-0.5" />
+                {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
+              </p>
             </div>
 
-            <!-- Token List -->
-            <div class="space-y-4">
-              <div
-                v-for="token in tokens"
-                :key="token.id"
-                class="border rounded-lg p-4"
+            <div class="space-x-2 ml-auto flex">
+
+              <button
+                @click="showUsage(token)"
+                class="text-sm flex cursor-pointer border justify-center items-center bg-blue-400/20 border-blue-400 hover:bg-blue-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-blue-400/40 p-2 px-4 rounded-2xl"
               >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="font-semibold">{{ token.name }}</h3>
-                    <p class="text-sm text-accent-foreground/50">
-                      Prefix: <code class="bg-accent-foreground/10 px-1">{{ token.prefix }}...</code>
-                    </p>
-                    <p class="text-sm text-accent-foreground/50">
-                      Created: {{ formatDate(token.created_at) }}
-                    </p>
-                    <p v-if="token.expires_at" class="text-sm text-accent-foreground/50">
-                      Expires: {{ formatDate(token.expires_at) }}
-                    </p>
-                    <p class="text-sm text-accent-foreground/50">
-                      Access Count: {{ token.access_count }}
-                    </p>
-                    <p v-if="token.last_used_at" class="text-sm text-accent-foreground/50">
-                      Last Used: {{ formatDate(token.last_used_at) }}
-                    </p>
-                  </div>
-                  <div class="space-x-2">
-                    <button
-                      @click="showUsage(token)"
-                      class="text-blue-600 hover:text-blue-800 text-sm"
-                    >
-                      View Usage
-                    </button>
-                    <button
-                      v-if="token.is_active"
-                      @click="revokeToken(token)"
-                      class="text-yellow-600 hover:text-yellow-800 text-sm"
-                    >
-                      Revoke
-                    </button>
-                    <button
-                      @click="deleteToken(token)"
-                      class="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <div
-                  v-if="!token.is_active"
-                  class="mt-2 text-sm text-red-600 font-semibold"
-                >
-                  REVOKED
-                </div>
-              </div>
+                View Usage
+              </button>
+              <button
+                v-if="token.is_active"
+                @click="revokeToken(token)"
+                class="text-sm flex cursor-pointer border justify-center items-center bg-orange-400/20 border-orange-400 hover:bg-orange-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:orange-400/40 p-2 px-4 rounded-2xl"
+              >
+                Revoke
+              </button>
+              <button
+                @click="deleteToken(token)"
+                class="text-sm flex cursor-pointer border justify-center items-center bg-red-400/20 border-red-400 hover:bg-red-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-red-400/40 p-2 px-4 rounded-2xl"
+              >
+                Delete
+              </button>
             </div>
+          </div>
+          <div class="flex justify-self-start gap-4 mt-2 items-start">
+            <div class="mt-0.5">
+              <p class="text-sm text-accent-foreground/50">
+                <CalendarIcon class="inline-block w-4 h-4 mr-1 -mt-0.5" />
+                Created: {{ formatDate(token.created_at) }}
+              </p>
+            </div>
+            <div class="mt-0.5">
+              <p v-if="token.expires_at" class="text-sm text-accent-foreground/50">
+                <AlarmClockOffIcon class="inline-block w-4 h-4 mr-1 -mt-0.5" />
+                Expires: {{ formatDate(token.expires_at) }}
+              </p>
+            </div>
+            <div class="mt-0.5">
+              <p v-if="token.last_used_at" class="text-sm text-accent-foreground/50">
+                <ClockArrowUpIcon class="inline-block w-4 h-4 mr-1 -mt-0.5" />
+                Last viewed: {{ formatDate(token.last_used_at) }}
+              </p>
+
+            </div>
+
+          </div>
+          <div
+            v-if="!token.is_active"
+            class="mt-2 text-sm text-red-600 font-semibold"
+          >
+            REVOKED
           </div>
         </div>
       </div>
+
     </div>
 
     <!-- Create Token Modal -->
@@ -179,87 +292,4 @@
   </AppLayout>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
-import axios from 'axios';
-import AppLayout from '@/layouts/AppLayout.vue';
-import Modal from '@/components/Modal.vue';
 
-const props = defineProps({
-  tokens: Array,
-});
-
-const showCreateModal = ref(false);
-const showTokenModal = ref(false);
-const newToken = ref('');
-const ipInput = ref('');
-
-const form = ref({
-  name: '',
-  expires_at: null,
-  allowed_ips: [],
-  abilities: ['read'],
-});
-
-const parseIps = () => {
-  if (ipInput.value) {
-    form.value.allowed_ips = ipInput.value
-      .split(',')
-      .map(ip => ip.trim())
-      .filter(ip => ip);
-  } else {
-    form.value.allowed_ips = [];
-  }
-};
-
-const createToken = async () => {
-  try {
-    const response = await axios.post('/tokens', form.value);
-    newToken.value = response.data.plain_token;
-    showCreateModal.value = false;
-    showTokenModal.value = true;
-    router.reload({ only: ['tokens'] });
-  } catch (error) {
-    console.error('Failed to create token:', error);
-    alert('Failed to create token');
-  }
-};
-
-const copyToken = () => {
-  navigator.clipboard.writeText(newToken.value);
-  alert('Token copied to clipboard!');
-};
-
-const revokeToken = async (token) => {
-  if (!confirm('Are you sure you want to revoke this token?')) return;
-
-  try {
-    await axios.post(`/tokens/${token.id}/revoke`);
-    router.reload({ only: ['tokens'] });
-  } catch (error) {
-    console.error('Failed to revoke token:', error);
-    alert('Failed to revoke token');
-  }
-};
-
-const deleteToken = async (token) => {
-  if (!confirm('Are you sure you want to delete this token? This cannot be undone.')) return;
-
-  try {
-    await axios.delete(`/tokens/${token.id}`);
-    router.reload({ only: ['tokens'] });
-  } catch (error) {
-    console.error('Failed to delete token:', error);
-    alert('Failed to delete token');
-  }
-};
-
-const showUsage = (token) => {
-  router.visit(`/tokens/${token.id}/usage`);
-};
-
-const formatDate = (date) => {
-  return new Date(date).toLocaleString();
-};
-</script>
