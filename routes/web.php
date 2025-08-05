@@ -181,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
     Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
 
+
     // Access Token Management
     Route::prefix('tokens')->name('tokens.')->group(function () {
         Route::get('/', [OverlayAccessTokenController::class, 'index'])->name('index');
@@ -282,6 +283,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/export', [App\Http\Controllers\TemplateBuilderController::class, 'exportTemplate'])
             ->name('api.template.export');
     });
+
+
+
 });
 
 require __DIR__.'/settings.php';

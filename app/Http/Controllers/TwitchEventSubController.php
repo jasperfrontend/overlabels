@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TwitchEvent;
 use App\Services\TwitchEventSubService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +32,7 @@ class TwitchEventSubController extends Controller
     public function connect(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user || !$user->access_token || !$user->twitch_id) {
             return response()->json(['error' => 'User not authenticated with Twitch'], 401);
         }
@@ -39,18 +40,18 @@ class TwitchEventSubController extends Controller
         try {
             // The callback URL that Twitch will send events to
             $callbackUrl = config('app.url') . '/api/twitch/webhook';
-            
+
             // Subscribe to follow events
             $followSub = $this->eventSubService->subscribeToFollows(
-                $user->access_token, 
-                $user->twitch_id, 
+                $user->access_token,
+                $user->twitch_id,
                 $callbackUrl
             );
 
             // Subscribe to subscription events
             $subSub = $this->eventSubService->subscribeToSubscriptions(
-                $user->access_token, 
-                $user->twitch_id, 
+                $user->access_token,
+                $user->twitch_id,
                 $callbackUrl
             );
 
@@ -68,7 +69,7 @@ class TwitchEventSubController extends Controller
 
         } catch (\Exception $e) {
             Log::error('EventSub connection failed: ' . $e->getMessage());
-            
+
             return response()->json([
                 'error' => 'Failed to connect to EventSub',
                 'message' => $e->getMessage()
@@ -82,7 +83,7 @@ class TwitchEventSubController extends Controller
     public function disconnect(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user || !$user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
@@ -90,7 +91,7 @@ class TwitchEventSubController extends Controller
         try {
             // Get app access token (since subscriptions were created with app token)
             $appToken = $this->eventSubService->getAppAccessToken();
-            
+
             if (!$appToken) {
                 return response()->json([
                     'error' => 'Could not get app access token for cleanup',
@@ -100,7 +101,7 @@ class TwitchEventSubController extends Controller
 
             // Get all current subscriptions using app token
             $subscriptions = $this->eventSubService->getSubscriptions($appToken);
-            
+
             if (!$subscriptions || !isset($subscriptions['data'])) {
                 return response()->json([
                     'success' => true,
@@ -110,7 +111,7 @@ class TwitchEventSubController extends Controller
 
             $deletedCount = 0;
             $errors = [];
-            
+
             foreach ($subscriptions['data'] as $subscription) {
                 if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
                     $deletedCount++;
@@ -133,7 +134,7 @@ class TwitchEventSubController extends Controller
 
         } catch (\Exception $e) {
             Log::error('EventSub disconnection failed: ' . $e->getMessage());
-            
+
             return response()->json([
                 'error' => 'Failed to disconnect from EventSub',
                 'message' => $e->getMessage()
@@ -190,7 +191,7 @@ class TwitchEventSubController extends Controller
                 $webhookLog['status'] = 'challenge_responded';
                 Cache::put('last_webhook_activity', $webhookLog, 300);
                 Cache::put('webhook_challenge_received', true, 300);
-                
+
                 $challenge = $data['challenge'];
 
                 try {
@@ -201,13 +202,13 @@ class TwitchEventSubController extends Controller
                     echo $challenge;
 
                     exit(); // Important: exit immediately to prevent Laravel from adding anything
-                    
+
                 } catch (\Exception $e) {
                     Log::error('Step 6: Failed to send challenge response', [
                         'error' => $e->getMessage(),
                         'challenge' => $challenge
                     ]);
-                    
+
                     // Fallback to Laravel response
                     return response($challenge, 200, [
                         'Content-Type' => 'text/plain',
@@ -229,7 +230,7 @@ class TwitchEventSubController extends Controller
             // Handle actual events (notifications)
             if ($messageType === 'notification' && isset($data['event'])) {
                 $this->handleTwitchEvent($data);
-                
+
                 // Update webhook log
                 $webhookLog['status'] = 'event_processed';
                 $webhookLog['event_data'] = $data['event'];
@@ -239,7 +240,7 @@ class TwitchEventSubController extends Controller
             // Handle revocations
             if ($messageType === 'revocation') {
                 Log::warning('Twitch subscription revoked', ['data' => $data]);
-                
+
                 // Update webhook log
                 $webhookLog['status'] = 'subscription_revoked';
                 Cache::put('last_webhook_activity', $webhookLog, 300);
@@ -254,14 +255,14 @@ class TwitchEventSubController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             Cache::put('webhook_error', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'timestamp' => now()->toISOString()
             ], 300);
-            
+
             return response('Error: ' . $e->getMessage(), 500);
         }
     }
@@ -281,7 +282,7 @@ class TwitchEventSubController extends Controller
     public function checkStatus(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user || !$user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
@@ -289,14 +290,14 @@ class TwitchEventSubController extends Controller
         try {
             // Get app access token to check app-created subscriptions
             $appToken = $this->eventSubService->getAppAccessToken();
-            
+
             if (!$appToken) {
                 return response()->json(['error' => 'Could not get app token'], 500);
             }
 
             // Check subscriptions with app token
             $subscriptions = $this->eventSubService->getSubscriptions($appToken);
-            
+
             return response()->json([
                 'subscriptions' => $subscriptions['data'] ?? [],
                 'total' => $subscriptions['total'] ?? 0,
@@ -316,7 +317,7 @@ class TwitchEventSubController extends Controller
     public function cleanupAll(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user || !$user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
@@ -327,11 +328,11 @@ class TwitchEventSubController extends Controller
         try {
             // Get app access token
             $appToken = $this->eventSubService->getAppAccessToken();
-            
+
             if ($appToken) {
                 // Clean up app token subscriptions
                 $appSubscriptions = $this->eventSubService->getSubscriptions($appToken);
-                
+
                 if ($appSubscriptions && isset($appSubscriptions['data'])) {
                     foreach ($appSubscriptions['data'] as $subscription) {
                         if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
@@ -345,7 +346,7 @@ class TwitchEventSubController extends Controller
 
             // Also try with user token
             $userSubscriptions = $this->eventSubService->getSubscriptions($user->access_token);
-            
+
             if ($userSubscriptions && isset($userSubscriptions['data'])) {
                 foreach ($userSubscriptions['data'] as $subscription) {
                     if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
@@ -365,7 +366,7 @@ class TwitchEventSubController extends Controller
 
         } catch (\Exception $e) {
             Log::error('EventSub cleanup failed: ' . $e->getMessage());
-            
+
             return response()->json([
                 'error' => 'Failed to cleanup subscriptions',
                 'message' => $e->getMessage(),
@@ -402,9 +403,28 @@ class TwitchEventSubController extends Controller
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
 
-        // Broadcast the event to connected WebSocket clients
-        // We'll implement this broadcast functionality next
-        broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
+        try {
+            // Store the event in the database
+            $twitchEvent = TwitchEvent::create([
+                'event_type' => $eventType,
+                'event_data' => $event,
+                'twitch_timestamp' => now(), // Use current time if not available in the event
+                'processed' => false,
+            ]);
+
+            Log::info("Stored Twitch event in database: {$eventType} (ID: {$twitchEvent->id})");
+
+            // Broadcast the event to connected WebSocket clients
+            broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
+        } catch (\Exception $e) {
+            Log::error("Failed to store Twitch event: {$e->getMessage()}", [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Still broadcast the event even if database storage fails
+            broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
+        }
     }
 
     /**
@@ -413,14 +433,14 @@ class TwitchEventSubController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user || !$user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
         try {
             $subscriptions = $this->eventSubService->getSubscriptions($user->access_token);
-            
+
             return response()->json([
                 'subscriptions' => $subscriptions['data'] ?? [],
                 'total' => $subscriptions['total'] ?? 0

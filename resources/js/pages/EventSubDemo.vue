@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import Heading from '@/components/Heading.vue';
@@ -23,6 +23,12 @@ const events = ref<Array<any>>([]);
 const subscriptionStatus = ref<any>(null);
 // @ts-ignore
 const echo = ref<Echo | null>(null);
+const isFetchingEvents = ref(false);
+const pagination = ref<any>({
+  current_page: 1,
+  per_page: 15,
+  total: 0
+});
 
 // Auto-scroll container
 const eventsContainer = ref<HTMLElement | null>(null);
@@ -71,20 +77,30 @@ const initializeEcho = () => {
     .listen('.twitch.event', (event: any) => {
       console.log('Received Twitch event:', event);
 
-      // Add new events to the events list
-      events.value.unshift({
+      // Format the real-time event
+      const formattedEvent = {
         ...event,
-        id: Date.now() + Math.random(),
-        receivedAt: new Date().toLocaleTimeString()
-      });
+        id: Date.now() + Math.random(), // Temporary ID until we refresh from DB
+        receivedAt: new Date().toLocaleTimeString(),
+        realtime: true, // Mark as a real-time event
+        processed: false
+      };
 
-      // Keep only the last 50 events
+      // Add new events to the events list
+      events.value.unshift(formattedEvent);
+
+      // Keep only the last 50 events in the UI
       if (events.value.length > 50) {
         events.value = events.value.slice(0, 50);
       }
 
       // Auto scroll to top
       scrollToTop();
+
+      // Refresh events from the database after a short delay to get the stored version
+      setTimeout(() => {
+        fetchEvents(1);
+      }, 2000);
     });
 
   console.log('Echo initialized and listening for events');
@@ -271,10 +287,112 @@ const getEventTypeClass = (type: string) => {
   }
 };
 
+// Fetch events from the database
+const fetchEvents = async (page = 1) => {
+  if (isFetchingEvents.value) return;
+
+  isFetchingEvents.value = true;
+
+  try {
+    const response = await fetch(`/api/twitch/events?page=${page}&per_page=${pagination.value.per_page}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      credentials: 'include', // Include cookies for authentication
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch events');
+    }
+
+    const data = await response.json();
+
+    // Update pagination info
+    pagination.value = {
+      current_page: data.current_page,
+      per_page: data.per_page,
+      total: data.total,
+      last_page: data.last_page
+    };
+
+    // Format events to match the structure expected by the UI
+
+
+    // Replace events with database events
+    events.value = data.data.map(event => ({
+      id: event.id,
+      type: event.event_type,
+      data: event.event_data,
+      timestamp: event.twitch_timestamp,
+      receivedAt: new Date(event.created_at).toLocaleTimeString(),
+      fromDatabase: true,
+      processed: event.processed
+    }));
+
+  } catch (error) {
+    console.error('Error fetching events:', error);
+
+    // Add error event
+    events.value.unshift({
+      id: Date.now(),
+      type: 'error',
+      data: { message: 'Failed to fetch events from database', error },
+      timestamp: new Date().toISOString(),
+      receivedAt: new Date().toLocaleTimeString()
+    });
+  } finally {
+    isFetchingEvents.value = false;
+  }
+};
+
+// Load the next page of events
+const loadNextPage = () => {
+  if (pagination.value.current_page < pagination.value.last_page) {
+    fetchEvents(pagination.value.current_page + 1);
+  }
+};
+
+// Load the previous page of events
+const loadPreviousPage = () => {
+  if (pagination.value.current_page > 1) {
+    fetchEvents(pagination.value.current_page - 1);
+  }
+};
+
+// Mark an event as processed
+const markAsProcessed = async (eventId) => {
+  try {
+    const response = await fetch(`/api/twitch/events/${eventId}/process`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      credentials: 'include', // Include cookies for authentication
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to mark event as processed');
+    }
+
+    // Update the event in the local state
+    const eventIndex = events.value.findIndex(e => e.id === eventId);
+    if (eventIndex !== -1) {
+      events.value[eventIndex].processed = true;
+    }
+
+  } catch (error) {
+    console.error('Error marking event as processed:', error);
+  }
+};
+
 // Lifecycle
 onMounted(() => {
   initializeEcho();
   checkStatus();
+  fetchEvents(); // Fetch events from the database when component mounts
 });
 
 onUnmounted(() => {
@@ -367,10 +485,66 @@ onUnmounted(() => {
       <!-- Events Feed -->
       <div class="flex-1 rounded-lg border bg-background overflow-hidden">
         <div class="border-b bg-muted/50 p-3">
-          <h2 class="font-semibold">Live Events Feed</h2>
+          <h2 class="font-semibold">Events Feed</h2>
           <p class="text-sm text-muted-foreground">
-            Events will appear here in real-time. Follow your channel or subscribe to see them!
+            Events are stored in the database and will appear here. Real-time events will be highlighted.
           </p>
+
+          <!-- Pagination Controls -->
+          <div class="flex items-center justify-between mt-2">
+            <div class="text-sm text-muted-foreground">
+              <span v-if="pagination.total > 0">
+                Showing {{ events.length }} of {{ pagination.total }} events
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                @click="fetchEvents(1)"
+                class="px-2 py-1 text-xs rounded border hover:bg-muted"
+                :disabled="isFetchingEvents || pagination.current_page === 1"
+              >
+                First
+              </button>
+
+              <button
+                @click="loadPreviousPage()"
+                class="px-2 py-1 text-xs rounded border hover:bg-muted"
+                :disabled="isFetchingEvents || pagination.current_page === 1"
+              >
+                Previous
+              </button>
+
+              <span class="text-xs text-muted-foreground">
+                Page {{ pagination.current_page }} of {{ pagination.last_page || 1 }}
+              </span>
+
+              <button
+                @click="loadNextPage()"
+                class="px-2 py-1 text-xs rounded border hover:bg-muted"
+                :disabled="isFetchingEvents || pagination.current_page === pagination.last_page"
+              >
+                Next
+              </button>
+
+              <button
+                @click="fetchEvents(pagination.last_page)"
+                class="px-2 py-1 text-xs rounded border hover:bg-muted"
+                :disabled="isFetchingEvents || pagination.current_page === pagination.last_page"
+              >
+                Last
+              </button>
+
+              <button
+                @click="fetchEvents(pagination.current_page)"
+                class="px-2 py-1 text-xs rounded border hover:bg-muted"
+                :disabled="isFetchingEvents"
+              >
+                <span v-if="isFetchingEvents">Loading...</span>
+                <span v-else>Refresh</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div
@@ -382,10 +556,15 @@ onUnmounted(() => {
             No events yet. Connect to EventSub and interact with your Twitch channel!
           </div>
 
+          <div v-if="isFetchingEvents && events.length === 0" class="text-center text-muted-foreground py-8">
+            Loading events...
+          </div>
+
           <div
             v-for="event in events"
             :key="event.id"
             class="border rounded-lg p-3 bg-card"
+            :class="{ 'border-blue-500 bg-blue-50 dark:bg-blue-900/20': event.realtime }"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
@@ -396,6 +575,34 @@ onUnmounted(() => {
                   >
                     {{ event.type }}
                   </span>
+
+                  <!-- Real-time indicator -->
+                  <span
+                    v-if="event.realtime"
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  >
+                    Real-time
+                  </span>
+
+                  <!-- Database indicator -->
+                  <span
+                    v-if="event.fromDatabase"
+                    class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                  >
+                    Database
+                  </span>
+
+                  <!-- Processing status -->
+                  <span
+                    v-if="event.fromDatabase"
+                    class="px-2 py-1 text-xs font-medium rounded-full"
+                    :class="event.processed
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'"
+                  >
+                    {{ event.processed ? 'Processed' : 'Unprocessed' }}
+                  </span>
+
                   <span class="text-xs text-muted-foreground">
                     {{ event.receivedAt }}
                   </span>
@@ -456,6 +663,16 @@ onUnmounted(() => {
                   </summary>
                   <pre class="text-xs bg-muted rounded p-2 mt-1 overflow-x-auto">{{ JSON.stringify(event.data, null, 2) }}</pre>
                 </details>
+
+                <!-- Process Button (only for unprocessed database events) -->
+                <div v-if="event.fromDatabase && !event.processed" class="mt-3 flex justify-end">
+                  <button
+                    @click="markAsProcessed(event.id)"
+                    class="px-3 py-1 text-xs font-medium rounded bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800"
+                  >
+                    Mark as Processed
+                  </button>
+                </div>
               </div>
             </div>
           </div>
