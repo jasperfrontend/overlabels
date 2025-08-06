@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TwitchEventReceived;
 use App\Models\TwitchEvent;
 use App\Services\TwitchEventSubService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -54,10 +56,22 @@ class TwitchEventSubController extends Controller
                 $user->twitch_id,
                 $callbackUrl
             );
+            $raidSub = $this->eventSubService->subscribeToRaids(
+                $user->access_token,
+                $user->twitch_id,
+                $callbackUrl
+            );
+            $onlineSub = $this->eventSubService->subscribeToStreamOnline(
+                $user->access_token,
+                $user->twitch_id,
+                $callbackUrl
+            );
 
             $results = [
                 'follow_subscription' => $followSub,
                 'sub_subscription' => $subSub,
+                'raid_subscription' => $raidSub,
+                'online_subscription' => $onlineSub,
                 'callback_url' => $callbackUrl
             ];
 
@@ -67,7 +81,7 @@ class TwitchEventSubController extends Controller
                 'data' => $results
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('EventSub connection failed: ' . $e->getMessage());
 
             return response()->json([
@@ -99,7 +113,7 @@ class TwitchEventSubController extends Controller
                 ], 500);
             }
 
-            // Get all current subscriptions using app token
+            // Get all current subscriptions using an app token
             $subscriptions = $this->eventSubService->getSubscriptions($appToken);
 
             if (!$subscriptions || !isset($subscriptions['data'])) {
@@ -127,12 +141,12 @@ class TwitchEventSubController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Removed {$deletedCount} subscriptions",
+                'message' => "Removed $deletedCount subscriptions",
                 'deleted_count' => $deletedCount,
                 'errors' => $errors
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('EventSub disconnection failed: ' . $e->getMessage());
 
             return response()->json([
@@ -164,7 +178,7 @@ class TwitchEventSubController extends Controller
                 return response('Invalid JSON', 400);
             }
 
-            // Step 3: Get message type
+            // Step 3: Get a message type
             $messageType = $request->header('Twitch-Eventsub-Message-Type');
 
             // Step 4: Check if it's a challenge
@@ -203,7 +217,7 @@ class TwitchEventSubController extends Controller
 
                     exit(); // Important: exit immediately to prevent Laravel from adding anything
 
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Step 6: Failed to send challenge response', [
                         'error' => $e->getMessage(),
                         'challenge' => $challenge
@@ -248,7 +262,7 @@ class TwitchEventSubController extends Controller
 
             return response('OK', 200);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('=== WEBHOOK EXCEPTION ===', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -288,7 +302,7 @@ class TwitchEventSubController extends Controller
         }
 
         try {
-            // Get app access token to check app-created subscriptions
+            // Get an app access token to check app-created subscriptions
             $appToken = $this->eventSubService->getAppAccessToken();
 
             if (!$appToken) {
@@ -305,7 +319,7 @@ class TwitchEventSubController extends Controller
                 'token_type' => 'app_token'
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to check EventSub status: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to get status'], 500);
         }
@@ -344,7 +358,7 @@ class TwitchEventSubController extends Controller
                 }
             }
 
-            // Also try with user token
+            // Also try with a user token
             $userSubscriptions = $this->eventSubService->getSubscriptions($user->access_token);
 
             if ($userSubscriptions && isset($userSubscriptions['data'])) {
@@ -359,12 +373,12 @@ class TwitchEventSubController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Cleaned up {$deletedCount} subscriptions",
+                'message' => "Cleaned up $deletedCount subscriptions",
                 'deleted_count' => $deletedCount,
                 'errors' => $errors
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('EventSub cleanup failed: ' . $e->getMessage());
 
             return response()->json([
@@ -412,18 +426,18 @@ class TwitchEventSubController extends Controller
                 'processed' => false,
             ]);
 
-            Log::info("Stored Twitch event in database: {$eventType} (ID: {$twitchEvent->id})");
+            Log::info("Stored Twitch event in database: $eventType (ID: $twitchEvent->id)");
 
             // Broadcast the event to connected WebSocket clients
-            broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
-        } catch (\Exception $e) {
+            broadcast(new TwitchEventReceived($eventType, $event));
+        } catch (Exception $e) {
             Log::error("Failed to store Twitch event: {$e->getMessage()}", [
                 'event_type' => $eventType,
                 'error' => $e->getMessage(),
             ]);
 
             // Still broadcast the event even if database storage fails
-            broadcast(new \App\Events\TwitchEventReceived($eventType, $event));
+            broadcast(new TwitchEventReceived($eventType, $event));
         }
     }
 
@@ -446,7 +460,7 @@ class TwitchEventSubController extends Controller
                 'total' => $subscriptions['total'] ?? 0
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get EventSub status: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to get status'], 500);
         }

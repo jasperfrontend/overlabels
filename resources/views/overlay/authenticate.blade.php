@@ -6,11 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Loading Overlay...</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: transparent;
-            font-family: Arial, sans-serif;
+        :root {
+
         }
         .loading {
             display: flex;
@@ -25,15 +22,16 @@
             text-align: center;
             padding: 20px;
         }
-        #overlay-content {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
+        .loading {
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 30px;
+            letter-spacing: 4px;
         }
     </style>
 </head>
 <body>
-<div class="loading" id="loading">Loading overlay...</div>
+<div class="loading" id="loading">Overlabels :: Loading</div>
 <div class="error" id="error"></div>
 <div id="overlay-content"></div>
 

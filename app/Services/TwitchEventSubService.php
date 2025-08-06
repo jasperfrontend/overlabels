@@ -10,7 +10,7 @@ class TwitchEventSubService
     private string $clientId;
     private string $clientSecret;
     private string $baseUrl = 'https://api.twitch.tv/helix/eventsub/subscriptions';
-    
+
     public function __construct()
     {
         $this->clientId = config('services.twitch.client_id');
@@ -45,7 +45,7 @@ class TwitchEventSubService
             return null;
         }
     }
-    
+
     /**
      * Subscribe to a Twitch EventSub event
      */
@@ -165,8 +165,7 @@ class TwitchEventSubService
     public function subscribeToSubscriptions(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
         // Get app access token for subscription events
-        $appToken = $this->getAppAccessToken();
-        if (!$appToken) {
+        if (!$userAccessToken) {
             return [
                 'error' => true,
                 'message' => 'Could not get app access token for subscription events'
@@ -187,7 +186,7 @@ class TwitchEventSubService
         ];
 
         // Use app access token for subscription events
-        return $this->createSubscription($appToken, $payload);
+        return $this->createSubscription($userAccessToken, $payload);
     }
 
     /**

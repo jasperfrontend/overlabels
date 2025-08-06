@@ -14,6 +14,7 @@ class TwitchEventController extends Controller
      * Display a listing of the Twitch events.
      *
      * @param Request $request
+     * @throws Exception
      * @return JsonResponse
      */
     public function index(Request $request)
@@ -49,6 +50,7 @@ class TwitchEventController extends Controller
      * Display the specified Twitch event.
      *
      * @param int $id
+     * @throws Exception
      * @return JsonResponse
      */
     public function show(int $id)
@@ -66,6 +68,7 @@ class TwitchEventController extends Controller
      * Mark an event as processed.
      *
      * @param int $id
+     * @throws Exception
      * @return JsonResponse
      */
     public function markAsProcessed(int $id)
@@ -89,6 +92,7 @@ class TwitchEventController extends Controller
      * Mark multiple events as processed.
      *
      * @param Request $request
+     * @throws Exception
      * @return JsonResponse
      */
     public function batchMarkAsProcessed(Request $request)
@@ -104,7 +108,7 @@ class TwitchEventController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "{$count} events marked as processed"
+                'message' => "$count events marked as processed"
             ]);
         } catch (Exception $e) {
             Log::error('Failed to batch mark events as processed: ' . $e->getMessage());
@@ -115,10 +119,11 @@ class TwitchEventController extends Controller
     /**
      * Remove the specified event from storage.
      *
-     * @param  int  $id
+     * @param int $id
+     * @throws Exception
      * @return JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id)
     {
         try {
             $event = TwitchEvent::findOrFail($id);

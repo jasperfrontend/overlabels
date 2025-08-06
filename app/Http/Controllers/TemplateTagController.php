@@ -6,6 +6,7 @@ use App\Services\JsonTemplateParserService;
 use App\Services\TwitchApiService;
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -43,12 +44,12 @@ class TemplateTagController extends Controller
                 'existingTags' => $existingTags,
                 'hasExistingTags' => !empty($existingTags)
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error loading template generator', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             // Return with empty data rather than failing completely
             return Inertia::render('TemplateTagGenerator', [
                 'twitchData' => $this->getEmptyTwitchData(),
@@ -72,7 +73,7 @@ class TemplateTagController extends Controller
         try {
             // Get fresh Twitch data with error handling
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-            
+
             // Ensure data arrays exist before processing
             $twitchData = $this->ensureDataArraysExist($twitchData);
 
@@ -101,7 +102,7 @@ class TemplateTagController extends Controller
                 'saved' => $saved
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error generating template tags', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
@@ -128,7 +129,7 @@ class TemplateTagController extends Controller
         try {
             // Get current Twitch data
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-            
+
             // Ensure data arrays exist
             $twitchData = $this->ensureDataArraysExist($twitchData);
 
@@ -143,7 +144,7 @@ class TemplateTagController extends Controller
                 'display_name' => $tag->display_name
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error previewing template tag', [
                 'tag_id' => $tag->id,
                 'error' => $e->getMessage()
@@ -159,7 +160,7 @@ class TemplateTagController extends Controller
     /**
      * Clear all template tags (useful for regenerating)
      */
-    public function clearAllTags(Request $request)
+    public function clearAllTags()
     {
         try {
             $tagCount = TemplateTag::count();
@@ -175,10 +176,10 @@ class TemplateTagController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Cleared {$tagCount} template tags and {$categoryCount} categories"
+                'message' => "Cleared $tagCount template tags and $categoryCount categories"
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error clearing template tags', ['error' => $e->getMessage()]);
 
             return response()->json([
@@ -195,14 +196,14 @@ class TemplateTagController extends Controller
     {
         try {
             $tags = $this->parser->getOrganizedTemplateTags();
-            
+
             return response()->json([
                 'success' => true,
                 'tags' => $tags
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error fetching all template tags', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'error' => 'Failed to fetch template tags',
                 'message' => $e->getMessage()
@@ -217,15 +218,15 @@ class TemplateTagController extends Controller
     {
         try {
             $tags = $this->parser->getOrganizedTemplateTags();
-            
+
             $filename = 'template-tags-' . date('Y-m-d-H-i-s') . '.json';
-            
+
             return response()->json($tags)
-                ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
-                
-        } catch (\Exception $e) {
+                ->header('Content-Disposition', "attachment; filename=\"$filename\"");
+
+        } catch (Exception $e) {
             Log::error('Error exporting template tags', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'error' => 'Failed to export template tags',
                 'message' => $e->getMessage()
@@ -251,18 +252,18 @@ class TemplateTagController extends Controller
         foreach ($requiredStructures as $key => $defaultValue) {
             if (!isset($twitchData[$key])) {
                 $twitchData[$key] = $defaultValue;
-                Log::warning("Missing Twitch data structure: {$key}, using default");
+                Log::warning("Missing Twitch data structure: $key, using default");
             }
         }
 
         // Ensure data arrays have at least empty objects to prevent index errors
         $dataArrays = ['channel_followers', 'followed_channels', 'subscribers', 'goals'];
-        
+
         foreach ($dataArrays as $arrayKey) {
             if (isset($twitchData[$arrayKey]['data']) && empty($twitchData[$arrayKey]['data'])) {
                 // Add empty object so index 0 access doesn't fail
                 $twitchData[$arrayKey]['data'] = [[]];
-                Log::info("Added empty data object for {$arrayKey} to prevent index errors");
+                Log::info("Added empty data object for $arrayKey to prevent index errors");
             }
         }
 

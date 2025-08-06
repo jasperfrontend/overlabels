@@ -5,11 +5,12 @@ import { router, Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import debounce from "lodash/debounce"
-import { EyeIcon, GitForkIcon } from 'lucide-vue-next';
+import { EyeIcon, GitForkIcon, SplitIcon, PencilIcon } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import axios from 'axios';
 import type { BreadcrumbItem } from '@/types/index.js';
 
+const showFilters = ref(false);
 const props = defineProps({
   templates: Object,
   filters: Object,
@@ -61,16 +62,16 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="overflow-hidden shadow-sm sm:rounded-lg">
         <div class="flex justify-between items-center mb-6">
           <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
-          <Link
+          <a
             :href="route('templates.create')"
-            class="text-sm flex cursor-pointer border justify-center items-center bg-green-400/20 border-green-400 hover:bg-green-400/30 transition hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-700 active:bg-green-400/40 p-2 px-4 rounded-2xl"
+            class="btn btn-primary"
           >
             Create New Template
-          </Link>
+          </a>
         </div>
 
         <!-- Filters -->
-        <div class="mb-6 flex gap-4">
+        <div class="mb-6 flex gap-4" v-if="showFilters">
           <select
             v-model="filters.filter"
             @change="applyFilter"
@@ -141,6 +142,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 class="btn btn-primary btn-sm"
               >
                 View
+                <EyeIcon class="w-4 h-4 ml-2" />
               </Link>
               <Link
                 v-if="template.owner_id === $page.props.auth.user.id"
@@ -148,6 +150,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 class="btn btn-secondary btn-sm"
               >
                 Edit
+                <PencilIcon class="w-4 h-4 ml-2" />
               </Link>
               <button
                 v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
@@ -155,6 +158,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 class="btn btn-warning btn-sm"
               >
                 Fork
+                <SplitIcon class="w-4 h-4 ml-2" />
               </button>
             </div>
           </div>

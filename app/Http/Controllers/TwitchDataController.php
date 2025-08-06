@@ -49,6 +49,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearAllUserCaches($user->twitch_id);
+
         return redirect()->back()->with([
             'message' => 'Twitch data refreshed!',
             'type' => 'success',
@@ -68,7 +69,9 @@ class TwitchDataController extends Controller
     public function refreshUserInfoData(Request $request)
     {
         $user = $this->getUserOrAbort($request);
-        $this->twitch->clearUserInfoCache($user->twitch_id);
+        $this->twitch->clearUserInfoCache($user->twitch_id); // dump existing user info cache
+        $this->twitch->getUserInfo($user->access_token, $user->twitch_id); // retrieve fresh info from Twitch API
+
         return redirect()->back()->with([
             'message' => 'Twitch User data refreshed!',
             'type' => 'success',
@@ -79,6 +82,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearChannelInfoCaches($user->twitch_id);
+        $this->twitch->getChannelInfo($user->access_token, $user->twitch_id);
         return redirect()->back()->with([
             'message' => 'Twitch channel info (bio, tags, profile pic) refreshed!',
             'type' => 'success',
@@ -89,6 +93,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearFollowedChannelsCaches($user->twitch_id);
+        $this->twitch->getFollowedChannels($user->access_token, $user->twitch_id);
         return redirect()->back()->with([
             'message' => 'Twitch followed channels data refreshed!',
             'type' => 'success',
@@ -99,6 +104,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearChannelFollowersCaches($user->twitch_id);
+        $this->twitch->getChannelFollowers($user->access_token, $user->twitch_id);
         return redirect()->back()->with([
             'message' => 'Twitch channel followers data refreshed!',
             'type' => 'success',
@@ -109,6 +115,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearSubscribersCaches($user->twitch_id);
+        $this->twitch->getChannelSubscribers($user->access_token, $user->twitch_id);
         return redirect()->back()->with([
             'message' => 'Twitch subscribers data refreshed!',
             'type' => 'success',
@@ -119,6 +126,7 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearGoalsCaches($user->twitch_id);
+        $this->twitch->getChannelGoals($user->access_token, $user->twitch_id);
         return redirect()->back()->with([
             'message' => 'Twitch goals data refreshed!',
             'type' => 'success',

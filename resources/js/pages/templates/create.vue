@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useForm, Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types'
@@ -10,6 +10,12 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Button } from '@/components/ui/button';
 import { truncate } from 'es-toolkit/compat';
+import { css } from '@codemirror/lang-css';
+import { html } from '@codemirror/lang-html';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { EditorView } from '@codemirror/view';
+import { Codemirror } from 'vue-codemirror';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -52,8 +58,30 @@ const breadcrumbs: BreadcrumbItem[] = [
   }
 ]
 
+const isDark = ref(document.documentElement.classList.contains('dark'));
 const showPreview = ref(false);
 const previewHtml = ref('');
+
+// CodeMirror extensions
+const htmlExtensions = computed(() => [
+  html(),
+  EditorView.theme({
+    '&': { fontSize: '14px' },
+    '.cm-content': { padding: '16px' },
+    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
+  }),
+  ...(isDark.value ? [oneDark] : []),
+]);
+
+const cssExtensions = computed(() => [
+  css(),
+  EditorView.theme({
+    '&': { fontSize: '14px' },
+    '.cm-content': { padding: '16px' },
+    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
+  }),
+  ...(isDark.value ? [oneDark] : []),
+]);
 
 // Tag selection modal state
 const showTagModal = ref(false);
@@ -168,6 +196,23 @@ const copyTagToClipboard = (tag: string): void => {
   }
 };
 
+const formatCode = (type: string): void => {
+  // Simple formatting - in production you might use a proper formatter
+  if (type === 'html') {
+    // Basic HTML formatting
+    form.html = form.html
+      .replace(/></g, '>\n<')
+      .replace(/(\n\s*)+/g, '\n');
+  } else if (type === 'css') {
+    // Basic CSS formatting
+    form.css = form.css
+      .replace(/}/g, '}\n')
+      .replace(/{/g, ' {\n  ')
+      .replace(/;/g, ';\n  ')
+      .replace(/\n\s*\n/g, '\n');
+  }
+};
+
 const previewTemplate = (): void => {
   // Create a preview with sample data that matches the database tags
   const sampleData: Record<string, string> = {
@@ -203,6 +248,14 @@ const previewTemplate = (): void => {
   </html>`;
   showPreview.value = true;
 };
+
+// Watch for theme changes
+watch(
+  () => document.documentElement.classList.contains('dark'),
+  (newDark) => {
+    isDark.value = newDark;
+  },
+);
 </script>
 
 <template>
@@ -211,142 +264,170 @@ const previewTemplate = (): void => {
     <div class="p-4">
       <Heading title="Overlay Creator" description="Design a new overlay template with HTML, CSS, and Template Tags" />
       <div class="mt-4">
-        <div class="overflow-hidden shadow-sm sm:rounded-lg">
 
-          <form @submit.prevent="submitForm">
-            <!-- Template Name -->
-            <div class="mb-4">
-              <label for="name" class="block text-sm font-medium text-accent-foreground/50 mb-1">
-                Template Name *
-              </label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="p-2 rounded border w-full hover:shadow-sm transition"
-                placeholder="My Awesome Overlay"
-                required
-              />
-              <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
-                {{ form.errors.name }}
-              </div>
+        <form @submit.prevent="submitForm">
+          <!-- Template Name -->
+          <div class="mb-4">
+            <label for="name" class="block text-sm font-medium text-accent-foreground/50 mb-1">
+              Template Name *
+            </label>
+            <input
+              id="name"
+              v-model="form.name"
+              type="text"
+              class="p-2 rounded border w-full hover:shadow-sm transition"
+              placeholder="My Awesome Overlay"
+              required
+            />
+            <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
+              {{ form.errors.name }}
             </div>
+          </div>
 
-            <!-- Description -->
-            <div class="mb-4">
-              <label for="description" class="block text-sm font-medium text-accent-foreground/50 mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                v-model="form.description"
-                rows="3"
-                class="p-2 rounded border w-full hover:shadow-sm transition"
-                placeholder="Describe what your template does..."
-              />
-              <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
-                {{ form.errors.description }}
-              </div>
+          <!-- Description -->
+          <div class="mb-4">
+            <label for="description" class="block text-sm font-medium text-accent-foreground/50 mb-1">
+              Description
+            </label>
+            <textarea
+              id="description"
+              v-model="form.description"
+              rows="3"
+              class="p-2 rounded border w-full hover:shadow-sm transition"
+              placeholder="Describe what your template does..."
+            />
+            <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
+              {{ form.errors.description }}
             </div>
+          </div>
 
-            <!-- Code Editors -->
-            <div class="space-y-6">
-              <!-- HTML Editor -->
+          <!-- Code Editors -->
+          <Tabs defaultValue="html" class="w-full">
+            <TabsList class="grid w-full grid-cols-2">
+              <TabsTrigger value="html">HTML *</TabsTrigger>
+              <TabsTrigger value="css">CSS</TabsTrigger>
+            </TabsList>
+
+            <!-- HTML Editor Tab -->
+            <TabsContent value="html" class="mt-4">
               <div>
                 <div class="flex justify-between items-center mb-2">
-                  <label class="block text-sm font-medium text-accent-foreground/50">
-                    HTML *
-                  </label>
-                  <button
-                    type="button"
-                    @click="insertTag('html')"
-                    class="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Insert Template Tag
-                  </button>
+                  <div class="space-x-2">
+                    <button
+                      type="button"
+                      @click="formatCode('html')"
+                      class="text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Format
+                    </button>
+                    <button
+                      type="button"
+                      @click="insertTag('html')"
+                      class="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Insert Template Tag
+                    </button>
+                  </div>
                 </div>
                 <div class="border rounded-md overflow-hidden">
-                  <textarea
-                    v-model="form.html"
-                    class="w-full font-mono text-sm p-3 h-64 focus:outline-none"
-                    placeholder="<div class='overlay'>&#10;  <h1>[[[user_name]]]</h1>&#10;  <p>Followers: [[[user_follower_count]]]</p>&#10;</div>"
-                    required
-                  />
+                  <div class="overflow-hidden rounded-lg border">
+                    <Codemirror
+                      v-model="form.html"
+                      :style="{ height: '500px' }"
+                      :autofocus="true"
+                      :indent-with-tab="true"
+                      :tab-size="2"
+                      :extensions="htmlExtensions"
+                      placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                    />
+                  </div>
                 </div>
                 <div v-if="form.errors.html" class="text-red-600 text-sm mt-1">
                   {{ form.errors.html }}
                 </div>
               </div>
+            </TabsContent>
 
-              <!-- CSS Editor -->
+            <!-- CSS Editor Tab -->
+            <TabsContent value="css" class="mt-4">
               <div>
                 <div class="flex justify-between items-center mb-2">
-                  <label class="block text-sm font-medium text-accent-foreground/50">
-                    CSS
-                  </label>
-                  <button
-                    type="button"
-                    @click="insertTag('css')"
-                    class="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Insert Template Tag
-                  </button>
+                  <div class="space-x-2">
+                    <button
+                      type="button"
+                      @click="formatCode('css')"
+                      class="text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Format
+                    </button>
+                    <button
+                      type="button"
+                      @click="insertTag('css')"
+                      class="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Insert Template Tag
+                    </button>
+                  </div>
                 </div>
                 <div class="border rounded-md overflow-hidden">
-                  <textarea
-                    v-model="form.css"
-                    class="w-full font-mono text-sm p-3 h-64 focus:outline-none"
-                    placeholder=".overlay {&#10;  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);&#10;  padding: 20px;&#10;  border-radius: 10px;&#10;}"
-                  />
+                  <div class="overflow-hidden rounded-lg border">
+                    <Codemirror
+                      v-model="form.css"
+                      :style="{ height: '500px' }"
+                      :indent-with-tab="true"
+                      :tab-size="2"
+                      :extensions="cssExtensions"
+                      placeholder="Enter your CSS styles here..."
+                    />
+                  </div>
                 </div>
                 <div v-if="form.errors.css" class="text-red-600 text-sm mt-1">
                   {{ form.errors.css }}
                 </div>
               </div>
+            </TabsContent>
+          </Tabs>
 
-            </div>
-
-            <!-- Visibility -->
-            <div class="mt-6">
-              <label class="flex items-center">
-                <input
-                  v-model="form.is_public"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                <span class="ml-2 text-sm text-accent-foreground">
-                  Make this template public (others can view and fork it)
-                </span>
-              </label>
-            </div>
+          <!-- Visibility -->
+          <div class="mt-6">
+            <label class="flex items-center">
+              <input
+                v-model="form.is_public"
+                type="checkbox"
+                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              <span class="ml-2 text-sm text-accent-foreground">
+                Make this template public (others can view and fork it)
+              </span>
+            </label>
+          </div>
 
 
-            <!-- Form Actions -->
-            <div class="mt-6 flex justify-end space-x-3">
-              <button
-                @click.prevent="insertTag('html')"
-                class="btn btn-cancel"
-              >
-                Show all template tags
-              </button>
-              <button
-                type="button"
-                @click="previewTemplate"
-                class="btn btn-secondary"
-              >
-                Preview
-              </button>
-              <button
-                type="submit"
-                :disabled="form.processing"
-                class="btn btn-primary"
-              >
-                Create Template
-              </button>
-            </div>
-          </form>
+          <!-- Form Actions -->
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              @click.prevent="insertTag('html')"
+              class="btn btn-cancel"
+            >
+              Show all template tags
+            </button>
+            <button
+              type="button"
+              @click="previewTemplate"
+              class="btn btn-secondary"
+            >
+              Preview
+            </button>
+            <button
+              type="submit"
+              :disabled="form.processing"
+              class="btn btn-primary"
+            >
+              Create Template
+            </button>
+          </div>
+        </form>
 
-        </div>
       </div>
     </div>
 

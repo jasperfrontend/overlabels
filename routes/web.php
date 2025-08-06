@@ -9,6 +9,7 @@ use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateBuilderController;
+use App\Http\Controllers\TwitchEventController;
 
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
@@ -150,7 +151,7 @@ Route::post('/logout', function () {
 });
 
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
     Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
     Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
@@ -224,11 +225,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
         ->name('overlay.hashes.destroy');
 
-    // Template Builder Interface - NOW USES SLUG INSTEAD OF HASH_KEY!
-    Route::get('/template-builder/{slug?}', [App\Http\Controllers\TemplateBuilderController::class, 'index'])
-        ->name('template.builder')
-        ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*'); // Match the fun slug pattern: word-word-word-word-word
-
     // API endpoints for template builder
     Route::prefix('api/template')->group(function () {
 
@@ -262,6 +258,15 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.template.export');
     });
 
+
+    // Twitch events API - protected by authentication
+    Route::prefix('/api/twitch/events')->middleware('auth:sanctum')->group(function () {
+        Route::get('/', [TwitchEventController::class, 'index']);
+        Route::get('/{id}', [TwitchEventController::class, 'show']);
+        Route::put('/{id}/process', [TwitchEventController::class, 'markAsProcessed']);
+        Route::post('/batch-process', [TwitchEventController::class, 'batchMarkAsProcessed']);
+        Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
+    });
 
 
 });

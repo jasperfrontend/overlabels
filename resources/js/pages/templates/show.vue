@@ -6,8 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from "@/components/RekaToast.vue"
 import type { BreadcrumbItem } from '@/types/index.js';
-import { GitForkIcon, EyeIcon, SplitIcon } from 'lucide-vue-next';
-import { Button } from '@/components/ui/button';
+import { GitForkIcon, EyeIcon, SplitIcon, ExternalLinkIcon, PencilIcon, TrashIcon } from 'lucide-vue-next';
 
 const props = defineProps({
   template: Object,
@@ -80,9 +79,22 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Heading :title="props.template?.name" :description="props.template?.description" />
           </div>
           <div class="flex space-x-2">
-            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-secondary"> Edit </a>
-            <button @click="forkTemplate" class="btn btn-warning">Fork</button>
-            <button v-if="canEdit" @click="deleteTemplate" class="btn btn-danger">Delete</button>
+            <a :href="publicUrl" target="_blank" class="btn btn-primary">
+              Preview Public
+              <ExternalLinkIcon class="w-4 h-4 ml-2" />
+            </a>
+            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-secondary">
+              Edit
+              <PencilIcon class="w-4 h-4 ml-2" />
+            </a>
+            <button @click="forkTemplate" class="btn btn-warning">
+              Fork
+              <SplitIcon class="w-4 h-4 ml-2" />
+            </button>
+            <button v-if="canEdit" @click="deleteTemplate" class="btn btn-danger">
+              Delete
+              <TrashIcon class="w-4 h-4 ml-2" />
+            </button>
           </div>
         </div>
 

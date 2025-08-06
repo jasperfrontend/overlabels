@@ -43,6 +43,7 @@ use App\Models\TemplateTag;
 use App\Services\OverlayTemplateParserService;
 use App\Services\DefaultTemplateProviderService;
 use App\Services\TemplateDataMapperService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -137,7 +138,7 @@ class TemplateBuilderController extends Controller
                 'templates' => $templates,
                 'source' => 'DefaultTemplateProviderService - centralized template files'
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error fetching default templates', [
                 'error' => $e->getMessage()
             ]);
@@ -317,7 +318,9 @@ class TemplateBuilderController extends Controller
 
     /**
      * Preview template with sample data
+     * @param Request $request
      * @param $parsedResult
+     * @return JsonResponse
      */
     public function previewTemplate(Request $request, $parsedResult): JsonResponse
     {
@@ -386,7 +389,7 @@ class TemplateBuilderController extends Controller
             if (str_contains($htmlTemplate, '<style>')) {
                 $htmlTemplate = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>$cssTemplate</style>", $htmlTemplate);
             } else {
-                $htmlTemplate = str_replace('</head>', "<style>{$cssTemplate}</style>\n</head>", $htmlTemplate);
+                $htmlTemplate = str_replace('</head>', "<style>$cssTemplate</style>\n</head>", $htmlTemplate);
             }
         }
 
@@ -394,7 +397,7 @@ class TemplateBuilderController extends Controller
 
         return response($htmlTemplate, 200)
             ->header('Content-Type', 'text/html')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
     }
 
     /**

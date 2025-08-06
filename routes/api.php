@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TwitchEventSubController;
-use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\OverlayTemplateController;
 
@@ -23,13 +22,3 @@ Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
 
 // Twitch webhook endpoint - must be accessible without authentication
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook']);
-
-// Twitch events API - protected by authentication
-
-Route::prefix('/twitch/events')->group(function () {
-    Route::get('/', [TwitchEventController::class, 'index']);
-    Route::get('/{id}', [TwitchEventController::class, 'show']);
-    Route::put('/{id}/process', [TwitchEventController::class, 'markAsProcessed']);
-    Route::post('/batch-process', [TwitchEventController::class, 'batchMarkAsProcessed']);
-    Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
-})->middleware('auth:sanctum');

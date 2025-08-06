@@ -172,7 +172,7 @@ const connect = async () => {
     } else {
       console.error('EventSub connection failed:', data);
       isLoading.value = false;
-      throw new Error(data.error || 'Failed to connect');
+
     }
   } catch (error) {
     isLoading.value = false;
@@ -226,7 +226,7 @@ const disconnect = async () => {
     } else {
       console.error('Disconnect failed:', data);
       isLoading.value = false;
-      throw new Error(data.error || 'Failed to disconnect');
+      console.error(data.error || 'Failed to disconnect');
     }
   } catch (error) {
     isLoading.value = false;
@@ -303,7 +303,7 @@ const fetchEvents = async (page = 1) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch events');
+      console.error('Failed to fetch events');
     }
 
     const data = await response.json();
@@ -320,7 +320,7 @@ const fetchEvents = async (page = 1) => {
 
 
     // Replace events with database events
-    events.value = data.data.map(event => ({
+    events.value = data.data.map((event: any) => ({
       id: event.id,
       type: event.event_type,
       data: event.event_data,
@@ -361,7 +361,7 @@ const loadPreviousPage = () => {
 };
 
 // Mark an event as processed
-const markAsProcessed = async (eventId) => {
+const markAsProcessed = async (eventId:any) => {
   try {
     const response = await fetch(`/api/twitch/events/${eventId}/process`, {
       method: 'PUT',
@@ -374,7 +374,7 @@ const markAsProcessed = async (eventId) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to mark event as processed');
+      console.error('Failed to mark event as processed');
     }
 
     // Update the event in the local state
