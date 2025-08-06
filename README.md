@@ -167,4 +167,4 @@ Contributions are always welcome! Fork the repository, create a feature branch, 
 
 ---
 
-Feel free to explore and create custom overlays and templates for Twitch! 🎨
+Feel free to explore and create custom overlays and templates for Twitch!
