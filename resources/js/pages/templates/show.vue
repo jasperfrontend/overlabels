@@ -80,7 +80,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Heading :title="props.template?.name" :description="props.template?.description" />
           </div>
           <div class="flex space-x-2">
-            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-primary"> Edit </a>
+            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-secondary"> Edit </a>
             <button @click="forkTemplate" class="btn btn-warning">Fork</button>
             <button v-if="canEdit" @click="deleteTemplate" class="btn btn-danger">Delete</button>
           </div>
@@ -130,11 +130,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               <input
                 :value="publicUrl"
                 readonly
-                class="flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-green-400 transition"
+                class="peer flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 transition"
               />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm btn-primary rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
@@ -147,11 +147,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                 id="auth-url"
                 :value="authUrl"
                 readonly
-                class="flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-green-400 transition"
+                class="peer flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 transition"
               />
               <button
                 @click="copyToClipboard(authUrl, 'Authenticated URL')"
-                class="btn btn-sm btn-primary rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>

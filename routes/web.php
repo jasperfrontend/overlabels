@@ -94,49 +94,31 @@ Route::get('/auth/callback/twitch', function () {
     try {
         $twitchUser = Socialite::driver('twitch')->user();
 
-        // Create the TwitchApiService instance
         $twitchService = new TwitchApiService();
-
-        // Get extended data using the access token
         $extendedData = $twitchService->getExtendedUserData(
             $twitchUser->token,
             $twitchUser->getId()
         );
 
-        // First, try to find the user by twitch_id
+        // Always match by Twitch ID only
         $user = User::where('twitch_id', $twitchUser->getId())->first();
 
         if (!$user) {
-            // If no user found by twitch_id, check if email already exists
-            $user = User::where('email', $twitchUser->getEmail())->first();
-
-            if ($user) {
-                // User exists with this email but no twitch_id - link the accounts
-                $user->update([
-                    'twitch_id' => $twitchUser->getId(),
-                    'avatar' => $twitchUser->getAvatar(),
-                    'access_token' => $twitchUser->token,
-                    'refresh_token' => $twitchUser->refreshToken ?? null,
-                    'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
-                    'twitch_data' => array_merge($twitchUser->user, $extendedData),
-                ]);
-            } else {
-                // No user exists at all - create a new one
-                $user = User::create([
-                    'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
-                    'email' => $twitchUser->getEmail(),
-                    'twitch_id' => $twitchUser->getId(),
-                    'avatar' => $twitchUser->getAvatar(),
-                    'access_token' => $twitchUser->token,
-                    'refresh_token' => $twitchUser->refreshToken ?? null,
-                    'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
-                    'twitch_data' => array_merge($twitchUser->user, $extendedData),
-                    'email_verified_at' => now(), // Twitch emails are pre-verified
-                    'password' => bcrypt(Str::random(32)), // Random password since they use OAuth
-                ]);
-            }
+            // Create a new user if not found
+            $user = User::create([
+                'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
+                'email' => $twitchUser->getEmail(), // Store it, but don't use it to match accounts. We'll use Twitch ID instead.
+                'twitch_id' => $twitchUser->getId(),
+                'avatar' => $twitchUser->getAvatar(),
+                'access_token' => $twitchUser->token,
+                'refresh_token' => $twitchUser->refreshToken ?? null,
+                'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
+                'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                'email_verified_at' => now(),
+                'password' => bcrypt(Str::random(32)),
+            ]);
         } else {
-            // User found by twitch_id - update their tokens and info
+            // Existing user — update tokens and data
             $user->update([
                 'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
                 'avatar' => $twitchUser->getAvatar(),
@@ -145,11 +127,6 @@ Route::get('/auth/callback/twitch', function () {
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
             ]);
-        }
-
-        // Make sure we have a valid user before attempting login
-        if (!$user) {
-            throw new Exception('Failed to create or find user');
         }
 
         Auth::login($user);
@@ -165,6 +142,7 @@ Route::get('/auth/callback/twitch', function () {
         return redirect('/')->with('error', 'Authentication failed. Please try again.');
     }
 });
+
 
 Route::post('/logout', function () {
     Auth::logout();

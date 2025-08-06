@@ -115,7 +115,7 @@ const formatDate = (date:string) => {
         <div
           v-for="token in tokens"
           :key="token.id"
-          class="border rounded-lg p-4"
+          class="border rounded-2xl p-4"
         >
           <div class="flex justify-self-start gap-4 items-start">
             <div>

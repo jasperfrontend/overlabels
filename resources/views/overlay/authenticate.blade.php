@@ -25,6 +25,11 @@
             text-align: center;
             padding: 20px;
         }
+        #overlay-content {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -68,6 +73,7 @@
                 // Create a style element
                 if (data.css) {
                     const style = document.createElement('style');
+                    style.id = 'overlay-css';
                     style.textContent = data.css;
                     document.head.appendChild(style);
                 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -55,12 +56,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function overlayAccessTokens()
+    public function overlayAccessTokens(): User|HasMany
     {
         return $this->hasMany(OverlayAccessToken::class);
     }
 
-    public function overlayTemplates()
+    public function overlayTemplates(): User|HasMany
     {
         return $this->hasMany(OverlayTemplate::class, 'owner_id');
     }

@@ -138,21 +138,21 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="mt-4 flex gap-2">
               <Link
                 :href="route('templates.show', template)"
-                class="bg-blue-600/50 border border-blue-600 hover:bg-blue-500/50 p-1 px-2 rounded-2xl text-sm cursor-pointer"
+                class="btn btn-primary btn-sm"
               >
                 View
               </Link>
               <Link
                 v-if="template.owner_id === $page.props.auth.user.id"
                 :href="route('templates.edit', template)"
-                class="bg-yellow-600/50 border border-yellow-600 hover:bg-yellow-500/50 p-1 px-2 rounded-2xl text-sm cursor-pointer"
+                class="btn btn-secondary btn-sm"
               >
                 Edit
               </Link>
               <button
                 v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                 @click="forkTemplate(template)"
-                class="bg-green-600/50 border border-green-600 hover:bg-green-500/50 p-1 px-2 rounded-2xl text-sm cursor-pointer"
+                class="btn btn-warning btn-sm"
               >
                 Fork
               </button>
