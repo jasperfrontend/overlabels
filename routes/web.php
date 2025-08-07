@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TemplateTagController;
+use App\Http\Controllers\PageController;
 
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
@@ -186,7 +187,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/builder/{template?}', [TemplateBuilderController::class, 'index'])->name('builder');
 
     // Template tag generator interface
-    Route::get('/tags-generator', [TemplateTagController::class, 'index'])
+    Route::get('/tags', [TemplateTagController::class, 'index'])
         ->name('tags.generator');
 
     // Generate standardized tags from current Twitch data
@@ -205,25 +206,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');
 
-    // Overlay Hash Management Interface
-    Route::get('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'index'])
-        ->name('overlay.hashes.index');
-
-    // Create a new Overlay Hash
-    Route::post('/overlay-hashes', [App\Http\Controllers\OverlayHashController::class, 'store'])
-        ->name('overlay.hashes.store');
-
-    // Revoke an Overlay Hash
-    Route::post('/overlay-hashes/{hash}/revoke', [App\Http\Controllers\OverlayHashController::class, 'revoke'])
-        ->name('overlay.hashes.revoke');
-
-    // Regenerate an Overlay Hash
-    Route::post('/overlay-hashes/{hash}/regenerate', [App\Http\Controllers\OverlayHashController::class, 'regenerate'])
-        ->name('overlay.hashes.regenerate');
-
-    // Delete an Overlay Hash permanently
-    Route::delete('/overlay-hashes/{hash}', [App\Http\Controllers\OverlayHashController::class, 'destroy'])
-        ->name('overlay.hashes.destroy');
 
     // API endpoints for template builder
     Route::prefix('api/template')->group(function () {
@@ -267,9 +249,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/batch-process', [TwitchEventController::class, 'batchMarkAsProcessed']);
         Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
     });
-
-
 });
+
+Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

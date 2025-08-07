@@ -46,21 +46,21 @@ const breadcrumbs = [
         <Heading title="How to get started" description="Follow these steps to get started" />
         <ol class="list-decimal list-inside mt-4 space-y-4">
           <li>
-            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/twitchdata">/twitchdata</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60 p-0.5 px-1 bg-accent/50 rounded" :href="route('twitchdata')">/twitchdata</Link>:</strong>
             Ensure your Twitch data has been imported successfully. If not, try logging out and back in or use the
             <em>"Refresh All Data directly from the Twitch API"</em> button on that page.
           </li>
           <li>
-            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/tags-generator">/tags-generator</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60 p-0.5 px-1 bg-accent/50 rounded" :href="route('tags.generator')">/tags</Link>:</strong>
             Here, you'll generate template tags for your Twitch account. Since permissions differ for affiliate and partner accounts, template tags need to be customized for your own account.
           </li>
           <li>
-            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/overlay-hashes">/overlay-hashes</Link>:</strong>
-            Generate secure overlay URLs. Be sure to read warnings on this page and
-            <strong>never share these URLs with anyone</strong>, as they can expose your Twitch data.
+            <strong>Visit <Link class="hover:text-accent-foreground/60 p-0.5 px-1 bg-accent/50 rounded" :href="route('tokens.index')">/tokens</Link>:</strong>
+            Generate secure overlay URL hashes. Be sure to read warnings on this page and
+            <strong>never share these codes with anyone</strong>, as they can expose your Twitch data.
           </li>
           <li>
-            <strong>Visit <Link class="hover:text-accent-foreground/60" href="/template-builder">/template-builder</Link>:</strong>
+            <strong>Visit <Link class="hover:text-accent-foreground/60 p-0.5 px-1 bg-accent/50 rounded" :href="route('templates.index')">/templates</Link>:</strong>
             Use this page to design your OBS overlay with HTML and CSS. A default layout is preloaded to showcase the system's capabilities.
           </li>
         </ol>

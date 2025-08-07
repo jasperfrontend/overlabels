@@ -1,32 +1,27 @@
 {{-- resources/views/overlay/authenticate.blade.php --}}
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Loading Overlay...</title>
     <style>
-        :root {
-
-        }
         .loading {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: #666;
-        }
-        .error {
-            display: none;
-            color: #ff0000;
-            text-align: center;
-            padding: 20px;
-        }
-        .loading {
             font-weight: bold;
             font-family: monospace;
             font-size: 30px;
             letter-spacing: 4px;
+            color: #666;
+        }
+        .error {
+            display: none;
+            color: orangered;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
@@ -41,6 +36,7 @@
     const slug = '{{ $slug }}';
 
     if (!hash || hash.length !== 64) {
+        // Invalid or missing token
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent = 'Invalid or missing authentication token';
@@ -55,7 +51,7 @@
             },
             body: JSON.stringify({
                 slug: slug,
-                token: hash
+                token: hash,
             })
         })
             .then(response => {
@@ -64,6 +60,7 @@
                     throw new Error('Authentication failed', response);
                 }
                 return response.json();
+
             })
             .then(data => {
                 document.getElementById('loading').style.display = 'none';

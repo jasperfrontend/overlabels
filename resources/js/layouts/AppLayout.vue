@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import LinkWarningModal from '@/components/LinkWarningModal.vue';
 import type { BreadcrumbItemType } from '@/types';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -15,6 +16,8 @@ withDefaults(defineProps<Props>(), {
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <LinkWarningModal />
-    <slot />
+    <TooltipProvider>
+      <slot />
+    </TooltipProvider>
   </AppLayout>
 </template>

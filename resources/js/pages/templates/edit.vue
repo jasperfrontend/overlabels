@@ -326,7 +326,7 @@ watch(
               <TabsTrigger value="html">HTML *</TabsTrigger>
               <TabsTrigger value="css">CSS</TabsTrigger>
             </TabsList>
-            
+
             <!-- HTML Editor Tab -->
             <TabsContent value="html" class="mt-4">
               <div>
@@ -466,22 +466,22 @@ watch(
           <div class="mt-6 flex justify-between">
             <Link
               :href="route('templates.show', template)"
-              class="hover:text-white/50 transition cursor-pointer"
+              class="btn btn-cancel"
             >
               ← Back to Template
             </Link>
-            <div class="space-x-3">
+            <div class="space-x-3 flex justify-around w-auto">
               <button
                 type="button"
                 @click="previewTemplate"
-                class="px-4 py-2 border border-gray-300 rounded-md hover:bg-white/20 transition cursor-pointer"
+                class="btn btn-secondary"
               >
                 Preview
               </button>
               <button
                 type="submit"
                 :disabled="form.processing || !form.isDirty"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+                class="btn btn-primary"
               >
                 Save Changes
               </button>
@@ -495,13 +495,17 @@ watch(
     <!-- Preview Modal -->
     <Modal :show="showPreview" @close="showPreview = false" max-width="4xl">
       <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold mb-4">Template Preview</h3>
+          <button @click="showPreview = false" class="btn btn-cancel">&times;</button>
+        </div>
         <div class="border rounded-md p-4 bg-gray-50" style="height: 400px; position: relative;">
           <iframe
             v-if="previewHtml"
             :srcdoc="previewHtml"
             class="w-full h-full border-0"
             sandbox="allow-scripts"
+            style="zoom: 0.5;"
           />
         </div>
         <div class="mt-4 text-sm text-gray-600">

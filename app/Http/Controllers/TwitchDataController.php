@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\TwitchApiService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -50,6 +51,8 @@ class TwitchDataController extends Controller
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearAllUserCaches($user->twitch_id);
 
+        $this->getLiveTwitchData($request);
+
         return redirect()->back()->with([
             'message' => 'Twitch data refreshed!',
             'type' => 'success',
@@ -80,13 +83,22 @@ class TwitchDataController extends Controller
 
     public function refreshChannelInfoData(Request $request)
     {
-        $user = $this->getUserOrAbort($request);
-        $this->twitch->clearChannelInfoCaches($user->twitch_id);
-        $this->twitch->getChannelInfo($user->access_token, $user->twitch_id);
-        return redirect()->back()->with([
-            'message' => 'Twitch channel info (bio, tags, profile pic) refreshed!',
-            'type' => 'success',
-        ]);
+        try {
+            $user = $this->getUserOrAbort($request);
+            $this->twitch->clearChannelInfoCaches($user->twitch_id);
+            $this->twitch->getChannelInfo($user->access_token, $user->twitch_id);
+            return redirect()->back()->with([
+                'message' => 'Twitch channel info (bio, tags) refreshed!',
+                'type' => 'success',
+            ]);
+        } catch (Exception $e) {
+            return redirect()->back()->with([
+                'message' => 'Failed to refresh Twitch channel info: ' . $e->getMessage(),
+                'type' => 'error',
+            ]);
+        } finally {
+            return false;
+        }
     }
 
     public function refreshFollowedChannelsData(Request $request)

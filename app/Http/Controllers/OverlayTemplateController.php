@@ -6,6 +6,8 @@ use App\Models\OverlayTemplate;
 use App\Models\OverlayAccessToken;
 use App\Services\OverlayTemplateParserService;
 use App\Services\TwitchApiService;
+use App\Services\TwitchEventSubService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -14,13 +16,16 @@ class OverlayTemplateController extends Controller
 {
     protected OverlayTemplateParserService $parserService;
     protected TwitchApiService $twitchService;
+    protected TwitchEventSubService $eventSubService;
 
     public function __construct(
         OverlayTemplateParserService $parserService,
-        TwitchApiService $twitchService
+        TwitchApiService $twitchService,
+        TwitchEventSubService $eventSubService
     ) {
         $this->parserService = $parserService;
         $this->twitchService = $twitchService;
+        $this->eventSubService = $eventSubService;
     }
 
     /**
@@ -37,8 +42,8 @@ class OverlayTemplateController extends Controller
             })
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhere('description', 'like', "%$search%");
                 });
             })
             ->with('owner:id,name,avatar')
@@ -65,7 +70,7 @@ class OverlayTemplateController extends Controller
      */
     public function show(OverlayTemplate $template)
     {
-        // Check if user can view this template
+        // Check if the user can view this template
         if (!$template->is_public && $template->owner_id !== auth()->id()) {
             abort(403, 'This template is private');
         }
@@ -120,11 +125,11 @@ class OverlayTemplateController extends Controller
     /**
      * Serve public overlay (unparsed)
      */
-    public function servePublic(Request $request, string $slug)
+    public function servePublic(string $slug)
     {
         $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
 
-        // Check if template is public
+        // Check if the template is public
         if (!$template->is_public) {
             abort(404, 'This overlay is private');
         }
@@ -143,10 +148,10 @@ class OverlayTemplateController extends Controller
     /**
      * Serve authenticated overlay (parsed with user data)
      */
-    public function serveAuthenticated(Request $request, string $slug)
+    public function serveAuthenticated(string $slug)
     {
         // Get token from fragment (handled by JavaScript)
-        // The fragment (#token) isn't sent to server, so we need JavaScript to handle it
+        // The fragment (#token) isn't sent to the server, so we need JavaScript to handle it
         return view('overlay.authenticate', [
             'slug' => $slug,
         ]);
@@ -166,7 +171,7 @@ class OverlayTemplateController extends Controller
         $token = OverlayAccessToken::findByToken($validated['token'], $request->ip());
 
         if (!$token) {
-            return response()->json(['error' => 'Invalid token'], 401);
+            return response()->json(['error' => 'Invalid token.'], 401);
         }
 
         // Find template
@@ -176,7 +181,12 @@ class OverlayTemplateController extends Controller
         $user = $token->user;
 
         if (!$user->access_token) {
-            return response()->json(['error' => 'User has no Twitch connection'], 400);
+            return response()->json(['error' => 'User has no Twitch connection.'], 400);
+        }
+
+        // Check if the template is public or set to private by the owner
+        if(!$template->is_public && $template->owner_id !== $token->user_id){
+            return response()->json(['error' => 'This overlay is private.'], 403);
         }
 
         try {
@@ -204,7 +214,7 @@ class OverlayTemplateController extends Controller
                 'isParsed' => true,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to render authenticated overlay', [
                 'error' => $e->getMessage(),
                 'template_slug' => $template->slug,
@@ -272,7 +282,7 @@ class OverlayTemplateController extends Controller
             $template->save();
         }
 
-        // For Inertia requests, redirect to the show page with success message
+        // For Inertia requests, redirect to the show page with a success message
         if ($request->wantsJson()) {
             return response()->json([
                 'template' => $template,

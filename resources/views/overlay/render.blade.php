@@ -8,9 +8,22 @@
     <style>
         {!! $css !!}
     </style>
-</head>
-<body>
+    <script>
+        // Helper function
+        let domReady = (cb) => {
+            document.readyState === 'interactive' || document.readyState === 'complete'
+                ? cb()
+                : document.addEventListener('DOMContentLoaded', cb);
+        };
 
+        domReady(() => {
+            // Display body when DOM is loaded
+            document.body.style.visibility = 'visible';
+        });
+    </script>
+</head>
+<body style="visibility: hidden;">
+<script>0</script>
 {!! $html !!}
 
 @if(!$isParsed)

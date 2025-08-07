@@ -86,10 +86,6 @@ class OverlayTemplate extends Model
         preg_match_all($pattern, $this->css, $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
-        // Extract from JS
-        preg_match_all($pattern, $this->js, $jsMatches);
-        $tags = array_merge($tags, $jsMatches[1] ?? []);
-
         // Remove transformation suffixes and return unique tags
         return array_unique(array_map(function($tag) {
             return explode('|', $tag)[0];

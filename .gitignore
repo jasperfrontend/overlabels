@@ -1,3 +1,6 @@
+/$(pwd)
+/$(pwd)/node_modules
+*/node_modules
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules

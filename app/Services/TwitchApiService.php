@@ -7,210 +7,178 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
-class   TwitchApiService
+class TwitchApiService
 {
     private string $clientId;
     private string $baseUrl = 'https://api.twitch.tv/helix';
+    
+    // Cache keys mapping for different data types
+    private const CACHE_KEYS = [
+        'user' => 'twitch_user_info_',
+        'channel' => 'twitch_channel_info_',
+        'followed_channels' => 'twitch_followed_channels_',
+        'channel_followers' => 'twitch_channel_followers_',
+        'subscribers' => 'twitch_subscribers_',
+        'goals' => 'twitch_goals_',
+    ];
 
     public function __construct()
     {
         $this->clientId = config('services.twitch.client_id');
     }
 
-    public function getChannelInfo(string $accessToken, string $userId): ?array
+    /**
+     * Generic method to make API requests to Twitch
+     */
+    private function makeApiRequest(string $accessToken, string $endpoint, array $params = [], string $errorContext = 'API request'): ?array
     {
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/channels", [
-                'broadcaster_id' => $userId
-            ]);
+            ])->get("$this->baseUrl/$endpoint", $params);
 
             if ($response->successful()) {
-                return $response->json()['data'][0] ?? null;
+                return $response->json();
             }
 
-            Log::warning('Failed to get channel info', [
+            Log::warning("Failed to {$errorContext}", [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
+                'endpoint' => $endpoint,
+                'params' => $params
             ]);
 
             return null;
         } catch (Exception $e) {
-            Log::error('Error getting channel info: ' . $e->getMessage());
+            Log::error("Error during {$errorContext}: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Generic method to handle cached data retrieval
+     */
+    private function getCachedData(string $cacheKey, string $userId, callable $dataCallback): array
+    {
+        $fullCacheKey = self::CACHE_KEYS[$cacheKey] . $userId;
+        return Cache::remember($fullCacheKey, now()->addDays(365), function () use ($dataCallback) {
+            return $dataCallback() ?? [];
+        });
+    }
+
+    /**
+     * Clear specific cache for a user
+     */
+    private function clearCache(string $cacheKey, string $userId): void
+    {
+        $fullCacheKey = self::CACHE_KEYS[$cacheKey] . $userId;
+        Cache::forget($fullCacheKey);
+    }
+
+    public function getChannelInfo(string $accessToken, string $userId): ?array
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'channels',
+            ['broadcaster_id' => $userId],
+            'get channel info'
+        );
+
+        return $response ? ($response['data'][0] ?? null) : null;
     }
 
     public function getUserInfo(string $accessToken, string $userId): ?array
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/users", [
-                'id' => $userId
-            ]);
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'users',
+            ['id' => $userId],
+            'get user info'
+        );
 
-            if ($response->successful()) {
-                return $response->json()['data'][0] ?? null;
-            }
-
-            Log::warning('Failed to get user info', [
-                'status' => $response->status(),
-                'response' => $response->body()
-            ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Error getting user info: ' . $e->getMessage());
-            return null;
-        }
+        return $response ? ($response['data'][0] ?? null) : null;
     }
 
     public function getFollowedChannels(string $accessToken, string $userId, int $first = 20): ?array
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/channels/followed", [
-                'user_id' => $userId,
-                'first' => $first
-            ]);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Error getting followed channels: ' . $e->getMessage());
-            return null;
-        }
+        return $this->makeApiRequest(
+            $accessToken,
+            'channels/followed',
+            ['user_id' => $userId, 'first' => $first],
+            'get followed channels'
+        );
     }
 
     public function getChannelFollowers(string $accessToken, string $userId, int $first = 20): ?array
     {
-        try {
-            $channelInfo = $this->getChannelInfo($accessToken, $userId);
+        // Special case: needs channel info first to get broadcaster_id
+        $channelInfo = $this->getChannelInfo($accessToken, $userId);
 
-            if (!$channelInfo) {
-                Log::warning('Could not get channel info for followers request', ['user_id' => $userId]);
-                return null;
-            }
-
-            $broadcasterId = $channelInfo['broadcaster_id'];
-
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/channels/followers", [
-                'broadcaster_id' => $broadcasterId,
-                'first' => $first
-            ]);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            Log::warning('Failed to get channel followers', [
-                'status' => $response->status(),
-                'response' => $response->body()
-            ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Error getting channel followers: ' . $e->getMessage());
+        if (!$channelInfo) {
+            Log::warning('Could not get channel info for followers request', ['user_id' => $userId]);
             return null;
         }
+
+        return $this->makeApiRequest(
+            $accessToken,
+            'channels/followers',
+            ['broadcaster_id' => $channelInfo['broadcaster_id'], 'first' => $first],
+            'get channel followers'
+        );
     }
 
     public function getChannelSubscribers(string $accessToken, string $userId, int $first = 20): ?array
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/subscriptions", [
-                'broadcaster_id' => $userId,
-                'first' => $first
-            ]);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Error getting subscribers: ' . $e->getMessage());
-            return null;
-        }
+        return $this->makeApiRequest(
+            $accessToken,
+            'subscriptions',
+            ['broadcaster_id' => $userId, 'first' => $first],
+            'get subscribers'
+        );
     }
 
     public function getChannelGoals(string $accessToken, string $userId): ?array
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/goals", [
-                'broadcaster_id' => $userId
-            ]);
-
-            if ($response->successful()) {
-                return $response->json();
-            }
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Error getting channel goals: ' . $e->getMessage());
-            return null;
-        }
+        return $this->makeApiRequest(
+            $accessToken,
+            'goals',
+            ['broadcaster_id' => $userId],
+            'get channel goals'
+        );
     }
 
+    // Cache the everliving heck out of the data because any EventSub event will kick off a cache refresh for that user anyway.
     protected function getCachedChannelInfo(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_channel_info_$userId", now()->addHours(12), function () use ($accessToken, $userId) {
-            return $this->getChannelInfo($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('channel', $userId, fn() => $this->getChannelInfo($accessToken, $userId));
     }
 
     protected function getCachedUserInfo(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_user_info_$userId", now()->addHours(12), function () use ($accessToken, $userId) {
-            return $this->getUserInfo($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('user', $userId, fn() => $this->getUserInfo($accessToken, $userId));
     }
 
     protected function getCachedFollowedChannels(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_followed_channels_$userId", now()->addMinutes(10), function () use ($accessToken, $userId) {
-            return $this->getFollowedChannels($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('followed_channels', $userId, fn() => $this->getFollowedChannels($accessToken, $userId));
     }
 
     protected function getCachedChannelFollowers(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_channel_followers_$userId", now()->addMinutes(10), function () use ($accessToken, $userId) {
-            return $this->getChannelFollowers($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('channel_followers', $userId, fn() => $this->getChannelFollowers($accessToken, $userId));
     }
 
     protected function getCachedSubscribers(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_subscribers_$userId", now()->addMinutes(5), function () use ($accessToken, $userId) {
-            return $this->getChannelSubscribers($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('subscribers', $userId, fn() => $this->getChannelSubscribers($accessToken, $userId));
     }
 
     protected function getCachedGoals(string $accessToken, string $userId): array
     {
-        return Cache::remember("twitch_goals_$userId", now()->addMinutes(5), function () use ($accessToken, $userId) {
-            return $this->getChannelGoals($accessToken, $userId) ?? [];
-        });
+        return $this->getCachedData('goals', $userId, fn() => $this->getChannelGoals($accessToken, $userId));
     }
+
     /*
      * getExtendedUserData gets the user data from the Laravel Cache.
      */
@@ -245,41 +213,38 @@ class   TwitchApiService
 
     public function clearAllUserCaches(string $userId): void
     {
-        Cache::forget("twitch_user_info_$userId");
-        Cache::forget("twitch_channel_info_$userId");
-        Cache::forget("twitch_followed_channels_$userId");
-        Cache::forget("twitch_channel_followers_$userId");
-        Cache::forget("twitch_subscribers_$userId");
-        Cache::forget("twitch_goals_$userId");
+        foreach (self::CACHE_KEYS as $key => $prefix) {
+            $this->clearCache($key, $userId);
+        }
     }
 
     public function clearUserInfoCache(string $userId): void
     {
-        Cache::forget("twitch_user_info_$userId");
+        $this->clearCache('user', $userId);
     }
 
     public function clearChannelInfoCaches(string $userId): void
     {
-        Cache::forget("twitch_channel_info_$userId");
+        $this->clearCache('channel', $userId);
     }
 
     public function clearFollowedChannelsCaches(string $userId): void
     {
-        Cache::forget("twitch_followed_channels_$userId");
+        $this->clearCache('followed_channels', $userId);
     }
 
     public function clearChannelFollowersCaches(string $userId): void
     {
-        Cache::forget("twitch_channel_followers_$userId");
+        $this->clearCache('channel_followers', $userId);
     }
 
     public function clearSubscribersCaches(string $userId): void
     {
-        Cache::forget("twitch_subscribers_$userId");
+        $this->clearCache('subscribers', $userId);
     }
 
     public function clearGoalsCaches(string $userId): void
     {
-        Cache::forget("twitch_goals_$userId");
+        $this->clearCache('goals', $userId);
     }
 }

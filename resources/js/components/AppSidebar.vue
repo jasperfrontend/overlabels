@@ -21,7 +21,7 @@
   },
   {
   title: 'Tags Generator',
-  href: '/tags-generator',
+  href: '/tags',
   icon: Code,
   },
   {

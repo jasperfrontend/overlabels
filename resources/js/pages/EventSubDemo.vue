@@ -468,7 +468,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Subscription Status -->
-      <div v-if="subscriptionStatus" class="rounded-lg border bg-muted/50 p-4">
+      <div v-if="subscriptionStatus" class="rounded-2xl mt-2 border bg-accent/20 p-4">
         <h3 class="font-semibold mb-2">Active Subscriptions ({{ subscriptionStatus.total }})</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div
@@ -477,13 +477,16 @@ onUnmounted(() => {
             class="text-sm bg-background rounded p-2 border"
           >
             <div class="font-medium">{{ sub.type }}</div>
-            <div class="text-muted-foreground text-xs">{{ sub.status }}</div>
+            <div class="text-green-400 text-xs"
+            v-if="sub.status === 'enabled'"
+            >{{ sub.status }}</div>
+            <div v-else class="text-muted-foreground text-xs">{{ sub.status }}</div>
           </div>
         </div>
       </div>
 
       <!-- Events Feed -->
-      <div class="flex-1 rounded-lg border bg-background overflow-hidden">
+      <div class="flex-1 rounded-2xl border mt-2 overflow-hidden">
         <div class="border-b bg-muted/50 p-3">
           <h2 class="font-semibold">Events Feed</h2>
           <p class="text-sm text-muted-foreground">
