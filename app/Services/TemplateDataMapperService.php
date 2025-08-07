@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -51,7 +53,7 @@ class TemplateDataMapperService
             'channel.content_classification_labels' => 'channel_content_labels',
             'channel.is_branded_content' => 'channel_is_branded',
 
-            // Followers mappings
+            // Channel Followers mappings
             'channel_followers.total' => 'followers_total',
             'channel_followers.data.0.user_id' => 'followers_latest_user_id',
             'channel_followers.data.0.user_login' => 'followers_latest_user_login',
@@ -65,7 +67,7 @@ class TemplateDataMapperService
             'followed_channels.data.0.broadcaster_name' => 'followed_latest_name',
             'followed_channels.data.0.followed_at' => 'followed_latest_date',
 
-            // Subscribers mappings
+            // Channel Subscribers mappings
             'subscribers.points' => 'subscribers_points',
             'subscribers.total' => 'subscribers_total',
             'subscribers.data.0.broadcaster_id' => 'subscribers_latest_broadcaster_id',
@@ -123,12 +125,12 @@ class TemplateDataMapperService
     {
         $mappings = $this->getTemplateMappings();
 
-        // First, try exact match
+        // First, try the exact match
         if (isset($mappings[$jsonPath])) {
             return $mappings[$jsonPath];
         }
 
-        // If no exact match, build logical name from path
+        // If no exact match, build a logical name from a path
         $parts = explode('.', $jsonPath);
 
         // Handle array access like "data.0.field_name" -> prefix with parent + "latest_" + field
@@ -159,7 +161,7 @@ class TemplateDataMapperService
             $value = $this->getNestedValue($twitchData, $jsonPath);
 
             if ($value !== null) {
-                // Apply formatting based on tag type
+                // Apply formatting based on a tag type
                 $templateData[$templateTag] = $this->formatValueForTemplate($value, $templateTag);
             } else {
                 // Provide default values for missing data
@@ -246,7 +248,7 @@ class TemplateDataMapperService
     }
 
     /**
-     * Get list of all available template tags with descriptions
+     * Get a list of all available template tags with descriptions
      * This helps with documentation and validation
      */
     public function getAvailableTemplateTags(): array
@@ -282,7 +284,7 @@ class TemplateDataMapperService
             'channel_content_labels' => 'Content classification labels',
             'channel_is_branded' => 'Whether channel has branded content',
 
-            // Followers information
+            // Follower information
             'followers_total' => 'Total number of followers',
             'followers_latest_id' => 'Latest follower ID',
             'followers_latest_login' => 'Latest follower login',
@@ -296,7 +298,7 @@ class TemplateDataMapperService
             'followed_latest_name' => 'Latest followed channel name',
             'followed_latest_date' => 'Latest follow date',
 
-            // Subscribers information
+            // Subscriber information
             'subscribers_total' => 'Total number of subscribers',
             'subscribers_points' => 'Subscriber points',
             'subscribers_latest_user_id' => 'Latest subscriber user ID',
@@ -312,7 +314,7 @@ class TemplateDataMapperService
             'subscribers_latest_gifter_login' => 'Gift giver login (if applicable)',
             'subscribers_latest_gifter_name' => 'Gift giver name (if applicable)',
 
-            // Goals information
+            // Goal information
             'goals_latest_type' => 'Goal type',
             'goals_latest_target' => 'Goal target',
             'goals_latest_current' => 'Current progress',
@@ -367,7 +369,7 @@ class TemplateDataMapperService
     }
 
     /**
-     * Helper: Get nested value from array using dot notation
+     * Helper: Get nested value from an array using dot notation
      * Enhanced with better error handling for missing data
      */
     private function getNestedValue(array $data, string $key)
@@ -381,7 +383,7 @@ class TemplateDataMapperService
             } else {
                 // Log missing data for debugging but don't fail
                 if ($nestedKey !== '0') { // Don't log missing array indices, those are expected
-                    Log::debug("Missing nested value for key: {$key} at {$nestedKey}");
+                    Log::debug("Missing nested value for key: $key at $nestedKey");
                 }
                 return null;
             }
@@ -448,8 +450,8 @@ class TemplateDataMapperService
         }
 
         try {
-            return \Carbon\Carbon::parse($dateString)->diffForHumans();
-        } catch (\Exception $e) {
+            return Carbon::parse($dateString)->diffForHumans();
+        } catch (Exception) {
             return $dateString; // Return original if parsing fails
         }
     }

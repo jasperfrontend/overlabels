@@ -469,8 +469,8 @@ onUnmounted(() => {
 
       <!-- Subscription Status -->
       <div v-if="subscriptionStatus" class="rounded-2xl mt-2 border bg-accent/20 p-4">
-        <h3 class="font-semibold mb-2">Active Subscriptions ({{ subscriptionStatus.total }})</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <Heading title="Active Subscriptions" :description="`Total: ${subscriptionStatus.total}`" />
+        <div class="grid grid-cols-1 mt-4 md:grid-cols-2 gap-2">
           <div
             v-for="sub in subscriptionStatus.subscriptions"
             :key="sub.id"
@@ -487,12 +487,8 @@ onUnmounted(() => {
 
       <!-- Events Feed -->
       <div class="flex-1 rounded-2xl border mt-2 overflow-hidden">
-        <div class="border-b bg-muted/50 p-3">
-          <h2 class="font-semibold">Events Feed</h2>
-          <p class="text-sm text-muted-foreground">
-            Events are stored in the database and will appear here. Real-time events will be highlighted.
-          </p>
-
+        <div class="border-b bg-muted/50 p-4">
+          <Heading title="Events Feed" description="Events are stored in the database and will appear here." />
           <!-- Pagination Controls -->
           <div class="flex items-center justify-between mt-2">
             <div class="text-sm text-muted-foreground">

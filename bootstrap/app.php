@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureValidTwitchToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RateLimitOverlayAccess;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'overlay.token' => ValidateOverlayToken::class,
             'rate.limit.overlay' => RateLimitOverlayAccess::class,
+            'twitch.token' => EnsureValidTwitchToken::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

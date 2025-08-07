@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\TwitchApiService;
+use App\Services\TwitchTokenService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,10 +12,12 @@ use Inertia\Inertia;
 class TwitchDataController extends Controller
 {
     protected TwitchApiService $twitch;
+    protected TwitchTokenService $tokenService;
 
-    public function __construct(TwitchApiService $twitch)
+    public function __construct(TwitchApiService $twitch, TwitchTokenService $tokenService)
     {
         $this->twitch = $twitch;
+        $this->tokenService = $tokenService;
     }
 
     public function index(Request $request)
@@ -24,17 +27,30 @@ class TwitchDataController extends Controller
             Log::error('No authenticated user or access token');
             abort(403);
         }
-        $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-
-        // If Laravel cache doesn't provide API info, retrieve it from Twitch directly
-        if (empty($twitchData['channel']['broadcaster_login'])) {
-            $this->twitch->clearAllUserCaches($user->twitch_id);
+        
+        try {
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-        }
 
-        return Inertia::render('TwitchData', [
-            'twitchData' => $twitchData,
-        ]);
+            // If Laravel cache doesn't provide API info, retrieve it from Twitch directly
+            if (empty($twitchData['channel']['broadcaster_login'])) {
+                $this->twitch->clearAllUserCaches($user->twitch_id);
+                $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+            }
+
+            return Inertia::render('TwitchData', [
+                'twitchData' => $twitchData,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Twitch data', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id
+            ]);
+            
+            return Inertia::render('TwitchData', [
+                'twitchData' => [],
+                'error' => 'Failed to fetch Twitch data. Please try refreshing the page.'
+            ]);
+        }
     }
 
     private function getUserOrAbort(Request $request)

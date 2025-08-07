@@ -1,6 +1,9 @@
-/$(pwd)
-/$(pwd)/node_modules
-*/node_modules
+*/$(pwd)/
+/$(pwd)/*
+/$(pwd)/node_modules/*
+/$(pwd)/node_modules/node/
+/$(pwd)/node_modules/node/*
+*/node_modules/*
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules

@@ -28,32 +28,32 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 
 Route::get('/twitchdata', [TwitchDataController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'twitch.token'])
     ->name('twitchdata');
 
 Route::get('/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
-    ->middleware(['auth']);
+    ->middleware(['auth', 'twitch.token']);
 
 Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthenticated'])
     ->name('overlay.authenticated')
@@ -91,6 +91,23 @@ Route::get('/auth/redirect/twitch', function () {
     ])->redirect();
 });
 
+
+// Refresh Twitch token endpoint
+Route::post('/auth/refresh/twitch', function () {
+    $user = Auth::user();
+    
+    if (!$user) {
+        return response()->json(['error' => 'Not authenticated'], 401);
+    }
+    
+    $tokenService = app(\App\Services\TwitchTokenService::class);
+    
+    if ($tokenService->refreshUserToken($user)) {
+        return response()->json(['success' => true, 'message' => 'Token refreshed successfully']);
+    }
+    
+    return response()->json(['error' => 'Failed to refresh token', 'requires_reauth' => true], 401);
+})->middleware('auth')->name('auth.refresh.twitch');
 
 Route::get('/auth/callback/twitch', function () {
     try {

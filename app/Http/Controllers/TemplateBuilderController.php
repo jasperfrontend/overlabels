@@ -69,7 +69,7 @@ class TemplateBuilderController extends Controller
     }
 
     /**
-     * Show the template builder interface (Inertia) - NOW USES CENTRALIZED SERVICE!
+     * Show the template builder interface
      */
     public function index(Request $request, string $slug = null): Response
     {

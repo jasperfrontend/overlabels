@@ -23,7 +23,7 @@
     </script>
 </head>
 <body style="visibility: hidden;">
-<script>0</script>
+<script>0</script> <!-- firefox hack against FUC -->
 {!! $html !!}
 
 @if(!$isParsed)

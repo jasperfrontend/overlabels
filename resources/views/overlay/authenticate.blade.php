@@ -1,10 +1,10 @@
-{{-- resources/views/overlay/authenticate.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Loading Overlay...</title>
+    @vite('resources/js/overlay/app.js') {{-- Your dedicated Vue app for overlays --}}
     <style>
         .loading {
             display: flex;
@@ -31,57 +31,17 @@
 <div id="overlay-content"></div>
 
 <script>
-    // Get token from URL fragment
-    const hash = window.location.hash.substring(1);
     const slug = '{{ $slug }}';
+    const token = window.location.hash.substring(1);
 
-    if (!hash || hash.length !== 64) {
-        // Invalid or missing token
+    if (!token || token.length !== 64) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent = 'Invalid or missing authentication token';
         document.title = 'Invalid or missing authentication token';
     } else {
-        // Fetch the parsed overlay content
-        fetch('/api/overlay/render', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                slug: slug,
-                token: hash,
-            })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    document.title = 'Authentication failed';
-                    throw new Error('Authentication failed', response);
-                }
-                return response.json();
-
-            })
-            .then(data => {
-                document.getElementById('loading').style.display = 'none';
-
-                // Create a style element
-                if (data.css) {
-                    const style = document.createElement('style');
-                    style.id = 'overlay-css';
-                    style.textContent = data.css;
-                    document.head.appendChild(style);
-                }
-
-                // Insert HTML
-                document.getElementById('overlay-content').innerHTML = data.html;
-                document.title = "Powered by Overlabels";
-            })
-            .catch(error => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = error.message;
-            });
+        // Expose token + slug for the Vue app (via window)
+        window.__OVERLAY__ = { slug, token };
     }
 </script>
 </body>

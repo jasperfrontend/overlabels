@@ -181,7 +181,7 @@ class OverlayTemplateParserService
      */
     private function getTagValue(array $data, string $tagName)
     {
-        // First try to get from database tags
+        // First, try to get from database tags
         $dbTag = TemplateTag::where('tag_name', $tagName)->first();
         if ($dbTag) {
             return $this->getValueByPath($data, $dbTag->json_path);

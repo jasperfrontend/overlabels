@@ -28,32 +28,74 @@ class TwitchApiService
     }
 
     /**
-     * Generic method to make API requests to Twitch
+     * Generic method to make API requests to Twitch with retry logic
      */
     private function makeApiRequest(string $accessToken, string $endpoint, array $params = [], string $errorContext = 'API request'): ?array
     {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken",
-                'Client-Id' => $this->clientId,
-            ])->get("$this->baseUrl/$endpoint", $params);
+        $maxRetries = 3;
+        $retryDelay = 1000; // Start with 1 second
+        
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => "Bearer $accessToken",
+                    'Client-Id' => $this->clientId,
+                ])->timeout(10)->get("$this->baseUrl/$endpoint", $params);
 
-            if ($response->successful()) {
-                return $response->json();
+                if ($response->successful()) {
+                    return $response->json();
+                }
+                
+                // Handle specific error codes
+                if ($response->status() === 401) {
+                    // Token is invalid, throw exception to trigger re-auth
+                    throw new Exception('Invalid OAuth token - requires re-authentication');
+                }
+                
+                if ($response->status() === 429) {
+                    // Rate limited, wait longer before retry
+                    $retryAfter = $response->header('Retry-After') ?? 60;
+                    Log::warning("Rate limited on {$errorContext}, waiting {$retryAfter} seconds");
+                    sleep(min($retryAfter, 60)); // Cap at 60 seconds
+                    continue;
+                }
+                
+                // For other 5xx errors, retry with exponential backoff
+                if ($response->status() >= 500 && $attempt < $maxRetries) {
+                    Log::warning("Server error on attempt {$attempt} for {$errorContext}, retrying...", [
+                        'status' => $response->status(),
+                        'endpoint' => $endpoint
+                    ]);
+                    usleep($retryDelay * 1000); // Convert to microseconds
+                    $retryDelay *= 2; // Exponential backoff
+                    continue;
+                }
+
+                Log::warning("Failed to {$errorContext} after {$attempt} attempts", [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'endpoint' => $endpoint,
+                    'params' => $params
+                ]);
+
+                return null;
+            } catch (Exception $e) {
+                if (str_contains($e->getMessage(), 'Invalid OAuth token')) {
+                    throw $e; // Re-throw auth errors
+                }
+                
+                if ($attempt === $maxRetries) {
+                    Log::error("Error during {$errorContext} after {$maxRetries} attempts: " . $e->getMessage());
+                    return null;
+                }
+                
+                Log::warning("Error on attempt {$attempt} for {$errorContext}: " . $e->getMessage());
+                usleep($retryDelay * 1000);
+                $retryDelay *= 2;
             }
-
-            Log::warning("Failed to {$errorContext}", [
-                'status' => $response->status(),
-                'response' => $response->body(),
-                'endpoint' => $endpoint,
-                'params' => $params
-            ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error("Error during {$errorContext}: " . $e->getMessage());
-            return null;
         }
+        
+        return null;
     }
 
     /**

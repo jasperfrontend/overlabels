@@ -6,11 +6,15 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { AppPageProps } from '@/types';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref(null);
 const toastType = ref('info');
+const isRefreshing = ref(false);
+const connectionError = ref(false);
+const lastRefreshTime = ref(Date.now());
+const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
 
 const auth = computed(() => page.props.auth);
 const avatar = ref(auth.value.user?.avatar);
@@ -19,6 +23,10 @@ const props = defineProps({
   twitchData: {
     type: Object,
     required: true,
+  },
+  error: {
+    type: String,
+    required: false,
   },
 });
 
@@ -41,9 +49,94 @@ function getTierStyle(tier: string) {
 }
 const confirmExpensiveApiCall = () => {
   if (confirm('This will make an expensive API call to refresh all your Twitch data. Are you sure you want to continue?')) {
-    window.location.href = '/twitchdata/refresh/expensive';
+    isRefreshing.value = true;
+    router.visit('/twitchdata/refresh/expensive', {
+      preserveScroll: true,
+      onFinish: () => {
+        isRefreshing.value = false;
+        lastRefreshTime.value = Date.now();
+      },
+      onError: (errors) => {
+        handleApiError(errors);
+      }
+    });
   }
 };
+
+const handleApiError = (error: any) => {
+  console.error('API Error:', error);
+  connectionError.value = true;
+  isRefreshing.value = false;
+  
+  // Check if it's an auth error
+  if (error?.response?.requires_reauth || error?.status === 401) {
+    toastMessage.value = 'Your Twitch session has expired. Redirecting to re-authenticate...';
+    toastType.value = 'error';
+    setTimeout(() => {
+      window.location.href = '/auth/redirect/twitch';
+    }, 2000);
+  } else {
+    toastMessage.value = 'Failed to fetch data from Twitch. Please try again later.';
+    toastType.value = 'error';
+  }
+};
+
+const refreshData = async (endpoint: string, label: string) => {
+  isRefreshing.value = true;
+  connectionError.value = false;
+  
+  router.post(endpoint, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      toastMessage.value = `${label} data refreshed successfully!`;
+      toastType.value = 'success';
+      lastRefreshTime.value = Date.now();
+    },
+    onError: (errors) => {
+      handleApiError(errors);
+    },
+    onFinish: () => {
+      isRefreshing.value = false;
+    }
+  });
+};
+
+// Auto-refresh mechanism to check token validity
+const checkTokenValidity = () => {
+  // Only auto-check if we haven't refreshed in the last 30 minutes
+  const thirtyMinutes = 30 * 60 * 1000;
+  if (Date.now() - lastRefreshTime.value > thirtyMinutes) {
+    // Make a lightweight API call to check token
+    router.reload({
+      preserveScroll: true,
+      preserveState: true,
+      only: ['twitchData'],
+      onError: (errors) => {
+        if (errors?.status === 401) {
+          handleApiError(errors);
+        }
+      }
+    });
+  }
+};
+
+onMounted(() => {
+  // Check for initial error
+  if (props.error) {
+    toastMessage.value = props.error;
+    toastType.value = 'error';
+    connectionError.value = true;
+  }
+  
+  // Set up auto-refresh check every 15 minutes
+  autoRefreshInterval.value = setInterval(checkTokenValidity, 15 * 60 * 1000);
+});
+
+onUnmounted(() => {
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+  }
+});
 watch(
   () => page.props.flash?.message,
   (newMessage) => {
@@ -76,30 +169,71 @@ watch (
       <div class="w-full max-w-4xl">
         <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
         <h1 class="mb-6 text-center text-4xl font-extrabold tracking-tight">Your Twitch Data</h1>
+        <div v-if="connectionError" class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
+          <p class="font-semibold">Connection Error</p>
+          <p class="text-sm">Unable to connect to Twitch API. Your session may have expired.</p>
+          <button 
+            @click="() => window.location.href = '/auth/redirect/twitch'"
+            class="mt-2 rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+          >
+            Re-authenticate with Twitch
+          </button>
+        </div>
+        
         <div class="mb-4 flex flex-row flex-wrap justify-between gap-2">
-          <RefreshButton action="/twitchdata/refresh/user" label="User">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/user', 'User')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            User
+          </button>
 
-          <RefreshButton action="/twitchdata/refresh/info" label="Bio">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/info', 'Bio')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            Bio
+          </button>
 
-          <RefreshButton action="/twitchdata/refresh/following" label="Following">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/following', 'Following')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            Following
+          </button>
 
-          <RefreshButton action="/twitchdata/refresh/followers" label="Followers">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/followers', 'Followers')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            Followers
+          </button>
 
-          <RefreshButton action="/twitchdata/refresh/subscribers" label="Subscribers">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/subscribers', 'Subscribers')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            Subscribers
+          </button>
 
-          <RefreshButton action="/twitchdata/refresh/goals" label="Goals">
-            <RefreshIcon />
-          </RefreshButton>
+          <button
+            @click="() => refreshData('/twitchdata/refresh/goals', 'Goals')"
+            :disabled="isRefreshing"
+            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
+            Goals
+          </button>
         </div>
 
         <div class="rounded-xl border bg-background p-6 shadow-lg">
@@ -186,8 +320,14 @@ watch (
             </ul>
           </div>
 
-          <button type="submit" class="btn btn-danger mt-6 w-full" @click="confirmExpensiveApiCall">
-            <RefreshIcon /> Refresh All Data directly from the Twitch API
+          <button 
+            type="submit" 
+            class="btn btn-danger mt-6 w-full disabled:opacity-50 disabled:cursor-not-allowed" 
+            @click="confirmExpensiveApiCall"
+            :disabled="isRefreshing"
+          >
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" /> 
+            {{ isRefreshing ? 'Refreshing...' : 'Refresh All Data directly from the Twitch API' }}
           </button>
         </div>
       </div>

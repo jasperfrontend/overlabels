@@ -196,9 +196,38 @@ class OverlayTemplateController extends Controller
                 $user->twitch_id
             );
 
-            // Parse template with user data
-            $parsedHtml = $this->parserService->parse($template->html, $twitchData);
-            $parsedCss = $this->parserService->parse($template->css, $twitchData);
+            $data = [
+                'user_name' => $twitchData['user']['display_name'] ?? 'Someone',
+                'display_name' => $twitchData['user']['display_name'] ?? 'Someone',
+                'profile_image_url' => $twitchData['user']['profile_image_url'] ?? 'https://placehold.co/150x150',
+                'view_count' => $twitchData['user']['view_count'] ?? 0,
+                'email' => $twitchData['user']['email'] ?? '',
+                'created_at' => $twitchData['user']['created_at'] ?? '',
+                'updated_at' => $twitchData['user']['updated_at'] ?? '',
+                'broadcaster_type' => $twitchData['user']['broadcaster_type'] ?? '',
+                'description' => $twitchData['user']['description'] ?? '',
+                'offline_image_url' => $twitchData['user']['offline_image_url'] ?? '',
+                'type' => $twitchData['user']['type'] ?? '',
+                'broadcaster_language' => $twitchData['user']['broadcaster_language'] ?? '',
+                'game_id' => $twitchData['user']['game_id'] ?? '',
+                'profile_banner' => $twitchData['user']['profile_image_url'] ?? '',
+                'content_classification_labels' => $twitchData['user']['content_classification_labels'] ?? [],
+                'is_branded_content' => $twitchData['user']['is_branded_content'] ?? false,
+                'login' => $twitchData['user']['login'] ?? '',
+                'id' => $twitchData['user']['id'] ?? '',
+                'broadcaster_id' => $twitchData['user']['broadcaster_id'] ?? '',
+                'broadcaster_login' => $twitchData['user']['broadcaster_login'] ?? '',
+                'broadcaster_name' => $twitchData['user']['broadcaster_name'] ?? '',
+                'followers_total' => $twitchData['channel_followers']['total'] ?? 0,
+                'subscribers_total' => $twitchData['subscribers']['total'] ?? 0,
+                'channel_name' => $twitchData['channel']['broadcaster_name'] ?? '',
+                'followers_latest_user_name' => $twitchData['channel_followers']['data'][0]['user_name'] ?? 'Someone',
+                'subscribers_latest_user_name' => $twitchData['subscribers']['data'][0]['user_name'] ?? 'Someone',
+                'game_name' => $twitchData['channel']['game_name'] ?? '',
+                'title' => $twitchData['channel']['title'] ?? '',
+                'delay' => $twitchData['channel']['delay'] ?? 0,
+                'tags' => $twitchData['channel']['tags'] ?? [],
+            ];
 
             // Record access
             $token->recordAccess(
@@ -207,12 +236,26 @@ class OverlayTemplateController extends Controller
                 $template->slug
             );
 
+            // NEW: directly return JSON as a response and don't pass the parsed HTML at all
             return response()->json([
-                'html' => $parsedHtml,
-                'css' => $parsedCss,
-                'template' => $template,
-                'isParsed' => true,
+                'template' => [
+                    'html' => $template->html,
+                    'css' => $template->css,
+                    'tags' => $template->template_tags,
+                ],
+                //'data' => $twitchData, // @refactor - remove this
+                'meta' => [
+                    'name' => $template->name,
+                    'slug' => $template->slug,
+                    'description' => $template->description,
+                    'is_public' => $template->is_public,
+                    'created_at' => $template->created_at,
+                    'updated_at' => $template->updated_at,
+                ],
+                'data' => $data,
+                'user' => $user,
             ]);
+
 
         } catch (Exception $e) {
             Log::error('Failed to render authenticated overlay', [
