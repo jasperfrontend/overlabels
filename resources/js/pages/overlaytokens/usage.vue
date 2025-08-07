@@ -111,7 +111,7 @@ const formatDate = (date:string) => {
       </div>
 
       <!-- Token List -->
-      <div class="space-y-4 bg-accent/20 overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="space-y-4 bg-accent/20 overflow-hidden">
         <div
           v-for="token in tokens"
           :key="token.id"

@@ -107,7 +107,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div
           v-for="template in templates?.data"
           :key="template.id"
-          class="bg-accent/20 border rounded-2xl p-4 hover:shadow-lg transition-shadow"
+          class="bg-accent/20 border rounded-2xl p-4"
         >
 
           <div class="flex justify-between items-center">

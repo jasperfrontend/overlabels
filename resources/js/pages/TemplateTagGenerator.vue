@@ -306,7 +306,7 @@ const getDataTypeClass = (dataType: string) => {
         <div
           v-for="(categoryData, categoryName) in organizedTags"
           :key="categoryName"
-          class="rounded-2xl border bg-accent/20 p-0 text-center shadow backdrop-blur-sm transition"
+          class="rounded-2xl border bg-accent/20 p-0 text-center transition"
         >
           <!-- Category Header -->
           <details class="group">
