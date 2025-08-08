@@ -62,7 +62,18 @@ class TemplateDataMapperService
             'channel.game_name' => 'channel_game',
             'channel.title' => 'channel_title',
             'channel.delay' => 'channel_delay',
-            'channel.tags' => 'channel_tags',
+            'channel.tags' => 'channel_tags_count',
+            'channel.tags.0' => 'channel_tags_0',
+            'channel.tags.1' => 'channel_tags_1',
+            'channel.tags.2' => 'channel_tags_2',
+            'channel.tags.3' => 'channel_tags_3',
+            'channel.tags.4' => 'channel_tags_4',
+            'channel.tags.5' => 'channel_tags_5',
+            'channel.tags.6' => 'channel_tags_6',
+            'channel.tags.7' => 'channel_tags_7',
+            'channel.tags.8' => 'channel_tags_8',
+            'channel.tags.9' => 'channel_tags_9',
+            'channel.tags.10' => 'channel_tags_10', // max 10 tags on twitch
             'channel.content_classification_labels' => 'channel_content_labels',
             'channel.is_branded_content' => 'channel_is_branded',
 
@@ -97,6 +108,7 @@ class TemplateDataMapperService
             'subscribers.data.0.user_login' => 'subscribers_latest_user_login',
 
             // Goals mappings
+            'goals.total' => 'goals_data_count',
             'goals.data.0.type' => 'goals_latest_type',
             'goals.data.0.target' => 'goals_latest_target',
             'goals.data.0.current' => 'goals_latest_current',

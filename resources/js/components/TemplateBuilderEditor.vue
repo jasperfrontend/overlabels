@@ -27,12 +27,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { Codemirror } from 'vue-codemirror';
 
 interface Props {
-  overlayHash: {
-    hash_key: string;
-    overlay_name: string;
-    slug: string;
-    id: number;
-  };
   existingTemplate: {
     html: string;
     css: string;
@@ -261,7 +255,7 @@ const openExternalLink = (link: any, target: string) => {
   window.open(link, target);
 };
 
-const resetToDefault = async () => {
+const resetTofDefault = async () => {
   if (confirm('Are you sure you want to reset to the default template? This will overwrite your current changes.')) {
     if (defaultTemplates.value) {
       htmlTemplate.value = defaultTemplates.value.html;
@@ -355,10 +349,9 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       <Card>
         <CardHeader class="pb-3">
           <CardTitle class="flex items-center gap-2 text-base">
-            <Play class="h-4 w-4" />
             Actions
             <!-- Keyboard shortcuts indicator -->
-            <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-1 h-6 w-6 p-0">
+            <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-auto h-6 w-6 p-0">
               <Keyboard class="h-4 w-4" />
             </Button>
           </CardTitle>
@@ -479,7 +472,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           <!-- Conditional Template Tags - Collapsible -->
           <div>
             <Button
-              @click="showConditionalExamples = !showConditionalExamples"
+              @click.prevent="showConditionalExamples = !showConditionalExamples"
               variant="ghost"
               class="mb-2 h-auto w-full cursor-pointer justify-between border p-0"
             >
@@ -623,40 +616,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
     </div>
   </div>
 
-  <!-- Keyboard shortcuts dialog -->
-  <div
-    v-if="showKeyboardShortcuts"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    @click.self="showKeyboardShortcuts = false"
-  >
-    <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
-        <button @click="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fill-rule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </div>
-      <div class="space-y-2">
-        <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id" class="flex items-center justify-between rounded-md border p-2 text-sm">
-          <span>{{ shortcut.description }}</span>
-          <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
-            {{ shortcut.keys }}
-          </kbd>
-        </div>
-        <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-          Press <kbd class="rounded bg-gray-100 px-1 dark:bg-gray-700">Ctrl+K</kbd> to toggle this dialog.<br /><br />
-          Keyboard shortcuts do not work when focused on the code editor.<br />
-          Click outside first, then hit ctrl+s.
-        </p>
-      </div>
-    </div>
-  </div>
 </template>
 
 <style scoped>

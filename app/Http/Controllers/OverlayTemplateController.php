@@ -311,8 +311,8 @@ class OverlayTemplateController extends Controller
             ]);
         }
 
-        return redirect()->route('templates.show', $template)
-            ->with('success', 'Template updated successfully!');
+//        return redirect()->route('templates.show', $template)
+//            ->with('success', 'Template updated successfully!');
     }
 
     /**

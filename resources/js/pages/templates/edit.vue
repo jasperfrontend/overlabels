@@ -1,19 +1,32 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Modal from '@/components/Modal.vue';
-import { BreadcrumbItem } from '@/types'
+import { BreadcrumbItem } from '@/types';
 import Heading from '@/components/Heading.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import RekaToast from '@/components/RekaToast.vue';
-import { truncate } from 'es-toolkit/compat';
-import axios from 'axios';
+import {
+  AlertCircle,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  Code,
+  ExternalLinkIcon,
+  Keyboard, Palette,
+  Play,
+  RefreshCcwDot,
+  Save,
+} from 'lucide-vue-next';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { useLinkWarning } from '@/composables/useLinkWarning';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -22,32 +35,42 @@ interface TemplateTag {
   category?: string;
 }
 
-interface CategoryTag {
-  category?: {
-    display_name: string;
-    description?: string;
+interface Props {
+  existingTemplate: {
+    html: string;
+    css: string;
   };
-  tags?: Array<{
-    display_tag: string;
+  template: {
+    id: number;
+    name: string;
     description: string;
-  }>;
-  active_template_tags?: Array<{
-    display_tag: string;
+  };
+  availableTags: Array<{
+    tag_name: string;
+    display_name: string;
     description: string;
+    data_type: string;
+    category: string;
     sample_data?: string;
   }>;
 }
 
-interface TagsResponse {
-  tags: Record<string, CategoryTag>;
-}
-
-const props = defineProps({
+const props = withDefaults(defineProps<Props>(), {
+  existingTemplate: () => ({ html: '', css: '' }),
+  availableTags: () => [],
   template: Object,
-});
+})
+
 
 const isDark = ref(document.documentElement.classList.contains('dark'));
 const page = usePage();
+const isSaving = ref(false);
+const validationResults = ref<any>(null);
+const isValidating = ref(false);
+const isLoadingDefaults = ref(false);
+const showConditionalExamples = ref(false);
+const showActionsDropdown = ref(false);
+const { triggerLinkWarning } = useLinkWarning();
 
 const form = useForm({
   name: props?.template?.name,
@@ -61,8 +84,8 @@ const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Template Builder',
     href: route('templates.edit', props.template),
-  }
-]
+  },
+];
 // CodeMirror extensions
 const htmlExtensions = computed(() => [
   html(),
@@ -83,37 +106,38 @@ const cssExtensions = computed(() => [
   }),
   ...(isDark.value ? [oneDark] : []),
 ]);
-const showPreview = ref(false);
-const previewHtml = ref('');
-const showSuccessToast = ref(false);
 
-// Tag selection modal state
-const showTagModal = ref(false);
-const tagList = ref<TemplateTag[]>([]);
-const currentEditor = ref<string>('');
-const categoryTags = ref<Record<string, CategoryTag>>({});
+// Grouped template tags by category
+const tagsByCategory = computed(() => {
+  const grouped: Record<string, typeof props.availableTags> = {};
+
+  props.availableTags.forEach((tag) => {
+    if (!grouped[tag.category]) {
+      grouped[tag.category] = [];
+    }
+    grouped[tag.category].push(tag);
+  });
+
+  return grouped;
+});
 
 // Toast state
 const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const showToast = ref(false);
-
-// Check for a flash message when the component mounts
-if (page.props.flash?.success) {
-  showSuccessToast.value = true;
-  setTimeout(() => {
-    showSuccessToast.value = false;
-  }, 3000);
-}
+const openExternalLink = (link: any, target: string) => {
+  window.open(link, target);
+};
 
 const submitForm = () => {
   form.put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
-      // Show success toast
-      showSuccessToast.value = true;
+      showToast.value = true;
+      toastMessage.value = "Template saved successfully!";
+      toastType.value = 'success';
       setTimeout(() => {
-        showSuccessToast.value = false;
+        showToast.value = false;
       }, 3000);
     },
     onError: () => {
@@ -122,148 +146,50 @@ const submitForm = () => {
   });
 };
 
-const insertTag = (editor: string): void => {
-  // Set the current editor for later use
-  currentEditor.value = editor;
-
-  console.log('showTagModal before API call:', showTagModal.value);
-
-  // Fetch available tags from the API
-  axios.get<TagsResponse>('/api/template-tags')
-    .then(response => {
-      const tags = response.data.tags;
-
-      // Store the categorized tags for the modal
-      categoryTags.value = tags;
-
-      // Flatten the tags for simple list if needed
-      const flattenedTags: TemplateTag[] = [];
-      Object.entries(tags).forEach(([category, categoryData]) => {
-        // Check for active_template_tags first, then fall back to tags
-        const tagsArray = categoryData.active_template_tags || categoryData.tags;
-
-        if (tagsArray && Array.isArray(tagsArray)) {
-          tagsArray.forEach(tag => {
-            flattenedTags.push({
-              display_tag: tag.display_tag,
-              description: tag.description,
-              category: categoryData.category?.display_name || category
-            });
-          });
-        }
-      });
-
-      tagList.value = flattenedTags;
-
-      // Show the tag selection modal
-      showTagModal.value = true;
-      console.log('showTagModal after setting to true:', showTagModal.value);
-    })
-    .catch(() => {
-      // Fallback to manual input
-      showToast.value = true;
-      toastMessage.value = 'Error retrieving tags from API';
-      toastType.value = 'error';
-
-      const tag = prompt('Enter template tag name (e.g., user_name):');
-      if (tag) {
-        const fullTag = `[[[${tag}]]]`;
-        if (editor === 'html') {
-          form.html += fullTag;
-        } else if (editor === 'css') {
-          form.css += fullTag;
-        }
-      }
-    });
-};
-
-// Function to copy the tag to clipboard and insert it into the editor
-const copyTagToClipboard = (tag: string): void => {
+const copyTag = async (tagName: string) => {
+  const tag = `[[[${tagName}]]]`;
   try {
-    // Copy to clipboard
-    navigator.clipboard.writeText(tag)
-      .then(() => {
-        // Show success toast
-        showToast.value = true;
-        toastMessage.value = `Tag copied to clipboard: ${tag}`;
-        toastType.value = 'success';
-
-        // Insert the tag into the current editor
-        if (currentEditor.value === 'html') {
-          form.html += tag;
-        } else if (currentEditor.value === 'css') {
-          form.css += tag;
-        }
-
-        // Close the modal
-        showTagModal.value = false;
-      })
-      .catch((error) => {
-        console.error('Failed to copy to clipboard:', error);
-        showToast.value = true;
-        toastMessage.value = 'Failed to copy to clipboard';
-        toastType.value = 'error';
-      });
-  } catch (error) {
-    console.error('Error copying to clipboard:', error);
+    await navigator.clipboard.writeText(tag);
     showToast.value = true;
-    toastMessage.value = 'Error copying to clipboard';
+    toastMessage.value = `Copied tag to clipboard: ${tagName}`;
+    toastType.value = 'success';
+  } catch (err) {
+    showToast.value = true;
+    toastMessage.value = 'Failed to copy tag to clipboard!';
     toastType.value = 'error';
   }
 };
 
-const formatCode = (type:any) => {
-  // Simple formatting - in production you might use a proper formatter
-  if (type === 'html') {
-    // Basic HTML formatting
-    form.html = form.html
-      .replace(/></g, '>\n<')
-      .replace(/(\n\s*)+/g, '\n');
-  } else if (type === 'css') {
-    // Basic CSS formatting
-    form.css = form.css
-      .replace(/}/g, '}\n')
-      .replace(/{/g, ' {\n  ')
-      .replace(/;/g, ';\n  ')
-      .replace(/\n\s*\n/g, '\n');
+const validateTemplate = async () => {
+  isValidating.value = true;
+  validationResults.value = null;
+
+  try {
+    const response = await fetch(route('api.template.validate'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify({
+        html_template: form.html,
+        css_template: form.css,
+      }),
+    });
+
+    validationResults.value = await response.json();
+  } catch (error) {
+    console.error('Validation error:', error);
+    showToast.value = true;
+    toastMessage.value = 'Failed to validate template!';
+    toastType.value = 'error';
+    validationResults.value = {
+      success: false,
+      errors: ['Failed to validate template'],
+    };
+  } finally {
+    isValidating.value = false;
   }
-};
-
-const previewTemplate = () => {
-  // Create a preview with sample data that matches the database tags
-  const sampleData = {
-    user_name: 'SampleStreamer',
-    user_follower_count: '1,234',
-    user_view_count: '45,678',
-    stream_title: 'Playing an awesome game!',
-    stream_game_name: 'Just Chatting',
-    stream_viewer_count: '567',
-    user_broadcaster_type: 'affiliate',
-    channel_subscription_count: '123',
-  };
-
-  // Simple template tag replacement for preview
-  let html = form.html;
-  let css = form.css;
-
-  // Replace template tags with sample data
-  Object.entries(sampleData).forEach(([tag, value]) => {
-    const tagPattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
-    html = html.replace(tagPattern, value);
-    css = css.replace(tagPattern, value);
-  });
-
-  previewHtml.value = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <style>${css}</style>
-    </head>
-    <body>
-      ${html}
-    </body>
-  </html>`;
-  showPreview.value = true;
 };
 
 // Watch for theme changes
@@ -274,136 +200,343 @@ watch(
   },
 );
 
+// Initialize keyboard shortcuts
+const { register, getAllShortcuts } = useKeyboardShortcuts();
+const showKeyboardShortcuts = ref(false);
+
+// Register keyboard shortcuts
+onMounted(() => {
+  // Save template with Ctrl+S
+  register(
+    'save-template',
+    'ctrl+s',
+    () => {
+      submitForm();
+    },
+    { description: 'Save template' },
+  );
+
+  // Preview with Ctrl+P
+  register(
+    'preview-live',
+    'ctrl+p',
+    () => {
+      triggerLinkWarning(
+        () => openExternalLink(`/overlay/${props.template?.slug}/public`, '_blank'),
+        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password. If you think it has leaked, revoke or regenerate the hash immediately.',
+      );
+    },
+    { description: 'Preview in new tab' },
+  );
+
+  // Validate template with Ctrl+V
+  register(
+    'validate-template',
+    'ctrl+v',
+    () => {
+      validateTemplate();
+    },
+    { description: 'Validate template' },
+  );
+
+  // Toggle keyboard shortcuts display with Ctrl+K
+  register(
+    'toggle-shortcuts',
+    'ctrl+k',
+    () => {
+      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
+    },
+    { description: 'Show keyboard shortcuts' },
+  );
+});
+
+// Get all keyboard shortcuts for display
+const keyboardShortcutsList = computed(() => getAllShortcuts());
+
 </script>
 
 <template>
   <Head title="Template Builder" />
   <AppLayout :breadcrumbs="breadcrumbs">
-
     <div class="p-4">
-    <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
+      <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
       <div class="mt-4">
-
         <form @submit.prevent="submitForm">
-          <!-- Template Name -->
-          <div class="mb-4">
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-              Template Name *
-            </label>
-            <input
-              id="name"
-              v-model="form.name"
-              type="text"
-              class="p-2 rounded border w-full  hover:shadow-sm transition"
-              required
-            />
-            <div v-if="form.errors.name" class="text-red-600 text-sm mt-1">
-              {{ form.errors.name }}
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+
+            <!-- Left sidebar with template tags and actions -->
+            <div class="space-y-6 lg:col-span-1">
+              <!-- Action buttons -->
+              <Card>
+                <CardHeader class="pb-3">
+                  <CardTitle class="flex items-center gap-2 text-base">
+                    <Play class="h-4 w-4" />
+                    Actions
+                    <!-- Keyboard shortcuts indicator -->
+                    <Button @click="showKeyboardShortcuts = !showKeyboardShortcuts" variant="ghost" size="sm" class="ml-1 h-6 w-6 p-0">
+                      <Keyboard class="h-4 w-4" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent class="pt-0">
+                  <!-- Primary action: Save -->
+                  <Button
+                    @click="submitForm"
+                    :disabled="form.processing"
+                    class="mb-3 w-full cursor-pointer bg-green-600 text-white shadow hover:bg-green-700"
+                  >
+                    <RefreshCcwDot v-if="form.processing" class="h-4 w-4 animate-spin" />
+                    <Save v-else class="h-4 w-4" />
+                    Save Template
+
+                  </Button>
+
+                  <!-- Secondary actions dropdown -->
+                  <div class="relative">
+                    <Button @click.prevent="showActionsDropdown = !showActionsDropdown" variant="outline" class="w-full cursor-pointer justify-between">
+                      <span>More Actions</span>
+                      <ChevronDown :class="['h-4 w-4 transition-transform', showActionsDropdown ? 'rotate-180' : '']" />
+                    </Button>
+
+                    <div v-if="showActionsDropdown" class="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-lg dark:bg-gray-800">
+
+                      <Button
+                        @click="
+                          validateTemplate();
+                          showActionsDropdown = !showActionsDropdown;
+                        "
+                        :disabled="isValidating"
+                        variant="ghost"
+                        class="w-full cursor-pointer justify-start"
+                      >
+                        <RefreshCcwDot v-if="isValidating" class="mr-2 h-4 w-4 animate-spin" />
+                        <CheckCircle v-else class="mr-2 h-4 w-4" />
+                        {{ isValidating ? 'Validating...' : 'Validate' }}
+                        <span class="ml-auto rounded bg-black/10 px-1 text-xs">⌃V</span>
+                      </Button>
+
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader class="pb-3">
+                  <CardTitle class="flex items-center gap-2 text-base">
+                    Title and description
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <!-- Template Name -->
+                  <div class="mb-4">
+                    <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Title * </label>
+                    <input id="name" v-model="form.name" type="text" class="w-full rounded border p-2 transition hover:shadow-sm" required />
+                    <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.name }}
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Description </label>
+                  <textarea id="description" v-model="form.description" rows="3" class="w-full rounded border p-2 transition hover:shadow-sm" />
+                  <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.description }}
+                  </div>
+
+                </CardContent>
+              </Card>
+              <!-- Template validation results -->
+              <Card v-if="validationResults">
+                <CardHeader>
+                  <CardTitle class="flex items-center gap-2 text-base">
+                    <AlertCircle class="h-4 w-4" />
+                    Validation Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div v-if="validationResults.success" class="text-sm text-green-600 dark:text-green-400">✅ Template is valid!</div>
+                  <div v-else class="space-y-2">
+                    <div v-if="validationResults.errors?.length" class="text-sm text-red-600 dark:text-red-400">
+                      <strong>Errors:</strong>
+                      <ul class="list-inside list-disc">
+                        <li v-for="error in validationResults.errors" :key="error">{{ error }}</li>
+                      </ul>
+                    </div>
+                    <div v-if="validationResults.warnings?.length" class="text-sm text-yellow-600 dark:text-yellow-400">
+                      <strong>Warnings:</strong>
+                      <ul class="list-inside list-disc">
+                        <li v-for="warning in validationResults.warnings" :key="warning">{{ warning }}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <!-- Available template tags -->
+              <Card>
+                <CardHeader>
+                  <div class="flex items-center justify-between">
+                    <CardTitle class="text-base">Template Tags</CardTitle>
+                    <a
+                      title="Read more about Conditional Template Tags"
+                      class="ml-2 flex h-6 cursor-pointer rounded bg-sidebar-accent px-2 pt-0.5 text-sm hover:bg-sidebar-accent/70"
+                      href="https://help.overlabels.com/template-builder/conditional-template-tags/#core"
+                      target="_blank"
+                    >
+                      Conditional Tags
+                      <ExternalLinkIcon class="mt-0.5 ml-1 h-[14px] w-[14px]" />
+                    </a>
+                  </div>
+                  <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Click to copy template tags to your clipboard</p>
+                </CardHeader>
+                <CardContent class="max-h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
+                  <!-- Conditional Template Tags - Collapsible -->
+                  <div>
+                    <Button
+                      @click.prevent="showConditionalExamples = !showConditionalExamples"
+                      variant="ghost"
+                      class="mb-2 h-auto w-full cursor-pointer justify-between border p-0"
+                    >
+                      <h4 class="flex items-center p-2 px-0 text-sm font-medium">Conditional Template Tags</h4>
+                      <ChevronRight :class="['h-4 w-4 transition-transform', showConditionalExamples ? 'rotate-90' : '']" />
+                    </Button>
+
+                    <div v-if="showConditionalExamples" class="space-y-3 text-xs">
+                      <div class="space-y-1 rounded border border-dashed border-gray-200 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-900">
+                        <div class="mb-1 font-medium">Basic if statement</div>
+                        <code class="text-muted-foreground">
+                          [[[if:channel_is_branded]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block">Woah branded content!</span> <br />
+                          [[[endif]]]
+                        </code>
+                      </div>
+
+                      <div class="space-y-1 rounded border border-dashed border-gray-200 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-900">
+                        <div class="mb-1 font-medium">if/else statement</div>
+                        <code class="text-muted-foreground">
+                          [[[if:channel_is_branded]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block">Woah branded content!</span> <br />
+                          [[[else]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block">Nah, no sponsor today lol</span> <br />
+                          [[[endif]]]
+                        </code>
+                      </div>
+
+                      <div class="space-y-1 rounded border border-dashed border-gray-200 bg-gray-100 p-2 dark:border-gray-700 dark:bg-gray-900">
+                        <div class="mb-1 font-medium">Numeric comparison</div>
+                        <code class="text-muted-foreground">
+                          [[[if:followers_total >= 2000]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block">WOW! Over 2000 followers!</span> <br />
+                          [[[else]]]<br />
+                          <span style="text-indent: 1rem; display: inline-block">Help us reach 2000 followers!</span> <br />
+                          [[[endif]]]
+                        </code>
+                        <div class="mt-2 flex items-center gap-2">
+                          <span class="rounded bg-chart-2 px-1 py-0 text-xs">==</span>
+                          <span class="rounded bg-chart-2 px-1 py-0 text-xs">!=</span>
+                          <span class="rounded bg-chart-2 px-1 py-0 text-xs">>=</span>
+                          <span class="rounded bg-chart-2 px-1 py-0 text-xs">></span>
+                          <span class="rounded bg-chart-2 px-1 py-0 text-xs"><=</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Regular template tags by category -->
+                  <div v-for="(tags, category) in tagsByCategory" :key="category">
+                    <h4 class="mb-2 font-medium">{{ category }}</h4>
+                    <div class="space-y-1">
+                      <Button
+                        v-for="tag in tags"
+                        :key="tag.tag_name"
+                        @click="copyTag(tag.tag_name)"
+                        variant="ghost"
+                        class="h-auto w-full justify-start py-1 px-0 text-xs"
+                        :title="tag.description"
+                      >
+                        <code class="text-xs">[[[{{ tag.tag_name }}]]]</code>
+                      </Button>
+                    </div>
+                  </div>
+
+                </CardContent>
+              </Card>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="space-y-6 lg:col-span-3">
+              <Tabs default-value="html" class="w-full">
+                <TabsList class="grid w-full grid-cols-5 gap-1">
+                  <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
+                    <Code class="h-4 w-4" />
+                    HTML
+                  </TabsTrigger>
+                  <TabsTrigger value="css" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
+                    <Palette class="h-4 w-4" />
+                    CSS
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="html" class="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle class="text-base">HTML Template</CardTitle>
+                      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                        Omit <code>doctype</code>, <code>html</code>, <code>head</code> and <code>body</code>.
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div class="overflow-hidden rounded-lg border">
+                        <Codemirror
+                          v-model="form.html"
+                          :style="{ height: '500px' }"
+                          :autofocus="true"
+                          :indent-with-tab="true"
+                          :tab-size="2"
+                          :extensions="htmlExtensions"
+                          placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="css" class="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle class="text-base">CSS Styles</CardTitle>
+                      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                        Style your overlay with CSS. Template tags work in css as well! You can also <code>@import</code> external stylesheets, eg. for fonts.
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div class="overflow-hidden rounded-lg border">
+                        <Codemirror
+                          v-model="form.css"
+                          :style="{ height: '500px' }"
+                          :indent-with-tab="true"
+                          :tab-size="2"
+                          :extensions="cssExtensions"
+                          placeholder="Enter your CSS styles here..."
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="preview" class="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle class="text-base">Live Preview</CardTitle>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">This preview shows how your overlay will look with sample data</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div class="rounded-lg border bg-gray-50 dark:bg-gray-900">
+                        <iframe :srcdoc="form.html" class="h-[500px] w-full border-0" sandbox="allow-same-origin" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 
-          <!-- Description -->
-          <div class="mb-4">
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              v-model="form.description"
-              rows="3"
-              class="p-2 rounded border w-full hover:shadow-sm transition"
-            />
-            <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
-              {{ form.errors.description }}
-            </div>
-          </div>
-
-          <!-- Code Editors -->
-          <Tabs defaultValue="html" class="w-full">
-            <TabsList class="grid w-full grid-cols-2">
-              <TabsTrigger value="html">HTML *</TabsTrigger>
-              <TabsTrigger value="css">CSS</TabsTrigger>
-            </TabsList>
-
-            <!-- HTML Editor Tab -->
-            <TabsContent value="html" class="mt-4">
-              <div>
-                <div class="flex justify-between items-center mb-2">
-                  <div class="space-x-2">
-                    <button
-                      type="button"
-                      @click="formatCode('html')"
-                      class="text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      Format
-                    </button>
-                    <button
-                      type="button"
-                      @click="insertTag('html')"
-                      class="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Insert Template Tag
-                    </button>
-                  </div>
-                </div>
-                <div class="border rounded-md overflow-hidden">
-                  <div class="overflow-hidden rounded-lg border">
-                    <Codemirror
-                      v-model="form.html"
-                      :style="{ height: '500px' }"
-                      :autofocus="true"
-                      :indent-with-tab="true"
-                      :tab-size="2"
-                      :extensions="htmlExtensions"
-                      placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
-                    />
-                  </div>
-                </div>
-                <div v-if="form.errors.html" class="text-red-600 text-sm mt-1">
-                  {{ form.errors.html }}
-                </div>
-              </div>
-            </TabsContent>
-
-            <!-- CSS Editor Tab -->
-            <TabsContent value="css" class="mt-4">
-              <div>
-                <div class="flex justify-between items-center mb-2">
-                  <div class="space-x-2">
-                    <button
-                      type="button"
-                      @click="formatCode('css')"
-                      class="text-sm text-gray-600 hover:text-gray-800"
-                    >
-                      Format
-                    </button>
-                    <button
-                      type="button"
-                      @click="insertTag('css')"
-                      class="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Insert Template Tag
-                    </button>
-                  </div>
-                </div>
-                <div class="border rounded-md overflow-hidden">
-                  <div class="overflow-hidden rounded-lg border">
-                    <Codemirror
-                      v-model="form.css"
-                      :style="{ height: '500px' }"
-                      :indent-with-tab="true"
-                      :tab-size="2"
-                      :extensions="cssExtensions"
-                      placeholder="Enter your CSS styles here..."
-                    />
-                  </div>
-                </div>
-                <div v-if="form.errors.css" class="text-red-600 text-sm mt-1">
-                  {{ form.errors.css }}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
 
           <!-- Visibility -->
           <div class="mt-6">
@@ -413,144 +546,91 @@ watch(
                 type="checkbox"
                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
-              <span class="ml-2 text-sm">
-                Make this template public (others can view and fork it)
-              </span>
+              <span class="ml-2 text-sm"> Make this template public (others can view and fork it) </span>
             </label>
           </div>
 
           <!-- Template Info -->
-          <div class="mt-6 grid grid-cols-2 gap-4 p-4 bg-accent/30 rounded-md text-sm">
+          <div class="mt-6 grid grid-cols-2 gap-4 rounded-md bg-accent/30 p-4 text-sm">
             <div>
               <span class="text-gray-600 dark:text-gray-400">Created:</span>
-              <span class="ml-2">{{ new Date(template.created_at).toLocaleDateString() }}</span>
+              <span class="ml-2">{{ new Date(template?.created_at).toLocaleDateString() }}</span>
             </div>
             <div>
               <span class="text-gray-600 dark:text-gray-400">Last updated:</span>
-              <span class="ml-2">{{ new Date(template.updated_at).toLocaleDateString() }}</span>
+              <span class="ml-2">{{ new Date(template?.updated_at).toLocaleDateString() }}</span>
             </div>
             <div>
               <span class="text-gray-600 dark:text-gray-400">Views:</span>
-              <span class="ml-2">{{ template.view_count }}</span>
+              <span class="ml-2">{{ template?.view_count }}</span>
             </div>
             <div>
               <span class="text-gray-600 dark:text-gray-400">Forks:</span>
-              <span class="ml-2">{{ template.fork_count }}</span>
+              <span class="ml-2">{{ template?.fork_count }}</span>
             </div>
           </div>
 
           <!-- Available Tags Help -->
-          <div class="mt-6 p-4 bg-accent/30 rounded-md">
-            <p class="text-xs mt-2">
-              <a href="/tags-generator" target="_blank" class="text-blue-300 hover:underline">
-                View all available tags
-              </a>
+          <div class="mt-6 rounded-md bg-accent/30 p-4">
+            <p class="mt-2 text-xs">
+              <a href="/tags-generator" target="_blank" class="text-blue-300 hover:underline"> View all available tags </a>
             </p>
             <div v-if="template?.template_tags && template?.template_tags.length > 0" class="mt-3">
-              <p class="text-sm mb-1">Currently used tags:</p>
+              <p class="mb-1 text-sm">Currently used tags:</p>
               <div class="flex flex-wrap gap-1">
-                <code
-                  v-for="tag in template.template_tags"
-                  :key="tag"
-                  class="bg-cyan-100/10 px-2 py-1 rounded text-xs"
-                >
-                  [[[{{ tag }}]]]
-                </code>
+                <code v-for="tag in template.template_tags" :key="tag" class="rounded bg-cyan-100/10 px-2 py-1 text-xs"> [[[{{ tag }}]]] </code>
               </div>
             </div>
           </div>
 
           <!-- Form Actions -->
           <div class="mt-6 flex justify-between">
-            <Link
-              :href="route('templates.show', template)"
-              class="btn btn-cancel"
-            >
-              ← Back to Template
-            </Link>
-            <div class="space-x-3 flex justify-around w-auto">
-              <button
-                type="button"
-                @click="previewTemplate"
-                class="btn btn-secondary"
-              >
-                Preview
-              </button>
-              <button
-                type="submit"
-                :disabled="form.processing || !form.isDirty"
-                class="btn btn-primary"
-              >
-                Save Changes
-              </button>
+            <Link :href="route('templates.show', template)" class="btn btn-cancel"> ← Back to Template </Link>
+            <div class="flex w-auto justify-around space-x-3">
+              <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save Changes</button>
             </div>
           </div>
         </form>
-
       </div>
     </div>
 
-    <!-- Preview Modal -->
-    <Modal :show="showPreview" @close="showPreview = false" max-width="4xl">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold mb-4">Template Preview</h3>
-          <button @click="showPreview = false" class="btn btn-cancel">&times;</button>
+
+    <!-- Keyboard shortcuts dialog -->
+    <div
+      v-if="showKeyboardShortcuts"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      @click.self="showKeyboardShortcuts = false"
+    >
+      <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
+          <button @click="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
         </div>
-        <div class="border rounded-md p-4 bg-gray-50" style="height: 400px; position: relative;">
-          <iframe
-            v-if="previewHtml"
-            :srcdoc="previewHtml"
-            class="w-full h-full border-0"
-            sandbox="allow-scripts"
-            style="zoom: 0.5;"
-          />
-        </div>
-        <div class="mt-4 text-sm text-gray-600">
-          Note: Template tags are shown with sample data in preview
+        <div class="space-y-2">
+          <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id" class="flex items-center justify-between rounded-md border p-2 text-sm">
+            <span>{{ shortcut.description }}</span>
+            <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+              {{ shortcut.keys }}
+            </kbd>
+          </div>
+          <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+            Press <kbd class="rounded bg-gray-100 px-1 dark:bg-gray-700">Ctrl+K</kbd> to toggle this dialog.<br /><br />
+            Keyboard shortcuts do not work when focused on the code editor.<br />
+            Click outside first, then hit ctrl+s.
+          </p>
         </div>
       </div>
-    </Modal>
-
-    <!-- Tag Selection Modal -->
-    <Modal :show="showTagModal" @close="showTagModal = false" max-width="3xl">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <h3 class="text-lg font-semibold mb-4 text-foreground">Select a Template Tag</h3>
-            <p class="text-sm text-muted-foreground mb-4">
-              Click on a tag to copy it to your clipboard and insert it into your template.
-            </p>
-          </div>
-          <div class="space-y-4">
-            <button
-              @click="showTagModal = false"
-              class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 cursor-pointer">&times;</button>
-          </div>
-        </div>
-        <div class="space-y-6 max-h-[60vh] overflow-y-auto">
-          <div v-for="(categoryData, categoryName) in categoryTags" :key="categoryName" class="border border-border rounded-lg p-4">
-            <!-- Category Header -->
-            <h4 class="text-md font-medium text-foreground mb-1">{{ categoryData.category?.display_name }}</h4>
-            <p class="text-sm text-muted-foreground mb-3">{{ categoryData.category?.description }}</p>
-
-            <!-- Tags in this category -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div v-for="(tag, tagIndex) in categoryData.active_template_tags || categoryData.tags" :key="tagIndex"
-                   class="border border-border rounded-lg p-3 hover:bg-accent/10 cursor-pointer transition-colors"
-                   @click="copyTagToClipboard(tag.display_tag)">
-                <code class="bg-muted px-2 py-1 rounded font-mono text-sm text-foreground">{{ tag.display_tag }}</code>
-                <p class="mt-2 text-sm text-muted-foreground" >{{ truncate(tag.sample_data, {length: 30, omission: "..."}) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Modal>
+    </div>
 
     <!-- Toast Notification -->
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
-
   </AppLayout>
 </template>
-
