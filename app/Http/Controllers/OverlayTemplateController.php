@@ -217,11 +217,10 @@ class OverlayTemplateController extends Controller
             // NEW: directly return JSON as a response and don't pass the parsed HTML at all
             return response()->json([
                 'template' => [
-                    'html' => $template->html,
+                    'html' => $this->parserService->parse($template->html, $mapped),
                     'css' => $template->css,
                     'tags' => $template->template_tags,
                 ],
-                //'data' => $twitchData, // @refactor - remove this
                 'meta' => [
                     'name' => $template->name,
                     'slug' => $template->slug,
@@ -231,7 +230,6 @@ class OverlayTemplateController extends Controller
                     'updated_at' => $template->updated_at,
                 ],
                 'data' => $mapped,
-                // 'user' => $user,
             ]);
 
 

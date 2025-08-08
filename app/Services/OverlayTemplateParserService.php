@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TemplateTag;
 use Illuminate\Support\Str;
+use Log;
 
 /**
  * OverlayTemplateParserService
@@ -30,13 +31,13 @@ class OverlayTemplateParserService
         }
 
         // First, handle conditional blocks
-        $template = $this->parseConditionalBlocks($template, $data);
+        return $this->parseConditionalBlocks($template, $data);
 
         // Then, handle loop blocks
-        $template = $this->parseLoopBlocks($template, $data);
+        // return $this->parseLoopBlocks($template, $data);
 
         // Finally, parse regular template tags
-        return $this->parseTemplateTags($template, $data);
+        // return $this->parseTemplateTags($template, $data);
     }
 
     /**
@@ -101,7 +102,7 @@ class OverlayTemplateParserService
     {
         $maxIterations = 10;
         $iteration = 0;
-
+        Log::info('Parsing conditional blocks');
         do {
             $previousTemplate = $template;
             $template = $this->parseSingleConditionalPass($template, $data);

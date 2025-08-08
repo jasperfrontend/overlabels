@@ -45,7 +45,7 @@ const compiledHtml = computed(() => {
   let html = htmlSource
 
   for (const key of templateTags.value) {
-    console.log('replacing', key)
+    console.log('replacing (OverlayRenderer.vue:48)', key)
     const val = map[key]
 
     // allow undefined/null → empty string
