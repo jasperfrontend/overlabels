@@ -72,7 +72,7 @@ class TwitchTokenService
     }
 
     /**
-     * Check if token needs refresh and refresh if necessary
+     * Check if the token needs refresh and refresh if necessary
      */
     public function ensureValidToken(User $user): bool
     {
@@ -90,7 +90,7 @@ class TwitchTokenService
     }
 
     /**
-     * Refresh and update user's token
+     * Refresh and update the user's token
      */
     public function refreshUserToken(User $user): bool
     {
@@ -100,13 +100,13 @@ class TwitchTokenService
         }
 
         $tokenData = $this->refreshAccessToken($user->refresh_token);
-        
+
         if (!$tokenData) {
             Log::error('Failed to refresh token for user', ['user_id' => $user->id]);
             return false;
         }
 
-        // Update user with new tokens
+        // Update the user with new tokens
         $user->update([
             'access_token' => $tokenData['access_token'],
             'refresh_token' => $tokenData['refresh_token'],

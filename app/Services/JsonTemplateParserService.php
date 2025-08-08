@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\Log;
 class JsonTemplateParserService
 {
     // Max scalar index tags per array (0 -> N-1) for allowlisted arrays
-    private const int ARRAY_INDEX_LIMIT = 0;
+    private const ARRAY_INDEX_LIMIT = 0;
 
     // Only these BASE standardized tags will get scalar _0, _1, ... tags
     // e.g. 'channel.tags' → standardized 'channel_tags' (in your mapper)
-    private const array INDEXED_ARRAY_BASE_TAGS = [
+    private const INDEXED_ARRAY_BASE_TAGS = [
         'channel_tags'
     ];
 
