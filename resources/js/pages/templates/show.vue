@@ -89,7 +89,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <TooltipBase
               v-else
-              tt-content-class="bg-zinc-800 border border-zinc-400/50 text-white text-sm p-3 px-6 rounded-3xl shadow-lg"
+              tt-content-class="tooltip-base tooltip-content"
 
               align="start"
               side="left"
@@ -155,8 +155,9 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
           <div>
             <TooltipBase
-              tt-content-class="bg-blue-400 text-white text-sm p-3 rounded-lg shadow-lg"
-              arrow-class="fill-blue-400"
+              tt-content-class="tooltip-base tooltip-content"
+              align="center"
+              side="top"
             >
               <template #trigger>
                 <span :class="props.template?.is_public ? 'text-green-400' : 'text-violet-400'" class="font-medium">
@@ -214,7 +215,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p class="mt-3 text-xs text-accent-foreground/50">
               Replace <span class="text-accent-foreground/80"><code>YOUR_TOKEN_HERE</code></span> at the end of the URL with your own
               <Link :href="route('tokens.index')"
-              class="text-green-400 underline hover:no-underline"
+              class="text-violet-400 underline hover:no-underline"
               >access token</Link>
             </p>
           </div>

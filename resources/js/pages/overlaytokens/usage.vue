@@ -111,15 +111,15 @@ const formatDate = (date:string) => {
       </div>
 
       <!-- Token List -->
-      <div class="space-y-4 bg-accent/20 overflow-hidden">
+      <div class="space-y-4 overflow-hidden">
         <div
           v-for="token in tokens"
           :key="token.id"
-          class="border rounded-2xl p-4"
+          class="border rounded-2xl p-4 bg-accent/20"
         >
           <div class="flex justify-self-start gap-4 items-start">
             <div>
-              <h3 class="font-semibold">{{ token.name }}</h3>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ token.name }}</h3>
             </div>
             <div class="mt-0.5">
               <p class="text-sm text-accent-foreground/50">

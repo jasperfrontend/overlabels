@@ -5,11 +5,10 @@ import { ref } from 'vue'
 export const isWebSocketConnected = ref(false)
 let echo: Echo<any> | null = null
 
-export function useEventSub(onEvent: (event: any) => void) {
-  if (echo) return // already connected
+export function useEventSub(onMapped?: (event: any) => void) {
+  if (echo) return
 
-  window.Pusher = Pusher
-
+    ;(window as any).Pusher = Pusher
   echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
@@ -17,19 +16,14 @@ export function useEventSub(onEvent: (event: any) => void) {
     forceTLS: true
   })
 
-  echo.connector.pusher.connection.bind('connected', () => {
-    isWebSocketConnected.value = true
-    console.log('[EventSub] WebSocket connected')
-  })
 
-  echo.connector.pusher.connection.bind('disconnected', () => {
-    isWebSocketConnected.value = false
-    console.log('[EventSub] WebSocket disconnected')
-  })
 
-  echo.channel('twitch-events')
-    .listen('.twitch.event', (event: any) => {
-      console.log('[EventSub] Twitch event received:', event)
-      onEvent(event)
-    })
+  echo.connector.pusher.connection.bind('connected',   () => isWebSocketConnected.value = true)
+  echo.connector.pusher.connection.bind('disconnected',() => isWebSocketConnected.value = false)
+  echo.connector.pusher.connection.bind('failed',      () => isWebSocketConnected.value = false)
+  echo.connector.pusher.connection.bind('error',       () => isWebSocketConnected.value = false)
+
+  echo.channel('twitch-events').listen('.twitch.event', (event: any) => {
+    onMapped?.(event)
+  })
 }

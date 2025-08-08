@@ -123,7 +123,6 @@ const submitForm = () => {
 };
 
 const insertTag = (editor: string): void => {
-  console.log('insertTag called for editor:', editor);
   // Set the current editor for later use
   currentEditor.value = editor;
 
@@ -162,7 +161,6 @@ const insertTag = (editor: string): void => {
     })
     .catch(() => {
       // Fallback to manual input
-      console.log('💔 Error retrieving tags from api')
       showToast.value = true;
       toastMessage.value = 'Error retrieving tags from API';
       toastType.value = 'error';
@@ -214,7 +212,7 @@ const copyTagToClipboard = (tag: string): void => {
   }
 };
 
-const formatCode = (type) => {
+const formatCode = (type:any) => {
   // Simple formatting - in production you might use a proper formatter
   if (type === 'html') {
     // Basic HTML formatting
@@ -448,7 +446,7 @@ watch(
                 View all available tags
               </a>
             </p>
-            <div v-if="template.template_tags && template.template_tags.length > 0" class="mt-3">
+            <div v-if="template?.template_tags && template?.template_tags.length > 0" class="mt-3">
               <p class="text-sm mb-1">Currently used tags:</p>
               <div class="flex flex-wrap gap-1">
                 <code

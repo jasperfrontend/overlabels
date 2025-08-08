@@ -25,7 +25,6 @@ const props = defineProps({
       <slot name="trigger" />
     </TooltipTrigger>
     <TooltipContent
-      class="text-md rounded px-2 py-1"
       :class="props.ttContentClass"
       :side="side"
       :align="props.align"

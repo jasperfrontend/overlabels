@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from 'lucide-vue-next';
+import { Copy, Eye, RefreshCw, Trash2, AlertCircle, Sparkles } from 'lucide-vue-next';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {
@@ -173,6 +173,52 @@ const clearAllTags = async () => {
   }
 };
 
+// Clean up redundant _data_X_ tags
+const cleanupRedundantTags = async () => {
+  if (!confirm('Clean up redundant tags like "channel_followers_data_3_user_id"? This will remove all tags with _data_[number]* patterns.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/template-tags/cleanup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      console.log('✅ Tags cleaned up:', data);
+
+      showToast.value = true;
+      toastMessage.value = data.message;
+      toastType.value = 'success';
+
+      // Show deleted tags if user wants details
+      if (data.deleted_count > 0) {
+        console.log('Deleted tags:', data.deleted_tags);
+      }
+
+      router.reload();
+    } else {
+      console.error('❌ Cleanup failed:', data);
+
+      showToast.value = true;
+      toastMessage.value = `Failed to clean up tags: ${data.message || data.error}`;
+      toastType.value = 'error';
+    }
+  } catch (error) {
+    console.error('💥 Cleanup error:', error);
+
+    showToast.value = true;
+    toastMessage.value = 'Failed to clean up tags. Please try again.';
+    toastType.value = 'error';
+  }
+};
+
 // Preview a specific tag
 const previewTag = async (tagId: number) => {
   if (isLoadingPreview.value[tagId]) return;
@@ -285,6 +331,11 @@ const getDataTypeClass = (dataType: string) => {
             {{ isGenerating ? 'Generating...' : 'Generate Tags' }}
           </button>
 
+          <button v-if="hasExistingTags" @click="cleanupRedundantTags" class="btn btn-warning">
+            <Sparkles class="mr-3 h-4 w-4" />
+            Clean Up Redundant
+          </button>
+
           <button v-if="hasExistingTags" @click="clearAllTags" class="btn btn-danger">
             <Trash2 class="mr-3 h-4 w-4" />
             Clear All Tags
@@ -368,7 +419,19 @@ const getDataTypeClass = (dataType: string) => {
                     </button>
 
                     <!-- Preview Button -->
+
                     <button
+                      v-if="tagPreviews[tag.id]"
+                      @click="clearPreview(tag.id)"
+                      class="cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+
+                    <button
+                      v-else
                       @click="previewTag(tag.id)"
                       :disabled="isLoadingPreview[tag.id]"
                       class="cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
@@ -377,6 +440,8 @@ const getDataTypeClass = (dataType: string) => {
                       <RefreshCw v-if="isLoadingPreview[tag.id]" class="h-4 w-4 animate-spin" />
                       <Eye v-else class="h-4 w-4" />
                     </button>
+
+
                   </div>
                 </div>
 
@@ -406,7 +471,7 @@ const getDataTypeClass = (dataType: string) => {
           <p class="mb-4 text-gray-500 dark:text-gray-400">
             Click "Generate Tags" to analyze your Twitch data and create template tags automatically.
           </p>
-          <button @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
+          <button @click="generateTags" :disabled="isGenerating" class="btn btn-primary m-auto text-center">
             <RefreshCw v-if="isGenerating" class="mr-2 h-4 w-4 animate-spin" />
             <RefreshCw v-else class="mr-2 h-4 w-4" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags Now' }}

@@ -1,0 +1,9 @@
+@layer components {
+  .tooltip-base {
+    @apply p-4 rounded-3xl shadow-lg;
+  }
+  .tooltip-content {
+    @apply bg-zinc-800 border border-zinc-400/50 text-white text-sm;
+
+  }
+}

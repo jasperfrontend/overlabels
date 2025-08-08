@@ -273,8 +273,8 @@ const resetToDefault = async () => {
       // Reload defaults if not loaded yet
       await loadDefaultTemplates();
       if (defaultTemplates.value) {
-        htmlTemplate.value = defaultTemplates?.value.html;
-        cssTemplate.value = defaultTemplates?.value.css;
+        htmlTemplate.value = defaultTemplates?.value?.html;
+        cssTemplate.value = defaultTemplates?.value?.css;
         showToast.value = true;
         toastMessage.value = 'Reset to default template!';
         toastType.value = 'success';
