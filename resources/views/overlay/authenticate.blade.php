@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Loading Overlay...</title>
-    @vite('resources/js/overlay/app.js') {{-- Your dedicated Vue app for overlays --}}
+    @vite('./resources/js/overlay/app.js')
+
     <style>
         .loading {
             display: flex;
