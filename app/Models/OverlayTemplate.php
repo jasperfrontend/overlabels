@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class OverlayTemplate extends Model
 {
@@ -42,7 +41,7 @@ class OverlayTemplate extends Model
     /**
      * Boot method
      */
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
@@ -54,19 +53,11 @@ class OverlayTemplate extends Model
     }
 
     /**
-     * Get public URL
-     */
-    public function getPublicUrl(): string
-    {
-        return config('app.url') . "/overlay/{$this->slug}/public";
-    }
-
-    /**
      * Get authenticated URL (for display purposes)
      */
     public function getAuthUrl(): string
     {
-        return config('app.url') . "/overlay/{$this->slug}#YOUR_TOKEN_HERE";
+        return config('app.url') . "/overlay/$this->slug#YOUR_TOKEN_HERE";
     }
 
     /**
@@ -76,7 +67,7 @@ class OverlayTemplate extends Model
     {
         $tags = [];
         // Updated pattern to match [[[tag_name]]] syntax
-        $pattern = '/\[\[\[([a-zA-Z0-9_]+)(?:\|[a-zA-Z0-9_]+)?\]\]\]/';
+        $pattern = '/\[\[\[([a-zA-Z0-9_]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
         // Extract from HTML
         preg_match_all($pattern, $this->html, $htmlMatches);

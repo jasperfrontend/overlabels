@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * TemplateDataMapperService
  *
- * CENTRALIZED service for all template tag mapping and data transformation.
+ * Centralized service for all template tag mapping and data transformation.
  * This consolidates the mapping logic from JsonTemplateParserService to avoid duplication.
  *
  * For Laravel beginners:
@@ -17,8 +17,21 @@ use Illuminate\Support\Facades\Log;
  * - Both template generation AND template parsing use this same mapping logic
  * - This ensures consistency between database tags and runtime template parsing
  */
+
+
+
+
 class TemplateDataMapperService
 {
+
+    private const NUMERIC_TAGS = [
+        'followers_total', 'followed_total', 'subscribers_total', 'subscribers_points',
+        'user_view_count', 'goals_latest_target', 'goals_latest_current', 'channel_delay',
+    ];
+
+    private const BOOLEAN_TAGS = [
+        'channel_is_branded', 'subscribers_latest_is_gift',
+    ];
     /**
      * MASTER MAPPING - Single source of truth for all template tag mappings
      * Format: 'json_path' => 'template_tag_name'
@@ -368,6 +381,22 @@ class TemplateDataMapperService
         ];
     }
 
+    /*
+     *  Helper methods for template mapping to map and prune to a template’s tags in one call.
+     */
+    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null): array
+    {
+        // Map the full Twitch dataset to your flat tag structure
+        $all = $this->mapTwitchDataForTemplates($twitchData, $overlayName);
+
+        // If a tag allowlist is provided, prune to only those keys
+        if (is_array($templateTags) && count($templateTags)) {
+            return array_intersect_key($all, array_flip($templateTags));
+        }
+
+        return $all;
+    }
+
     /**
      * Helper: Get nested value from an array using dot notation
      * Enhanced with better error handling for missing data
@@ -395,49 +424,48 @@ class TemplateDataMapperService
     /**
      * Format value for template display
      */
-    private function formatValueForTemplate($value, string $templateTag): string
+    private function formatValueForTemplate(mixed $value, string $templateTag): mixed
     {
-        // Handle different data types
         if (is_array($value)) {
-            if ($templateTag == 'channel_tags') {
+            if ($templateTag === 'channel_tags') {
                 return implode(', ', $value);
             }
             return json_encode($value);
         }
 
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
+        if (in_array($templateTag, self::BOOLEAN_TAGS, true)) {
+            // Coerce anything truthy/falsy into real bool
+            return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool)$value;
         }
 
-        // format numbers. skip for now.
-        // @TODO: create a ::raw modifier for template tags which skips number formatting
-        if (is_numeric($value) && in_array($templateTag, ['followers_total', 'followed_total', 'subscribers_total', 'subscribers_points', 'user_view_count', 'goals_latest_target', 'goals_latest_current'])) {
-//            return number_format($value);
-            return $value;
+        if (in_array($templateTag, self::NUMERIC_TAGS, true) && is_numeric($value)) {
+            return (!str_contains((string)$value, '.')) ? (int)$value : (float)$value;
         }
 
-        // Format dates
+        if (is_bool($value)) return $value;
+        if (is_int($value) || is_float($value)) return $value;
+
         if (str_contains($templateTag, '_date') || str_contains($templateTag, '_created')) {
-            return $this->formatDate($value);
+            return $this->formatDate(is_string($value) ? $value : null);
         }
 
-        return (string) $value;
+        return (string)$value;
     }
 
     /**
      * Get the default value for missing data
      */
-    private function getDefaultValue(string $templateTag): string
+    private function getDefaultValue(string $templateTag): mixed
     {
-        if (str_contains($templateTag, 'total') || str_contains($templateTag, 'count') || str_contains($templateTag, 'points')) {
-            return '0';
+        if (in_array($templateTag, self::NUMERIC_TAGS, true)) {
+            return 0;
         }
-
-        if (str_contains($templateTag, 'is_') || str_contains($templateTag, '_gift')) {
-            return 'false';
+        if (in_array($templateTag, self::BOOLEAN_TAGS, true) ||
+            str_contains($templateTag, 'is_') || str_contains($templateTag, '_gift')) {
+            return false;
         }
-
-        return 'N/A';
+        // Dates/strings default to ''
+        return '';
     }
 
     /**

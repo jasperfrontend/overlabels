@@ -190,6 +190,63 @@ class TemplateTagController extends Controller
     }
 
     /**
+     * Clean up redundant _data_X_ tags
+     * Removes tags like channel_followers_data_3_user_id, followed_channels_data_7_broadcaster_name, etc.
+     */
+    public function cleanupRedundantTags()
+    {
+        try {
+            // Pattern to match tags with _data_[number]_ in them
+            //$redundantPattern = '/_data_\d+_/';
+            $redundantPattern = '/_data_\d/';
+
+            // Find all tags that match the pattern
+            $redundantTags = TemplateTag::all()->filter(function($tag) use ($redundantPattern) {
+                return preg_match($redundantPattern, $tag->tag_name);
+            });
+
+            $deletedCount = 0;
+            $deletedTags = [];
+
+            foreach ($redundantTags as $tag) {
+                $deletedTags[] = $tag->tag_name;
+                $tag->delete();
+                $deletedCount++;
+            }
+
+            // Also clean up any empty categories
+            $emptyCategories = TemplateTagCategory::doesntHave('templateTags')->get();
+            $deletedCategoriesCount = 0;
+            foreach ($emptyCategories as $category) {
+                $category->delete();
+                $deletedCategoriesCount++;
+            }
+
+            Log::info('Redundant template tags cleaned up', [
+                'tags_deleted' => $deletedCount,
+                'empty_categories_deleted' => $deletedCategoriesCount,
+                'deleted_tags' => $deletedTags
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully cleaned up $deletedCount redundant tags",
+                'deleted_count' => $deletedCount,
+                'deleted_tags' => $deletedTags,
+                'empty_categories_deleted' => $deletedCategoriesCount
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error cleaning up redundant template tags', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'error' => 'Failed to clean up redundant tags',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get all template tags (API endpoint)
      */
     public function getAllTags()

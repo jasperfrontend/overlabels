@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,12 +63,12 @@ class TemplateTag extends Model
 
     /**
      * Create a custom variant of this tag
-     * @throws \Exception
+     * @throws Exception
      */
     public function createCustomVariant(string $newTagName, array $customOptions = []): self
     {
         if ($this->tag_type === 'custom') {
-            throw new \Exception('Cannot create custom variant of a custom tag');
+            throw new Exception('Cannot create custom variant of a custom tag');
         }
 
         return self::create([
@@ -107,8 +109,8 @@ class TemplateTag extends Model
         // Handle date formatting
         if (isset($this->formatting_options['date_format']) && $data) {
             try {
-                return \Carbon\Carbon::parse($data)->format($this->formatting_options['date_format']);
-            } catch (\Exception $e) {
+                return Carbon::parse($data)->format($this->formatting_options['date_format']);
+            } catch (Exception $e) {
                 return $data;
             }
         }
@@ -121,6 +123,9 @@ class TemplateTag extends Model
         // Handle array to string conversion
         if (is_array($data) && isset($this->formatting_options['array_join'])) {
             return implode($this->formatting_options['array_join'], $data);
+        }
+        if ($data === null) {
+            return "N/A";
         }
 
         return $data;

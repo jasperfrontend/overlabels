@@ -219,6 +219,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
         ->name('tags.clear');
 
+    // Clean up redundant _data_X_ tags
+    Route::post('/template-tags/cleanup', [TemplateTagController::class, 'cleanupRedundantTags'])
+        ->name('tags.cleanup');
+
     // Export standardized tags for sharing
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');

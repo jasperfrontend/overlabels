@@ -7,6 +7,7 @@ use App\Models\OverlayAccessToken;
 use App\Services\OverlayTemplateParserService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
+use App\Services\TemplateDataMapperService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,15 +18,18 @@ class OverlayTemplateController extends Controller
     protected OverlayTemplateParserService $parserService;
     protected TwitchApiService $twitchService;
     protected TwitchEventSubService $eventSubService;
+    protected TemplateDataMapperService $mapper;
 
     public function __construct(
         OverlayTemplateParserService $parserService,
         TwitchApiService $twitchService,
-        TwitchEventSubService $eventSubService
+        TwitchEventSubService $eventSubService,
+        TemplateDataMapperService $mapper
     ) {
         $this->parserService = $parserService;
         $this->twitchService = $twitchService;
         $this->eventSubService = $eventSubService;
+        $this->mapper = $mapper;
     }
 
     /**
@@ -190,44 +194,18 @@ class OverlayTemplateController extends Controller
         }
 
         try {
-            // Get Twitch data
+            // Get Twitch data (cached snapshot)
             $twitchData = $this->twitchService->getExtendedUserData(
                 $user->access_token,
                 $user->twitch_id
             );
 
-            $data = [
-                'user_name' => $twitchData['user']['display_name'] ?? 'Someone',
-                'display_name' => $twitchData['user']['display_name'] ?? 'Someone',
-                'profile_image_url' => $twitchData['user']['profile_image_url'] ?? 'https://placehold.co/150x150',
-                'view_count' => $twitchData['user']['view_count'] ?? 0,
-                'email' => $twitchData['user']['email'] ?? '',
-                'created_at' => $twitchData['user']['created_at'] ?? '',
-                'updated_at' => $twitchData['user']['updated_at'] ?? '',
-                'broadcaster_type' => $twitchData['user']['broadcaster_type'] ?? '',
-                'description' => $twitchData['user']['description'] ?? '',
-                'offline_image_url' => $twitchData['user']['offline_image_url'] ?? '',
-                'type' => $twitchData['user']['type'] ?? '',
-                'broadcaster_language' => $twitchData['user']['broadcaster_language'] ?? '',
-                'game_id' => $twitchData['user']['game_id'] ?? '',
-                'profile_banner' => $twitchData['user']['profile_image_url'] ?? '',
-                'content_classification_labels' => $twitchData['user']['content_classification_labels'] ?? [],
-                'is_branded_content' => $twitchData['user']['is_branded_content'] ?? false,
-                'login' => $twitchData['user']['login'] ?? '',
-                'id' => $twitchData['user']['id'] ?? '',
-                'broadcaster_id' => $twitchData['user']['broadcaster_id'] ?? '',
-                'broadcaster_login' => $twitchData['user']['broadcaster_login'] ?? '',
-                'broadcaster_name' => $twitchData['user']['broadcaster_name'] ?? '',
-                'followers_total' => $twitchData['channel_followers']['total'] ?? 0,
-                'subscribers_total' => $twitchData['subscribers']['total'] ?? 0,
-                'channel_name' => $twitchData['channel']['broadcaster_name'] ?? '',
-                'followers_latest_user_name' => $twitchData['channel_followers']['data'][0]['user_name'] ?? 'Someone',
-                'subscribers_latest_user_name' => $twitchData['subscribers']['data'][0]['user_name'] ?? 'Someone',
-                'game_name' => $twitchData['channel']['game_name'] ?? '',
-                'title' => $twitchData['channel']['title'] ?? '',
-                'delay' => $twitchData['channel']['delay'] ?? 0,
-                'tags' => $twitchData['channel']['tags'] ?? [],
-            ];
+            // Map and prune via the single source of truth
+            $mapped = $this->mapper->mapForTemplate(
+                $twitchData,
+                $template->name,
+                $template->template_tags // allowlist: only tags the template actually uses
+            );
 
             // Record access
             $token->recordAccess(
@@ -252,8 +230,8 @@ class OverlayTemplateController extends Controller
                     'created_at' => $template->created_at,
                     'updated_at' => $template->updated_at,
                 ],
-                'data' => $data,
-                'user' => $user,
+                'data' => $mapped,
+                // 'user' => $user,
             ]);
 
 

@@ -222,6 +222,7 @@ class OverlayTemplateParserService
             'upper' => strtoupper($value),
             'lower' => strtolower($value),
             'title' => Str::title($value),
+            'array' => Array($value),
             'number' => number_format((float)$value),
             'thousands' => number_format((float)$value, 0, '.', ','),
             'date' => is_numeric($value) ? date('Y-m-d', $value) : date('Y-m-d', strtotime($value)),

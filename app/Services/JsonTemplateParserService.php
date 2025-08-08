@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
+use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -15,19 +16,28 @@ use Illuminate\Support\Facades\Log;
  */
 class JsonTemplateParserService
 {
+    // Max scalar index tags per array (0 -> N-1) for allowlisted arrays
+    private const int ARRAY_INDEX_LIMIT = 0;
+
+    // Only these BASE standardized tags will get scalar _0, _1, ... tags
+    // e.g. 'channel.tags' → standardized 'channel_tags' (in your mapper)
+    private const array INDEXED_ARRAY_BASE_TAGS = [
+        'channel_tags'
+    ];
+
+    // Arrays we do not recurse deeply (keep your existing list)
+    private array $limitedArrays = [
+        'followed_channels.data',
+        'channel_followers.data',
+        'subscribers.data',
+    ];
+
     private TemplateDataMapperService $templateDataMapper;
 
     public function __construct(TemplateDataMapperService $templateDataMapper)
     {
         $this->templateDataMapper = $templateDataMapper;
     }
-
-    // Don't recurse too deep over useless Twitch API data to prevent template tag spam
-    private array $limitedArrays = [
-        'followed_channels.data',
-        'channel_followers.data',
-        'subscribers.data',
-    ];
 
     /**
      * Generate only STANDARD tags that are consistent for everyone
@@ -70,7 +80,7 @@ class JsonTemplateParserService
     private function parseLevel(array $data, string $path, array &$createdTags, array &$categories, string $parentKey = '', array &$processedPaths = []): void
     {
         foreach ($data as $key => $value) {
-            $currentPath = $path ? "{$path}.{$key}" : $key;
+            $currentPath = $path ? "$path.$key" : $key;
 
             if (is_array($value)) {
                 $this->handleArrayValue($key, $value, $currentPath, $createdTags, $categories, $parentKey, $processedPaths);
@@ -85,89 +95,70 @@ class JsonTemplateParserService
      * Handle array values in the JSON structure
      * Fixed to prevent duplicate tag creation and "Undefined array key 0" errors
      */
-    private function handleArrayValue(string $key, array $value, string $path, array &$createdTags, array &$categories, string $parentKey, array &$processedPaths = []): void
-    {
+    private function handleArrayValue(
+        string $key,
+        array $value,
+        string $path,
+        array &$createdTags,
+        array &$categories,
+        string $parentKey,
+        array &$processedPaths = []
+    ): void {
+        // Let the unified array logic run (this handles count, latest, and limited indexing)
+        $this->createTagFromValue($key, $value, $path, $createdTags, $categories, $parentKey, $processedPaths);
 
-        $isLimitedArray = in_array($path, $this->limitedArrays);
-
-        if (!empty($value)) {
-            $firstItem = reset($value);
-
-            if (is_array($firstItem) && !empty($firstItem)) {
-                foreach ($firstItem as $objKey => $objValue) {
-                    $fullPath = "{$path}.0.{$objKey}";
-                    $this->createTagFromValue($objKey, $objValue, $fullPath, $createdTags, $categories, $key, $processedPaths);
-                }
-            }
+        // Check if this is a limited array - if so, DON'T recurse into individual items
+        $isLimitedArray = in_array($path, $this->limitedArrays, true);
+        if ($isLimitedArray) {
+            // For limited arrays, we've already handled everything we need in createTagFromValue
+            // (count, latest fields, etc.) - no need to recurse further
+            return;
         }
 
-        // Create a count tag
-        if (isset($value['total'])) {
-            $totalPath = "{$path}.total";
-            if (!in_array($totalPath, $processedPaths)) {
-                $this->createTagFromValue('total', $value['total'], $totalPath, $createdTags, $categories, $key, $processedPaths);
-            }
-        } elseif (is_array($value) && !empty($value)) {
-            $firstKey = array_key_first($value);
-            if (is_numeric($firstKey)) {
-                $countPath = $path . '_count';
-                if (!in_array($countPath, $processedPaths)) {
-                    $this->createTagFromValue('count', count($value), $countPath, $createdTags, $categories, $key, $processedPaths);
-                }
-            }
-        }
+        // For non-limited arrays, recurse normally (but skip numeric keys for data arrays)
+        foreach ($value as $k => $v) {
 
-        // Don't recurse through all entries if it's a limited array
-        if (!$isLimitedArray) {
-            $this->parseLevel($value, $path, $createdTags, $categories, $key, $processedPaths);
+            $childPath = "$path.$k";
+
+            if (is_array($v)) {
+                $this->parseLevel($v, $childPath, $createdTags, $categories, $key, $processedPaths);
+            } else {
+                $this->createTagFromValue((string)$k, $v, $childPath, $createdTags, $categories, $key, $processedPaths);
+            }
         }
     }
+
+
 
     /**
      * Create a template tag from a value using the centralized mapper
      * Enhanced with duplicate prevention
      */
-    private function createTagFromValue(string $key, $value, string $jsonPath, array &$createdTags, array &$categories, string $parentKey = '', array &$processedPaths = []): void
-    {
-        // Check if we've already processed this path
-        if (in_array($jsonPath, $processedPaths)) {
-            Log::info("Skipping duplicate path", ['path' => $jsonPath]);
+    private function createTagFromValue(
+        string $key,
+               $value,
+        string $jsonPath,
+        array &$createdTags,
+        array &$categories,
+        string $parentKey = '',
+        array &$processedPaths = []
+    ): void {
+        // De-dup by path (not by tag name)
+        if (in_array($jsonPath, $processedPaths, true)) {
             return;
         }
-
-        // Determine the type of data
-        $dataType = $this->getDataType($value);
-
-        // SKIP array tags (we can't use them directly in template syntax)
-        if ($dataType === 'array') {
-            Log::info("Skipping array type tag", ['path' => $jsonPath, 'tag_name' => $key]);
-            return;
-        }
-
-        // Mark this path as processed
         $processedPaths[] = $jsonPath;
 
-        // Use the centralized mapper to get the standardized tag name
-        $standardizedTagName = $this->templateDataMapper->getStandardizedTagName($jsonPath);
+        $dataType = $this->getDataType($value);
 
-        // Skip if this results in an empty or invalid tag name
-        if (empty($standardizedTagName) || $standardizedTagName === $jsonPath) {
-            // Log for debugging but don't create invalid tags
-            Log::debug("Skipping tag creation for path: {$jsonPath} (no mapping found)");
-            return;
+        // Standardized base tag from mapper (or fallback)
+        $baseTag = $this->templateDataMapper->getStandardizedTagName($jsonPath);
+        if (!$baseTag) {
+            $baseTag = str_replace('.', '_', $jsonPath);
         }
 
-        // Check if we've already created a tag with this name (additional safety)
-        foreach ($createdTags as $existingTag) {
-            if ($existingTag['tag_name'] === $standardizedTagName) {
-                return;
-            }
-        }
-
-        // Determine which category this tag belongs to
-        $categoryName = $this->determineCategoryForTag($standardizedTagName);
-
-        // Ensure the category exists
+        // Category ensure once
+        $categoryName = $this->determineCategoryForTag($baseTag);
         if (!isset($categories[$categoryName])) {
             $categoryDefinitions = $this->templateDataMapper->getTagCategories();
             if (isset($categoryDefinitions[$categoryName])) {
@@ -178,20 +169,113 @@ class JsonTemplateParserService
                     $categories
                 );
             } else {
-                $this->createCategory($categoryName, ucfirst($categoryName), "Template tags related to {$categoryName}", $categories);
+                $this->createCategory(
+                    $categoryName,
+                    ucfirst($categoryName),
+                    "Template tags related to $categoryName",
+                    $categories
+                );
             }
         }
 
-        // Create the tag
-        $this->createTag(
-            $standardizedTagName,
-            $jsonPath,
-            $value,
-            $createdTags,
-            $categories,
-            $categoryName
-        );
+        // ===== ARRAY HANDLING =====
+        if ($dataType === 'array' && is_array($value)) {
+            // 1) Base array tag (so [[[foreach:...]]] works)
+            $this->createTag(
+                $baseTag,
+                $jsonPath,
+                array_slice($value, 0, 3), // small sample for DB display
+                $createdTags,
+                $categories,
+                $categoryName
+            );
+
+            // 2) Count tag
+            $countTag = "{$baseTag}_count";
+            $countPath = "{$jsonPath}_count";
+            if (!$this->tagExists($createdTags, $countTag)) {
+                $this->createTag(
+                    $countTag,
+                    $countPath,
+                    count($value),
+                    $createdTags,
+                    $categories,
+                    $categoryName
+                );
+            }
+
+            // 3) First-item scalar fields for arrays-of-objects → enables *latest* mappings
+            // Example: channel_followers.data.0.user_name -> followers_latest_user_name
+            $firstItem = reset($value);
+            if (is_array($firstItem) && !empty($firstItem)) {
+                foreach ($firstItem as $objKey => $objVal) {
+                    if (is_scalar($objVal) || $this->getDataType($objVal) !== 'array') {
+                        $firstPath = "$jsonPath.0.$objKey";
+                        // This will hit mapper's '...data.0.*' rules → *_latest_* tag names
+                        $this->createTagFromValue((string)$objKey, $objVal, $firstPath, $createdTags, $categories, $key, $processedPaths);
+                    }
+                }
+            }
+
+            // 4) Optional scalar indexing for allowlisted scalar arrays (e.g., channel.tags)
+            // ONLY for simple scalar arrays, NOT for arrays of objects
+            $limit = self::ARRAY_INDEX_LIMIT;
+            $baseIsIndexed = in_array($baseTag, self::INDEXED_ARRAY_BASE_TAGS, true);
+            if ($baseIsIndexed && !empty($value)) {
+                // Check if this is a simple scalar array
+                $firstItem = reset($value);
+                $isScalarArray = is_scalar($firstItem);
+
+                if ($isScalarArray) {
+                    // Only create indexed tags for simple scalar arrays
+                    $slice = array_slice($value, 0, $limit, true);
+                    foreach ($slice as $index => $item) {
+                        if (is_scalar($item)) {
+                            $indexTag = "{$baseTag}_$index";
+                            $indexPath = "$jsonPath.$index";
+                            if (!$this->tagExists($createdTags, $indexTag)) {
+                                $this->createTag(
+                                    $indexTag,
+                                    $indexPath,
+                                    $item,
+                                    $createdTags,
+                                    $categories,
+                                    $categoryName
+                                );
+                            }
+                        }
+                    }
+                }
+                // Do NOT create indexed tags for arrays of objects
+            }
+
+            return; // done with arrays
+        }
+
+        // ===== NON-ARRAY =====
+        if (!$this->tagExists($createdTags, $baseTag)) {
+            $this->createTag(
+                $baseTag,
+                $jsonPath,
+                $value,
+                $createdTags,
+                $categories,
+                $categoryName
+            );
+        }
     }
+
+    /** helper */
+    private function tagExists(array $createdTags, string $tagName): bool
+    {
+        foreach ($createdTags as $existingTag) {
+            if (($existingTag['tag_name'] ?? null) === $tagName) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Determine which category a tag belongs to based on its name
@@ -250,7 +334,7 @@ class JsonTemplateParserService
         $dataType = $this->getDataType($sampleValue);
 
         // Create display tag
-        $displayTag = "[[[{$tagName}]]]";
+        $displayTag = "[[[$tagName]]]";
 
         // Debug logging
         Log::info('Creating template tag', [
@@ -309,7 +393,7 @@ class JsonTemplateParserService
                     $existingTag = TemplateTag::where('tag_name', $tagData['tag_name'])->first();
 
                     if ($existingTag) {
-                        // Update existing tag with new sample data
+                        // Update an existing tag with new sample data
                         $existingTag->update([
                             'sample_data' => $tagData['sample_data'],
                             'json_path' => $tagData['json_path'],
@@ -326,7 +410,7 @@ class JsonTemplateParserService
                 }
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $saved['errors'][] = $e->getMessage();
             Log::error('Error saving template tags to database', [
                 'error' => $e->getMessage(),
@@ -371,7 +455,7 @@ class JsonTemplateParserService
     }
 
     /**
-     * Get data type of a value
+     * Get the data type from a value
      */
     private function getDataType($value): string
     {
@@ -443,7 +527,7 @@ class JsonTemplateParserService
             default => 'Text value'
         };
 
-        return "Template tag for {$this->generateDisplayName($tagName)}. {$baseDescription}.";
+        return "Template tag for {$this->generateDisplayName($tagName)}. $baseDescription.";
     }
 
     /**
@@ -456,7 +540,7 @@ class JsonTemplateParserService
         }
 
         if (is_array($value)) {
-            // Store only first few items for arrays
+            // Store only the first few items for arrays
             return array_slice($value, 0, 3);
         }
 
@@ -492,7 +576,7 @@ class JsonTemplateParserService
         // Array joining options
         if ($dataType === 'array') {
             $options['array_join'] = ', ';
-            $options['max_items'] = 10;
+            $options['max_items'] = 3;
         }
 
         return empty($options) ? null : $options;
