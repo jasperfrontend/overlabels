@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Loading Overlay...</title>
-    @vite('https://jasper.up.railway.app/resources/js/overlay/app.js')
+    @vite('resources/js/overlay/app.js')
 
     <style>
         .loading {

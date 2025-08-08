@@ -13,6 +13,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+.claude
 .env
 .env.local
 .env.backup
