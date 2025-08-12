@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -19,7 +20,7 @@ class TwitchEventSubService
 
     /**
      * Get an app access token for EventSub subscriptions that require it
-     * Made public so controller can use it for status checks
+     * Made public so the controller can use it for status checks
      */
     public function getAppAccessToken(): ?string
     {
@@ -40,7 +41,7 @@ class TwitchEventSubService
                 'response' => $response->body()
             ]);
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception getting app access token: ' . $e->getMessage());
             return null;
         }
@@ -59,8 +60,7 @@ class TwitchEventSubService
             ])->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
-                $responseData = $response->json();
-                return $responseData;
+                return $response->json();
             }
 
             // Return error info instead of null so we can see what went wrong
@@ -71,7 +71,7 @@ class TwitchEventSubService
                 'payload' => $payload
             ];
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('EventSub subscription exception', [
                 'event_type' => $payload['type'] ?? 'unknown',
                 'error' => $e->getMessage(),
@@ -101,7 +101,7 @@ class TwitchEventSubService
             }
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting EventSub subscriptions: ' . $e->getMessage());
             return null;
         }
@@ -121,14 +121,14 @@ class TwitchEventSubService
             ]);
 
             return $response->successful();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error deleting EventSub subscription: ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Subscribe to channel follow events (Version 2 - REQUIRES APP TOKEN)
+     * Subscribe to the channel follow events (Version 2 - REQUIRES APP TOKEN)
      */
     public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
@@ -146,7 +146,7 @@ class TwitchEventSubService
             'version' => '2', // Use version 2
             'condition' => [
                 'broadcaster_user_id' => $userId,
-                'moderator_user_id' => $userId // Required for follows - you moderate your own channel
+                'moderator_user_id' => $userId // Required for follows
             ],
             'transport' => [
                 'method' => 'webhook',
@@ -181,7 +181,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret', 'fallback-secret')
+                'secret' => config('app.twitch_webhook_secret')
             ]
         ];
 
@@ -190,7 +190,7 @@ class TwitchEventSubService
     }
 
     /**
-     * Subscribe to channel raids (Alternative event that's easier to test)
+     * Subscribe to channel raids
      */
     public function subscribeToRaids(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
@@ -203,7 +203,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret', 'fallback-secret')
+                'secret' => config('app.twitch_webhook_secret')
             ]
         ];
 
@@ -211,7 +211,7 @@ class TwitchEventSubService
     }
 
     /**
-     * Subscribe to stream online events (Easy to test)
+     * Subscribe to stream online events
      */
     public function subscribeToStreamOnline(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
@@ -224,7 +224,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret', 'fallback-secret')
+                'secret' => config('app.twitch_webhook_secret')
             ]
         ];
 

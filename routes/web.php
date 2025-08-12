@@ -95,17 +95,17 @@ Route::get('/auth/redirect/twitch', function () {
 // Refresh Twitch token endpoint
 Route::post('/auth/refresh/twitch', function () {
     $user = Auth::user();
-    
+
     if (!$user) {
         return response()->json(['error' => 'Not authenticated'], 401);
     }
-    
+
     $tokenService = app(\App\Services\TwitchTokenService::class);
-    
+
     if ($tokenService->refreshUserToken($user)) {
         return response()->json(['success' => true, 'message' => 'Token refreshed successfully']);
     }
-    
+
     return response()->json(['error' => 'Failed to refresh token', 'requires_reauth' => true], 401);
 })->middleware('auth')->name('auth.refresh.twitch');
 
@@ -185,7 +185,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [OverlayAccessTokenController::class, 'store'])->name('store');
         Route::post('/{token}/revoke', [OverlayAccessTokenController::class, 'revoke'])->name('revoke');
         Route::delete('/{token}', [OverlayAccessTokenController::class, 'destroy'])->name('destroy');
-        Route::get('/{token}/usage', [OverlayAccessTokenController::class, 'usage'])->name('usage');
     });
 
     // Template Management - Full resource routes

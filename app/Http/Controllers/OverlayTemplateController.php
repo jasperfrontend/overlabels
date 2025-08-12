@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\OverlayTemplate;
 use App\Models\OverlayAccessToken;
-use App\Services\OverlayTemplateParserService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TemplateDataMapperService;
@@ -15,18 +14,16 @@ use Inertia\Inertia;
 
 class OverlayTemplateController extends Controller
 {
-    protected OverlayTemplateParserService $parserService;
     protected TwitchApiService $twitchService;
     protected TwitchEventSubService $eventSubService;
     protected TemplateDataMapperService $mapper;
 
     public function __construct(
-        OverlayTemplateParserService $parserService,
+
         TwitchApiService $twitchService,
         TwitchEventSubService $eventSubService,
         TemplateDataMapperService $mapper
     ) {
-        $this->parserService = $parserService;
         $this->twitchService = $twitchService;
         $this->eventSubService = $eventSubService;
         $this->mapper = $mapper;
@@ -217,7 +214,7 @@ class OverlayTemplateController extends Controller
             // NEW: directly return JSON as a response and don't pass the parsed HTML at all
             return response()->json([
                 'template' => [
-                    'html' => $this->parserService->parse($template->html, $mapped),
+                    'html' => $template->html,
                     'css' => $template->css,
                     'tags' => $template->template_tags,
                 ],

@@ -1,6 +1,16 @@
 <template>
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
+    <NotificationManager
+      ref="notificationManager"
+      :queue-config="notificationConfig"
+      :default-props="defaultNotificationProps"
+      :props-map="notificationPropsMap"
+      @notification-shown="onNotificationShown"
+      @notification-hidden="onNotificationHidden"
+      @queue-updated="onQueueUpdated"
+    />
+    
     <div v-html="compiledHtml" />
   </div>
 </template>
@@ -8,16 +18,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useEventSub } from '@/composables/useEventSub';
+import { useEventsStore } from '@/stores/overlayState';
+import { useEventHandler } from '@/composables/useEventHandler';
+import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
+import NotificationManager from '@/components/notifications/NotificationManager.vue';
+import type { NormalizedEvent } from '@/types';
 
-let lastUpdate = 0
-const MIN_INTERVAL = 16 // ~ 60fps
+let lastUpdate = 0;
+const MIN_INTERVAL = 16; // ~ 60fps
 
 function bump() {
-  const now = performance.now()
-  if (now - lastUpdate < MIN_INTERVAL) return
-  lastUpdate = now
+  const now = performance.now();
+  if (now - lastUpdate < MIN_INTERVAL) return;
+  lastUpdate = now;
   // trigger a benign write-action to keep computed re-evaluations sane
-  data.value = { ...data.value }
+  data.value = { ...data.value };
 }
 
 const props = defineProps<{
@@ -25,142 +40,59 @@ const props = defineProps<{
   token: string;
 }>();
 
-const rawHtml = ref<string>('')
+const rawHtml = ref<string>('');
 const css = ref('');
-const data = ref<Record<string, any> | undefined>(undefined)
+const data = ref<Record<string, any> | undefined>(undefined);
 const error = ref('');
-const templateTags = ref<string[]>([])
+const templateTags = ref<string[]>([]);
+const eventStore = useEventsStore();
+const eventHandler = useEventHandler();
+const giftBombDetector = useGiftBombDetector();
+const notificationManager = ref<InstanceType<typeof NotificationManager> | null>(null);
 
-function escapeRegExp(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Utility: escape regex special characters in keys
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// Pre-build regex maps only for tags that have valid string/number values
+const tagRegexMap = computed(() => {
+  const m = new Map<string, RegExp>();
+
+  const sourceData = data.value && typeof data.value === 'object' ? data.value : {};
+
+  // Ensure templateTags is always an array before iterating
+  const tags = Array.isArray(templateTags.value) ? templateTags.value : [];
+
+  // Only log critical info
+  if (tags.length === 0) {
+    console.warn('[OverlayRenderer] No template tags received from server!');
+  }
+
+  for (const key of tags) {
+    const val = sourceData[key];
+
+    // Skip keys with undefined/null or object values
+    if (val === undefined || val === null) continue;
+    if (typeof val === 'object') continue;
+
+    m.set(key, new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g'));
+  }
+  return m;
+});
 
 const compiledHtml = computed(() => {
-  const htmlSource = rawHtml.value
-  const map = (data.value && typeof data.value === 'object') ? data.value : {}
+  let html = rawHtml.value;
 
-  // If no tags yet, just return
-  if (!templateTags.value || templateTags.value.length === 0) return htmlSource
-
-  let html = htmlSource
-
-  for (const key of templateTags.value) {
-    console.log('replacing (OverlayRenderer.vue:48)', key)
-    const val = map[key]
-
-    // allow undefined/null → empty string
-    if (val === undefined || val === null) continue
-    if (typeof val === 'object') continue
-
-    const replacement = String(val)
-    const pattern = new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g')
-    html = html.replace(pattern, replacement)
-  }
-
-  return html
-})
-
-// --- Helpers ---
-const get = (obj: any, path: string) => path.split('.').reduce((o, k) => (o && k in o ? o[k] : undefined), obj);
-
-const NUMERIC_TAGS = new Set([
-  'followers_total',
-  'followed_total',
-  'subscribers_total',
-  'subscribers_points',
-  'user_view_count',
-  'goals_latest_target',
-  'goals_latest_current',
-  'channel_delay',
-]);
-
-const BOOL_TAGS = new Set(['subscribers_latest_is_gift', 'channel_is_branded']);
-
-function coerceForTag(tag: string, raw: any) {
-  if (NUMERIC_TAGS.has(tag)) return Number(raw ?? 0);
-  if (BOOL_TAGS.has(tag)) return Boolean(raw);
-  return raw ?? '';
-}
-
-// Apply one op onto the overlay data
-function applyOp(data: Record<string, any>, op: any, event: any) {
-  const by = op.byPath ? get(event, op.byPath) : op.by;
-  const value = op.from ? get(event, op.from) : op.value;
-
-  switch (op.op) {
-    case 'set': {
-      data[op.tag] = coerceForTag(op.tag, value);
-      break;
-    }
-    case 'inc': {
-      const cur = Number(data[op.tag] ?? 0);
-      const delta = Number(coerceForTag(op.tag, by ?? 1));
-      data[op.tag] = cur + delta;
-      break;
-    }
-    case 'dec': {
-      const cur = Number(data[op.tag] ?? 0);
-      const delta = Number(coerceForTag(op.tag, by ?? 1));
-      data[op.tag] = cur - delta;
-      break;
-    }
-    case 'max': {
-      const nv = Number(coerceForTag(op.tag, value));
-      const cur = Number(data[op.tag] ?? 0);
-      data[op.tag] = Math.max(cur, nv);
-      break;
-    }
-    case 'push': {
-      const arr = Array.isArray(data[op.tag]) ? data[op.tag] : [];
-      const v = coerceForTag(op.tag, value);
-      if (v !== undefined) arr.unshift(v);
-      if (op.limit && arr.length > op.limit) arr.length = op.limit;
-      data[op.tag] = arr;
-      break;
+  for (const [key, regex] of tagRegexMap.value.entries()) {
+    if(data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
+      html = html.replace(regex, String(data?.value[key]));
     }
   }
-}
 
-// EventSub → template tag mapping rules
-const EVENT_RULES: Record<string, Array<any>> = {
-  // FOLLOWS
-  'channel.follow': [
-    { op: 'inc', tag: 'followers_total', by: 1 },
-    { op: 'set', tag: 'followers_latest_user_name', from: 'data.user_name' },
-    { op: 'set', tag: 'followers_latest_user_id', from: 'data.user_id' },
-    { op: 'set', tag: 'followers_latest_date', from: 'data.followed_at' },
-  ],
-
-  // SUBS (new sub message)
-  'channel.subscribe': [
-    { op: 'inc', tag: 'subscribers_total', by: 1 },
-    { op: 'set', tag: 'subscribers_latest_user_name', from: 'data.user_name' },
-    { op: 'set', tag: 'subscribers_latest_tier', from: 'data.tier' },
-    { op: 'set', tag: 'subscribers_latest_is_gift', from: 'data.is_gift' },
-    { op: 'set', tag: 'subscribers_latest_gifter_name', from: 'data.gifter_name' },
-  ],
-
-  // MASS GIFT (gift bomb)
-  'channel.subscription.gift': [
-    // Twitch CLI often sends "total" for count this message gifted
-    { op: 'inc', tag: 'subscribers_total', byPath: 'data.total' },
-    { op: 'set', tag: 'subscribers_latest_is_gift', value: true },
-    { op: 'set', tag: 'subscribers_latest_gifter_name', from: 'data.user_name' },
-  ],
-
-  // CHEER
-  'channel.cheer': [
-    { op: 'set', tag: 'last_cheer_user', from: 'data.user_name' },
-    { op: 'set', tag: 'last_cheer_bits', from: 'data.bits' },
-  ],
-
-  // RAID
-  'channel.raid': [
-    { op: 'set', tag: 'last_raid_from', from: 'data.from_broadcaster_user_name' },
-    { op: 'max', tag: 'last_raid_viewers_peak', value: 0 }, // ensures numeric init
-    { op: 'max', tag: 'last_raid_viewers_peak', from: 'data.viewers' },
-  ],
-};
+  return html;
+});
 
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
@@ -172,8 +104,70 @@ function injectStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
+const notificationConfig = computed(() => ({
+  maxQueueSize: 100,
+  defaultDisplayDuration: 5000,
+  groupingWindow: 3000,
+  maxGroupSize: 50,
+}));
+
+const defaultNotificationProps = computed(() => ({
+  position: 'top-center',
+  size: 'medium',
+  transitionName: 'notification-slide',
+  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  borderColor: '#ff6b00',
+  borderWidth: 2,
+  borderRadius: 8,
+  padding: 16,
+  margin: 16,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontSize: 16,
+  fontColor: '#ffffff',
+}));
+
+const notificationPropsMap = computed(() => ({
+  'channel.subscribe': {
+    borderColor: '#9146ff',
+    titleColor: '#9146ff',
+  },
+  'channel.subscription.gift': {
+    borderColor: '#ff0000',
+    titleColor: '#ff0000',
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+  },
+  'channel.raid': {
+    borderColor: '#ff0000',
+    titleColor: '#ff0000',
+    size: 'large',
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+  },
+  'channel.follow': {
+    borderColor: '#9146ff',
+    titleColor: '#9146ff',
+    size: 'small',
+  },
+  'channel.cheer': {
+    borderColor: '#00d4ff',
+    titleColor: '#00d4ff',
+  },
+}));
+
+const onNotificationShown = (event: NormalizedEvent) => {
+  console.log('Notification shown:', event.type, event.id);
+};
+
+const onNotificationHidden = (event: NormalizedEvent) => {
+  console.log('Notification hidden:', event.type, event.id);
+  eventStore.clearOverlayTriggers();
+};
+
+const onQueueUpdated = (size: number) => {
+  console.log('Notification queue size:', size);
+};
+
 onMounted(async () => {
-  data.value = {}
+  data.value = {};
   try {
     const response = await fetch('/api/overlay/render', {
       method: 'POST',
@@ -181,29 +175,53 @@ onMounted(async () => {
       body: JSON.stringify({ slug: props.slug, token: props.token }),
     });
 
-    if (!response.ok) throw new Error('Failed to load overlay');
+    if (response.ok) {
+      const json = await response.json();
 
-    const json = await response.json();
-    rawHtml.value = json.template.html;
-    templateTags.value = json.template.tags ?? []
-    css.value = json.template.css;
-    data.value = json.data ?? {}
+      rawHtml.value = json.template.html;
 
-    injectStyle(css.value);
+      // Ensure tags is always an array, even if the server sends something unexpected
+      templateTags.value = Array.isArray(json.template.tags) ? json.template.tags : [];
 
-    document.title = json.meta?.name || 'Overlay';
-    document.getElementById('loading')?.remove();
-  } catch (err) {
+      css.value = json.template.css;
+      data.value = json.data ?? {};
+
+      injectStyle(css.value);
+      document.title = json.meta?.name || 'Overlay';
+      document.getElementById('loading')?.remove();
+    } else {
+      console.error('Failed to load overlay', response.status, response.statusText);
+    }
+  } catch (err: any) {
     error.value = err.message;
     document.getElementById('loading')?.remove();
   }
 
   useEventSub((event) => {
-    if (!data.value || typeof data.value !== 'object') data.value = {}
-    const rules = EVENT_RULES[event.type]
-    if (!rules) return
-    for (const op of rules) applyOp(data.value, op, event)
-    bump()
-  })
+    if (!data.value || typeof data.value !== 'object') data.value = {};
+
+    const restructuredEvent = {
+      subscription: {
+        type: event.eventType || event.type
+      },
+      event: event.eventData || event.data
+    };
+
+    // First normalize the event
+    const normalizedEvent = eventHandler.processRawEvent(restructuredEvent);
+    
+    // Then process through gift bomb detector
+    giftBombDetector.processEvent(normalizedEvent, (processedEvent) => {
+      // Dispatch the processed event for notifications
+      eventHandler.dispatchEvent(processedEvent);
+      
+      // Update the store
+      eventStore.addEvent(processedEvent);
+      
+      // Update template data
+      data.value = { ...data.value, ...(processedEvent.raw?.event || {}) };
+      bump();
+    });
+  });
 });
 </script>

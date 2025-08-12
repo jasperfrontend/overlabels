@@ -34,6 +34,7 @@
 <script>
     const slug = '{{ $slug }}';
     const token = window.location.hash.substring(1);
+    const style = HTMLStyleElement;
 
     if (!token || token.length !== 64) {
         document.getElementById('loading').style.display = 'none';
@@ -41,7 +42,6 @@
         document.getElementById('error').textContent = 'Invalid or missing authentication token';
         document.title = 'Invalid or missing authentication token';
     } else {
-        // Expose token + slug for the Vue app (via window)
         window.__OVERLAY__ = { slug, token };
     }
 </script>

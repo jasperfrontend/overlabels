@@ -11,7 +11,7 @@ class TwitchApiService
 {
     private string $clientId;
     private string $baseUrl = 'https://api.twitch.tv/helix';
-    
+
     // Cache keys mapping for different data types
     private const CACHE_KEYS = [
         'user' => 'twitch_user_info_',
@@ -34,7 +34,7 @@ class TwitchApiService
     {
         $maxRetries = 3;
         $retryDelay = 1000; // Start with 1 second
-        
+
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
                 $response = Http::withHeaders([
@@ -45,13 +45,13 @@ class TwitchApiService
                 if ($response->successful()) {
                     return $response->json();
                 }
-                
+
                 // Handle specific error codes
                 if ($response->status() === 401) {
                     // Token is invalid, throw exception to trigger re-auth
                     throw new Exception('Invalid OAuth token - requires re-authentication');
                 }
-                
+
                 if ($response->status() === 429) {
                     // Rate limited, wait longer before retry
                     $retryAfter = $response->header('Retry-After') ?? 60;
@@ -59,7 +59,7 @@ class TwitchApiService
                     sleep(min($retryAfter, 60)); // Cap at 60 seconds
                     continue;
                 }
-                
+
                 // For other 5xx errors, retry with exponential backoff
                 if ($response->status() >= 500 && $attempt < $maxRetries) {
                     Log::warning("Server error on attempt {$attempt} for {$errorContext}, retrying...", [
@@ -83,18 +83,18 @@ class TwitchApiService
                 if (str_contains($e->getMessage(), 'Invalid OAuth token')) {
                     throw $e; // Re-throw auth errors
                 }
-                
+
                 if ($attempt === $maxRetries) {
                     Log::error("Error during {$errorContext} after {$maxRetries} attempts: " . $e->getMessage());
                     return null;
                 }
-                
+
                 Log::warning("Error on attempt {$attempt} for {$errorContext}: " . $e->getMessage());
                 usleep($retryDelay * 1000);
                 $retryDelay *= 2;
             }
         }
-        
+
         return null;
     }
 
@@ -118,6 +118,9 @@ class TwitchApiService
         Cache::forget($fullCacheKey);
     }
 
+    /**
+     * @throws Exception
+     */
     public function getChannelInfo(string $accessToken, string $userId): ?array
     {
         $response = $this->makeApiRequest(
@@ -130,6 +133,9 @@ class TwitchApiService
         return $response ? ($response['data'][0] ?? null) : null;
     }
 
+    /**
+     * @throws Exception
+     */
     public function getUserInfo(string $accessToken, string $userId): ?array
     {
         $response = $this->makeApiRequest(
@@ -142,6 +148,9 @@ class TwitchApiService
         return $response ? ($response['data'][0] ?? null) : null;
     }
 
+    /**
+     * @throws Exception
+     */
     public function getFollowedChannels(string $accessToken, string $userId, int $first = 20): ?array
     {
         return $this->makeApiRequest(
@@ -152,6 +161,9 @@ class TwitchApiService
         );
     }
 
+    /**
+     * @throws Exception
+     */
     public function getChannelFollowers(string $accessToken, string $userId, int $first = 20): ?array
     {
         // Special case: needs channel info first to get broadcaster_id
@@ -170,6 +182,9 @@ class TwitchApiService
         );
     }
 
+    /**
+     * @throws Exception
+     */
     public function getChannelSubscribers(string $accessToken, string $userId, int $first = 20): ?array
     {
         return $this->makeApiRequest(
@@ -180,6 +195,9 @@ class TwitchApiService
         );
     }
 
+    /**
+     * @throws Exception
+     */
     public function getChannelGoals(string $accessToken, string $userId): ?array
     {
         return $this->makeApiRequest(
@@ -240,6 +258,9 @@ class TwitchApiService
      * getFreshTwitchData gets data directly from the Twitch API. This is an expensive call
      * because it refreshes ALL your data. The user is advised to use this API request with
      * caution and to not overuse it.
+     */
+    /**
+     * @throws Exception
      */
     public function getFreshTwitchData(string $accessToken, string $userId): array
     {

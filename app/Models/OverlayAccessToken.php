@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use Random\RandomException;
 
 class OverlayAccessToken extends Model
 {
@@ -42,6 +43,7 @@ class OverlayAccessToken extends Model
     /**
      * Generate a new secure token
      * Returns array with plain token (to show user once) and hashed version (to store)
+     * @throws RandomException
      */
     public static function generateToken(): array
     {

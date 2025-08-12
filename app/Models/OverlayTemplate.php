@@ -77,10 +77,13 @@ class OverlayTemplate extends Model
         preg_match_all($pattern, $this->css, $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
-        // Remove transformation suffixes and return unique tags
-        return array_unique(array_map(function($tag) {
+        // Remove transformation suffixes and return unique tags with re-indexed array
+        $uniqueTags = array_unique(array_map(function($tag) {
             return explode('|', $tag)[0];
         }, $tags));
+        
+        // Re-index the array to ensure it's saved as a JSON array, not object
+        return array_values($uniqueTags);
     }
 
     /**

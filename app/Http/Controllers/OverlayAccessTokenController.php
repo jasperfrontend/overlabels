@@ -35,7 +35,7 @@ class OverlayAccessTokenController extends Controller
                 ];
             });
 
-        return Inertia::render('overlaytokens/usage', [
+        return Inertia::render('overlaytokens/index', [
             'tokens' => $tokens,
         ]);
     }

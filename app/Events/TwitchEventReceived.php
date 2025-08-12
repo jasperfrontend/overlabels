@@ -35,23 +35,11 @@ class TwitchEventReceived implements ShouldBroadcast
     }
 
     /**
-     * Get the name of the broadcast event.
+     * The event's broadcast name.
      */
     public function broadcastAs(): string
     {
         return 'twitch.event';
     }
 
-    /**
-     * Get the data to broadcast.
-     */
-    public function broadcastWith(): array
-    {
-
-        return [
-            'type' => $this->eventType,
-            'data' => $this->eventData,
-            'timestamp' => $this->timestamp,
-        ];
-    }
 }

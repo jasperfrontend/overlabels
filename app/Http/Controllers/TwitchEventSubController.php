@@ -157,7 +157,7 @@ class TwitchEventSubController extends Controller
     }
 
     /**
-     * Handle incoming webhooks from Twitch - DEBUG VERSION
+     * Handle incoming webhooks from Twitch
      */
     public function webhook(Request $request)
     {
@@ -430,6 +430,7 @@ class TwitchEventSubController extends Controller
 
             // Broadcast the event to connected WebSocket clients
             broadcast(new TwitchEventReceived($eventType, $event));
+
         } catch (Exception $e) {
             Log::error("Failed to store Twitch event: {$e->getMessage()}", [
                 'event_type' => $eventType,

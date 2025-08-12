@@ -79,7 +79,7 @@ class DefaultTemplateProviderService
         }
 
         // Inject CSS into HTML
-        if (strpos($html, '<style>') !== false) {
+        if (str_contains($html, '<style>')) {
             $html = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>{$css}</style>", $html);
         } else {
             $html = str_replace('</head>', "<style>{$css}</style>\n</head>", $html);
@@ -164,7 +164,7 @@ class DefaultTemplateProviderService
         <h1>[[[overlay_name]]]</h1>
         <p><strong>Channel:</strong> [[[channel_name]]]</p>
         <p><strong>Followers:</strong> [[[followers_total]]]</p>
-        <p><em>Fallback template - default template file missing</em></p>
+        <p><em>Fallback template. Default template file missing</em></p>
     </div>
 </body>
 </html>';
