@@ -44,8 +44,8 @@ export type NormalizedEvent = {
   user_login?: string;  // @todo: remove this and work out
   user_name?: string;
   user_id?: string;
-  gifter_name: string;
-  tier?: '1000'|'2000'|'3000';
+  gifter_name: string | undefined;
+  tier?: '1000'|'2000'|'3000' | undefined;
   is_gift?: boolean;
   gift_count?: number;      // for bombs
   raw: any;                 // keep original for debugging

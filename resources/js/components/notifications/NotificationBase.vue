@@ -14,12 +14,12 @@
       ]"
       :style="computedStyles"
     >
-      <div 
-        v-if="backgroundImage" 
+      <div
+        v-if="backgroundImage"
         class="notification-background"
         :style="{ backgroundImage: `url(${backgroundImage})` }"
       />
-      
+
       <div class="notification-content">
         <slot />
       </div>
@@ -92,7 +92,7 @@ const computedStyles = computed(() => {
     boxShadow: `0 0 ${props.shadowSize}px ${props.shadowColor}`,
     ...props.customStyles,
   };
-  
+
   return styles;
 });
 </script>

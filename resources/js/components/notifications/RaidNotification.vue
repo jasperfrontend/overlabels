@@ -9,22 +9,22 @@
         <component :is="iconComponent" v-if="iconComponent" />
         <span v-else class="default-icon">⚔️</span>
       </div>
-      
+
       <div class="raid-body">
         <h2 class="raid-title" :style="{ color: titleColor }">
           {{ title }}
         </h2>
-        
+
         <div class="raid-message" :style="{ color: messageColor }">
-          <strong>{{ fromBroadcasterName }}</strong> is raiding with 
+          <strong>{{ fromBroadcasterName }}</strong> is raiding with
           <strong class="viewer-count">{{ viewerCount }}</strong> {{ viewerLabel }}!
         </div>
-        
+
         <div v-if="showWelcomeMessage" class="welcome-message">
           {{ welcomeMessage }}
         </div>
       </div>
-      
+
       <div v-if="showAnimation" class="raid-animation">
         <slot name="animation">
           <div class="raid-effect"></div>
@@ -67,15 +67,15 @@ const baseProps = computed(() => {
 // Suppress unused variable warnings
 void (props.event && props.showIcon && props.showWelcomeMessage && props.showAnimation && props.titleColor && props.messageColor && props.iconComponent && props.welcomeMessage);
 
-const fromBroadcasterName = computed(() => 
+const fromBroadcasterName = computed(() =>
   props.event.raw?.event?.from_broadcaster_user_name || 'A streamer'
 );
 
-const viewerCount = computed(() => 
+const viewerCount = computed(() =>
   props.event.raw?.event?.viewers || 0
 );
 
-const viewerLabel = computed(() => 
+const viewerLabel = computed(() =>
   viewerCount.value === 1 ? 'viewer' : 'viewers'
 );
 

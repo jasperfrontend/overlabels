@@ -9,16 +9,16 @@
         <component :is="iconComponent" v-if="iconComponent" />
         <span v-else class="default-icon">⭐</span>
       </div>
-      
+
       <div class="notification-body">
         <h3 class="notification-title" :style="{ color: titleColor }">
           {{ title }}
         </h3>
-        
+
         <div class="notification-message" :style="{ color: messageColor }">
           <template v-if="isGiftBomb">
-            <strong>{{ gifterName }}</strong> just gifted 
-            <strong class="gift-count" :class="{ 'count-updating': isUpdating }">{{ giftCount }}</strong> 
+            <strong>{{ gifterName }}</strong> just gifted
+            <strong class="gift-count" :class="{ 'count-updating': isUpdating }">{{ giftCount }}</strong>
             {{ tierLabel }} subscriptions to the community!
           </template>
           <template v-else-if="isGift">
@@ -27,18 +27,18 @@
           <template v-else>
             <strong>{{ userName }}</strong> subscribed with {{ tierLabel }}!
           </template>
-          
+
           <div v-if="showMessage && message" class="user-message">
             "{{ message }}"
           </div>
         </div>
-        
+
         <div v-if="showStats" class="notification-stats">
           <span v-if="monthsSubscribed">{{ monthsSubscribed }} months</span>
           <span v-if="streakMonths">{{ streakMonths }} month streak</span>
         </div>
       </div>
-      
+
       <div v-if="showAnimation" class="notification-animation">
         <slot name="animation" />
       </div>
@@ -85,7 +85,17 @@ const baseProps = computed(() => {
 });
 
 // Suppress unused variable warnings
-void (props.event && props.count && props.showIcon && props.showMessage && props.showStats && props.showAnimation && props.titleColor && props.messageColor && props.iconComponent && props.tierLabels);
+void (
+  props.event &&
+  props.count &&
+  props.showIcon &&
+  props.showMessage &&
+  props.showStats &&
+  props.showAnimation &&
+  props.titleColor &&
+  props.messageColor &&
+  props.iconComponent &&
+  props.tierLabels);
 
 const isGift = computed(() => props.event.is_gift);
 const isGiftBomb = computed(() => props.event.type === 'channel.subscription.gift' && (props.event.gift_count || 0) > 1);

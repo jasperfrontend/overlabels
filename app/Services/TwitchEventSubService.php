@@ -54,7 +54,7 @@ class TwitchEventSubService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
                 'Content-Type' => 'application/json',
             ])->post($this->baseUrl, $payload);
@@ -92,7 +92,7 @@ class TwitchEventSubService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
             ])->get($this->baseUrl);
 
@@ -114,7 +114,7 @@ class TwitchEventSubService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
+                'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
             ])->delete($this->baseUrl, [
                 'id' => $subscriptionId
@@ -132,9 +132,7 @@ class TwitchEventSubService
      */
     public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        // Get app access token for follow events (REQUIRED by Twitch)
-        $appToken = $this->getAppAccessToken();
-        if (!$appToken) {
+        if (!$userAccessToken) {
             return [
                 'error' => true,
                 'message' => 'Could not get app access token for follow events'
@@ -146,17 +144,18 @@ class TwitchEventSubService
             'version' => '2', // Use version 2
             'condition' => [
                 'broadcaster_user_id' => $userId,
-                'moderator_user_id' => $userId // Required for follows
+                // Required for follows, but since broadcaster also is moderator in their own channel, this should be fine.
+                'moderator_user_id' => $userId
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret', 'fallback-secret')
+                'secret' => config('app.twitch_webhook_secret')
             ]
         ];
 
         // Use APP access token for follow events (not user token)
-        return $this->createSubscription($appToken, $payload);
+        return $this->createSubscription($userAccessToken, $payload);
     }
 
     /**

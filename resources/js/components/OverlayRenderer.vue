@@ -10,7 +10,7 @@
       @notification-hidden="onNotificationHidden"
       @queue-updated="onQueueUpdated"
     />
-    
+
     <div v-html="compiledHtml" />
   </div>
 </template>
@@ -106,8 +106,8 @@ function injectStyle(styleString: string) {
 
 const notificationConfig = computed(() => ({
   maxQueueSize: 100,
-  defaultDisplayDuration: 5000,
-  groupingWindow: 3000,
+  defaultDisplayDuration: 8000,
+  groupingWindow: 4000,
   maxGroupSize: 50,
 }));
 
@@ -134,13 +134,13 @@ const notificationPropsMap = computed(() => ({
   'channel.subscription.gift': {
     borderColor: '#ff0000',
     titleColor: '#ff0000',
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    backgroundColor: 'rgba(255, 0, 0, 0.4)',
   },
   'channel.raid': {
     borderColor: '#ff0000',
     titleColor: '#ff0000',
     size: 'large',
-    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    backgroundColor: 'rgba(255, 0, 0, 0.4)',
   },
   'channel.follow': {
     borderColor: '#9146ff',
@@ -207,17 +207,14 @@ onMounted(async () => {
       event: event.eventData || event.data
     };
 
-    // First normalize the event
+    // First, we normalize the event
     const normalizedEvent = eventHandler.processRawEvent(restructuredEvent);
-    
-    // Then process through gift bomb detector
+
     giftBombDetector.processEvent(normalizedEvent, (processedEvent) => {
       // Dispatch the processed event for notifications
       eventHandler.dispatchEvent(processedEvent);
-      
       // Update the store
       eventStore.addEvent(processedEvent);
-      
       // Update template data
       data.value = { ...data.value, ...(processedEvent.raw?.event || {}) };
       bump();

@@ -67,7 +67,7 @@ class OverlayAccessToken extends Model
     }
 
     /**
-     * Find token by plain text and validate
+     * Find a token by plain text and validate
      */
     public static function findByToken(string $plainToken, ?string $clientIp = null): ?self
     {
@@ -85,7 +85,7 @@ class OverlayAccessToken extends Model
     }
 
     /**
-     * Check if token is valid
+     * Check if the token is valid
      */
     public function isValid(?string $clientIp = null): bool
     {

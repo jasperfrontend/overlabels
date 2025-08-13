@@ -29,7 +29,7 @@ class ValidateOverlayToken
             }
         }
 
-        // Attach token and user to request
+        // Attach token and user to the request
         $request->merge(['overlay_token' => $accessToken]);
         $request->setUserResolver(function () use ($accessToken) {
             return $accessToken->user;
