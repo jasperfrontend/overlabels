@@ -41,6 +41,9 @@ class OverlayTemplateController extends Controller
             ->when($request->input('filter') === 'public', function ($query) {
                 $query->where('is_public', true);
             })
+            ->when($request->input('type'), function ($query, $type) {
+                $query->where('type', $type);
+            })
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
@@ -54,7 +57,7 @@ class OverlayTemplateController extends Controller
 
         return Inertia::render('templates/index', [
             'templates' => $templates,
-            'filters' => $request->only(['filter', 'search', 'sort', 'direction']),
+            'filters' => $request->only(['filter', 'search', 'type', 'sort', 'direction']),
         ]);
     }
 
@@ -226,7 +229,9 @@ class OverlayTemplateController extends Controller
                     'created_at' => $template->created_at,
                     'updated_at' => $template->updated_at,
                 ],
-                'data' => $mapped,
+                'data' => array_merge($mapped, [
+                    'user_twitch_id' => $user->twitch_id, // Add user's Twitch ID for alert channels
+                ]),
             ]);
 
 
@@ -251,6 +256,7 @@ class OverlayTemplateController extends Controller
             'description' => 'nullable|string',
             'html' => 'required|string',
             'css' => 'nullable|string',
+            'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
         ]);
 
@@ -287,6 +293,7 @@ class OverlayTemplateController extends Controller
             'description' => 'nullable|string',
             'html' => 'sometimes|string',
             'css' => 'nullable|string',
+            'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
         ]);
 

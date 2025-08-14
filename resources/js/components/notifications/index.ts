@@ -1,4 +1,3 @@
-
 export type { NotificationBaseProps } from './NotificationBase.vue';
 export type { SubscriptionNotificationProps } from './SubscriptionNotification.vue';
 export type { RaidNotificationProps } from './RaidNotification.vue';

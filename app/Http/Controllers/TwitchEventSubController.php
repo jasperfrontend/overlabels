@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\TwitchEventReceived;
 use App\Models\TwitchEvent;
+use App\Models\User;
+use App\Models\EventTemplateMapping;
+use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
+use App\Services\TemplateDataMapperService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,10 +18,17 @@ use Inertia\Inertia;
 class TwitchEventSubController extends Controller
 {
     private TwitchEventSubService $eventSubService;
+    private TwitchApiService $twitchService;
+    private TemplateDataMapperService $mapper;
 
-    public function __construct(TwitchEventSubService $eventSubService)
-    {
+    public function __construct(
+        TwitchEventSubService $eventSubService,
+        TwitchApiService $twitchService,
+        TemplateDataMapperService $mapper
+    ) {
         $this->eventSubService = $eventSubService;
+        $this->twitchService = $twitchService;
+        $this->mapper = $mapper;
     }
 
     /**
@@ -422,11 +433,32 @@ class TwitchEventSubController extends Controller
             $twitchEvent = TwitchEvent::create([
                 'event_type' => $eventType,
                 'event_data' => $event,
-                'twitch_timestamp' => now(), // Use current time if not available in the event
+                'twitch_timestamp' => now(),
                 'processed' => false,
             ]);
 
             Log::info("Stored Twitch event in database: $eventType (ID: $twitchEvent->id)");
+
+            // Find the broadcaster user
+            $broadcasterId = $event['broadcaster_user_id'] ?? null;
+            
+            if ($broadcasterId) {
+                $user = User::where('twitch_id', $broadcasterId)->first();
+                
+                if ($user) {
+                    // Check if user has a template mapping for this event
+                    $mapping = EventTemplateMapping::with('template')
+                        ->where('user_id', $user->id)
+                        ->where('event_type', $eventType)
+                        ->where('enabled', true)
+                        ->first();
+
+                    if ($mapping && $mapping->template) {
+                        // Render the user's custom alert template
+                        $this->renderEventAlert($user, $mapping, $data);
+                    }
+                }
+            }
 
             // Broadcast the event to connected WebSocket clients
             broadcast(new TwitchEventReceived($eventType, $event));
@@ -439,6 +471,52 @@ class TwitchEventSubController extends Controller
 
             // Still broadcast the event even if database storage fails
             broadcast(new TwitchEventReceived($eventType, $event));
+        }
+    }
+
+    /**
+     * Render user's custom alert template for an event
+     */
+    private function renderEventAlert(User $user, EventTemplateMapping $mapping, array $eventData): void
+    {
+        try {
+            // Get user's Twitch data for static template tags
+            $twitchData = $this->twitchService->getExtendedUserData(
+                $user->access_token,
+                $user->twitch_id
+            );
+
+            // Map template data including event tags
+            $templateData = $this->mapper->mapForTemplate(
+                $twitchData,
+                $mapping->template->name,
+                $mapping->template->template_tags,
+                $eventData // Pass event data for event.* tags
+            );
+
+            // Broadcast alert data to overlay
+            broadcast(new \App\Events\AlertTriggered(
+                $mapping->template->html,
+                $mapping->template->css,
+                $templateData,
+                $mapping->duration_ms,
+                $mapping->transition_type,
+                $user->twitch_id
+            ));
+
+            Log::info("Rendered custom alert for user {$user->id}", [
+                'event_type' => $eventData['subscription']['type'],
+                'template_id' => $mapping->template_id,
+                'duration' => $mapping->duration_ms,
+            ]);
+
+        } catch (Exception $e) {
+            Log::error("Failed to render event alert: {$e->getMessage()}", [
+                'user_id' => $user->id,
+                'template_id' => $mapping->template_id,
+                'event_type' => $eventData['subscription']['type'],
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

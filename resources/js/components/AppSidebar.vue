@@ -36,8 +36,8 @@
   },
 
   {
-  title: 'EventSub Demo',
-  href: '/eventsub-demo',
+  title: 'Events',
+  href: '/events',
   icon: Radio,
   },
 

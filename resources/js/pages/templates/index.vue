@@ -20,6 +20,7 @@ const props = defineProps({
 const filters = ref({
   filter: props.filters?.filter || '',
   search: props.filters?.search || '',
+  type: props.filters?.type || '',
   sort: props.filters?.sort || 'created_at',
   direction: props.filters?.direction || 'desc',
 });
@@ -82,6 +83,16 @@ const breadcrumbs: BreadcrumbItem[] = [
           <option value="public">Public Templates</option>
         </select>
 
+        <select
+          v-model="filters.type"
+          @change="applyFilter"
+          class="rounded-2xl p-1 px-3 text-accent-foreground bg-accent"
+        >
+          <option value="" selected>All Types</option>
+          <option value="static">Static Overlays</option>
+          <option value="alert">Event Alerts</option>
+        </select>
+
         <input
           v-model="filters.search"
           @input="debounceSearch"
@@ -125,13 +136,23 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
           <p class="text-sm mb-3">{{ template.description || 'No description' }}</p>
 
-          <div class="bg-accent-foreground/5 p-0.5 px-2 rounded-2xl mb-3 text-sm inline-block">
-            <span v-if="template.is_public" class="text-green-600">
-              Public
-            </span>
-            <span v-else class="text-violet-400">
-              Private
-            </span>
+          <div class="flex gap-2 mb-3">
+            <div class="bg-accent-foreground/5 p-0.5 px-2 rounded-2xl text-sm inline-block">
+              <span v-if="template.is_public" class="text-green-600">
+                Public
+              </span>
+              <span v-else class="text-violet-400">
+                Private
+              </span>
+            </div>
+            <div class="bg-blue-100 p-0.5 px-2 rounded-2xl text-sm inline-block">
+              <span v-if="template.type === 'alert'" class="text-blue-600">
+                🚨 Alert
+              </span>
+              <span v-else class="text-blue-600">
+                📺 Overlay
+              </span>
+            </div>
           </div>
           <div class="flex items-center text-sm text-gray-500 mb-3">
             <img

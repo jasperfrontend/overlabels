@@ -1,16 +1,22 @@
 <template>
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
-    <NotificationManager
-      ref="notificationManager"
-      :queue-config="notificationConfig"
-      :default-props="defaultNotificationProps"
-      :props-map="notificationPropsMap"
-      @notification-shown="onNotificationShown"
-      @notification-hidden="onNotificationHidden"
-      @queue-updated="onQueueUpdated"
-    />
+    <!-- Dynamic Alert Overlay -->
+    <transition
+      :name="currentAlert?.transition || 'fade'"
+      @enter="onAlertEnter"
+      @leave="onAlertLeave"
+    >
+      <div
+        v-if="currentAlert"
+        class="alert-overlay"
+        :style="alertContainerStyle"
+      >
+        <div v-html="compiledAlertHtml" />
+      </div>
+    </transition>
 
+    <!-- Static Overlay Content -->
     <div v-html="compiledHtml" />
   </div>
 </template>
@@ -21,8 +27,16 @@ import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
-import NotificationManager from '@/components/notifications/NotificationManager.vue';
 import type { NormalizedEvent } from '@/types';
+
+interface AlertData {
+  html: string;
+  css: string;
+  data: Record<string, any>;
+  duration: number;
+  transition: string;
+  timestamp: number;
+}
 
 let lastUpdate = 0;
 const MIN_INTERVAL = 16; // ~ 60fps
@@ -48,7 +62,11 @@ const templateTags = ref<string[]>([]);
 const eventStore = useEventsStore();
 const eventHandler = useEventHandler();
 const giftBombDetector = useGiftBombDetector();
-const notificationManager = ref<InstanceType<typeof NotificationManager> | null>(null);
+
+// Alert system state
+const currentAlert = ref<AlertData | null>(null);
+const alertTimeout = ref<number | null>(null);
+const userId = ref<string | null>(null);
 
 
 // Utility: escape regex special characters in keys
@@ -104,66 +122,99 @@ function injectStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
-const notificationConfig = computed(() => ({
-  maxQueueSize: 100,
-  defaultDisplayDuration: 8000,
-  groupingWindow: 4000,
-  maxGroupSize: 50,
-}));
+// Alert rendering system
+const compiledAlertHtml = computed(() => {
+  if (!currentAlert.value) return '';
+  
+  let html = currentAlert.value.html;
+  const alertData = currentAlert.value.data;
+  
+  if (!alertData || typeof alertData !== 'object') return html;
+  
+  // Parse ALL template tags found in the alert data, not just templateTags
+  for (const [key, value] of Object.entries(alertData)) {
+    if (value === undefined || value === null || typeof value === 'object') continue;
+    
+    const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}\\]\\]\\]`, 'g');
+    html = html.replace(regex, String(value));
+  }
+  
+  return html;
+});
 
-const defaultNotificationProps = computed(() => ({
-  position: 'top-center',
-  size: 'medium',
-  transitionName: 'notification-slide',
-  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-  borderColor: '#ff6b00',
-  borderWidth: 2,
-  borderRadius: 8,
-  padding: 16,
-  margin: 16,
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-  fontSize: 16,
-  fontColor: '#ffffff',
-}));
+const alertContainerStyle = computed(() => {
+  if (!currentAlert.value) return {};
+  
+  return {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  };
+});
 
-const notificationPropsMap = computed(() => ({
-  'channel.subscribe': {
-    borderColor: '#9146ff',
-    titleColor: '#9146ff',
-  },
-  'channel.subscription.gift': {
-    borderColor: '#ff0000',
-    titleColor: '#ff0000',
-    backgroundColor: 'rgba(255, 0, 0, 0.4)',
-  },
-  'channel.raid': {
-    borderColor: '#ff0000',
-    titleColor: '#ff0000',
-    size: 'large',
-    backgroundColor: 'rgba(255, 0, 0, 0.4)',
-  },
-  'channel.follow': {
-    borderColor: '#9146ff',
-    titleColor: '#9146ff',
-    size: 'small',
-  },
-  'channel.cheer': {
-    borderColor: '#00d4ff',
-    titleColor: '#00d4ff',
-  },
-}));
+// Alert management functions
+function showAlert(alertData: AlertData) {
+  // Clear any existing alert
+  if (alertTimeout.value) {
+    clearTimeout(alertTimeout.value);
+    alertTimeout.value = null;
+  }
+  
+  // Inject alert CSS
+  if (alertData.css) {
+    injectAlertStyle(alertData.css);
+  }
+  
+  // Show the alert
+  currentAlert.value = alertData;
+  console.log('Showing alert for', alertData.duration, 'ms');
+  
+  // Auto-hide after duration
+  alertTimeout.value = window.setTimeout(() => {
+    hideAlert();
+  }, alertData.duration);
+}
 
-const onNotificationShown = (event: NormalizedEvent) => {
-  console.log('Notification shown:', event.type, event.id);
+function hideAlert() {
+  currentAlert.value = null;
+  if (alertTimeout.value) {
+    clearTimeout(alertTimeout.value);
+    alertTimeout.value = null;
+  }
+  
+  // Remove alert styles
+  const alertStyle = document.getElementById('alert-style');
+  if (alertStyle) {
+    alertStyle.remove();
+  }
+  
+  console.log('Alert hidden');
+}
+
+function injectAlertStyle(styleString: string) {
+  const existing = document.getElementById('alert-style');
+  if (existing) existing.remove();
+  
+  const style = document.createElement('style');
+  style.id = 'alert-style';
+  style.textContent = styleString;
+  document.head.appendChild(style);
+}
+
+const onAlertEnter = () => {
+  console.log('Alert enter animation');
 };
 
-const onNotificationHidden = (event: NormalizedEvent) => {
-  console.log('Notification hidden:', event.type, event.id);
+const onAlertLeave = () => {
+  console.log('Alert leave animation');
   eventStore.clearOverlayTriggers();
-};
-
-const onQueueUpdated = (size: number) => {
-  console.log('Notification queue size:', size);
 };
 
 onMounted(async () => {
@@ -185,10 +236,26 @@ onMounted(async () => {
 
       css.value = json.template.css;
       data.value = json.data ?? {};
+      
+      // Extract user ID for alert channel subscription
+      console.log('DEBUG: Overlay data received:', {
+        user_id: json.data?.user_id,
+        channel_id: json.data?.channel_id,
+        twitch_id: json.data?.twitch_id,
+        user_twitch_id: json.data?.user_twitch_id,
+        available_keys: Object.keys(json.data || {})
+      });
+      userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
+      console.log('DEBUG: Set userId to:', userId.value);
 
       injectStyle(css.value);
       document.title = json.meta?.name || 'Overlay';
       document.getElementById('loading')?.remove();
+      
+      // Set up alert listening
+      console.log('DEBUG: About to setup alert listener');
+      setupAlertListener();
+      console.log('DEBUG: Alert listener setup completed');
     } else {
       console.error('Failed to load overlay', response.status, response.statusText);
     }
@@ -221,4 +288,80 @@ onMounted(async () => {
     });
   });
 });
+
+// Set up alert listener for broadcasted alerts
+function setupAlertListener() {
+  console.log('DEBUG: setupAlertListener called');
+  
+  if (!window.Echo) {
+    console.error('ERROR: window.Echo is not available');
+    return;
+  }
+  
+  console.log('DEBUG: window.Echo exists');
+  
+  console.log('DEBUG: userId.value is:', userId.value);
+  if (!userId.value) {
+    console.warn('No user ID available for alert subscription');
+    return;
+  }
+
+  // Listen for alert broadcasts on the user's channel
+  const channelName = `alerts.${userId.value}`;
+  console.log('Setting up alert listener for channel:', channelName);
+  
+  // Test if Echo is connected
+  try {
+    console.log('Echo connector state:', window.Echo.connector.pusher.connection.state);
+    console.log('Echo connector options:', {
+      key: window.Echo.options.key,
+      cluster: window.Echo.options.cluster,
+      encrypted: window.Echo.options.encrypted
+    });
+  } catch (error) {
+    console.error('Echo connection error:', error);
+  }
+  
+  // Use Laravel Echo to listen for real-time alert broadcasts
+  console.log('Creating Echo channel for:', channelName);
+  const channel = window.Echo.channel(channelName);
+  
+  // Listen for alert broadcasts (Laravel Echo requires dot prefix)
+  channel.listen('.alert.triggered', handleAlertTriggered);
+  
+  // Add debugging for channel events
+  channel.subscribed(() => {
+    console.log('✅ Successfully subscribed to channel:', channelName);
+  });
+  
+  channel.error((error: any) => {
+    console.error('❌ Channel subscription error:', error);
+  });
+  
+}
+
+function handleAlertTriggered(event: any) {
+  console.log('Alert triggered via Echo:', event);
+  
+  const alertData = event.alert;
+  if (!alertData) {
+    console.error('No alert data in Echo event');
+    return;
+  }
+  
+  // Merge current overlay data with event data for template rendering
+  const mergedData = {
+    ...data.value,
+    ...alertData.data
+  };
+  
+  showAlert({
+    html: alertData.html,
+    css: alertData.css,
+    data: mergedData,
+    duration: alertData.duration,
+    transition: alertData.transition,
+    timestamp: alertData.timestamp || Date.now()
+  });
+}
 </script>

@@ -4,7 +4,7 @@ import type { NormalizedEvent } from '@/types';
 interface GiftBombBuffer {
   gifterName: string;
   gifterUserId: string;
-  tier: string;
+  tier: "1000" | "2000" | "3000" | undefined;
   events: NormalizedEvent[];
   firstEventTime: number;
   lastEventTime: number;
@@ -23,7 +23,7 @@ export function useGiftBombDetector() {
   const createGiftBombEvent = (buffer: GiftBombBuffer, isUpdate = false): NormalizedEvent => {
     const firstEvent = buffer.events[0];
     const giftCount = buffer.events.length;
-    
+
     return {
       id: buffer.liveEventId,
       type: 'channel.subscription.gift',
@@ -133,7 +133,7 @@ export function useGiftBombDetector() {
         sendLiveUpdate(buffer, callback);
       }, LIVE_UPDATE_DELAY);
     }
-    
+
     // If already live, send throttled update (every 5th event or every 300ms)
     else if (buffer.isLive && buffer.events.length > MIN_GIFT_BOMB_SIZE) {
       const shouldUpdate = buffer.events.length % 5 === 0 || (now - buffer.lastUpdateTime) > 300;

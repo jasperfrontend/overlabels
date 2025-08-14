@@ -389,6 +389,22 @@ class TemplateDataMapperService
                 'display_name' => 'Overlay Metadata',
                 'description' => 'Information about the overlay itself',
                 'tags' => ['overlay_name', 'timestamp']
+            ],
+            'event' => [
+                'display_name' => 'Event Data',
+                'description' => 'Dynamic event data from Twitch EventSub',
+                'tags' => [
+                    'event.type', 'event.user_id', 'event.user_login', 'event.user_name',
+                    'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name',
+                    'event.tier', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
+                    'event.message', 'event.bits', 'event.viewers', 'event.from_broadcaster_user_id',
+                    'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name',
+                    'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name',
+                    'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name',
+                    'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
+                    'event.reward_id', 'event.reward_title', 'event.reward_prompt', 'event.reward_cost',
+                    'event.user_input', 'event.status', 'event.redeemed_at'
+                ]
             ]
         ];
     }
@@ -396,10 +412,15 @@ class TemplateDataMapperService
     /*
      *  Helper methods for template mapping to map and prune to a template’s tags in one call.
      */
-    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null): array
+    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null, ?array $eventData = null): array
     {
         // Map the full Twitch dataset to your flat tag structure
         $all = $this->mapTwitchDataForTemplates($twitchData, $overlayName);
+
+        // If event data is provided, add event.* tags
+        if ($eventData) {
+            $all = array_merge($all, $this->mapEventDataForTemplates($eventData));
+        }
 
         // If a tag allowlist is provided, prune to only those keys
         if (is_array($templateTags) && count($templateTags)) {
@@ -494,5 +515,96 @@ class TemplateDataMapperService
         } catch (Exception) {
             return $dateString; // Return original if parsing fails
         }
+    }
+
+    /**
+     * Map EventSub event data to template tags
+     */
+    public function mapEventDataForTemplates(array $eventData): array
+    {
+        $mapped = [];
+        
+        // Add event type
+        if (isset($eventData['subscription']['type'])) {
+            $mapped['event.type'] = $eventData['subscription']['type'];
+        }
+        
+        // Map all event fields with event. prefix
+        if (isset($eventData['event'])) {
+            foreach ($eventData['event'] as $key => $value) {
+                $tagName = 'event.' . $key;
+                
+                // Handle nested objects (flatten them)
+                if (is_array($value) && !array_is_list($value)) {
+                    foreach ($value as $nestedKey => $nestedValue) {
+                        $mapped['event.' . $key . '.' . $nestedKey] = $this->formatValueForTemplate($nestedValue, 'event.' . $key . '.' . $nestedKey);
+                    }
+                } else {
+                    $mapped[$tagName] = $this->formatValueForTemplate($value, $tagName);
+                }
+            }
+        }
+        
+        return $mapped;
+    }
+
+    /**
+     * Get available event template tags
+     */
+    public function getAvailableEventTags(): array
+    {
+        return [
+            // Common event fields
+            'event.type' => 'Event type (channel.follow, channel.subscribe, etc.)',
+            'event.user_id' => 'User ID who triggered the event',
+            'event.user_login' => 'User login who triggered the event',
+            'event.user_name' => 'User display name who triggered the event',
+            'event.broadcaster_user_id' => 'Broadcaster user ID',
+            'event.broadcaster_user_login' => 'Broadcaster login',
+            'event.broadcaster_user_name' => 'Broadcaster display name',
+            
+            // Subscription specific
+            'event.tier' => 'Subscription tier (1000, 2000, 3000)',
+            'event.is_gift' => 'Whether this is a gifted subscription',
+            'event.total' => 'Total months subscribed',
+            'event.cumulative_total' => 'Cumulative total months',
+            'event.streak_months' => 'Current subscription streak',
+            'event.message' => 'User message (for resubscriptions)',
+            
+            // Gift subscription specific
+            'event.is_anonymous' => 'Whether the gift is anonymous',
+            'event.cumulative_total' => 'Total gifts given by this user',
+            
+            // Bits/Cheer specific
+            'event.bits' => 'Number of bits cheered',
+            
+            // Raid specific
+            'event.viewers' => 'Number of viewers in the raid',
+            'event.from_broadcaster_user_id' => 'Raiding broadcaster ID',
+            'event.from_broadcaster_user_login' => 'Raiding broadcaster login',
+            'event.from_broadcaster_user_name' => 'Raiding broadcaster name',
+            
+            // Channel Points Redemption
+            'event.reward_id' => 'Reward ID',
+            'event.reward_title' => 'Reward title',
+            'event.reward_prompt' => 'Reward prompt',
+            'event.reward_cost' => 'Reward cost in points',
+            'event.user_input' => 'User input for the reward',
+            'event.status' => 'Redemption status',
+            'event.redeemed_at' => 'When the reward was redeemed',
+        ];
+    }
+
+    /**
+     * Check if a template has event tags (to determine if it's an alert template)
+     */
+    public function hasEventTags(array $templateTags): bool
+    {
+        foreach ($templateTags as $tag) {
+            if (str_starts_with($tag, 'event.')) {
+                return true;
+            }
+        }
+        return false;
     }
 }

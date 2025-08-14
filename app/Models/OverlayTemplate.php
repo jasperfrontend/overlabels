@@ -14,6 +14,7 @@ class OverlayTemplate extends Model
 
     protected $fillable = [
         'slug',
+        'type',
         'owner_id',
         'name',
         'description',
@@ -129,5 +130,26 @@ class OverlayTemplate extends Model
     public function forks(): HasMany
     {
         return $this->hasMany(self::class, 'fork_of_id');
+    }
+
+    public function eventMappings(): HasMany
+    {
+        return $this->hasMany(EventTemplateMapping::class, 'template_id');
+    }
+
+    /**
+     * Scope for static overlays
+     */
+    public function scopeStatic($query)
+    {
+        return $query->where('type', 'static');
+    }
+
+    /**
+     * Scope for alert templates
+     */
+    public function scopeAlert($query)
+    {
+        return $query->where('type', 'alert');
     }
 }
