@@ -27,7 +27,6 @@ import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
-import type { NormalizedEvent } from '@/types';
 
 interface AlertData {
   html: string;
@@ -125,26 +124,34 @@ function injectStyle(styleString: string) {
 // Alert rendering system
 const compiledAlertHtml = computed(() => {
   if (!currentAlert.value) return '';
-  
+
   let html = currentAlert.value.html;
   const alertData = currentAlert.value.data;
-  
+
   if (!alertData || typeof alertData !== 'object') return html;
-  
-  // Parse ALL template tags found in the alert data, not just templateTags
+
+  // Create a map of all tags to process - both static and dynamic
+  const allTags = new Map<string, any>();
+
+  // First, add all data from the merged data (includes both static and dynamic)
   for (const [key, value] of Object.entries(alertData)) {
-    if (value === undefined || value === null || typeof value === 'object') continue;
-    
+    if (value !== undefined && value !== null && typeof value !== 'object') {
+      allTags.set(key, value);
+    }
+  }
+
+  // Process all tags in the HTML
+  for (const [key, value] of allTags.entries()) {
     const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}\\]\\]\\]`, 'g');
     html = html.replace(regex, String(value));
   }
-  
+
   return html;
 });
 
 const alertContainerStyle = computed(() => {
   if (!currentAlert.value) return {};
-  
+
   return {
     position: 'fixed',
     top: 0,
@@ -166,16 +173,16 @@ function showAlert(alertData: AlertData) {
     clearTimeout(alertTimeout.value);
     alertTimeout.value = null;
   }
-  
+
   // Inject alert CSS
   if (alertData.css) {
     injectAlertStyle(alertData.css);
   }
-  
+
   // Show the alert
   currentAlert.value = alertData;
   console.log('Showing alert for', alertData.duration, 'ms');
-  
+
   // Auto-hide after duration
   alertTimeout.value = window.setTimeout(() => {
     hideAlert();
@@ -188,20 +195,20 @@ function hideAlert() {
     clearTimeout(alertTimeout.value);
     alertTimeout.value = null;
   }
-  
+
   // Remove alert styles
   const alertStyle = document.getElementById('alert-style');
   if (alertStyle) {
     alertStyle.remove();
   }
-  
+
   console.log('Alert hidden');
 }
 
 function injectAlertStyle(styleString: string) {
   const existing = document.getElementById('alert-style');
   if (existing) existing.remove();
-  
+
   const style = document.createElement('style');
   style.id = 'alert-style';
   style.textContent = styleString;
@@ -236,7 +243,7 @@ onMounted(async () => {
 
       css.value = json.template.css;
       data.value = json.data ?? {};
-      
+
       // Extract user ID for alert channel subscription
       console.log('DEBUG: Overlay data received:', {
         user_id: json.data?.user_id,
@@ -251,7 +258,7 @@ onMounted(async () => {
       injectStyle(css.value);
       document.title = json.meta?.name || 'Overlay';
       document.getElementById('loading')?.remove();
-      
+
       // Set up alert listening
       console.log('DEBUG: About to setup alert listener');
       setupAlertListener();
@@ -292,14 +299,14 @@ onMounted(async () => {
 // Set up alert listener for broadcasted alerts
 function setupAlertListener() {
   console.log('DEBUG: setupAlertListener called');
-  
+
   if (!window.Echo) {
     console.error('ERROR: window.Echo is not available');
     return;
   }
-  
+
   console.log('DEBUG: window.Echo exists');
-  
+
   console.log('DEBUG: userId.value is:', userId.value);
   if (!userId.value) {
     console.warn('No user ID available for alert subscription');
@@ -309,7 +316,7 @@ function setupAlertListener() {
   // Listen for alert broadcasts on the user's channel
   const channelName = `alerts.${userId.value}`;
   console.log('Setting up alert listener for channel:', channelName);
-  
+
   // Test if Echo is connected
   try {
     console.log('Echo connector state:', window.Echo.connector.pusher.connection.state);
@@ -321,40 +328,50 @@ function setupAlertListener() {
   } catch (error) {
     console.error('Echo connection error:', error);
   }
-  
+
   // Use Laravel Echo to listen for real-time alert broadcasts
   console.log('Creating Echo channel for:', channelName);
   const channel = window.Echo.channel(channelName);
-  
+
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
   channel.listen('.alert.triggered', handleAlertTriggered);
-  
+
   // Add debugging for channel events
   channel.subscribed(() => {
     console.log('✅ Successfully subscribed to channel:', channelName);
   });
-  
+
   channel.error((error: any) => {
     console.error('❌ Channel subscription error:', error);
   });
-  
+
 }
 
 function handleAlertTriggered(event: any) {
   console.log('Alert triggered via Echo:', event);
-  
+
   const alertData = event.alert;
   if (!alertData) {
     console.error('No alert data in Echo event');
     return;
   }
-  
+
   // Merge current overlay data with event data for template rendering
+  // This ensures both static tags (from data.value) and dynamic tags (from alertData.data) are available
   const mergedData = {
     ...data.value,
     ...alertData.data
   };
-  
+
+  // Debug logging to verify the merge
+  console.log('Merged data for alert:', {
+    staticDataKeys: Object.keys(data.value || {}),
+    eventDataKeys: Object.keys(alertData.data || {}),
+    mergedDataKeys: Object.keys(mergedData),
+    sampleStaticTag: mergedData['subscribers_total'],
+    sampleEventTag: mergedData['event.user_name']
+  });
+
   showAlert({
     html: alertData.html,
     css: alertData.css,

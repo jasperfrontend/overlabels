@@ -396,7 +396,7 @@ class TemplateDataMapperService
                 'tags' => [
                     'event.type', 'event.user_id', 'event.user_login', 'event.user_name',
                     'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name',
-                    'event.tier', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
+                    'event.tier', 'event.tier_display', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
                     'event.message', 'event.bits', 'event.viewers', 'event.from_broadcaster_user_id',
                     'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name',
                     'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name',
@@ -518,24 +518,52 @@ class TemplateDataMapperService
     }
 
     /**
+     * Format Twitch subscription tier for display
+     * Converts "1000" -> "1", "2000" -> "2", "3000" -> "3", "Prime" -> "Prime"
+     */
+    private function formatTier($tier): string
+    {
+        if (!$tier) {
+            return '';
+        }
+
+        $tierMap = [
+            '1000' => '1',
+            '2000' => '2',
+            '3000' => '3',
+            'Prime' => 'Prime'
+        ];
+
+        // Convert to string to handle both string and numeric inputs
+        $tierStr = (string) $tier;
+
+        return $tierMap[$tierStr] ?? $tierStr;
+    }
+
+    /**
      * Map EventSub event data to template tags
      */
     public function mapEventDataForTemplates(array $eventData): array
     {
         $mapped = [];
-        
+
         // Add event type
         if (isset($eventData['subscription']['type'])) {
             $mapped['event.type'] = $eventData['subscription']['type'];
         }
-        
+
         // Map all event fields with event. prefix
         if (isset($eventData['event'])) {
             foreach ($eventData['event'] as $key => $value) {
                 $tagName = 'event.' . $key;
-                
+
+                // Special handling for tier field - provide both raw and formatted versions
+                if ($key === 'tier') {
+                    $mapped[$tagName] = $value; // Keep raw value for backward compatibility
+                    $mapped['event.tier_display'] = $this->formatTier($value); // Add formatted version
+                }
                 // Handle nested objects (flatten them)
-                if (is_array($value) && !array_is_list($value)) {
+                elseif (is_array($value) && !array_is_list($value)) {
                     foreach ($value as $nestedKey => $nestedValue) {
                         $mapped['event.' . $key . '.' . $nestedKey] = $this->formatValueForTemplate($nestedValue, 'event.' . $key . '.' . $nestedKey);
                     }
@@ -544,7 +572,7 @@ class TemplateDataMapperService
                 }
             }
         }
-        
+
         return $mapped;
     }
 
@@ -562,28 +590,28 @@ class TemplateDataMapperService
             'event.broadcaster_user_id' => 'Broadcaster user ID',
             'event.broadcaster_user_login' => 'Broadcaster login',
             'event.broadcaster_user_name' => 'Broadcaster display name',
-            
+
             // Subscription specific
-            'event.tier' => 'Subscription tier (1000, 2000, 3000)',
+            'event.tier' => 'Raw subscription tier value (1000, 2000, 3000, Prime)',
+            'event.tier_display' => 'Formatted subscription tier (1, 2, 3, Prime)',
             'event.is_gift' => 'Whether this is a gifted subscription',
             'event.total' => 'Total months subscribed',
-            'event.cumulative_total' => 'Cumulative total months',
             'event.streak_months' => 'Current subscription streak',
             'event.message' => 'User message (for resubscriptions)',
-            
+
             // Gift subscription specific
             'event.is_anonymous' => 'Whether the gift is anonymous',
             'event.cumulative_total' => 'Total gifts given by this user',
-            
+
             // Bits/Cheer specific
             'event.bits' => 'Number of bits cheered',
-            
+
             // Raid specific
             'event.viewers' => 'Number of viewers in the raid',
             'event.from_broadcaster_user_id' => 'Raiding broadcaster ID',
             'event.from_broadcaster_user_login' => 'Raiding broadcaster login',
             'event.from_broadcaster_user_name' => 'Raiding broadcaster name',
-            
+
             // Channel Points Redemption
             'event.reward_id' => 'Reward ID',
             'event.reward_title' => 'Reward title',

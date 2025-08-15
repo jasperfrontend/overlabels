@@ -11,6 +11,7 @@ use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateBuilderController;
 use App\Http\Controllers\TwitchEventController;
+use App\Http\Controllers\EventTemplateMappingController;
 
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;

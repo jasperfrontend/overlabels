@@ -16,9 +16,9 @@ interface GiftBombBuffer {
 
 export function useGiftBombDetector() {
   const activeBuffers = ref<Map<string, GiftBombBuffer>>(new Map());
-  const GIFT_BOMB_WINDOW = 3000; // 3 seconds to collect all gift events (faster)
+  const GIFT_BOMB_WINDOW = 8000; // 5 seconds to collect all gift events (faster)
   const MIN_GIFT_BOMB_SIZE = 2; // Minimum 2 gifts to be considered a bomb
-  const LIVE_UPDATE_DELAY = 200; // 200ms delay before showing first live notification
+  const LIVE_UPDATE_DELAY = 100; // 200 ms delay before showing the first live notification
 
   const createGiftBombEvent = (buffer: GiftBombBuffer, isUpdate = false): NormalizedEvent => {
     const firstEvent = buffer.events[0];
@@ -93,8 +93,8 @@ export function useGiftBombDetector() {
 
     const gifterName = event.user_name || 'Anonymous';
     const gifterUserId = event.user_id || 'unknown';
-    const tier = event.tier || '1000';
-    const bufferKey = `${gifterUserId}-${tier}`;
+    const tier: "1000" | "2000" | "3000" | undefined = event.tier as "1000" | "2000" | "3000" | undefined;
+    const bufferKey = `${gifterUserId}-${tier || '1000'}`;
     const now = Date.now();
 
     let buffer = activeBuffers.value.get(bufferKey);
@@ -129,8 +129,14 @@ export function useGiftBombDetector() {
     if (buffer.events.length === MIN_GIFT_BOMB_SIZE && !buffer.isLive) {
       buffer.isLive = true;
       buffer.lastUpdateTime = now;
+      // Capture buffer in closure to ensure it's defined
+      const currentBuffer = buffer;
       setTimeout(() => {
-        sendLiveUpdate(buffer, callback);
+        // Re-check that buffer still exists before sending update
+        const latestBuffer = activeBuffers.value.get(bufferKey);
+        if (latestBuffer) {
+          sendLiveUpdate(latestBuffer, callback);
+        }
       }, LIVE_UPDATE_DELAY);
     }
 

@@ -41,11 +41,11 @@ export type NormalizedEvent = {
   broadcaster_user_id: string;
   broadcaster_user_login: string;
   broadcaster_user_name: string;
-  user_login?: string;  // @todo: remove this and work out
+  user_login?: string;
   user_name?: string;
   user_id?: string;
   gifter_name: string | undefined;
-  tier?: '1000'|'2000'|'3000' | undefined;
+  tier?: '1000'|'2000'|'3000' | string | undefined;
   is_gift?: boolean;
   gift_count?: number;      // for bombs
   raw: any;                 // keep original for debugging

@@ -67,8 +67,8 @@ class OverlayTemplate extends Model
     public function extractTemplateTags(): array
     {
         $tags = [];
-        // Updated pattern to match [[[tag_name]]] syntax
-        $pattern = '/\[\[\[([a-zA-Z0-9_]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
+        // Updated pattern to match [[[tag_name]]] syntax including dots for event.* tags
+        $pattern = '/\[\[\[([a-zA-Z0-9_.]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
         // Extract from HTML
         preg_match_all($pattern, $this->html, $htmlMatches);

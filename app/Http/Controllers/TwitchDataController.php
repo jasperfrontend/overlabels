@@ -27,7 +27,7 @@ class TwitchDataController extends Controller
             Log::error('No authenticated user or access token');
             abort(403);
         }
-        
+
         try {
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
 
@@ -45,7 +45,7 @@ class TwitchDataController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => $user->id
             ]);
-            
+
             return Inertia::render('TwitchData', [
                 'twitchData' => [],
                 'error' => 'Failed to fetch Twitch data. Please try refreshing the page.'
@@ -78,7 +78,11 @@ class TwitchDataController extends Controller
     public function getLiveTwitchData(Request $request)
     {
         $user = $this->getUserOrAbort($request);
-        $this->twitch->getFreshTwitchData($user->access_token, $user->twitch_id);
+        try {
+            $this->twitch->getFreshTwitchData($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Twitch data', [$e->getMessage()]);
+        }
         return redirect()->back()->with([
             'message' => 'Twitch API data refreshed.',
             'type' => 'success',
@@ -89,7 +93,11 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearUserInfoCache($user->twitch_id); // dump existing user info cache
-        $this->twitch->getUserInfo($user->access_token, $user->twitch_id); // retrieve fresh info from Twitch API
+        try {
+            $this->twitch->getUserInfo($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Twitch data', [$e->getMessage()]);
+        } // retrieve fresh info from Twitch API
 
         return redirect()->back()->with([
             'message' => 'Twitch User data refreshed!',
@@ -121,7 +129,11 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearFollowedChannelsCaches($user->twitch_id);
-        $this->twitch->getFollowedChannels($user->access_token, $user->twitch_id);
+        try {
+            $this->twitch->getFollowedChannels($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Followed Channels data', [$e->getMessage()]);
+        }
         return redirect()->back()->with([
             'message' => 'Twitch followed channels data refreshed!',
             'type' => 'success',
@@ -132,7 +144,11 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearChannelFollowersCaches($user->twitch_id);
-        $this->twitch->getChannelFollowers($user->access_token, $user->twitch_id);
+        try {
+            $this->twitch->getChannelFollowers($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Channel Followers data', [$e->getMessage()]);
+        }
         return redirect()->back()->with([
             'message' => 'Twitch channel followers data refreshed!',
             'type' => 'success',
@@ -143,7 +159,11 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearSubscribersCaches($user->twitch_id);
-        $this->twitch->getChannelSubscribers($user->access_token, $user->twitch_id);
+        try {
+            $this->twitch->getChannelSubscribers($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Channel Subscribers data', [$e->getMessage()]);
+        }
         return redirect()->back()->with([
             'message' => 'Twitch subscribers data refreshed!',
             'type' => 'success',
@@ -154,7 +174,11 @@ class TwitchDataController extends Controller
     {
         $user = $this->getUserOrAbort($request);
         $this->twitch->clearGoalsCaches($user->twitch_id);
-        $this->twitch->getChannelGoals($user->access_token, $user->twitch_id);
+        try {
+            $this->twitch->getChannelGoals($user->access_token, $user->twitch_id);
+        } catch (Exception $e) {
+            Log::error('Failed to fetch Channel Goals data', [$e->getMessage()]);
+        }
         return redirect()->back()->with([
             'message' => 'Twitch goals data refreshed!',
             'type' => 'success',

@@ -1,6 +1,7 @@
 import { normalizeEvent } from './useNormalizeEvent';
 import type { NormalizedEvent } from '@/types';
 
+
 export interface EventHandlerConfig {
   enableLogging?: boolean;
   enableNotifications?: boolean;
@@ -29,6 +30,11 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
       window.dispatchEvent(new CustomEvent('twitch-event-stats', {
         detail: event
       }));
+    }
+    if (enableLogging) {
+      window.dispatchEvent(new CustomEvent('twitch-event-log', {
+        detail: event
+      }))
     }
   };
 

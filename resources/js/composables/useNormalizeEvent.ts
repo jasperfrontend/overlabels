@@ -4,6 +4,7 @@ import type { NormalizedEvent } from '@/types';
  * Normalize the raw Twitch EventSub payload into a consistent structure.
  * Handles all major EventSub event types with proper field mapping.
  */
+
 export function normalizeEvent(raw: any): NormalizedEvent {
   const e = raw?.event ?? raw?.payload ?? raw?.eventData ?? raw;
   const eventType = raw?.subscription?.type ?? raw?.eventType ?? e?.type ?? 'unknown';
@@ -20,7 +21,7 @@ export function normalizeEvent(raw: any): NormalizedEvent {
   let user_login: string | null;
   let user_name: string | null;
   let gifter_name: string | null = null;
-  let tier: '1000' | '2000' | '3000' | null = null;
+  let tier: string | null = null;
   let is_gift: boolean | null = null;
   let gift_count: number | null = null;
 
