@@ -15,6 +15,7 @@ use Inertia\Inertia;
 class OverlayTemplateController extends Controller
 {
     protected TwitchApiService $twitchService;
+    protected TemplateTagController $templateTagController;
     protected TwitchEventSubService $eventSubService;
     protected TemplateDataMapperService $mapper;
 
@@ -22,11 +23,13 @@ class OverlayTemplateController extends Controller
 
         TwitchApiService $twitchService,
         TwitchEventSubService $eventSubService,
-        TemplateDataMapperService $mapper
+        TemplateDataMapperService $mapper,
+        TemplateTagController $templateTagController
     ) {
         $this->twitchService = $twitchService;
         $this->eventSubService = $eventSubService;
         $this->mapper = $mapper;
+        $this->templateTagController = $templateTagController;
     }
 
     /**
@@ -46,8 +49,9 @@ class OverlayTemplateController extends Controller
             })
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%$search%")
-                        ->orWhere('description', 'like', "%$search%");
+                    $searchTerm = '%' . strtolower($search) . '%';
+                    $q->whereRaw('LOWER(name) LIKE ?', [$searchTerm])
+                        ->orWhereRaw('LOWER(description) LIKE ?', [$searchTerm]);
                 });
             })
             ->with('owner:id,name,avatar')
@@ -98,9 +102,35 @@ class OverlayTemplateController extends Controller
             abort(403);
         }
 
+        $availableTags = [];
+
+        try {
+            $availableTagsResponse = $this->templateTagController->getAllTags();
+
+            // Extract JSON from the response
+            $jsonContent = $availableTagsResponse->getContent();
+
+            // Decode the JSON content into an array
+            $decodedResponse = json_decode($jsonContent, true);
+
+            Log::info('Available tags response', ['response' => $decodedResponse]);
+
+            if ($decodedResponse && isset($decodedResponse['success']) && $decodedResponse['success'] === true) {
+                $availableTags = $decodedResponse['tags'] ?? [];
+            } else {
+                Log::error('Failed to fetch available tags', ['response' => $decodedResponse]);
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to fetch available tags', ['error' => $e->getMessage()]);
+        }
+
+
+
         return Inertia::render('templates/edit', [
             'template' => $template,
+            'availableTags' => $availableTags,
         ]);
+
     }
 
     /**
@@ -313,8 +343,8 @@ class OverlayTemplateController extends Controller
             ]);
         }
 
-//        return redirect()->route('templates.show', $template)
-//            ->with('success', 'Template updated successfully!');
+        return redirect()->route('templates.edit', $template)
+            ->with('success', 'Template updated successfully!');
     }
 
     /**

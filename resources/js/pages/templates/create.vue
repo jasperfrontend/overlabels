@@ -1,14 +1,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useForm, Link, Head } from '@inertiajs/vue3';
+import { useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types'
 import Modal from '@/components/Modal.vue';
 import axios from 'axios';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Button } from '@/components/ui/button';
 import { truncate } from 'es-toolkit/compat';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
@@ -32,10 +31,12 @@ interface CategoryTag {
   tags?: Array<{
     display_tag: string;
     description: string;
+    sample_data?: string;
   }>;
   active_template_tags?: Array<{
     display_tag: string;
     description: string;
+    sample_data: string;
   }>;
 }
 
@@ -118,7 +119,7 @@ const insertTag = (editor: string): void => {
       // Store the categorized tags for the modal
       categoryTags.value = tags;
 
-      // Flatten the tags for simple list if needed
+      // Flatten the tags for a simple list if needed
       const flattenedTags: TemplateTag[] = [];
       Object.entries(tags).forEach(([category, categoryData]) => {
         // Check for active_template_tags first, then fall back to tags
@@ -309,10 +310,10 @@ watch(
             </label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label class="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" :class="{ 'border-blue-500 bg-blue-50': form.type === 'static' }">
-                <input 
-                  v-model="form.type" 
-                  type="radio" 
-                  value="static" 
+                <input
+                  v-model="form.type"
+                  type="radio"
+                  value="static"
                   class="mt-1 mr-3"
                   required
                 />
@@ -323,12 +324,12 @@ watch(
                   </div>
                 </div>
               </label>
-              
+
               <label class="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" :class="{ 'border-blue-500 bg-blue-50': form.type === 'alert' }">
-                <input 
-                  v-model="form.type" 
-                  type="radio" 
-                  value="alert" 
+                <input
+                  v-model="form.type"
+                  type="radio"
+                  value="alert"
                   class="mt-1 mr-3"
                   required
                 />
@@ -343,7 +344,7 @@ watch(
             <div v-if="form.errors.type" class="text-red-600 text-sm mt-1">
               {{ form.errors.type }}
             </div>
-            
+
             <!-- Event-specific help -->
             <div v-if="form.type === 'alert'" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <div class="text-sm text-blue-800">
@@ -523,10 +524,12 @@ watch(
           </div>
         </div>
         <div class="space-y-6 max-h-[60vh] overflow-y-auto">
-          <div v-for="(categoryData, categoryName) in categoryTags" :key="categoryName" class="border border-border rounded-lg p-4">
+          <div
+            v-if="categoryTags && Object.keys(categoryTags).length > 0"
+            v-for="(categoryData, categoryName) in categoryTags" :key="categoryName" class="border border-border rounded-lg p-4">
             <!-- Category Header -->
-            <h4 class="text-md font-medium text-foreground mb-1">{{ categoryData.category.display_name }}</h4>
-            <p class="text-sm text-muted-foreground mb-3">{{ categoryData.category.description }}</p>
+            <h4 class="text-md font-medium text-foreground mb-1">{{ categoryData?.category?.display_name }}</h4>
+            <p class="text-sm text-muted-foreground mb-3">{{ categoryData?.category?.description }}</p>
 
             <!-- Tags in this category -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -534,7 +537,7 @@ watch(
                    class="border border-border rounded-lg p-3 hover:bg-accent/10 cursor-pointer transition-colors"
                    @click="copyTagToClipboard(tag.display_tag)">
                 <code class="bg-muted px-2 py-1 rounded font-mono text-sm text-foreground">{{ tag.display_tag }}</code>
-                <p class="mt-2 text-sm text-muted-foreground" >{{ truncate(tag.sample_data, {length: 30, omission: "..."}) }}</p>
+                <p v-if="tag.sample_data" class="mt-2 text-sm text-muted-foreground" >{{ truncate(tag.sample_data, {length: 30, omission: "..."}) }}</p>
               </div>
             </div>
           </div>
