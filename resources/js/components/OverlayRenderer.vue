@@ -170,10 +170,10 @@ const compiledAlertHtml = computed(() => {
 // Alert management functions
 function showAlert(alertData: AlertData) {
   // Clear any existing alert
-  // if (alertTimeout.value) {
-  //   clearTimeout(alertTimeout.value);
-  //   alertTimeout.value = null;
-  // }
+  if (alertTimeout.value) {
+    clearTimeout(alertTimeout.value);
+    alertTimeout.value = null;
+  }
 
   // Inject alert CSS
   if (alertData.css) {
@@ -198,10 +198,10 @@ function hideAlert() {
   }
 
   // Remove alert styles
-  const alertStyle = document.getElementById('alert-style');
-  if (alertStyle) {
-    alertStyle.remove();
-  }
+  // const alertStyle = document.getElementById('alert-style');
+  // if (alertStyle) {
+  //   alertStyle.remove();
+  // }
 
   console.log('Alert hidden');
 }
