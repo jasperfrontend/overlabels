@@ -228,9 +228,17 @@ const onAlertLeave = () => {
 onMounted(async () => {
   data.value = {};
   try {
+    // Get CSRF token from meta tag
+    const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     const response = await fetch('/api/overlay/render', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken || '',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'include',
       body: JSON.stringify({ slug: props.slug, token: props.token }),
     });
 

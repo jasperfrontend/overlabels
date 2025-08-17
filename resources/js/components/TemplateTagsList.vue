@@ -3,6 +3,16 @@ import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
 import RekaToast from '@/components/RekaToast.vue';
 
+// Configure axios to include CSRF token and credentials
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.withCredentials = true;
+
+// Get CSRF token from meta tag if it exists
+const token = document.head.querySelector('meta[name="csrf-token"]');
+if (token) {
+  axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
+}
+
 // Toast state
 const toastMessage = ref('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');

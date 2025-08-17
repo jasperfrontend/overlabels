@@ -14,6 +14,16 @@ interface GiftBombBuffer {
   liveEventId: string;
 }
 
+/**
+ * Provides functionality to detect and process "gift bombs" in subscription events,
+ * where multiple subscriptions are gifted within a short time window.
+ *
+ * @return {Object} - An object containing methods:
+ *                    - `processEvent(event, callback)` - Processes incoming events and handles gift detection.
+ *                    - `forceFlushAll(callback)` - Immediately flushes all active buffers, invoking the callback for each processed event.
+ *                    - `getActiveBuffers()` - Retrieves information about currently active gift bomb buffers.
+ *                    - `activeBufferCount()` - Returns the count of active gift bomb buffers.
+ */
 export function useGiftBombDetector() {
   const activeBuffers = ref<Map<string, GiftBombBuffer>>(new Map());
   const GIFT_BOMB_WINDOW = 8000; // 8 seconds to collect all gift events

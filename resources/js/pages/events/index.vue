@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { AlertTriangleIcon, CheckIcon } from 'lucide-vue-next';
 import axios from 'axios';
 import type { BreadcrumbItem } from '@/types/index.js';
@@ -59,10 +60,12 @@ const unassignedTemplates = computed(() => {
   return props.alertTemplates.filter(t => !assignedTemplateIds.has(t.id)).length;
 });
 
-// System is working properly - debug logs removed
-
 const isSaving = ref(false);
-const showSuccessToast = ref(false);
+
+// Toast state
+const toastMessage = ref<string>('');
+const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+const showToast = ref(false);
 
 const getTemplateName = (templateId: number | null): string => {
   if (!templateId) return 'No template';
@@ -86,11 +89,10 @@ const saveAllMappings = async () => {
     const response = await axios.put('/events/bulk', {
       mappings: mappingsToSave
     });
+    showToast.value = true;
+    toastMessage.value = "Settings saved successfully!";
+    toastType.value = 'success';
 
-    showSuccessToast.value = true;
-    setTimeout(() => {
-      showSuccessToast.value = false;
-    }, 3000);
   } catch (error:any) {
     if (error.response) {
       alert(`Error: ${error.response.data.error || 'Failed to save settings'}`);
@@ -100,11 +102,6 @@ const saveAllMappings = async () => {
   } finally {
     isSaving.value = false;
   }
-};
-
-const testAlert = (mapping: EventMapping) => {
-  // TODO: Implement test alert functionality
-  alert(`Test alert for ${mapping.event_type} - Feature coming soon!`);
 };
 </script>
 
@@ -152,7 +149,7 @@ const testAlert = (mapping: EventMapping) => {
       <!-- Info Panel -->
       <div v-if="alertTemplates.length > 0" :class="[
         'border rounded-lg p-4 mb-6 bg-accent/20',
-        unassignedTemplates > 0 ? 'border-green-500/30 dark:border-green-400/30' : 'border-blue-500/30 dark:border-blue-400/30'
+        unassignedTemplates > 0 ? 'bg-green-500/20 dark:bg-green-400/10 border-green-500/30 dark:border-green-400/30' : 'border-blue-500/30 dark:border-blue-400/30'
       ]">
         <div class="flex">
           <div class="ml-3">
@@ -196,8 +193,8 @@ const testAlert = (mapping: EventMapping) => {
                 {{ eventTypes[mapping.event_type] }}
               </h3>
               <p class="text-sm text-muted-foreground">{{ mapping.event_type }}</p>
-              <p v-if="mapping.enabled && mapping.template_id" class="text-sm text-green-500 dark:text-green-300/50 mt-1">
-                <CheckIcon class="w-4 h-4 mr-1 inline-block text-green-500 dark:text-green-300/50" /> Using template: {{ getTemplateName(mapping.template_id) }}
+              <p v-if="mapping.enabled && mapping.template_id" class="text-sm text-green-500 dark:text-green-400 mt-1">
+                <CheckIcon class="w-4 h-4 mr-1 inline-block text-green-500 dark:text-green-400" /> Using template: {{ getTemplateName(mapping.template_id) }}
               </p>
               <p v-else-if="mapping.enabled" class="text-sm text-destructive mt-1">
                 ⚠ No template selected
@@ -214,19 +211,20 @@ const testAlert = (mapping: EventMapping) => {
                   v-model="mapping.enabled"
                   class="sr-only peer"
                 />
-                <div class="relative w-11 h-6 bg-input peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div class="relative w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-foreground/50"></div>
               </label>
             </div>
           </div>
 
-          <div v-if="mapping.enabled" class="mt-4 p-4 bg-background rounded-md border border-border">
+          <div v-if="mapping.enabled" class="mt-4 p-4 rounded-md border border-border">
             <h4 class="text-sm font-medium text-foreground mb-3">Configuration</h4>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Alert Template *</label>
+                <label class="block text-sm text-muted-foreground mb-2" for="template_select">Alert Template</label>
                 <select
                   v-model="mapping.template_id"
-                  class="w-full rounded-md border border-input bg-background p-2 focus:border-primary focus:ring-primary"
+                  id="template_select"
+                  class="w-full rounded-md border border-input bg-background p-2 h-10 focus:border-primary focus:ring-primary"
                   :disabled="alertTemplates.length === 0"
                   :class="{ 'border-destructive bg-destructive/10': mapping.enabled && !mapping.template_id }"
                 >
@@ -245,24 +243,26 @@ const testAlert = (mapping: EventMapping) => {
               </div>
 
             <div>
-              <label class="block text-sm font-medium text-foreground mb-2">
+              <label class="block text-sm text-muted-foreground mb-2">
                 Duration ({{ mapping.duration_ms / 1000 }}s)
               </label>
-              <input
-                v-model.number="mapping.duration_ms"
-                type="range"
-                min="1000"
-                max="30000"
-                step="500"
-                class="w-full h-2 bg-accent rounded-lg appearance-none cursor-pointer accent-primary"
-              />
+              <div class="bg-background border rounded-lg px-2 h-10">
+                <input
+                  v-model.number="mapping.duration_ms"
+                  type="range"
+                  min="1000"
+                  max="30000"
+                  step="500"
+                  class="w-full h-2 mt-4 bg-accent rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-foreground mb-2">Transition</label>
+              <label class="block text-sm text-muted-foreground mb-2">Transition</label>
               <select
                 v-model="mapping.transition_type"
-                class="w-full rounded-md border border-input bg-background p-2 focus:border-primary focus:ring-primary"
+                class="w-full rounded-md border border-input bg-background p-2 h-10 focus:border-primary focus:ring-primary"
               >
                 <option
                   v-for="(label, value) in transitionTypes"
@@ -282,14 +282,6 @@ const testAlert = (mapping: EventMapping) => {
                 show "{{ getTemplateName(mapping.template_id) }}" for {{ mapping.duration_ms / 1000 }} seconds
                 with {{ transitionTypes[mapping.transition_type].toLowerCase() }} transition.
               </div>
-              <button
-                @click="testAlert(mapping)"
-                size="sm"
-                variant="outline"
-                class="ml-4"
-              >
-                Test Alert
-              </button>
             </div>
           </div>
         </div>
@@ -307,13 +299,9 @@ const testAlert = (mapping: EventMapping) => {
       </div>
     </div>
     </div>
-    <!-- Success Toast -->
-    <div
-      v-if="showSuccessToast"
-      class="fixed bottom-4 right-4 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg z-50"
-    >
-      Settings saved successfully!
-    </div>
+
+    <!-- Toast Notification -->
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
   </AppLayout>
 </template>
 

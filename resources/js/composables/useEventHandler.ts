@@ -1,14 +1,57 @@
 import { normalizeEvent } from './useNormalizeEvent';
 import type { NormalizedEvent } from '@/types';
 
-
 export interface EventHandlerConfig {
   enableLogging?: boolean;
   enableNotifications?: boolean;
   enableStatistics?: boolean;
 }
 
+/**
+ * Composable: useEventHandler
+ *
+ * Provides a unified interface for handling Twitch EventSub events.
+ * Wraps event normalization with optional logging, notification dispatching,
+ * and statistics tracking via `CustomEvent`s on `window`.
+ *
+ * This composable is intended to be the main entry point for consuming raw
+ * EventSub payloads in a Vue application.
+ *
+ * @param config - Optional configuration:
+ *  - `enableLogging` (default: true): Dispatch logs of normalized events
+ *  - `enableNotifications` (default: true): Dispatch `twitch-event-normalized`
+ *  - `enableStatistics` (default: true): Dispatch `twitch-event-stats`
+ *
+ * @returns An object with the following methods:
+ * - `processRawEvent(raw: any): NormalizedEvent` — Normalize and process a raw EventSub payload
+ * - `dispatchEvent(event: NormalizedEvent): void` — Dispatch normalized events as `CustomEvent`s
+ * - `handleEvent(raw: any): NormalizedEvent` — Wrapper around `processRawEvent` + `dispatchEvent`
+ * - `isEventType(event: NormalizedEvent, ...types: string[]): boolean` — Check if an event matches a type
+ * - `getEventMetadata(event: NormalizedEvent): Record<string, any>` — Extracts contextual metadata (bits, subs, raids, etc.)
+ * - `shouldGroupEvents(event1: NormalizedEvent, event2: NormalizedEvent): boolean` — Whether two events should be grouped together
+ *
+ * @example
+ * ```ts
+ * import { useEventHandler } from '@/composables/useEventHandler'
+ *
+ * const { handleEvent, isEventType } = useEventHandler({ enableLogging: true })
+ *
+ * // Handle a raw Twitch EventSub payload
+ * window.addEventListener('message', (e) => {
+ *   const event = handleEvent(e.data)
+ *   if (isEventType(event, 'channel.subscribe')) {
+ *     console.log('New subscriber:', event.user_name)
+ *   }
+ * })
+ *
+ * // Listen globally for normalized events
+ * window.addEventListener('twitch-event-normalized', (e) => {
+ *   console.log('Normalized event:', e.detail)
+ * })
+ * ```
+ */
 export function useEventHandler(config: EventHandlerConfig = {}) {
+
   const {
     enableLogging = true,
     enableNotifications = true,

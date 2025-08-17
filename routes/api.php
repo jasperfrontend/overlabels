@@ -13,12 +13,15 @@ Route::get('/user', function (Request $request) {
 Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
-        ->middleware(['throttle:overlay', 'rate.limit.overlay']);
+        ->middleware(['throttle:overlay', 'rate.limit.overlay'])
+        ->withoutMiddleware([\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Get all template tags (API endpoint)
 Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
-    ->name('tags.api.all');
+    ->name('tags.api.all')
+    ->middleware('auth:sanctum');
 
-// Twitch webhook endpoint - must be accessible without authentication
-Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook']);
+// Twitch webhook endpoint - must be accessible without authentication or CSRF
+Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
+    ->withoutMiddleware([\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);

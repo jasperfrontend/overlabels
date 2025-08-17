@@ -95,7 +95,7 @@ class OverlayTemplateController extends Controller
     /**
      * Show the form for editing the specified template
      */
-    public function edit(OverlayTemplate $template)
+    public function edit(Request $request, OverlayTemplate $template)
     {
         // Check ownership
         if ($template->owner_id !== auth()->id()) {
@@ -105,7 +105,7 @@ class OverlayTemplateController extends Controller
         $availableTags = [];
 
         try {
-            $availableTagsResponse = $this->templateTagController->getAllTags();
+            $availableTagsResponse = $this->templateTagController->getAllTags($request);
 
             // Extract JSON from the response
             $jsonContent = $availableTagsResponse->getContent();

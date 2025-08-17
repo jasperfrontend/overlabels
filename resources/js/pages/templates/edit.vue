@@ -81,7 +81,7 @@ const form = useForm({
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Template Builder',
+    title: "Editing Template: " + props.template.name,
     href: route('templates.edit', props.template),
   },
 ];
@@ -121,17 +121,11 @@ const submitForm = () => {
       showToast.value = true;
       toastMessage.value = "Template saved successfully!";
       toastType.value = 'success';
-      setTimeout(() => {
-        showToast.value = false;
-      }, 3000);
     },
     onError: () => {
       showToast.value = true;
       toastMessage.value = "Failed to save template!";
       toastType.value = 'error';
-      setTimeout(() => {
-        showToast.value = false;
-      }, 3000);
     },
   });
 };
@@ -190,16 +184,14 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 </script>
 
 <template>
-  <Head title="Template Builder" />
+  <Head :title="`Editing Template: ${template.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-      <div class="flex gap-4">
+      <div class="flex">
         <div>
           <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
-
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <!-- Keyboard shortcuts indicator -->
           <button
             @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
             class="btn btn-cancel"

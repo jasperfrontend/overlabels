@@ -361,9 +361,9 @@ class JsonTemplateParserService
     }
 
     /**
-     * Save generated tags to the database
+     * Save generated tags to the database for a specific user
      */
-    public function saveTagsToDatabase(array $tagData): array
+    public function saveTagsToDatabaseForUser(array $tagData, int $userId): array
     {
         $saved = [
             'categories' => 0,
@@ -376,8 +376,11 @@ class JsonTemplateParserService
             // Save categories first
             foreach ($tagData['categories'] as $categoryData) {
                 $category = TemplateTagCategory::firstOrCreate(
-                    ['name' => $categoryData['name']],
-                    $categoryData
+                    [
+                        'user_id' => $userId,
+                        'name' => $categoryData['name']
+                    ],
+                    array_merge($categoryData, ['user_id' => $userId])
                 );
 
                 if ($category->wasRecentlyCreated) {
@@ -387,10 +390,14 @@ class JsonTemplateParserService
 
             // Save tags
             foreach ($tagData['tags'] as $tagData) {
-                $category = TemplateTagCategory::where('name', $tagData['category_name'])->first();
+                $category = TemplateTagCategory::where('user_id', $userId)
+                    ->where('name', $tagData['category_name'])
+                    ->first();
 
                 if ($category) {
-                    $existingTag = TemplateTag::where('tag_name', $tagData['tag_name'])->first();
+                    $existingTag = TemplateTag::where('user_id', $userId)
+                        ->where('tag_name', $tagData['tag_name'])
+                        ->first();
 
                     if ($existingTag) {
                         // Update an existing tag with new sample data
@@ -402,7 +409,10 @@ class JsonTemplateParserService
                         $saved['updated_tags']++;
                     } else {
                         // Create new tag
-                        TemplateTag::create(array_merge($tagData, ['category_id' => $category->id]));
+                        TemplateTag::create(array_merge($tagData, [
+                            'user_id' => $userId,
+                            'category_id' => $category->id
+                        ]));
                         $saved['tags']++;
                     }
                 } else {
@@ -422,10 +432,57 @@ class JsonTemplateParserService
     }
 
     /**
-     * Get all template tags organized by category
+     * Legacy method - kept for backwards compatibility
+     * @deprecated Use saveTagsToDatabaseForUser instead
+     */
+    public function saveTagsToDatabase(array $tagData): array
+    {
+        // This method is deprecated but kept for backwards compatibility
+        // It will save tags without a user_id (null)
+        return $this->saveTagsToDatabaseForUser($tagData, null);
+    }
+
+    /**
+     * Get all template tags organized by category for a specific user
+     */
+    public function getOrganizedTemplateTagsForUser(int $userId): array
+    {
+        $categories = TemplateTagCategory::with('activeTemplateTags')
+            ->where('user_id', $userId)
+            ->orderBy('sort_order')
+            ->orderBy('display_name')
+            ->get();
+
+        $organized = [];
+
+        foreach ($categories as $category) {
+            $organized[$category->name] = [
+                'category' => $category,
+                'tags' => $category->activeTemplateTags->map(function($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'tag_name' => $tag->tag_name,
+                        'display_tag' => $tag->display_tag,
+                        'display_name' => $tag->display_name,
+                        'description' => $tag->description,
+                        'data_type' => $tag->data_type,
+                        'sample_data' => $tag->sample_data,
+                        'json_path' => $tag->json_path
+                    ];
+                })
+            ];
+        }
+
+        return $organized;
+    }
+
+    /**
+     * Legacy method - kept for backwards compatibility
+     * @deprecated Use getOrganizedTemplateTagsForUser instead
      */
     public function getOrganizedTemplateTags(): array
     {
+        // This returns all tags without user filtering
         $categories = TemplateTagCategory::with('activeTemplateTags')
             ->orderBy('sort_order')
             ->orderBy('display_name')

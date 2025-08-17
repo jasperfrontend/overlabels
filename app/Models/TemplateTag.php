@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
+use App\Models\User;
 
 class TemplateTag extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'category_id',
         'tag_name',
         'display_tag',
@@ -36,6 +38,14 @@ class TemplateTag extends Model
         'is_active' => 'boolean',
         'is_editable' => 'boolean',  // NEW
     ];
+
+    /**
+     * Get the user this tag belongs to
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the category this tag belongs to

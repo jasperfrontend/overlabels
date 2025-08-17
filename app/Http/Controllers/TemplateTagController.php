@@ -36,8 +36,8 @@ class TemplateTagController extends Controller
             // Get current Twitch data with error handling
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
 
-            // Get existing template tags organized by category
-            $existingTags = $this->parser->getOrganizedTemplateTags();
+            // Get existing template tags organized by category for this user
+            $existingTags = $this->parser->getOrganizedTemplateTagsForUser($user->id);
 
             return Inertia::render('TemplateTagGenerator', [
                 'twitchData' => $twitchData,
@@ -53,7 +53,7 @@ class TemplateTagController extends Controller
             // Return with empty data rather than failing completely
             return Inertia::render('TemplateTagGenerator', [
                 'twitchData' => $this->getEmptyTwitchData(),
-                'existingTags' => $this->parser->getOrganizedTemplateTags(),
+                'existingTags' => $this->parser->getOrganizedTemplateTagsForUser($user->id),
                 'hasExistingTags' => false,
                 'error' => 'Failed to load Twitch data. You can still generate template tags.'
             ]);
@@ -90,13 +90,13 @@ class TemplateTagController extends Controller
                 'tags' => count($generatedTags['tags'])
             ]);
 
-            // Save the generated tags to database
-            $saved = $this->parser->saveTagsToDatabase($generatedTags);
+            // Save the generated tags to database with user_id
+            $saved = $this->parser->saveTagsToDatabaseForUser($generatedTags, $user->id);
 
             Log::info('Template tags saved to database', $saved);
 
             // Clear the cache when tags are updated
-            cache()->forget('template_tags_v1');
+            cache()->forget('template_tags_v1_user_' . $user->id);
 
             return response()->json([
                 'success' => true,
@@ -163,22 +163,28 @@ class TemplateTagController extends Controller
     /**
      * Clear all template tags (useful for regenerating)
      */
-    public function clearAllTags()
+    public function clearAllTags(Request $request)
     {
         try {
-            $tagCount = TemplateTag::count();
-            $categoryCount = TemplateTagCategory::count();
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
 
-            TemplateTag::truncate();
-            TemplateTagCategory::truncate();
+            $tagCount = TemplateTag::where('user_id', $user->id)->count();
+            $categoryCount = TemplateTagCategory::where('user_id', $user->id)->count();
 
-            Log::info('All template tags cleared', [
+            TemplateTag::where('user_id', $user->id)->delete();
+            TemplateTagCategory::where('user_id', $user->id)->delete();
+
+            Log::info('User template tags cleared', [
+                'user_id' => $user->id,
                 'tags_deleted' => $tagCount,
                 'categories_deleted' => $categoryCount
             ]);
 
             // Clear the cache when tags are cleared
-            cache()->forget('template_tags_v1');
+            cache()->forget('template_tags_v1_user_' . $user->id);
 
             return response()->json([
                 'success' => true,
@@ -199,15 +205,20 @@ class TemplateTagController extends Controller
      * Clean up redundant _data_X_ tags
      * Removes tags like channel_followers_data_3_user_id, followed_channels_data_7_broadcaster_name, etc.
      */
-    public function cleanupRedundantTags()
+    public function cleanupRedundantTags(Request $request)
     {
         try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
+
             // Pattern to match tags with _data_[number]_ in them
             //$redundantPattern = '/_data_\d+_/';
             $redundantPattern = '/_data_\d/';
 
-            // Find all tags that match the pattern
-            $redundantTags = TemplateTag::all()->filter(function($tag) use ($redundantPattern) {
+            // Find all tags that match the pattern for this user
+            $redundantTags = TemplateTag::where('user_id', $user->id)->get()->filter(function($tag) use ($redundantPattern) {
                 return preg_match($redundantPattern, $tag->tag_name);
             });
 
@@ -220,8 +231,8 @@ class TemplateTagController extends Controller
                 $deletedCount++;
             }
 
-            // Also clean up any empty categories
-            $emptyCategories = TemplateTagCategory::doesntHave('templateTags')->get();
+            // Also clean up any empty categories for this user
+            $emptyCategories = TemplateTagCategory::where('user_id', $user->id)->doesntHave('templateTags')->get();
             $deletedCategoriesCount = 0;
             foreach ($emptyCategories as $category) {
                 $category->delete();
@@ -229,13 +240,14 @@ class TemplateTagController extends Controller
             }
 
             Log::info('Redundant template tags cleaned up', [
+                'user_id' => $user->id,
                 'tags_deleted' => $deletedCount,
                 'empty_categories_deleted' => $deletedCategoriesCount,
                 'deleted_tags' => $deletedTags
             ]);
 
             // Clear the cache when tags are cleaned up
-            cache()->forget('template_tags_v1');
+            cache()->forget('template_tags_v1_user_' . $user->id);
 
             return response()->json([
                 'success' => true,
@@ -258,16 +270,21 @@ class TemplateTagController extends Controller
     /**
      * Get all template tags (API endpoint)
      */
-    public function getAllTags()
+    public function getAllTags(Request $request)
     {
         try {
-            // Cache the tags for 1 hour (3600 seconds)
-            // The cache key includes a version to allow for cache busting
-            $cacheKey = 'template_tags_v1';
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
+            
+            // Cache the tags per user for 1 hour (3600 seconds)
+            // The cache key includes user ID to separate tags per user
+            $cacheKey = 'template_tags_v1_user_' . $user->id;
             $cacheDuration = 3600; // 1 hour
             
-            $tags = cache()->remember($cacheKey, $cacheDuration, function () {
-                return $this->parser->getOrganizedTemplateTags();
+            $tags = cache()->remember($cacheKey, $cacheDuration, function () use ($user) {
+                return $this->parser->getOrganizedTemplateTagsForUser($user->id);
             });
 
             return response()->json([

@@ -15,6 +15,7 @@ import {
   GlobeIcon,
   LockIcon,
   BellIcon,
+  Trash2Icon,
   MonitorIcon
 } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
@@ -27,7 +28,7 @@ const props = defineProps({
 });
 
 const filters = ref({
-  filter: props.filters?.filter || '',
+  filter: props.filters?.filter || 'all_templates',
   search: props.filters?.search || '',
   type: props.filters?.type || '',
   sort: props.filters?.sort || 'created_at',
@@ -72,6 +73,18 @@ const forkTemplate = async (template:any) => {
   }
 };
 
+const deleteTemplate = async (template:any) => {
+  if (!confirm(`Delete "${template.name}"?`)) return;
+
+  try {
+    await axios.delete('/templates/' + template.id);
+    router.reload({ only: ['templates'] });
+  } catch (error) {
+    console.error('Failed to delete template:', error);
+    alert('Failed to delete template');
+  }
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: "Overlabels Overlay Editor",
@@ -104,57 +117,6 @@ const formatDate = (date: string) => {
         </Link>
       </div>
 
-      <!-- Filters Section -->
-      <div class="mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Search -->
-          <div class="relative">
-            <SearchIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              v-model="filters.search"
-              @input="debounceSearch"
-              type="text"
-              placeholder="Search templates..."
-              class="w-full pl-10 pr-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-
-          <!-- Type Filter -->
-          <select
-            v-model="filters.type"
-            @change="applyFilter"
-            class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">All Types</option>
-            <option value="overlay">Static Overlay</option>
-            <option value="alert">Event Alert</option>
-          </select>
-
-          <!-- Visibility Filter -->
-          <select
-            v-model="filters.filter"
-            @change="applyFilter"
-            class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">All Templates</option>
-            <option value="mine">My Templates</option>
-            <option value="public">Public Templates</option>
-          </select>
-
-          <!-- Sort -->
-          <select
-            v-model="filters.sort"
-            @change="applyFilter"
-            class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="created_at">Date Created</option>
-            <option value="name">Name</option>
-            <option value="view_count">Views</option>
-            <option value="fork_count">Forks</option>
-          </select>
-        </div>
-      </div>
-
       <!-- Templates Table -->
       <div class="bg-card dark:bg-card border border-border dark:border-border rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
@@ -164,7 +126,7 @@ const formatDate = (date: string) => {
                 <th class="px-6 py-3 text-left">
                   <button
                     @click="sortBy('name')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Template
                     <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="w-3 h-3" />
@@ -179,7 +141,7 @@ const formatDate = (date: string) => {
                 <th class="px-6 py-3 text-center">
                   <button
                     @click="sortBy('view_count')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Views
                     <component v-if="getSortIcon('view_count')" :is="getSortIcon('view_count')" class="w-3 h-3" />
@@ -188,7 +150,7 @@ const formatDate = (date: string) => {
                 <th class="px-6 py-3 text-center">
                   <button
                     @click="sortBy('fork_count')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Forks
                     <component v-if="getSortIcon('fork_count')" :is="getSortIcon('fork_count')" class="w-3 h-3" />
@@ -197,14 +159,14 @@ const formatDate = (date: string) => {
                 <th class="px-6 py-3 text-left">
                   <button
                     @click="sortBy('created_at')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Created
                     <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="w-3 h-3" />
                   </button>
                 </th>
-                <th class="px-6 py-3 text-right">
-                  <span class="text-sm font-medium text-muted-foreground">Actions</span>
+                <th class="px-6 py-3 text-left text-sm text-muted-foreground">
+                  Status
                 </th>
               </tr>
             </thead>
@@ -212,14 +174,55 @@ const formatDate = (date: string) => {
               <tr
                 v-for="template in templates?.data"
                 :key="template.id"
-                class="hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors"
+                class="hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors group"
               >
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 w-[600px]">
                   <div>
                     <div class="flex items-center gap-2">
-                      <h3 class="font-medium text-foreground dark:text-foreground">{{ template.name }}</h3>
-                      <GlobeIcon v-if="template.is_public" class="w-4 h-4 text-green-500" title="Public" />
-                      <LockIcon v-else class="w-4 h-4 text-muted-foreground" title="Private" />
+                      <h3 class="font-medium text-foreground dark:text-foreground truncate w-[360px]" :title="template.name">{{ template.name }}</h3>
+
+                      <div class="hidden group-hover:flex items-center justify-end gap-2">
+                        <Link
+                          :href="route('templates.show', template)"
+                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          title="View Details"
+                        >
+                          <EyeIcon class="w-4 h-4" />
+                        </Link>
+                        <Link
+                          v-if="template.owner_id === $page.props.auth.user.id"
+                          :href="route('templates.edit', template)"
+                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          title="Edit"
+                        >
+                          <PencilIcon class="w-4 h-4" />
+                        </Link>
+                        <button
+                          v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
+                          @click="forkTemplate(template)"
+                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full cursor-pointer"
+                          title="Fork"
+                        >
+                          <GitForkIcon class="w-4 h-4" />
+                        </button>
+                        <button
+                          v-if="template.owner_id === $page.props.auth.user.id"
+                          @click="deleteTemplate(template)"
+                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2Icon class="w-4 h-4" />
+                        </button>
+                        <a
+                          v-if="template.is_public"
+                          :href="`/overlay/${template.slug}/public`"
+                          target="_blank"
+                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          title="Preview"
+                        >
+                          <ExternalLinkIcon class="w-4 h-4" />
+                        </a>
+                      </div>
                     </div>
                     <p class="text-sm text-muted-foreground mt-1">{{ template.description || 'No description' }}</p>
                   </div>
@@ -254,39 +257,9 @@ const formatDate = (date: string) => {
                   <span class="text-sm text-muted-foreground">{{ formatDate(template.created_at) }}</span>
                 </td>
                 <td class="px-6 py-4">
-                  <div class="flex items-center justify-end gap-2">
-                    <Link
-                      :href="route('templates.show', template)"
-                      class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                      title="View Details"
-                    >
-                      <EyeIcon class="w-4 h-4" />
-                    </Link>
-                    <Link
-                      v-if="template.owner_id === $page.props.auth.user.id"
-                      :href="route('templates.edit', template)"
-                      class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Edit"
-                    >
-                      <PencilIcon class="w-4 h-4" />
-                    </Link>
-                    <button
-                      v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
-                      @click="forkTemplate(template)"
-                      class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Fork"
-                    >
-                      <GitForkIcon class="w-4 h-4" />
-                    </button>
-                    <a
-                      v-if="template.is_public"
-                      :href="`/overlay/${template.slug}/public`"
-                      target="_blank"
-                      class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Preview"
-                    >
-                      <ExternalLinkIcon class="w-4 h-4" />
-                    </a>
+                  <div class="inline-flex items-center gap-1">
+                    <GlobeIcon v-if="template.is_public" class="w-4 h-4 text-green-500" title="Public" />
+                    <LockIcon v-else class="w-4 h-4 text-violet-400" title="Private" />
                   </div>
                 </td>
               </tr>
@@ -297,6 +270,72 @@ const formatDate = (date: string) => {
         <!-- Empty State -->
         <div v-if="!templates?.data?.length" class="p-12 text-center">
           <p class="text-muted-foreground">No templates found. Try adjusting your filters or create a new template.</p>
+        </div>
+      </div>
+
+
+      <!-- Filters Section -->
+      <div class="mt-8 bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Search -->
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-search">Search title</label>
+            <input
+              v-model="filters.search"
+              @input="debounceSearch"
+              type="text"
+              placeholder="Search templates..."
+              class="w-full px-3 py-1 h-[38px] bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              id="filter-search"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <!-- Type Filter -->
+            <label for="filter-type">Type</label>
+            <select
+              v-model="filters.type"
+              @change="applyFilter"
+              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              id="filter-type"
+            >
+              <option value="">All Types</option>
+              <option value="static">Static Overlay</option>
+              <option value="alert">Event Alert</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-visibility">Ownership</label>
+            <!-- Visibility Filter -->
+            <select
+              v-model="filters.filter"
+              @change="applyFilter"
+              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              id="filter-visibility"
+            >
+              <option value="all_templates">All Templates</option>
+              <option value="mine">My Templates</option>
+              <option value="public">Public Templates</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-sort">Order</label>
+            <!-- Sort -->
+            <select
+              v-model="filters.sort"
+              @change="applyFilter"
+              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              id="filter-sort"
+            >
+              <option value="created_at">Date Created</option>
+              <option value="name">Name</option>
+              <option value="view_count">Views</option>
+              <option value="fork_count">Forks</option>
+            </select>
+          </div>
         </div>
       </div>
 

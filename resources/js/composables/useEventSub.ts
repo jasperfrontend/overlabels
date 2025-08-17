@@ -2,6 +2,21 @@ import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 import { ref } from 'vue'
 
+/**
+ * Sets up a Twitch EventSub WebSocket listener using Laravel Echo + Pusher.
+ *
+ * Establishes a connection to the `twitch-events` channel and listens for
+ * `.twitch.event` payloads.
+ *
+ * @param onMapped - Optional callback that receives each raw event payload
+ *
+ * @example
+ * ```ts
+ * useEventSub((event) => {
+ *   console.log('Incoming Twitch event:', event)
+ * })
+ * ```
+ */
 export const isWebSocketConnected = ref(false)
 let echo: Echo<any> | null = null
 

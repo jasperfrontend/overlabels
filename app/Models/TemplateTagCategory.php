@@ -5,12 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 class TemplateTagCategory extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'display_name', 
         'description',
@@ -21,6 +24,14 @@ class TemplateTagCategory extends Model
     protected $casts = [
         'is_group' => 'boolean',
     ];
+
+    /**
+     * Get the user this category belongs to
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get all template tags in this category
