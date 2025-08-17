@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +30,7 @@ class TwitchApiService
 
     /**
      * Generic method to make API requests to Twitch with retry logic
+     * @throws ConnectionException
      */
     private function makeApiRequest(string $accessToken, string $endpoint, array $params = [], string $errorContext = 'API request'): ?array
     {
@@ -55,14 +57,14 @@ class TwitchApiService
                 if ($response->status() === 429) {
                     // Rate limited, wait longer before retry
                     $retryAfter = $response->header('Retry-After') ?? 60;
-                    Log::warning("Rate limited on {$errorContext}, waiting {$retryAfter} seconds");
+                    Log::warning("Rate limited on $errorContext, waiting $retryAfter seconds");
                     sleep(min($retryAfter, 60)); // Cap at 60 seconds
                     continue;
                 }
 
                 // For other 5xx errors, retry with exponential backoff
                 if ($response->status() >= 500 && $attempt < $maxRetries) {
-                    Log::warning("Server error on attempt {$attempt} for {$errorContext}, retrying...", [
+                    Log::warning("Server error on attempt $attempt for $errorContext, retrying...", [
                         'status' => $response->status(),
                         'endpoint' => $endpoint
                     ]);
@@ -71,7 +73,7 @@ class TwitchApiService
                     continue;
                 }
 
-                Log::warning("Failed to {$errorContext} after {$attempt} attempts", [
+                Log::warning("Failed to $errorContext after $attempt attempts", [
                     'status' => $response->status(),
                     'response' => $response->body(),
                     'endpoint' => $endpoint,
@@ -85,11 +87,11 @@ class TwitchApiService
                 }
 
                 if ($attempt === $maxRetries) {
-                    Log::error("Error during {$errorContext} after {$maxRetries} attempts: " . $e->getMessage());
+                    Log::error("Error during $errorContext after $maxRetries attempts: " . $e->getMessage());
                     return null;
                 }
 
-                Log::warning("Error on attempt {$attempt} for {$errorContext}: " . $e->getMessage());
+                Log::warning("Error on attempt $attempt for $errorContext: " . $e->getMessage());
                 usleep($retryDelay * 1000);
                 $retryDelay *= 2;
             }
@@ -110,7 +112,7 @@ class TwitchApiService
     }
 
     /**
-     * Clear specific cache for a user
+     * Clear a specific cache for a user
      */
     private function clearCache(string $cacheKey, string $userId): void
     {
