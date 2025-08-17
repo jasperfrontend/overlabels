@@ -40,34 +40,103 @@ interface TagsResponse {
 const tagList = ref<TemplateTag[]>([]);
 const categoryTags = ref<Record<string, CategoryTag>>({});
 
+// Cache configuration
+const CACHE_KEY = 'template_tags_cache';
+const CACHE_VERSION_KEY = 'template_tags_cache_version';
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+const CURRENT_CACHE_VERSION = 'v1';
+
+interface CachedData {
+  tags: Record<string, CategoryTag>;
+  timestamp: number;
+  version: string;
+}
+
+function getCachedTags(): CachedData | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    const version = localStorage.getItem(CACHE_VERSION_KEY);
+    
+    if (!cached || version !== CURRENT_CACHE_VERSION) {
+      return null;
+    }
+    
+    const data: CachedData = JSON.parse(cached);
+    const now = Date.now();
+    
+    // Check if cache is expired
+    if (now - data.timestamp > CACHE_DURATION) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error reading cache:', error);
+    localStorage.removeItem(CACHE_KEY);
+    return null;
+  }
+}
+
+function setCachedTags(tags: Record<string, CategoryTag>): void {
+  try {
+    const cacheData: CachedData = {
+      tags,
+      timestamp: Date.now(),
+      version: CURRENT_CACHE_VERSION,
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
+  } catch (error) {
+    console.error('Error setting cache:', error);
+    // If localStorage is full or unavailable, continue without caching
+  }
+}
+
+function processTags(tags: Record<string, CategoryTag>): void {
+  // Store the categorized tags for the modal
+  categoryTags.value = tags;
+
+  // Flatten the tags for a simple list if needed
+  const flattenedTags: TemplateTag[] = [];
+  Object.entries(tags).forEach(([category, categoryData]) => {
+    // Check for active_template_tags first, then fall back to tags
+    const tagsArray = categoryData.active_template_tags || categoryData.tags;
+
+    if (tagsArray && Array.isArray(tagsArray)) {
+      tagsArray.forEach((tag) => {
+        flattenedTags.push({
+          display_tag: tag.display_tag,
+          description: tag.description,
+          category: categoryData.category?.display_name || category,
+        });
+      });
+    }
+  });
+
+  tagList.value = flattenedTags;
+}
+
 function useGetTemplateTags(): void {
+  // Check cache first
+  const cached = getCachedTags();
+  
+  if (cached) {
+    processTags(cached.tags);
+    return;
+  }
+  
   // Fetch available tags from the API
   axios
     .get<TagsResponse>(route('tags.api.all'))
     .then((response) => {
       const tags = response.data.tags;
-
-      // Store the categorized tags for the modal
-      categoryTags.value = tags;
-
-      // Flatten the tags for a simple list if needed
-      const flattenedTags: TemplateTag[] = [];
-      Object.entries(tags).forEach(([category, categoryData]) => {
-        // Check for active_template_tags first, then fall back to tags
-        const tagsArray = categoryData.active_template_tags || categoryData.tags;
-
-        if (tagsArray && Array.isArray(tagsArray)) {
-          tagsArray.forEach((tag) => {
-            flattenedTags.push({
-              display_tag: tag.display_tag,
-              description: tag.description,
-              category: categoryData.category?.display_name || category,
-            });
-          });
-        }
-      });
-
-      tagList.value = flattenedTags;
+      
+      // Cache the response
+      setCachedTags(tags);
+      
+      // Process the tags
+      processTags(tags);
     })
     .catch(() => {
       console.log('Error retrieving tags from api');

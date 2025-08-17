@@ -95,6 +95,9 @@ class TemplateTagController extends Controller
 
             Log::info('Template tags saved to database', $saved);
 
+            // Clear the cache when tags are updated
+            cache()->forget('template_tags_v1');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Template tags generated successfully!',
@@ -174,6 +177,9 @@ class TemplateTagController extends Controller
                 'categories_deleted' => $categoryCount
             ]);
 
+            // Clear the cache when tags are cleared
+            cache()->forget('template_tags_v1');
+
             return response()->json([
                 'success' => true,
                 'message' => "Cleared $tagCount template tags and $categoryCount categories"
@@ -228,6 +234,9 @@ class TemplateTagController extends Controller
                 'deleted_tags' => $deletedTags
             ]);
 
+            // Clear the cache when tags are cleaned up
+            cache()->forget('template_tags_v1');
+
             return response()->json([
                 'success' => true,
                 'message' => "Successfully cleaned up $deletedCount redundant tags",
@@ -252,11 +261,20 @@ class TemplateTagController extends Controller
     public function getAllTags()
     {
         try {
-            $tags = $this->parser->getOrganizedTemplateTags();
+            // Cache the tags for 1 hour (3600 seconds)
+            // The cache key includes a version to allow for cache busting
+            $cacheKey = 'template_tags_v1';
+            $cacheDuration = 3600; // 1 hour
+            
+            $tags = cache()->remember($cacheKey, $cacheDuration, function () {
+                return $this->parser->getOrganizedTemplateTags();
+            });
 
             return response()->json([
                 'success' => true,
-                'tags' => $tags
+                'tags' => $tags,
+                'cached_at' => now()->toIso8601String(),
+                'cache_ttl' => $cacheDuration
             ]);
         } catch (Exception $e) {
             Log::error('Error fetching all template tags', ['error' => $e->getMessage()]);
