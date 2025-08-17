@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
@@ -36,6 +36,24 @@ interface TagPreview {
   json_path: string;
 }
 
+interface JobProgress {
+  step: string;
+  message: string;
+  progress: number;
+}
+
+interface TagJob {
+  id: number;
+  job_type: string;
+  status: string;
+  progress?: JobProgress;
+  result?: any;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+}
+
 // Props from the controller
 const props = defineProps<{
   twitchData: Record<string, any>;
@@ -53,6 +71,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // State with proper TypeScript types
 const isGenerating = ref(false);
+const isCleaningUp = ref(false);
+const currentGenerateJob = ref<TagJob | null>(null);
+const currentCleanupJob = ref<TagJob | null>(null);
+const jobPollingInterval = ref<number | null>(null);
 const tagPreviews = ref<Record<number, TagPreview>>({});
 const isLoadingPreview = ref<Record<number, boolean>>({});
 const generationError = ref('');
@@ -81,13 +103,113 @@ onMounted(async () => {
   if (res.ok) {
     posts.value = await res.json();
   }
+
+  // Check for any existing running jobs on mount
+  pollJobStatus();
 });
 
-// Generate template tags from current Twitch data
+// Cleanup on unmount
+onUnmounted(() => {
+  stopJobPolling();
+});
+
+// Poll for job status updates
+const pollJobStatus = async () => {
+  try {
+    const response = await fetch('/api/template-tags/jobs', {
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+    if (!data.success || !data.jobs) return;
+
+    // Update current jobs
+    const generateJob = data.jobs.find((job: TagJob) => job.job_type === 'generate' && ['pending', 'processing'].includes(job.status));
+    const cleanupJob = data.jobs.find((job: TagJob) => job.job_type === 'cleanup' && ['pending', 'processing'].includes(job.status));
+
+    if (generateJob) {
+      currentGenerateJob.value = generateJob;
+      isGenerating.value = true;
+    } else if (currentGenerateJob.value) {
+      // Job completed or failed
+      const completedJob = data.jobs.find((job: TagJob) => job.id === currentGenerateJob.value!.id);
+      if (completedJob && completedJob.status === 'completed') {
+        showToast.value = true;
+        toastMessage.value = `Successfully generated ${completedJob.result?.generated || 'template'} tags!`;
+        toastType.value = 'success';
+        
+        // Refresh the page to show new tags
+        setTimeout(() => {
+          router.reload({
+            only: ['existingTags', 'hasExistingTags'],
+          });
+        }, 1000);
+      } else if (completedJob && completedJob.status === 'failed') {
+        showToast.value = true;
+        toastMessage.value = `Failed to generate tags: ${completedJob.error_message}`;
+        toastType.value = 'error';
+      }
+      currentGenerateJob.value = null;
+      isGenerating.value = false;
+    }
+
+    if (cleanupJob) {
+      currentCleanupJob.value = cleanupJob;
+      isCleaningUp.value = true;
+    } else if (currentCleanupJob.value) {
+      // Job completed or failed
+      const completedJob = data.jobs.find((job: TagJob) => job.id === currentCleanupJob.value!.id);
+      if (completedJob && completedJob.status === 'completed') {
+        showToast.value = true;
+        toastMessage.value = `Successfully cleaned up ${completedJob.result?.deleted_tags_count || 0} redundant tags!`;
+        toastType.value = 'success';
+        
+        // Refresh the page to show updated tags
+        router.reload();
+      } else if (completedJob && completedJob.status === 'failed') {
+        showToast.value = true;
+        toastMessage.value = `Failed to cleanup tags: ${completedJob.error_message}`;
+        toastType.value = 'error';
+      }
+      currentCleanupJob.value = null;
+      isCleaningUp.value = false;
+    }
+
+    // Stop polling if no jobs are running
+    if (!generateJob && !cleanupJob) {
+      stopJobPolling();
+    }
+  } catch (error) {
+    console.error('Error polling job status:', error);
+  }
+};
+
+// Start job polling
+const startJobPolling = () => {
+  if (jobPollingInterval.value) return;
+  
+  jobPollingInterval.value = window.setInterval(pollJobStatus, 2000); // Poll every 2 seconds
+  pollJobStatus(); // Initial poll
+};
+
+// Stop job polling
+const stopJobPolling = () => {
+  if (jobPollingInterval.value) {
+    clearInterval(jobPollingInterval.value);
+    jobPollingInterval.value = null;
+  }
+};
+
+// Generate template tags from current Twitch data (async)
 const generateTags = async () => {
   if (isGenerating.value) return;
 
-  isGenerating.value = true;
   generationError.value = '';
 
   try {
@@ -102,22 +224,26 @@ const generateTags = async () => {
     const data = await response.json();
 
     if (response.ok && data.success) {
+      isGenerating.value = true;
+      currentGenerateJob.value = { 
+        id: data.job_id, 
+        job_type: 'generate', 
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      
       showToast.value = true;
-      toastMessage.value = `Successfully generated ${data.generated} template tags!`;
-      toastType.value = 'success';
+      toastMessage.value = 'Template tag generation started! This may take a few minutes.';
+      toastType.value = 'info';
 
-      // Refresh the page to show new tags
-      setTimeout(() => {
-        router.reload({
-          only: ['existingTags', 'hasExistingTags'],
-        });
-      }, 1000);
+      // Start polling for status updates
+      startJobPolling();
     } else {
       console.error('❌ Generation failed:', data);
       generationError.value = data.message || data.error || 'Unknown error occurred';
 
       showToast.value = true;
-      toastMessage.value = `Failed to generate tags: ${generationError.value}`;
+      toastMessage.value = `Failed to start generation: ${generationError.value}`;
       toastType.value = 'error';
     }
   } catch (error) {
@@ -125,10 +251,8 @@ const generateTags = async () => {
     generationError.value = 'Network error - please check your connection and try again.';
 
     showToast.value = true;
-    toastMessage.value = 'Failed to generate tags. Please try again.';
+    toastMessage.value = 'Failed to start tag generation. Please try again.';
     toastType.value = 'error';
-  } finally {
-    isGenerating.value = false;
   }
 };
 
@@ -173,8 +297,10 @@ const clearAllTags = async () => {
   }
 };
 
-// Clean up redundant _data_X_ tags
+// Clean up redundant _data_X_ tags (async)
 const cleanupRedundantTags = async () => {
+  if (isCleaningUp.value) return;
+
   if (!confirm('Clean up redundant tags like "channel_followers_data_3_user_id"? This will remove all tags with _data_[number]* patterns.')) {
     return;
   }
@@ -191,30 +317,32 @@ const cleanupRedundantTags = async () => {
     const data = await response.json();
 
     if (response.ok && data.success) {
-      console.log('✅ Tags cleaned up:', data);
+      isCleaningUp.value = true;
+      currentCleanupJob.value = { 
+        id: data.job_id, 
+        job_type: 'cleanup', 
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
 
       showToast.value = true;
-      toastMessage.value = data.message;
-      toastType.value = 'success';
+      toastMessage.value = 'Template tag cleanup started!';
+      toastType.value = 'info';
 
-      // Show deleted tags if user wants details
-      if (data.deleted_count > 0) {
-        console.log('Deleted tags:', data.deleted_tags);
-      }
-
-      router.reload();
+      // Start polling for status updates
+      startJobPolling();
     } else {
       console.error('❌ Cleanup failed:', data);
 
       showToast.value = true;
-      toastMessage.value = `Failed to clean up tags: ${data.message || data.error}`;
+      toastMessage.value = `Failed to start cleanup: ${data.message || data.error}`;
       toastType.value = 'error';
     }
   } catch (error) {
     console.error('💥 Cleanup error:', error);
 
     showToast.value = true;
-    toastMessage.value = 'Failed to clean up tags. Please try again.';
+    toastMessage.value = 'Failed to start tag cleanup. Please try again.';
     toastType.value = 'error';
   }
 };
@@ -331,15 +459,55 @@ const getDataTypeClass = (dataType: string) => {
             {{ isGenerating ? 'Generating...' : 'Generate Tags' }}
           </button>
 
-          <button v-if="hasExistingTags" @click="cleanupRedundantTags" class="btn btn-warning">
-            <Sparkles class="mr-3 h-4 w-4" />
-            Clean Up Redundant
+          <button v-if="hasExistingTags" @click="cleanupRedundantTags" :disabled="isCleaningUp" class="btn btn-warning">
+            <RefreshCw v-if="isCleaningUp" class="h-4 w-4 animate-spin" />
+            <Sparkles v-else class="mr-3 h-4 w-4" />
+            {{ isCleaningUp ? 'Cleaning...' : 'Clean Up Redundant' }}
           </button>
 
           <button v-if="hasExistingTags" @click="clearAllTags" class="btn btn-danger">
             <Trash2 class="mr-3 h-4 w-4" />
             Clear All Tags
           </button>
+        </div>
+      </div>
+
+      <!-- Job Progress Display -->
+      <div v-if="currentGenerateJob || currentCleanupJob" class="mb-6 space-y-4">
+        <!-- Generation Progress -->
+        <div v-if="currentGenerateJob" class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Template Tag Generation</h3>
+            <span class="text-xs text-blue-600 dark:text-blue-400">{{ currentGenerateJob.status }}</span>
+          </div>
+          <div v-if="currentGenerateJob.progress" class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-blue-700 dark:text-blue-300">{{ currentGenerateJob.progress.message }}</span>
+              <span class="text-blue-600 dark:text-blue-400">{{ currentGenerateJob.progress.progress }}%</span>
+            </div>
+            <div class="w-full bg-blue-200 rounded-full h-2 dark:bg-blue-800">
+              <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="{ width: currentGenerateJob.progress.progress + '%' }"></div>
+            </div>
+          </div>
+          <p v-else class="text-sm text-blue-700 dark:text-blue-300">Starting generation...</p>
+        </div>
+
+        <!-- Cleanup Progress -->
+        <div v-if="currentCleanupJob" class="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">Template Tag Cleanup</h3>
+            <span class="text-xs text-orange-600 dark:text-orange-400">{{ currentCleanupJob.status }}</span>
+          </div>
+          <div v-if="currentCleanupJob.progress" class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-orange-700 dark:text-orange-300">{{ currentCleanupJob.progress.message }}</span>
+              <span class="text-orange-600 dark:text-orange-400">{{ currentCleanupJob.progress.progress }}%</span>
+            </div>
+            <div class="w-full bg-orange-200 rounded-full h-2 dark:bg-orange-800">
+              <div class="bg-orange-600 h-2 rounded-full transition-all duration-300" :style="{ width: currentCleanupJob.progress.progress + '%' }"></div>
+            </div>
+          </div>
+          <p v-else class="text-sm text-orange-700 dark:text-orange-300">Starting cleanup...</p>
         </div>
       </div>
 

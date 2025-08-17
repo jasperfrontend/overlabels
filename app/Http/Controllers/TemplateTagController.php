@@ -6,6 +6,9 @@ use App\Services\JsonTemplateParserService;
 use App\Services\TwitchApiService;
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
+use App\Models\TemplateTagJob;
+use App\Jobs\GenerateTemplateTags;
+use App\Jobs\CleanupRedundantTags;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -61,7 +64,7 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Generate standardized template tags from current Twitch data
+     * Generate standardized template tags from current Twitch data (async)
      */
     public function generateTags(Request $request)
     {
@@ -71,49 +74,52 @@ class TemplateTagController extends Controller
         }
 
         try {
-            // Get fresh Twitch data with error handling
-            $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
+            // Check if there's already a pending or processing generation job
+            $existingJob = TemplateTagJob::where('user_id', $user->id)
+                ->where('job_type', 'generate')
+                ->whereIn('status', ['pending', 'processing'])
+                ->first();
 
-            // Ensure data arrays exist before processing
-            $twitchData = $this->ensureDataArraysExist($twitchData);
+            if ($existingJob) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Template tag generation is already in progress',
+                    'job_id' => $existingJob->id,
+                    'status' => $existingJob->status
+                ]);
+            }
 
-            Log::info('Starting template tag generation', [
+            // Create job record
+            $jobRecord = TemplateTagJob::create([
                 'user_id' => $user->id,
-                'data_structure' => array_keys($twitchData)
+                'job_type' => 'generate',
+                'status' => 'pending'
             ]);
 
-            // Generate template tags from the Twitch data
-            $generatedTags = $this->parser->parseJsonAndCreateTags($twitchData);
+            // Dispatch the job
+            GenerateTemplateTags::dispatch($user, $jobRecord);
 
-            Log::info('Template tags generated successfully', [
-                'categories' => count($generatedTags['categories']),
-                'tags' => count($generatedTags['tags'])
+            Log::info('Template tag generation job dispatched', [
+                'user_id' => $user->id,
+                'job_id' => $jobRecord->id
             ]);
-
-            // Save the generated tags to database with user_id
-            $saved = $this->parser->saveTagsToDatabaseForUser($generatedTags, $user->id);
-
-            Log::info('Template tags saved to database', $saved);
-
-            // Clear the cache when tags are updated
-            cache()->forget('template_tags_v1_user_' . $user->id);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Template tags generated successfully!',
-                'generated' => $generatedTags['total_tags'],
-                'saved' => $saved
+                'message' => 'Template tag generation started! This may take a few minutes.',
+                'job_id' => $jobRecord->id,
+                'status' => 'pending'
             ]);
 
         } catch (Exception $e) {
-            Log::error('Error generating template tags', [
+            Log::error('Error dispatching template tag generation job', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
-                'error' => 'Failed to generate template tags',
+                'error' => 'Failed to start template tag generation',
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -202,7 +208,7 @@ class TemplateTagController extends Controller
     }
 
     /**
-     * Clean up redundant _data_X_ tags
+     * Clean up redundant _data_X_ tags (async)
      * Removes tags like channel_followers_data_3_user_id, followed_channels_data_7_broadcaster_name, etc.
      */
     public function cleanupRedundantTags(Request $request)
@@ -213,55 +219,100 @@ class TemplateTagController extends Controller
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
 
-            // Pattern to match tags with _data_[number]_ in them
-            //$redundantPattern = '/_data_\d+_/';
-            $redundantPattern = '/_data_\d/';
+            // Check if there's already a pending or processing cleanup job
+            $existingJob = TemplateTagJob::where('user_id', $user->id)
+                ->where('job_type', 'cleanup')
+                ->whereIn('status', ['pending', 'processing'])
+                ->first();
 
-            // Find all tags that match the pattern for this user
-            $redundantTags = TemplateTag::where('user_id', $user->id)->get()->filter(function($tag) use ($redundantPattern) {
-                return preg_match($redundantPattern, $tag->tag_name);
-            });
-
-            $deletedCount = 0;
-            $deletedTags = [];
-
-            foreach ($redundantTags as $tag) {
-                $deletedTags[] = $tag->tag_name;
-                $tag->delete();
-                $deletedCount++;
+            if ($existingJob) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Template tag cleanup is already in progress',
+                    'job_id' => $existingJob->id,
+                    'status' => $existingJob->status
+                ]);
             }
 
-            // Also clean up any empty categories for this user
-            $emptyCategories = TemplateTagCategory::where('user_id', $user->id)->doesntHave('templateTags')->get();
-            $deletedCategoriesCount = 0;
-            foreach ($emptyCategories as $category) {
-                $category->delete();
-                $deletedCategoriesCount++;
-            }
-
-            Log::info('Redundant template tags cleaned up', [
+            // Create job record
+            $jobRecord = TemplateTagJob::create([
                 'user_id' => $user->id,
-                'tags_deleted' => $deletedCount,
-                'empty_categories_deleted' => $deletedCategoriesCount,
-                'deleted_tags' => $deletedTags
+                'job_type' => 'cleanup',
+                'status' => 'pending'
             ]);
 
-            // Clear the cache when tags are cleaned up
-            cache()->forget('template_tags_v1_user_' . $user->id);
+            // Dispatch the job
+            CleanupRedundantTags::dispatch($user, $jobRecord);
+
+            Log::info('Template tag cleanup job dispatched', [
+                'user_id' => $user->id,
+                'job_id' => $jobRecord->id
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => "Successfully cleaned up $deletedCount redundant tags",
-                'deleted_count' => $deletedCount,
-                'deleted_tags' => $deletedTags,
-                'empty_categories_deleted' => $deletedCategoriesCount
+                'message' => 'Template tag cleanup started!',
+                'job_id' => $jobRecord->id,
+                'status' => 'pending'
             ]);
 
         } catch (Exception $e) {
-            Log::error('Error cleaning up redundant template tags', ['error' => $e->getMessage()]);
+            Log::error('Error dispatching template tag cleanup job', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
 
             return response()->json([
-                'error' => 'Failed to clean up redundant tags',
+                'error' => 'Failed to start template tag cleanup',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get job status for template tag operations
+     */
+    public function getJobStatus(Request $request, string $jobType = null)
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['error' => 'User not authenticated'], 401);
+            }
+
+            $query = TemplateTagJob::where('user_id', $user->id);
+            
+            if ($jobType) {
+                $query->where('job_type', $jobType);
+            }
+
+            $jobs = $query->orderBy('created_at', 'desc')->limit(10)->get();
+
+            return response()->json([
+                'success' => true,
+                'jobs' => $jobs->map(function($job) {
+                    return [
+                        'id' => $job->id,
+                        'job_type' => $job->job_type,
+                        'status' => $job->status,
+                        'progress' => $job->progress,
+                        'result' => $job->result,
+                        'error_message' => $job->error_message,
+                        'started_at' => $job->started_at?->toIso8601String(),
+                        'completed_at' => $job->completed_at?->toIso8601String(),
+                        'created_at' => $job->created_at->toIso8601String(),
+                    ];
+                })
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error fetching job status', [
+                'user_id' => $request->user()?->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to fetch job status',
                 'message' => $e->getMessage()
             ], 500);
         }

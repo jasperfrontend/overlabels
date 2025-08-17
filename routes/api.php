@@ -22,6 +22,11 @@ Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
     ->name('tags.api.all')
     ->middleware('auth:sanctum');
 
+// Get job status for template tag operations
+Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'getJobStatus'])
+    ->name('tags.api.jobs')
+    ->middleware('auth:sanctum');
+
 // Twitch webhook endpoint - must be accessible without authentication or CSRF
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
