@@ -485,7 +485,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Events Feed -->
+      <!-- events Feed -->
       <div class="flex-1 rounded-2xl border mt-2 overflow-hidden">
         <div class="border-b bg-muted/50 p-4">
           <Heading title="Events Feed" description="Events are stored in the database and will appear here." />

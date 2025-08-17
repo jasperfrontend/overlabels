@@ -55,7 +55,6 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
 
   const getEventMetadata = (event: NormalizedEvent) => {
     const metadata: Record<string, any> = {};
-
     switch (event.type) {
       case 'channel.subscribe':
       case 'channel.subscription.message':
@@ -63,6 +62,7 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
         if (event.tier) metadata.tier = event.tier;
         if (event.is_gift) metadata.gift = true;
         if (event.gift_count) metadata.count = event.gift_count;
+        if (event.cumulative_total) metadata.cumulative_total = event.cumulative_total; // total gifted subs in the channel
         break;
 
       case 'channel.cheer':

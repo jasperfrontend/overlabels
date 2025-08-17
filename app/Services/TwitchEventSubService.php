@@ -229,4 +229,60 @@ class TwitchEventSubService
 
         return $this->createSubscription($userAccessToken, $payload);
     }
+
+    /**
+     * Subscribe to channel subscription gift events (when someone gifts subscriptions)
+     */
+    public function subscribeToSubscriptionGifts(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    {
+        if (!$userAccessToken) {
+            return [
+                'error' => true,
+                'message' => 'Could not get app access token for gift subscription events'
+            ];
+        }
+
+        $payload = [
+            'type' => 'channel.subscription.gift',
+            'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $userId
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret')
+            ]
+        ];
+
+        return $this->createSubscription($userAccessToken, $payload);
+    }
+
+    /**
+     * Subscribe to channel subscription message events (resubs with messages)
+     */
+    public function subscribeToSubscriptionMessages(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    {
+        if (!$userAccessToken) {
+            return [
+                'error' => true,
+                'message' => 'Could not get app access token for subscription message events'
+            ];
+        }
+
+        $payload = [
+            'type' => 'channel.subscription.message',
+            'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $userId
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret')
+            ]
+        ];
+
+        return $this->createSubscription($userAccessToken, $payload);
+    }
 }

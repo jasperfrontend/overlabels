@@ -16,9 +16,9 @@ interface GiftBombBuffer {
 
 export function useGiftBombDetector() {
   const activeBuffers = ref<Map<string, GiftBombBuffer>>(new Map());
-  const GIFT_BOMB_WINDOW = 8000; // 5 seconds to collect all gift events (faster)
-  const MIN_GIFT_BOMB_SIZE = 2; // Minimum 2 gifts to be considered a bomb
-  const LIVE_UPDATE_DELAY = 100; // 200 ms delay before showing the first live notification
+  const GIFT_BOMB_WINDOW = 8000; // 8 seconds to collect all gift events
+  const MIN_GIFT_BOMB_SIZE = 2; // Minimum 2 gifts to be considered a bomb (for channel.subscribe events)
+  const LIVE_UPDATE_DELAY = 100; // 100 ms delay before showing the first live notification
 
   const createGiftBombEvent = (buffer: GiftBombBuffer, isUpdate = false): NormalizedEvent => {
     const firstEvent = buffer.events[0];
@@ -156,7 +156,16 @@ export function useGiftBombDetector() {
   };
 
   const processEvent = (event: NormalizedEvent, callback: (event: NormalizedEvent) => void) => {
-    if (event.type === 'channel.subscribe' && event.is_gift) {
+    // Handle gift subscription events (from the gifter)
+    if (event.type === 'channel.subscription.gift') {
+      // These events already have the total count from Twitch
+      // The event.total field is already available via event.raw.event.total
+      // Pass them through directly with the total already set
+      callback(event);
+    }
+    // Handle individual gift receipts (recipients of gifts) - aggregate these if multiple come in quickly
+    else if (event.type === 'channel.subscribe' && event.is_gift) {
+      // These are individual recipients - aggregate them for gift bomb detection
       processGiftEvent(event, callback);
     } else {
       // Non-gift events pass through immediately

@@ -42,7 +42,7 @@ function getTierStyle(tier: string) {
     case '2000': // Tier 2
       return 'ring-2 ring-gray-400 hover:ring-gray-200';
     case '3000': // Tier 3
-      return 'ring-2 ring-yellow-200 dark:ring-yellow-400/50 shadow-lg hover:ring-yellow-500 dark:hover:ring-yellow-300/75';
+      return 'ring-2 ring-yellow-200 dark:ring-yellow-400/50 hover:ring-yellow-500 dark:hover:ring-yellow-300/75';
     default: // Tier 1
       return '';
   }
@@ -67,7 +67,7 @@ const handleApiError = (error: any) => {
   console.error('API Error:', error);
   connectionError.value = true;
   isRefreshing.value = false;
-  
+
   // Check if it's an auth error
   if (error?.response?.requires_reauth || error?.status === 401) {
     toastMessage.value = 'Your Twitch session has expired. Redirecting to re-authenticate...';
@@ -84,7 +84,7 @@ const handleApiError = (error: any) => {
 const refreshData = async (endpoint: string, label: string) => {
   isRefreshing.value = true;
   connectionError.value = false;
-  
+
   router.post(endpoint, {}, {
     preserveScroll: true,
     onSuccess: () => {
@@ -127,7 +127,7 @@ onMounted(() => {
     toastType.value = 'error';
     connectionError.value = true;
   }
-  
+
   // Set up auto-refresh check every 15 minutes
   autoRefreshInterval.value = setInterval(checkTokenValidity, 15 * 60 * 1000);
 });
@@ -172,19 +172,19 @@ watch (
         <div v-if="connectionError" class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
           <p class="font-semibold">Connection Error</p>
           <p class="text-sm">Unable to connect to Twitch API. Your session may have expired.</p>
-          <button 
+          <button
             @click="() => window.location.href = '/auth/redirect/twitch'"
             class="mt-2 rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
           >
             Re-authenticate with Twitch
           </button>
         </div>
-        
+
         <div class="mb-4 flex flex-row flex-wrap justify-between gap-2">
           <button
             @click="() => refreshData('/twitchdata/refresh/user', 'User')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             User
@@ -193,7 +193,7 @@ watch (
           <button
             @click="() => refreshData('/twitchdata/refresh/info', 'Bio')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Bio
@@ -202,7 +202,7 @@ watch (
           <button
             @click="() => refreshData('/twitchdata/refresh/following', 'Following')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Following
@@ -211,7 +211,7 @@ watch (
           <button
             @click="() => refreshData('/twitchdata/refresh/followers', 'Followers')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Followers
@@ -220,7 +220,7 @@ watch (
           <button
             @click="() => refreshData('/twitchdata/refresh/subscribers', 'Subscribers')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Subscribers
@@ -229,20 +229,20 @@ watch (
           <button
             @click="() => refreshData('/twitchdata/refresh/goals', 'Goals')"
             :disabled="isRefreshing"
-            class="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-cancel"
           >
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Goals
           </button>
         </div>
 
-        <div class="rounded-xl border bg-background p-6 shadow-lg">
+        <div class="rounded-xl border bg-background p-6">
           <div class="grid place-content-center">
             <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" target="_blank">
               <img
                 :src="avatar"
                 :alt="props.twitchData.channel.broadcaster_name"
-                class="my-2 inline-block h-20 w-20 rounded-full shadow transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+                class="my-2 inline-block h-20 w-20 rounded-full transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
               />
             </a>
           </div>
@@ -260,7 +260,7 @@ watch (
           <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <a v-if="props.twitchData.channel_followers.total" :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
               <div
-                class="cursor-pointer rounded-2xl border bg-accent/20 p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+                class="btn btn-cancel flex flex-col items-center justify-center"
               >
                 <p class="text-lg font-semibold text-muted-foreground">Your Follower Count</p>
                 <p class="text-2xl font-bold">
@@ -275,7 +275,7 @@ watch (
               target="_blank"
             >
               <div
-                class="cursor-pointer rounded-2xl border bg-accent/20 p-4 text-center shadow backdrop-blur-sm transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+                class="btn btn-cancel flex flex-col items-center justify-center"
               >
                 <p class="text-lg font-semibold text-muted-foreground">Latest Follower</p>
                 <p class="text-xl font-bold">
@@ -293,7 +293,7 @@ watch (
                 :href="`https://www.twitch.tv/directory/all/tags/${tag}`"
                 :key="tag"
                 target="_blank"
-                class="inline-block rounded-full border bg-accent/20 px-3 py-1 text-sm font-medium text-accent-foreground shadow transition hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+                class="btn btn-cancel btn-sm"
               >
                 {{ tag }}
               </a>
@@ -302,11 +302,11 @@ watch (
 
           <div class="mt-10">
             <h3 class="mb-2 text-lg font-semibold">Subscribers</h3>
-            <ul class="grid grid-cols-3 gap-2 space-y-2">
+            <ul class="grid grid-cols-3 gap-2">
               <li
                 v-for="(sub, i) in props.twitchData.subscribers.data"
                 :key="i"
-                class="h-16 w-auto cursor-pointer rounded-2xl border bg-accent/20 p-2 px-4 shadow backdrop-blur-sm transition duration-200 hover:bg-accent/50 hover:ring-2 hover:ring-gray-300 active:bg-accent dark:hover:ring-gray-700"
+                class="btn btn-cancel flex flex-col items-start justify-center"
                 :class="getTierStyle(sub.tier)"
               >
                 <a class="m-0 flex flex-col p-0" :href="`${twitch}${sub.user_name}`" target="_blank">
@@ -320,13 +320,13 @@ watch (
             </ul>
           </div>
 
-          <button 
-            type="submit" 
-            class="btn btn-danger mt-6 w-full disabled:opacity-50 disabled:cursor-not-allowed" 
+          <button
+            type="submit"
+            class="btn btn-danger mt-6 w-full disabled:opacity-50 disabled:cursor-not-allowed"
             @click="confirmExpensiveApiCall"
             :disabled="isRefreshing"
           >
-            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" /> 
+            <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             {{ isRefreshing ? 'Refreshing...' : 'Refresh All Data directly from the Twitch API' }}
           </button>
         </div>

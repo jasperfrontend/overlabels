@@ -18,8 +18,7 @@ Route::prefix('/overlay')->group(function () {
 
 // Get all template tags (API endpoint)
 Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
-    ->name('tags.api.all')
-    ->middleware('auth:sanctum');
+    ->name('tags.api.all');
 
 // Twitch webhook endpoint - must be accessible without authentication
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook']);

@@ -48,6 +48,7 @@ export type NormalizedEvent = {
   tier?: '1000'|'2000'|'3000' | string | undefined;
   is_gift?: boolean;
   gift_count?: number;      // for bombs
+  cumulative_total?: number;
   raw: any;                 // keep original for debugging
 }
 

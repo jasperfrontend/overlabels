@@ -2,7 +2,6 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
-import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const breadcrumbs = [
   {
@@ -13,7 +12,10 @@ const breadcrumbs = [
 </script>
 
 <template>
-  <Head :title="breadcrumbs[0].title" description="Dashboard for Overlabels First Test Drive" />
+  <Head>
+    <title>Dashboard</title>
+    <meta name="description" content="Dashboard for Overlabels First Test Drive">
+  </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-6 overflow-x-auto">
       <!-- Header Section -->

@@ -9,7 +9,7 @@ beforeEach(function () {
         'twitch_id' => '123456789',
         'access_token' => 'test_token',
     ]);
-    
+
     $this->alertTemplate = OverlayTemplate::factory()->create([
         'owner_id' => $this->user->id,
         'type' => 'alert',
@@ -17,7 +17,7 @@ beforeEach(function () {
         'html' => '<div class="alert">New follower: [[[event.user_name]]]!</div>',
         'css' => '.alert { color: red; }',
     ]);
-    
+
     $this->staticTemplate = OverlayTemplate::factory()->create([
         'owner_id' => $this->user->id,
         'type' => 'static',
@@ -29,7 +29,7 @@ beforeEach(function () {
 
 test('can create event template mapping', function () {
     $this->actingAs($this->user);
-    
+
     $response = $this->post(route('events.store'), [
         'event_type' => 'channel.follow',
         'template_id' => $this->alertTemplate->id,
@@ -37,9 +37,9 @@ test('can create event template mapping', function () {
         'transition_type' => 'fade',
         'enabled' => true,
     ]);
-    
+
     $response->assertStatus(200);
-    
+
     $this->assertDatabaseHas('event_template_mappings', [
         'user_id' => $this->user->id,
         'event_type' => 'channel.follow',
@@ -52,7 +52,7 @@ test('can create event template mapping', function () {
 
 test('cannot map static template to event', function () {
     $this->actingAs($this->user);
-    
+
     $response = $this->post(route('events.store'), [
         'event_type' => 'channel.follow',
         'template_id' => $this->staticTemplate->id,
@@ -60,18 +60,18 @@ test('cannot map static template to event', function () {
         'transition_type' => 'fade',
         'enabled' => true,
     ]);
-    
+
     $response->assertStatus(422);
 });
 
 test('can view event mapping configuration page', function () {
     $this->actingAs($this->user);
-    
+
     $response = $this->get(route('events.index'));
-    
+
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) => $page
-        ->component('Events/Index')
+        ->component('events/Index')
         ->has('mappings')
         ->has('alertTemplates')
         ->has('eventTypes')
@@ -88,7 +88,7 @@ test('event template mapping has correct relationships', function () {
         'transition_type' => 'fade',
         'enabled' => true,
     ]);
-    
+
     expect($mapping->user->id)->toBe($this->user->id);
     expect($mapping->template->id)->toBe($this->alertTemplate->id);
     expect($mapping->template->type)->toBe('alert');
@@ -96,7 +96,7 @@ test('event template mapping has correct relationships', function () {
 
 test('template data mapper can handle event tags', function () {
     $mapper = app(\App\Services\TemplateDataMapperService::class);
-    
+
     $eventData = [
         'subscription' => ['type' => 'channel.follow'],
         'event' => [
@@ -106,14 +106,14 @@ test('template data mapper can handle event tags', function () {
             'broadcaster_user_id' => '123456789',
         ]
     ];
-    
+
     $twitchData = [
         'user' => ['display_name' => 'StreamerName'],
         'channel_followers' => ['total' => 1000]
     ];
-    
+
     $result = $mapper->mapForTemplate($twitchData, 'Test', null, $eventData);
-    
+
     expect($result)->toHaveKey('event.type');
     expect($result)->toHaveKey('event.user_name');
     expect($result['event.type'])->toBe('channel.follow');
@@ -122,11 +122,11 @@ test('template data mapper can handle event tags', function () {
 
 test('template type filtering works', function () {
     $this->actingAs($this->user);
-    
+
     // Test filtering by alert type
     $response = $this->get(route('templates.index', ['type' => 'alert']));
     $response->assertStatus(200);
-    
+
     // Test filtering by static type
     $response = $this->get(route('templates.index', ['type' => 'static']));
     $response->assertStatus(200);
@@ -134,7 +134,7 @@ test('template type filtering works', function () {
 
 test('alert template can be created with event tags', function () {
     $this->actingAs($this->user);
-    
+
     $response = $this->post(route('templates.store'), [
         'name' => 'New Follower Alert',
         'description' => 'Shows when someone follows',
@@ -143,9 +143,9 @@ test('alert template can be created with event tags', function () {
         'css' => '.alert { background: blue; }',
         'is_public' => true,
     ]);
-    
+
     $response->assertRedirect();
-    
+
     $template = OverlayTemplate::where('name', 'New Follower Alert')->first();
     expect($template)->not->toBeNull();
     expect($template->type)->toBe('alert');

@@ -10,9 +10,13 @@
       <div
         v-if="currentAlert"
         class="alert-overlay"
-        :style="alertContainerStyle"
       >
-        <div v-html="compiledAlertHtml" />
+        <div
+          v-html="compiledAlertHtml"
+          class="alert-content"
+          :id="`alert-content-${currentAlert.timestamp}`"
+
+        />
       </div>
     </transition>
 
@@ -102,11 +106,16 @@ const tagRegexMap = computed(() => {
 const compiledHtml = computed(() => {
   let html = rawHtml.value;
 
+  // First pass: replace all known tags with their values
   for (const [key, regex] of tagRegexMap.value.entries()) {
     if(data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
       html = html.replace(regex, String(data?.value[key]));
     }
   }
+
+  // Second pass: replace any remaining template tags with empty string
+  // This prevents showing raw tags like [[[total]]] before data arrives
+  html = html.replace(/\[\[\[[\w.]+]]]/g,'');
 
   return html;
 });
@@ -128,7 +137,11 @@ const compiledAlertHtml = computed(() => {
   let html = currentAlert.value.html;
   const alertData = currentAlert.value.data;
 
-  if (!alertData || typeof alertData !== 'object') return html;
+  if (!alertData || typeof alertData !== 'object') {
+    // If no data, replace all template tags with empty string to avoid showing raw tags
+    html = html.replace(/\[\[\[[\w.]+]]]/g, '');
+    return html;
+  }
 
   // Create a map of all tags to process - both static and dynamic
   const allTags = new Map<string, any>();
@@ -140,39 +153,27 @@ const compiledAlertHtml = computed(() => {
     }
   }
 
-  // Process all tags in the HTML
+  // First pass: replace all known tags with their values
   for (const [key, value] of allTags.entries()) {
-    const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}\\]\\]\\]`, 'g');
+    const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g');
     html = html.replace(regex, String(value));
   }
+
+  // Second pass: replace any remaining template tags with empty string
+  // This handles tags that don't have data yet (like event.total before it arrives)
+  html = html.replace(/\[\[\[[\w.]+]]]/g, '');
 
   return html;
 });
 
-const alertContainerStyle = computed(() => {
-  if (!currentAlert.value) return {};
-
-  return {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 9999,
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  };
-});
 
 // Alert management functions
 function showAlert(alertData: AlertData) {
   // Clear any existing alert
-  if (alertTimeout.value) {
-    clearTimeout(alertTimeout.value);
-    alertTimeout.value = null;
-  }
+  // if (alertTimeout.value) {
+  //   clearTimeout(alertTimeout.value);
+  //   alertTimeout.value = null;
+  // }
 
   // Inject alert CSS
   if (alertData.css) {

@@ -65,7 +65,7 @@ const features = [
 const stats = [
   { label: 'Active Streamers', value: '10K+' },
   { label: 'Overlays Created', value: '50K+' },
-  { label: 'Events Processed', value: '5M+' },
+  { label: 'events Processed', value: '5M+' },
   { label: 'Uptime', value: '99.9%' }
 ];
 </script>

@@ -4,7 +4,7 @@
   import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
   import { type NavItem } from '@/types';
   import { Link } from '@inertiajs/vue3';
-  import { LayoutGrid, Radio, TwitchIcon, Code, Shield, Building } from 'lucide-vue-next';
+  import { LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building } from 'lucide-vue-next';
   import AppLogo from './AppLogo.vue';
 
   const mainNavItems: NavItem[] = [
@@ -17,7 +17,7 @@
   {
   title: 'Your Twitch Data',
   href: '/twitchdata',
-  icon: TwitchIcon,
+  icon: Grid2x2Check,
   },
   {
   title: 'Tags Generator',
@@ -36,7 +36,7 @@
   },
 
   {
-  title: 'Events',
+  title: 'Events Builder',
   href: '/events',
   icon: Radio,
   },

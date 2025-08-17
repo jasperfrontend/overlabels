@@ -44,13 +44,13 @@ class EventTemplateMappingController extends Controller
                     'template' => null,
                 ];
             } else {
-                // Convert existing model to array for consistency
+                // Convert the existing model to an array for consistency
                 $mapping = $mapping->toArray();
             }
             $allMappings[] = $mapping;
         }
 
-        return Inertia::render('Events/Index', [
+        return Inertia::render('events/index', [
             'mappings' => $allMappings,
             'alertTemplates' => $alertTemplates,
             'eventTypes' => $eventTypes,

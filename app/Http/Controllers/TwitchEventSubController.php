@@ -67,6 +67,21 @@ class TwitchEventSubController extends Controller
                 $user->twitch_id,
                 $callbackUrl
             );
+            
+            // Subscribe to gift subscription events
+            $giftSub = $this->eventSubService->subscribeToSubscriptionGifts(
+                $user->access_token,
+                $user->twitch_id,
+                $callbackUrl
+            );
+            
+            // Subscribe to subscription message events (resubs)
+            $resubSub = $this->eventSubService->subscribeToSubscriptionMessages(
+                $user->access_token,
+                $user->twitch_id,
+                $callbackUrl
+            );
+            
             $raidSub = $this->eventSubService->subscribeToRaids(
                 $user->access_token,
                 $user->twitch_id,
@@ -81,6 +96,8 @@ class TwitchEventSubController extends Controller
             $results = [
                 'follow_subscription' => $followSub,
                 'sub_subscription' => $subSub,
+                'gift_subscription' => $giftSub,
+                'resub_subscription' => $resubSub,
                 'raid_subscription' => $raidSub,
                 'online_subscription' => $onlineSub,
                 'callback_url' => $callbackUrl
