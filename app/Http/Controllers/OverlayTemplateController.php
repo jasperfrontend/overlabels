@@ -113,8 +113,6 @@ class OverlayTemplateController extends Controller
             // Decode the JSON content into an array
             $decodedResponse = json_decode($jsonContent, true);
 
-            Log::info('Available tags response', ['response' => $decodedResponse]);
-
             if ($decodedResponse && isset($decodedResponse['success']) && $decodedResponse['success'] === true) {
                 $availableTags = $decodedResponse['tags'] ?? [];
             } else {
