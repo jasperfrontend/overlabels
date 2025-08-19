@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\TwitchApiService;
+use App\Services\TwitchTokenService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwitchDataController;
@@ -9,15 +10,14 @@ use App\Http\Controllers\PageController;
 
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
-use App\Http\Controllers\TemplateBuilderController;
 use App\Http\Controllers\TwitchEventController;
-use App\Http\Controllers\EventTemplateMappingController;
 
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Laravel\Socialite\Two\AbstractProvider;
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -41,28 +41,36 @@ Route::get('/twitchdata', [TwitchDataController::class, 'index'])
     ->name('twitchdata');
 
 Route::get('/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.expensive');
 
 Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.all');
 
 Route::post('/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.user');
 
 Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.info');
 
 Route::post('/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.following');
 
 Route::post('/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.followers');
 
 Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.subscribers');
 
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
-    ->middleware(['auth', 'twitch.token']);
+    ->middleware(['auth', 'twitch.token'])
+    ->name('twitchdata.refresh.goals');
 
 Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthenticated'])
     ->name('overlay.authenticated')
@@ -74,14 +82,14 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
 
 
 // Test endpoint for debugging hash authentication (with fun slug)
-Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
-    ->name('overlay.test')
-    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Same pattern as above
-    ->where('hashKey', '[a-zA-Z0-9]{64}');
+//Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
+//    ->name('overlay.test')
+//    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Same pattern as above
+//    ->where('hashKey', '[a-zA-Z0-9]{64}');
 
-Route::get('/phpinfo', function () {
-    phpinfo();
-});
+//Route::get('/phpinfo', action: function () {
+//    phpinfo();
+//});
 
 // Initiate login with Twitch
 Route::get('/auth/redirect/twitch', function () {
@@ -109,7 +117,7 @@ Route::post('/auth/refresh/twitch', function () {
         return response()->json(['error' => 'Not authenticated'], 401);
     }
 
-    $tokenService = app(\App\Services\TwitchTokenService::class);
+    $tokenService = app(TwitchTokenService::class);
 
     if ($tokenService->refreshUserToken($user)) {
         return response()->json(['success' => true, 'message' => 'Token refreshed successfully']);
@@ -179,13 +187,12 @@ Route::post('/logout', function () {
 
 
 Route::middleware('auth')->group(function () {
-    Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
-    Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
-    Route::get('/eventsub-demo', [App\Http\Controllers\TwitchEventSubController::class, 'index'])->name('eventsub.demo');
-    Route::get('/eventsub/status', [App\Http\Controllers\TwitchEventSubController::class, 'status'])->name('eventsub.status');
-    Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
-    Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
-    Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
+//    Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
+//    Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
+//    Route::get('/eventsub/status', [App\Http\Controllers\TwitchEventSubController::class, 'status'])->name('eventsub.status');
+//    Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
+//    Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
+//    Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
 
 
     // Access Token Management
@@ -216,9 +223,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{eventType}', [App\Http\Controllers\EventTemplateMappingController::class, 'destroy'])->name('destroy');
     });
 
-    // Template Builder
-    Route::get('/builder/{template?}', [TemplateBuilderController::class, 'index'])->name('builder');
-
     // Template tag generator interface
     Route::get('/tags', [TemplateTagController::class, 'index'])
         ->name('tags.generator');
@@ -242,40 +246,6 @@ Route::middleware('auth')->group(function () {
     // Export standardized tags for sharing
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');
-
-
-    // API endpoints for template builder
-    Route::prefix('api/template')->group(function () {
-
-        // Get available template tags
-        Route::get('/tags', [App\Http\Controllers\TemplateBuilderController::class, 'getAvailableTags'])
-            ->name('api.template.tags');
-
-        // Get default templates from a centralized service
-        Route::get('/defaults', [App\Http\Controllers\TemplateBuilderController::class, 'getDefaultTemplates'])
-            ->name('api.template.defaults');
-
-        // Validate template syntax
-        Route::post('/validate', [App\Http\Controllers\TemplateBuilderController::class, 'validateTemplate'])
-            ->name('api.template.validate');
-
-        // Save template to overlay hash (still uses hash_key internally for security)
-        Route::post('/save', [App\Http\Controllers\TemplateBuilderController::class, 'saveTemplate'])
-            ->name('api.template.save');
-
-        // Load existing template from slug
-        Route::get('/load/{slug}', [App\Http\Controllers\TemplateBuilderController::class, 'loadTemplate'])
-            ->name('api.template.load')
-            ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
-
-        // Preview template with sample data
-        Route::post('/preview', [App\Http\Controllers\TemplateBuilderController::class, 'previewTemplate'])
-            ->name('api.template.preview');
-
-        // Export template as a standalone HTML file
-        Route::post('/export', [App\Http\Controllers\TemplateBuilderController::class, 'exportTemplate'])
-            ->name('api.template.export');
-    });
 
 
     // Twitch events API - protected by authentication

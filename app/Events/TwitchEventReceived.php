@@ -7,6 +7,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class TwitchEventReceived implements ShouldBroadcast
 {
@@ -15,7 +16,6 @@ class TwitchEventReceived implements ShouldBroadcast
     public string $eventType;
     public array $eventData;
     public string $timestamp;
-
     /**
      * Create a new event instance.
      */
@@ -24,6 +24,8 @@ class TwitchEventReceived implements ShouldBroadcast
         $this->eventType = $eventType;
         $this->eventData = $eventData;
         $this->timestamp = now()->toISOString();
+        Log::info('Twitch event received: ' . $eventType);
+
     }
 
     /**

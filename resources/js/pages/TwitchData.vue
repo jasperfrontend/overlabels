@@ -9,7 +9,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 
 const page = usePage<AppPageProps>();
-const toastMessage = ref(null);
+const toastMessage = ref('');
 const toastType = ref('info');
 const isRefreshing = ref(false);
 const connectionError = ref(false);

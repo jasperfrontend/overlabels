@@ -205,7 +205,7 @@ class TwitchEventSubService
                 'secret' => config('app.twitch_webhook_secret')
             ]
         ];
-
+        Log::info('Subscribing to raid events', $payload);
         return $this->createSubscription($userAccessToken, $payload);
     }
 
@@ -259,7 +259,7 @@ class TwitchEventSubService
     }
 
     /**
-     * Subscribe to channel subscription message events (resubs with messages)
+     * Subscribe to channel subscription message events (resubscriptions with messages)
      */
     public function subscribeToSubscriptionMessages(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {

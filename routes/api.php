@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\OverlayTemplateController;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -14,7 +15,7 @@ Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
         ->middleware(['throttle:overlay', 'rate.limit.overlay'])
-        ->withoutMiddleware([\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Get all template tags (API endpoint)
@@ -29,4 +30,4 @@ Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'get
 
 // Twitch webhook endpoint - must be accessible without authentication or CSRF
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
-    ->withoutMiddleware([\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);

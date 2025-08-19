@@ -82,7 +82,7 @@ class OverlayTemplate extends Model
         $uniqueTags = array_unique(array_map(function($tag) {
             return explode('|', $tag)[0];
         }, $tags));
-        
+
         // Re-index the array to ensure it's saved as a JSON array, not object
         return array_values($uniqueTags);
     }
@@ -95,6 +95,15 @@ class OverlayTemplate extends Model
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->fork_of_id = $this->id;
+        
+        // Create the forked name and limit to 100 characters
+        $forkedName = 'Forked from '.$this->name;
+        if (strlen($forkedName) > 100) {
+            // If it's too long, truncate and add ellipsis
+            $forkedName = substr($forkedName, 0, 97) . '...';
+        }
+        $fork->name = $forkedName;
+        
         $fork->version = 1;
         $fork->view_count = 0;
         $fork->fork_count = 0;

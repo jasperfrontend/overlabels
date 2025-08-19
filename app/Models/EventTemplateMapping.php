@@ -65,7 +65,7 @@ class EventTemplateMapping extends Model
     }
 
     /**
-     * Get display name for the event type
+     * Get the display name for the event type
      */
     public function getEventTypeDisplayAttribute(): string
     {

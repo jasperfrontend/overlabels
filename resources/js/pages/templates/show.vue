@@ -8,6 +8,7 @@ import RekaToast from "@/components/RekaToast.vue"
 import TooltipBase from '@/components/TooltipBase.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import { GitForkIcon, EyeIcon, SplitIcon, ExternalLinkIcon, PencilIcon, TrashIcon, CircleAlertIcon } from 'lucide-vue-next';
+import { useTemplateActions } from '@/composables/useTemplateActions';
 
 const props = defineProps({
   template: Object,
@@ -15,49 +16,26 @@ const props = defineProps({
 });
 
 const activeTab = ref('html');
-// Toast state
-const toastMessage = ref('');
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
-const showToast = ref(false);
 
-const publicUrl = computed(() => {
-  return `${window.location.origin}/overlay/${props.template?.slug}/public`;
-});
+// Use the template actions composable
+const {
+  publicUrl,
+  authUrl,
+  previewTemplate,
+  forkTemplate,
+  deleteTemplate,
+  toastMessage,
+  toastType,
+  showToast,
+} = useTemplateActions(props.template);
 
-const authUrl = computed(() => {
-  return `${window.location.origin}/overlay/${props.template?.slug}#YOUR_TOKEN_HERE`;
-});
-
+// Local toast state for clipboard copy
 const copyToClipboard = (url:string, shownValue:string) => {
   navigator.clipboard.writeText(url);
   showToast.value = false;
   toastMessage.value = `${shownValue} copied to clipboard!`;
   toastType.value = 'success';
   showToast.value = true;
-};
-
-const forkTemplate = async () => {
-  if (!confirm('Fork this template?')) return;
-
-  try {
-    const response = await axios.post(route('templates.fork', props.template));
-    router.visit(route('templates.show', response.data.template));
-  } catch (error) {
-    console.error('Failed to fork template:', error);
-    showToast.value = true;
-    toastMessage.value = 'Failed to fork template.';
-    toastType.value = 'error';
-  }
-};
-
-const deleteTemplate = () => {
-  if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
-
-  router.delete(route('templates.destroy', props.template), {
-    onSuccess: () => {
-      // Will redirect to index
-    },
-  });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -82,7 +60,8 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex space-x-2">
             <a
               v-if="$page.props.template?.is_public"
-              :href="publicUrl" target="_blank" class="btn btn-primary">
+              @click.prevent="previewTemplate"
+              href="#" class="btn btn-cancel">
               Preview
               <ExternalLinkIcon class="w-4 h-4 ml-2" />
             </a>
@@ -96,7 +75,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             >
               <template #trigger>
                 <a
-                  :href="authUrl" target="_blank" class="btn btn-private">
+                  @click.prevent="previewTemplate"
+                  href="#" class="btn btn-private">
                   Preview
                   <ExternalLinkIcon class="w-4 h-4 ml-2" />
                 </a>

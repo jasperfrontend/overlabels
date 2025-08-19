@@ -20,10 +20,16 @@ import {
   Palette,
   RefreshCcwDot,
   Save,
+  ExternalLinkIcon,
+  SplitIcon,
+  TrashIcon,
+  CircleAlertIcon,
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useLinkWarning } from '@/composables/useLinkWarning';
+import { useTemplateActions } from '@/composables/useTemplateActions';
+import TooltipBase from '@/components/TooltipBase.vue';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -70,6 +76,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 const isDark = ref(document.documentElement.classList.contains('dark'));
 const { triggerLinkWarning } = useLinkWarning();
+
+// Use the template actions composable for Preview, Fork, Delete
+const {
+  previewTemplate,
+  forkTemplate,
+  deleteTemplate,
+  toastMessage: templateToastMessage,
+  toastType: templateToastType,
+  showToast: showTemplateToast,
+} = useTemplateActions(props.template);
 
 const form = useForm({
   name: props?.template?.name,
@@ -192,13 +208,48 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <button
-            @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
-            class="btn btn-cancel"
-            title="Show keyboard shortcuts"
+          <a
+            v-if="template?.is_public"
+            @click.prevent="previewTemplate"
+            href="#" class="btn btn-cancel">
+            Preview
+            <ExternalLinkIcon class="w-4 h-4 ml-2" />
+          </a>
+
+          <TooltipBase
+            v-else
+            tt-content-class="tooltip-base tooltip-content"
+            align="start"
+            side="left"
           >
-            <Keyboard class="h-4 w-4 mr-2" />
-            Keyboard Shortcuts
+            <template #trigger>
+              <a
+                @click.prevent="previewTemplate"
+                href="#" class="btn btn-private">
+                Preview
+                <ExternalLinkIcon class="w-4 h-4 ml-2" />
+              </a>
+            </template>
+            <template #content>
+              <div class="space-y-1 text-sm">
+                <div class="flex items-center space-x-2">
+                <CircleAlertIcon class="w-6 h-6 mr-2 text-purple-400" />
+                <h3 class="text-xl font-bold">Don't forget</h3>
+                </div>
+                Add your token to the end of the URL like this:<br />
+                <code class="text-purple-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
+              </div>
+            </template>
+          </TooltipBase>
+
+          <button @click="deleteTemplate" class="btn btn-danger">
+            Delete
+            <TrashIcon class="w-4 h-4 ml-2" />
+          </button>
+
+          <button @click="forkTemplate" class="btn btn-warning">
+            Fork
+            <SplitIcon class="w-4 h-4 ml-2" />
           </button>
 
           <button
@@ -208,8 +259,9 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           >
             <RefreshCcwDot v-if="form.processing" class="h-4 w-4 mr-2 animate-spin" />
             <Save v-else class="h-4 w-4 mr-2" />
-            Save Changes
+            Save
           </button>
+
         </div>
       </div>
       <div class="mt-4">
@@ -354,13 +406,23 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                   </Card>
                 </TabsContent>
               </Tabs>
+              <!-- Keyboard Shortcuts Link -->
+              <div class="mt-3 text-center">
+                <a
+                  @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
+                  href="#"
+                  class="text-sm text-muted-foreground hover:text-accent-foreground underline cursor-pointer"
+                >
+                  Keyboard Shortcuts
+                </a>
+              </div>
             </div>
           </div>
           <!-- Form Actions -->
           <div class="mt-6 flex justify-between">
             <Link :href="route('templates.show', template)" class="btn btn-cancel"> ← Back to Template </Link>
             <div class="flex w-auto justify-around space-x-3">
-              <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save Changes</button>
+              <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save</button>
             </div>
           </div>
         </form>
@@ -405,5 +467,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
     <!-- Toast Notification -->
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
+    <!-- Template Actions Toast Notification -->
+    <RekaToast v-if="showTemplateToast" :message="templateToastMessage" :type="templateToastType" />
   </AppLayout>
 </template>

@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use function Laravel\Prompts\warning;
 
 class TwitchEventSubController extends Controller
 {
@@ -67,21 +68,21 @@ class TwitchEventSubController extends Controller
                 $user->twitch_id,
                 $callbackUrl
             );
-            
+
             // Subscribe to gift subscription events
             $giftSub = $this->eventSubService->subscribeToSubscriptionGifts(
                 $user->access_token,
                 $user->twitch_id,
                 $callbackUrl
             );
-            
+
             // Subscribe to subscription message events (resubs)
             $resubSub = $this->eventSubService->subscribeToSubscriptionMessages(
                 $user->access_token,
                 $user->twitch_id,
                 $callbackUrl
             );
-            
+
             $raidSub = $this->eventSubService->subscribeToRaids(
                 $user->access_token,
                 $user->twitch_id,
@@ -438,6 +439,71 @@ class TwitchEventSubController extends Controller
     }
 
     /**
+     * Refresh relevant caches based on the event type
+     */
+    private function refreshCachesForEvent(string $eventType, ?string $broadcasterId): void
+    {
+        if (!$broadcasterId) {
+            return;
+        }
+
+        try {
+            // Map event types to cache clear methods
+            switch ($eventType) {
+                case 'channel.follow':
+                    // New follower - refresh followers and goals
+                    $this->twitchService->clearChannelFollowersCaches($broadcasterId);
+                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    Log::info("Cleared follower and goals caches for new follow event", [
+                        'broadcaster_id' => $broadcasterId
+                    ]);
+                    break;
+
+                case 'channel.subscribe':
+                case 'channel.subscription.gift':
+                case 'channel.subscription.message':
+                    // New subscriber - refresh subscribers and goals
+                    $this->twitchService->clearSubscribersCaches($broadcasterId);
+                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    Log::info("Cleared subscriber and goals caches for subscription event", [
+                        'event_type' => $eventType,
+                        'broadcaster_id' => $broadcasterId
+                    ]);
+                    break;
+
+                case 'channel.raid':
+                    // Raid might affect goals
+                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    Log::info("Cleared goals cache for raid event", [
+                        'broadcaster_id' => $broadcasterId
+                    ]);
+                    break;
+
+                case 'stream.online':
+                case 'stream.offline':
+                    // Stream status change - might want to refresh channel info
+                    $this->twitchService->clearChannelInfoCaches($broadcasterId);
+                    Log::info("Cleared channel info cache for stream status change", [
+                        'event_type' => $eventType,
+                        'broadcaster_id' => $broadcasterId
+                    ]);
+                    break;
+
+                default:
+                    // No specific cache clearing needed for other events
+                    break;
+            }
+        } catch (Exception $e) {
+            Log::warning("Failed to clear caches for event", [
+                'event_type' => $eventType,
+                'broadcaster_id' => $broadcasterId,
+                'error' => $e->getMessage()
+            ]);
+            // Don't throw - cache clearing failure shouldn't break event processing
+        }
+    }
+
+    /**
      * Process incoming Twitch events
      */
     private function handleTwitchEvent(array $data): void
@@ -457,11 +523,23 @@ class TwitchEventSubController extends Controller
             Log::info("Stored Twitch event in database: $eventType (ID: $twitchEvent->id)");
 
             // Find the broadcaster user
-            $broadcasterId = $event['broadcaster_user_id'] ?? null;
+            // For raid events, the broadcaster is in 'to_broadcaster_user_id'
+            $broadcasterId = $eventType === 'channel.raid' 
+                ? ($event['to_broadcaster_user_id'] ?? null)
+                : ($event['broadcaster_user_id'] ?? null);
             
+            // Clear relevant caches based on event type
+            $this->refreshCachesForEvent($eventType, $broadcasterId);
+
+            Log::info("Processing event for broadcaster", [
+                'event_type' => $eventType,
+                'broadcaster_id' => $broadcasterId,
+                'event_keys' => array_keys($event)
+            ]);
+
             if ($broadcasterId) {
                 $user = User::where('twitch_id', $broadcasterId)->first();
-                
+
                 if ($user) {
                     // Check if user has a template mapping for this event
                     $mapping = EventTemplateMapping::with('template')
@@ -471,10 +549,29 @@ class TwitchEventSubController extends Controller
                         ->first();
 
                     if ($mapping && $mapping->template) {
+                        Log::info("Found template mapping for event", [
+                            'event_type' => $eventType,
+                            'template_id' => $mapping->template_id,
+                            'user_id' => $user->id
+                        ]);
                         // Render the user's custom alert template
                         $this->renderEventAlert($user, $mapping, $data);
+                    } else {
+                        Log::warning("No enabled template mapping found", [
+                            'event_type' => $eventType,
+                            'user_id' => $user->id,
+                            'mapping_exists' => EventTemplateMapping::where('user_id', $user->id)
+                                ->where('event_type', $eventType)->exists()
+                        ]);
                     }
+                } else {
+                    Log::warning("User not found for Twitch ID: $broadcasterId");
                 }
+            } else {
+                Log::warning("No broadcaster ID found in event", [
+                    'event_type' => $eventType,
+                    'event_keys' => array_keys($event)
+                ]);
             }
 
             // Broadcast the event to connected WebSocket clients

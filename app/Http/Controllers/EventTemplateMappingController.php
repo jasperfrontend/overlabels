@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\EventTemplateMapping;
 use App\Models\OverlayTemplate;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class EventTemplateMappingController extends Controller
 {
@@ -157,14 +160,14 @@ class EventTemplateMappingController extends Controller
                 'updated_count' => count($updatedMappings)
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
-        } catch (\Exception $e) {
-            \Log::error('Failed to update event mappings', [
+        } catch (Exception $e) {
+            Log::error('Failed to update event mappings', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);

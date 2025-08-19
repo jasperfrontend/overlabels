@@ -38,6 +38,10 @@ class OverlayTemplateController extends Controller
     public function index(Request $request)
     {
         $templates = OverlayTemplate::query()
+            ->where(function ($query) use ($request) {
+                $query->where('is_public', true)
+                    ->orWhere('owner_id', $request->user()->id);
+            })
             ->when($request->input('filter') === 'mine', function ($query) use ($request) {
                 $query->where('owner_id', $request->user()->id);
             })
@@ -56,6 +60,7 @@ class OverlayTemplateController extends Controller
             })
             ->with('owner:id,name,avatar')
             ->withCount('forks')
+
             ->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
             ->paginate(12);
 
@@ -357,9 +362,16 @@ class OverlayTemplateController extends Controller
 
         $fork = $template->fork($request->user());
 
-        return response()->json([
-            'template' => $fork,
-            'message' => 'Template forked successfully',
-        ]);
+        // Check if this is an AJAX request or a regular form submission
+        if ($request->wantsJson()) {
+            return response()->json([
+                'template' => $fork,
+                'message' => 'Template forked successfully',
+            ]);
+        }
+
+        // For regular form submissions, redirect to templates index
+        return redirect()->route('templates.index')
+            ->with('success', 'Template forked successfully! The template "' . $fork->name . '" has been added to your templates.');
     }
 }

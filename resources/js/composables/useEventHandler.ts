@@ -98,6 +98,7 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
 
   const getEventMetadata = (event: NormalizedEvent) => {
     const metadata: Record<string, any> = {};
+    console.log("💥 event: ",event);
     switch (event.type) {
       case 'channel.subscribe':
       case 'channel.subscription.message':
@@ -115,7 +116,19 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
 
       case 'channel.raid':
         const viewers = event.raw?.event?.viewers;
+        const to_broadcaster_user_id = event.raw?.event?.to_broadcaster_user_id;
+        const to_broadcaster_user_login = event.raw?.event?.to_broadcaster_user_login;
+        const to_broadcaster_user_name = event.raw?.event?.to_broadcaster_user_name;
+        const from_broadcaster_user_id = event.raw?.event?.from_broadcaster_user_id;
+        const from_broadcaster_user_login = event.raw?.event?.from_broadcaster_user_login;
+        const from_broadcaster_user_name = event.raw?.event?.from_broadcaster_user_name;
         if (viewers) metadata.viewers = viewers;
+        if (to_broadcaster_user_id) metadata.to_broadcaster_user_id = to_broadcaster_user_id;
+        if (to_broadcaster_user_login) metadata.to_broadcaster_user_login = to_broadcaster_user_login;
+        if (to_broadcaster_user_name) metadata.to_broadcaster_user_name = to_broadcaster_user_name;
+        if (from_broadcaster_user_id) metadata.from_broadcaster_user_id = from_broadcaster_user_id;
+        if (from_broadcaster_user_login) metadata.from_broadcaster_user_login = from_broadcaster_user_login;
+        if (from_broadcaster_user_name) metadata.from_broadcaster_user_name = from_broadcaster_user_name;
         break;
 
       default:

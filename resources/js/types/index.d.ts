@@ -49,6 +49,13 @@ export type NormalizedEvent = {
   is_gift?: boolean;
   gift_count?: number;      // for bombs
   cumulative_total?: number;
+  to_broadcaster_user_id?: string;
+  to_broadcaster_user_login?: string;
+  to_broadcaster_user_name?: string;
+  from_broadcaster_user_id?: string;
+  from_broadcaster_user_login?: string;
+  from_broadcaster_user_name?: string;
+  viewers?: number;
   raw: any;                 // keep original for debugging
 }
 

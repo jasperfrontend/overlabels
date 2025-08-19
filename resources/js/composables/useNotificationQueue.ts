@@ -27,14 +27,14 @@ const DEFAULT_CONFIG: Required<NotificationQueueConfig> = {
 
 export function useNotificationQueue(config: NotificationQueueConfig = {}) {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-  
+
   const queue = ref<QueuedNotification[]>([]);
   const currentNotification = ref<QueuedNotification | null>(null);
   const isDisplaying = ref(false);
   let displayTimeout: number | null = null;
-  
+
   const queueSize = computed(() => queue.value.length);
-  
+
   const getEventPriority = (event: NormalizedEvent): number => {
     const priorityMap: Record<string, number> = {
       'channel.raid': 10,
@@ -48,25 +48,25 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     };
     return priorityMap[event.type] || 1;
   };
-  
+
   const getGroupKey = (event: NormalizedEvent): string | undefined => {
-    // Only group regular follows and cheers, not gift subscriptions 
+    // Only group regular follows and cheers, not gift subscriptions
     // (gift bombs are handled upstream by useGiftBombDetector)
     const groupableTypes = [
       'channel.follow',
       'channel.cheer',
     ];
-    
+
     if (!groupableTypes.includes(event.type)) {
       return undefined;
     }
-    
+
     return `${event.type}-group`;
   };
-  
+
   const getDisplayDuration = (notification: QueuedNotification): number => {
     const baseDuration = mergedConfig.defaultDisplayDuration;
-    
+
     // For gift bombs, scale duration based on the number of gifts
     if (notification.event.type === 'channel.subscription.gift' && notification.event.gift_count) {
       const giftCount = notification.event.gift_count;
@@ -75,12 +75,12 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
       if (giftCount >= 5) return 6000;   // 6 seconds for 5+ gifts
       return 5000; // 5 seconds for smaller gift bombs
     }
-    
+
     // Standard grouping duration increase
     if (notification.count && notification.count > 1) {
       return baseDuration + (notification.count * 200);
     }
-    
+
     const durationMap: Record<string, number> = {
       'channel.raid': 8000,
       'channel.subscription.gift': 6000,
@@ -88,37 +88,37 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
       'channel.cheer': 4000,
       'channel.follow': 3000,
     };
-    
+
     return durationMap[notification.event.type] || baseDuration;
   };
-  
+
   const addToQueue = (event: NormalizedEvent) => {
     const now = Date.now();
     const isLiveUpdate = event.raw?.event?.is_live_update;
     const isFinal = event.raw?.event?.is_final;
-    
+
     // Define supported event types - only these will show notifications
     const supportedEventTypes = [
       'channel.subscribe',
-      'channel.subscription.gift', 
+      'channel.subscription.gift',
       'channel.subscription.message',
       'channel.raid',
       'channel.follow',
       'channel.cheer',
     ];
-    
+
     // Skip unknown/unsupported event types
     if (!supportedEventTypes.includes(event.type)) {
       console.log(`[NotificationQueue] Skipping unsupported event type: ${event.type}`);
       return;
     }
-    
+
     // Handle live gift bomb updates and finals
     if ((isLiveUpdate || isFinal) && event.type === 'channel.subscription.gift') {
       // Check if this notification is already in queue
       const existingInQueue = queue.value.find(n => n.id === event.id);
       if (existingInQueue) {
-        // Update existing event object to maintain component stability
+        // Update the existing event object to maintain component stability
         Object.assign(existingInQueue.event, {
           gift_count: event.gift_count,
           raw: {
@@ -135,7 +135,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
         existingInQueue.displayDuration = getDisplayDuration(existingInQueue);
         return;
       }
-      
+
       // Check if this notification is currently being displayed
       if (currentNotification.value && currentNotification.value.id === event.id) {
         // Update the existing event object properties to maintain component stability
@@ -152,7 +152,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
           }
         });
         currentNotification.value.count = event.gift_count;
-        
+
         // If this is the final update, don't extend the timeout - let it finish naturally
         if (!isFinal) {
           // Extend display time for live updates
@@ -169,22 +169,22 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
         return;
       }
     }
-    
+
     const groupKey = getGroupKey(event);
-    
+
     if (groupKey && !isLiveUpdate) {
       const existingGroup = queue.value.find(
-        n => n.groupKey === groupKey && 
+        n => n.groupKey === groupKey &&
         (now - n.addedAt) < mergedConfig.groupingWindow
       );
-      
+
       if (existingGroup && (existingGroup.count || 0) < mergedConfig.maxGroupSize) {
         existingGroup.count = (existingGroup.count || 1) + 1;
         existingGroup.displayDuration = getDisplayDuration(existingGroup);
         return;
       }
     }
-    
+
     const notification: QueuedNotification = {
       id: event.id,
       event,
@@ -194,32 +194,32 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
       groupKey,
       count: event.gift_count || 1,
     };
-    
+
     notification.displayDuration = getDisplayDuration(notification);
-    
+
     queue.value.push(notification);
     queue.value.sort((a, b) => b.priority - a.priority || a.addedAt - b.addedAt);
-    
+
     if (queue.value.length > mergedConfig.maxQueueSize) {
       queue.value = queue.value.slice(0, mergedConfig.maxQueueSize);
     }
   };
-  
+
   const processNextNotification = () => {
     if (isDisplaying.value || queue.value.length === 0) {
       return;
     }
-    
+
     const next = queue.value.shift();
     if (!next) return;
-    
+
     currentNotification.value = next;
     isDisplaying.value = true;
-    
+
     if (displayTimeout) {
       clearTimeout(displayTimeout);
     }
-    
+
     displayTimeout = window.setTimeout(() => {
       currentNotification.value = null;
       isDisplaying.value = false;
@@ -227,7 +227,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
       processNextNotification();
     }, next.displayDuration);
   };
-  
+
   const clearQueue = () => {
     queue.value = [];
     if (displayTimeout) {
@@ -237,7 +237,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     currentNotification.value = null;
     isDisplaying.value = false;
   };
-  
+
   const skipCurrent = () => {
     if (displayTimeout) {
       clearTimeout(displayTimeout);
@@ -247,13 +247,13 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     isDisplaying.value = false;
     processNextNotification();
   };
-  
+
   watch(queue, () => {
     if (!isDisplaying.value && queue.value.length > 0) {
       processNextNotification();
     }
   }, { deep: true });
-  
+
   return {
     queue: computed(() => queue.value),
     currentNotification: computed(() => currentNotification.value),

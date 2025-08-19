@@ -3,7 +3,7 @@ import Pusher from 'pusher-js'
 import { ref } from 'vue'
 
 /**
- * Sets up a Twitch EventSub WebSocket listener using Laravel Echo + Pusher.
+ * Sets up a Twitch EventSub WebSocket listener using Laravel Echo and Pusher.
  *
  * Establishes a connection to the `twitch-events` channel and listens for
  * `.twitch.event` payloads.
@@ -31,8 +31,6 @@ export function useEventSub(onMapped?: (event: any) => void) {
     forceTLS: true
   })
 
-
-
   echo.connector.pusher.connection.bind('connected',   () => isWebSocketConnected.value = true)
   echo.connector.pusher.connection.bind('disconnected',() => isWebSocketConnected.value = false)
   echo.connector.pusher.connection.bind('failed',      () => isWebSocketConnected.value = false)
@@ -40,5 +38,6 @@ export function useEventSub(onMapped?: (event: any) => void) {
 
   echo.channel('twitch-events').listen('.twitch.event', (event: any) => {
     onMapped?.(event)
+    console.log('Incoming Twitch event:', event)
   })
 }

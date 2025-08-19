@@ -230,10 +230,10 @@ onMounted(async () => {
   try {
     // Get CSRF token from meta tag
     const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
+
     const response = await fetch('/api/overlay/render', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': csrfToken || '',
         'X-Requested-With': 'XMLHttpRequest'
@@ -254,14 +254,15 @@ onMounted(async () => {
       data.value = json.data ?? {};
 
       // Extract user ID for alert channel subscription
-      console.log('DEBUG: Overlay data received:', {
-        user_id: json.data?.user_id,
-        channel_id: json.data?.channel_id,
-        twitch_id: json.data?.twitch_id,
-        user_twitch_id: json.data?.user_twitch_id,
-        available_keys: Object.keys(json.data || {})
-      });
+      // console.log('DEBUG: Overlay data received:', {
+      //   user_id: json.data?.user_id,
+      //   channel_id: json.data?.channel_id,
+      //   twitch_id: json.data?.twitch_id,
+      //   user_twitch_id: json.data?.user_twitch_id,
+      //   available_keys: Object.keys(json.data || {})
+      // });
       userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
+      // userId.value = json.data?.twitch_id || null;
       console.log('DEBUG: Set userId to:', userId.value);
 
       injectStyle(css.value);
