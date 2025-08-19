@@ -225,6 +225,21 @@ onMounted(() => {
         </code>
         <p class="mt-1 text-xs text-muted-foreground">Operators: >, <, >=, <=, !=, =</p>
       </div>
+      
+      <!-- Event-based conditionals -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">Event-based Conditionals (for Alert Templates)</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:event.bits >= 100]]]<br/>
+&nbsp;&nbsp;🎉 Big cheer! [[[event.user_name]]] cheered [[[event.bits]]] bits!<br/>
+[[[elseif:event.bits >= 50]]]<br/>
+&nbsp;&nbsp;Nice cheer from [[[event.user_name]]]!<br/>
+[[[else]]]<br/>
+&nbsp;&nbsp;Thanks [[[event.user_name]]] for the bits!<br/>
+[[[endif]]]
+        </code>
+        <p class="mt-1 text-xs text-muted-foreground">Works with event.bits, event.user_name, event.tier, etc.</p>
+      </div>
 
       <!-- If/Else -->
       <div class="rounded bg-accent/50 p-3">

@@ -104,6 +104,7 @@ class OverlayTemplate extends Model
         
         // Pattern to match conditional statements: [[[if:tag_name operator value]]]
         // Also matches: [[[elseif:tag_name operator value]]]
+        // Updated to properly support dots in tag names like event.bits, event.user_name
         $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^\]]+)?]]]/';
         
         preg_match_all($conditionalPattern, $content, $matches);

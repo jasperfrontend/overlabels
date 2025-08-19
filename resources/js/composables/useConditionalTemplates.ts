@@ -22,9 +22,10 @@ export function useConditionalTemplates() {
      */
     const parseCondition = (condition: string): ParsedCondition => {
         condition = condition.trim();
-        
+
         // Check for comparison operators
-        const comparisonMatch = condition.match(/^(\w+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
+        // Updated regex to support dots in variable names like event.bits, event.user_name
+        const comparisonMatch = condition.match(/^([a-zA-Z0-9_.]+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
         if (comparisonMatch) {
             return {
                 variable: comparisonMatch[1],
@@ -33,7 +34,7 @@ export function useConditionalTemplates() {
                 isBoolean: false
             };
         }
-        
+
         // Otherwise treat as boolean
         return {
             variable: condition,
@@ -46,25 +47,25 @@ export function useConditionalTemplates() {
      */
     const evaluateCondition = (condition: ParsedCondition, data: Record<string, any>): boolean => {
         const variableValue = data[condition.variable];
-        
+
         // Boolean evaluation
         if (condition.isBoolean) {
             // Check for 'false', '0', null, undefined, empty string
             return !!variableValue && variableValue !== 'false' && variableValue !== '0';
         }
-        
+
         // Comparison evaluation
         if (!condition.operator || condition.value === undefined) {
             return false;
         }
-        
+
         // Try to parse as numbers if both sides look numeric
         const isNumericComparison = !isNaN(Number(variableValue)) && !isNaN(Number(condition.value));
-        
+
         if (isNumericComparison) {
             const numValue = Number(variableValue);
             const numCompare = Number(condition.value);
-            
+
             switch (condition.operator) {
                 case '>': return numValue > numCompare;
                 case '<': return numValue < numCompare;
@@ -78,7 +79,7 @@ export function useConditionalTemplates() {
             // String comparison
             const strValue = String(variableValue || '');
             const strCompare = String(condition.value);
-            
+
             switch (condition.operator) {
                 case '==': return strValue === strCompare;
                 case '!=': return strValue !== strCompare;
@@ -101,25 +102,25 @@ export function useConditionalTemplates() {
             console.warn('Maximum conditional nesting depth reached');
             return template;
         }
-        
+
         // Regex to match conditional blocks
-        const conditionalRegex = /\[\[\[if:([^\]]+)\]\]\]([\s\S]*?)\[\[\[endif\]\]\]/;
-        
+        const conditionalRegex = /\[\[\[if:([^\]]+)]]]([\s\S]*?)\[\[\[endif]]]/;
+
         let result = template;
         let match;
-        
+
         while ((match = conditionalRegex.exec(result)) !== null) {
             const fullMatch = match[0];
             const condition = match[1];
             const innerContent = match[2];
-            
+
             // Parse the inner content for else/elseif blocks
             const blocks: ConditionalBlock[] = [];
-            const elseRegex = /\[\[\[else(?:if:([^\]]+))?\]\]\]/g;
+            const elseRegex = /\[\[\[else(?:if:([^\]]+))?]]]/g;
             let lastElseIndex = 0;
             let elseMatch;
             let currentCondition = condition;
-            
+
             while ((elseMatch = elseRegex.exec(innerContent)) !== null) {
                 // Add the content before this else/elseif
                 blocks.push({
@@ -127,12 +128,12 @@ export function useConditionalTemplates() {
                     condition: currentCondition,
                     content: innerContent.substring(lastElseIndex, elseMatch.index)
                 });
-                
-                // Set up for next block
+
+                // Set up for the next block
                 lastElseIndex = elseMatch.index + elseMatch[0].length;
                 currentCondition = elseMatch[1]; // Will be undefined for 'else'
             }
-            
+
             // Add the final block
             if (lastElseIndex === 0) {
                 // No else/elseif found, just a simple if
@@ -149,7 +150,7 @@ export function useConditionalTemplates() {
                     content: innerContent.substring(lastElseIndex)
                 });
             }
-            
+
             // Evaluate conditions and select content
             let selectedContent = '';
             for (const block of blocks) {
@@ -165,16 +166,16 @@ export function useConditionalTemplates() {
                     }
                 }
             }
-            
+
             // Process nested conditionals in the selected content
             if (selectedContent.includes('[[[if:')) {
                 selectedContent = processConditionalBlocks(selectedContent, data, depth + 1);
             }
-            
+
             // Replace the entire conditional block with the selected content
             result = result.substring(0, match.index) + selectedContent + result.substring(match.index + fullMatch.length);
         }
-        
+
         return result;
     };
 
