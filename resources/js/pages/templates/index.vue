@@ -9,7 +9,6 @@ import {
   GitForkIcon,
   PencilIcon,
   ExternalLinkIcon,
-  SearchIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   GlobeIcon,
@@ -100,6 +99,35 @@ const formatDate = (date: string) => {
   });
 };
 
+const eventTypeColors = {
+  'channel.follow': 'bg-green-500',
+  'channel.subscribe': 'bg-purple-500',
+  'channel.subscription.gift': 'bg-pink-500',
+  'channel.subscription.message': 'bg-indigo-500',
+  'channel.cheer': 'bg-yellow-500',
+  'channel.raid': 'bg-red-500',
+  'channel.channel_points_custom_reward_redemption.add': 'bg-cyan-500',
+  'stream.online': 'bg-green-400',
+  'stream.offline': 'bg-red-400',
+};
+
+const eventTypeLabels = {
+  'channel.follow': 'Follow',
+  'channel.subscribe': 'Subscribe',
+  'channel.subscription.gift': 'Gift Sub',
+  'channel.subscription.message': 'Resub',
+  'channel.cheer': 'Cheer',
+  'channel.raid': 'Raid',
+  'channel.channel_points_custom_reward_redemption.add': 'Points',
+  'stream.online': 'Stream Online',
+  'stream.offline': 'Stream Offline',
+};
+
+const getEventMapping = (template: any) => {
+  if (!template.event_mappings || template.event_mappings.length === 0) return null;
+  return template.event_mappings[0];
+};
+
 </script>
 
 <template>
@@ -123,49 +151,37 @@ const formatDate = (date: string) => {
           <table class="w-full">
             <thead class="bg-muted dark:bg-muted border-b border-border dark:border-border">
               <tr>
-                <th class="px-6 py-3 text-left">
+                <th class="px-4 py-2 text-left">
                   <button
                     @click="sortBy('name')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Template
-                    <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="w-3 h-3" />
+                    <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="w-4 h-4" />
                   </button>
                 </th>
-                <th class="px-6 py-3 text-left">
-                  <span class="text-sm font-medium text-muted-foreground">Type</span>
+                <th class="px-3 py-2 text-left">
+                  <span class="text-xs font-medium text-muted-foreground">Type</span>
                 </th>
-                <th class="px-6 py-3 text-left">
-                  <span class="text-sm font-medium text-muted-foreground">Owner</span>
+                <th class="px-3 py-2 text-left">
+                  <span class="text-xs font-medium text-muted-foreground">Event</span>
                 </th>
-                <th class="px-6 py-3 text-center">
-                  <button
-                    @click="sortBy('view_count')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    Views
-                    <component v-if="getSortIcon('view_count')" :is="getSortIcon('view_count')" class="w-3 h-3" />
-                  </button>
+                <th class="px-3 py-2 text-left">
+                  <span class="text-xs font-medium text-muted-foreground">Owner</span>
                 </th>
-                <th class="px-6 py-3 text-center">
-                  <button
-                    @click="sortBy('fork_count')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    Forks
-                    <component v-if="getSortIcon('fork_count')" :is="getSortIcon('fork_count')" class="w-3 h-3" />
-                  </button>
+                <th class="px-3 py-2 text-center">
+                  <span class="text-xs font-medium text-muted-foreground">Stats</span>
                 </th>
-                <th class="px-6 py-3 text-left">
+                <th class="px-3 py-2 text-left">
                   <button
                     @click="sortBy('created_at')"
-                    class="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Created
-                    <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="w-3 h-3" />
+                    <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="w-4 h-4" />
                   </button>
                 </th>
-                <th class="px-6 py-3 text-left text-sm text-muted-foreground">
+                <th class="px-3 py-2 text-left text-xs text-muted-foreground">
                   Status
                 </th>
               </tr>
@@ -176,15 +192,15 @@ const formatDate = (date: string) => {
                 :key="template.id"
                 class="hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors group"
               >
-                <td class="px-6 py-4 w-[600px]">
+                <td class="px-4 py-2 max-w-[400px]">
                   <div>
-                    <div class="flex items-center gap-2">
-                      <h3 class="font-medium text-foreground dark:text-foreground truncate w-[360px]" :title="template.name">{{ template.name }}</h3>
+                    <div class="flex items-center gap-2 relative">
+                      <h3 class="font-medium text-sm text-foreground dark:text-foreground truncate max-w-[250px]" :title="template.name">{{ template.name }}</h3>
 
-                      <div class="hidden group-hover:flex items-center justify-end gap-2">
+                      <div class="hidden group-hover:flex absolute top-0 right-0 p-2 px-4 -mt-1 items-center justify-end gap-1">
                         <Link
                           :href="route('templates.show', template)"
-                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
                           title="View Details"
                         >
                           <EyeIcon class="w-4 h-4" />
@@ -192,7 +208,7 @@ const formatDate = (date: string) => {
                         <Link
                           v-if="template.owner_id === $page.props.auth.user.id"
                           :href="route('templates.edit', template)"
-                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
                           title="Edit"
                         >
                           <PencilIcon class="w-4 h-4" />
@@ -200,7 +216,7 @@ const formatDate = (date: string) => {
                         <button
                           v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                           @click="forkTemplate(template)"
-                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full cursor-pointer"
+                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
                           title="Fork"
                         >
                           <GitForkIcon class="w-4 h-4" />
@@ -208,7 +224,7 @@ const formatDate = (date: string) => {
                         <button
                           v-if="template.owner_id === $page.props.auth.user.id"
                           @click="deleteTemplate(template)"
-                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full cursor-pointer"
+                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
                           title="Delete"
                         >
                           <Trash2Icon class="w-4 h-4" />
@@ -217,46 +233,64 @@ const formatDate = (date: string) => {
                           v-if="template.is_public"
                           :href="`/overlay/${template.slug}/public`"
                           target="_blank"
-                          class="p-1 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
                           title="Preview"
                         >
                           <ExternalLinkIcon class="w-4 h-4" />
                         </a>
                       </div>
                     </div>
-                    <p class="text-sm text-muted-foreground mt-1">{{ template.description || 'No description' }}</p>
+                    <p class="text-xs text-muted-foreground mt-0.5 truncate max-w-[350px]">{{ template.description || 'No description' }}</p>
                   </div>
                 </td>
-                <td class="px-6 py-4">
-                  <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                <td class="px-3 py-2">
+                  <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium"
                        :class="template.type === 'alert'
                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'">
-                    <BellIcon v-if="template.type === 'alert'" class="w-3 h-3" />
-                    <MonitorIcon v-else class="w-3 h-3" />
-                    {{ template.type === 'alert' ? 'Alert' : 'Overlay' }}
+                    <BellIcon v-if="template.type === 'alert'" class="w-4 h-4" />
+                    <MonitorIcon v-else class="w-4 h-4" />
+                    <span class="hidden lg:inline">{{ template.type === 'alert' ? 'Alert' : 'Overlay' }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2">
+                <td class="px-3 py-2">
+                  <div v-if="getEventMapping(template)" class="flex items-center gap-1">
+                    <span
+                      :class="eventTypeColors[getEventMapping(template).event_type]"
+                      class="inline-block w-2 h-2 rounded-full"
+                    ></span>
+                    <span class="text-xs text-muted-foreground">
+                      {{ eventTypeLabels[getEventMapping(template).event_type] }}
+                    </span>
+                  </div>
+                  <span v-else class="text-xs text-muted-foreground">-</span>
+                </td>
+                <td class="px-3 py-2">
+                  <div class="flex items-center gap-1.5">
                     <img
                       :src="template?.owner?.avatar"
                       :alt="template?.owner?.name"
-                      class="w-6 h-6 rounded-full"
+                      class="w-5 h-5 rounded-full"
                     />
-                    <span class="text-sm text-foreground dark:text-foreground">{{ template.owner.name }}</span>
+                    <span class="text-xs text-foreground dark:text-foreground truncate max-w-[100px]">{{ template.owner.name }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="text-sm text-muted-foreground">{{ template.view_count || 0 }}</span>
+                <td class="px-3 py-2 text-center">
+                  <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <div class="flex items-center gap-0.5">
+                      <EyeIcon class="w-4 h-4" />
+                      <span>{{ template.view_count || 0 }}</span>
+                    </div>
+                    <div class="flex items-center gap-0.5">
+                      <GitForkIcon class="w-4 h-4" />
+                      <span>{{ template.forks_count || 0 }}</span>
+                    </div>
+                  </div>
                 </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="text-sm text-muted-foreground">{{ template.forks_count || 0 }}</span>
+                <td class="px-3 py-2">
+                  <span class="text-xs text-muted-foreground">{{ formatDate(template.created_at) }}</span>
                 </td>
-                <td class="px-6 py-4">
-                  <span class="text-sm text-muted-foreground">{{ formatDate(template.created_at) }}</span>
-                </td>
-                <td class="px-6 py-4">
+                <td class="px-3 py-2">
                   <div class="inline-flex items-center gap-1">
                     <GlobeIcon v-if="template.is_public" class="w-4 h-4 text-green-500" title="Public" />
                     <LockIcon v-else class="w-4 h-4 text-violet-400" title="Private" />
@@ -352,4 +386,3 @@ const formatDate = (date: string) => {
     </div>
   </AppLayout>
 </template>
-

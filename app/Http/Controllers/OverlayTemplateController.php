@@ -59,6 +59,9 @@ class OverlayTemplateController extends Controller
                 });
             })
             ->with('owner:id,name,avatar')
+            ->with(['eventMappings' => function ($query) use ($request) {
+                $query->where('user_id', $request->user()->id);
+            }])
             ->withCount('forks')
 
             ->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
