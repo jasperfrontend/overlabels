@@ -67,7 +67,8 @@ class OverlayTemplate extends Model
     public function extractTemplateTags(): array
     {
         $tags = [];
-        // Updated pattern to match [[[tag_name]]] syntax including dots for event.* tags
+        
+        // Pattern to match [[[tag_name]]] syntax including dots for event.* tags
         $pattern = '/\[\[\[([a-zA-Z0-9_.]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
         // Extract from HTML
@@ -78,6 +79,13 @@ class OverlayTemplate extends Model
         preg_match_all($pattern, $this->css, $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
+        // NEW: Extract tags from conditional statements
+        $conditionalTags = $this->extractConditionalTags($this->html);
+        $tags = array_merge($tags, $conditionalTags);
+        
+        $conditionalTags = $this->extractConditionalTags($this->css);
+        $tags = array_merge($tags, $conditionalTags);
+
         // Remove transformation suffixes and return unique tags with re-indexed array
         $uniqueTags = array_unique(array_map(function($tag) {
             return explode('|', $tag)[0];
@@ -85,6 +93,26 @@ class OverlayTemplate extends Model
 
         // Re-index the array to ensure it's saved as a JSON array, not object
         return array_values($uniqueTags);
+    }
+
+    /**
+     * Extract tags referenced in conditional statements
+     */
+    private function extractConditionalTags(string $content): array
+    {
+        $tags = [];
+        
+        // Pattern to match conditional statements: [[[if:tag_name operator value]]]
+        // Also matches: [[[elseif:tag_name operator value]]]
+        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^\]]+)?]]]/';
+        
+        preg_match_all($conditionalPattern, $content, $matches);
+        
+        if (!empty($matches[1])) {
+            $tags = array_merge($tags, $matches[1]);
+        }
+        
+        return $tags;
     }
 
     /**

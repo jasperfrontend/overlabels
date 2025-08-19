@@ -66,20 +66,20 @@ function getCachedTags(): CachedData | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     const version = localStorage.getItem(CACHE_VERSION_KEY);
-    
+
     if (!cached || version !== CURRENT_CACHE_VERSION) {
       return null;
     }
-    
+
     const data: CachedData = JSON.parse(cached);
     const now = Date.now();
-    
+
     // Check if cache is expired
     if (now - data.timestamp > CACHE_DURATION) {
       localStorage.removeItem(CACHE_KEY);
       return null;
     }
-    
+
     return data;
   } catch (error) {
     console.error('Error reading cache:', error);
@@ -130,21 +130,21 @@ function processTags(tags: Record<string, CategoryTag>): void {
 function useGetTemplateTags(): void {
   // Check cache first
   const cached = getCachedTags();
-  
+
   if (cached) {
     processTags(cached.tags);
     return;
   }
-  
+
   // Fetch available tags from the API
   axios
     .get<TagsResponse>(route('tags.api.all'))
     .then((response) => {
       const tags = response.data.tags;
-      
+
       // Cache the response
       setCachedTags(tags);
-      
+
       // Process the tags
       processTags(tags);
     })
@@ -198,6 +198,75 @@ onMounted(() => {
       showDescription ? 'Hide descriptions' : 'Show descriptions'
     }}</label>
   </div>
+
+  <!-- Conditional Syntax Section -->
+  <div class="mb-6">
+    <h2 class="mb-2 text-xl font-bold">Conditional Syntax</h2>
+    <p class="mb-3 text-sm text-muted-foreground">Use conditional logic to show/hide content based on template data.</p>
+
+    <div class="space-y-3">
+      <!-- Boolean conditions -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">Boolean Conditions</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:channel_is_branded]]]<br/>
+&nbsp;&nbsp;This stream is powered by EA Sports!<br/>
+[[[endif]]]
+        </code>
+      </div>
+
+      <!-- Numerical comparisons -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">Numerical Comparisons</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:subscribers_total >= 50]]]<br/>
+&nbsp;&nbsp;Thank you for 50+ subscribers!<br/>
+[[[endif]]]
+        </code>
+        <p class="mt-1 text-xs text-muted-foreground">Operators: >, <, >=, <=, !=, =</p>
+      </div>
+
+      <!-- If/Else -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">If/Else</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:followers_total >= 100]]]<br/>
+&nbsp;&nbsp;100+ followers strong!<br/>
+[[[else]]]<br/>
+&nbsp;&nbsp;Help us reach 100 followers!<br/>
+[[[endif]]]
+        </code>
+      </div>
+
+      <!-- If/ElseIf/Else -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">If/ElseIf/Else</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:subscribers_total >= 100]]]<br/>
+&nbsp;&nbsp;Triple digits!<br/>
+[[[elseif:subscribers_total >= 50]]]<br/>
+&nbsp;&nbsp;Halfway to 100!<br/>
+[[[else]]]<br/>
+&nbsp;&nbsp;Growing our community!<br/>
+[[[endif]]]
+        </code>
+      </div>
+
+      <!-- String comparisons -->
+      <div class="rounded bg-accent/50 p-3">
+        <h3 class="mb-1 text-sm font-semibold">String Comparisons</h3>
+        <code class="block bg-background/50 p-2 rounded text-xs">
+[[[if:channel_language = en]]]<br/>
+&nbsp;&nbsp;Welcome to our English stream!<br/>
+[[[elseif:channel_language = es]]]<br/>
+&nbsp;&nbsp;¡Bienvenidos a nuestro stream!<br/>
+[[[endif]]]
+        </code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regular Template Tags -->
   <div v-for="(tags, category) in groupedTags" :key="category">
     <h2 class="mb-2 text-xl font-bold">{{ category }}</h2>
     <ul class="mb-4">

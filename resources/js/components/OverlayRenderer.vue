@@ -31,6 +31,7 @@ import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
+import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 
 interface AlertData {
   html: string;
@@ -65,6 +66,7 @@ const templateTags = ref<string[]>([]);
 const eventStore = useEventsStore();
 const eventHandler = useEventHandler();
 const giftBombDetector = useGiftBombDetector();
+const { processTemplate } = useConditionalTemplates();
 
 // Alert system state
 const currentAlert = ref<AlertData | null>(null);
@@ -105,15 +107,20 @@ const tagRegexMap = computed(() => {
 
 const compiledHtml = computed(() => {
   let html = rawHtml.value;
+  
+  // First process conditional logic (before replacing tags)
+  if (data.value && typeof data.value === 'object') {
+    html = processTemplate(html, data.value);
+  }
 
-  // First pass: replace all known tags with their values
+  // Then replace all known tags with their values
   for (const [key, regex] of tagRegexMap.value.entries()) {
     if(data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
       html = html.replace(regex, String(data?.value[key]));
     }
   }
 
-  // Second pass: replace any remaining template tags with empty string
+  // Finally replace any remaining template tags with empty string
   // This prevents showing raw tags like [[[total]]] before data arrives
   html = html.replace(/\[\[\[[\w.]+]]]/g,'');
 
@@ -143,23 +150,26 @@ const compiledAlertHtml = computed(() => {
     return html;
   }
 
+  // First process conditional logic
+  html = processTemplate(html, alertData);
+
   // Create a map of all tags to process - both static and dynamic
   const allTags = new Map<string, any>();
 
-  // First, add all data from the merged data (includes both static and dynamic)
+  // Add all data from the merged data (includes both static and dynamic)
   for (const [key, value] of Object.entries(alertData)) {
     if (value !== undefined && value !== null && typeof value !== 'object') {
       allTags.set(key, value);
     }
   }
 
-  // First pass: replace all known tags with their values
+  // Replace all known tags with their values
   for (const [key, value] of allTags.entries()) {
     const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g');
     html = html.replace(regex, String(value));
   }
 
-  // Second pass: replace any remaining template tags with empty string
+  // Finally replace any remaining template tags with empty string
   // This handles tags that don't have data yet (like event.total before it arrives)
   html = html.replace(/\[\[\[[\w.]+]]]/g, '');
 
