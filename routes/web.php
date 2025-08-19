@@ -31,6 +31,10 @@ Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
+Route::get('/help', function () {
+    return Inertia::render('Help');
+})->name('help');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
