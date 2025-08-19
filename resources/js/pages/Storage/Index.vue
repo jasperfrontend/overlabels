@@ -163,7 +163,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AppLayout from '@/layouts/AppLayout.vue';
 
 interface StorageAccount {
   id: number
@@ -201,7 +201,7 @@ const connectProvider = (provider: string) => {
 
 const disconnectAccount = (account: StorageAccount | undefined) => {
   if (!account) return
-  
+
   router.patch(route('storage.disconnect', { account: account.id }), {}, {
     preserveScroll: true,
   })
@@ -209,7 +209,7 @@ const disconnectAccount = (account: StorageAccount | undefined) => {
 
 const removeAccount = (account: StorageAccount | undefined) => {
   if (!account) return
-  
+
   if (confirm('Are you sure you want to remove this storage account? This action cannot be undone.')) {
     router.delete(route('storage.destroy', { account: account.id }), {
       preserveScroll: true,
