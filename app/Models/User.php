@@ -65,4 +65,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(OverlayTemplate::class, 'owner_id');
     }
+
+    public function storageAccounts(): User|HasMany
+    {
+        return $this->hasMany(StorageAccount::class);
+    }
 }
