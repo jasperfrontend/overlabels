@@ -161,7 +161,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue';
 

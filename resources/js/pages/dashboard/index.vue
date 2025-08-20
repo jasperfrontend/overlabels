@@ -47,7 +47,7 @@ const breadcrumbs = [
     <meta name="description" content="Dashboard for Overlabels - Your Twitch overlay hub">
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-8 p-8">
+    <div class="flex h-full flex-1 flex-col gap-4 p-4">
       <!-- Welcome Header -->
       <header class="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-accent/30 via-accent/20 to-transparent p-8 shadow-lg backdrop-blur-sm">
         <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
@@ -144,7 +144,7 @@ const breadcrumbs = [
             Public templates you can fork and customize
           </span>
         </div>
-        
+
         <div v-if="communityTemplates.length > 0" class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2560px]:grid-cols-5">
           <TemplateCard
             v-for="template in communityTemplates"
@@ -154,7 +154,7 @@ const breadcrumbs = [
             :current-user-id="userId"
           />
         </div>
-        
+
         <Card v-else class="border-dashed">
           <CardHeader class="text-center py-8">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
@@ -163,7 +163,7 @@ const breadcrumbs = [
             </CardDescription>
           </CardHeader>
         </Card>
-        
+
         <div class="flex justify-center pt-6">
           <Button size="lg" variant="outline" asChild>
             <Link href="/templates">
@@ -185,7 +185,7 @@ const breadcrumbs = [
             </Link>
           </CardContent>
         </Card>
-        
+
         <Card class="group hover:shadow-md transition-all hover:border-accent">
           <CardHeader class="pb-4">
             <CardTitle class="text-base font-medium">Template Tags</CardTitle>
@@ -196,7 +196,7 @@ const breadcrumbs = [
             </Link>
           </CardContent>
         </Card>
-        
+
         <Card class="group hover:shadow-md transition-all hover:border-accent">
           <CardHeader class="pb-4">
             <CardTitle class="text-base font-medium">Access Tokens</CardTitle>
@@ -207,7 +207,7 @@ const breadcrumbs = [
             </Link>
           </CardContent>
         </Card>
-        
+
         <Card class="group hover:shadow-md transition-all hover:border-accent">
           <CardHeader class="pb-4">
             <CardTitle class="text-base font-medium">Help & Docs</CardTitle>

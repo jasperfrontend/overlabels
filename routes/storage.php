@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'storage.refresh'])->group(function () {
     Route::prefix('storage')->name('storage.')->group(function () {
-        Route::get('/', [StorageConnectionController::class, 'index'])->name('index');
+        Route::get('/app', [StorageConnectionController::class, 'index'])->name('index');
         Route::get('/connect/{provider}', [StorageConnectionController::class, 'connect'])->name('connect');
         Route::get('/callback/{provider}', [StorageConnectionController::class, 'callback'])->name('callback');
         Route::patch('/accounts/{account}/disconnect', [StorageConnectionController::class, 'disconnect'])->name('disconnect');
         Route::delete('/accounts/{account}', [StorageConnectionController::class, 'destroy'])->name('destroy');
-        
+
         Route::prefix('accounts/{account}')->name('accounts.')->group(function () {
             Route::get('/files', [StorageBrowserController::class, 'listFiles'])->name('files.list');
             Route::get('/files/{fileId}', [StorageBrowserController::class, 'getFile'])->name('files.get');
