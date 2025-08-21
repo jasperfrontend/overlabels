@@ -107,7 +107,7 @@ const tagRegexMap = computed(() => {
 
 const compiledHtml = computed(() => {
   let html = rawHtml.value;
-  
+
   // First process conditional logic (before replacing tags)
   if (data.value && typeof data.value === 'object') {
     html = processTemplate(html, data.value);
@@ -169,7 +169,7 @@ const compiledAlertHtml = computed(() => {
     html = html.replace(regex, String(value));
   }
 
-  // Finally replace any remaining template tags with empty string
+  // Finally, replace any remaining template tags with empty string
   // This handles tags that don't have data yet (like event.total before it arrives)
   html = html.replace(/\[\[\[[\w.]+]]]/g, '');
 
@@ -263,26 +263,13 @@ onMounted(async () => {
       css.value = json.template.css;
       data.value = json.data ?? {};
 
-      // Extract user ID for alert channel subscription
-      // console.log('DEBUG: Overlay data received:', {
-      //   user_id: json.data?.user_id,
-      //   channel_id: json.data?.channel_id,
-      //   twitch_id: json.data?.twitch_id,
-      //   user_twitch_id: json.data?.user_twitch_id,
-      //   available_keys: Object.keys(json.data || {})
-      // });
       userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
-      // userId.value = json.data?.twitch_id || null;
-      console.log('DEBUG: Set userId to:', userId.value);
 
       injectStyle(css.value);
       document.title = json.meta?.name || 'Overlay';
       document.getElementById('loading')?.remove();
 
-      // Set up alert listening
-      console.log('DEBUG: About to setup alert listener');
       setupAlertListener();
-      console.log('DEBUG: Alert listener setup completed');
     } else {
       console.error('Failed to load overlay', response.status, response.statusText);
     }

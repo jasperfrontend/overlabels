@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Laravel\Socialite\Two\AbstractProvider;
 
-use App\Http\Controllers\StorageConnectionController;
-use App\Http\Controllers\StorageBrowserController;
+//use App\Http\Controllers\StorageConnectionController;
+//use App\Http\Controllers\StorageBrowserController;
 
 
 Route::get('/', function () {
@@ -42,6 +42,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
+Route::get('/login', [PageController::class, 'notAuthorized'])
+    ->middleware(['guest'])
+    ->name('login');
 
 Route::get('/twitchdata', [TwitchDataController::class, 'index'])
     ->middleware(['auth', 'twitch.token'])
@@ -86,17 +89,6 @@ Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthentic
 Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePublic'])
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
-
-
-// Test endpoint for debugging hash authentication (with fun slug)
-//Route::get('/test-hash/{slug}/{hashKey}', [App\Http\Controllers\OverlayHashController::class, 'testHash'])
-//    ->name('overlay.test')
-//    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*') // Same pattern as above
-//    ->where('hashKey', '[a-zA-Z0-9]{64}');
-
-//Route::get('/phpinfo', action: function () {
-//    phpinfo();
-//});
 
 // Initiate login with Twitch
 Route::get('/auth/redirect/twitch', function () {
@@ -187,6 +179,7 @@ Route::get('/auth/callback/twitch', function () {
 });
 
 
+
 Route::post('/logout', function () {
     Auth::logout();
     return redirect('/');
@@ -194,13 +187,6 @@ Route::post('/logout', function () {
 
 
 Route::middleware('auth')->group(function () {
-//    Route::post('/eventsub/connect', [App\Http\Controllers\TwitchEventSubController::class, 'connect'])->name('eventsub.connect');
-//    Route::post('/eventsub/disconnect', [App\Http\Controllers\TwitchEventSubController::class, 'disconnect'])->name('eventsub.disconnect');
-//    Route::get('/eventsub/status', [App\Http\Controllers\TwitchEventSubController::class, 'status'])->name('eventsub.status');
-//    Route::get('/eventsub/webhook-status', [App\Http\Controllers\TwitchEventSubController::class, 'webhookStatus']);
-//    Route::get('/eventsub/check-status', [App\Http\Controllers\TwitchEventSubController::class, 'checkStatus']);
-//    Route::get('/eventsub/cleanup-all', [App\Http\Controllers\TwitchEventSubController::class, 'cleanupAll']);
-
 
     // Access Token Management
     Route::prefix('tokens')->name('tokens.')->group(function () {
@@ -264,26 +250,28 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
     });
 });
-
-Route::middleware(['auth', 'verified', 'storage.refresh'])->group(function () {
-    Route::prefix('storage')->name('storage.')->group(function () {
-        Route::get('/app', [StorageConnectionController::class, 'index'])->name('index');
-        Route::get('/connect/{provider}', [StorageConnectionController::class, 'connect'])->name('connect');
-        Route::get('/callback/{provider}', [StorageConnectionController::class, 'callback'])->name('callback');
-        Route::patch('/accounts/{account}/disconnect', [StorageConnectionController::class, 'disconnect'])->name('disconnect');
-        Route::delete('/accounts/{account}', [StorageConnectionController::class, 'destroy'])->name('destroy');
-
-        Route::prefix('accounts/{account}')->name('accounts.')->group(function () {
-            Route::get('/files', [StorageBrowserController::class, 'listFiles'])->name('files.list');
-            Route::get('/files/{fileId}', [StorageBrowserController::class, 'getFile'])->name('files.get');
-            Route::get('/files/{fileId}/download-url', [StorageBrowserController::class, 'getDownloadUrl'])->name('files.download-url');
-            Route::get('/files/{fileId}/shareable-url', [StorageBrowserController::class, 'getShareableUrl'])->name('files.shareable-url');
-            Route::get('/files/{fileId}/thumbnail', [StorageBrowserController::class, 'getThumbnail'])->name('files.thumbnail');
-            Route::get('/quota', [StorageBrowserController::class, 'getQuota'])->name('quota');
-            Route::get('/validate', [StorageBrowserController::class, 'validateConnection'])->name('validate');
-        });
-    });
-});
+/**
+ * @TODO: Actually make connecting to external file storage services work. Currently, it's barely more than a placeholder.
+ */
+//Route::middleware(['auth', 'verified', 'storage.refresh'])->group(function () {
+//    Route::prefix('storage')->name('storage.')->group(function () {
+//        Route::get('/', [StorageConnectionController::class, 'index'])->name('index');
+//        Route::get('/connect/{provider}', [StorageConnectionController::class, 'connect'])->name('connect');
+//        Route::get('/callback/{provider}', [StorageConnectionController::class, 'callback'])->name('callback');
+//        Route::patch('/accounts/{account}/disconnect', [StorageConnectionController::class, 'disconnect'])->name('disconnect');
+//        Route::delete('/accounts/{account}', [StorageConnectionController::class, 'destroy'])->name('destroy');
+//
+//        Route::prefix('accounts/{account}')->name('accounts.')->group(function () {
+//            Route::get('/files', [StorageBrowserController::class, 'listFiles'])->name('files.list');
+//            Route::get('/files/{fileId}', [StorageBrowserController::class, 'getFile'])->name('files.get');
+//            Route::get('/files/{fileId}/download-url', [StorageBrowserController::class, 'getDownloadUrl'])->name('files.download-url');
+//            Route::get('/files/{fileId}/shareable-url', [StorageBrowserController::class, 'getShareableUrl'])->name('files.shareable-url');
+//            Route::get('/files/{fileId}/thumbnail', [StorageBrowserController::class, 'getThumbnail'])->name('files.thumbnail');
+//            Route::get('/quota', [StorageBrowserController::class, 'getQuota'])->name('quota');
+//            Route::get('/validate', [StorageBrowserController::class, 'validateConnection'])->name('validate');
+//        });
+//    });
+//});
 
 
 Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');

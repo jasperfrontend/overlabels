@@ -67,7 +67,7 @@ class OverlayTemplate extends Model
     public function extractTemplateTags(): array
     {
         $tags = [];
-        
+
         // Pattern to match [[[tag_name]]] syntax including dots for event.* tags
         $pattern = '/\[\[\[([a-zA-Z0-9_.]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
@@ -82,7 +82,7 @@ class OverlayTemplate extends Model
         // NEW: Extract tags from conditional statements
         $conditionalTags = $this->extractConditionalTags($this->html);
         $tags = array_merge($tags, $conditionalTags);
-        
+
         $conditionalTags = $this->extractConditionalTags($this->css);
         $tags = array_merge($tags, $conditionalTags);
 
@@ -101,18 +101,18 @@ class OverlayTemplate extends Model
     private function extractConditionalTags(string $content): array
     {
         $tags = [];
-        
+
         // Pattern to match conditional statements: [[[if:tag_name operator value]]]
         // Also matches: [[[elseif:tag_name operator value]]]
         // Updated to properly support dots in tag names like event.bits, event.user_name
         $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^\]]+)?]]]/';
-        
+
         preg_match_all($conditionalPattern, $content, $matches);
-        
+
         if (!empty($matches[1])) {
             $tags = array_merge($tags, $matches[1]);
         }
-        
+
         return $tags;
     }
 
@@ -124,15 +124,15 @@ class OverlayTemplate extends Model
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->fork_of_id = $this->id;
-        
+
         // Create the forked name and limit to 100 characters
         $forkedName = 'Forked from '.$this->name;
-        if (strlen($forkedName) > 100) {
+        if (strlen($forkedName) > 70) {
             // If it's too long, truncate and add ellipsis
             $forkedName = substr($forkedName, 0, 97) . '...';
         }
         $fork->name = $forkedName;
-        
+
         $fork->version = 1;
         $fork->view_count = 0;
         $fork->fork_count = 0;

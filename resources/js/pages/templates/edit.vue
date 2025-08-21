@@ -12,11 +12,9 @@ import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
-
 import {
   Code,
   InfoIcon,
-  Keyboard,
   Palette,
   RefreshCcwDot,
   Save,
@@ -134,14 +132,16 @@ const submitForm = () => {
   form.put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
-      showToast.value = true;
+      showToast.value = false;
       toastMessage.value = "Template saved successfully!";
       toastType.value = 'success';
+      showToast.value = true;
     },
     onError: () => {
-      showToast.value = true;
+      showToast.value = false;
       toastMessage.value = "Failed to save template!";
       toastType.value = 'error';
+      showToast.value = true;
     },
   });
 };
@@ -274,7 +274,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
             <!-- Editor Area -->
             <div class="space-y-6 col-span-12 lg:col-span-10">
               <Tabs default-value="html" class="w-full">
-                <TabsList class="grid w-full grid-cols-5 gap-1">
+                <TabsList class="grid w-full grid-cols-5 gap-2">
                   <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
                     <Code class="h-4 w-4" />
                     HTML
@@ -291,7 +291,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
                 <TabsContent value="html" class="mt-4">
                   <Card>
-                    <CardHeader>
+                    <CardHeader class="px-4">
                       <CardTitle class="text-base">HTML Template</CardTitle>
                       <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
                         Omit <code>doctype</code>, <code>html</code>, <code>head</code> and <code>body</code>.

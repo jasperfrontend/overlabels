@@ -7,7 +7,7 @@ import RekaToast from '@/components/RekaToast.vue';
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 
-// Get CSRF token from meta tag if it exists
+// Get CSRF token from the meta-tag if it exists
 const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
   axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
@@ -19,6 +19,7 @@ const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 const showToast = ref(false);
 
 const showDescription = ref(false);
+const showTemplateTags = ref(false);
 
 interface TemplateTag {
   display_tag: string;
@@ -184,119 +185,52 @@ const copyTag = async (tagName: string) => {
 onMounted(() => {
   useGetTemplateTags();
 });
+
 </script>
 
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
-  <!--  <pre>{{groupedTags}}</pre>-->
-  <div
-    :class="{ 'bg-violet-500 dark:bg-violet-400': showDescription, 'bg-accent': !showDescription }"
-    class="mb-4 flex items-center space-x-2 rounded text-accent-foreground/80"
-  >
-    <input type="checkbox" id="show-description" v-model="showDescription" class="mr-2 hidden" />
-    <label for="show-description" class="block w-full cursor-pointer rounded p-2 text-sm select-none" :class="{ 'text-accent': showDescription }">{{
-      showDescription ? 'Hide descriptions' : 'Show descriptions'
-    }}</label>
-  </div>
+
 
   <!-- Conditional Syntax Section -->
   <div class="mb-6">
-    <h2 class="mb-2 text-xl font-bold">Conditional Syntax</h2>
-    <p class="mb-3 text-sm text-muted-foreground">Use conditional logic to show/hide content based on template data.</p>
-
-    <div class="space-y-3">
-      <!-- Boolean conditions -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">Boolean Conditions</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:channel_is_branded]]]<br/>
-&nbsp;&nbsp;This stream is powered by EA Sports!<br/>
-[[[endif]]]
-        </code>
-      </div>
-
-      <!-- Numerical comparisons -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">Numerical Comparisons</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:subscribers_total >= 50]]]<br/>
-&nbsp;&nbsp;Thank you for 50+ subscribers!<br/>
-[[[endif]]]
-        </code>
-        <p class="mt-1 text-xs text-muted-foreground">Operators: >, <, >=, <=, !=, =</p>
-      </div>
-      
-      <!-- Event-based conditionals -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">Event-based Conditionals (for Alert Templates)</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:event.bits >= 100]]]<br/>
-&nbsp;&nbsp;🎉 Big cheer! [[[event.user_name]]] cheered [[[event.bits]]] bits!<br/>
-[[[elseif:event.bits >= 50]]]<br/>
-&nbsp;&nbsp;Nice cheer from [[[event.user_name]]]!<br/>
-[[[else]]]<br/>
-&nbsp;&nbsp;Thanks [[[event.user_name]]] for the bits!<br/>
-[[[endif]]]
-        </code>
-        <p class="mt-1 text-xs text-muted-foreground">Works with event.bits, event.user_name, event.tier, etc.</p>
-      </div>
-
-      <!-- If/Else -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">If/Else</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:followers_total >= 100]]]<br/>
-&nbsp;&nbsp;100+ followers strong!<br/>
-[[[else]]]<br/>
-&nbsp;&nbsp;Help us reach 100 followers!<br/>
-[[[endif]]]
-        </code>
-      </div>
-
-      <!-- If/ElseIf/Else -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">If/ElseIf/Else</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:subscribers_total >= 100]]]<br/>
-&nbsp;&nbsp;Triple digits!<br/>
-[[[elseif:subscribers_total >= 50]]]<br/>
-&nbsp;&nbsp;Halfway to 100!<br/>
-[[[else]]]<br/>
-&nbsp;&nbsp;Growing our community!<br/>
-[[[endif]]]
-        </code>
-      </div>
-
-      <!-- String comparisons -->
-      <div class="rounded bg-accent/50 p-3">
-        <h3 class="mb-1 text-sm font-semibold">String Comparisons</h3>
-        <code class="block bg-background/50 p-2 rounded text-xs">
-[[[if:channel_language = en]]]<br/>
-&nbsp;&nbsp;Welcome to our English stream!<br/>
-[[[elseif:channel_language = es]]]<br/>
-&nbsp;&nbsp;¡Bienvenidos a nuestro stream!<br/>
-[[[endif]]]
-        </code>
-      </div>
-    </div>
+    <p class="pt-1 text-sm text-muted-foreground">
+      Visit <a class="text-violet-500 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a> to learn more about conditional and event alert syntax.
+    </p>
   </div>
 
   <!-- Regular Template Tags -->
   <div v-for="(tags, category) in groupedTags" :key="category">
-    <h2 class="mb-2 text-xl font-bold">{{ category }}</h2>
-    <ul class="mb-4">
-      <li v-for="tag in tags" :key="tag.display_tag">
-        <button
-          @click.prevent="copyTag(tag.display_tag)"
-          class="cursor-pointer rounded bg-accent px-1 py-0.5 text-xs text-accent-foreground/80 transition-colors hover:bg-sidebar hover:text-accent-foreground"
-          :title="`Click to copy ${tag.display_tag}`"
-        >
-          {{ tag.display_tag }}
-        </button>
-        <div v-if="showDescription" class="mb-1 text-xs text-muted-foreground">
-          <span class="text-xs text-violet-500 dark:text-violet-400">{{ tag.description }}</span>
-        </div>
-      </li>
-    </ul>
+    <details class="mb-4">
+      <summary class="mb-2 cursor-pointer text-lg font-bold">{{ category }}</summary>
+
+      <ul class="mb-4">
+        <li v-for="tag in tags" :key="tag.display_tag">
+          <button
+            @click.prevent="copyTag(tag.display_tag)"
+            class="cursor-pointer rounded bg-accent px-1 py-0.5 text-xs text-accent-foreground/80 transition-colors hover:bg-sidebar hover:text-accent-foreground"
+            :title="`Click to copy ${tag.display_tag}`"
+          >
+            {{ tag.display_tag }}
+          </button>
+          <div v-if="showDescription" class="mb-1 text-xs text-muted-foreground">
+            <span class="text-xs text-violet-500 dark:text-violet-400">{{ tag.description }}</span>
+          </div>
+        </li>
+      </ul>
+    </details>
+  </div>
+  <div
+    v-if="tagList.length > 0"
+    :class="{ 'text-violet-500 dark:text-violet-400': showDescription, 'text-accent-foreground': !showDescription }"
+    class="flex items-center space-x-2 rounded text-accent-foreground/80"
+  >
+    <input type="checkbox" id="show-description" v-model="showDescription" class="mr-2 accent-violet-500" />
+    <label for="show-description" class="cursor-pointer rounded p-1 text-sm select-none" :class="{ 'text-accent-foreground': showDescription }">
+      {{ showDescription ? 'Hide' : 'Show' }} descriptions</label
+    >
+  </div>
+  <div v-else>
+    <p class="text-sm text-muted-foreground">No tags available</p>
   </div>
 </template>

@@ -1,7 +1,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useForm, Head } from '@inertiajs/vue3';
+import { useForm, Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types'
 import Modal from '@/components/Modal.vue';
@@ -309,7 +309,7 @@ watch(
               Template Type *
             </label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label class="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" :class="{ 'border-blue-500 bg-blue-50': form.type === 'static' }">
+              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-blue-500 bg-accent-foreground/20': form.type === 'static' }">
                 <input
                   v-model="form.type"
                   type="radio"
@@ -318,14 +318,14 @@ watch(
                   required
                 />
                 <div>
-                  <div class="text-sm font-medium text-gray-900">Static Overlay</div>
+                  <div class="text-sm font-medium">Static Overlay</div>
                   <div class="text-xs text-gray-500 mt-1">
                     Displays persistent content with Twitch data (follower count, stream title, etc.)
                   </div>
                 </div>
               </label>
 
-              <label class="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" :class="{ 'border-blue-500 bg-blue-50': form.type === 'alert' }">
+              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-blue-500 bg-accent-foreground/20': form.type === 'alert' }">
                 <input
                   v-model="form.type"
                   type="radio"
@@ -334,7 +334,7 @@ watch(
                   required
                 />
                 <div>
-                  <div class="text-sm font-medium text-gray-900">Event Alert</div>
+                  <div class="text-sm font-medium">Event Alert</div>
                   <div class="text-xs text-gray-500 mt-1">
                     Shows temporarily when events occur (new follower, subscription, etc.)
                   </div>
@@ -346,13 +346,13 @@ watch(
             </div>
 
             <!-- Event-specific help -->
-            <div v-if="form.type === 'alert'" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div class="text-sm text-blue-800">
-                <strong>💡 Alert Template Tips:</strong>
+            <div v-if="form.type === 'alert'" class="mt-3 p-3 bg-accent border border-accent-foreground/50 rounded-md">
+              <div class="text-sm">
+                <strong>Alert Template Tips:</strong>
                 <ul class="mt-1 list-disc list-inside space-y-1">
-                  <li>Use <code class="bg-blue-100 px-1 rounded">event.user_name</code> for the person who triggered the event</li>
-                  <li>Use <code class="bg-blue-100 px-1 rounded">event.type</code> to show what kind of event occurred</li>
-                  <li>Mix event tags with regular tags like <code class="bg-blue-100 px-1 rounded">followers_total</code></li>
+                  <li>To view all the Event-based template tags you can use, visit the <a class="underline" href="/help" target="_blank">Help documentation</a>.</li>
+                  <li>There are some caveats in the Event-based syntax. For example, only the <code>channel.raid</code> event uses <code>event.from_broadcaster_user_name</code></li>
+                  <li>You can mix event tags with regular tags like <code class="bg-accent-foreground/20 p-1 rounded">[[[followers_total]]]</code></li>
                   <li>Keep alert templates simple and readable for quick display</li>
                 </ul>
               </div>
