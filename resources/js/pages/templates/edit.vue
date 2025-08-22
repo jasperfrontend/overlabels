@@ -12,17 +12,7 @@ import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
-import {
-  Code,
-  InfoIcon,
-  Palette,
-  RefreshCcwDot,
-  Save,
-  ExternalLinkIcon,
-  SplitIcon,
-  TrashIcon,
-  CircleAlertIcon,
-} from 'lucide-vue-next';
+import { Code, InfoIcon, Palette, RefreshCcwDot, Save, ExternalLinkIcon, SplitIcon, TrashIcon, CircleAlertIcon, ToggleLeft, ToggleRight } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -70,7 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
   existingTemplate: () => ({ html: '', css: '' }),
   availableTags: () => [],
   template: Object,
-})
+});
 
 const isDark = ref(document.documentElement.classList.contains('dark'));
 const { triggerLinkWarning } = useLinkWarning();
@@ -95,7 +85,7 @@ const form = useForm({
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: "Editing Template: " + props.template.name,
+    title: 'Editing Template: ' + props.template.name,
     href: route('templates.edit', props.template),
   },
 ];
@@ -133,18 +123,20 @@ const submitForm = () => {
     preserveScroll: true,
     onSuccess: () => {
       showToast.value = false;
-      toastMessage.value = "Template saved successfully!";
+      toastMessage.value = 'Template saved successfully!';
       toastType.value = 'success';
       showToast.value = true;
     },
     onError: () => {
       showToast.value = false;
-      toastMessage.value = "Failed to save template!";
+      toastMessage.value = 'Failed to save template!';
       toastType.value = 'error';
       showToast.value = true;
     },
   });
 };
+
+const showSidebar = ref(false);
 
 // Watch for theme changes
 watch(
@@ -196,7 +188,6 @@ onMounted(() => {
 
 // Get all keyboard shortcuts for display
 const keyboardShortcutsList = computed(() => getAllShortcuts());
-
 </script>
 
 <template>
@@ -208,33 +199,23 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <a
-            v-if="template?.is_public"
-            @click.prevent="previewTemplate"
-            href="#" class="btn btn-cancel">
+          <a v-if="template?.is_public" @click.prevent="previewTemplate" href="#" class="btn btn-cancel">
             Preview
-            <ExternalLinkIcon class="w-4 h-4 ml-2" />
+            <ExternalLinkIcon class="ml-2 h-4 w-4" />
           </a>
 
-          <TooltipBase
-            v-else
-            tt-content-class="tooltip-base tooltip-content"
-            align="start"
-            side="left"
-          >
+          <TooltipBase v-else tt-content-class="tooltip-base tooltip-content" align="start" side="left">
             <template #trigger>
-              <a
-                @click.prevent="previewTemplate"
-                href="#" class="btn btn-private">
+              <a @click.prevent="previewTemplate" href="#" class="btn btn-private">
                 Preview
-                <ExternalLinkIcon class="w-4 h-4 ml-2" />
+                <ExternalLinkIcon class="ml-2 h-4 w-4" />
               </a>
             </template>
             <template #content>
               <div class="space-y-1 text-sm">
                 <div class="flex items-center space-x-2">
-                <CircleAlertIcon class="w-6 h-6 mr-2 text-purple-400" />
-                <h3 class="text-xl font-bold">Don't forget</h3>
+                  <CircleAlertIcon class="mr-2 h-6 w-6 text-purple-400" />
+                  <h3 class="text-xl font-bold">Don't forget</h3>
                 </div>
                 Add your token to the end of the URL like this:<br />
                 <code class="text-purple-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
@@ -244,35 +225,30 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
           <button @click="deleteTemplate" class="btn btn-danger">
             Delete
-            <TrashIcon class="w-4 h-4 ml-2" />
+            <TrashIcon class="ml-2 h-4 w-4" />
           </button>
 
           <button @click="forkTemplate" class="btn btn-warning">
             Fork
-            <SplitIcon class="w-4 h-4 ml-2" />
+            <SplitIcon class="ml-2 h-4 w-4" />
           </button>
 
-          <button
-            @click="submitForm"
-            :disabled="form.processing || !form.isDirty"
-            class="btn btn-primary"
-          >
-            <RefreshCcwDot v-if="form.processing" class="h-4 w-4 mr-2 animate-spin" />
-            <Save v-else class="h-4 w-4 mr-2" />
+          <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
+            <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
+            <Save v-else class="mr-2 h-4 w-4" />
             Save
           </button>
-
         </div>
       </div>
       <div class="mt-4">
         <form @submit.prevent="submitForm">
           <div class="grid grid-cols-12 gap-4">
             <!-- Sidebar Area -->
-            <div class="col-span-12 lg:col-span-2">
+            <div class="col-span-12 lg:col-span-2" v-if="showSidebar">
               <TemplateTagsList />
             </div>
             <!-- Editor Area -->
-            <div class="space-y-6 col-span-12 lg:col-span-10">
+            <div class="col-span-12 space-y-6" :class="{ 'lg:col-span-10': showSidebar }">
               <Tabs default-value="html" class="w-full">
                 <TabsList class="grid w-full grid-cols-5 gap-2">
                   <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
@@ -301,7 +277,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                       <div class="overflow-hidden rounded-lg border">
                         <Codemirror
                           v-model="form.html"
-                          :style="{ height: '500px' }"
+                          :style="{ height: showSidebar ? '500px' : '800px' }"
                           :autofocus="true"
                           :indent-with-tab="true"
                           :tab-size="2"
@@ -317,7 +293,8 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                     <CardHeader>
                       <CardTitle class="text-base">CSS Styles</CardTitle>
                       <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                        Style your overlay with CSS. Template tags work in css as well! You can also <code>@import</code> external stylesheets, eg. for fonts.
+                        Style your overlay with CSS. Template tags work in css as well! You can also <code>@import</code> external stylesheets, eg.
+                        for fonts.
                       </p>
                     </CardHeader>
                     <CardContent>
@@ -337,9 +314,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                 <TabsContent value="meta" class="mt-4">
                   <Card>
                     <CardHeader class="pb-3">
-                      <CardTitle class="flex items-center gap-2 text-base">
-                        Title and description
-                      </CardTitle>
+                      <CardTitle class="flex items-center gap-2 text-base"> Title and description </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <!-- Template Name -->
@@ -408,13 +383,22 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               </Tabs>
               <!-- Keyboard Shortcuts Link -->
               <div class="mt-3 text-center">
+                <button
+                  @click.prevent="showSidebar = !showSidebar"
+                  class="flex gap-2 cursor-pointer text-sm text-muted-foreground underline hover:text-accent-foreground"
+                >
+                  <ToggleRight v-if="showSidebar" class="w-4 h-4 mr-1" />
+                  <ToggleLeft v-else class="w-4 h-4 mr-1" />
+                  Toggle sidebar
+                </button>
                 <a
                   @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
                   href="#"
-                  class="text-sm text-muted-foreground hover:text-accent-foreground underline cursor-pointer"
+                  class="cursor-pointer text-sm text-muted-foreground underline hover:text-accent-foreground"
                 >
                   Keyboard Shortcuts
                 </a>
+
               </div>
             </div>
           </div>
@@ -429,7 +413,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </div>
     </div>
 
-
     <!-- Keyboard shortcuts dialog -->
     <div
       v-if="showKeyboardShortcuts"
@@ -440,7 +423,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
           <button @click.prevent="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor;">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor">
               <path
                 fill-rule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Globe, Lock, Eye, GitFork, Bell, Layers } from 'lucide-vue-next';
+import { Globe, Lock, Eye, GitFork, Bell, Layers, ExternalLinkIcon, PencilIcon } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const props = defineProps<{
 const isOwnTemplate = props.currentUserId && props.template.owner?.id === props.currentUserId;
 
 const handleFork = () => {
-  router.post(`/templates/${props.template.id}/fork`);
+  confirm('Are you sure you want to fork this template to your own account?') && router.post(`/templates/${props.template.id}/fork`);
 };
 
 const formatDate = (date: string) => {
@@ -45,9 +45,7 @@ const formatDate = (date: string) => {
 </script>
 
 <template>
-  <Card
-    class="group relative flex h-full flex-col overflow-hidden"
-  >
+  <Card class="group relative flex h-full flex-col overflow-hidden">
     <CardHeader class="px-4 pb-4">
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
@@ -76,7 +74,7 @@ const formatDate = (date: string) => {
       </div>
     </CardHeader>
 
-    <CardContent class="flex flex-1 flex-col justify-between space-y-4">
+    <CardContent class="flex flex-1 flex-col justify-between space-y-2">
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm text-muted-foreground">
@@ -88,7 +86,6 @@ const formatDate = (date: string) => {
               <GitFork class="h-4 w-4" />
               <span>{{ template.fork_count || 0 }}</span>
             </div>
-
           </div>
 
           <span class="text-xs text-muted-foreground" title="Last updated">
@@ -103,23 +100,25 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <button v-if="isOwnTemplate" class="flex-1 btn btn-secondary" asChild title="Edit template">
-          <Link :href="`/templates/${template.id}/edit`"> Edit </Link>
-        </button>
-        <button v-else-if="template.is_public" class="flex-1 btn btn-warning" @click="handleFork" title="Fork template">
-          <GitFork class="mr-1 h-3 w-3" />
+        <a v-if="isOwnTemplate" class="btn btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
+          Edit
+          <PencilIcon class="ml-2 h-4 w-4" />
+        </a>
+        <button v-else-if="template.is_public" class="btn btn-warning" @click="handleFork" title="Fork template">
           Fork
+          <GitFork class="ml-1 h-4 w-4" />
         </button>
-        <button class="flex-1 btn btn-primary" asChild>
-          <Link v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank"> Preview </Link>
-          <a
-            v-else
-            onclick='alert("This template is private. You can only preview it from the Edit screen.\n\nEdit the template and click the Preview button from there. Add your own API key to the template URL to see it in action.")'
-            class="cursor-not-allowed"
-          >
-            Preview
-          </a>
-        </button>
+        <a class="btn btn-primary" v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank">
+          Preview
+          <ExternalLinkIcon class="ml-2 h-4 w-4" />
+        </a>
+        <a
+          v-else
+          onclick='alert("This template is private. You can only preview it from the Edit screen.\n\nEdit the template and click the Preview button from there. Add your own API key to the template URL to see it in action.")'
+          class="btn btn-warning cursor-not-allowed"
+        >
+          Preview
+        </a>
       </div>
     </CardContent>
   </Card>

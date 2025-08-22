@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
 import RekaToast from '@/components/RekaToast.vue';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 
 // Configure axios to include CSRF token and credentials
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -19,7 +20,7 @@ const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 const showToast = ref(false);
 
 const showDescription = ref(false);
-const showTemplateTags = ref(false);
+const showUserTagInfo = ref(false);
 
 interface TemplateTag {
   display_tag: string;
@@ -185,18 +186,46 @@ const copyTag = async (tagName: string) => {
 onMounted(() => {
   useGetTemplateTags();
 });
-
 </script>
 
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
 
-
   <!-- Conditional Syntax Section -->
   <div class="mb-6">
     <p class="pt-1 text-sm text-muted-foreground">
-      Visit <a class="text-violet-500 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a> to learn more about conditional and event alert syntax.
+      Visit
+      <a class="text-violet-400 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a>
+      to learn more about syntax.
+
+      <button @click.prevent="showUserTagInfo = true" class="mt-4 cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
+        READ THIS ABOUT <code>user_*</code> TAGS
+      </button>
     </p>
+
+    <Dialog v-model:open="showUserTagInfo">
+      <DialogContent class="max-w-lg">
+        <DialogHeader>
+          <div class="flex items-center space-x-2">
+            <DialogTitle>[[[user_*]]] Tags</DialogTitle>
+            <button @click.prevent="showUserTagInfo = false" class="rounded-full ml-auto w-[26px] h-[26px] cursor-pointer text-xl font-bold text-muted-foreground hover:text-muted-foreground hover:bg-accent">&times;</button>
+          </div>
+        </DialogHeader>
+        <DialogDescription class="text-sm text-muted-foreground">
+          <code>[[[user_*]]]</code> does not represent you, but the most recent user who triggered an event on your stream.
+          <h2 class="text-lg mt-4 mb-2"><strong>For example:</strong></h2>
+          <ul class="list-disc pl-5 mb-4">
+            <li>Subscription → the subscriber's details</li>
+            <li>Gift sub / cheer / follow → that user's details</li>
+            <li>Default → your user account details</li>
+          </ul>
+          These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br><br>
+          <div class="bg-violet-100 border border-violet-400 text-violet-700 px-4 py-3 pb-0 rounded relative mb-4 dark:border-violet-500 dark:text-violet-800 dark:bg-violet-200">
+            Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info like your username and avatar.<br><br>
+          </div>
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
   </div>
 
   <!-- Regular Template Tags -->
@@ -227,7 +256,7 @@ onMounted(() => {
   >
     <input type="checkbox" id="show-description" v-model="showDescription" class="mr-2 accent-violet-500" />
     <label for="show-description" class="cursor-pointer rounded p-1 text-sm select-none" :class="{ 'text-accent-foreground': showDescription }">
-      {{ showDescription ? 'Hide' : 'Show' }} descriptions</label
+      Descriptions</label
     >
   </div>
   <div v-else>

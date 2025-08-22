@@ -5,6 +5,7 @@ import TemplateCard from '@/components/TemplateCard.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, Plus, Bell, Users } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 interface Template {
   id: number;
@@ -52,17 +53,15 @@ const breadcrumbs = [
       <section v-if="userAlertTemplates.length > 0" class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <Bell class="w-6 h-6 text-primary" />
-            <h2 class="text-2xl font-semibold">Your Alert Templates</h2>
+            <Bell class="w-6 h-6 mr-1 text-primary" />
+            <Heading title="Your Alert Templates" description="Customize your alerts to fit your needs" />
           </div>
-          <Button variant="outline" asChild>
-            <Link :href="route('templates.create')" class="flex items-center gap-2">
-              <Plus class="w-4 h-4" />
-              New Alert
-            </Link>
-          </Button>
+          <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
+            New Alert
+            <Plus class="w-4 h-4" />
+          </a>
         </div>
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2560px]:grid-cols-5">
+        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
           <TemplateCard
             v-for="template in userAlertTemplates"
             :key="template.id"
@@ -72,7 +71,7 @@ const breadcrumbs = [
         </div>
       </section>
 
-      <div class="w-full h-px bg-muted-foreground/10 my-6" />
+      <div class="w-full h-px bg-muted-foreground/10 mt-6 mb-2" />
 
       <!-- Your Static Templates Section -->
       <section v-if="userStaticTemplates.length > 0" class="space-y-6">
@@ -81,14 +80,12 @@ const breadcrumbs = [
             <Layers class="w-6 h-6 text-primary" />
             <h2 class="text-2xl font-semibold">Your Static Overlays</h2>
           </div>
-          <Button variant="outline" asChild>
-            <Link :href="route('templates.create')" class="flex items-center gap-2">
-              <Plus class="w-4 h-4" />
-              New Overlay
-            </Link>
-          </Button>
+          <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
+            New Overlay
+            <Plus class="w-4 h-4" />
+          </a>
         </div>
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2560px]:grid-cols-5">
+        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
           <TemplateCard
             v-for="template in userStaticTemplates"
             :key="template.id"
@@ -98,7 +95,7 @@ const breadcrumbs = [
         </div>
       </section>
 
-      <div class="w-full h-px bg-muted-foreground/10 my-6" />
+      <div class="w-full h-px bg-muted-foreground/10 mt-6 mb-2" />
 
       <!-- Empty State for User Templates -->
       <section v-if="userAlertTemplates.length === 0 && userStaticTemplates.length === 0" class="space-y-6">
@@ -110,13 +107,13 @@ const breadcrumbs = [
             </CardDescription>
           </CardHeader>
           <CardContent class="flex justify-center gap-4 pb-8">
-            <Button size="lg" asChild>
+            <Button size="lg" class="btn btn-secondary" asChild>
               <Link :href="route('templates.create')">
                 <Plus class="w-4 h-4 mr-2" />
                 Create Template
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" class="btn btn-primary" asChild>
               <Link :href="route('templates.index')">
                 Browse Templates
               </Link>
@@ -127,15 +124,23 @@ const breadcrumbs = [
 
       <!-- Community Templates Section -->
       <section class="space-y-6">
-        <div class="flex items-center gap-3">
-          <Users class="w-6 h-6 text-primary" />
-          <h2 class="text-2xl font-semibold">From the Community</h2>
-          <span class="text-base text-muted-foreground">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <Users class="w-6 h-6 text-primary" />
+            <h2 class="text-2xl font-semibold">From the Community</h2>
+            <span class="text-base text-muted-foreground">
             Public templates you can fork and customize
           </span>
+          </div>
+          <a class="btn btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
+            Community templates
+            <Users class="w-4 h-4" />
+          </a>
         </div>
 
-        <div v-if="communityTemplates.length > 0" class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2560px]:grid-cols-5">
+
+
+        <div v-if="communityTemplates.length > 0" class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
           <TemplateCard
             v-for="template in communityTemplates"
             :key="template.id"
@@ -155,11 +160,7 @@ const breadcrumbs = [
         </Card>
 
         <div class="flex py-6">
-          <Button size="lg" variant="outline" asChild>
-            <Link :href="route('templates.index')">
-              Browse All Templates
-            </Link>
-          </Button>
+          <a :href="route('templates.index')" class="btn btn-cancel">Browse All Templates</a>
         </div>
       </section>
 

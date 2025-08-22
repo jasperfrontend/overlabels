@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles } from 'lucide-vue-next';
+import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles, Radio } from 'lucide-vue-next';
 import axios from 'axios';
 import type { BreadcrumbItem } from '@/types/index.js';
 
@@ -117,8 +117,10 @@ const saveAllMappings = async () => {
     <div class="p-4">
       <!-- Header Section -->
       <div class="mb-8 flex items-start justify-between">
-        <Heading title="Event Alert Configuration" description="Connect Twitch events to your alert templates" />
-
+        <div class="flex items-center gap-2">
+          <Radio class="w-6 h-6 mr-2" />
+          <Heading title="Event Alert Configuration" description="Connect Twitch events to your alert templates" />
+        </div>
         <div class="flex gap-3">
           <Link :href="route('templates.create', { type: 'alert' })" class="btn btn-secondary"> Create Template </Link>
           <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-primary min-w-[140px]">
@@ -154,8 +156,7 @@ const saveAllMappings = async () => {
         <div class="flex gap-3">
           <AlertTriangleIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-500" />
           <div>
-            <h3 class="mb-1 font-medium text-foreground">No Alert Templates Available</h3>
-            <p class="mb-3 text-sm text-muted-foreground">Create your first alert template to start configuring events.</p>
+            <Heading title="No Alert Templates Available" description="Create your first alert template to start configuring events." />
             <Link :href="route('templates.create')" class="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
               <Sparkles class="h-4 w-4" />
               Create your first template
@@ -169,9 +170,9 @@ const saveAllMappings = async () => {
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
-            class="flex cursor-pointer items-center gap-4 rounded-lg p-4 transition-colors hover:bg-accent"
+            class="flex cursor-pointer items-center gap-4 rounded-2xl border bg-accent/20 hover:bg-accent/50 p-4 text-center transition"
             :class="{
-              'bg-accent rounded-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
+              'bg-accent/50 rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-card': !mapping.enabled || expandedEvent !== mapping.event_type,
             }"
             @click="toggleEvent(mapping.event_type)"
@@ -229,7 +230,7 @@ const saveAllMappings = async () => {
           <!-- Configuration Panel -->
           <div
             v-if="mapping.enabled && expandedEvent === mapping.event_type"
-            class="mb-2 border bg-accent border-t-0 p-4"
+            class="mb-2 border bg-accent/50 border-t-0 rounded-b-2xl p-4"
             @click.stop
           >
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -284,8 +285,8 @@ const saveAllMappings = async () => {
             </div>
 
             <!-- Preview Description -->
-            <div v-if="mapping.template_id" class="mt-4 rounded-md bg-accent/30 p-3">
-              <p class="text-sm text-muted-foreground">
+            <div v-if="mapping.template_id" class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
+              <p class="text-sm">
                 <span class="font-medium">Preview:</span>
                 When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the "{{ getTemplateName(mapping.template_id) }}" alert will
                 {{ transitionTypes[mapping.transition_type].toLowerCase() }} in for {{ mapping.duration_ms / 1000 }} seconds.

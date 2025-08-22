@@ -15,7 +15,8 @@ import {
   LockIcon,
   BellIcon,
   Trash2Icon,
-  MonitorIcon
+  MonitorIcon,
+  LayoutTemplate
 } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import axios from 'axios';
@@ -135,8 +136,11 @@ const getEventMapping = (template: any) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
-        <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
+      <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-2">
+          <LayoutTemplate class="w-6 h-6 mr-1" />
+          <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
+        </div>
         <Link
           :href="route('templates.create')"
           class="btn btn-primary"
@@ -146,10 +150,10 @@ const getEventMapping = (template: any) => {
       </div>
 
       <!-- Templates Table -->
-      <div class="bg-card dark:bg-card border border-border dark:border-border rounded-lg overflow-hidden">
+      <div class="bg-card dark:bg-accent/5 border border-border dark:border-border rounded-2xl overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-muted dark:bg-muted border-b border-border dark:border-border">
+            <thead class="bg-muted dark:bg-accent/20 border-b border-border dark:border-border">
               <tr>
                 <th class="px-4 py-2 text-left">
                   <button

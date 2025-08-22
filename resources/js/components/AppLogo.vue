@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { Ratio } from 'lucide-vue-next';
 </script>
 
 <template>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">Overlabels</span>
+    <div class="flex text-left text-sm">
+      <Ratio class="w-7 h-7 text-violet-400" />
+      <span class="ml-2 text-lg font-medium">Overlabels</span>
     </div>
 </template>

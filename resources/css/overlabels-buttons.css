@@ -1,7 +1,7 @@
 @layer components {
   .btn {
     @apply text-sm font-medium px-4 py-2 rounded-full cursor-pointer flex items-center justify-center duration-150;
-    @apply bg-accent/50 hover:bg-accent dark:bg-zinc-800/60 text-accent-foreground border border-zinc-300 dark:border-zinc-700;
+    @apply bg-accent/50 hover:bg-accent dark:bg-zinc-800/70 text-accent-foreground border border-zinc-300 dark:border-zinc-700;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background;
   }

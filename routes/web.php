@@ -42,6 +42,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
+Route::get('/dashboard/recents', [DashboardController::class, 'recentCommunityTemplates'])
+    ->middleware(['auth'])
+    ->name('dashboard.recents');
+
 Route::get('/login', [PageController::class, 'notAuthorized'])
     ->middleware(['guest'])
     ->name('login');
