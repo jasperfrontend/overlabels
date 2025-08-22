@@ -17,9 +17,12 @@ import { Head, Link } from '@inertiajs/vue3';
     <div v-if="$page.props.auth.user">
       <Link href="/dashboard" class="bg-accent p-2 px-4 block mt-6 rounded hover:bg-violet-500 transition-color">You are logged in. Go to the dashboard</Link>
     </div>
-    <div v-else>
+    <div
+      v-else
+      class="flex flex-col items-center justify-center"
+    >
       <LoginSocial />
-      <p class="mt-4 text-lg text-gray-600">By logging in you agree you will end up in a ridiculous mess where nothing is finished. Have fun!</p>
+      <p class="text-sm mt-20 text-accent-foreground/50">By logging in you agree you will end up in a ridiculous mess where nothing is finished. Have fun!</p>
     </div>
   </div>
 </template>

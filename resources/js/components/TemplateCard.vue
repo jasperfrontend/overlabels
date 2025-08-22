@@ -46,7 +46,7 @@ const formatDate = (date: string) => {
 
 <template>
   <Card
-    class="group relative flex h-full flex-col overflow-hidden transition-all hover:border-accent-foreground/15 hover:shadow-md dark:hover:border-accent-foreground/40"
+    class="group relative flex h-full flex-col overflow-hidden"
   >
     <CardHeader class="px-4 pb-4">
       <div class="space-y-2">
@@ -103,14 +103,14 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <Button v-if="isOwnTemplate" size="sm" variant="outline" class="flex-1" asChild title="Edit template">
+        <button v-if="isOwnTemplate" class="flex-1 btn btn-secondary" asChild title="Edit template">
           <Link :href="`/templates/${template.id}/edit`"> Edit </Link>
-        </Button>
-        <Button v-else-if="template.is_public" size="sm" variant="outline" class="flex-1" @click="handleFork" title="Fork template">
+        </button>
+        <button v-else-if="template.is_public" class="flex-1 btn btn-warning" @click="handleFork" title="Fork template">
           <GitFork class="mr-1 h-3 w-3" />
           Fork
-        </Button>
-        <Button size="sm" variant="outline" class="flex-1" asChild>
+        </button>
+        <button class="flex-1 btn btn-primary" asChild>
           <Link v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank"> Preview </Link>
           <a
             v-else
@@ -119,7 +119,7 @@ const formatDate = (date: string) => {
           >
             Preview
           </a>
-        </Button>
+        </button>
       </div>
     </CardContent>
   </Card>

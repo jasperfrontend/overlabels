@@ -374,21 +374,27 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="text-2xl font-bold mb-4">Tips & Best Practices</h2>
           <div class="space-y-4 text-muted-foreground">
             <div>
-              <h4 class="font-semibold text-foreground mb-2">Use Meaningful Conditions</h4>
+              <h4 class="font-semibold text-foreground">Use Meaningful Conditions</h4>
               <p>Create different alert styles based on the value: small donations vs large donations, new followers vs milestone followers.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground mb-2">Safe Processing</h4>
-              <p>All conditional logic is processed in the browser for security. No server-side code execution.</p>
+              <h4 class="font-semibold text-foreground">Test Your Conditions</h4>
+              <p>Use the <a class="text-accent-foreground underline hover:no-underline" href="https://dev.twitch.tv/docs/cli/event-command/" target="_blank" rel="nofollow noopener">Twitch CLI</a> to test your alert templates with different event values to ensure they work as expected.
+                (<a href="https://dev.twitch.tv/docs/cli/" class="text-accent-foreground underline hover:no-underline" target="_blank" rel="nofollow">How to install Twitch CLI</a>)</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground mb-2">Test Your Conditions</h4>
-              <p>Use the Twitch CLI to test your alert templates with different event values to ensure they work as expected.</p>
-            </div>
-            <div>
-              <h4 class="font-semibold text-foreground mb-2">Style Conditional Content</h4>
+              <h4 class="font-semibold text-foreground">Style Conditional Content</h4>
               <p>Apply different CSS classes within conditionals to create visual variety for different alert types.</p>
             </div>
+            <div>
+              <h4 class="font-semibold text-foreground">Fork the Starter Kit</h4>
+              <p>Fork the Overlabels Starter Kit to get a great set of defaults to work with.</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-foreground">Overlabels is for professionals</h4>
+              <p>If you can't write HTML, CSS or understand the concept or a template engine and event-based conditionals, please fuck off.</p>
+            </div>
+
           </div>
         </div>
       </div>
