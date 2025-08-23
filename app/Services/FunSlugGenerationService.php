@@ -13,7 +13,8 @@ class FunSlugGenerationService
         'tiny', 'loud', 'quiet', 'smooth', 'rough', 'soft', 'hard', 'light', 'dark', 'fresh',
         'old', 'new', 'wild', 'tame', 'free', 'brave', 'shy', 'smart', 'fun', 'silly',
         'wise', 'magic', 'super', 'mega', 'ultra', 'epic', 'rare', 'common', 'special', 'plain',
-        'fancy', 'simple', 'complex', 'easy', 'tough', 'gentle', 'fierce', 'kind', 'mean', 'nice'
+        'fancy', 'simple', 'complex', 'easy', 'tough', 'gentle', 'fierce', 'kind', 'mean', 'nice',
+        'oddly', 'strange', 'weird', 'crazy', 'scary', 'scarier', 'scariest',
     ];
 
     private array $adjectives2 = [
@@ -21,7 +22,9 @@ class FunSlugGenerationService
         'glowing', 'shining', 'sparkling', 'twinkling', 'blazing', 'floating', 'drifting', 'rushing', 'crawling', 'racing',
         'singing', 'humming', 'whistling', 'laughing', 'smiling', 'giggling', 'cheering', 'celebrating', 'playing', 'working',
         'sleeping', 'dreaming', 'thinking', 'wondering', 'exploring', 'discovering', 'creating', 'building', 'making', 'crafting',
-        'painting', 'drawing', 'writing', 'reading', 'learning', 'teaching', 'helping', 'caring', 'loving', 'sharing'
+        'painting', 'drawing', 'writing', 'reading', 'learning', 'teaching', 'helping', 'caring', 'loving', 'sharing',
+        'healing', 'doing', 'dabbling', 'tinkering', 'architecting', 'engineering', 'designing', 'planning', 'preparing',
+
     ];
 
     private array $nouns = [
@@ -49,7 +52,7 @@ class FunSlugGenerationService
     ];
 
     /**
-     * Generate a fun, unique slug with pattern: adjective-adjective-noun-adjective-animal
+     * Generate a fun, unique slug with this pattern: adjective-adjective-noun-adjective-animal
      * Example: bright-dancing-star-golden-fox
      */
     public function generateUniqueSlug(int $maxAttempts = 10): string
@@ -57,7 +60,7 @@ class FunSlugGenerationService
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             $slug = $this->generateRandomSlug();
 
-            // Fast lookup: Check if slug exists using indexed query
+            // Fast lookup: Check if the slug exists using an indexed query
             if (!$this->slugExists($slug)) {
                 return $slug;
             }
@@ -90,7 +93,7 @@ class FunSlugGenerationService
         $adj3 = $this->adjectives3[array_rand($this->adjectives3)];
         $animal = $this->animals[array_rand($this->animals)];
 
-        return "{$adj1}-{$adj2}-{$noun}-{$adj3}-{$animal}";
+        return "$adj1-$adj2-$noun-$adj3-$animal";
     }
 
     /**
@@ -100,7 +103,7 @@ class FunSlugGenerationService
     private function slugExists(string $slug): bool
     {
         // Cache key for this slug check
-        $cacheKey = "slug_exists:{$slug}";
+        $cacheKey = "slug_exists:$slug";
 
         // Check Laravel Cache first (Redis lookup = ~0.1ms)
         $cached = Cache::get($cacheKey);
@@ -108,7 +111,7 @@ class FunSlugGenerationService
             return $cached === 'exists';
         }
 
-        // Database check with index (should be ~1-2ms even with 500k+ records)
+        // Database check with index (should be ~1-2 ms even with 500k+ records)
         $exists = DB::table('overlay_hashes')
             ->where('slug', $slug)
             ->exists();
@@ -162,7 +165,7 @@ class FunSlugGenerationService
             ->update(['slug' => $newSlug]);
 
         // Clear any cached existence check for the new slug
-        Cache::forget("slug_exists:{$newSlug}");
+        Cache::forget("slug_exists:$newSlug");
 
         return $newSlug;
     }
@@ -175,9 +178,9 @@ class FunSlugGenerationService
         $results = [];
         $uncachedSlugs = [];
 
-        // Check cache first for all slugs
+        // Check the cache first for all slugs
         foreach ($slugs as $slug) {
-            $cacheKey = "slug_exists:{$slug}";
+            $cacheKey = "slug_exists:$slug";
             $cached = Cache::get($cacheKey);
 
             if ($cached !== null) {
@@ -200,7 +203,7 @@ class FunSlugGenerationService
 
                 // Cache the result
                 $cacheTime = $exists ? 3600 : 300;
-                Cache::put("slug_exists:{$slug}", $exists ? 'exists' : 'not_exists', $cacheTime);
+                Cache::put("slug_exists:$slug", $exists ? 'exists' : 'not_exists', $cacheTime);
             }
         }
 

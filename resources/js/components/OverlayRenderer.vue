@@ -85,11 +85,12 @@ const tagRegexMap = computed(() => {
 
   const sourceData = data.value && typeof data.value === 'object' ? data.value : {};
 
+
   // Ensure templateTags is always an array before iterating
   const tags = Array.isArray(templateTags.value) ? templateTags.value : [];
 
   // Only log critical info
-  if (tags.length === 0) {
+  if (tags.length == null) {
     console.warn('[OverlayRenderer] No template tags received from server!');
   }
 

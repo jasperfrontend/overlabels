@@ -136,7 +136,7 @@ const submitForm = () => {
   });
 };
 
-const showSidebar = ref(false);
+const showSidebar = ref(true);
 
 // Watch for theme changes
 watch(
@@ -242,7 +242,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </div>
       <div class="mt-4">
         <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <!-- Sidebar Area -->
             <div class="col-span-12 lg:col-span-2" v-if="showSidebar">
               <TemplateTagsList />

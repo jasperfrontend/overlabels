@@ -67,7 +67,7 @@ const breadcrumbs = [
         </div>
 
         <Card v-else class="border-dashed">
-          <CardHeader class="text-center py-8">
+          <CardHeader class="flex text-center py-8">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
             <CardDescription class="text-base mt-2">
               Be the first to share a template with the community!

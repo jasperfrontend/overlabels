@@ -391,8 +391,12 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p>Fork the Overlabels Starter Kit to get a great set of defaults to work with.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Overlabels is for professionals</h4>
-              <p>If you can't write HTML, CSS or understand the concept or a template engine and event-based conditionals, please fuck off.</p>
+              <h4 class="font-semibold text-foreground">If you speak HTML & CSS and understand conditional logic, you're in the right place</h4>
+              <p>
+                Overlabels assumes you know your way around HTML, CSS and a template engine.
+                If those sound like foreign words, you'll probably have a better time with a
+                drag-and-drop overlay tool like <a class="text-accent-foreground underline hover:no-underline" href="https://streamelements.com" target="_blank">StreamElements</a> or <a class="text-accent-foreground underline hover:no-underline" href="https://streamlabs.com" target="_blank">StreamLabs</a> instead.
+              </p>
             </div>
 
           </div>
