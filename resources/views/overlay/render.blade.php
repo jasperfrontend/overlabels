@@ -8,6 +8,11 @@
     <style>
         {!! $css !!}
     </style>
+    @vite('resources/js/overlay/app.js')
+    <script
+        src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js"
+        type="module"
+    ></script>
     <script>
         // Helper function
         let domReady = (cb) => {

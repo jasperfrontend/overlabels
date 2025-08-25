@@ -1,170 +1,184 @@
-# Overlabels
+# 🎮 Overlabels
 
-Welcome to **Overlabels**, a Laravel-based application that enables Twitch streamers to manage overlays, templates, and Twitch EventSub configurations with ease. The app includes features such as advanced template management, Twitch API integrations, event handling, and user authentication powered by Twitch OAuth.
+**The Ultimate Twitch Overlay Management Platform**
+
+Transform your Twitch streams with beautiful, dynamic overlays that respond to your audience in real-time. Overlabels makes it effortless to create, customize, and deploy professional-grade stream overlays without writing a single line of code.
+
+![Built with Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)
+![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vue.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38B2AC?style=flat-square&logo=tailwind-css)
+
+---
+
+## Why Choose Overlabels?
+
+### **Launch Ready in Minutes**
+- **One-click Twitch OAuth** - Start creating immediately with your existing Twitch account
+- **Pre-built template library** - Choose from professionally designed overlay kits
+- **Instant preview** - See your changes in real-time before going live
+
+### **Code-first Template Builder**
+- **NO Drag-and-drop interface** - Advanced code editor for power users
+- **Live data integration** - Your overlays automatically display follower counts, subscriber goals, recent followers, and more
+- **Custom CSS & HTML** - Full creative control when you need it
+- **Export standalone files** - Take your overlays anywhere
+
+### **Real-Time Everything**
+- **EventSub integration** - Instant notifications for follows, subs, cheers, and raids
+- **Dynamic content updates** - No manual refreshing needed
+- **Smart notifications** - Beautiful, customizable alerts that match your brand
+
+### **Secure & Scalable**
+- **Token-based security** - Control who can access your overlays
+- **Rate limiting** - Built-in protection against abuse
+- **Privacy controls** - Public or private overlay sharing
+- **Access logging** - Track how your overlays are being used
+
+---
+
+## Perfect For
+
+- **New Streamers** wanting professional overlays without vendor lock-in
+- **Experienced Creators** needing advanced customization and control  
+- **Overlay Designers** building templates for multiple streamers
+- **Development Teams** integrating overlay systems into larger platforms
+
+---
+
+## 🛠 Quick Start
+
+### Prerequisites
+- PHP 8.2+ with Composer
+- Node.js 18+ with npm
+- SQLite (included) or PostgreSQL
+
+### Get Running in 3 Steps
+
+```bash
+# 1. Clone and install dependencies
+git clone <your-repo-url> overlabels
+cd overlabels
+composer install && npm install
+
+# 2. Set up your environment
+cp .env.example .env
+# Add your Twitch Client ID and Secret to .env
+
+# 3. Launch everything at once
+composer run dev
+```
+
+That's it! Visit `http://localhost:8000` and log in with Twitch to start building.
 
 ---
 
 ## Features
 
-### **Core Functionality**
-- **Twitch OAuth Integration:** Secure login using Twitch accounts with scopes to manage user data, subscriptions, followers, and more.
-- **Overlay Management:**
-  - View public or private overlays.
-  - Render overlays programmatically via API.
-- **Template Builder:**
-  - Create, manage, and fork templates for overlays.
-  - Validate and preview templates with sample Twitch data.
-  - Export templates as standalone HTML files.
-- **Template Tags System:**
-  - Generate standardized template tags using live Twitch data.
-  - Clear all tags or export for reuse.
-  - Preview tags with real-time data.
-- **Twitch EventSub API:**
-  - Connect/disconnect from Twitch EventSub.
-  - View webhook status and manage cleanup processes.
+### **Visual Template System**
+- **Smart tag system** - `[[[follower_count]]]`, `[[[latest_follower]]]`, `[[[subscriber_goal]]]` and 50+ more
+- **Live preview** - See exactly how your overlay looks with real data
+- **Fork templates** - Start with existing designs and make them your own
+- **Kit collections** - Curated overlay packages from the community
 
-### **Authenticated Features**
-- **Dashboard:** Access an overview of your Twitch data and application usage.
-- **Twitch Data Management:** Refresh and synchronize various Twitch data points, such as:
-  - User profile information
-  - Channel followers and subscribers
-  - Goals and channel points
-- **Access Tokens Management:** Generate and revoke overlay access tokens to manage secured interactions.
-- **Customizable Navigation:** Access multiple tools, including the EventSub demo and tags generator directly through the app.
+### **Developer-Friendly Architecture**
+- **Modern tech stack** - Laravel 12, Vue 3, TypeScript, Inertia.js
+- **RESTful API** - Integrate with external tools and services
+- **Webhook system** - Real-time Twitch event processing
+- **Queue system** - Reliable background job processing
+
+### **Production Ready**
+- **CDN support** - Fast asset delivery worldwide
+- **Monitoring** - Built-in telescope debugging and logging
+- **Testing** - Comprehensive test suite with Pest framework
+- **Deployment** - Optimized for modern hosting platforms
 
 ---
 
-## API Overview
+## Documentation
 
-### **Public Endpoints**
-1. `POST /twitch/webhook`  
-   Receives and processes Twitch webhook notifications.
+### **For Streamers**
+- **Dashboard Overview** - Manage all your overlays from one place
+- **Template Builder Guide** - Create stunning overlays visually
+- **Twitch Integration** - Connect your channel and manage EventSub
+- **Sharing & Access** - Control who sees your overlays
 
-2. **Overlay Rendering:**
-  - `POST /overlay/render` - Render overlay templates programmatically.
-  - `GET /overlay/{slug}/public` - View public overlays.
-
-### **Authenticated API Endpoints**
-- **Twitch Events:**
-  - `GET /twitch/events` - List all events.
-  - `GET /twitch/events/{id}` - Show details of a specific event.
-  - `PUT /twitch/events/{id}/process` - Mark events as processed.
-  - `POST /twitch/events/batch-process` - Batch process events.
-  - `DELETE /twitch/events/{id}` - Remove specific events.
-
-- **Template Builder API:**
-  - `GET /api/template/tags` - Retrieve available template tags.
-  - `POST /api/template/validate` - Validate template syntax.
-  - `POST /api/template/preview` - Preview templates with sample data.
-  - `POST /api/template/export` - Export templates as standalone HTML.
-  - `POST /api/template/save` - Save a template to be used in the overlay.
-  - `GET /api/template/load/{slug}` - Load an overlay template by slug.
+### **For Developers**
+- **API Reference** - Complete endpoint documentation
+- **Template Tag System** - Build dynamic content with ease
+- **Webhook Events** - Handle Twitch events in real-time
+- **Custom Services** - Extend functionality with your own integrations
 
 ---
 
-## Installation and Setup
+## Community & Kits
 
-### Prerequisites
-- [PHP 8.2](https://www.php.net/releases/8.2/en.php)
-- [Composer](https://getcomposer.org/)
-- [Node.js](https://nodejs.org/) with npm
-- A PostgreSQL database
+### **Template Marketplace**
+Discover overlay kits created by the community:
+- **Starter Packs** - Everything new streamers need
+- **Gaming Themes** - Genre-specific overlay collections  
+- **Seasonal Collections** - Holiday and event-themed overlays
+- **Professional Designs** - Corporate and business-ready layouts
 
-### Steps
-1. Clone the repository.
-```shell script
-git clone <repository-url>
-   cd Overlabels
-```
-
-2. Install PHP dependencies.
-```shell script
-composer install
-```
-
-3. Install JavaScript dependencies.
-```shell script
-npm install
-```
-
-4. Configure the `.env` file:
-  - Connect to your PostgreSQL database.
-  - Set up Twitch OAuth credentials (`TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`).
-
-5. Run database migrations.
-```shell script
-php artisan migrate
-```
-
-6. Start the development server.
-```shell script
-php artisan serve
-```
-
-7. Compile frontend assets.
-```shell script
-npm run dev
-```
-
+### **Share & Collaborate**
+- **Public galleries** - Showcase your best overlay designs
+- **Fork system** - Build upon others' work (with permission)
+- **Attribution tracking** - Credit original creators automatically
+- **Community feedback** - Rate and review overlay kits
 
 ---
 
-## Usage
+## Deployment
 
-### Authentication
-1. Navigate to the root URL.
-2. Use the “Log in with Twitch” button to authenticate.
+### **Hosting Options**
+- **Shared Hosting** - Most providers with PHP 8.2+ support
+- **VPS/Cloud** - Full control with services like DigitalOcean, Linode
+- **Platform as a Service** - Deploy to Heroku, Vercel, or similar
+- **Container Deployment** - Docker support included
 
-### Dashboard
-After logging in, you'll be redirected to the dashboard, which provides access to all the app's tools:
-- View and refresh Twitch data.
-- Manage templates and overlays.
-- Set up EventSub integrations.
+### **Production Checklist**
+```bash
+# Optimize for production
+php artisan optimize
+php artisan config:cache
+php artisan route:cache
+npm run build
 
-### Template Builder
-Access the template builder via the **Template Builder** menu to create and modify templates. Use the integrated validation and preview features to ensure templates work seamlessly with your Twitch data.
+# Set up queue workers
+php artisan queue:work --daemon
 
----
-
-## Navigation
-The sidebar provides quick access to the following tools:
-- **Dashboard**
-- **Your Twitch Data**
-- **Tags Generator**
-- **Token Generator**
-- **Template Builder**
-- **EventSub Demo**
-
----
-
-## Development
-
-### Testing
-- Run unit tests:
-```shell script
-php artisan test
+# Monitor with Telescope (optional)
+php artisan telescope:install
 ```
-
-- Run frontend tests:
-```shell script
-npm run test
-```
-
-
-### Code Style
-- Use [Prettier](https://prettier.io/) for consistent frontend formatting.
-- Use [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer) for PHP standards.
-
----
-
-## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
 
 ---
 
 ## Contributing
-Contributions are always welcome! Fork the repository, create a feature branch, and submit a pull request.
+
+We love contributions! Whether you're:
+- **Reporting bugs** - Help us improve reliability
+- **Suggesting features** - Shape the future of Overlabels  
+- **Designing templates** - Share your creativity
+- **Writing code** - Enhance the platform
+
+Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ---
 
-Feel free to explore and create custom overlays and templates for Twitch!
+## License & Support
+
+**MIT License** - Use Overlabels however you need, commercially or personally.
+
+- **Community Support** - GitHub Discussions and Issues
+- **Business Inquiries** - Contact us for enterprise solutions
+- **Updates** - Follow us for the latest features and templates
+
+---
+
+## Ready to Transform Your Stream?
+
+[**Get Started Now**](http://localhost:8000) • [**Documentation**](#-documentation) • [**Template Gallery**](#-community--kits)
+
+---
+
+*Built with ❤️ by streamers, for streamers. Make every stream unforgettable with Overlabels.*

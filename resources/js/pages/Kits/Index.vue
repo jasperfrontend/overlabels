@@ -55,16 +55,16 @@ const props = defineProps<Props>();
         <div>
           <h1 class="text-3xl font-bold"><span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span> Template Kits</h1>
           <p class="mt-2 text-muted-foreground">
-            Organize your overlay templates into reusable collections
+            Kits offer a bundle of existing templates and overlay alerts. Fork them to your own account and assign them to your Events!
           </p>
         </div>
-        <Link href="/kits/create" class="btn btn-primary">
+        <Link :href="route('kits.create')" class="btn btn-primary">
           <PlusIcon class="mr-2 h-4 w-4" />
           Create Kit
         </Link>
       </div>
 
-      <div v-if="kits.data.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div v-if="kits.data.length > 0" class="grid md:grid-cols-2 lg:grid-cols-3">
         <KitCard
           v-for="kit in kits.data"
           :key="kit.id"

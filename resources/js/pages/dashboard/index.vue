@@ -44,79 +44,74 @@ const breadcrumbs = [
 <template>
   <Head>
     <title>Dashboard</title>
-    <meta name="description" content="Dashboard for Overlabels - Your Twitch overlay hub">
+    <meta name="description" content="Dashboard for Overlabels - Your Twitch overlay hub" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
+      <Card class="mb-4">
+        <CardHeader>
+          <CardTitle class="text-2xl">Welcome back, {{ userName }}!</CardTitle>
+          <CardDescription class="mt-2">
+            You have {{ userAlertTemplates.length + userStaticTemplates.length }} templates in your collection. Create new templates or explore the
+            community's creations below.
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       <!-- Your Alert Templates Section -->
       <section v-if="userAlertTemplates.length > 0" class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <Bell class="w-6 h-6 mr-1 text-primary" />
+            <Bell class="mr-1 h-6 w-6 text-primary" />
             <Heading title="Your Alert Templates" description="Customize your alerts to fit your needs" />
           </div>
           <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Alert
-            <Plus class="w-4 h-4" />
+            <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
-          <TemplateCard
-            v-for="template in userAlertTemplates"
-            :key="template.id"
-            :template="template"
-            :current-user-id="userId"
-          />
+        <div class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
+          <TemplateCard v-for="template in userAlertTemplates" :key="template.id" :template="template" :current-user-id="userId" />
         </div>
       </section>
 
-      <div class="w-full h-px bg-muted-foreground/10 mt-6 mb-2" />
+      <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
 
       <!-- Your Static Templates Section -->
       <section v-if="userStaticTemplates.length > 0" class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <Layers class="w-6 h-6 text-primary" />
+            <Layers class="h-6 w-6 text-primary" />
             <h2 class="text-2xl font-semibold">Your Static Overlays</h2>
           </div>
           <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Overlay
-            <Plus class="w-4 h-4" />
+            <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
-          <TemplateCard
-            v-for="template in userStaticTemplates"
-            :key="template.id"
-            :template="template"
-            :current-user-id="userId"
-          />
+        <div class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
+          <TemplateCard v-for="template in userStaticTemplates" :key="template.id" :template="template" :current-user-id="userId" />
         </div>
       </section>
 
-      <div class="w-full h-px bg-muted-foreground/10 mt-6 mb-2" />
+      <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
 
       <!-- Empty State for User Templates -->
       <section v-if="userAlertTemplates.length === 0 && userStaticTemplates.length === 0" class="space-y-6">
         <Card class="border-dashed">
-          <CardHeader class="text-center py-8">
+          <CardHeader class="py-8 text-center">
             <CardTitle class="text-2xl">Get Started with Your First Template</CardTitle>
-            <CardDescription class="mt-3 text-base">
-              Create your own custom overlays or fork one from the community to get started
-            </CardDescription>
+            <CardDescription class="mt-3 text-base"> Create your own custom overlays or fork one from the community to get started </CardDescription>
           </CardHeader>
           <CardContent class="flex justify-center gap-4 pb-8">
             <Button size="lg" class="btn btn-secondary" asChild>
               <Link :href="route('templates.create')">
-                <Plus class="w-4 h-4 mr-2" />
+                <Plus class="mr-2 h-4 w-4" />
                 Create Template
               </Link>
             </Button>
             <Button size="lg" class="btn btn-primary" asChild>
-              <Link :href="route('templates.index')">
-                Browse Templates
-              </Link>
+              <Link :href="route('templates.index')"> Browse Templates </Link>
             </Button>
           </CardContent>
         </Card>
@@ -126,36 +121,27 @@ const breadcrumbs = [
       <section class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <Users class="w-6 h-6 text-primary" />
+            <Users class="h-6 w-6 text-primary" />
             <h2 class="text-2xl font-semibold">From the Community</h2>
-            <span class="text-base text-muted-foreground">
-            Public templates you can fork and customize
-          </span>
+            <span class="text-base text-muted-foreground"> Public templates you can fork and customize </span>
           </div>
           <a class="btn btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
             Community templates
-            <Users class="w-4 h-4" />
+            <Users class="h-4 w-4" />
           </a>
         </div>
 
-
-
-        <div v-if="communityTemplates.length > 0" class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 min-[2560px]:grid-cols-5">
-          <TemplateCard
-            v-for="template in communityTemplates"
-            :key="template.id"
-            :template="template"
-            :show-owner="true"
-            :current-user-id="userId"
-          />
+        <div
+          v-if="communityTemplates.length > 0"
+          class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
+        >
+          <TemplateCard v-for="template in communityTemplates" :key="template.id" :template="template" :show-owner="true" :current-user-id="userId" />
         </div>
 
         <Card v-else class="border-dashed">
-          <CardHeader class="text-center py-8">
+          <CardHeader class="py-8 text-center">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
-            <CardDescription class="text-base mt-2">
-              Be the first to share a template with the community!
-            </CardDescription>
+            <CardDescription class="mt-2 text-base"> Be the first to share a template with the community! </CardDescription>
           </CardHeader>
         </Card>
 
@@ -163,7 +149,6 @@ const breadcrumbs = [
           <a :href="route('templates.index')" class="btn btn-cancel">Browse All Templates</a>
         </div>
       </section>
-
     </div>
   </AppLayout>
 </template>
