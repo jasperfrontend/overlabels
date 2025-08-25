@@ -6,6 +6,7 @@ use App\Services\FunSlugGenerationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OverlayTemplate extends Model
@@ -49,6 +50,13 @@ class OverlayTemplate extends Model
         static::creating(function ($template) {
             if (!$template->slug) {
                 $template->slug = app(FunSlugGenerationService::class)->generateUniqueSlug();
+            }
+        });
+
+        static::deleting(function ($template) {
+            // Prevent deletion if template is part of any kit
+            if ($template->kits()->count() > 0) {
+                throw new \Exception('Cannot delete a template that is part of a kit. Remove it from all kits first.');
             }
         });
     }
@@ -173,6 +181,19 @@ class OverlayTemplate extends Model
     public function eventMappings(): HasMany
     {
         return $this->hasMany(EventTemplateMapping::class, 'template_id');
+    }
+
+    /**
+     * Kits relationship
+     */
+    public function kits(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Kit::class,
+            'kit_templates',
+            'overlay_template_id',
+            'kit_id'
+        )->withTimestamps();
     }
 
     /**

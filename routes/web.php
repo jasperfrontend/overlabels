@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\KitController;
 
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
@@ -210,6 +211,18 @@ Route::middleware('auth')->group(function () {
         Route::put('/{template}', [OverlayTemplateController::class, 'update'])->name('update');
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
         Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
+    });
+
+    // Kit Management
+    Route::prefix('kits')->name('kits.')->group(function () {
+        Route::get('/', [KitController::class, 'index'])->name('index');
+        Route::get('/create', [KitController::class, 'create'])->name('create');
+        Route::post('/', [KitController::class, 'store'])->name('store');
+        Route::get('/{kit}', [KitController::class, 'show'])->name('show');
+        Route::get('/{kit}/edit', [KitController::class, 'edit'])->name('edit');
+        Route::put('/{kit}', [KitController::class, 'update'])->name('update');
+        Route::delete('/{kit}', [KitController::class, 'destroy'])->name('destroy');
+        Route::post('/{kit}/fork', [KitController::class, 'fork'])->name('fork');
     });
 
     // Event Template Mapping Management

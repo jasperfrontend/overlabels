@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kit;
 use App\Models\OverlayTemplate;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,8 +57,16 @@ class DashboardController extends Controller
             ->limit(50) // @TODO: Make pagination of community templates page configurable
             ->get();
 
+        // Get latest 10 public kits
+        $recentKits = Kit::with(['owner:id,name,avatar', 'templates'])
+            ->public()
+            ->latest()
+            ->limit(10)
+            ->get();
+
         return Inertia::render('dashboard/recents', [
             'communityTemplates' => $communityTemplates,
+            'recentKits' => $recentKits,
         ]);
     }
 }
