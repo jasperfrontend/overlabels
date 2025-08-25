@@ -2,7 +2,7 @@
 
 **The Ultimate Twitch Overlay Management Platform**
 
-Transform your Twitch streams with beautiful, dynamic overlays that respond to your audience in real-time. Overlabels makes it effortless to create, customize, and deploy professional-grade stream overlays without writing a single line of code.
+Transform your Twitch streams with beautiful, dynamic overlays that respond to your audience in real-time. Overlabels makes it effortless to create, customize, and deploy professional-grade stream overlays while writing all the code yourself.
 
 ![Built with Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=flat-square&logo=vue.js)
