@@ -46,8 +46,8 @@ class Kit extends Model
                 throw new \Exception('Cannot delete a kit that has been forked.');
             }
 
-            // Delete thumbnail if exists
-            if ($kit->thumbnail && Storage::disk('public')->exists($kit->thumbnail)) {
+            // Delete thumbnail if exists and is local storage (not Cloudinary URL)
+            if ($kit->thumbnail && !filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
                 Storage::disk('public')->delete($kit->thumbnail);
             }
         });
@@ -136,6 +136,12 @@ class Kit extends Model
             return null;
         }
 
+        // If thumbnail is already a full URL (Cloudinary), return as-is
+        if (filter_var($this->thumbnail, FILTER_VALIDATE_URL)) {
+            return $this->thumbnail;
+        }
+
+        // Legacy support for local storage files
         return Storage::disk('public')->url($this->thumbnail);
     }
 

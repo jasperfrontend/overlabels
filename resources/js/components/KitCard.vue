@@ -58,11 +58,11 @@ const formatDate = (date: string) => {
 </script>
 
 <template>
-  <Card class="group relative flex h-full flex-col overflow-hidden">
+  <Card class="group relative flex h-full pt-0 flex-col overflow-hidden">
     <!-- Thumbnail -->
-    <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted">
-      <img 
-        :src="kit.thumbnail_url" 
+    <div v-if="kit.thumbnail_url" class="aspect-video rounded-lg rounded-b-none w-full overflow-hidden bg-muted">
+      <img
+        :src="kit.thumbnail_url"
         :alt="kit.title"
         class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
@@ -70,8 +70,8 @@ const formatDate = (date: string) => {
     <div v-else class="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
       <Package class="h-12 w-12 text-primary/40" />
     </div>
-    
-    <CardHeader class="px-4 pb-4">
+
+    <CardHeader class="px-4 pb-4 bg-gradient-to-b from-accent to-transparent py-4">
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
           <CardTitle class="min-w-0 flex-1 text-base">
@@ -131,25 +131,25 @@ const formatDate = (date: string) => {
           Edit
           <PencilIcon class="ml-2 h-4 w-4" />
         </Link>
-        
-        <button 
-          v-if="!isOwnKit || kit.is_public" 
-          class="btn btn-warning" 
-          @click="handleFork" 
+
+        <button
+          v-if="!isOwnKit || kit.is_public"
+          class="btn btn-warning"
+          @click="handleFork"
           title="Fork kit"
         >
           Fork
           <GitFork class="ml-1 h-4 w-4" />
         </button>
-        
+
         <Link :href="`/kits/${kit.id}`" class="btn btn-primary">
           View
           <ExternalLinkIcon class="ml-2 h-4 w-4" />
         </Link>
-        
-        <button 
-          v-if="isOwnKit && allowDelete && kit.fork_count === 0" 
-          class="btn btn-danger" 
+
+        <button
+          v-if="isOwnKit && allowDelete && kit.fork_count === 0"
+          class="btn btn-danger"
           @click="handleDelete"
           title="Delete kit"
         >

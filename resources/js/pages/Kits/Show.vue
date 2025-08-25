@@ -70,7 +70,7 @@ const handleDelete = () => {
     alert('This kit cannot be deleted because it has been forked.');
     return;
   }
-  
+
   if (confirm('Are you sure you want to delete this kit? This action cannot be undone.')) {
     router.delete(`/kits/${props.kit.id}`, {
       onSuccess: () => router.visit('/kits')
@@ -93,7 +93,7 @@ const formatDate = (date: string) => {
 
     <div class="container mx-auto px-4 py-8">
       <!-- Back button -->
-      <Link href="/kits" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kits
       </Link>
@@ -101,9 +101,9 @@ const formatDate = (date: string) => {
       <!-- Kit header -->
       <div class="mb-8 overflow-hidden rounded-lg bg-card">
         <!-- Thumbnail -->
-        <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[21/9]">
-          <img 
-            :src="kit.thumbnail_url" 
+        <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[16/9]">
+          <img
+            :src="kit.thumbnail_url"
             :alt="kit.title"
             class="h-full w-full object-cover"
           />
@@ -122,7 +122,7 @@ const formatDate = (date: string) => {
                   {{ kit.is_public ? 'Public' : 'Private' }}
                 </Badge>
               </div>
-              
+
               <p v-if="kit.description" class="mb-4 text-muted-foreground">
                 {{ kit.description }}
               </p>
@@ -132,7 +132,7 @@ const formatDate = (date: string) => {
                   <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
                   <span>by {{ kit.owner.name }}</span>
                 </div>
-                
+
                 <div v-if="kit.forked_from" class="flex items-center gap-1">
                   <GitFork class="h-4 w-4" />
                   <span>Forked from</span>
@@ -157,15 +157,15 @@ const formatDate = (date: string) => {
                 <PencilIcon class="mr-2 h-4 w-4" />
                 Edit Kit
               </Link>
-              
+
               <button v-if="canFork" @click="handleFork" class="btn btn-primary">
                 <GitFork class="mr-2 h-4 w-4" />
                 Fork Kit
               </button>
-              
-              <button 
-                v-if="canEdit && kit.fork_count === 0" 
-                @click="handleDelete" 
+
+              <button
+                v-if="canEdit && kit.fork_count === 0"
+                @click="handleDelete"
                 class="btn btn-danger"
                 title="Delete kit"
               >
@@ -183,10 +183,10 @@ const formatDate = (date: string) => {
         </h2>
 
         <div v-if="kit.templates && kit.templates.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <TemplateCard 
-            v-for="template in kit.templates" 
-            :key="template.id" 
-            :template="template" 
+          <TemplateCard
+            v-for="template in kit.templates"
+            :key="template.id"
+            :template="template"
             :current-user-id="auth?.user?.id"
             :show-owner="false"
           />

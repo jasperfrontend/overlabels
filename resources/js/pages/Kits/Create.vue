@@ -27,12 +27,13 @@ const form = useForm({
   title: '',
   description: '',
   is_public: false,
-  thumbnail: null as File | null,
+  thumbnail_url: '' as string,
   template_ids: [] as number[],
 });
 
 const thumbnailPreview = ref<string | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
+const isUploading = ref(false);
+const uploadWidget = ref<any>(null);
 
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
@@ -48,40 +49,52 @@ watch(() => form.template_ids, (newVal, oldVal) => {
   });
 }, { deep: true });
 
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-
-  if (file) {
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file. Only jpg and png are supported.');
-      return;
-    }
-
-    form.thumbnail = file;
-
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      thumbnailPreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+const uploadToCloudinary = () => {
+  if (!window.cloudinary) {
+    console.error('Cloudinary widget not loaded');
+    return;
   }
+
+  isUploading.value = true;
+
+  const widget = window.cloudinary.createUploadWidget(
+    {
+      cloudName: window.cloudinaryCloudName,
+      uploadPreset: 'overlabels-kit-thumbnails',
+      sources: ['local'],
+      multiple: false,
+      maxFiles: 1,
+      clientAllowedFormats: ['jpg', 'jpeg', 'png'],
+      maxFileSize: 10485760, // 10MB
+      cropping: true,
+      croppingAspectRatio: 16/9,
+      showAdvancedOptions: false,
+      showUploadMoreButton: false,
+      folder: 'kits/thumbnails',
+    },
+    (error: any, result: any) => {
+      isUploading.value = false;
+      
+      if (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed. Please try again.');
+        return;
+      }
+
+      if (result.event === 'success') {
+        form.thumbnail_url = result.info.secure_url;
+        thumbnailPreview.value = result.info.secure_url;
+        console.log('Image uploaded successfully:', result.info.secure_url);
+      }
+    }
+  );
+
+  widget.open();
 };
 
 const removeThumbnail = () => {
-  form.thumbnail = null;
+  form.thumbnail_url = '';
   thumbnailPreview.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
 };
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
@@ -102,7 +115,6 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
 
 const submit = () => {
   form.post('/kits', {
-    forceFormData: true,
     preserveScroll: true,
   });
 };
@@ -203,24 +215,20 @@ const submit = () => {
             </div>
 
             <div v-else>
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*"
-                @change="handleFileSelect"
-                class="hidden"
-                id="thumbnail-upload"
-              />
-              <label
-                for="thumbnail-upload"
-                class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50"
+              <button
+                type="button"
+                @click="uploadToCloudinary"
+                :disabled="isUploading"
+                class="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
-                <span class="text-sm text-muted-foreground">Click to upload thumbnail</span>
-                <span class="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB</span>
-              </label>
+                <span class="text-sm text-muted-foreground">
+                  {{ isUploading ? 'Uploading...' : 'Click to upload thumbnail' }}
+                </span>
+                <span class="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB • Cloudinary powered</span>
+              </button>
             </div>
-            <p v-if="form.errors.thumbnail" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail }}</p>
+            <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>
           </CardContent>
         </Card>
 

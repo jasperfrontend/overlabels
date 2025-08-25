@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { ArrowLeft, Upload, X, Package, Plus, Trash2 } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -40,72 +40,95 @@ const form = useForm({
   title: props.kit.title,
   description: props.kit.description || '',
   is_public: props.kit.is_public,
-  thumbnail: null as File | null,
+  thumbnail_url: props.kit.thumbnail_url || '',
   template_ids: [...props.selectedTemplateIds],
 });
 
 const thumbnailPreview = ref<string | null>(props.kit.thumbnail_url || null);
-const fileInput = ref<HTMLInputElement | null>(null);
+const isUploading = ref(false);
+const uploadWidget = ref<any>(null);
 
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
 });
 
-const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  
-  if (file) {
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
-      return;
-    }
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-    
-    form.thumbnail = file;
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      thumbnailPreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+// Debug watcher to track the form state
+watch(() => form.template_ids, (newVal, oldVal) => {
+  console.log('Template IDs changed:', {
+    oldVal,
+    newVal,
+    length: newVal.length,
+    buttonShouldBeDisabled: form.processing || newVal.length === 0
+  });
+}, { deep: true });
+
+const uploadToCloudinary = () => {
+  if (!window.cloudinary) {
+    console.error('Cloudinary widget not loaded');
+    return;
   }
+
+  isUploading.value = true;
+
+  const widget = window.cloudinary.createUploadWidget(
+    {
+      cloudName: window.cloudinaryCloudName,
+      uploadPreset: 'overlabels-kit-thumbnails',
+      sources: ['local'],
+      multiple: false,
+      maxFiles: 1,
+      clientAllowedFormats: ['jpg', 'jpeg', 'png'],
+      maxFileSize: 10485760, // 10MB
+      cropping: true,
+      croppingAspectRatio: 16/9,
+      showAdvancedOptions: false,
+      showUploadMoreButton: false,
+      folder: 'kits/thumbnails',
+    },
+    (error: any, result: any) => {
+      isUploading.value = false;
+
+      if (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed. Please try again.');
+        return;
+      }
+
+      if (result.event === 'success') {
+        form.thumbnail_url = result.info.secure_url;
+        thumbnailPreview.value = result.info.secure_url;
+        console.log('Image uploaded successfully:', result.info.secure_url);
+      }
+    }
+  );
+
+  widget.open();
 };
 
 const removeThumbnail = () => {
-  form.thumbnail = null;
+  form.thumbnail_url = '';
   thumbnailPreview.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
 };
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
+  console.log('toggleTemplate called:', { templateId, checked, currentIds: form.template_ids });
+
   if (checked) {
-    // Add template if not already included
+    // Add a template if not already included
     if (!form.template_ids.includes(templateId)) {
       form.template_ids = [...form.template_ids, templateId];
+      console.log('Added template:', templateId, 'New array:', form.template_ids);
     }
   } else {
     // Remove template
     form.template_ids = form.template_ids.filter(id => id !== templateId);
+    console.log('Removed template:', templateId, 'New array:', form.template_ids);
   }
 };
 
 const submit = () => {
-  // Use post with _method: 'PUT' for file uploads
-  router.post(`/kits/${props.kit.id}`, {
-    _method: 'PUT',
-    ...form.data(),
-  }, {
-    forceFormData: true,
+  // Use put method for Cloudinary URL submission
+  form.put(`/kits/${props.kit.id}`, {
     preserveScroll: true,
   });
 };
@@ -184,14 +207,15 @@ const submit = () => {
           <CardHeader>
             <CardTitle>Kit Thumbnail</CardTitle>
             <CardDescription>
-              Update your kit's thumbnail image (2560x1440px recommended, max 10MB)
+              Update your kit's thumbnail image (2560x1440px recommended, max 10MB).
+              Be sure to provide a high quality thumbnail so your kit looks great in the library.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="thumbnailPreview" class="mb-4">
+            <div v-if="thumbnailPreview" class="mt-4">
               <div class="relative inline-block">
-                <img 
-                  :src="thumbnailPreview" 
+                <img
+                  :src="thumbnailPreview"
                   alt="Thumbnail preview"
                   class="h-48 w-auto rounded-lg object-cover"
                 />
@@ -204,26 +228,22 @@ const submit = () => {
                 </button>
               </div>
             </div>
-            
+
             <div v-else>
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*"
-                @change="handleFileSelect"
-                class="hidden"
-                id="thumbnail-upload"
-              />
-              <label
-                for="thumbnail-upload"
-                class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50"
+              <button
+                type="button"
+                @click="uploadToCloudinary"
+                :disabled="isUploading"
+                class="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
-                <span class="text-sm text-muted-foreground">Click to upload thumbnail</span>
-                <span class="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB</span>
-              </label>
+                <span class="text-sm text-muted-foreground">
+                  {{ isUploading ? 'Uploading...' : 'Click to upload thumbnail' }}
+                </span>
+                <span class="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB • Cloudinary powered</span>
+              </button>
             </div>
-            <p v-if="form.errors.thumbnail" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail }}</p>
+            <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>
           </CardContent>
         </Card>
 
@@ -236,26 +256,27 @@ const submit = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="templates.length === 0" class="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
+            <div v-if="templates.length === 0" class="mt-4 rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
               <Package class="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
               <p class="text-sm text-muted-foreground">
                 You don't have any templates yet. Create some templates first.
               </p>
             </div>
-            
-            <div v-else class="space-y-2">
-              <div 
-                v-for="template in templates" 
+
+            <div v-else class="mt-4 space-y-2">
+              <div
+                v-for="template in templates"
                 :key="template.id"
                 class="flex items-center space-x-3 rounded-lg border p-3 transition-colors"
                 :class="{ 'bg-primary/5 border-primary': form.template_ids.includes(template.id) }"
               >
                 <Checkbox
                   :id="`template-${template.id}`"
+                  class="hidden"
                   :checked="form.template_ids.includes(template.id)"
                   @click="() => toggleTemplate(template.id, !form.template_ids.includes(template.id))"
                 />
-                <label 
+                <label
                   :for="`template-${template.id}`"
                   class="flex flex-1 cursor-pointer items-center justify-between"
                 >
@@ -267,9 +288,9 @@ const submit = () => {
                 </label>
               </div>
             </div>
-            
+
             <p v-if="form.errors.template_ids" class="mt-2 text-sm text-red-500">{{ form.errors.template_ids }}</p>
-            
+
             <div v-if="selectedTemplates.length > 0" class="mt-4 rounded-lg bg-muted p-3">
               <p class="text-sm font-medium">
                 Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}
@@ -290,9 +311,9 @@ const submit = () => {
           <router-link :to="`/kits/${kit.id}`" class="btn btn-secondary">
             Cancel
           </router-link>
-          <Button 
-            type="submit" 
-            :disabled="form.processing || form.template_ids.length === 0"
+          <Button
+            type="submit"
+            :disabled="form.processing"
             class="btn btn-primary"
           >
             {{ form.processing ? 'Updating...' : 'Update Kit' }}

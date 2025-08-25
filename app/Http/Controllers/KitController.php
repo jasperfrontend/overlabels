@@ -49,7 +49,7 @@ class KitController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'is_public' => 'required|boolean',
-            'thumbnail' => 'nullable|image|max:10240|dimensions:max_width=2560,max_height=1440',
+            'thumbnail_url' => 'nullable|url',
             'template_ids' => 'required|array|min:1',
             'template_ids.*' => 'exists:overlay_templates,id',
         ]);
@@ -70,12 +70,9 @@ class KitController extends Controller
         $kit->description = $validated['description'];
         $kit->is_public = $validated['is_public'];
 
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            $file = $request->file('thumbnail');
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('kit-thumbnails', $filename, 'public');
-            $kit->thumbnail = $path;
+        // Handle thumbnail upload - now using Cloudinary URL directly from frontend
+        if ($request->filled('thumbnail_url')) {
+            $kit->thumbnail = $request->input('thumbnail_url');
         }
 
         $kit->save();
@@ -143,7 +140,7 @@ class KitController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'is_public' => 'required|boolean',
-            'thumbnail' => 'nullable|image|max:10240|dimensions:max_width=2560,max_height=1440',
+            'thumbnail_url' => 'nullable|url',
             'template_ids' => 'required|array|min:1',
             'template_ids.*' => 'exists:overlay_templates,id',
         ]);
@@ -162,17 +159,14 @@ class KitController extends Controller
         $kit->description = $validated['description'];
         $kit->is_public = $validated['is_public'];
 
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail')) {
-            // Delete old thumbnail if exists
-            if ($kit->thumbnail && Storage::disk('public')->exists($kit->thumbnail)) {
+        // Handle thumbnail upload - now using Cloudinary URL directly from frontend
+        if ($request->filled('thumbnail_url')) {
+            // Delete old local thumbnail if exists (for legacy support)
+            if ($kit->thumbnail && !filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
                 Storage::disk('public')->delete($kit->thumbnail);
             }
-
-            $file = $request->file('thumbnail');
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('kit-thumbnails', $filename, 'public');
-            $kit->thumbnail = $path;
+            
+            $kit->thumbnail = $request->input('thumbnail_url');
         }
 
         $kit->save();

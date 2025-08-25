@@ -4,6 +4,7 @@ import { PlusIcon, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
 import { Button } from '@/components/ui/button';
+import Heading from '@/components/Heading.vue';
 
 interface Kit {
   id: number;
@@ -52,7 +53,7 @@ const props = defineProps<Props>();
     <div class="container mx-auto px-4 py-8">
       <div class="mb-8 flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold">My Template Kits</h1>
+          <h1 class="text-3xl font-bold"><span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span> Template Kits</h1>
           <p class="mt-2 text-muted-foreground">
             Organize your overlay templates into reusable collections
           </p>
@@ -64,10 +65,10 @@ const props = defineProps<Props>();
       </div>
 
       <div v-if="kits.data.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <KitCard 
-          v-for="kit in kits.data" 
-          :key="kit.id" 
-          :kit="kit" 
+        <KitCard
+          v-for="kit in kits.data"
+          :key="kit.id"
+          :kit="kit"
           :current-user-id="auth?.user?.id"
           :allow-delete="true"
         />
@@ -101,6 +102,17 @@ const props = defineProps<Props>();
           {{ page }}
         </Link>
       </div>
+
+      <div class="mt-6">
+        <Heading title="What are Kits?">
+        </Heading>
+        <p>Kits are a collection of existing of templates and alert overlays. You can use kits to quickly share a
+          set of templates with anybody you like.</p>
+
+        <p>By default, kits are private. You can set a kit to be publicly available,
+          then everybody who has an Overlabels account can fork your Kit and use it themselves.</p>
+      </div>
+
     </div>
   </AppLayout>
 </template>
