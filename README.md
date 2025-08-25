@@ -1,4 +1,4 @@
-# 🎮 Overlabels
+# Overlabels
 
 **The Ultimate Twitch Overlay Management Platform**
 
@@ -161,7 +161,7 @@ We love contributions! Whether you're:
 - **Designing templates** - Share your creativity
 - **Writing code** - Enhance the platform
 
-Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
+Check out our currently very much non-existing [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ---
 
@@ -172,12 +172,6 @@ Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 - **Community Support** - GitHub Discussions and Issues
 - **Business Inquiries** - Contact us for enterprise solutions
 - **Updates** - Follow us for the latest features and templates
-
----
-
-## Ready to Transform Your Stream?
-
-[**Get Started Now**](http://localhost:8000) • [**Documentation**](#-documentation) • [**Template Gallery**](#-community--kits)
 
 ---
 
