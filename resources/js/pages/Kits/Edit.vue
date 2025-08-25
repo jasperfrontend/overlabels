@@ -311,13 +311,13 @@ const submit = () => {
           <router-link :to="`/kits/${kit.id}`" class="btn btn-secondary">
             Cancel
           </router-link>
-          <Button
+          <button
             type="submit"
             :disabled="form.processing"
             class="btn btn-primary"
           >
             {{ form.processing ? 'Updating...' : 'Update Kit' }}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

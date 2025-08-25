@@ -17,7 +17,6 @@ import {
   Code,
   ExternalLinkIcon,
   FileWarningIcon,
-  FolderOpen,
   Keyboard,
   Palette,
   Play,
@@ -26,7 +25,6 @@ import {
 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { Codemirror } from 'vue-codemirror';
-import StorageBrowserModal from '@/components/Storage/StorageBrowserModal.vue';
 
 interface Props {
   existingTemplate: {
@@ -56,7 +54,6 @@ const isValidating = ref(false);
 const isLoadingDefaults = ref(false);
 const showConditionalExamples = ref(false);
 const showActionsDropdown = ref(false);
-const showStorageBrowser = ref(false);
 const htmlEditor = ref();
 const cssEditor = ref();
 
@@ -282,16 +279,7 @@ const resetTofDefault = async () => {
   }
 };
 
-const openStorageBrowser = () => {
-  showStorageBrowser.value = true;
-  showActionsDropdown.value = false;
-};
 
-const onFileSelect = (file: any, downloadUrl: string, insertType: string) => {
-  showToast.value = true;
-  toastMessage.value = `${file.name} inserted successfully!`;
-  toastType.value = 'success';
-};
 
 // Watch for theme changes
 watch(
@@ -420,14 +408,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                 <span class="ml-auto rounded bg-black/10 px-1 text-xs">⌃V</span>
               </Button>
 
-              <Button
-                @click="openStorageBrowser"
-                variant="ghost"
-                class="w-full cursor-pointer justify-start"
-              >
-                <FolderOpen class="mr-2 h-4 w-4" />
-                Browse Storage Files
-              </Button>
 
               <div class="my-1 border-t"></div>
 
@@ -643,13 +623,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
     </div>
   </div>
 
-  <!-- Storage Browser Modal -->
-  <StorageBrowserModal
-    :show="showStorageBrowser"
-    :editor="htmlEditor?.view"
-    @close="showStorageBrowser = false"
-    @file-select="onFileSelect"
-  />
 
 </template>
 

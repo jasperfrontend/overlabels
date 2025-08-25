@@ -22,7 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware('web')->group(base_path('routes/auth.php'));
             Route::middleware('web')->group(base_path('routes/settings.php'));
-            Route::middleware('web')->group(base_path('routes/storage.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -44,7 +43,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'overlay.token' => ValidateOverlayToken::class,
             'rate.limit.overlay' => RateLimitOverlayAccess::class,
             'twitch.token' => EnsureValidTwitchToken::class,
-            'storage.refresh' => \App\Http\Middleware\HandleStorageTokenRefresh::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
