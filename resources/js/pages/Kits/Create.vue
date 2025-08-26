@@ -33,7 +33,6 @@ const form = useForm({
 
 const thumbnailPreview = ref<string | null>(null);
 const isUploading = ref(false);
-const uploadWidget = ref<any>(null);
 
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
@@ -74,7 +73,7 @@ const uploadToCloudinary = () => {
     },
     (error: any, result: any) => {
       isUploading.value = false;
-      
+
       if (error) {
         console.error('Upload error:', error);
         alert('Upload failed. Please try again.');

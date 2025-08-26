@@ -2,14 +2,22 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * @property int|mixed $owner_id
+ * @property string $title
+ * @property string $description
+ * @property bool $is_public
+ * @property string|mixed $thumbnail
+ * @property mixed $templates
+ */
 class Kit extends Model
 {
     use HasFactory;
@@ -43,7 +51,7 @@ class Kit extends Model
         static::deleting(function ($kit) {
             // Prevent deletion if kit has been forked
             if ($kit->fork_count > 0) {
-                throw new \Exception('Cannot delete a kit that has been forked.');
+                throw new Exception('Cannot delete a kit that has been forked.');
             }
 
             // Delete thumbnail if exists and is local storage (not Cloudinary URL)
@@ -67,9 +75,9 @@ class Kit extends Model
     public function templates(): BelongsToMany
     {
         return $this->belongsToMany(
-            OverlayTemplate::class, 
-            'kit_templates', 
-            'kit_id', 
+            OverlayTemplate::class,
+            'kit_templates',
+            'kit_id',
             'overlay_template_id'
         )->withTimestamps();
     }
@@ -77,18 +85,18 @@ class Kit extends Model
     /**
      * Fork parent relationship
      */
-    public function forkedFrom(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'forked_from_id');
-    }
+//    public function forkedFrom(): BelongsTo
+//    {
+//        return $this->belongsTo(self::class, 'forked_from_id');
+//    }
 
     /**
      * Forks relationship
      */
-    public function forks(): HasMany
-    {
-        return $this->hasMany(self::class, 'forked_from_id');
-    }
+//    public function forks(): HasMany
+//    {
+//        return $this->hasMany(self::class, 'forked_from_id');
+//    }
 
     /**
      * Fork this kit for a user
@@ -120,7 +128,7 @@ class Kit extends Model
     }
 
     /**
-     * Check if user can delete this kit
+     * Check if the user can delete this kit
      */
     public function canBeDeleted(): bool
     {
@@ -136,7 +144,7 @@ class Kit extends Model
             return null;
         }
 
-        // If thumbnail is already a full URL (Cloudinary), return as-is
+        // If the thumbnail is already a full URL (Cloudinary), return as-is
         if (filter_var($this->thumbnail, FILTER_VALIDATE_URL)) {
             return $this->thumbnail;
         }

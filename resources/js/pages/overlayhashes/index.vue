@@ -28,7 +28,6 @@ import {
   Ban,
   ExternalLink,
   AlertTriangle,
-  CheckCircle,
   Check,
   Clock,
   ShieldQuestion

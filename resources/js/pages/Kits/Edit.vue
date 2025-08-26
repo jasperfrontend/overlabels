@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, computed, onMounted, watch } from 'vue';
-import { ArrowLeft, Upload, X, Package, Plus, Trash2 } from 'lucide-vue-next';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { ArrowLeft, Upload, X, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,7 +45,6 @@ const form = useForm({
 
 const thumbnailPreview = ref<string | null>(props.kit.thumbnail_url || null);
 const isUploading = ref(false);
-const uploadWidget = ref<any>(null);
 
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
@@ -140,10 +138,10 @@ const submit = () => {
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
       <!-- Back button -->
-      <router-link :to="`/kits/${kit.id}`" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="`/kits/${kit.id}`" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kit
-      </router-link>
+      </Link>
 
       <div class="mb-8">
         <h1 class="text-3xl font-bold">Edit Kit</h1>
@@ -181,7 +179,7 @@ const submit = () => {
                 id="description"
                 v-model="form.description"
                 placeholder="Describe what this kit contains and who might find it useful..."
-                rows="4"
+                :rows="4"
                 :class="{ 'border-red-500': form.errors.description }"
               />
               <p v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</p>
@@ -308,9 +306,9 @@ const submit = () => {
 
         <!-- Form Actions -->
         <div class="flex justify-end gap-4">
-          <router-link :to="`/kits/${kit.id}`" class="btn btn-secondary">
+          <Link :href="`/kits/${kit.id}`" class="btn btn-secondary">
             Cancel
-          </router-link>
+          </Link>
           <button
             type="submit"
             :disabled="form.processing"

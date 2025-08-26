@@ -116,7 +116,7 @@ const eventTypeLabels = {
   'channel.follow': 'Follow',
   'channel.subscribe': 'Subscribe',
   'channel.subscription.gift': 'Gift Sub',
-  'channel.subscription.message': 'Resub',
+  'channel.subscription.message': 'Re-sub',
   'channel.cheer': 'Cheer',
   'channel.raid': 'Raid',
   'channel.channel_points_custom_reward_redemption.add': 'Points',

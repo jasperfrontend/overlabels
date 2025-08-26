@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
+import { ref } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from "@/components/RekaToast.vue"

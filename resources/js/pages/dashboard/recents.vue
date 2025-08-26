@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import TemplateCard from '@/components/TemplateCard.vue';
 import KitCard from '@/components/KitCard.vue';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Layers, Plus, Bell, Users, Package } from 'lucide-vue-next';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, Package } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 
 interface Template {

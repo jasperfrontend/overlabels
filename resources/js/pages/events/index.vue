@@ -96,9 +96,11 @@ const saveAllMappings = async () => {
     const response = await axios.put('/events/bulk', {
       mappings: mappingsToSave,
     });
+
     showToast.value = true;
-    toastMessage.value = 'Settings saved successfully!';
+    toastMessage.value = 'Settings saved successfully: ' + response.data.message;
     toastType.value = 'success';
+
   } catch (error: any) {
     if (error.response) {
       alert(`Error: ${error.response.data.error || 'Failed to save settings'}`);
@@ -218,7 +220,6 @@ const saveAllMappings = async () => {
               <svg
                 class="h-5 w-5 text-muted-foreground transition-transform"
                 :class="{ 'rotate-180': expandedEvent === mapping.event_type }"
-                fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >

@@ -3,7 +3,6 @@ import { Head, Link } from '@inertiajs/vue3';
 import { PlusIcon, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
-import { Button } from '@/components/ui/button';
 import Heading from '@/components/Heading.vue';
 
 interface Kit {
@@ -43,7 +42,7 @@ interface Props {
   };
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 </script>
 
 <template>
@@ -80,7 +79,7 @@ const props = defineProps<Props>();
         <p class="mb-6 max-w-sm text-sm text-muted-foreground">
           Create your first template kit to organize and share your overlay templates.
         </p>
-        <Link href="/kits/create" class="btn btn-primary">
+        <Link :href="route('kits.create')" class="btn btn-primary">
           <PlusIcon class="mr-2 h-4 w-4" />
           Create Your First Kit
         </Link>

@@ -1,7 +1,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useForm, Head, router } from '@inertiajs/vue3';
+import { useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types'
 import Modal from '@/components/Modal.vue';

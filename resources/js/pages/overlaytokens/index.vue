@@ -97,9 +97,9 @@ const deleteToken = async (t: Token) => {
   }
 };
 
-const showUsage = (t: Token) => {
-  router.visit(`/tokens/${t.id}/usage`);
-};
+// const showUsage = (t: Token) => {
+//   router.visit(`/tokens/${t.id}/usage`);
+// };
 
 const formatDate = (date: string | null | undefined) =>
   date ? new Date(date).toLocaleString() : '-';

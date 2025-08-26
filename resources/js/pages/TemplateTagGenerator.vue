@@ -105,10 +105,10 @@ onMounted(async () => {
   }
 
   // Check for any existing running jobs on mount
-  pollJobStatus();
+  await pollJobStatus();
 });
 
-// Cleanup on unmount
+// Cleanup on unMount
 onUnmounted(() => {
   stopJobPolling();
 });
@@ -143,7 +143,7 @@ const pollJobStatus = async () => {
         showToast.value = true;
         toastMessage.value = `Successfully generated ${completedJob.result?.generated || 'template'} tags!`;
         toastType.value = 'success';
-        
+
         // Refresh the page to show new tags
         setTimeout(() => {
           router.reload({
@@ -169,7 +169,7 @@ const pollJobStatus = async () => {
         showToast.value = true;
         toastMessage.value = `Successfully cleaned up ${completedJob.result?.deleted_tags_count || 0} redundant tags!`;
         toastType.value = 'success';
-        
+
         // Refresh the page to show updated tags
         router.reload();
       } else if (completedJob && completedJob.status === 'failed') {
@@ -193,7 +193,7 @@ const pollJobStatus = async () => {
 // Start job polling
 const startJobPolling = () => {
   if (jobPollingInterval.value) return;
-  
+
   jobPollingInterval.value = window.setInterval(pollJobStatus, 2000); // Poll every 2 seconds
   pollJobStatus(); // Initial poll
 };
@@ -225,13 +225,13 @@ const generateTags = async () => {
 
     if (response.ok && data.success) {
       isGenerating.value = true;
-      currentGenerateJob.value = { 
-        id: data.job_id, 
-        job_type: 'generate', 
+      currentGenerateJob.value = {
+        id: data.job_id,
+        job_type: 'generate',
         status: 'pending',
         created_at: new Date().toISOString()
       };
-      
+
       showToast.value = true;
       toastMessage.value = 'Template tag generation started! This may take a few minutes.';
       toastType.value = 'info';
@@ -318,9 +318,9 @@ const cleanupRedundantTags = async () => {
 
     if (response.ok && data.success) {
       isCleaningUp.value = true;
-      currentCleanupJob.value = { 
-        id: data.job_id, 
-        job_type: 'cleanup', 
+      currentCleanupJob.value = {
+        id: data.job_id,
+        job_type: 'cleanup',
         status: 'pending',
         created_at: new Date().toISOString()
       };
@@ -406,17 +406,9 @@ const copyTag = async (tagName: string) => {
     toastType.value = 'info';
   } catch (error) {
     console.error('Failed to copy:', error);
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea');
-    textArea.value = `[[[${tagName}]]]`;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-
     showToast.value = true;
-    toastMessage.value = `Copied tag: ${tagName}`;
-    toastType.value = 'info';
+    toastMessage.value = "Failed to copy tag.";
+    toastType.value = 'error';
   }
 };
 
@@ -530,19 +522,19 @@ const getDataTypeClass = (dataType: string) => {
           <!-- Category Header -->
           <details class="group">
             <summary class="flex cursor-pointer list-none items-center justify-between rounded-2xl p-4 hover:bg-accent/50">
-              <div class="flex items-center">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              <span class="block flex items-center">
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {{ categoryData.category.display_name }}
-                </h3>
+                </span>
                 <span class="ml-3 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                   {{ categoryData.tags.length }} tags
                 </span>
-              </div>
-              <div class="transform transition-transform group-open:rotate-180">
-                <svg class="h-5 w-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              </span>
+              <span class="block transform transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5 text-gray-500 dark:text-gray-400" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-              </div>
+              </span>
             </summary>
 
             <!-- Tags Grid -->
@@ -593,7 +585,7 @@ const getDataTypeClass = (dataType: string) => {
                       @click="clearPreview(tag.id)"
                       class="cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                     >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="h-4 w-4" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>
@@ -618,7 +610,7 @@ const getDataTypeClass = (dataType: string) => {
                   <div class="mb-2 flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
                     <button @click="clearPreview(tag.id)" class="cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300">
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="h-4 w-4" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>

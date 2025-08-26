@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, ExternalLinkIcon, Trash2Icon } from 'lucide-vue-next';
+import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import TemplateCard from '@/components/TemplateCard.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface Template {
