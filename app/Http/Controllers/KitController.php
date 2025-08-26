@@ -226,14 +226,14 @@ class KitController extends Controller
     /**
      * Get recent community kits
      */
-//    public function recent()
-//    {
-//        $kits = Kit::with(['owner', 'templates'])
-//            ->public()
-//            ->orderBy('created_at', 'desc')
-//            ->limit(10)
-//            ->get();
-//
-//        return response()->json($kits);
-//    }
+    public function recent()
+    {
+        $kits = Kit::with(['owner', 'templates'])
+            ->public()
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json($kits);
+    }
 }

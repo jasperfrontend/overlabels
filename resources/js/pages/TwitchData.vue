@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import RefreshButton from '@/components/RefreshButton.vue';
 import RefreshIcon from '@/components/RefreshIcon.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -50,7 +49,7 @@ function getTierStyle(tier: string) {
 const confirmExpensiveApiCall = () => {
   if (confirm('This will make an expensive API call to refresh all your Twitch data. Are you sure you want to continue?')) {
     isRefreshing.value = true;
-    router.visit('/twitchdata/refresh/expensive', {
+    router.visit(route('twitchdata.refresh.all'), {
       preserveScroll: true,
       onFinish: () => {
         isRefreshing.value = false;

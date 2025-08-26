@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Globe, Lock, Eye, GitFork, Bell, Layers, ExternalLinkIcon, PencilIcon } from 'lucide-vue-next';
-import { Badge } from '@/components/ui/badge';
+import { Globe, Lock, Eye, GitFork, ExternalLinkIcon, PencilIcon } from 'lucide-vue-next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 interface Template {
   id: number;
@@ -100,22 +98,22 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <a v-if="isOwnTemplate" class="btn btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
+        <a v-if="isOwnTemplate" class="btn btn-sm btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
           Edit
           <PencilIcon class="ml-2 h-4 w-4" />
         </a>
-        <button v-else-if="template.is_public" class="btn btn-warning" @click="handleFork" title="Fork template">
+        <button v-else-if="template.is_public" class="btn btn-sm btn-warning" @click="handleFork" title="Fork template">
           Fork
           <GitFork class="ml-1 h-4 w-4" />
         </button>
-        <a class="btn btn-primary" v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank">
+        <a class="btn btn-sm btn-primary" v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank">
           Preview
           <ExternalLinkIcon class="ml-2 h-4 w-4" />
         </a>
         <a
           v-else
           onclick='alert("This template is private. You can only preview it from the Edit screen.\n\nEdit the template and click the Preview button from there. Add your own API key to the template URL to see it in action.")'
-          class="btn btn-warning cursor-not-allowed"
+          class="btn btn-sm btn-warning cursor-not-allowed"
         >
           Preview
         </a>

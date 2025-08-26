@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import TemplateCard from '@/components/TemplateCard.vue';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, Plus, Bell, Users } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
@@ -48,15 +47,12 @@ const breadcrumbs = [
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-      <Card class="mb-4">
-        <CardHeader>
-          <CardTitle class="text-2xl">Welcome back, {{ userName }}!</CardTitle>
-          <CardDescription class="mt-2">
-            You have {{ userAlertTemplates.length + userStaticTemplates.length }} templates in your collection. Create new templates or explore the
-            community's creations below.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+
+      <Heading
+        class="pb-8 mb-4 border-b"
+        :title="`Welcome back, ${userName}!`"
+        :description="`You have ${ userAlertTemplates.length + userStaticTemplates.length } templates in your collection.
+        Create new templates or explore the community's creations below.`" />
 
       <!-- Your Alert Templates Section -->
       <section v-if="userAlertTemplates.length > 0" class="space-y-6">
@@ -65,7 +61,7 @@ const breadcrumbs = [
             <Bell class="mr-1 h-6 w-6 text-primary" />
             <Heading title="Your Alert Templates" description="Customize your alerts to fit your needs" />
           </div>
-          <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
+          <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Alert
             <Plus class="h-4 w-4" />
           </a>
@@ -84,7 +80,7 @@ const breadcrumbs = [
             <Layers class="h-6 w-6 text-primary" />
             <h2 class="text-2xl font-semibold">Your Static Overlays</h2>
           </div>
-          <a class="btn btn-cancel flex items-center gap-2" :href="route('templates.create')">
+          <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Overlay
             <Plus class="h-4 w-4" />
           </a>
@@ -104,15 +100,13 @@ const breadcrumbs = [
             <CardDescription class="mt-3 text-base"> Create your own custom overlays or fork one from the community to get started </CardDescription>
           </CardHeader>
           <CardContent class="flex justify-center gap-4 pb-8">
-            <Button size="lg" class="btn btn-secondary" asChild>
-              <Link :href="route('templates.create')">
-                <Plus class="mr-2 h-4 w-4" />
-                Create Template
-              </Link>
-            </Button>
-            <Button size="lg" class="btn btn-primary" asChild>
-              <Link :href="route('templates.index')"> Browse Templates </Link>
-            </Button>
+            <a class="btn btn-sm btn-secondary" :href="route('templates.create')">
+              <Plus class="mr-2 h-4 w-4" />
+              Create Template
+            </a>
+            <a size="lg" class="btn btn-sm btn-primary" :href="route('templates.index')">
+              Browse Templates
+            </a>
           </CardContent>
         </Card>
       </section>
@@ -125,7 +119,7 @@ const breadcrumbs = [
             <h2 class="text-2xl font-semibold">From the Community</h2>
             <span class="text-base text-muted-foreground"> Public templates you can fork and customize </span>
           </div>
-          <a class="btn btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
+          <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
             Community templates
             <Users class="h-4 w-4" />
           </a>
@@ -146,7 +140,7 @@ const breadcrumbs = [
         </Card>
 
         <div class="flex py-6">
-          <a :href="route('templates.index')" class="btn btn-cancel">Browse All Templates</a>
+          <a :href="route('templates.index')" class="btn btn-sm btn-cancel">Browse All Templates</a>
         </div>
       </section>
     </div>

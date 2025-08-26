@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { router, Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
-import debounce from "lodash/debounce"
+import debounce from 'lodash/debounce';
 import {
   EyeIcon,
   GitForkIcon,
@@ -16,7 +16,8 @@ import {
   BellIcon,
   Trash2Icon,
   MonitorIcon,
-  LayoutTemplate
+  LayoutTemplate,
+  PlusIcon,
 } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import axios from 'axios';
@@ -61,7 +62,7 @@ const getSortIcon = (field: string) => {
   return filters.value.direction === 'asc' ? ArrowUpIcon : ArrowDownIcon;
 };
 
-const forkTemplate = async (template:any) => {
+const forkTemplate = async (template: any) => {
   if (!confirm(`Fork "${template.name}"?`)) return;
 
   try {
@@ -73,7 +74,7 @@ const forkTemplate = async (template:any) => {
   }
 };
 
-const deleteTemplate = async (template:any) => {
+const deleteTemplate = async (template: any) => {
   if (!confirm(`Delete "${template.name}"?`)) return;
 
   try {
@@ -87,7 +88,7 @@ const deleteTemplate = async (template:any) => {
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: "Overlabels Overlay Editor",
+    title: 'Overlabels Overlay Editor',
     href: '/templates',
   },
 ];
@@ -96,7 +97,7 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 
@@ -128,7 +129,6 @@ const getEventMapping = (template: any) => {
   if (!template.event_mappings || template.event_mappings.length === 0) return null;
   return template.event_mappings[0];
 };
-
 </script>
 
 <template>
@@ -136,32 +136,30 @@ const getEventMapping = (template: any) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
+      <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <LayoutTemplate class="w-6 h-6 mr-1" />
+          <LayoutTemplate class="mr-1 h-6 w-6" />
           <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
         </div>
-        <Link
-          :href="route('templates.create')"
-          class="btn btn-primary"
-        >
+        <Link :href="route('templates.create')" class="btn btn-primary">
           Create New Template
+          <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
       </div>
 
       <!-- Templates Table -->
-      <div class="bg-card dark:bg-accent/5 border border-border dark:border-border rounded-2xl overflow-hidden">
+      <div class="overflow-hidden rounded-2xl border border-border bg-card dark:border-border dark:bg-accent/5">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-muted dark:bg-accent/20 border-b border-border dark:border-border">
+            <thead class="border-b border-border bg-muted dark:border-border dark:bg-accent/20">
               <tr>
                 <th class="px-4 py-2 text-left">
                   <button
                     @click="sortBy('name')"
-                    class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    class="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Template
-                    <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="w-4 h-4" />
+                    <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="h-4 w-4" />
                   </button>
                 </th>
                 <th class="px-3 py-2 text-left">
@@ -179,90 +177,87 @@ const getEventMapping = (template: any) => {
                 <th class="px-3 py-2 text-left">
                   <button
                     @click="sortBy('created_at')"
-                    class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    class="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Created
-                    <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="w-4 h-4" />
+                    <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="h-4 w-4" />
                   </button>
                 </th>
-                <th class="px-3 py-2 text-left text-xs text-muted-foreground">
-                  Status
-                </th>
+                <th class="px-3 py-2 text-left text-xs text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border dark:divide-border">
-              <tr
-                v-for="template in templates?.data"
-                :key="template.id"
-                class="hover:bg-muted/50 dark:hover:bg-muted/50 transition-colors group"
-              >
-                <td class="px-4 py-2 max-w-[400px]">
+              <tr v-for="template in templates?.data" :key="template.id" class="group transition-colors hover:bg-muted/50 dark:hover:bg-muted/50">
+                <td class="max-w-[400px] px-4 py-2">
                   <div>
-                    <div class="flex items-center gap-2 relative">
-                      <h3 class="font-medium text-sm text-foreground dark:text-foreground truncate max-w-[250px]" :title="template.name">{{ template.name }}</h3>
+                    <div class="relative flex items-center gap-2">
+                      <h3 class="max-w-[250px] truncate text-sm font-medium text-foreground dark:text-foreground" :title="template.name">
+                        {{ template.name }}
+                      </h3>
 
-                      <div class="hidden group-hover:flex absolute top-0 right-0 p-2 px-4 -mt-1 items-center justify-end gap-1">
+                      <div class="absolute top-0 right-0 -mt-1 hidden items-center justify-end gap-1 p-2 px-4 group-hover:flex">
                         <Link
                           :href="route('templates.show', template)"
-                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
                           title="View Details"
                         >
-                          <EyeIcon class="w-4 h-4" />
+                          <EyeIcon class="h-4 w-4" />
                         </Link>
                         <Link
                           v-if="template.owner_id === $page.props.auth.user.id"
                           :href="route('templates.edit', template)"
-                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
                           title="Edit"
                         >
-                          <PencilIcon class="w-4 h-4" />
+                          <PencilIcon class="h-4 w-4" />
                         </Link>
                         <button
                           v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                           @click="forkTemplate(template)"
-                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
                           title="Fork"
                         >
-                          <GitForkIcon class="w-4 h-4" />
+                          <GitForkIcon class="h-4 w-4" />
                         </button>
                         <button
                           v-if="template.owner_id === $page.props.auth.user.id"
                           @click="deleteTemplate(template)"
-                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
                           title="Delete"
                         >
-                          <Trash2Icon class="w-4 h-4" />
+                          <Trash2Icon class="h-4 w-4" />
                         </button>
                         <a
                           v-if="template.is_public"
                           :href="`/overlay/${template.slug}/public`"
                           target="_blank"
-                          class="p-2 text-muted-foreground hover:text-foreground hover:bg-accent-foreground/10 transition-colors rounded-full"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
                           title="Preview"
                         >
-                          <ExternalLinkIcon class="w-4 h-4" />
+                          <ExternalLinkIcon class="h-4 w-4" />
                         </a>
                       </div>
                     </div>
-                    <p class="text-xs text-muted-foreground mt-0.5 truncate max-w-[350px]">{{ template.description || 'No description' }}</p>
+                    <p class="mt-0.5 max-w-[350px] truncate text-xs text-muted-foreground">{{ template.description || 'No description' }}</p>
                   </div>
                 </td>
                 <td class="px-3 py-2">
-                  <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium"
-                       :class="template.type === 'alert'
-                         ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
-                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'">
-                    <BellIcon v-if="template.type === 'alert'" class="w-4 h-4" />
-                    <MonitorIcon v-else class="w-4 h-4" />
+                  <div
+                    class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium"
+                    :class="
+                      template.type === 'alert'
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                    "
+                  >
+                    <BellIcon v-if="template.type === 'alert'" class="h-4 w-4" />
+                    <MonitorIcon v-else class="h-4 w-4" />
                     <span class="hidden lg:inline">{{ template.type === 'alert' ? 'Alert' : 'Overlay' }}</span>
                   </div>
                 </td>
                 <td class="px-3 py-2">
                   <div v-if="getEventMapping(template)" class="flex items-center gap-1">
-                    <span
-                      :class="eventTypeColors[getEventMapping(template).event_type]"
-                      class="inline-block w-2 h-2 rounded-full"
-                    ></span>
+                    <span :class="eventTypeColors[getEventMapping(template).event_type]" class="inline-block h-2 w-2 rounded-full"></span>
                     <span class="text-xs text-muted-foreground">
                       {{ eventTypeLabels[getEventMapping(template).event_type] }}
                     </span>
@@ -271,22 +266,18 @@ const getEventMapping = (template: any) => {
                 </td>
                 <td class="px-3 py-2">
                   <div class="flex items-center gap-1.5">
-                    <img
-                      :src="template?.owner?.avatar"
-                      :alt="template?.owner?.name"
-                      class="w-5 h-5 rounded-full"
-                    />
-                    <span class="text-xs text-foreground dark:text-foreground truncate max-w-[100px]">{{ template.owner.name }}</span>
+                    <img :src="template?.owner?.avatar" :alt="template?.owner?.name" class="h-5 w-5 rounded-full" />
+                    <span class="max-w-[100px] truncate text-xs text-foreground dark:text-foreground">{{ template.owner.name }}</span>
                   </div>
                 </td>
                 <td class="px-3 py-2 text-center">
                   <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                     <div class="flex items-center gap-0.5">
-                      <EyeIcon class="w-4 h-4" />
+                      <EyeIcon class="h-4 w-4" />
                       <span>{{ template.view_count || 0 }}</span>
                     </div>
                     <div class="flex items-center gap-0.5">
-                      <GitForkIcon class="w-4 h-4" />
+                      <GitForkIcon class="h-4 w-4" />
                       <span>{{ template.forks_count || 0 }}</span>
                     </div>
                   </div>
@@ -296,8 +287,8 @@ const getEventMapping = (template: any) => {
                 </td>
                 <td class="px-3 py-2">
                   <div class="inline-flex items-center gap-1">
-                    <GlobeIcon v-if="template.is_public" class="w-4 h-4 text-green-500" title="Public" />
-                    <LockIcon v-else class="w-4 h-4 text-violet-400" title="Private" />
+                    <GlobeIcon v-if="template.is_public" class="h-4 w-4 text-green-500" title="Public" />
+                    <LockIcon v-else class="h-4 w-4 text-violet-400" title="Private" />
                   </div>
                 </td>
               </tr>
@@ -311,10 +302,9 @@ const getEventMapping = (template: any) => {
         </div>
       </div>
 
-
       <!-- Filters Section -->
-      <div class="mt-8 bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="mt-8 rounded-lg border border-border bg-card p-4 shadow-sm dark:border-border dark:bg-card">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
           <!-- Search -->
 
           <div class="flex flex-col gap-1">
@@ -324,7 +314,7 @@ const getEventMapping = (template: any) => {
               @input="debounceSearch"
               type="text"
               placeholder="Search templates..."
-              class="w-full px-3 py-1 h-[38px] bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="h-[38px] w-full rounded-lg border border-border bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
               id="filter-search"
             />
           </div>
@@ -335,7 +325,7 @@ const getEventMapping = (template: any) => {
             <select
               v-model="filters.type"
               @change="applyFilter"
-              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
               id="filter-type"
             >
               <option value="">All Types</option>
@@ -350,7 +340,7 @@ const getEventMapping = (template: any) => {
             <select
               v-model="filters.filter"
               @change="applyFilter"
-              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
               id="filter-visibility"
             >
               <option value="all_templates">All Templates</option>
@@ -365,7 +355,7 @@ const getEventMapping = (template: any) => {
             <select
               v-model="filters.sort"
               @change="applyFilter"
-              class="px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
               id="filter-sort"
             >
               <option value="created_at">Date Created</option>
@@ -379,13 +369,7 @@ const getEventMapping = (template: any) => {
 
       <!-- Pagination -->
       <div v-if="templates?.last_page > 1" class="mt-6">
-        <Pagination
-          :links="templates?.links"
-          :from="templates?.from"
-          :to="templates?.to"
-          :total="templates?.total"
-          class="dark:text-foreground"
-        />
+        <Pagination :links="templates?.links" :from="templates?.from" :to="templates?.to" :total="templates?.total" class="dark:text-foreground" />
       </div>
     </div>
   </AppLayout>

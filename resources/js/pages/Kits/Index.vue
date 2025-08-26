@@ -54,7 +54,7 @@ defineProps<Props>();
         <div>
           <h1 class="text-3xl font-bold"><span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span> Template Kits</h1>
           <p class="mt-2 text-muted-foreground">
-            Kits offer a bundle of existing templates and overlay alerts. Fork them to your own account and assign them to your Events!
+            Kits offer a bundle of premade templates and overlay alerts. Fork them to your own account and assign them to your Events!
           </p>
         </div>
         <Link :href="route('kits.create')" class="btn btn-primary">
@@ -63,7 +63,7 @@ defineProps<Props>();
         </Link>
       </div>
 
-      <div v-if="kits.data.length > 0" class="grid md:grid-cols-2 lg:grid-cols-3">
+      <div v-if="kits.data.length > 0" class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         <KitCard
           v-for="kit in kits.data"
           :key="kit.id"
@@ -103,13 +103,14 @@ defineProps<Props>();
       </div>
 
       <div class="mt-6">
-        <Heading title="What are Kits?">
-        </Heading>
-        <p>Kits are a collection of existing of templates and alert overlays. You can use kits to quickly share a
+        <Heading title="What are Kits?" />
+        <p>Kits are a collection of premade of templates and alert overlays. You can use kits to quickly share a
           set of templates with anybody you like.</p>
 
         <p>By default, kits are private. You can set a kit to be publicly available,
           then everybody who has an Overlabels account can fork your Kit and use it themselves.</p>
+        <Heading class="mt-4" title="Can I create a Kit?" />
+        <p>Everybody can create Kits! In fact, it would be <span class="bg-cyan-400/50 px-1">amazing</span> if you did.</p>
       </div>
 
     </div>

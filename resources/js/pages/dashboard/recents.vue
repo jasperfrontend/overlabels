@@ -66,8 +66,8 @@ const breadcrumbs = [
 
 <template>
   <Head>
-    <title>Recently added Templates</title>
-    <meta name="description" content="The Newest Templates and Alerts - Overlabels">
+    <title>Recently added Templates and Kits</title>
+    <meta name="description" content="The Newest Templates, Alerts and Kits - Overlabels">
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
@@ -100,7 +100,7 @@ const breadcrumbs = [
         </Card>
 
         <div class="flex py-6">
-          <a :href="route('templates.index')" class="btn btn-cancel">Browse All Templates</a>
+          <a :href="route('templates.index')" class="btn btn-sm btn-cancel">Browse All Templates</a>
         </div>
       </section>
 
@@ -122,7 +122,7 @@ const breadcrumbs = [
         </div>
 
         <div class="flex py-6">
-          <a :href="route('kits.index')" class="btn btn-cancel">Browse All Kits</a>
+          <a :href="route('kits.index')" class="btn btn-sm btn-cancel">Browse All Kits</a>
         </div>
       </section>
 

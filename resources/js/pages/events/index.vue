@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles, Radio } from 'lucide-vue-next';
+import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles, Radio, Save } from 'lucide-vue-next';
 import axios from 'axios';
 import type { BreadcrumbItem } from '@/types/index.js';
 
@@ -124,9 +124,13 @@ const saveAllMappings = async () => {
           <Heading title="Event Alert Configuration" description="Connect Twitch events to your alert templates" />
         </div>
         <div class="flex gap-3">
-          <Link :href="route('templates.create', { type: 'alert' })" class="btn btn-secondary"> Create Template </Link>
-          <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-primary min-w-[140px]">
+          <Link :href="route('templates.create', { type: 'alert' })" class="btn btn-secondary">
+            Create New Template
+            <Sparkles class="ml-2 h-4 w-4" />
+          </Link>
+          <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-primary">
             {{ isSaving ? 'Saving...' : 'Save Changes' }}
+            <Save class="ml-2 h-4 w-4" />
           </button>
         </div>
       </div>

@@ -57,7 +57,7 @@ class DashboardController extends Controller
             ->limit(50) // @TODO: Make pagination of community templates page configurable
             ->get();
 
-        // Get latest 10 public kits
+        // Get the 10 latest public kits
         $recentKits = Kit::with(['owner:id,name,avatar', 'templates'])
             ->public()
             ->latest()

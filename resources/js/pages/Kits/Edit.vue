@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { ArrowLeft, Upload, X, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -49,16 +48,6 @@ const isUploading = ref(false);
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
 });
-
-// Debug watcher to track the form state
-watch(() => form.template_ids, (newVal, oldVal) => {
-  console.log('Template IDs changed:', {
-    oldVal,
-    newVal,
-    length: newVal.length,
-    buttonShouldBeDisabled: form.processing || newVal.length === 0
-  });
-}, { deep: true });
 
 const uploadToCloudinary = () => {
   if (!window.cloudinary) {
@@ -192,10 +181,11 @@ const submit = () => {
                   Public kits can be discovered and forked by other users
                 </p>
               </div>
-              <Switch
-                id="is_public"
-                v-model:checked="form.is_public"
-              />
+<!--              <Switch-->
+<!--                id="is_public"-->
+<!--                v-model:checked="form.is_public"-->
+<!--              />-->
+              <input type="checkbox" v-model="form.is_public" />
             </div>
           </CardContent>
         </Card>

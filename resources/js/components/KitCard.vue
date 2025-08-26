@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Globe, Lock, Eye, GitFork, Package, ExternalLinkIcon, PencilIcon, Trash2Icon } from 'lucide-vue-next';
-import { Badge } from '@/components/ui/badge';
+import { Globe, Lock, Eye, GitFork, Package, Pencil, Trash2 } from 'lucide-vue-next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 interface Kit {
   id: number;
@@ -127,14 +125,14 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <Link v-if="isOwnKit" :href="`/kits/${kit.id}/edit`" class="btn btn-secondary flex text-center">
+        <Link v-if="isOwnKit" :href="`/kits/${kit.id}/edit`" class="btn btn-sm btn-secondary flex text-center">
           Edit
-          <PencilIcon class="ml-2 h-4 w-4" />
+          <Pencil class="ml-2 h-4 w-4" />
         </Link>
 
         <button
           v-if="!isOwnKit || kit.is_public"
-          class="btn btn-warning"
+          class="btn btn-sm btn-warning"
           @click="handleFork"
           title="Fork kit"
         >
@@ -142,18 +140,18 @@ const formatDate = (date: string) => {
           <GitFork class="ml-1 h-4 w-4" />
         </button>
 
-        <Link :href="`/kits/${kit.id}`" class="btn btn-primary">
+        <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-primary">
           View
-          <ExternalLinkIcon class="ml-2 h-4 w-4" />
+          <Eye class="ml-2 h-4 w-4" />
         </Link>
 
         <button
           v-if="isOwnKit && allowDelete && kit.fork_count === 0"
-          class="btn btn-danger"
+          class="btn btn-sm btn-danger"
           @click="handleDelete"
           title="Delete kit"
         >
-          <Trash2Icon class="h-4 w-4" />
+          <Trash2 class="h-4 w-4" />
         </button>
       </div>
     </CardContent>

@@ -309,7 +309,7 @@ watch(
               Template Type *
             </label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-blue-500 bg-accent-foreground/20': form.type === 'static' }">
+              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-violet-400 bg-accent-foreground/10': form.type === 'static' }">
                 <input
                   v-model="form.type"
                   type="radio"
@@ -325,7 +325,7 @@ watch(
                 </div>
               </label>
 
-              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-blue-500 bg-accent-foreground/20': form.type === 'alert' }">
+              <label class="flex items-start p-4 border rounded-lg cursor-pointer transition" :class="{ 'border-violet-400 bg-accent-foreground/10': form.type === 'alert' }">
                 <input
                   v-model="form.type"
                   type="radio"
@@ -350,7 +350,8 @@ watch(
               <div class="text-sm">
                 <strong>Alert Template Tips:</strong>
                 <ul class="mt-1 list-disc list-inside space-y-1">
-                  <li>To view all the Event-based template tags you can use, visit the <a class="underline" href="/help" target="_blank">Help documentation</a>.</li>
+                  <li>To view all the Event-based template tags you can use,
+                    visit the <a class="underline" href="/help" target="_blank">Help documentation</a> <span class="text-muted-foreground">(opens in a new tab)</span>.</li>
                   <li>There are some caveats in the Event-based syntax. For example, only the <code>channel.raid</code> event uses <code>event.from_broadcaster_user_name</code></li>
                   <li>You can mix event tags with regular tags like <code class="bg-accent-foreground/20 p-1 rounded">[[[followers_total]]]</code></li>
                   <li>Keep alert templates simple and readable for quick display</li>
