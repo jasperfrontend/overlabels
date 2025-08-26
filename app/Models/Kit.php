@@ -85,18 +85,18 @@ class Kit extends Model
     /**
      * Fork parent relationship
      */
-//    public function forkedFrom(): BelongsTo
-//    {
-//        return $this->belongsTo(self::class, 'forked_from_id');
-//    }
+    public function forkedFrom(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'forked_from_id');
+    }
 
     /**
      * Forks relationship
      */
-//    public function forks(): HasMany
-//    {
-//        return $this->hasMany(self::class, 'forked_from_id');
-//    }
+    public function forks(): HasMany
+    {
+        return $this->hasMany(self::class, 'forked_from_id');
+    }
 
     /**
      * Fork this kit for a user
