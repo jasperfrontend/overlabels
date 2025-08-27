@@ -169,7 +169,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
@@ -186,7 +186,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               />
               <button
                 @click="copyToClipboard(authUrl, 'Authenticated URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-l-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>

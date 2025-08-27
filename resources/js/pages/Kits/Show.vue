@@ -98,7 +98,7 @@ const formatDate = (date: string) => {
       </Link>
 
       <!-- Kit header -->
-      <div class="mb-8 overflow-hidden rounded-lg bg-card">
+      <div class="mb-8 overflow-hidden rounded-lg bg-card lg:max-w-[75%]">
         <!-- Thumbnail -->
         <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[16/9]">
           <img
@@ -154,12 +154,12 @@ const formatDate = (date: string) => {
             <div class="flex gap-2">
               <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-secondary">
                 Edit Kit
-                <PencilIcon class="mr-2 h-4 w-4" />
+                <PencilIcon class="ml-2 h-4 w-4" />
               </Link>
 
               <button v-if="canFork" @click="handleFork" class="btn btn-primary">
                 Fork Kit
-                <GitFork class="mr-2 h-4 w-4" />
+                <GitFork class="ml-2 h-4 w-4" />
               </button>
 
               <button

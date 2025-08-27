@@ -48,18 +48,13 @@ const breadcrumbs = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
 
-      <Heading
-        class="pb-8 mb-4 border-b"
-        :title="`Welcome back, ${userName}!`"
-        :description="`You have ${ userAlertTemplates.length + userStaticTemplates.length } templates in your collection.
-        Create new templates or explore the community's creations below.`" />
 
       <!-- Your Alert Templates Section -->
       <section v-if="userAlertTemplates.length > 0" class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <Bell class="mr-1 h-6 w-6 text-primary" />
-            <Heading title="Your Alert Templates" description="Customize your alerts to fit your needs" />
+            <Heading title="Your Alert Templates" />
           </div>
           <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Alert
@@ -133,14 +128,14 @@ const breadcrumbs = [
         </div>
 
         <Card v-else class="border-dashed">
-          <CardHeader class="py-8 text-center">
+          <CardHeader class="py-8 flex-column justify-center gap-2 text-center">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
             <CardDescription class="mt-2 text-base"> Be the first to share a template with the community! </CardDescription>
           </CardHeader>
         </Card>
 
         <div class="flex py-6">
-          <a :href="route('templates.index')" class="btn btn-sm btn-cancel">Browse All Templates</a>
+          <a href="/templates?direction=desc&filter=mine&search=&type=" class="btn btn-sm btn-cancel">Browse Your Templates</a>
         </div>
       </section>
     </div>

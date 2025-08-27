@@ -176,9 +176,9 @@ const saveAllMappings = async () => {
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
-            class="flex cursor-pointer items-center gap-4 rounded-2xl border bg-accent/20 hover:bg-accent/50 p-4 text-center transition"
+            class="flex cursor-pointer items-center gap-4 rounded-2xl border bg-accent/20 hover:bg-sidebar-accent p-4 text-center transition"
             :class="{
-              'bg-accent/50 rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
+              'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-card': !mapping.enabled || expandedEvent !== mapping.event_type,
             }"
             @click="toggleEvent(mapping.event_type)"
@@ -235,7 +235,7 @@ const saveAllMappings = async () => {
           <!-- Configuration Panel -->
           <div
             v-if="mapping.enabled && expandedEvent === mapping.event_type"
-            class="mb-2 border bg-accent/50 border-t-0 rounded-b-2xl p-4"
+            class="mb-2 border bg-sidebar-accent border-t-0 rounded-b-2xl p-4"
             @click.stop
           >
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -269,7 +269,7 @@ const saveAllMappings = async () => {
                     min="1000"
                     max="30000"
                     step="500"
-                    class="h-2 flex-1 cursor-pointer appearance-none rounded-lg text-primary focus:outline-none ring-1 focus:ring-primary"
+                    class="h-2 flex-1 cursor-pointer rounded-lg text-primary focus:outline-none ring-1 focus:ring-primary"
                   />
                   <span class="text-xs text-muted-foreground">30s</span>
                 </div>

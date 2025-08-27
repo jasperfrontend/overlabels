@@ -35,12 +35,13 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=akshar:300,400,500,600,700" rel="stylesheet" />
+{{--        <link href="https://fonts.bunny.net/css?family=akshar:300,400,500,600,700" rel="stylesheet" />--}}
+        <link href="https://fonts.bunny.net/css?family=anaheim:400,500,600,700,800" rel="stylesheet" />
 
         @routes
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
-        
+
         {{-- Cloudinary Upload Widget --}}
         <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
         <script>

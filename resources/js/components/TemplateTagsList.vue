@@ -237,7 +237,7 @@ onMounted(() => {
         <li v-for="tag in tags" :key="tag.display_tag">
           <button
             @click.prevent="copyTag(tag.display_tag)"
-            class="cursor-pointer rounded bg-accent px-1 py-0.5 text-xs text-accent-foreground/80 transition-colors hover:bg-sidebar hover:text-accent-foreground"
+            class="cursor-pointer rounded bg-accent px-1 py-0.5 text-sm text-accent-foreground/80 transition-colors hover:bg-sidebar hover:text-accent-foreground"
             :title="`Click to copy ${tag.display_tag}`"
           >
             {{ tag.display_tag }}

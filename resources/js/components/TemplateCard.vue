@@ -45,9 +45,9 @@ const formatDate = (date: string) => {
 <template>
   <Card class="group relative flex h-full flex-col overflow-hidden">
     <CardHeader class="px-4 pb-4">
-      <div class="space-y-2">
-        <div class="flex items-start justify-between gap-2">
-          <CardTitle class="min-w-0 flex-1 text-base">
+      <div>
+        <div class="flex items-start justify-between">
+          <CardTitle class="flex-1 mb-1 text-base">
             <Link
               :href="`/templates/${template.id}`"
               class="block truncate transition-colors hover:text-accent-foreground/80"
@@ -56,14 +56,11 @@ const formatDate = (date: string) => {
               {{ template.name }}
             </Link>
           </CardTitle>
-          <div class="flex flex-shrink-0 items-center gap-2">
-            <div
-              class="rounded-full p-1.5"
-              :class="template.is_public ? 'bg-green-500/10' : 'bg-violet-500/10'"
-              :title="template.is_public ? 'Public template' : 'Private template'"
-            >
-              <component :is="template.is_public ? Globe : Lock" :class="['h-4 w-4', template.is_public ? 'text-green-600' : 'text-violet-600']" />
-            </div>
+          <div class="flex gap-2">
+
+            <span class="text-xs text-muted-foreground" title="Last updated">
+            {{ formatDate(template.updated_at) }}
+          </span>
           </div>
         </div>
         <CardDescription v-if="template.description" class="line-clamp-2 text-sm">
@@ -76,19 +73,26 @@ const formatDate = (date: string) => {
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm text-muted-foreground">
-            <div class="flex items-center gap-1.5" title="Views">
+            <div
+              class="flex items-center gap-1"
+              :title="template.is_public ? 'Public template' : 'Private template'"
+            >
+              <component :is="template.is_public ? Globe : Lock" class="h-4 w-4" />
+              <span v-if="template.is_public">Public</span>
+              <span v-else>Private</span>
+            </div>
+            <div class="flex items-center gap-1" title="Views">
               <Eye class="h-4 w-4" />
               <span>{{ template.view_count || 0 }}</span>
             </div>
-            <div class="flex items-center gap-1.5" title="Forks">
+            <div class="flex items-center gap-1" title="Forks">
               <GitFork class="h-4 w-4" />
               <span>{{ template.fork_count || 0 }}</span>
             </div>
+
           </div>
 
-          <span class="text-xs text-muted-foreground" title="Last updated">
-            {{ formatDate(template.updated_at) }}
-          </span>
+
         </div>
 
         <div v-if="showOwner && template.owner" class="flex items-center gap-2 border-t pt-3">
@@ -98,7 +102,12 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <a v-if="isOwnTemplate" class="btn btn-sm btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
+        <a class="btn btn-sm btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}`">
+          View
+          <Eye class="ml-2 h-4 w-4" />
+        </a>
+
+        <a v-if="isOwnTemplate" class="btn btn-sm btn-warning flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
           Edit
           <PencilIcon class="ml-2 h-4 w-4" />
         </a>
