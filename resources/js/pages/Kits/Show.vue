@@ -153,13 +153,13 @@ const formatDate = (date: string) => {
 
             <div class="flex gap-2">
               <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-secondary">
-                <PencilIcon class="mr-2 h-4 w-4" />
                 Edit Kit
+                <PencilIcon class="mr-2 h-4 w-4" />
               </Link>
 
               <button v-if="canFork" @click="handleFork" class="btn btn-primary">
-                <GitFork class="mr-2 h-4 w-4" />
                 Fork Kit
+                <GitFork class="mr-2 h-4 w-4" />
               </button>
 
               <button

@@ -4,6 +4,7 @@ import { PlusIcon, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
 import Heading from '@/components/Heading.vue';
+import { BreadcrumbItem } from '@/types';
 
 interface Kit {
   id: number;
@@ -42,11 +43,18 @@ interface Props {
   };
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'Template Kits',
+    href: route('kits.index'),
+  }
+]
+
 defineProps<Props>();
 </script>
 
 <template>
-  <AppLayout>
+  <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="My Kits" />
 
     <div class="container mx-auto px-4 py-8">
