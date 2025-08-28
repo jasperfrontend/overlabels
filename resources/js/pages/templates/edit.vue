@@ -242,24 +242,24 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </div>
       <div class="mt-4">
         <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-12 gap-2">
+          <div class="grid grid-cols-16 gap-2">
             <!-- Sidebar Area -->
-            <div class="col-span-12 lg:col-span-2" v-if="showSidebar">
+            <div class="col-span-16 lg:col-span-2" v-if="showSidebar">
               <TemplateTagsList />
             </div>
             <!-- Editor Area -->
-            <div class="col-span-12 space-y-6" :class="{ 'lg:col-span-10': showSidebar }">
+            <div class="col-span-16 space-y-6" :class="{ 'lg:col-span-14': showSidebar }">
               <Tabs default-value="html" class="w-full">
-                <TabsList class="grid w-full grid-cols-5 gap-2">
-                  <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
+                <TabsList class="grid w-full grid-cols-8 gap-2">
+                  <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
                     <Code class="h-4 w-4" />
                     HTML
                   </TabsTrigger>
-                  <TabsTrigger value="css" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
+                  <TabsTrigger value="css" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
                     <Palette class="h-4 w-4" />
                     CSS
                   </TabsTrigger>
-                  <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-accent dark:hover:bg-accent">
+                  <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
                     <InfoIcon class="h-4 w-4" />
                     Meta
                   </TabsTrigger>
@@ -339,7 +339,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                           <input
                             v-model="form.is_public"
                             type="checkbox"
-                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                           />
                           <span class="ml-2 text-sm"> Make this template public (others can view and fork it) </span>
                         </label>
@@ -368,7 +368,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                       <!-- Available Tags Help -->
                       <div class="mt-6 rounded-md bg-accent/30 p-4">
                         <p class="mt-2 text-xs">
-                          <a href="/tags-generator" target="_blank" class="text-blue-300 hover:underline"> View all available tags </a>
+                          <a :href="route('tags.generator')" target="_blank" class="text-blue-300 hover:underline"> View all available tags </a>
                         </p>
                         <div v-if="template?.template_tags && template?.template_tags.length > 0" class="mt-3">
                           <p class="mb-1 text-sm">Currently used tags:</p>

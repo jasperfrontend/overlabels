@@ -57,17 +57,18 @@ defineProps<Props>();
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="My Kits" />
 
-    <div class="container mx-auto px-4 py-8">
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold"><span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span> Template Kits</h1>
-          <p class="mt-2 text-muted-foreground">
-            Kits offer a bundle of premade templates and overlay alerts. Fork them to your own account and assign them to your Events!
-          </p>
+    <div class="mx-auto p-4">
+      <div class="mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span>
+          <Heading
+            title="Template Kits"
+            description="Kits offer a bundle of premade templates and overlay alerts. Fork them to your own account and assign them to your Events!"
+          />
         </div>
         <Link :href="route('kits.create')" class="btn btn-primary">
-          <PlusIcon class="mr-2 h-4 w-4" />
           Create Kit
+          <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
       </div>
 

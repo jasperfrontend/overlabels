@@ -58,7 +58,7 @@ const formatDate = (date: string) => {
 <template>
   <Card class="group relative flex h-full pt-0 flex-col overflow-hidden">
     <!-- Thumbnail -->
-    <div v-if="kit.thumbnail_url" class="aspect-video rounded-lg rounded-b-none w-full overflow-hidden bg-muted">
+    <div v-if="kit.thumbnail_url" class="aspect-video rounded-sm rounded-b-none w-full overflow-hidden bg-muted">
       <img
         :src="kit.thumbnail_url"
         :alt="kit.title"

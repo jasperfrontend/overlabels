@@ -19,7 +19,7 @@ const mainNavItems: NavItem[] = [
     icon: Users,
   },
   {
-    title: 'NEW: Kits',
+    title: 'Template Kits',
     href: '/kits',
     icon: LayoutGrid,
   },

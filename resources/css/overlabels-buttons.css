@@ -47,11 +47,11 @@
   }
 
   .btn-cancel {
-    @apply text-gray-500 dark:text-gray-400;
-    @apply hover:border-gray-500 dark:hover:border-gray-500;
-    @apply hover:bg-gray-500/10 dark:hover:bg-gray-500/20;
-    @apply active:bg-gray-500/20;
-    @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-700;
+    @apply text-teal-500 dark:text-teal-400;
+    @apply hover:border-teal-500 dark:hover:border-teal-500;
+    @apply hover:bg-teal-500/10 dark:hover:bg-teal-500/20;
+    @apply active:bg-teal-500/20;
+    @apply focus-visible:ring-teal-500 dark:focus-visible:ring-teal-700;
   }
 
   .btn-dead {

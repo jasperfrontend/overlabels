@@ -111,12 +111,12 @@ const formatDate = (date: string | null | undefined) =>
     <div class="p-4">
       <div class="mb-6 flex items-center justify-between">
         <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
-        <button @click="showCreateModal = true" class="btn btn-primary">Create New Token</button>
+        <button @click="showCreateModal = true" class="btn btn-primary">Create Token</button>
       </div>
 
       <!-- Token List -->
       <div class="space-y-4 overflow-hidden">
-        <div v-for="token in tokens" :key="token.id" class="rounded-2xl border bg-accent/20 p-4">
+        <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
           <div class="flex items-start gap-4 justify-self-start">
             <div>
               <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ token.name }}</h3>

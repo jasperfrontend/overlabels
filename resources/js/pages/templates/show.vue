@@ -154,45 +154,45 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- URLs Section -->
-      <div class="mb-6 rounded-lg border bg-accent/15 p-4">
+      <div class="mb-6 rounded-sm border border-sidebar bg-sidebar-accent p-4">
         <h3 v-if="props.template?.is_public" class="mb-3 font-semibold">Overlay URLs</h3>
         <h3 v-else class="mb-3 font-semibold">Overlay URL</h3>
         <div class="space-y-3">
           <div v-if="props.template?.is_public">
-            <label class="text-sm" for="public-url">Public URL (Preview without data):</label>
+            <label class="text-sm" for="public-url">Public URL</label>
             <div class="mt-1 flex items-center">
               <input
                 :value="publicUrl"
                 id="public-url"
                 readonly
-                class="peer flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-cyan-100 transition"
+                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-accent-foreground transition"
               />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
             </div>
           </div>
           <div>
-            <label class="text-sm" for="auth-url">Authenticated URL (Use with your token):</label>
+            <label class="text-sm" for="auth-url">Authenticated URL</label>
             <div class="mt-1 flex items-center">
               <input
                 id="auth-url"
                 :value="authUrl"
                 readonly
-                class="peer flex-1 rounded-l-md border px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-cyan-100 transition"
+                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-accent-foreground transition"
               />
               <button
                 @click="copyToClipboard(authUrl, 'Authenticated URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
             </div>
-            <p class="mt-3 text-xs text-accent-foreground/50">
-              Replace <span class="text-accent-foreground/80"><code>YOUR_TOKEN_HERE</code></span> at the end of the URL with your own
+            <p class="mt-3 text-xs text-accent-foreground">
+              Replace <span class="text-accent-foreground"><code>YOUR_TOKEN_HERE</code></span> at the end of the URL with your own
               <Link :href="route('tokens.index')"
               class="text-violet-400 underline hover:no-underline"
               >access token</Link>
@@ -202,7 +202,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- Code Tabs -->
-      <div class="overflow-hidden rounded-lg border">
+      <div class="overflow-hidden rounded-sm border border-sidebar">
         <div class="flex border-b">
           <button
             v-for="tab in ['html', 'css']"
@@ -210,7 +210,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             @click="activeTab = tab"
             :class="[
               'cursor-pointer px-8 py-2.5 text-sm font-medium transition-colors',
-              activeTab === tab ? 'border-accent-foreground/40 bg-accent text-accent-foreground' : 'hover:text-gray-300',
+              activeTab === tab ? 'border-accent-foreground/40 bg-sidebar text-accent-foreground' : 'hover:text-gray-300',
             ]"
           >
             {{ tab }}
@@ -222,7 +222,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
             class="absolute top-6 right-15 btn btn-sm btn-primary"
             >
-            Copy
+            Copy {{activeTab.toUpperCase()}}
           </button>
         </div>
       </div>

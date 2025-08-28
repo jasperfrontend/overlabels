@@ -261,10 +261,10 @@ watch(
 </script>
 
 <template>
-  <Head title="Create New Template" />
+  <Head title="Create Template" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-      <Heading title="Overlay Creator" description="Design a new overlay template with HTML, CSS, and Template Tags" />
+      <Heading title="Create Template" description="Code a new overlay template with HTML, CSS, and Template Tags" />
       <div class="mt-4">
 
         <form @submit.prevent="submitForm">

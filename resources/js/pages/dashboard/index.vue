@@ -89,8 +89,8 @@ const breadcrumbs = [
 
       <!-- Empty State for User Templates -->
       <section v-if="userAlertTemplates.length === 0 && userStaticTemplates.length === 0" class="space-y-6">
-        <Card class="border-dashed">
-          <CardHeader class="py-8 text-center">
+        <Card class="border border-sidebar">
+          <CardHeader class="py-4 text-center">
             <CardTitle class="text-2xl">Get Started with Your First Template</CardTitle>
             <CardDescription class="mt-3 text-base"> Create your own custom overlays or fork one from the community to get started </CardDescription>
           </CardHeader>
@@ -127,7 +127,7 @@ const breadcrumbs = [
           <TemplateCard v-for="template in communityTemplates" :key="template.id" :template="template" :show-owner="true" :current-user-id="userId" />
         </div>
 
-        <Card v-else class="border-dashed">
+        <Card v-else class="border border-sidebar">
           <CardHeader class="py-8 flex-column justify-center gap-2 text-center">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
             <CardDescription class="mt-2 text-base"> Be the first to share a template with the community! </CardDescription>

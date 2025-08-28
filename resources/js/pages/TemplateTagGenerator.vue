@@ -517,16 +517,16 @@ const getDataTypeClass = (dataType: string) => {
         <div
           v-for="(categoryData, categoryName) in organizedTags"
           :key="categoryName"
-          class="rounded-2xl border bg-accent/20 p-0 text-center transition"
+          class="rounded-sm border bg-sidebar-accent p-0 text-center transition"
         >
           <!-- Category Header -->
           <details class="group">
-            <summary class="flex cursor-pointer list-none items-center justify-between rounded-2xl p-4 hover:bg-accent/50">
+            <summary class="flex cursor-pointer list-none items-center justify-between rounded-sm p-4 hover:bg-sidebar">
               <span class="block flex items-center">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {{ categoryData.category.display_name }}
                 </span>
-                <span class="ml-3 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                <span class="ml-3 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
                   {{ categoryData.tags.length }} tags
                 </span>
               </span>
@@ -542,7 +542,7 @@ const getDataTypeClass = (dataType: string) => {
               <div
                 v-for="tag in categoryData.tags"
                 :key="tag.id"
-                class="rounded-lg border bg-accent p-4 text-left transition-all hover:border-accent hover:bg-accent/60 hover:shadow-sm dark:bg-accent/30 dark:hover:bg-accent/15"
+                class="rounded-lg border border-sidebar bg-sidebar p-4 text-left transition-all hover:border-sidebar hover:bg-sidebar/60 hover:shadow-sm dark:bg-sidebar/30 dark:hover:bg-sidebar/15"
               >
                 <!-- Tag Header -->
                 <div class="flex items-start justify-between">

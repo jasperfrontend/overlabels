@@ -142,52 +142,52 @@ const getEventMapping = (template: any) => {
           <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary">
-          Create New Template
+          Create Template
           <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
       </div>
 
       <!-- Templates Table -->
-      <div class="overflow-hidden rounded-2xl border border-border bg-card dark:border-border dark:bg-accent/5">
+      <div class="overflow-hidden rounded-sm border border-sidebar bg-sidebar-accent">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="border-b border-border bg-muted dark:border-border dark:bg-accent/20">
+            <thead class="border-b border-border bg-sidebar">
               <tr>
                 <th class="px-4 py-2 text-left">
                   <button
                     @click="sortBy('name')"
-                    class="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    class="inline-flex cursor-pointer items-center gap-1 text-md font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Template
                     <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="h-4 w-4" />
                   </button>
                 </th>
                 <th class="px-3 py-2 text-left">
-                  <span class="text-xs font-medium text-muted-foreground">Type</span>
+                  <span class="font-medium text-muted-foreground">Type</span>
                 </th>
                 <th class="px-3 py-2 text-left">
-                  <span class="text-xs font-medium text-muted-foreground">Event</span>
+                  <span class="font-medium text-muted-foreground">Event</span>
                 </th>
                 <th class="px-3 py-2 text-left">
-                  <span class="text-xs font-medium text-muted-foreground">Owner</span>
+                  <span class="font-medium text-muted-foreground">Owner</span>
                 </th>
                 <th class="px-3 py-2 text-center">
-                  <span class="text-xs font-medium text-muted-foreground">Stats</span>
+                  <span class="font-medium text-muted-foreground">Stats</span>
                 </th>
                 <th class="px-3 py-2 text-left">
                   <button
                     @click="sortBy('created_at')"
-                    class="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    class="inline-flex cursor-pointer items-center gap-1 font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Created
                     <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="h-4 w-4" />
                   </button>
                 </th>
-                <th class="px-3 py-2 text-left text-xs text-muted-foreground">Status</th>
+                <th class="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border dark:divide-border">
-              <tr v-for="template in templates?.data" :key="template.id" class="group transition-colors hover:bg-muted/50 dark:hover:bg-muted/50">
+              <tr v-for="template in templates?.data" :key="template.id" class="group transition-colors hover:bg-sidebar">
                 <td class="max-w-[400px] px-4 py-2">
                   <div>
                     <div class="relative flex items-center gap-2">
