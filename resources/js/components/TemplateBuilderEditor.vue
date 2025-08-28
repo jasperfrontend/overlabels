@@ -19,7 +19,6 @@ import {
   FileWarningIcon,
   Keyboard,
   Palette,
-  Play,
   RefreshCcwDot,
   Save,
 } from 'lucide-vue-next';
@@ -176,7 +175,7 @@ const copyTag = async (tagName: string) => {
     toastType.value = 'success';
   } catch (err) {
     showToast.value = true;
-    toastMessage.value = 'Failed to copy tag to clipboard!';
+    toastMessage.value = 'Failed to copy tag to clipboard: ' + err;
     toastType.value = 'error';
   }
 };
@@ -257,30 +256,6 @@ const openExternalLink = (link: any, target: string) => {
   window.open(link, target);
 };
 
-const resetTofDefault = async () => {
-  if (confirm('Are you sure you want to reset to the default template? This will overwrite your current changes.')) {
-    if (defaultTemplates.value) {
-      htmlTemplate.value = defaultTemplates.value.html;
-      cssTemplate.value = defaultTemplates.value.css;
-      showToast.value = true;
-      toastMessage.value = 'Reset to default template!';
-      toastType.value = 'success';
-    } else {
-      // Reload defaults if not loaded yet
-      await loadDefaultTemplates();
-      if (defaultTemplates.value) {
-        htmlTemplate.value = defaultTemplates?.value?.html;
-        cssTemplate.value = defaultTemplates?.value?.css;
-        showToast.value = true;
-        toastMessage.value = 'Reset to default template!';
-        toastType.value = 'success';
-      }
-    }
-  }
-};
-
-
-
 // Watch for theme changes
 watch(
   () => document.documentElement.classList.contains('dark'),
@@ -339,8 +314,6 @@ onMounted(() => {
   );
 });
 
-// Get all keyboard shortcuts for display
-const keyboardShortcutsList = computed(() => getAllShortcuts());
 </script>
 
 <template>

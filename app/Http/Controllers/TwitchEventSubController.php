@@ -426,7 +426,7 @@ class TwitchEventSubController extends Controller
         $signature = $request->header('Twitch-Eventsub-Message-Signature');
         $timestamp = $request->header('Twitch-Eventsub-Message-Timestamp');
         $body = $request->getContent();
-        $secret = config('app.twitch_webhook_secret', 'fallback-secret');
+        $secret = config('app.twitch_webhook_secret');
 
         if (!$signature || !$timestamp) {
             return false;
@@ -524,10 +524,10 @@ class TwitchEventSubController extends Controller
 
             // Find the broadcaster user
             // For raid events, the broadcaster is in 'to_broadcaster_user_id'
-            $broadcasterId = $eventType === 'channel.raid' 
+            $broadcasterId = $eventType === 'channel.raid'
                 ? ($event['to_broadcaster_user_id'] ?? null)
                 : ($event['broadcaster_user_id'] ?? null);
-            
+
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
 

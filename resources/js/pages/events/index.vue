@@ -114,14 +114,14 @@ const saveAllMappings = async () => {
 </script>
 
 <template>
-  <Head title="Event Alert Configuration" />
+  <Head title="Event Alert Builder" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header Section -->
-      <div class="mb-4 flex items-start justify-between">
+      <div class="mb-4 mt-1 flex items-start justify-between">
         <div class="flex items-center gap-2">
           <Radio class="w-6 h-6 mr-2" />
-          <Heading title="Event Alert Configuration" description="Connect Twitch events to your alert templates" />
+          <Heading title="Alerts Builder" />
         </div>
         <div class="flex gap-3">
           <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-secondary">

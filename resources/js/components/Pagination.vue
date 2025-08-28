@@ -42,7 +42,7 @@
                 index === links.length - 1 ? 'rounded-r-md' : '',
                 'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors'
               ]"
-              v-html="link.label"
+              :v-text="link.label"
             />
             <span
               v-else
@@ -63,7 +63,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { Link } from '@inertiajs/vue3';
 
 defineProps({

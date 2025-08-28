@@ -18,6 +18,7 @@ import {
   MonitorIcon,
   LayoutTemplate,
   PlusIcon,
+  Building,
 } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import axios from 'axios';
@@ -136,10 +137,10 @@ const getEventMapping = (template: any) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
-      <div class="mb-6 flex items-center justify-between">
+      <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <LayoutTemplate class="mr-1 h-6 w-6" />
-          <Heading title="Your Templates" description="View, edit, fork your templates and create new ones." />
+          <Building class="w-6 h-6 mr-2" />
+          <Heading title="All Templates" />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary">
           Create Template
@@ -156,7 +157,7 @@ const getEventMapping = (template: any) => {
                 <th class="px-4 py-2 text-left">
                   <button
                     @click="sortBy('name')"
-                    class="inline-flex cursor-pointer items-center gap-1 text-md font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    class="inline-flex cursor-pointer items-center gap-1 text-md font-medium text-muted-foreground hover:text-foreground"
                   >
                     Template
                     <component v-if="getSortIcon('name')" :is="getSortIcon('name')" class="h-4 w-4" />
@@ -177,7 +178,7 @@ const getEventMapping = (template: any) => {
                 <th class="px-3 py-2 text-left">
                   <button
                     @click="sortBy('created_at')"
-                    class="inline-flex cursor-pointer items-center gap-1 font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    class="inline-flex cursor-pointer items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
                   >
                     Created
                     <component v-if="getSortIcon('created_at')" :is="getSortIcon('created_at')" class="h-4 w-4" />
@@ -187,7 +188,7 @@ const getEventMapping = (template: any) => {
               </tr>
             </thead>
             <tbody class="divide-y divide-border dark:divide-border">
-              <tr v-for="template in templates?.data" :key="template.id" class="group transition-colors hover:bg-sidebar">
+              <tr v-for="template in templates?.data" :key="template.id" class="group hover:bg-sidebar">
                 <td class="max-w-[400px] px-4 py-2">
                   <div>
                     <div class="relative flex items-center gap-2">
@@ -198,7 +199,7 @@ const getEventMapping = (template: any) => {
                       <div class="absolute top-0 right-0 -mt-1 hidden items-center justify-end gap-1 p-2 px-4 group-hover:flex">
                         <Link
                           :href="route('templates.show', template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="View Details"
                         >
                           <EyeIcon class="h-4 w-4" />
@@ -206,7 +207,7 @@ const getEventMapping = (template: any) => {
                         <Link
                           v-if="template.owner_id === $page.props.auth.user.id"
                           :href="route('templates.edit', template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Edit"
                         >
                           <PencilIcon class="h-4 w-4" />
@@ -214,7 +215,7 @@ const getEventMapping = (template: any) => {
                         <button
                           v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                           @click="forkTemplate(template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Fork"
                         >
                           <GitForkIcon class="h-4 w-4" />
@@ -222,7 +223,7 @@ const getEventMapping = (template: any) => {
                         <button
                           v-if="template.owner_id === $page.props.auth.user.id"
                           @click="deleteTemplate(template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Delete"
                         >
                           <Trash2Icon class="h-4 w-4" />
@@ -231,7 +232,7 @@ const getEventMapping = (template: any) => {
                           v-if="template.is_public"
                           :href="`/overlay/${template.slug}/public`"
                           target="_blank"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent-foreground/10 hover:text-foreground"
+                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Preview"
                         >
                           <ExternalLinkIcon class="h-4 w-4" />

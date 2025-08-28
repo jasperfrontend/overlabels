@@ -192,52 +192,32 @@ onMounted(() => {
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
 
   <!-- Conditional Syntax Section -->
-  <div class="mb-6">
-    <p class="pt-1 text-sm text-muted-foreground">
+  <div class="mb-4 gap-2">
+    <p>Template Tags are the bread and butter of Overlabels. These tags represent real Twitch data and you can easily use them in your HTML <strong>and</strong> CSS templates
+      to create interactive overlays for your Twitch stream. This simple and easy to understand template syntax has been created to just work and mostly
+    stay out of your way. Click a tag below to copy it to your clipboard.</p>
+
+    <p class="pt-4 text-sm text-muted-foreground">
       Visit
       <a class="text-violet-400 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a>
-      to learn more about syntax.
-
-      <button @click.prevent="showUserTagInfo = true" class="mt-4 cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
-        READ THIS ABOUT <code>user_*</code> TAGS
-      </button>
+      to learn more about <strong>Dynamic & Conditional Template Syntax</strong>.
     </p>
 
-    <Dialog v-model:open="showUserTagInfo">
-      <DialogContent class="max-w-lg">
-        <DialogHeader>
-          <div class="flex items-center space-x-2">
-            <DialogTitle>[[[user_*]]] Tags</DialogTitle>
-            <button @click.prevent="showUserTagInfo = false" class="rounded-full ml-auto w-[26px] h-[26px] cursor-pointer text-xl font-bold text-muted-foreground hover:text-muted-foreground hover:bg-accent">&times;</button>
-          </div>
-        </DialogHeader>
-        <DialogDescription class="text-sm text-muted-foreground">
-          <code>[[[user_*]]]</code> does not represent you, but the most recent user who triggered an event on your stream.
-          <h2 class="text-lg mt-4 mb-2"><strong>For example:</strong></h2>
-          <ul class="list-disc pl-5 mb-4">
-            <li>Subscription → the subscriber's details</li>
-            <li>Gift sub / cheer / follow → that user's details</li>
-            <li>Default → your user account details</li>
-          </ul>
-          These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br><br>
-          <div class="bg-violet-100 border border-violet-400 text-violet-700 px-4 py-3 pb-0 rounded relative mb-4 dark:border-violet-500 dark:text-violet-800 dark:bg-violet-200">
-            Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info like your username and avatar.<br><br>
-          </div>
-        </DialogDescription>
-      </DialogContent>
-    </Dialog>
   </div>
 
+  <button @click.prevent="showUserTagInfo = true" class="mb-4 cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
+    IMPORTANT INFO ABOUT <code>user_*</code> TAGS
+  </button>
   <!-- Regular Template Tags -->
-  <div v-for="(tags, category) in groupedTags" :key="category">
-    <details class="mb-4">
-      <summary class="mb-2 cursor-pointer text-lg font-bold">{{ category }}</summary>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div class="bg-sidebar-accent border border-sidebar rounded-sm p-4" v-for="(tags, category) in groupedTags" :key="category">
+      <h2 class="mb-2 text-lg font-bold">{{ category }}</h2>
 
       <ul class="mb-4">
         <li v-for="tag in tags" :key="tag.display_tag">
           <button
             @click.prevent="copyTag(tag.display_tag)"
-            class="cursor-pointer rounded bg-accent px-1 py-0.5 text-sm text-accent-foreground/80 transition-colors hover:bg-sidebar hover:text-accent-foreground"
+            class="cursor-pointer rounded bg-sidebar border border-card-foreground/20 hover:border-violet-300/40 hover:bg-violet-400/20 mb-1 px-1 py-0.5 text-sm"
             :title="`Click to copy ${tag.display_tag}`"
           >
             {{ tag.display_tag }}
@@ -247,7 +227,7 @@ onMounted(() => {
           </div>
         </li>
       </ul>
-    </details>
+    </div>
   </div>
   <div
     v-if="tagList.length > 0"
@@ -262,4 +242,31 @@ onMounted(() => {
   <div v-else>
     <p class="text-sm text-muted-foreground">No tags available</p>
   </div>
+
+
+  <Dialog v-model:open="showUserTagInfo">
+    <DialogContent class="max-w-lg">
+      <DialogHeader>
+        <div class="flex items-center space-x-2">
+          <DialogTitle>[[[user_*]]] Tags</DialogTitle>
+          <button @click.prevent="showUserTagInfo = false" class="rounded-full ml-auto w-[26px] h-[26px] cursor-pointer text-xl font-bold text-muted-foreground hover:text-muted-foreground hover:bg-accent">&times;</button>
+        </div>
+      </DialogHeader>
+      <DialogDescription class="text-sm text-muted-foreground">
+        <p><code>[[[user_*]]]</code> represents the most recent user who <strong>triggered an event</strong> on your stream. This is not your channel data.</p>
+        <h2 class="text-lg mt-4 mb-2"><strong>For example:</strong></h2>
+        <ul class="list-disc pl-5 mb-4">
+          <li>Subscription → the subscriber's details</li>
+          <li>Gift sub / cheer / follow → that user's details</li>
+          <li>Default → your user account details</li>
+        </ul>
+        These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br><br>
+        <div class="bg-violet-100 border border-violet-400 text-violet-700 p-4 rounded relative dark:border-violet-500 dark:text-violet-800 dark:bg-violet-200">
+          Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info.<br><br>
+          Currently your avatar is not in your channel data. In future updates this may happen if people want this.
+        </div>
+      </DialogDescription>
+    </DialogContent>
+  </Dialog>
+
 </template>

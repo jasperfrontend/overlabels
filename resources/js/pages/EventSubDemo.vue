@@ -21,7 +21,7 @@ const isLoading = ref(false);
 const isWebSocketConnected = ref(false);
 const events = ref<Array<any>>([]);
 const subscriptionStatus = ref<any>(null);
-// @ts-ignore
+// @ts-expect-error
 const echo = ref<Echo | null>(null);
 const isFetchingEvents = ref(false);
 const pagination = ref<any>({

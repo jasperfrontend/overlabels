@@ -12,7 +12,22 @@ import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
-import { Code, InfoIcon, Palette, RefreshCcwDot, Save, ExternalLinkIcon, SplitIcon, TrashIcon, CircleAlertIcon, ToggleLeft, ToggleRight } from 'lucide-vue-next';
+import {
+  Brackets,
+  Code,
+  InfoIcon,
+  Palette,
+  RefreshCcwDot,
+  Save,
+  ExternalLink,
+  Split,
+  Trash,
+  CircleAlert,
+  Keyboard,
+  LayoutTemplate,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -136,7 +151,7 @@ const submitForm = () => {
   });
 };
 
-const showSidebar = ref(true);
+const tallEditor = ref(true);
 
 // Watch for theme changes
 watch(
@@ -194,27 +209,30 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
   <Head :title="`Editing Template: ${template.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-      <div class="flex">
-        <div>
-          <Heading title="Template Builder" description="Create custom HTML/CSS templates for your overlays using our CodePen-style editor." />
+
+      <!-- Header -->
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <LayoutTemplate class="mr-2 h-6 w-6" />
+          <Heading title="Template Editor" />
         </div>
         <div class="ml-auto flex items-center gap-2">
           <a v-if="template?.is_public" @click.prevent="previewTemplate" href="#" class="btn btn-cancel">
             Preview
-            <ExternalLinkIcon class="ml-2 h-4 w-4" />
+            <ExternalLink class="ml-2 h-4 w-4" />
           </a>
 
           <TooltipBase v-else tt-content-class="tooltip-base tooltip-content" align="start" side="left">
             <template #trigger>
               <a @click.prevent="previewTemplate" href="#" class="btn btn-private">
                 Preview
-                <ExternalLinkIcon class="ml-2 h-4 w-4" />
+                <ExternalLink class="ml-2 h-4 w-4" />
               </a>
             </template>
             <template #content>
               <div class="space-y-1 text-sm">
                 <div class="flex items-center space-x-2">
-                  <CircleAlertIcon class="mr-2 h-6 w-6 text-purple-400" />
+                  <CircleAlert class="mr-2 h-6 w-6 text-purple-400" />
                   <h3 class="text-xl font-bold">Don't forget</h3>
                 </div>
                 Add your token to the end of the URL like this:<br />
@@ -225,12 +243,12 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
           <button @click="deleteTemplate" class="btn btn-danger">
             Delete
-            <TrashIcon class="ml-2 h-4 w-4" />
+            <Trash class="ml-2 h-4 w-4" />
           </button>
 
           <button @click="forkTemplate" class="btn btn-warning">
             Fork
-            <SplitIcon class="ml-2 h-4 w-4" />
+            <Split class="ml-2 h-4 w-4" />
           </button>
 
           <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
@@ -240,168 +258,182 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           </button>
         </div>
       </div>
+
       <div class="mt-4">
         <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-16 gap-2">
-            <!-- Sidebar Area -->
-            <div class="col-span-16 lg:col-span-2" v-if="showSidebar">
-              <TemplateTagsList />
-            </div>
-            <!-- Editor Area -->
-            <div class="col-span-16 space-y-6" :class="{ 'lg:col-span-14': showSidebar }">
-              <Tabs default-value="html" class="w-full">
-                <TabsList class="grid w-full grid-cols-8 gap-2">
-                  <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
-                    <Code class="h-4 w-4" />
-                    HTML
-                  </TabsTrigger>
-                  <TabsTrigger value="css" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
-                    <Palette class="h-4 w-4" />
-                    CSS
-                  </TabsTrigger>
-                  <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
-                    <InfoIcon class="h-4 w-4" />
-                    Meta
-                  </TabsTrigger>
-                </TabsList>
 
-                <TabsContent value="html" class="mt-4">
-                  <Card>
-                    <CardHeader class="px-4">
-                      <CardTitle class="text-base">HTML Template</CardTitle>
-                      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                        Omit <code>doctype</code>, <code>html</code>, <code>head</code> and <code>body</code>.
-                      </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div class="overflow-hidden rounded-lg border">
-                        <Codemirror
-                          v-model="form.html"
-                          :style="{ height: showSidebar ? '500px' : '800px' }"
-                          :autofocus="true"
-                          :indent-with-tab="true"
-                          :tab-size="2"
-                          :extensions="htmlExtensions"
-                          placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+          <!-- Editor Area -->
+          <div class="space-y-6">
+            <Tabs default-value="html" class="w-full">
+              <TabsList class="grid w-full grid-cols-8 gap-2">
+                <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <Code class="h-4 w-4" />
+                  HTML
+                </TabsTrigger>
+                <TabsTrigger value="css" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <Palette class="h-4 w-4" />
+                  CSS
+                </TabsTrigger>
+                <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <InfoIcon class="h-4 w-4" />
+                  Meta
+                </TabsTrigger>
+                <TabsTrigger value="tags" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <Brackets class="h-4 w-4" />
+                  Template Tags
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="html" class="mt-4">
+                <Card>
+                  <CardHeader class="px-4">
+                    <CardTitle class="text-base">HTML Template</CardTitle>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                      Omit <code>doctype</code>, <code>html</code>, <code>head</code> and <code>body</code>.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="overflow-hidden rounded-lg border">
+                      <Codemirror
+                        v-model="form.html"
+                        :style="{ height: tallEditor ? '500px' : '800px' }"
+                        :autofocus="true"
+                        :indent-with-tab="true"
+                        :tab-size="2"
+                        :extensions="htmlExtensions"
+                        placeholder="Enter your HTML template here... Use [[[tag_name]]] for dynamic content"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="css" class="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="text-base">CSS Styles</CardTitle>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                      Style your overlay with CSS. Template tags work in css as well! You can also <code>@import</code> external stylesheets, eg.
+                      for fonts.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="overflow-hidden rounded-lg border">
+                      <Codemirror
+                        v-model="form.css"
+                        :style="{ height: '500px' }"
+                        :indent-with-tab="true"
+                        :tab-size="2"
+                        :extensions="cssExtensions"
+                        placeholder="Enter your CSS styles here..."
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="meta" class="mt-4">
+                <Card>
+                  <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center gap-2 text-base"> Title and description </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <!-- Template Name -->
+                    <div class="mb-4">
+                      <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Title * </label>
+                      <input id="name" v-model="form.name" type="text" class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm" required />
+                      <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.name }}
+                      </div>
+                    </div>
+
+                    <!-- Description -->
+                    <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Description </label>
+                    <textarea id="description" v-model="form.description" rows="3" class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm" />
+                    <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.description }}
+                    </div>
+
+                    <!-- Visibility -->
+                    <div class="mt-6">
+                      <label class="flex items-center">
+                        <input
+                          v-model="form.is_public"
+                          type="checkbox"
+                          class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                         />
+                        <span class="ml-2 text-sm"> Make this template public (others can view and fork it) </span>
+                      </label>
+                    </div>
+
+                    <!-- Template Info -->
+                    <div class="mt-6 grid grid-cols-2 gap-4 rounded-md bg-sidebar p-4 text-sm">
+                      <div>
+                        <span class="text-gray-600 dark:text-gray-400">Created:</span>
+                        <span class="ml-2">{{ new Date(template?.created_at).toLocaleDateString() }}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="css" class="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle class="text-base">CSS Styles</CardTitle>
-                      <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                        Style your overlay with CSS. Template tags work in css as well! You can also <code>@import</code> external stylesheets, eg.
-                        for fonts.
+                      <div>
+                        <span class="text-gray-600 dark:text-gray-400">Last updated:</span>
+                        <span class="ml-2">{{ new Date(template?.updated_at).toLocaleDateString() }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 dark:text-gray-400">Views:</span>
+                        <span class="ml-2">{{ template?.view_count }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 dark:text-gray-400">Forks:</span>
+                        <span class="ml-2">{{ template?.fork_count }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Available Tags Help -->
+                    <div class="mt-6 rounded-md bg-sidebar p-4">
+                      <p class="mt-2 text-xs">
+                        <a :href="route('tags.generator')" target="_blank" class="text-blue-300 hover:underline"> View all available tags </a>
                       </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div class="overflow-hidden rounded-lg border">
-                        <Codemirror
-                          v-model="form.css"
-                          :style="{ height: '500px' }"
-                          :indent-with-tab="true"
-                          :tab-size="2"
-                          :extensions="cssExtensions"
-                          placeholder="Enter your CSS styles here..."
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="meta" class="mt-4">
-                  <Card>
-                    <CardHeader class="pb-3">
-                      <CardTitle class="flex items-center gap-2 text-base"> Title and description </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <!-- Template Name -->
-                      <div class="mb-4">
-                        <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Title * </label>
-                        <input id="name" v-model="form.name" type="text" class="w-full rounded border p-2 transition hover:shadow-sm" required />
-                        <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
-                          {{ form.errors.name }}
+                      <div v-if="template?.template_tags && template?.template_tags.length > 0" class="mt-3">
+                        <p class="mb-1 text-sm">Currently used tags:</p>
+                        <div class="flex flex-wrap gap-1">
+                          <code v-for="tag in template.template_tags" class="rounded bg-cyan-100/10 px-2 py-1 text-xs"> [[[{{ tag }}]]] </code>
                         </div>
                       </div>
-
-                      <!-- Description -->
-                      <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50"> Description </label>
-                      <textarea id="description" v-model="form.description" rows="3" class="w-full rounded border p-2 transition hover:shadow-sm" />
-                      <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.description }}
-                      </div>
-
-                      <!-- Visibility -->
-                      <div class="mt-6">
-                        <label class="flex items-center">
-                          <input
-                            v-model="form.is_public"
-                            type="checkbox"
-                            class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                          />
-                          <span class="ml-2 text-sm"> Make this template public (others can view and fork it) </span>
-                        </label>
-                      </div>
-
-                      <!-- Template Info -->
-                      <div class="mt-6 grid grid-cols-2 gap-4 rounded-md bg-accent/30 p-4 text-sm">
-                        <div>
-                          <span class="text-gray-600 dark:text-gray-400">Created:</span>
-                          <span class="ml-2">{{ new Date(template?.created_at).toLocaleDateString() }}</span>
-                        </div>
-                        <div>
-                          <span class="text-gray-600 dark:text-gray-400">Last updated:</span>
-                          <span class="ml-2">{{ new Date(template?.updated_at).toLocaleDateString() }}</span>
-                        </div>
-                        <div>
-                          <span class="text-gray-600 dark:text-gray-400">Views:</span>
-                          <span class="ml-2">{{ template?.view_count }}</span>
-                        </div>
-                        <div>
-                          <span class="text-gray-600 dark:text-gray-400">Forks:</span>
-                          <span class="ml-2">{{ template?.fork_count }}</span>
-                        </div>
-                      </div>
-
-                      <!-- Available Tags Help -->
-                      <div class="mt-6 rounded-md bg-accent/30 p-4">
-                        <p class="mt-2 text-xs">
-                          <a :href="route('tags.generator')" target="_blank" class="text-blue-300 hover:underline"> View all available tags </a>
-                        </p>
-                        <div v-if="template?.template_tags && template?.template_tags.length > 0" class="mt-3">
-                          <p class="mb-1 text-sm">Currently used tags:</p>
-                          <div class="flex flex-wrap gap-1">
-                            <code v-for="tag in template.template_tags" class="rounded bg-cyan-100/10 px-2 py-1 text-xs"> [[[{{ tag }}]]] </code>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-              <!-- Keyboard Shortcuts Link -->
-              <div class="mt-3 text-center">
-                <button
-                  @click.prevent="showSidebar = !showSidebar"
-                  class="flex gap-2 cursor-pointer text-sm text-muted-foreground underline hover:text-accent-foreground"
-                >
-                  <ToggleRight v-if="showSidebar" class="w-4 h-4 mr-1" />
-                  <ToggleLeft v-else class="w-4 h-4 mr-1" />
-                  Toggle sidebar
-                </button>
-                <a
-                  @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
-                  href="#"
-                  class="cursor-pointer text-sm text-muted-foreground underline hover:text-accent-foreground"
-                >
-                  Keyboard Shortcuts
-                </a>
-
-              </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="tags" class="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="flex items-center gap-2 text-base">Tags</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="mb-4">
+                      <TemplateTagsList />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+            <!-- Keyboard Shortcuts Link -->
+            <div class="mt-3 text-center flex justify-between">
+              <button
+                @click.prevent="tallEditor = !tallEditor"
+                class="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:text-accent-foreground"
+              >
+                <ChevronDown v-if="tallEditor" class="mr-1 h-4 w-4" />
+                <ChevronUp v-else class="mr-1 h-4 w-4" />
+                <span v-if="tallEditor">Expand editor</span>
+                <span v-else>Collapse editor</span>
+              </button>
+              <a
+                @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
+                href="#"
+                class="cursor-pointer text-sm text-muted-foreground hover:text-accent-foreground"
+              >
+                <Keyboard class="mr-1 h-4 w-4" />
+                Keyboard Shortcuts
+              </a>
             </div>
           </div>
+
           <!-- Form Actions -->
           <div class="mt-6 flex justify-between">
             <Link :href="route('templates.show', template)" class="btn btn-cancel"> ← Back to Template </Link>

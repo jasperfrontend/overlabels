@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import TemplateCard from '@/components/TemplateCard.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, Plus, Bell, Users } from 'lucide-vue-next';
@@ -47,13 +47,11 @@ const breadcrumbs = [
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-
-
       <!-- Your Alert Templates Section -->
       <section v-if="userAlertTemplates.length > 0" class="space-y-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <Bell class="mr-1 h-6 w-6 text-primary" />
+            <Bell class="mr-2 h-6 w-6" />
             <Heading title="Your Alert Templates" />
           </div>
           <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
@@ -73,7 +71,7 @@ const breadcrumbs = [
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <Layers class="h-6 w-6 text-primary" />
-            <h2 class="text-2xl font-semibold">Your Static Overlays</h2>
+            <h2 class="text-xl font-semibold">Your Static Overlays</h2>
           </div>
           <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
             New Overlay
@@ -95,13 +93,11 @@ const breadcrumbs = [
             <CardDescription class="mt-3 text-base"> Create your own custom overlays or fork one from the community to get started </CardDescription>
           </CardHeader>
           <CardContent class="flex justify-center gap-4 pb-8">
-            <a class="btn btn-sm btn-secondary" :href="route('templates.create')">
+            <Link class="btn btn-sm btn-secondary" :href="route('templates.create')">
               <Plus class="mr-2 h-4 w-4" />
               Create Template
-            </a>
-            <a size="lg" class="btn btn-sm btn-primary" :href="route('templates.index')">
-              Browse Templates
-            </a>
+            </Link>
+            <Link size="lg" class="btn btn-sm btn-primary" :href="route('templates.index')"> Browse Templates </Link>
           </CardContent>
         </Card>
       </section>
@@ -114,10 +110,10 @@ const breadcrumbs = [
             <h2 class="text-2xl font-semibold">From the Community</h2>
             <span class="text-base text-muted-foreground"> Public templates you can fork and customize </span>
           </div>
-          <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
+          <Link class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('dashboard.recents')">
             Community templates
             <Users class="h-4 w-4" />
-          </a>
+          </Link>
         </div>
 
         <div
@@ -128,14 +124,14 @@ const breadcrumbs = [
         </div>
 
         <Card v-else class="border border-sidebar">
-          <CardHeader class="py-8 flex-column justify-center gap-2 text-center">
+          <CardHeader class="flex-column justify-center gap-2 py-8 text-center">
             <CardTitle class="text-xl">No Community Templates Yet</CardTitle>
             <CardDescription class="mt-2 text-base"> Be the first to share a template with the community! </CardDescription>
           </CardHeader>
         </Card>
 
         <div class="flex py-6">
-          <a href="/templates?direction=desc&filter=mine&search=&type=" class="btn btn-sm btn-cancel">Browse Your Templates</a>
+          <Link :href="`${route('templates.index')}?direction=desc&filter=mine&search=&type=`" class="btn btn-sm btn-cancel">Browse Your Templates</Link>
         </div>
       </section>
     </div>

@@ -524,9 +524,10 @@ watch(
               class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 cursor-pointer">&times;</button>
           </div>
         </div>
-        <div class="space-y-6 max-h-[60vh] overflow-y-auto">
+        <div
+          v-if="categoryTags && Object.keys(categoryTags).length > 0"
+          class="space-y-6 max-h-[60vh] overflow-y-auto">
           <div
-            v-if="categoryTags && Object.keys(categoryTags).length > 0"
             v-for="(categoryData, categoryName) in categoryTags" :key="categoryName" class="border border-border rounded-lg p-4">
             <!-- Category Header -->
             <h4 class="text-md font-medium text-foreground mb-1">{{ categoryData?.category?.display_name }}</h4>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { PlusIcon, Package } from 'lucide-vue-next';
+import { PlusIcon, Package, LayoutGrid } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
 import Heading from '@/components/Heading.vue';
@@ -60,11 +60,8 @@ defineProps<Props>();
     <div class="mx-auto p-4">
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-sm px-3 py-1 relative -top-1.5 mr-1 border border-dashed border-violet-400/40 rounded-full bg-violet-500/10 text-violet-400">NEW</span>
-          <Heading
-            title="Template Kits"
-            description="Kits offer a bundle of premade templates and overlay alerts. Fork them to your own account and assign them to your Events!"
-          />
+          <LayoutGrid class="w-6 h-6 mr-2" />
+          <Heading title="Template Kits" />
         </div>
         <Link :href="route('kits.create')" class="btn btn-primary">
           Create Kit

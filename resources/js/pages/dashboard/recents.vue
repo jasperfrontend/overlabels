@@ -75,7 +75,7 @@ const breadcrumbs = [
       <!-- Community Templates Section -->
       <section class="space-y-8 mt-1 ">
         <div class="flex items-center gap-3">
-          <Users class="w-6 h-6 mr-1 text-primary" />
+          <Users class="w-6 h-6 mr-2 text-primary" />
           <Heading title="Recently created templates" />
         </div>
 
@@ -98,13 +98,15 @@ const breadcrumbs = [
           </CardHeader>
         </Card>
 
-        <div class="flex py-6">
+        <div class="flex">
           <a :href="route('templates.index')" class="btn btn-sm btn-cancel">Browse All Templates</a>
         </div>
       </section>
 
+      <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
+
       <!-- Recent Kits Section -->
-      <section v-if="recentKits && recentKits.length > 0" class="space-y-6">
+      <section v-if="recentKits && recentKits.length > 0" class="space-y-6 mt-4">
         <div class="flex items-center gap-3">
           <Package class="w-6 h-6 mr-1 text-primary" />
           <Heading title="Recent Template Kits" description="Collections of templates ready to fork and use" />

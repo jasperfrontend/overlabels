@@ -15,7 +15,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
 import { CheckCircle, AlertTriangle, Info, XCircle } from 'lucide-vue-next'
 

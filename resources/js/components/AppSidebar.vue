@@ -24,14 +24,14 @@ const mainNavItems: NavItem[] = [
     icon: LayoutGrid,
   },
   {
-    title: 'Template Builder',
+    title: 'All Templates',
     href: '/templates',
     icon: Building,
   },
 
   {
-    title: 'Events Builder',
-    href: '/events',
+    title: 'Alerts Builder',
+    href: '/alerts',
     icon: Radio,
   },
 

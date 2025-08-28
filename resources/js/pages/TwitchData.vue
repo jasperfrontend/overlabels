@@ -252,6 +252,8 @@ watch (
             }}</a>
           </h2>
 
+          <div class="text-center text-violet-400">(Twitch Channel ID: {{props.twitchData.user.id}})</div>
+
           <div class="mb-4 text-center text-sm text-muted-foreground">
             {{ props.twitchData.user.description }}
           </div>

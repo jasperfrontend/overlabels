@@ -10,7 +10,6 @@ interface ModalProps {
 const props = defineProps<ModalProps>();
 
 // Set default values for optional props
-const maxWidth = props.maxWidth || '2xl';
 const closeable = props.closeable;
 
 const emit = defineEmits(['close']);
@@ -83,7 +82,7 @@ const maxWidthClass = computed(() => {
               <button
                 v-if="closeable"
                 @click="close"
-                class="absolute right-4 top-4 cursor-pointer w-6 h-6 hover:bg-accent text-xl font-bold focus:rotate-180 transition-transform rounded-full flex items-center justify-center"
+                class="absolute right-4 top-4 cursor-pointer w-6 h-6 hover:bg-sidebar text-xl font-bold focus:rotate-180 transition-transform rounded-full flex items-center justify-center"
                 aria-label="Close"
               >
                 &times;

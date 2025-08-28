@@ -226,7 +226,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Event Template Mapping Management
-    Route::prefix('events')->name('events.')->group(function () {
+    Route::prefix('alerts')->name('events.')->group(function () {
         Route::get('/', [App\Http\Controllers\EventTemplateMappingController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\EventTemplateMappingController::class, 'store'])->name('store');
         Route::put('/bulk', [App\Http\Controllers\EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
