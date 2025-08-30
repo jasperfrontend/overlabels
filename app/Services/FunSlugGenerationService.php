@@ -38,7 +38,7 @@ class FunSlugGenerationService
     private array $adjectives3 = [
         'golden', 'silver', 'bronze', 'crystal', 'diamond', 'emerald', 'ruby', 'sapphire', 'pearl', 'copper',
         'wooden', 'stone', 'metal', 'glass', 'plastic', 'fabric', 'paper', 'leather', 'silk', 'wool',
-        'striped', 'spotted', 'dotted', 'lined', 'curved', 'straight', 'round', 'square', 'triangle', 'spiral',
+        'striped', 'spotted', 'dotted', 'lined', 'curved', 'hooked', 'round', 'square', 'triangle', 'spiral',
         'frozen', 'melted', 'heated', 'cooled', 'twisted', 'bent', 'broken', 'fixed', 'lost', 'found',
         'hidden', 'visible', 'secret', 'open', 'closed', 'locked', 'unlocked', 'empty', 'full', 'half'
     ];
