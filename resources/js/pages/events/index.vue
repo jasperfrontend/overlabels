@@ -32,8 +32,8 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Event Configuration',
-    href: '/events',
+    title: 'Event Alerts Builder',
+    href: '/alerts',
   },
 ];
 
@@ -93,12 +93,12 @@ const saveAllMappings = async () => {
       enabled: mapping.enabled,
     }));
 
-    const response = await axios.put('/events/bulk', {
+    const response = await axios.put('/alerts/bulk', {
       mappings: mappingsToSave,
     });
 
     showToast.value = true;
-    toastMessage.value = 'Settings saved successfully: ' + response.data.message;
+    toastMessage.value = 'Settings saved successfully!';
     toastType.value = 'success';
 
   } catch (error: any) {
@@ -114,7 +114,7 @@ const saveAllMappings = async () => {
 </script>
 
 <template>
-  <Head title="Event Alert Builder" />
+  <Head title="Event Alerts Builder" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header Section -->

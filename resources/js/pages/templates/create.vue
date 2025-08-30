@@ -486,6 +486,7 @@ watch(
                         placeholder="My Awesome Overlay"
                         required
                         autofocus
+                        data-1p-ignore
                       />
                       <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
                         {{ form.errors.name }}
