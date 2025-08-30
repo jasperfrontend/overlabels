@@ -64,4 +64,7 @@
   .btn-sm {
     @apply text-sm py-2 px-3.5;
   }
+  .btn-xs {
+    @apply text-sm py-1 px-2;
+  }
 }
