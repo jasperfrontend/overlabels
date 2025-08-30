@@ -16,7 +16,6 @@ import {
   BellIcon,
   Trash2Icon,
   MonitorIcon,
-  LayoutTemplate,
   PlusIcon,
   Building,
 } from 'lucide-vue-next';
@@ -148,11 +147,78 @@ const getEventMapping = (template: any) => {
         </Link>
       </div>
 
+
+      <!-- Filters Section -->
+      <div class="mb-4 rounded-sm border border-sidebar bg-sidebar-accent p-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4 lg:grid-cols-6">
+          <!-- Search -->
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-search">Search title</label>
+            <input
+              v-model="filters.search"
+              @input="debounceSearch"
+              type="text"
+              placeholder="Search templates..."
+              class="h-[38px] w-full rounded-sm border border-sidebar bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              id="filter-search"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <!-- Type Filter -->
+            <label for="filter-type">Type</label>
+            <select
+              v-model="filters.type"
+              @change="applyFilter"
+              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              id="filter-type"
+            >
+              <option value="">All Types</option>
+              <option value="static">Static Overlay</option>
+              <option value="alert">Event Alert</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-visibility">Ownership</label>
+            <!-- Visibility Filter -->
+            <select
+              v-model="filters.filter"
+              @change="applyFilter"
+              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              id="filter-visibility"
+            >
+              <option value="all_templates">All Templates</option>
+              <option value="mine">My Templates</option>
+              <option value="public">Public Templates</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label for="filter-sort">Order</label>
+            <!-- Sort -->
+            <select
+              v-model="filters.sort"
+              @change="applyFilter"
+              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              id="filter-sort"
+            >
+              <option value="created_at">Date Created</option>
+              <option value="name">Name</option>
+              <option value="view_count">Views</option>
+              <option value="fork_count">Forks</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+
       <!-- Templates Table -->
       <div class="overflow-hidden rounded-sm border border-sidebar bg-sidebar-accent">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="border-b border-border bg-sidebar">
+            <thead class="border-b border-sidebar-foreground bg-sidebar">
               <tr>
                 <th class="px-4 py-2 text-left">
                   <button
@@ -187,7 +253,7 @@ const getEventMapping = (template: any) => {
                 <th class="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-border dark:divide-border">
+            <tbody class="divide-y divide-sidebar">
               <tr v-for="template in templates?.data" :key="template.id" class="group hover:bg-sidebar">
                 <td class="max-w-[400px] px-4 py-2">
                   <div>
@@ -303,74 +369,9 @@ const getEventMapping = (template: any) => {
         </div>
       </div>
 
-      <!-- Filters Section -->
-      <div class="mt-8 rounded-lg border border-border bg-card p-4 shadow-sm dark:border-border dark:bg-card">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <!-- Search -->
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-search">Search title</label>
-            <input
-              v-model="filters.search"
-              @input="debounceSearch"
-              type="text"
-              placeholder="Search templates..."
-              class="h-[38px] w-full rounded-lg border border-border bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
-              id="filter-search"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <!-- Type Filter -->
-            <label for="filter-type">Type</label>
-            <select
-              v-model="filters.type"
-              @change="applyFilter"
-              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
-              id="filter-type"
-            >
-              <option value="">All Types</option>
-              <option value="static">Static Overlay</option>
-              <option value="alert">Event Alert</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-visibility">Ownership</label>
-            <!-- Visibility Filter -->
-            <select
-              v-model="filters.filter"
-              @change="applyFilter"
-              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
-              id="filter-visibility"
-            >
-              <option value="all_templates">All Templates</option>
-              <option value="mine">My Templates</option>
-              <option value="public">Public Templates</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-sort">Order</label>
-            <!-- Sort -->
-            <select
-              v-model="filters.sort"
-              @change="applyFilter"
-              class="rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/20 focus:outline-none dark:border-border dark:bg-background dark:text-foreground"
-              id="filter-sort"
-            >
-              <option value="created_at">Date Created</option>
-              <option value="name">Name</option>
-              <option value="view_count">Views</option>
-              <option value="fork_count">Forks</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <!-- Pagination -->
       <div v-if="templates?.last_page > 1" class="mt-6">
-        <Pagination :links="templates?.links" :from="templates?.from" :to="templates?.to" :total="templates?.total" class="dark:text-foreground" />
+        <Pagination :links="templates?.links" :from="templates?.from" :to="templates?.to" :total="templates?.total" />
       </div>
     </div>
   </AppLayout>
