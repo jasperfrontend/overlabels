@@ -186,7 +186,7 @@ class OverlayTemplate extends Model
     }
 
     /**
-     * Kits relationship
+     * kits relationship
      */
     public function kits(): BelongsToMany
     {

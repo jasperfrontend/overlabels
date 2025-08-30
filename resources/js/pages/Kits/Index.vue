@@ -46,7 +46,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Template Kits',
+    title: 'Template kits',
     href: route('kits.index'),
   }
 ]
@@ -109,10 +109,10 @@ defineProps<Props>();
         </Link>
       </div>
 
-      <!-- Recent Public Kits Section -->
+      <!-- Recent Public kits Section -->
       <div v-if="recentPublicKits && recentPublicKits.length > 0" class="mt-12">
         <div class="mb-6 h-px w-full bg-muted-foreground/10" />
-        
+
         <div class="mb-6">
           <div class="flex items-center gap-2 mb-2">
             <Package class="w-5 h-5 text-primary" />

@@ -105,7 +105,7 @@ const breadcrumbs = [
 
       <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
 
-      <!-- Recent Kits Section -->
+      <!-- Recent kits Section -->
       <section v-if="recentKits && recentKits.length > 0" class="space-y-6 mt-4">
         <div class="flex items-center gap-3">
           <Package class="w-6 h-6 mr-1 text-primary" />
