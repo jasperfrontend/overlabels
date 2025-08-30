@@ -42,7 +42,7 @@
                 index === links.length - 1 ? 'rounded-r-md' : '',
                 'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors'
               ]"
-              :v-text="link.label"
+              v-html="link.label"
             />
             <span
               v-else
@@ -66,10 +66,17 @@
 <script lang="ts" setup>
 import { Link } from '@inertiajs/vue3';
 
-defineProps({
-  links: Array,
-  from: Number,
-  to: Number,
-  total: Number,
-});
+interface PaginationLink {
+  url: string | null;
+  label: string;
+  page: number | null;
+  active: boolean;
+}
+
+defineProps<{
+  links: PaginationLink[];
+  from: number;
+  to: number;
+  total: number;
+}>();
 </script>

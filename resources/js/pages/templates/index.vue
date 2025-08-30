@@ -370,8 +370,8 @@ const getEventMapping = (template: any) => {
       </div>
 
       <!-- Pagination -->
-      <div v-if="templates?.last_page > 1" class="mt-6">
-        <Pagination :links="templates?.links" :from="templates?.from" :to="templates?.to" :total="templates?.total" />
+      <div v-if=templates?.last_page > 1" class="mt-6">
+        <Pagination :links="templates.links" :from="templates.from" :to="templates.to" :total="templates.total" />
       </div>
     </div>
   </AppLayout>
