@@ -28,9 +28,11 @@ import {
   ChevronDown,
   Zap,
   Layout,
+  Logs,
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { Input } from '@/components/ui/input';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -326,10 +328,14 @@ watch(
 
           <!-- Editor Area -->
           <div class="space-y-6">
-            <Tabs default-value="html" class="w-full">
+            <Tabs default-value="meta" class="w-full">
               <TabsList class="grid w-full grid-cols-8 gap-2">
+                <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <InfoIcon class="h-4 w-4" />
+                  Meta
+                </TabsTrigger>
                 <TabsTrigger value="head" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
-                  <Code class="h-4 w-4" />
+                  <Logs class="h-4 w-4" />
                   HEAD
                 </TabsTrigger>
                 <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
@@ -340,10 +346,7 @@ watch(
                   <Palette class="h-4 w-4" />
                   CSS
                 </TabsTrigger>
-                <TabsTrigger value="meta" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
-                  <InfoIcon class="h-4 w-4" />
-                  Meta
-                </TabsTrigger>
+
                 <TabsTrigger value="tags" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
                   <Brackets class="h-4 w-4" />
                   Template Tags
@@ -482,6 +485,7 @@ watch(
                         class="w-full rounded border border-sidebar-foreground/50 p-2 focus:ring-1 ring-violet-400 focus:outline-none"
                         placeholder="My Awesome Overlay"
                         required
+                        autofocus
                       />
                       <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
                         {{ form.errors.name }}
@@ -594,15 +598,13 @@ watch(
 
                     <!-- Visibility -->
                     <div class="mt-6">
-                      <label class="flex items-center">
+                      <label>
                         <input
                           v-model="form.is_public"
                           type="checkbox"
-                          class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
+                          class="p-2 mr-2 w-5 h-5"
                         />
-                        <span class="ml-2 text-sm">
                           Make this template public (others can view and fork it)
-                        </span>
                       </label>
                     </div>
 
