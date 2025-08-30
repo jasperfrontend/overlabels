@@ -10,49 +10,49 @@ import AppLogo from './AppLogo.vue';
 const mainNavItems: NavItem[] = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: route('dashboard'),
     icon: House,
   },
   {
     title: 'Recents',
-    href: '/dashboard/recents',
+    href: route('dashboard.recents'),
     icon: Users,
   },
   {
     title: 'All Templates',
-    href: '/templates',
+    href: route('templates.index'),
     icon: Building,
   },
   {
     title: 'Template kits',
-    href: '/kits',
+    href: route('kits.index'),
     icon: LayoutGrid,
   },
   {
     title: 'Alerts Builder',
-    href: '/alerts',
+    href: route('events.index'),
     icon: Radio,
   },
 ];
 const userNavItems: NavItem[] = [
   {
     title: 'Syntax Help',
-    href: '/help',
+    href: route('help'),
     icon: Brackets,
   },
   {
     title: 'Token Generator',
-    href: '/tokens',
+    href: route('tokens.index'),
     icon: Shield,
   },
   {
     title: 'Tags Generator',
-    href: '/tags',
+    href: route('tags.generator'),
     icon: Code,
   },
   {
     title: 'Your Twitch Data',
-    href: '/twitchdata',
+    href: route('twitchdata'),
     icon: Grid2x2Check,
   },
 
