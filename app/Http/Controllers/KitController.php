@@ -21,8 +21,17 @@ class KitController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(12);
 
-        return Inertia::render('Kits/Index', [
+        // Get recent public kits for discovery
+        $recentPublicKits = Kit::with(['owner:id,name,avatar', 'templates'])
+            ->public()
+            ->where('owner_id', '!=', $request->user()->id)
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        return Inertia::render('Kits/index', [
             'kits' => $kits,
+            'recentPublicKits' => $recentPublicKits,
         ]);
     }
 

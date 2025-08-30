@@ -36,6 +36,7 @@ interface Props {
     per_page: number;
     total: number;
   };
+  recentPublicKits?: Kit[];
   auth?: {
     user?: {
       id: number;
@@ -106,6 +107,31 @@ defineProps<Props>();
         >
           {{ page }}
         </Link>
+      </div>
+
+      <!-- Recent Public Kits Section -->
+      <div v-if="recentPublicKits && recentPublicKits.length > 0" class="mt-12">
+        <div class="mb-6 h-px w-full bg-muted-foreground/10" />
+        
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-2">
+            <Package class="w-5 h-5 text-primary" />
+            <Heading title="Discover Recent Community Kits" />
+          </div>
+          <p class="text-sm text-muted-foreground">
+            Explore kits created by the community. Fork any kit to get started quickly with a complete set of templates.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <KitCard
+            v-for="kit in recentPublicKits"
+            :key="kit.id"
+            :kit="kit"
+            :show-owner="true"
+            :current-user-id="auth?.user?.id"
+          />
+        </div>
       </div>
 
       <div class="mt-6">
