@@ -158,4 +158,25 @@
     body {
         @apply bg-background text-foreground;
     }
+    
+    /* Range slider styles */
+    input[type="range"] {
+        @apply appearance-none bg-secondary/20;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        @apply appearance-none h-4 w-4 rounded-full bg-primary cursor-pointer transition-colors hover:bg-primary/90;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+        @apply appearance-none h-4 w-4 rounded-full bg-primary cursor-pointer border-0 transition-colors hover:bg-primary/90;
+    }
+    
+    input[type="range"]::-webkit-slider-runnable-track {
+        @apply h-2 rounded-lg bg-secondary;
+    }
+    
+    input[type="range"]::-moz-range-track {
+        @apply h-2 rounded-lg bg-secondary;
+    }
 }

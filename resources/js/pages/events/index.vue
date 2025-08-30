@@ -260,20 +260,21 @@ const saveAllMappings = async () => {
                 <p v-if="!mapping.template_id" class="mt-1 text-xs text-yellow-600">Select a template to show alerts</p>
               </div>
 
-              <!-- Duration Slider -->
+              <!-- Duration Input -->
               <div>
-                <label class="mb-2 block text-sm font-medium text-foreground"> Duration: {{ mapping.duration_ms / 1000 }}s </label>
-                <div class="flex items-center gap-3 pt-2">
-                  <span class="text-xs text-muted-foreground">1s</span>
+                <label class="mb-2 block text-sm font-medium text-foreground">Duration (seconds)</label>
+                <div class="flex items-center gap-2">
                   <input
-                    v-model.number="mapping.duration_ms"
-                    type="range"
-                    min="1000"
-                    max="30000"
-                    step="500"
-                    class="h-2 flex-1 cursor-pointer rounded-lg text-primary focus:outline-none ring-1 focus:ring-primary"
+                    :value="mapping.duration_ms / 1000"
+                    @input="mapping.duration_ms = Math.min(30, Math.max(1, Number($event.target.value) || 1)) * 1000"
+                    type="number"
+                    min="1"
+                    max="30"
+                    step="1"
+                    class="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="1-30"
                   />
-                  <span class="text-xs text-muted-foreground">30s</span>
+                  <span class="text-sm text-muted-foreground">seconds</span>
                 </div>
               </div>
 

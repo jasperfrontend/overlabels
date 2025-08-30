@@ -17,6 +17,7 @@ class OverlayTemplateFactory extends Factory
             'slug' => $this->faker->slug(),
             'name' => $this->faker->name(),
             'description' => $this->faker->text(),
+            'head' => $this->faker->word(),
             'html' => $this->faker->word(),
             'css' => $this->faker->word(),
             'js' => $this->faker->word(),

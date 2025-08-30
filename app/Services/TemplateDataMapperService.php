@@ -12,14 +12,10 @@ use Illuminate\Support\Facades\Log;
  * Centralized service for all template tag mapping and data transformation.
  * This consolidates the mapping logic from JsonTemplateParserService to avoid duplication.
  *
- * For Laravel beginners:
  * - This service is the SINGLE SOURCE OF TRUTH for template tag mappings
  * - Both template generation AND template parsing use this same mapping logic
  * - This ensures consistency between database tags and runtime template parsing
  */
-
-
-
 
 class TemplateDataMapperService
 {
@@ -121,12 +117,13 @@ class TemplateDataMapperService
     * Wraps the provided HTML body and CSS into a complete HTML document.
     * Used to generate a full HTML page for overlay rendering.
     *
+    * @param string $headHtml The HTML content to include in the head.
     * @param string $bodyHtml The HTML content to include in the body.
     * @param string $css The CSS styles to inject into the document.
     * @param string $title The title of the HTML document (default: 'Overlay').
     * @return string The complete HTML document as a string.
     **/
-    public function wrapHtmlAndCssIntoDocument(string $bodyHtml, string $css, string $title = 'Overlay'): string
+    public function wrapHtmlAndCssIntoDocument(string $headHtml, string $bodyHtml, string $css, string $title = 'Overlay'): string
     {
         return '<!DOCTYPE html>
     <html lang="en">
@@ -134,6 +131,7 @@ class TemplateDataMapperService
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>' . htmlspecialchars($title) . '</title>
+        ' . $headHtml . '
         <style>' . $css . '</style>
     </head>
     <body>

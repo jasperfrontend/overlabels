@@ -15,6 +15,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -47,6 +48,7 @@ interface TagsResponse {
 const form = useForm({
   name: '',
   description: '',
+  head: '',
   html: '',
   css: '',
   type: 'static',
@@ -144,7 +146,7 @@ const insertTag = (editor: string): void => {
     })
     .catch(() => {
       // Fallback to manual input
-      console.log('💔 Error retrieving tags from api')
+      console.log('Error retrieving tags from api')
       showToast.value = true;
       toastMessage.value = 'Error retrieving tags from API';
       toastType.value = 'error';
@@ -229,6 +231,7 @@ const previewTemplate = (): void => {
   };
 
   // Simple template tag replacement for preview
+  let head = form.head;
   let html = form.html;
   let css = form.css;
 
@@ -243,6 +246,7 @@ const previewTemplate = (): void => {
   <html lang="en">
       <head>
       <style>${css}</style>
+      ${head}
     </head>
     <body>
       ${html}
@@ -362,10 +366,18 @@ watch(
 
           <!-- Code Editors -->
           <Tabs defaultValue="html" class="w-full">
-            <TabsList class="grid w-full grid-cols-2">
-              <TabsTrigger value="html">HTML *</TabsTrigger>
+            <TabsList class="grid w-full grid-cols-8">
+              <TabsTrigger value="head">HEAD</TabsTrigger>
+              <TabsTrigger value="html">HTML</TabsTrigger>
               <TabsTrigger value="css">CSS</TabsTrigger>
             </TabsList>
+
+            <!-- head Editor Tab -->
+            <TabsContent value="head" class="mt-4">
+              <div>
+                <textarea rows="10" class="w-full p-2 font-mono border border-sidebar" v-model="form.head" placeholder="enter <head> stuff here..." />
+              </div>
+            </TabsContent>
 
             <!-- HTML Editor Tab -->
             <TabsContent value="html" class="mt-4">
@@ -493,7 +505,10 @@ watch(
     <!-- Preview Modal -->
     <Modal :show="showPreview" @close="showPreview = false" max-width="4xl">
       <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4 text-foreground">Template Preview</h3>
+        <div class="flex text-center justify-between">
+          <h3 class="text-lg font-semibold mb-4 text-foreground">Template Preview</h3>
+          <button class="btn btn-sm py-2 rounded-full mb-4" @click="showPreview = !showPreview" title="Close preview">&times;</button>
+        </div>
         <div class="border border-border rounded-md p-4 bg-muted" style="height: 400px; position: relative;">
           <iframe
             v-if="previewHtml"

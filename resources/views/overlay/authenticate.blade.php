@@ -35,6 +35,7 @@
             padding: 20px;
         }
     </style>
+    {!! $head !!}
 </head>
 <body>
 <div class="loading" id="loading">Overlabels :: Loading</div>

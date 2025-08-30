@@ -177,6 +177,7 @@ class OverlayTemplateController extends Controller
         $template->recordView();
 
         return view('overlay.render', [
+            'head' => $template->head,
             'html' => $template->html,
             'css' => $template->css,
             'js' => $template->js,
@@ -290,6 +291,7 @@ class OverlayTemplateController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'head' => 'nullable|string',
             'html' => 'required|string',
             'css' => 'nullable|string',
             'type' => 'required|in:static,alert',
@@ -327,6 +329,7 @@ class OverlayTemplateController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
+            'head' => 'nullable|string',
             'html' => 'sometimes|string',
             'css' => 'nullable|string',
             'type' => 'sometimes|in:static,alert',

@@ -43,6 +43,7 @@ interface TemplateTag {
 
 interface Props {
   existingTemplate: {
+    head: string;
     html: string;
     css: string;
   };
@@ -50,6 +51,7 @@ interface Props {
     id: number;
     name: string;
     description: string;
+    head: string;
     html: string;
     css: string;
     is_public: boolean;
@@ -72,7 +74,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  existingTemplate: () => ({ html: '', css: '' }),
+  existingTemplate: () => ({head: '', html: '', css: '' }),
   availableTags: () => [],
   template: Object,
 });
@@ -93,6 +95,7 @@ const {
 const form = useForm({
   name: props?.template?.name,
   description: props?.template?.description || '',
+  head: props?.template?.head || '',
   html: props?.template?.html || '',
   css: props?.template?.css || '',
   is_public: props?.template?.is_public,
@@ -266,6 +269,10 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           <div class="space-y-6">
             <Tabs default-value="html" class="w-full">
               <TabsList class="grid w-full grid-cols-8 gap-2">
+                <TabsTrigger value="head" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
+                  <Code class="h-4 w-4" />
+                  HEAD
+                </TabsTrigger>
                 <TabsTrigger value="html" class="flex cursor-pointer items-center gap-2 hover:bg-sidebar-accent">
                   <Code class="h-4 w-4" />
                   HTML
@@ -284,6 +291,26 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                 </TabsTrigger>
               </TabsList>
 
+              <TabsContent value="head" class="mt-4">
+                <Card>
+                  <CardHeader class="px-4">
+                    <CardTitle class="text-base">HEAD Template</CardTitle>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                      You're on your own here. Very little validating is done on this contents.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="overflow-hidden rounded-lg border">
+                      <textarea
+                        v-model="form.head"
+                        rows="10"
+                        class="font-mono w-full p-2 border border-sidebar"
+                        :style="{ height: tallEditor ? '500px' : '800px' }"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
               <TabsContent value="html" class="mt-4">
                 <Card>
                   <CardHeader class="px-4">
@@ -320,7 +347,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                     <div class="overflow-hidden rounded-lg border">
                       <Codemirror
                         v-model="form.css"
-                        :style="{ height: '500px' }"
+                        :style="{ height: tallEditor ? '500px' : '800px' }"
                         :indent-with-tab="true"
                         :tab-size="2"
                         :extensions="cssExtensions"
@@ -426,9 +453,9 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               <a
                 @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
                 href="#"
-                class="cursor-pointer text-sm text-muted-foreground hover:text-accent-foreground"
+                class="cursor-pointer flex text-sm text-muted-foreground hover:text-accent-foreground"
               >
-                <Keyboard class="mr-1 h-4 w-4" />
+                <Keyboard class="mr-2 mt-0.5 h-4 w-4" />
                 Keyboard Shortcuts
               </a>
             </div>
@@ -451,7 +478,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       @click.self="showKeyboardShortcuts = false"
     >
-      <div class="w-full max-w-md overflow-hidden rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+      <div class="w-full max-w-md overflow-hidden rounded-lg p-6 shadow-lg bg-sidebar-accent border border-sidebar">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
           <button @click.prevent="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -467,7 +494,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
         <div class="space-y-2">
           <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id" class="flex items-center justify-between rounded-md border p-2 text-sm">
             <span>{{ shortcut.description }}</span>
-            <kbd class="rounded bg-gray-100 px-2 py-1 font-mono text-xs dark:bg-gray-700">
+            <kbd class="rounded bg-sidebar-accent px-2 py-1 font-mono text-xs">
               {{ shortcut.keys }}
             </kbd>
           </div>

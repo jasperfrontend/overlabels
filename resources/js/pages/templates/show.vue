@@ -55,6 +55,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="flex items-start justify-between">
           <div>
             <Heading :title="props.template?.name" :description="props.template?.description" />
+            <!-- <pre>{{$page.props.template}}</pre>-->
           </div>
           <div class="flex space-x-2">
             <a
@@ -205,7 +206,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="overflow-hidden rounded-sm border border-sidebar">
         <div class="flex border-b">
           <button
-            v-for="tab in ['html', 'css']"
+            v-for="tab in ['head', 'html', 'css']"
             :key="tab"
             @click="activeTab = tab"
             :class="[

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\FunSlugGenerationService;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ class OverlayTemplate extends Model
         'owner_id',
         'name',
         'description',
+        'head',
         'html',
         'css',
         'js',
@@ -56,7 +58,7 @@ class OverlayTemplate extends Model
         static::deleting(function ($template) {
             // Prevent deletion if template is part of any kit
             if ($template->kits()->count() > 0) {
-                throw new \Exception('Cannot delete a template that is part of a kit. Remove it from all kits first.');
+                throw new Exception('Cannot delete a template that is part of a kit. Remove it from all kits first.');
             }
         });
     }
@@ -113,7 +115,7 @@ class OverlayTemplate extends Model
         // Pattern to match conditional statements: [[[if:tag_name operator value]]]
         // Also matches: [[[elseif:tag_name operator value]]]
         // Updated to properly support dots in tag names like event.bits, event.user_name
-        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^\]]+)?]]]/';
+        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^]]+)?]]]/';
 
         preg_match_all($conditionalPattern, $content, $matches);
 
