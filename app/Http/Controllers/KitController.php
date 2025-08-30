@@ -29,7 +29,7 @@ class KitController extends Controller
             ->limit(10)
             ->get();
 
-        return Inertia::render(route('kits.index'), [
+        return Inertia::render('kits/index', [
             'kits' => $kits,
             'recentPublicKits' => $recentPublicKits,
         ]);
@@ -44,7 +44,7 @@ class KitController extends Controller
             ->orderBy('created_at', 'desc')
             ->get(['id', 'name', 'type', 'slug']);
 
-        return Inertia::render(route('kits.create'), [
+        return Inertia::render('kits/create', [
             'templates' => $templates,
         ]);
     }
@@ -105,7 +105,7 @@ class KitController extends Controller
 
         $kit->load(['owner', 'templates', 'forkedFrom']);
 
-        return Inertia::render(route('kits.show', $kit), [
+        return Inertia::render('kits/show', [
             'kit' => $kit,
             'canEdit' => $kit->owner_id === auth()->id(),
             'canFork' => auth()->check(),
@@ -128,7 +128,7 @@ class KitController extends Controller
 
         $kit->load('templates');
 
-        return Inertia::render(route('kits.edit', $kit), [
+        return Inertia::render('kits/edit', [
             'kit' => $kit,
             'templates' => $templates,
             'selectedTemplateIds' => $kit->templates->pluck('id')->toArray(),
