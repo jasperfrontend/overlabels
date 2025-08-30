@@ -32,8 +32,10 @@ import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
+import { html } from '@codemirror/lang-html';
 
 interface AlertData {
+  head: string;
   html: string;
   css: string;
   data: Record<string, any>;
@@ -58,6 +60,7 @@ const props = defineProps<{
   token: string;
 }>();
 
+const head = ref<string | null>(null);
 const rawHtml = ref<string>('');
 const css = ref('');
 const data = ref<Record<string, any> | undefined>(undefined);
@@ -136,6 +139,25 @@ function injectStyle(styleString: string) {
   style.id = 'overlay-style';
   style.textContent = styleString;
   document.head.appendChild(style);
+}
+
+function injectHead(headString: string | null) {
+  if (!headString) return;
+  
+  // Parse the head HTML string to extract individual elements
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<head>${headString}</head>`, 'text/html');
+  const headElements = doc.head.children;
+  
+  // Remove any previously injected custom head elements
+  document.querySelectorAll('[data-overlay-head]').forEach(el => el.remove());
+  
+  // Inject each element from the template head into the actual document head
+  Array.from(headElements).forEach(element => {
+    const clonedElement = element.cloneNode(true) as Element;
+    clonedElement.setAttribute('data-overlay-head', 'true');
+    document.head.appendChild(clonedElement);
+  });
 }
 
 // Alert rendering system
@@ -255,7 +277,8 @@ onMounted(async () => {
 
     if (response.ok) {
       const json = await response.json();
-
+      console.log(json);
+      head.value = json.template.head;
       rawHtml.value = json.template.html;
 
       // Ensure tags is always an array, even if the server sends something unexpected
@@ -267,6 +290,9 @@ onMounted(async () => {
       userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
       injectStyle(css.value);
+      console.log(head.value);
+      injectHead(head.value);
+
       document.title = json.meta?.name || 'Overlay';
       document.getElementById('loading')?.remove();
 
@@ -381,6 +407,7 @@ function handleAlertTriggered(event: any) {
   });
 
   showAlert({
+    head: alertData.head,
     html: alertData.html,
     css: alertData.css,
     data: mergedData,

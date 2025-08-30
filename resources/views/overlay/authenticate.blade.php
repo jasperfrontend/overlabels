@@ -35,13 +35,12 @@
             padding: 20px;
         }
     </style>
-    {!! $head !!}
+
 </head>
 <body>
 <div class="loading" id="loading">Overlabels :: Loading</div>
 <div class="error" id="error"></div>
 <div id="overlay-content"></div>
-
 <script>
     const slug = '{{ $slug }}';
     const token = window.location.hash.substring(1);

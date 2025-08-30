@@ -15,7 +15,6 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 
 // Define interfaces for template tags
 interface TemplateTag {

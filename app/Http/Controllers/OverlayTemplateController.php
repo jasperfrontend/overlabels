@@ -251,9 +251,10 @@ class OverlayTemplateController extends Controller
                 $template->slug
             );
 
-            // NEW: directly return JSON as a response and don't pass the parsed HTML at all
+            // Directly return JSON as a response so frontend can handle rendering
             return response()->json([
                 'template' => [
+                    'head' => $template->head,
                     'html' => $template->html,
                     'css' => $template->css,
                     'tags' => $template->template_tags,

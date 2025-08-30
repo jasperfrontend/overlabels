@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { House, LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building, HelpingHandIcon, Users } from 'lucide-vue-next';
+import { House, LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building, HelpingHandIcon, Users, Brackets } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -19,33 +19,31 @@ const mainNavItems: NavItem[] = [
     icon: Users,
   },
   {
+    title: 'All Templates',
+    href: '/templates',
+    icon: Building,
+  },
+  {
     title: 'Template Kits',
     href: '/kits',
     icon: LayoutGrid,
   },
   {
-    title: 'All Templates',
-    href: '/templates',
-    icon: Building,
-  },
-
-  {
     title: 'Alerts Builder',
     href: '/alerts',
     icon: Radio,
   },
-
-  {
-    title: 'Help',
-    href: '/help',
-    icon: HelpingHandIcon,
-  },
 ];
 const userNavItems: NavItem[] = [
   {
-    title: 'Your Twitch Data',
-    href: '/twitchdata',
-    icon: Grid2x2Check,
+    title: 'Syntax Help',
+    href: '/help',
+    icon: Brackets,
+  },
+  {
+    title: 'Token Generator',
+    href: '/tokens',
+    icon: Shield,
   },
   {
     title: 'Tags Generator',
@@ -53,11 +51,13 @@ const userNavItems: NavItem[] = [
     icon: Code,
   },
   {
-    title: 'Token Generator',
-    href: '/tokens',
-    icon: Shield,
+    title: 'Your Twitch Data',
+    href: '/twitchdata',
+    icon: Grid2x2Check,
   },
-]
+
+
+];
 </script>
 
 <template>

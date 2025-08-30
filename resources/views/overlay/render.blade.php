@@ -36,21 +36,21 @@
     <div style="position: fixed; top: 40px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 5px 5px 10px; border-radius: 3px; font: 12px Arial, sans-serif; z-index: 1000;">
         Preview Mode - Template tags not parsed. Click to copy:
         <button
-            title="Copy the HTML from this overlay"
+            title="Copy the <head> from this overlay"
             id="overlabels-copy-to-clipboard-html-34jkd0scnj2e3mg"
             onclick="copyToClipboard('head')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
         >
             HEAD
         </button>
         <button
-            title="Copy the HTML from this overlay"
+            title="Copy the html from this overlay"
             id="overlabels-copy-to-clipboard-html-34jkd0scnj2e3mg"
             onclick="copyToClipboard('html')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
         >
             HTML
         </button>
         <button
-            title="Copy the CSS from this overlay"
+            title="Copy the css from this overlay"
             id="overlabels-copy-to-clipboard-css-34jkd0scnj2e3mg"
             onclick="copyToClipboard('css')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;">
             CSS
@@ -77,9 +77,11 @@
                     content = {!! json_encode($css) !!}
                 } else if (type === 'head') {
                     content = {!! json_encode($head) !!}
+                } else {
+                    alert('You are trying to copy something that does not exist.')
                 }
                 navigator.clipboard.writeText(content).then(() => {
-                    alert(`${type.toUpperCase()} copied to clipboard!`);
+                    alert(`<${type}> copied to clipboard!`);
                 }).catch(err => {
                     console.error('Failed to copy:', err);
                 });
