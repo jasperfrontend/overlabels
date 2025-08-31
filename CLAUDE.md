@@ -39,6 +39,13 @@ php artisan optimize     # Cache configuration
 
 ## Architecture Overview
 
+This app is being built on a Windows 10 machine. Do NOT use linux commands for file manipulation and handling, but use the
+Windows equivalents.
+
+PHP.exe is located at `C:\Users\jmstu\.config\herd\bin\php84.bat`
+
+This project uses Postgres.
+
 ### Core Systems
 
 **Twitch Integration**: The app integrates deeply with Twitch through OAuth and EventSub webhooks. User authentication is based on `twitch_id` (not email). The `TwitchApiService` handles all API interactions including token refresh.
