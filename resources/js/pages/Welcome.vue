@@ -84,7 +84,7 @@ const activeTab = ref('template');
                 <ArrowRight class="ml-2 h-4 w-4" />
               </Link>
             </div>
-            <div v-else class="mt-8">
+            <div v-else>
               <LoginSocial />
             </div>
           </div>
@@ -119,16 +119,16 @@ const activeTab = ref('template');
 
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <Link v-if="!$page.props.auth.user" href="#get-started">
-              <Button size="lg" class="w-full sm:w-auto">
+              <button class="btn btn-primary cursor-pointer">
                 Get Started Free
                 <ArrowRight class="ml-2 h-5 w-5" />
-              </Button>
+              </button>
             </Link>
             <Link href="#how-it-works">
-              <Button size="lg" variant="outline" class="w-full sm:w-auto">
+              <button class="btn btn-secondary cursor-pointer">
                 See How It Works
                 <ChevronDown class="ml-2 h-5 w-5" />
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
