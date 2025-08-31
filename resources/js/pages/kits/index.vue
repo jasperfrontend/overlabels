@@ -58,8 +58,8 @@ defineProps<Props>();
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="My Kits" />
 
-    <div class="mx-auto p-4">
-      <div class="mb-6 flex items-center justify-between">
+    <div class="p-4 space-y-4 ">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <LayoutGrid class="w-6 h-6 mr-2" />
           <Heading title="Template Kits" />

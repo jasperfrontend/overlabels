@@ -517,7 +517,7 @@ const getDataTypeClass = (dataType: string) => {
         <div
           v-for="(categoryData, categoryName) in organizedTags"
           :key="categoryName"
-          class="rounded-sm border bg-sidebar-accent p-0 text-center transition"
+          class="rounded-sm border border-sidebar bg-sidebar-accent p-0 text-center transition"
         >
           <!-- Category Header -->
           <details class="group">
@@ -550,7 +550,7 @@ const getDataTypeClass = (dataType: string) => {
                   <div class="min-w-0 flex-1">
                     <div class="mb-2 flex items-center">
                       <code
-                        class="cursor-pointer rounded-none border border-dashed border-cyan-600/50 bg-gray-100 px-2.5 py-1.5 font-mono text-sm text-gray-800 transition hover:border-dashed hover:border-cyan-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-900"
+                        class="cursor-pointer rounded-none border border-dashed border-violet-400/40 bg-gray-100 px-2.5 py-1.5 font-mono text-sm text-gray-800 transition hover:border-violet-400 hover:bg-gray-200 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/20"
                         title="click to copy tag"
                         @click="copyTag(tag.tag_name)"
                       >
@@ -637,15 +637,6 @@ const getDataTypeClass = (dataType: string) => {
             {{ isGenerating ? 'Generating...' : 'Generate Tags Now' }}
           </button>
         </div>
-      </div>
-
-      <!-- Debug Info (only in development) -->
-      <div class="mt-8 rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
-        <h3 class="mb-2 text-sm font-medium">Debug Information</h3>
-        <details class="text-xs">
-          <summary class="cursor-pointer">Raw Twitch Data Structure</summary>
-          <pre class="mt-2 overflow-x-auto">{{ JSON.stringify(twitchData, null, 2) }}</pre>
-        </details>
       </div>
     </div>
   </AppLayout>

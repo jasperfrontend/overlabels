@@ -48,7 +48,7 @@ const breadcrumbs = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
       <!-- Your Alert Templates Section -->
-      <section v-if="userAlertTemplates.length > 0" class="space-y-6">
+      <section v-if="userAlertTemplates.length > 0" class="space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <Bell class="mr-2 h-6 w-6" />
