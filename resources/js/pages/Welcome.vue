@@ -76,7 +76,7 @@ const activeTab = ref('template');
             </span>
           </div>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-8">
             <DarkModeToggle />
             <div v-if="$page.props.auth.user">
               <Link :href="route('dashboard.index')" class="btn btn-primary">
@@ -84,7 +84,7 @@ const activeTab = ref('template');
                 <ArrowRight class="ml-2 h-4 w-4" />
               </Link>
             </div>
-            <div v-else>
+            <div v-else class="mt-8">
               <LoginSocial />
             </div>
           </div>
@@ -366,7 +366,7 @@ const activeTab = ref('template');
             <CardTitle class="text-3xl sm:text-4xl mb-4">
               Ready to Code Your Overlays?
             </CardTitle>
-            <CardDescription class="text-base">
+            <CardDescription class="text-base mb-8">
               Join the growing community of streamers who prefer code over clicks.
               It's free, open source, and you own everything you create.
             </CardDescription>
@@ -383,7 +383,7 @@ const activeTab = ref('template');
             </div>
             <div v-else class="space-y-4">
               <LoginSocial />
-              <p class="text-xs text-muted-foreground dark:text-gray-500 mt-4">
+              <p class="text-xs text-muted-foreground dark:text-gray-500 mt-8">
                 By signing in, you agree that this is an MVP and things might break.
                 Your data is safe and you can revoke access anytime via Twitch settings.
               </p>
