@@ -228,7 +228,7 @@ const previewTemplate = (): void => {
     channel_subscription_count: '123',
   };
 
-  let head = form.head;
+  const head = form.head;
   let html = form.html;
   let css = form.css;
 

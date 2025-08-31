@@ -16,6 +16,9 @@ use App\Http\Controllers\TwitchEventController;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use App\Models\User;
 use Laravel\Socialite\Two\AbstractProvider;
 
@@ -40,11 +43,11 @@ Route::get('/help', function () {
 })->name('help');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth.redirect'])
     ->name('dashboard.index');
 
 Route::get('/dashboard/recents', [DashboardController::class, 'recentCommunityTemplates'])
-    ->middleware(['auth'])
+    ->middleware(['auth.redirect'])
     ->name('dashboard.recents');
 
 Route::get('/login', [PageController::class, 'notAuthorized'])
@@ -52,39 +55,39 @@ Route::get('/login', [PageController::class, 'notAuthorized'])
     ->name('login');
 
 Route::get('/twitchdata', [TwitchDataController::class, 'index'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata');
 
 Route::get('/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.expensive');
 
 Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.all');
 
 Route::post('/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.user');
 
 Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.info');
 
 Route::post('/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.following');
 
 Route::post('/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.followers');
 
 Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.subscribers');
 
 Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
-    ->middleware(['auth', 'twitch.token'])
+    ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.goals');
 
 Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthenticated'])
@@ -96,7 +99,12 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
 // Initiate login with Twitch
-Route::get('/auth/redirect/twitch', function () {
+Route::get('/auth/redirect/twitch', function (Request $request) {
+    // Preserve the intended URL during OAuth flow
+    if ($request->session()->has('url.intended')) {
+        // Session will persist through OAuth flow
+    }
+
     /** @var AbstractProvider $driver */
     $driver = Socialite::driver('twitch');
 
@@ -171,7 +179,8 @@ Route::get('/auth/callback/twitch', function () {
 
         Auth::login($user);
 
-        return redirect('/dashboard');
+        // Redirect to intended URL or dashboard if no intended URL
+        return redirect()->intended('/dashboard');
 
     } catch (Exception $e) {
         Log::error('Twitch OAuth callback failed', [
@@ -191,7 +200,7 @@ Route::post('/logout', function () {
 });
 
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth.redirect')->group(function () {
 
     // Access Token Management
     Route::prefix('tokens')->name('tokens.')->group(function () {

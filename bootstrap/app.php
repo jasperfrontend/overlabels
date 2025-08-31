@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureValidTwitchToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RateLimitOverlayAccess;
+use App\Http\Middleware\RedirectIfUnauthenticated;
 use App\Http\Middleware\ValidateOverlayToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Register middleware aliases for use in routes
         $middleware->alias([
+            'auth.redirect' => RedirectIfUnauthenticated::class,
             'overlay.token' => ValidateOverlayToken::class,
             'rate.limit.overlay' => RateLimitOverlayAccess::class,
             'twitch.token' => EnsureValidTwitchToken::class,
