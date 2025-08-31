@@ -41,7 +41,7 @@ Route::get('/help', function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
-    ->name('dashboard');
+    ->name('dashboard.index');
 
 Route::get('/dashboard/recents', [DashboardController::class, 'recentCommunityTemplates'])
     ->middleware(['auth'])

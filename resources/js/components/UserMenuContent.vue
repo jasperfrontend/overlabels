@@ -3,7 +3,7 @@ import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from 'lucide-vue-next';
+import { LogOut } from 'lucide-vue-next';
 import { useAppearance } from '@/composables/useAppearance';
 import { Monitor, Moon, Sun } from 'lucide-vue-next';
 
@@ -37,7 +37,7 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
           <div class="flex rounded-lg gap-0 justify-between bg-neutral-100 dark:bg-neutral-800">
             <button
-              v-for="{ value, Icon, label } in tabs"
+              v-for="{ value, label } in tabs"
               :key="value"
               @click="updateAppearance(value)"
               :class="[
