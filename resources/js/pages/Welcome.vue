@@ -406,11 +406,9 @@ const activeTab = ref('template');
           <div class="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/terms" class="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" class="hover:text-foreground transition-colors">Privacy</Link>
-            <a href="https://github.com" target="_blank" rel="noopener" class="hover:text-foreground transition-colors">
-              <Github class="h-5 w-5" />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener" class="hover:text-foreground transition-colors">
-              <Twitter class="h-5 w-5" />
+            <a href="https://github.com/jasperfrontend/overlabels" target="_blank" rel="noopener" class="hover:text-foreground transition-colors flex">
+              Overlabels on Github
+              <Github class="h-5 w-5 ml-2" />
             </a>
           </div>
         </div>
