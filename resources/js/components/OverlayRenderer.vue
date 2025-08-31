@@ -32,7 +32,6 @@ import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
-import { html } from '@codemirror/lang-html';
 
 interface AlertData {
   head: string;
@@ -143,15 +142,15 @@ function injectStyle(styleString: string) {
 
 function injectHead(headString: string | null) {
   if (!headString) return;
-  
+
   // Parse the head HTML string to extract individual elements
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<head>${headString}</head>`, 'text/html');
   const headElements = doc.head.children;
-  
+
   // Remove any previously injected custom head elements
   document.querySelectorAll('[data-overlay-head]').forEach(el => el.remove());
-  
+
   // Inject each element from the template head into the actual document head
   Array.from(headElements).forEach(element => {
     const clonedElement = element.cloneNode(true) as Element;
