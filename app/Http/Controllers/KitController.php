@@ -29,7 +29,7 @@ class KitController extends Controller
             ->limit(10)
             ->get();
 
-        return Inertia::render('Kits/index', [
+        return Inertia::render('kits/index', [
             'kits' => $kits,
             'recentPublicKits' => $recentPublicKits,
         ]);
