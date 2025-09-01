@@ -38,7 +38,7 @@
 {!! $html !!}
 
 @if(!$isParsed)
-    <div style="position: fixed; bottom: 0; right: 0; width: 100%; box-sizing: border-box; background: rgba(47,46,66,0.9); color: white; padding: 5px 5px 5px 10px; border-radius: 0; font: 11px sans-serif; z-index: 1000;">
+    <div style="position: fixed; top: 0; right: 0; width: 100%; box-sizing: border-box; background: rgba(47,46,66,0.9); color: white; padding: 5px 5px 5px 10px; border-radius: 0; font: 11px sans-serif; z-index: 1000;">
         <div style="display: flex; flex-flow: row nowrap; align-items: center; justify-content: space-between">
             <div>
                 Overlabels Preview Mode - Template tags not parsed.
