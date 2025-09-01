@@ -75,7 +75,7 @@
                         </button>
                     </form>
                 @else
-                    <button onclick="window.location.href='/'" title="Log in to Overlabels to fork this overlay to your account" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;">
+                    <button onclick="window.location.href='/dashboard'" title="Log in to Overlabels to fork this overlay to your account" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;">
                        Login to fork
                     </button>
                 @endauth

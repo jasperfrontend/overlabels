@@ -183,6 +183,21 @@ const copyTag = async (tagName: string) => {
   }
 };
 
+const copyAllTags = async () => {
+  try {
+    const allTags = tagList.value.map(tag => tag.display_tag).join(' ');
+    await navigator.clipboard.writeText(allTags);
+    toastMessage.value = `Copied ${tagList.value.length} tags to clipboard`;
+    toastType.value = 'success';
+    showToast.value = true;
+  } catch (error) {
+    console.error('Failed to copy:', error);
+    toastMessage.value = 'Failed to copy tags';
+    toastType.value = 'error';
+    showToast.value = true;
+  }
+};
+
 onMounted(() => {
   useGetTemplateTags();
 });
@@ -205,9 +220,14 @@ onMounted(() => {
 
   </div>
 
-  <button @click.prevent="showUserTagInfo = true" class="mb-4 cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
-    IMPORTANT INFO ABOUT <code>user_*</code> TAGS
-  </button>
+  <div class="flex gap-2 mb-4">
+    <button @click.prevent="showUserTagInfo = true" class="cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
+      IMPORTANT INFO ABOUT <code>user_*</code> TAGS
+    </button>
+    <button @click.prevent="copyAllTags" class="cursor-pointer bg-violet-500 text-white border border-violet-600 px-4 py-2 rounded hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700">
+      Copy All Tags
+    </button>
+  </div>
   <!-- Regular Template Tags -->
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     <div class="bg-sidebar-accent border border-sidebar rounded-sm p-4" v-for="(tags, category) in groupedTags" :key="category">
