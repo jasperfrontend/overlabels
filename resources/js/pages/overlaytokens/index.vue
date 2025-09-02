@@ -119,16 +119,16 @@ const formatDate = (date: string | null | undefined) =>
         <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
           <div class="flex items-start gap-4 justify-self-start">
             <div>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ token.name }}</h3>
+              <h3 class="text-lg -mt-0.5 mr-1 font-semibold">{{ token.name }}</h3>
             </div>
             <div class="mt-0.5">
-              <p class="text-sm text-accent-foreground/50">
+              <p class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
                 <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Prefix: <code class="bg-accent-foreground/10 px-1">{{ token.prefix }}...</code>
+                Prefix: <code class="bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">{{ token.prefix }}...</code>
               </p>
             </div>
             <div class="mt-0.5">
-              <p class="text-sm text-accent-foreground/50" title="Access Count">
+              <p class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Access Count">
                 <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
               </p>
@@ -142,19 +142,19 @@ const formatDate = (date: string | null | undefined) =>
 
           <div class="mt-2 flex items-start gap-4 justify-self-start">
             <div class="mt-0.5">
-              <p class="text-sm text-accent-foreground/50">
+              <p class="text-sm text-sidebar-foreground/80">
                 <CalendarIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 Created: {{ formatDate(token.created_at) }}
               </p>
             </div>
             <div class="mt-0.5">
-              <p v-if="token.expires_at" class="text-sm text-accent-foreground/50">
+              <p v-if="token.expires_at" class="text-sm text-sidebar-foreground/80">
                 <AlarmClockOffIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 Expires: {{ formatDate(token.expires_at) }}
               </p>
             </div>
             <div class="mt-0.5">
-              <p v-if="token.last_used_at" class="text-sm text-accent-foreground/50">
+              <p v-if="token.last_used_at" class="text-sm text-sidebar-foreground/80">
                 <ClockArrowUpIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 Last viewed: {{ formatDate(token.last_used_at) }}
               </p>

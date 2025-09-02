@@ -161,6 +161,7 @@ const activeTab = ref('template');
       </div>
     </section>
 
+
     <!-- How It Works -->
     <section id="how-it-works" class="py-20 sm:py-32 bg-muted/30 dark:bg-gray-900/30">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -274,6 +275,24 @@ const activeTab = ref('template');
         </div>
       </div>
     </section>
+
+
+    <!-- assign templates to events -->
+    <section id="how-it-works" class="py-20 sm:py-32 bg-muted/30 dark:bg-gray-900/30">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl sm:text-4xl font-bold mb-4">Simply add Alert Templates to your Twitch events</h2>
+          <p class="text-muted-foreground dark:text-gray-400 max-w-2xl mx-auto mb-8">
+            The easy-to-use interface makes assigning templates to events a breeze.
+          </p>
+          <div class="max-w-6xl mx-auto">
+            <img src="https://jasper.monster/sharex/firefox_fxpyxTlXzq.png" alt="" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+
 
     <!-- Benefits -->
     <section class="py-20 sm:py-32">

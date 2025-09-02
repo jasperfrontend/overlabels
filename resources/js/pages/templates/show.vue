@@ -55,7 +55,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="flex items-start justify-between">
           <div>
             <Heading :title="props.template?.name" :description="props.template?.description" />
-            <!-- <pre>{{$page.props.template}}</pre>-->
           </div>
           <div class="flex space-x-2">
             <a
@@ -110,21 +109,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Meta Information -->
         <div class="mt-4 flex items-center space-x-6 text-sm text-muted-foreground">
-          <div class="flex items-center">
-            <img :src="props.template?.owner.avatar" :alt="props.template?.owner.name" class="mr-2 h-6 w-6 rounded-full" />
+          <div class="flex items-center text-sm bg-sidebar p-1 pr-2.5 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+            <img :src="props.template?.owner.avatar" :alt="props.template?.owner.name" class="mr-2 size-5 rounded-full" />
             <span>{{ props.template?.owner.name }}</span>
           </div>
-          <div>
-            <EyeIcon class="mr-1 inline-block h-4 w-4 text-white/50" />
+          <div class="text-sm bg-sidebar p-1 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+            <EyeIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
             <span class="font-medium">{{ props.template?.view_count }}</span>
             <span class="ml-1">{{ props.template?.view_count === 1 ? 'view' : 'views' }}</span>
           </div>
-          <div>
-            <GitForkIcon class="mr-1 inline-block h-4 w-4 text-white/50" />
+          <div class="text-sm bg-sidebar p-1 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+            <GitForkIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
             <span class="font-medium">{{ props.template?.forks_count }}</span> <span class="ml-1">forks</span>
           </div>
-          <div v-if="props.template?.fork_parent">
-            <SplitIcon class="mr-1 inline-block h-4 w-4 text-white/50" />
+          <div v-if="props.template?.fork_parent" class="text-sm bg-sidebar p-1 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+            <SplitIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
             Forked from
             <Link
               :href="route('templates.show', props.template?.fork_parent)"
@@ -133,14 +132,14 @@ const breadcrumbs: BreadcrumbItem[] = [
               {{ props.template?.fork_parent.name }}
             </Link>
           </div>
-          <div>
+          <div class="text-sm bg-sidebar p-1 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
             <TooltipBase
               tt-content-class="tooltip-base tooltip-content"
               align="center"
               side="top"
             >
               <template #trigger>
-                <span :class="props.template?.is_public ? 'text-green-400' : 'text-violet-400'" class="font-medium">
+                <span :class="props.template?.is_public ? 'text-green-500' : 'text-violet-400'" class="font-medium">
                   {{ props.template?.is_public ? 'Public' : 'Private' }}
                 </span>
               </template>
@@ -166,11 +165,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                 :value="publicUrl"
                 id="public-url"
                 readonly
-                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-accent-foreground transition"
+                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-2 focus:border-gray-400 focus:text-accent-foreground transition"
               />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-none rounded-r-md border-2 border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
@@ -183,11 +182,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                 id="auth-url"
                 :value="authUrl"
                 readonly
-                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-gray-400 focus:text-accent-foreground transition"
+                class="peer flex-1 rounded-l-md border border-sidebar px-3 py-2 text-sm text-muted-foreground outline-none focus:border-2 focus:border-gray-400 focus:text-accent-foreground transition"
               />
               <button
                 @click="copyToClipboard(authUrl, 'Authenticated URL')"
-                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-r-md border border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
+                class="btn btn-sm peer-focus:bg-gray-400/20 hover:bg-gray-400/40 peer-focus:border-gray-400 rounded-none rounded-r-md border-2 border-sidebar border-l-0 px-4 py-2 text-sm hover:ring-0"
               >
                 Copy
               </button>
@@ -204,20 +203,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Code Tabs -->
       <div class="overflow-hidden rounded-sm border border-sidebar">
-        <div class="flex border-b">
+        <div class="flex border-b border-b-sidebar">
           <button
             v-for="tab in ['head', 'html', 'css']"
             :key="tab"
             @click="activeTab = tab"
             :class="[
               'cursor-pointer px-8 py-2.5 text-sm font-medium transition-colors',
-              activeTab === tab ? 'border-accent-foreground/40 bg-sidebar text-accent-foreground' : 'hover:text-gray-300',
+              activeTab === tab ? 'border-sidebar-accent-foreground/40 bg-sidebar text-accent-foreground' : 'hover:text-gray-300',
             ]"
           >
             {{ tab }}
           </button>
         </div>
-        <div class="bg-accent/20 text-gray-700 dark:text-accent-foreground p-4 relative">
+        <div class="bg-sidebar-accent text-gray-700 dark:text-accent-foreground p-4 relative">
           <pre class="overflow-auto max-h-[50vh]"><code class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
           <button
             @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"

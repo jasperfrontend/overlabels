@@ -34,16 +34,24 @@ const handleFork = () => {
 };
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const dateObj = new Date(date);
+
+  return {
+    display: dateObj.toLocaleDateString('en-GB', {
+      month: 'short',
+      day: 'numeric',
+    }),
+    full: dateObj.toLocaleDateString('en-GB', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  };
 };
 </script>
 
 <template>
-  <Card class="group relative flex h-full flex-col overflow-hidden">
+  <Card class="group relative flex h-full flex-col overflow-hidden border border-sidebar-foreground/30 dark:border-sidebar hover:bg-sidebar-accent/90 transition hover:ring-2 ring-violet-300/30">
     <CardHeader class="px-4 pb-4">
       <div>
         <div class="flex items-start justify-between">
@@ -58,12 +66,14 @@ const formatDate = (date: string) => {
           </CardTitle>
           <div class="flex gap-2">
 
-            <span class="text-xs text-muted-foreground" title="Last updated">
-            {{ formatDate(template.updated_at) }}
-          </span>
+            <span
+              :title="`Created: ${formatDate(template.created_at).full}\nUpdated: ${formatDate(template.updated_at).full}`"
+              class="text-xs bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+              {{ formatDate(template.created_at).display }}
+            </span>
           </div>
         </div>
-        <CardDescription v-if="template.description" class="line-clamp-2 text-sm">
+        <CardDescription v-if="template.description" class="line-clamp-2 text-sm text-violet-900 dark:text-violet-100">
           {{ template.description }}
         </CardDescription>
       </div>
@@ -72,20 +82,23 @@ const formatDate = (date: string) => {
     <CardContent class="flex flex-1 flex-col justify-between space-y-2">
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4 text-sm text-muted-foreground">
+          <div class="flex items-center gap-2 text-sm">
+
             <div
-              class="flex items-center gap-1"
+              class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition"
               :title="template.is_public ? 'Public template' : 'Private template'"
             >
               <component :is="template.is_public ? Globe : Lock" class="h-4 w-4" />
               <span v-if="template.is_public">Public</span>
               <span v-else>Private</span>
             </div>
-            <div class="flex items-center gap-1" title="Views">
+
+            <div class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Views">
               <Eye class="h-4 w-4" />
               <span>{{ template.view_count || 0 }}</span>
             </div>
-            <div class="flex items-center gap-1" title="Forks">
+
+            <div class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Forks">
               <GitFork class="h-4 w-4" />
               <span>{{ template.fork_count || 0 }}</span>
             </div>
@@ -95,9 +108,9 @@ const formatDate = (date: string) => {
 
         </div>
 
-        <div v-if="showOwner && template.owner" class="flex items-center gap-2 border-t pt-3">
+        <div v-if="showOwner && template.owner" class="flex items-center gap-2 border-t border-t-sidebar pt-3 mt-4">
           <img v-if="template.owner.avatar" :src="template.owner.avatar" :alt="template.owner.name" class="h-6 w-6 rounded-full" />
-          <span class="truncate text-sm text-muted-foreground"> by {{ template.owner.name }} </span>
+          <span class="truncate text-sm text-sidebar-foreground/80"> by {{ template.owner.name }} </span>
         </div>
       </div>
 

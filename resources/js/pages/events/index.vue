@@ -199,21 +199,21 @@ const saveAllMappings = async () => {
                 <h3 class="font-medium text-foreground">
                   {{ eventTypes[mapping.event_type] }}
                 </h3>
-                <span class="font-mono text-xs text-muted-foreground">
+                <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
                   {{ mapping.event_type }}
                 </span>
               </div>
 
               <!-- Quick Status when enabled -->
               <div v-if="mapping.enabled" class="mt-1 flex items-center gap-4 text-sm">
-                <span class="flex items-center gap-1.5" :class="mapping.template_id ? 'text-muted-foreground' : 'text-yellow-600'">
+                <span class="flex items-center gap-1.5" :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                   <span class="font-medium">Template:</span>
                   {{ getTemplateName(mapping.template_id) }}
                 </span>
-                <span class="text-muted-foreground">•</span>
-                <span class="text-muted-foreground"> {{ mapping.duration_ms / 1000 }}s </span>
-                <span class="text-muted-foreground">•</span>
-                <span class="text-muted-foreground">
+                <span class="text-sidebar-foreground/80">•</span>
+                <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
+                <span class="text-sidebar-foreground/80">•</span>
+                <span class="text-sidebar-foreground/80">
                   {{ transitionTypes[mapping.transition_type] }}
                 </span>
               </div>

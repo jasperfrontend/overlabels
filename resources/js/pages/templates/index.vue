@@ -160,7 +160,7 @@ const getEventMapping = (template: any) => {
               @input="debounceSearch"
               type="text"
               placeholder="Search templates..."
-              class="h-[38px] w-full rounded-sm border border-sidebar bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              class="h-[40px] w-full rounded-sm border border-sidebar bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
               id="filter-search"
             />
           </div>
@@ -256,16 +256,19 @@ const getEventMapping = (template: any) => {
             <tbody class="divide-y divide-sidebar">
               <tr v-for="template in templates?.data" :key="template.id" class="group hover:bg-sidebar">
                 <td class="max-w-[400px] px-4 py-2">
-                  <div>
-                    <div class="relative flex items-center gap-2">
-                      <h3 class="max-w-[250px] truncate text-sm font-medium text-foreground dark:text-foreground" :title="template.name">
+                  <div class="pt-2 pb-1.5">
+                    <div class="relative flex items-center gap-0">
+                      <h3
+                        class="max-w-[450px] truncate font-semibold text-base leading-snug text-foreground dark:text-foreground mb-0"
+                        :title="template.name"
+                      >
                         {{ template.name }}
                       </h3>
 
                       <div class="absolute top-0 right-0 -mt-1 hidden items-center justify-end gap-1 p-2 px-4 group-hover:flex">
                         <Link
                           :href="route('templates.show', template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                          class="rounded-full p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="View Details"
                         >
                           <EyeIcon class="h-4 w-4" />
@@ -273,7 +276,7 @@ const getEventMapping = (template: any) => {
                         <Link
                           v-if="template.owner_id === $page.props.auth.user.id"
                           :href="route('templates.edit', template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                          class="rounded-full p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Edit"
                         >
                           <PencilIcon class="h-4 w-4" />
@@ -281,7 +284,7 @@ const getEventMapping = (template: any) => {
                         <button
                           v-if="template.is_public || template.owner_id === $page.props.auth.user.id"
                           @click="forkTemplate(template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                          class="rounded-full p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Fork"
                         >
                           <GitForkIcon class="h-4 w-4" />
@@ -289,7 +292,7 @@ const getEventMapping = (template: any) => {
                         <button
                           v-if="template.owner_id === $page.props.auth.user.id"
                           @click="deleteTemplate(template)"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                          class="rounded-full p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Delete"
                         >
                           <Trash2Icon class="h-4 w-4" />
@@ -298,19 +301,24 @@ const getEventMapping = (template: any) => {
                           v-if="template.is_public"
                           :href="`/overlay/${template.slug}/public`"
                           target="_blank"
-                          class="rounded-full p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                          class="rounded-full p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-foreground"
                           title="Preview"
                         >
                           <ExternalLinkIcon class="h-4 w-4" />
                         </a>
                       </div>
                     </div>
-                    <p class="mt-0.5 max-w-[350px] truncate text-xs text-muted-foreground">{{ template.description || 'No description' }}</p>
+                    <p
+                      :title="template.description || 'No description'"
+                      class="max-w-[450px] truncate text-sm leading-relaxed text-sidebar-foreground/70"
+                    >
+                      {{ template.description || 'No description' }}
+                    </p>
                   </div>
                 </td>
                 <td class="px-3 py-2">
                   <div
-                    class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium"
+                    class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-sm font-medium"
                     :class="
                       template.type === 'alert'
                         ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
@@ -325,20 +333,20 @@ const getEventMapping = (template: any) => {
                 <td class="px-3 py-2">
                   <div v-if="getEventMapping(template)" class="flex items-center gap-1">
                     <span :class="eventTypeColors[getEventMapping(template).event_type]" class="inline-block h-2 w-2 rounded-full"></span>
-                    <span class="text-xs text-muted-foreground">
+                    <span class="text-sm text-muted-foreground">
                       {{ eventTypeLabels[getEventMapping(template).event_type] }}
                     </span>
                   </div>
-                  <span v-else class="text-xs text-muted-foreground">-</span>
+                  <span v-else class="text-sm text-muted-foreground">-</span>
                 </td>
                 <td class="px-3 py-2">
                   <div class="flex items-center gap-1.5">
                     <img :src="template?.owner?.avatar" :alt="template?.owner?.name" class="h-5 w-5 rounded-full" />
-                    <span class="max-w-[100px] truncate text-xs text-foreground dark:text-foreground">{{ template.owner.name }}</span>
+                    <span class="max-w-[100px] truncate text-sm text-foreground dark:text-foreground">{{ template.owner.name }}</span>
                   </div>
                 </td>
                 <td class="px-3 py-2 text-center">
-                  <div class="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <div class="flex items-center justify-center gap-2 text-sm text-sidebar-foreground/80">
                     <div class="flex items-center gap-0.5">
                       <EyeIcon class="h-4 w-4" />
                       <span>{{ template.view_count || 0 }}</span>
@@ -350,7 +358,7 @@ const getEventMapping = (template: any) => {
                   </div>
                 </td>
                 <td class="px-3 py-2">
-                  <span class="text-xs text-muted-foreground">{{ formatDate(template.created_at) }}</span>
+                  <span class="text-sm text-sidebar-foreground/80">{{ formatDate(template.created_at) }}</span>
                 </td>
                 <td class="px-3 py-2">
                   <div class="inline-flex items-center gap-1">

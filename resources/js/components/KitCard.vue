@@ -65,11 +65,11 @@ const formatDate = (date: string) => {
         class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
     </div>
-    <div v-else class="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+    <div v-else class="flex aspect-video w-full items-center justify-center">
       <Package class="h-12 w-12 text-primary/40" />
     </div>
 
-    <CardHeader class="px-4 pb-4 bg-gradient-to-b from-accent to-transparent py-4">
+    <CardHeader class="px-4 pb-4 py-4">
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
           <CardTitle class="min-w-0 flex-1 text-base">
@@ -87,7 +87,7 @@ const formatDate = (date: string) => {
               :class="kit.is_public ? 'bg-green-500/10' : 'bg-violet-500/10'"
               :title="kit.is_public ? 'Public kit' : 'Private kit'"
             >
-              <component :is="kit.is_public ? Globe : Lock" :class="['h-4 w-4', kit.is_public ? 'text-green-600' : 'text-violet-600']" />
+              <component :is="kit.is_public ? Globe : Lock" :class="['size-4', kit.is_public ? 'text-green-600' : 'text-violet-600']" />
             </div>
           </div>
         </div>
@@ -100,34 +100,34 @@ const formatDate = (date: string) => {
     <CardContent class="flex flex-1 flex-col justify-between space-y-2">
       <div class="space-y-3">
         <!-- Templates count -->
-        <div v-if="kit.templates" class="flex items-center gap-2 text-sm text-muted-foreground">
-          <Package class="h-4 w-4" />
-          <span>{{ kit.templates.length }} template{{ kit.templates.length !== 1 ? 's' : '' }}</span>
+        <div v-if="kit.templates" class="flex items-center gap-2 text-sm mb-4">
+          <Package class="size-4" />
+          <span>Contains {{ kit.templates.length }} template{{ kit.templates.length !== 1 ? 's' : '' }}</span>
         </div>
 
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4 text-sm text-muted-foreground">
+          <div class="flex items-center gap-4 text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
             <div class="flex items-center gap-1.5" title="Forks">
-              <GitFork class="h-4 w-4" />
+              <GitFork class="size-4" />
               <span>{{ kit.fork_count || 0 }}</span>
             </div>
           </div>
 
-          <span class="text-xs text-muted-foreground" title="Last updated">
+          <span class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Last updated">
             {{ formatDate(kit.updated_at) }}
           </span>
         </div>
 
         <div v-if="showOwner && kit.owner" class="flex items-center gap-2 border-t pt-3">
           <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
-          <span class="truncate text-sm text-muted-foreground"> by {{ kit.owner.name }} </span>
+          <span class="truncate text-sm"> by {{ kit.owner.name }} </span>
         </div>
       </div>
 
       <div class="flex gap-2 pt-2">
         <Link v-if="isOwnKit" :href="`/kits/${kit.id}/edit`" class="btn btn-sm btn-secondary flex text-center">
           Edit
-          <Pencil class="ml-2 h-4 w-4" />
+          <Pencil class="ml-2 size-4" />
         </Link>
 
         <button
@@ -137,12 +137,12 @@ const formatDate = (date: string) => {
           title="Fork kit"
         >
           Fork
-          <GitFork class="ml-1 h-4 w-4" />
+          <GitFork class="ml-1 size-4" />
         </button>
 
         <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-primary">
           View
-          <Eye class="ml-2 h-4 w-4" />
+          <Eye class="ml-2 size-4" />
         </Link>
 
         <button
@@ -151,7 +151,7 @@ const formatDate = (date: string) => {
           @click="handleDelete"
           title="Delete kit"
         >
-          <Trash2 class="h-4 w-4" />
+          <Trash2 class="size-4" />
         </button>
       </div>
     </CardContent>

@@ -10,7 +10,7 @@ defineProps<Props>();
 <template>
     <div class="space-y-0.5">
         <h2 class="text-xl font-semibold tracking-tight">{{ title }}</h2>
-        <p v-if="description" class="text-sm text-muted-foreground">
+        <p v-if="description" class="text-sm text-violet-900 dark:text-violet-100">
             {{ description }}
         </p>
     </div>
