@@ -29,6 +29,8 @@ class User extends Authenticatable
         'token_expires_at',
         'twitch_data',
         'email_verified_at',
+        'eventsub_connected_at',
+        'eventsub_auto_connect',
     ];
 
     /**
@@ -51,6 +53,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'token_expires_at' => 'datetime',
+            'eventsub_connected_at' => 'datetime',
+            'eventsub_auto_connect' => 'boolean',
             'twitch_data' => 'array',
             'password' => 'hashed',
         ];
@@ -69,5 +73,22 @@ class User extends Authenticatable
     public function storageAccounts(): User|HasMany
     {
         return $this->hasMany(StorageAccount::class);
+    }
+
+    public function eventsubSubscriptions(): User|HasMany
+    {
+        return $this->hasMany(UserEventsubSubscription::class);
+    }
+
+    public function isEventSubConnected(): bool
+    {
+        return $this->eventsub_connected_at !== null;
+    }
+
+    public function hasActiveEventSubSubscriptions(): bool
+    {
+        return $this->eventsubSubscriptions()
+            ->where('status', 'enabled')
+            ->exists();
     }
 }

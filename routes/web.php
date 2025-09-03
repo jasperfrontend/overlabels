@@ -150,6 +150,7 @@ Route::get('/auth/callback/twitch', function () {
 
         // Always match by Twitch ID only
         $user = User::where('twitch_id', $twitchUser->getId())->first();
+        $isNewUser = !$user;
 
         if (!$user) {
             // Create a new user if not found
@@ -164,6 +165,7 @@ Route::get('/auth/callback/twitch', function () {
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
                 'email_verified_at' => now(),
                 'password' => bcrypt(Str::random(32)),
+                'eventsub_auto_connect' => true, // New users default to auto-connect
             ]);
         } else {
             // Existing user — update tokens and data
@@ -178,6 +180,27 @@ Route::get('/auth/callback/twitch', function () {
         }
 
         Auth::login($user);
+
+        // Auto-setup EventSub subscriptions for new users or users who have auto-connect enabled
+        if (($isNewUser || $user->eventsub_auto_connect) && !$user->eventsub_connected_at) {
+            try {
+                Log::info("Dispatching EventSub setup for user", [
+                    'user_id' => $user->id,
+                    'twitch_id' => $user->twitch_id,
+                    'is_new_user' => $isNewUser,
+                ]);
+                
+                // Dispatch the job to setup EventSub subscriptions
+                \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, false);
+                
+            } catch (Exception $e) {
+                Log::warning("Failed to dispatch EventSub setup job", [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail authentication if EventSub setup fails
+            }
+        }
 
         // Redirect to intended URL or dashboard if no intended URL
         return redirect()->intended('/dashboard');
@@ -240,6 +263,17 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/', [App\Http\Controllers\EventTemplateMappingController::class, 'store'])->name('store');
         Route::put('/bulk', [App\Http\Controllers\EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
         Route::delete('/{eventType}', [App\Http\Controllers\EventTemplateMappingController::class, 'destroy'])->name('destroy');
+    });
+
+    // EventSub Management
+    Route::prefix('eventsub')->name('eventsub.')->group(function () {
+        Route::get('/', [App\Http\Controllers\UserEventSubController::class, 'index'])->name('index');
+        Route::post('/connect', [App\Http\Controllers\UserEventSubController::class, 'connect'])->name('connect');
+        Route::post('/disconnect', [App\Http\Controllers\UserEventSubController::class, 'disconnect'])->name('disconnect');
+        Route::post('/refresh', [App\Http\Controllers\UserEventSubController::class, 'refresh'])->name('refresh');
+        Route::post('/auto-connect', [App\Http\Controllers\UserEventSubController::class, 'toggleAutoConnect'])->name('auto-connect');
+        Route::get('/status', [App\Http\Controllers\UserEventSubController::class, 'status'])->name('status');
+        Route::get('/admin/stats', [App\Http\Controllers\UserEventSubController::class, 'adminStats'])->name('admin.stats');
     });
 
     // Template tag generator interface
