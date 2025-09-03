@@ -132,7 +132,10 @@ class TwitchEventSubService
      */
     public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        // Get app access token for follow events (v2 requires app token)
+        $appToken = $this->getAppAccessToken();
+        
+        if (!$appToken) {
             return [
                 'error' => true,
                 'message' => 'Could not get app access token for follow events'
@@ -155,19 +158,18 @@ class TwitchEventSubService
         ];
 
         // Use APP access token for follow events (not user token)
-        return $this->createSubscription($userAccessToken, $payload);
+        return $this->createSubscription($appToken, $payload);
     }
 
     /**
-     * Subscribe to channel subscription events (Requires app access token)
+     * Subscribe to channel subscription events (Uses user access token)
      */
     public function subscribeToSubscriptions(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        // Get app access token for subscription events
         if (!$userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'Could not get app access token for subscription events'
+                'message' => 'User access token required for subscription events'
             ];
         }
 
@@ -184,7 +186,7 @@ class TwitchEventSubService
             ]
         ];
 
-        // Use app access token for subscription events
+        // Use user access token for subscription events
         return $this->createSubscription($userAccessToken, $payload);
     }
 
@@ -238,7 +240,7 @@ class TwitchEventSubService
         if (!$userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'Could not get app access token for gift subscription events'
+                'message' => 'User access token required for gift subscription events'
             ];
         }
 
@@ -266,12 +268,96 @@ class TwitchEventSubService
         if (!$userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'Could not get app access token for subscription message events'
+                'message' => 'User access token required for subscription message events'
             ];
         }
 
         $payload = [
             'type' => 'channel.subscription.message',
+            'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $userId
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret')
+            ]
+        ];
+
+        return $this->createSubscription($userAccessToken, $payload);
+    }
+    
+    /**
+     * Subscribe to channel point redemption events (add)
+     */
+    public function subscribeToChannelPointsRedemptionAdd(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    {
+        if (!$userAccessToken) {
+            return [
+                'error' => true,
+                'message' => 'User access token required for channel point redemption events'
+            ];
+        }
+
+        $payload = [
+            'type' => 'channel.channel_points_custom_reward_redemption.add',
+            'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $userId
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret')
+            ]
+        ];
+
+        return $this->createSubscription($userAccessToken, $payload);
+    }
+    
+    /**
+     * Subscribe to channel point redemption events (update)
+     */
+    public function subscribeToChannelPointsRedemptionUpdate(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    {
+        if (!$userAccessToken) {
+            return [
+                'error' => true,
+                'message' => 'User access token required for channel point redemption update events'
+            ];
+        }
+
+        $payload = [
+            'type' => 'channel.channel_points_custom_reward_redemption.update',
+            'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $userId
+            ],
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => $callbackUrl,
+                'secret' => config('app.twitch_webhook_secret')
+            ]
+        ];
+
+        return $this->createSubscription($userAccessToken, $payload);
+    }
+    
+    /**
+     * Subscribe to stream offline events
+     */
+    public function subscribeToStreamOffline(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    {
+        if (!$userAccessToken) {
+            return [
+                'error' => true,
+                'message' => 'User access token required for stream offline events'
+            ];
+        }
+
+        $payload = [
+            'type' => 'stream.offline',
             'version' => '1',
             'condition' => [
                 'broadcaster_user_id' => $userId
