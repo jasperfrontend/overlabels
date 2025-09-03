@@ -113,4 +113,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Signup Notification Email
+    |--------------------------------------------------------------------------
+    |
+    | Email address that will receive notifications when new users sign up
+    | via Twitch OAuth. Leave empty to disable signup notifications.
+    |
+    */
+
+    'signup_notification_email' => env('SIGNUP_NOTIFICATION_EMAIL', 'jasper@emailjasper.com'),
+
 ];

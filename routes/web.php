@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Laravel\Socialite\Two\AbstractProvider;
+use App\Events\UserRegistered;
 
 //use App\Http\Controllers\StorageConnectionController;
 //use App\Http\Controllers\StorageBrowserController;
@@ -167,6 +168,9 @@ Route::get('/auth/callback/twitch', function () {
                 'password' => bcrypt(Str::random(32)),
                 'eventsub_auto_connect' => true, // New users default to auto-connect
             ]);
+
+            // Dispatch event for new user registration
+            UserRegistered::dispatch($user);
         } else {
             // Existing user — update tokens and data
             $user->update([

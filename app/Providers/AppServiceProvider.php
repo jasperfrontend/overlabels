@@ -73,5 +73,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
             $event->extendSocialite('twitch', \SocialiteProviders\Twitch\Provider::class);
         });
+
+        // Register user registration event listener
+        Event::listen(
+            \App\Events\UserRegistered::class,
+            \App\Listeners\SendSignupNotification::class
+        );
     }
 }
