@@ -129,7 +129,6 @@ const submitForm = () => {
 };
 
 const insertTag = (editor: string): void => {
-  console.log('insertTag called for editor:', editor);
   currentEditor.value = editor;
 
   axios.get<TagsResponse>('/api/template-tags')

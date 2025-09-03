@@ -32,13 +32,13 @@ export const useEventsStore = defineStore('events', {
     getEventsByType: (state) => (eventType: string) => {
       return state.events.filter(event => event.type === eventType);
     },
-    
+
     getRecentEventsByType: (state) => (eventType: string, limit = 10) => {
       return state.recentEvents
         .filter(event => event.type === eventType)
         .slice(0, limit);
     },
-    
+
     getStatsByType: (state) => (eventType: string) => {
       const events = state.events.filter(event => event.type === eventType);
       return {
@@ -54,7 +54,6 @@ export const useEventsStore = defineStore('events', {
      * Apply a normalized event to the store using EVENT_RULES.
      */
     processEventRules(ev: NormalizedEvent) {
-      console.log('Processing event rules:', ev.type, ev.id);
       const rules = EVENT_RULES[ev.type];
       if (!rules) return;
 
@@ -98,13 +97,12 @@ export const useEventsStore = defineStore('events', {
      */
     addEvent(ev: NormalizedEvent) {
       if (this.events.find(e => e.id === ev.id)) {
-        console.log('Event already exists, skipping:', ev.id);
         return;
       }
 
       this.events.push(ev);
       this.recentEvents.unshift(ev);
-      
+
       if (this.recentEvents.length > this.maxRecentEvents) {
         this.recentEvents = this.recentEvents.slice(0, this.maxRecentEvents);
       }
@@ -117,17 +115,14 @@ export const useEventsStore = defineStore('events', {
         }));
       }
 
-      console.log('Event added to store:', ev.type, ev.id);
     },
 
     /**
      * Public method: feed raw EventSub payload into the system.
      */
     handleRawEvent(raw: any) {
-      console.log('Raw event received:', raw);
       const ev = normalizeEvent(raw);
-      console.log('Normalized event:', ev);
-      
+
       this.addEvent(ev);
     },
 

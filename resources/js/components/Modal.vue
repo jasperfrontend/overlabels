@@ -15,7 +15,6 @@ const closeable = props.closeable;
 const emit = defineEmits(['close']);
 
 watch(() => props.show, (newValue) => {
-  console.log('Modal show prop changed:', newValue);
   if (newValue) {
     document.body.style.overflow = 'hidden';
   } else {

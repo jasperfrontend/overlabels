@@ -38,6 +38,5 @@ export function useEventSub(onMapped?: (event: any) => void) {
 
   echo.channel('twitch-events').listen('.twitch.event', (event: any) => {
     onMapped?.(event)
-    console.log('Incoming Twitch event:', event)
   })
 }

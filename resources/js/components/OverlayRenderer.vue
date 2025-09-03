@@ -4,7 +4,6 @@
     <!-- Dynamic Alert Overlay -->
     <transition
       :name="currentAlert?.transition || 'fade'"
-      @enter="onAlertEnter"
       @leave="onAlertLeave"
     >
       <div
@@ -214,7 +213,6 @@ function showAlert(alertData: AlertData) {
 
   // Show the alert
   currentAlert.value = alertData;
-  console.log('Showing alert for', alertData.duration, 'ms');
 
   // Auto-hide after duration
   alertTimeout.value = window.setTimeout(() => {
@@ -235,7 +233,6 @@ function hideAlert() {
   //   alertStyle.remove();
   // }
 
-  console.log('Alert hidden');
 }
 
 function injectAlertStyle(styleString: string) {
@@ -248,12 +245,8 @@ function injectAlertStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
-const onAlertEnter = () => {
-  console.log('Alert enter animation');
-};
 
 const onAlertLeave = () => {
-  console.log('Alert leave animation');
   eventStore.clearOverlayTriggers();
 };
 
@@ -276,7 +269,6 @@ onMounted(async () => {
 
     if (response.ok) {
       const json = await response.json();
-      console.log(json);
       head.value = json.template.head;
       rawHtml.value = json.template.html;
 
@@ -289,7 +281,6 @@ onMounted(async () => {
       userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
       injectStyle(css.value);
-      console.log(head.value);
       injectHead(head.value);
 
       document.title = json.meta?.name || 'Overlay';
@@ -331,16 +322,12 @@ onMounted(async () => {
 
 // Set up alert listener for broadcasted alerts
 function setupAlertListener() {
-  console.log('DEBUG: setupAlertListener called');
 
   if (!window.Echo) {
     console.error('ERROR: window.Echo is not available');
     return;
   }
 
-  console.log('DEBUG: window.Echo exists');
-
-  console.log('DEBUG: userId.value is:', userId.value);
   if (!userId.value) {
     console.warn('No user ID available for alert subscription');
     return;
@@ -348,22 +335,10 @@ function setupAlertListener() {
 
   // Listen for alert broadcasts on the user's channel
   const channelName = `alerts.${userId.value}`;
-  console.log('Setting up alert listener for channel:', channelName);
 
-  // Test if Echo is connected
-  try {
-    console.log('Echo connector state:', window.Echo.connector.pusher.connection.state);
-    console.log('Echo connector options:', {
-      key: window.Echo.options.key,
-      cluster: window.Echo.options.cluster,
-      encrypted: window.Echo.options.encrypted
-    });
-  } catch (error) {
-    console.error('Echo connection error:', error);
-  }
+
 
   // Use Laravel Echo to listen for real-time alert broadcasts
-  console.log('Creating Echo channel for:', channelName);
   const channel = window.Echo.channel(channelName);
 
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
@@ -381,7 +356,6 @@ function setupAlertListener() {
 }
 
 function handleAlertTriggered(event: any) {
-  console.log('Alert triggered via Echo:', event);
 
   const alertData = event.alert;
   if (!alertData) {
@@ -396,14 +370,6 @@ function handleAlertTriggered(event: any) {
     ...alertData.data
   };
 
-  // Debug logging to verify the merge
-  console.log('Merged data for alert:', {
-    staticDataKeys: Object.keys(data.value || {}),
-    eventDataKeys: Object.keys(alertData.data || {}),
-    mergedDataKeys: Object.keys(mergedData),
-    sampleStaticTag: mergedData['subscribers_total'],
-    sampleEventTag: mergedData['event.user_name']
-  });
 
   showAlert({
     head: alertData.head,

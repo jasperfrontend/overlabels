@@ -171,7 +171,7 @@ const revokeHash = async (hash: OverlayHash) => {
       page.props.flash.message = 'Hash revoked successfully';
       page.props.flash.type = 'success';
     } else {
-      console.log('Error revoking hash:', response);
+      console.error('Error revoking hash:', response);
       page.props.flash.message = 'Failed to revoke hash';
       page.props.flash.type = 'error';
     }
@@ -201,7 +201,7 @@ const regenerateHash = async (hash: OverlayHash) => {
       page.props.flash.message = 'Hash regenerated successfully';
       page.props.flash.type = 'success';
     } else {
-      console.log('Error regenerating hash:', response);
+      console.error('Error regenerating hash:', response);
       page.props.flash.message = 'Failed to regenerate hash';
       page.props.flash.type = 'error';
     }
@@ -231,7 +231,7 @@ const deleteHash = async (hash: OverlayHash) => {
       page.props.flash.message = 'Hash deleted successfully';
       page.props.flash.type = 'success';
     } else {
-      console.log('Error deleting hash:', response);
+      console.error('Error deleting hash:', response);
       page.props.flash.message = 'Failed to delete hash';
       page.props.flash.type = 'error';
     }
@@ -247,7 +247,6 @@ const copyUrl = async (url: string) => {
   try {
     await navigator.clipboard.writeText(url);
     // You could add a toast notification here
-    console.log('URL copied to clipboard');
     page.props.flash.message = 'URL copied to clipboard';
     page.props.flash.type = 'success';
   } catch (error) {

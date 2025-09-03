@@ -98,7 +98,6 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
 
   const getEventMetadata = (event: NormalizedEvent) => {
     const metadata: Record<string, any> = {};
-    console.log("💥 event: ",event);
     switch (event.type) {
       case 'channel.subscribe':
       case 'channel.subscription.message':

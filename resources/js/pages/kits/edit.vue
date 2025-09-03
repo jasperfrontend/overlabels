@@ -84,7 +84,6 @@ const uploadToCloudinary = () => {
       if (result.event === 'success') {
         form.thumbnail_url = result.info.secure_url;
         thumbnailPreview.value = result.info.secure_url;
-        console.log('Image uploaded successfully:', result.info.secure_url);
       }
     }
   );
@@ -98,18 +97,15 @@ const removeThumbnail = () => {
 };
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
-  console.log('toggleTemplate called:', { templateId, checked, currentIds: form.template_ids });
 
   if (checked) {
     // Add a template if not already included
     if (!form.template_ids.includes(templateId)) {
       form.template_ids = [...form.template_ids, templateId];
-      console.log('Added template:', templateId, 'New array:', form.template_ids);
     }
   } else {
     // Remove template
     form.template_ids = form.template_ids.filter(id => id !== templateId);
-    console.log('Removed template:', templateId, 'New array:', form.template_ids);
   }
 };
 

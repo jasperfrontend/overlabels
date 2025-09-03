@@ -17,7 +17,6 @@ window.Echo = new Echo({
   encrypted: true,
 });
 
-console.log('Echo configured for overlay with key:', import.meta.env.VITE_PUSHER_APP_KEY);
 
 // Mount the Vue app once the DOM is ready and window.__OVERLAY__ is available
 document.addEventListener('DOMContentLoaded', () => {

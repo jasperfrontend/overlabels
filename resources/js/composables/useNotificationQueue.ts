@@ -109,7 +109,6 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
 
     // Skip unknown/unsupported event types
     if (!supportedEventTypes.includes(event.type)) {
-      console.log(`[NotificationQueue] Skipping unsupported event type: ${event.type}`);
       return;
     }
 

@@ -151,7 +151,7 @@ function useGetTemplateTags(): void {
       processTags(tags);
     })
     .catch(() => {
-      console.log('Error retrieving tags from api');
+      console.error('Error retrieving tags from api');
     });
 }
 
