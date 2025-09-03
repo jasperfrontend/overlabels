@@ -19,14 +19,14 @@ const mainNavItems: NavItem[] = [
     icon: Users,
   },
   {
-    title: 'All Templates',
-    href: route('templates.index'),
-    icon: Building,
-  },
-  {
     title: 'Template kits',
     href: route('kits.index'),
     icon: LayoutGrid,
+  },
+  {
+    title: 'All Templates',
+    href: route('templates.index'),
+    icon: Building,
   },
   {
     title: 'Alerts Builder',
