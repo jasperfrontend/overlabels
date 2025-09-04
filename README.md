@@ -1,75 +1,104 @@
 # Welcome to Overlabels
 
-Overlabels is a dead-simple approach to OBS overlays. Where other providers offer a drag and drop editor, I figured: we can just write these in HTML and CSS. So with that idea in mind, Overlabels was born.
+Overlabels lets you create OBS overlays by writing HTML and CSS directly, rather than using drag-and-drop editors. This gives you complete control over your overlay design while keeping the workflow straightforward for anyone familiar with web development.
 
-## Just... HTML and CSS?
-Well yes, and no. It would be very nice if you could actually show your Twitch data in your OBS overlays, so I created a very easy to use template syntax. It's not pretty, but it's very functional and no other template parser will ever interfere with this. As I said here:
+## Getting Started
 
-https://x.com/xoverlabels/status/1963386310783303976
+1. Create an Overlabels account
+2. Generate a secure token for authentication
+3. Create your static overlay (the persistent container)
+4. Create event alert templates for different Twitch events
+5. Assign alerts to events in the Alerts Builder
+6. Add your overlay URL to OBS
 
-The Overlabels triple-bracket syntax is ugly, but functional. In fact it's:
+## How It Works
 
-- Too ugly for anyone to accidentally conflict with
-- Too simple for anyone to not understand
-- Too portable for anyone to complain about
+Overlabels uses a custom triple-bracket template syntax to inject Twitch data into your HTML. The syntax is intentionally distinctive - too unique to accidentally conflict with other code, simple enough to understand immediately, and portable across any HTML document.
 
-There are 2 different types of Template Syntax, based on two different Twitch APIs.
+There are two types of data available through the template syntax:
 
-1. The mostly static data, taken from the Twitch Helix API.
-2. Current events, taken from the Twitch EventSub API.
+1. **Static data** from the Twitch Helix API (follower counts, subscriber counts, stream category, etc.)
+2. **Event data** from the Twitch EventSub API (new followers, subscriptions, raids, etc.)
 
-The Helix data is perfect to create HTML/CSS overlays with for your stream. Show your current follower count, subscriber count, latest follower, latest subscriber, the current category you're streaming in and - since it's just HTML - any other static data you want to show.
+### Basic Template Example
 
-### A simple example
 ```html
-    <div class="stat-item">
-        <span class="stat-number">[[[followers_total]]]</span>
-        <span class="stat-label">Followers</span>
-    </div>
+<div class="stat-item">
+    <span class="stat-number">[[[followers_total]]]</span>
+    <span class="stat-label">Followers</span>
+</div>
 ```
-Rendered this will output: 1300 followers.
 
-### Another example
+This renders your current follower count, for example: "1300 Followers"
+
+### Conditional Template Syntax
+
+Overlabels includes a comparison engine for conditional rendering based on boolean, numerical, and string values:
+
 ```html
 [[[if:channel_language = en]]]
   <p>Welcome to our English stream!</p>
 [[[elseif:channel_language = es]]]
   <p>¡Bienvenidos a nuestro stream en Español!</p>
-[[[endif]]] 
+[[[endif]]]
 ```
-Here we introduce the Conditional Template Syntax. This is a rather powerful comparison engine that can compare boolean, numerical and string values. The syntax follows a logical structure and any template tag that ouputs a value can be used as a Conditional.
+
+Any template tag that outputs a value can be used in conditionals. Both static overlays and event alerts support conditional syntax.
 
 [Read more about Conditional Template Syntax](https://overlabels.com/help) on the website.
 
-Conditional Template Syntax can be used on your Static Overlays, as well as your Event Alert Templates.
+## Static Overlays
 
-## How does a Static Overlay work?
-I think the best way to show you how it works, is to show you an actual Static Overlay.
+Static overlays are the persistent HTML pages that display your stream information and serve as containers for event alerts. They continuously show data like follower counts, current game, and other stream statistics.
 
-[https://overlabels.com/overlay/tame-rolling-house-full-eagle/public](https://overlabels.com/overlay/tame-rolling-house-full-eagle/public)
+### Example Static Overlay
 
-This template shows the syntax used to get the Helix data to your frontend.
+View a working example: [https://overlabels.com/overlay/tame-rolling-house-full-eagle/public](https://overlabels.com/overlay/tame-rolling-house-full-eagle/public)
 
-Do note the `/public` URL here. If you want to actually use this template with your Twitch data, you need to generate a Token.
-Tokens are a safe way to retrieve your Twitch data. Tokens are never sent to the backend and aren't stored in a database. Some fine encryption happens on the frontend using Laravel's [CSRF protection](https://laravel.com/docs/12.x/csrf) before your key is sent to the backend to retrieve your data. Frontend queries for your Twitch data are performed by Axios and not by the Laravel backend at all.
+The `/public` endpoint shows the template structure without real data. To display your actual Twitch data, you'll need to generate a secure token and replace `/public` with `/#your_token_here`.
 
-If you want to activate this template with your own data, replace public with `/#your_token_here`. Generate a token on `/tokens` in the app.
+### Token Security
 
-## KEEP THIS TOKEN A SECRET. TREAT IT LIKE A PASSWORD AND NEVER SHARE IT ON STREAM OR WITH ANYONE WHATSOEVER.
-If you suspect your token is leaked, revoke and delete it immediately and create a new token. Then replace the obsolete token with the newly generated one in the overlay URLs in your OBS or wherever you use the Overlabels overlays.
+Tokens authenticate your overlay to fetch your Twitch data securely. They're encrypted on the frontend using Laravel's CSRF protection before any backend communication. The actual Twitch data queries are performed directly from the frontend via Axios, never through the Laravel backend.
 
-## You need a static overlay to make dynamic Overlay Alerts work
-Dynamic overlays live "inside" your static overlays. they can't be fired unless you have a frontend to show them in.
+**IMPORTANT: Keep your token secret. Treat it like a password and never share it on stream or with anyone.**
 
-## How do dynamic overlays work?
-When you create a new template in the Overlabels webapp, you can choose between a Static Overlay or an Event Alert.
-Event Alerts parse a specific syntax per event. Check the [Event-based Template Tags help](https://overlabels.com/help). Every event current integrated into Overlabels has its own syntax. There's a big overlap in most of the EventSub events, but do study the Help documentation thoroughly to find all syntax you can use.
+If you suspect your token has been compromised, revoke it immediately in the app, generate a new one, and update your OBS overlay URLs.
 
-## How do I assign Event Alert templates to alerts?
-In the very easy to use Alerts Builder you can assign Twitch EventSub events to different templates, set how long you want to show the alert and choose a transition effect that currenly doesn't work yet.
+## Event Alerts
 
-Once you have created a Template, created Event Alert templates and assigned every template to every event, you're ready to go. Just include the static overlay URL **including** the secure token in your OBS, set the dimensions of the overlay to fullscreen (ctrl-s in OBS) and whenever you receive a new event, your alert template will show and the revelant part of your static template is automatically updated. So if you receive a new follower, your follower count in your template is updated.
+Event alerts are triggered overlays that appear when specific Twitch events occur (new followers, subscriptions, raids, etc.). These require a static overlay as their container - without this container, event alerts have nowhere to render.
 
-All in all, this is incredibly powerful but still a mess. It works, it's safe but it's still very much just an MVP.
+### Creating Event Alerts
+
+1. Create a new template in the webapp and select "Event Alert"
+2. Use event-specific template syntax for each event type
+3. Check the [Event-based Template Tags help](https://overlabels.com/help) for complete syntax documentation
+
+### Assigning Alerts to Events
+
+The Alerts Builder lets you:
+- Assign specific templates to different Twitch EventSub events
+- Set display duration for each alert
+- Choose transition effects (currently in development)
+
+## Adding to OBS
+
+Once you've created your templates and configured your alerts:
+
+1. Copy your static overlay URL (including the secure token)
+2. Add it as a Browser Source in OBS
+3. Set the source dimensions to fullscreen (Ctrl+S in OBS)
+4. Your overlay will now display live data and show alerts when events occur
+
+When an event triggers (like a new follower), two things happen automatically:
+- The event alert template displays
+- The relevant data in your static overlay updates (follower count increases)
+
+## Current Status
+
+Overlabels is currently an MVP - functional and secure, but with room for improvement. Features like transition effects are still in development.
+
+## Questions or Issues?
 
 If you have questions, please submit a pull request or open an issue. I love to hear from you.
