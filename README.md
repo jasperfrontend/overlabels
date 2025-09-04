@@ -9,9 +9,9 @@ https://x.com/xoverlabels/status/1963386310783303976
 
 The Overlabels triple-bracket syntax is ugly, but functional. In fact it's:
 
-Too ugly for anyone to accidentally conflict with
-Too simple for anyone to not understand
-Too portable for anyone to complain about
+- Too ugly for anyone to accidentally conflict with
+- Too simple for anyone to not understand
+- Too portable for anyone to complain about
 
 There are 2 different types of Template Syntax, based on two different Twitch APIs.
 
