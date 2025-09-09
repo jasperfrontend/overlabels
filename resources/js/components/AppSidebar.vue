@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { House, LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building, Users, Brackets } from 'lucide-vue-next';
+import { House, LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building, Users, Brackets, FileText } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -39,6 +39,11 @@ const userNavItems: NavItem[] = [
     title: 'Syntax Help',
     href: route('help'),
     icon: Brackets,
+  },
+  {
+    title: 'Manifesto',
+    href: route('manifesto'),
+    icon: FileText,
   },
   {
     title: 'Token Generator',

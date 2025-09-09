@@ -43,6 +43,10 @@ Route::get('/help', function () {
     return Inertia::render('Help');
 })->name('help');
 
+Route::get('/manifesto', function () {
+    return Inertia::render('Manifesto');
+})->name('manifesto');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
