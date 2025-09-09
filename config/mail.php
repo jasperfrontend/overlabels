@@ -123,6 +123,6 @@ return [
     |
     */
 
-    'signup_notification_email' => env('SIGNUP_NOTIFICATION_EMAIL', 'jasper@emailjasper.com'),
+    'signup_notification_email' => env('SIGNUP_NOTIFICATION_EMAIL'),
 
 ];

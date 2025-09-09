@@ -72,7 +72,7 @@ const handleDelete = () => {
 
   if (confirm('Are you sure you want to delete this kit? This action cannot be undone.')) {
     router.delete(`/kits/${props.kit.id}`, {
-      onSuccess: () => router.visit('/kits')
+      onSuccess: () => router.visit('/kits'),
     });
   }
 };
@@ -101,11 +101,7 @@ const formatDate = (date: string) => {
       <div class="mb-8 overflow-hidden rounded-lg bg-card lg:max-w-[75%]">
         <!-- Thumbnail -->
         <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[16/9]">
-          <img
-            :src="kit.thumbnail_url"
-            :alt="kit.title"
-            class="h-full w-full object-cover"
-          />
+          <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
         </div>
         <div v-else class="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 lg:aspect-[21/9]">
           <Package class="h-16 w-16 text-primary/40" />
@@ -145,9 +141,7 @@ const formatDate = (date: string) => {
                   <span>{{ kit.fork_count }} fork{{ kit.fork_count !== 1 ? 's' : '' }}</span>
                 </div>
 
-                <div>
-                  Created {{ formatDate(kit.created_at) }}
-                </div>
+                <div>Created {{ formatDate(kit.created_at) }}</div>
               </div>
             </div>
 
@@ -162,12 +156,7 @@ const formatDate = (date: string) => {
                 <GitFork class="ml-2 h-4 w-4" />
               </button>
 
-              <button
-                v-if="canEdit && kit.fork_count === 0"
-                @click="handleDelete"
-                class="btn btn-danger"
-                title="Delete kit"
-              >
+              <button v-if="canEdit && kit.fork_count === 0" @click="handleDelete" class="btn btn-danger" title="Delete kit">
                 <Trash2Icon class="h-4 w-4" />
               </button>
             </div>
@@ -177,9 +166,7 @@ const formatDate = (date: string) => {
 
       <!-- Templates section -->
       <div>
-        <h2 class="mb-4 text-xl font-semibold">
-          Templates in this Kit ({{ kit.templates?.length || 0 }})
-        </h2>
+        <h2 class="mb-4 text-xl font-semibold">Templates in this Kit ({{ kit.templates?.length || 0 }})</h2>
 
         <div v-if="kit.templates && kit.templates.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <TemplateCard
@@ -193,12 +180,19 @@ const formatDate = (date: string) => {
 
         <div v-else class="rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center">
           <Package class="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-          <p class="text-muted-foreground">
-            No templates in this kit yet.
+          <p class="text-muted-foreground">No templates in this kit yet.</p>
+          <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary mt-4"> Add Templates </Link>
+        </div>
+
+        <div class="mt-8">
+          <h2 class="mt-8 text-3xl font-semibold">How do Template Kits work</h2>
+          <p>
+            Template Kits contain both static templates (like overlays, panels, or screens) and alert templates (for follows, subscriptions, etc.).
+            Forking this kit creates a complete copy in your account with all pre-configured templates. You can use the
+            <a href="https://dev.twitch.tv/docs/cli/event-command/" class="text-primary underline" target="_blank">Twitch CLI</a> to test alert
+            events and preview how your alerts will look in action.
           </p>
-          <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary mt-4">
-            Add Templates
-          </Link>
+          <p class="mt-3">You will need a static overlay to render your alert overlays in. You cannot use alert overlays without a static base overlay.</p>
         </div>
       </div>
     </div>

@@ -45,17 +45,19 @@ const formatDate = (date: string) => {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-    })
+    }),
   };
 };
 </script>
 
 <template>
-  <Card class="group relative flex h-full flex-col overflow-hidden border border-sidebar-foreground/30 dark:border-sidebar hover:bg-sidebar-accent/90 transition hover:ring-2 ring-violet-300/30">
+  <Card
+    class="group relative flex h-full flex-col overflow-hidden border border-sidebar-foreground/30 ring-violet-300/30 transition hover:bg-sidebar-accent/90 hover:ring-2 dark:border-sidebar"
+  >
     <CardHeader class="px-4 pb-4">
       <div>
         <div class="flex items-start justify-between">
-          <CardTitle class="flex-1 mb-1 text-base">
+          <CardTitle class="mb-1 flex-1 text-base">
             <Link
               :href="`/templates/${template.id}`"
               class="block truncate transition-colors hover:text-accent-foreground/80"
@@ -65,10 +67,10 @@ const formatDate = (date: string) => {
             </Link>
           </CardTitle>
           <div class="flex gap-2">
-
             <span
               :title="`Created: ${formatDate(template.created_at).full}\nUpdated: ${formatDate(template.updated_at).full}`"
-              class="text-xs bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+              class="rounded-full bg-sidebar p-0.5 px-2 text-xs text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+            >
               {{ formatDate(template.created_at).display }}
             </span>
           </div>
@@ -83,9 +85,18 @@ const formatDate = (date: string) => {
       <div class="space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2 text-sm">
-
             <div
-              class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition"
+              class="bg-sidebar flex items-center gap-1 rounded-full p-0.5 px-2 transition"
+              :class="{
+                'text-violet-900 dark:text-violet-100': template.type === 'static',
+                'text-cyan-900 dark:text-cyan-100': template.type === 'alert',
+              }"
+              :title="`Type: ${template.type.charAt(0).toUpperCase() + template.type.slice(1)}`"
+            >
+              {{ template.type.charAt(0).toUpperCase() + template.type.slice(1) }}
+            </div>
+            <div
+              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
               :title="template.is_public ? 'Public template' : 'Private template'"
             >
               <component :is="template.is_public ? Globe : Lock" class="h-4 w-4" />
@@ -93,22 +104,25 @@ const formatDate = (date: string) => {
               <span v-else>Private</span>
             </div>
 
-            <div class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Views">
+            <div
+              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+              title="Views"
+            >
               <Eye class="h-4 w-4" />
               <span>{{ template.view_count || 0 }}</span>
             </div>
 
-            <div class="flex items-center gap-1 bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Forks">
+            <div
+              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+              title="Forks"
+            >
               <GitFork class="h-4 w-4" />
               <span>{{ template.fork_count || 0 }}</span>
             </div>
-
           </div>
-
-
         </div>
 
-        <div v-if="showOwner && template.owner" class="flex items-center gap-2 border-t border-t-sidebar pt-3 mt-4">
+        <div v-if="showOwner && template.owner" class="mt-4 flex items-center gap-2 border-t border-t-sidebar pt-3">
           <img v-if="template.owner.avatar" :src="template.owner.avatar" :alt="template.owner.name" class="h-6 w-6 rounded-full" />
           <span class="truncate text-sm text-sidebar-foreground/80"> by {{ template.owner.name }} </span>
         </div>

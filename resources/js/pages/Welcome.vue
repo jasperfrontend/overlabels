@@ -15,7 +15,6 @@ import {
   ArrowDown,
   Check,
   Github,
-  Twitter,
   Layers,
   Gauge,
   Lock
@@ -286,7 +285,106 @@ const activeTab = ref('template');
             The easy-to-use interface makes assigning templates to events a breeze.
           </p>
           <div class="max-w-6xl mx-auto">
-            <img src="https://jasper.monster/sharex/firefox_fxpyxTlXzq.png" alt="" />
+            <!-- Events List -->
+            <div class="space-y-2">
+              <div class="group">
+                <!-- Event Row -->
+                <div
+                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4 text-center bg-sidebar rounded-b-none border border-b-0"
+                >
+                  <!-- Enable Toggle -->
+                  <label class="relative inline-flex cursor-pointer items-center" @click.stop>
+                    <input type="checkbox" class="peer sr-only" disabled />
+                    <span
+                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-700 dark:after:bg-gray-100"
+                    ></span>
+                  </label>
+
+                  <!-- Event Info -->
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-3">
+                      <h3 class="font-medium text-foreground">
+                        New Follower
+                      </h3>
+                      <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+                        channel.follow
+                      </span>
+                    </div>
+
+                    <!-- Quick Status when enabled -->
+                    <div class="mt-1 flex items-center gap-4 text-sm">
+                      <span class="flex items-center gap-1.5 text-sidebar-foreground/80">
+                        <span class="font-medium">Template:</span>
+                        Midnight Purple - New Follower Alert
+                      </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80"> 5s </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80">fade</span>
+                    </div>
+                  </div>
+
+                  <!-- Status Indicator -->
+                  <div class="flex items-center gap-2">
+                    <div class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
+                    <svg
+                      class="h-5 w-5 text-muted-foreground transition-transform"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <div
+                  class="flex cursor-pointer items-center mt-1 gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4 text-center bg-sidebar rounded-b-none border border-b-0"
+                >
+                  <!-- Enable Toggle -->
+                  <label class="relative inline-flex cursor-pointer items-center" @click.stop>
+                    <input type="checkbox" class="peer sr-only" checked disabled />
+                    <span
+                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-700 dark:after:bg-gray-100"
+                    ></span>
+                  </label>
+
+                  <!-- Event Info -->
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-3">
+                      <h3 class="font-medium text-foreground">
+                        New Subscription
+                      </h3>
+                      <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+                        channel.subscribe
+                      </span>
+                    </div>
+
+                    <!-- Quick Status when enabled -->
+                    <div class="mt-1 flex items-center gap-4 text-sm">
+                      <span class="flex items-center gap-1.5 text-sidebar-foreground/80">
+                        <span class="font-medium">Template:</span>
+                        Midnight Purple - New Subscriber Alert
+                      </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80"> 8s </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80">fade</span>
+                    </div>
+                  </div>
+
+                  <!-- Status Indicator -->
+                  <div class="flex items-center gap-2">
+                    <div class="h-2 w-2 rounded-full bg-green-500" title="Template not selected"></div>
+                    <svg
+                      class="h-5 w-5 text-muted-foreground transition-transform"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
