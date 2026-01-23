@@ -43,7 +43,7 @@
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.0",
-        "lodash": "^4.17.21",
+        "lodash": "^4.17.23",
         "lucide-vue-next": "^0.468.0",
         "pinia": "^3.0.3",
         "reka-ui": "^2.4.0",
