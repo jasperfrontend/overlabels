@@ -1,9 +1,25 @@
 @layer components {
   .btn {
     @apply text-sm font-medium px-4 py-1.5 rounded-sm cursor-pointer flex items-center justify-center duration-150;
-    @apply bg-sidebar hover:bg-slate-300 text-accent-foreground border border-sidebar-foreground/30;
+    @apply bg-sidebar hover:bg-slate-300 text-accent-foreground;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background;
+  }
+
+  .btn-chill {
+    @apply text-gray-500 dark:text-gray-400;
+    @apply hover:border-gray-500 dark:hover:border-gray-800;
+    @apply hover:bg-gray-500/10 dark:hover:bg-gray-500/20;
+    @apply active:bg-gray-500/20;
+    @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-800;
+  }
+
+  .btn-white {
+    @apply text-white dark:text-gray-200;
+    @apply hover:border-white dark:hover:border-gray-800;
+    @apply hover:bg-white/10 dark:hover:bg-white/20;
+    @apply active:bg-white/20;
+    @apply focus-visible:ring-white dark:focus-visible:ring-gray-800;
   }
 
   .btn-primary {

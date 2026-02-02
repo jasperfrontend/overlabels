@@ -52,7 +52,7 @@ const formatDate = (date: string) => {
 
 <template>
   <Card
-    class="group relative flex h-full flex-col overflow-hidden border border-sidebar-foreground/30 ring-violet-300/30 transition hover:bg-sidebar-accent/90 hover:ring-2 dark:border-sidebar"
+    class="group relative flex h-full flex-col overflow-hidden border border-sidebar-foreground/30 ring-violet-300/30 transition hover:bg-sidebar-accent/90 dark:border-sidebar"
   >
     <CardHeader class="px-4 pb-4">
       <div>
@@ -84,19 +84,19 @@ const formatDate = (date: string) => {
     <CardContent class="flex flex-1 flex-col justify-between space-y-2">
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2 text-sm">
+          <div class="flex items-center gap-2 text-sm opacity-40 hover:opacity-100">
             <div
-              class="bg-sidebar flex items-center gap-1 rounded-full p-0.5 px-2 transition"
+              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 transition"
               :class="{
-                'text-violet-900 dark:text-violet-100': template.type === 'static',
-                'text-cyan-900 dark:text-cyan-100': template.type === 'alert',
+                'text-violet-900 dark:text-violet-200': template.type === 'static',
+                'text-cyan-900 dark:text-cyan-200': template.type === 'alert',
               }"
               :title="`Type: ${template.type.charAt(0).toUpperCase() + template.type.slice(1)}`"
             >
               {{ template.type.charAt(0).toUpperCase() + template.type.slice(1) }}
             </div>
             <div
-              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+              class="flex items-center gap-1 rounded-full bg-none p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
               :title="template.is_public ? 'Public template' : 'Private template'"
             >
               <component :is="template.is_public ? Globe : Lock" class="h-4 w-4" />
@@ -105,7 +105,7 @@ const formatDate = (date: string) => {
             </div>
 
             <div
-              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+              class="flex items-center gap-1 rounded-full bg-none p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
               title="Views"
             >
               <Eye class="h-4 w-4" />
@@ -113,7 +113,7 @@ const formatDate = (date: string) => {
             </div>
 
             <div
-              class="flex items-center gap-1 rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+              class="flex items-center gap-1 rounded-full bg-none p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
               title="Forks"
             >
               <GitFork class="h-4 w-4" />
@@ -129,20 +129,31 @@ const formatDate = (date: string) => {
       </div>
 
       <div class="flex gap-2 pt-2">
-        <a class="btn btn-sm btn-secondary flex text-center" title="Edit template" :href="`/templates/${template.id}`">
-          View
+        <a class="btn btn-sm btn-chill flex text-center" :title="`View details of ${template.name}`" :href="`/templates/${template.id}`">
+          Details
           <Eye class="ml-2 h-4 w-4" />
         </a>
 
-        <a v-if="isOwnTemplate" class="btn btn-sm btn-warning flex text-center" title="Edit template" :href="`/templates/${template.id}/edit`">
+        <a
+          v-if="isOwnTemplate"
+          class="btn btn-sm btn-chill flex text-center"
+          :title="`Edit ${template.name}`"
+          :href="`/templates/${template.id}/edit`"
+        >
           Edit
           <PencilIcon class="ml-2 h-4 w-4" />
         </a>
-        <button v-else-if="template.is_public" class="btn btn-sm btn-warning" @click="handleFork" title="Fork template">
+        <button v-else-if="template.is_public" class="btn btn-sm btn-chill" :title="`Fork ${template.name}`" @click="handleFork">
           Fork
           <GitFork class="ml-1 h-4 w-4" />
         </button>
-        <a class="btn btn-sm btn-primary" v-if="template.is_public" :href="`/overlay/${template.slug}/public`" target="_blank">
+        <a
+          class="btn btn-sm btn-chill"
+          v-if="template.is_public"
+          :title="`Preview ${template.name}`"
+          :href="`/overlay/${template.slug}/public`"
+          target="_blank"
+        >
           Preview
           <ExternalLinkIcon class="ml-2 h-4 w-4" />
         </a>
