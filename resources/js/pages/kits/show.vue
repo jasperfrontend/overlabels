@@ -4,6 +4,7 @@ import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, Trash2Icon } from
 import AppLayout from '@/layouts/AppLayout.vue';
 import TemplateCard from '@/components/TemplateCard.vue';
 import { Badge } from '@/components/ui/badge';
+import { BreadcrumbItem } from '@/types';
 
 interface Template {
   id: number;
@@ -84,13 +85,20 @@ const formatDate = (date: string) => {
     year: 'numeric',
   });
 };
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'View Kit "' + props.kit.title + '"',
+    href: route('kits.index'),
+  },
+];
 </script>
 
 <template>
-  <AppLayout>
+  <AppLayout :breadcrumbs="breadcrumbs">
     <Head :title="kit.title" />
 
-    <div class="container mx-auto px-4 py-8">
+    <div class="space-y-4 p-4">
       <!-- Back button -->
       <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
@@ -189,10 +197,12 @@ const formatDate = (date: string) => {
           <p>
             Template Kits contain both static templates (like overlays, panels, or screens) and alert templates (for follows, subscriptions, etc.).
             Forking this kit creates a complete copy in your account with all pre-configured templates. You can use the
-            <a href="https://dev.twitch.tv/docs/cli/event-command/" class="text-primary underline" target="_blank">Twitch CLI</a> to test alert
-            events and preview how your alerts will look in action.
+            <a href="https://dev.twitch.tv/docs/cli/event-command/" class="text-primary underline" target="_blank">Twitch CLI</a> to test alert events
+            and preview how your alerts will look in action.
           </p>
-          <p class="mt-3">You will need a static overlay to render your alert overlays in. You cannot use alert overlays without a static base overlay.</p>
+          <p class="mt-3">
+            You will need a static overlay to render your alert overlays in. You cannot use alert overlays without a static base overlay.
+          </p>
         </div>
       </div>
     </div>

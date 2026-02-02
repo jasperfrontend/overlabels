@@ -69,71 +69,108 @@ const showWelcomeAlertAgain = () => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
       <!-- Welcome Alert Section -->
-      <section v-if="showWelcomeAlert" class="relative mb-6 rounded-xl overflow-hidden border border-purple-200/30 dark:border-purple-800/30 bg-gradient-to-br from-purple-50/70 via-purple-100/50 to-purple-200/30 dark:from-purple-900/30 dark:via-purple-950/20 dark:to-purple-900/20 p-6 shadow-sm backdrop-blur-sm">
+      <section
+        v-if="showWelcomeAlert"
+        class="relative mb-6 rounded-lg border border-slate-200 dark:border-slate-800
+         bg-slate-50 dark:bg-slate-900/40 p-6 shadow-sm"
+      >
         <button
           @click="dismissWelcomeAlert"
-          class="absolute top-4 right-4 p-1.5 rounded-md hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
-          title="Dismiss welcome message"
+          class="absolute top-4 right-4 p-1.5 rounded-md
+           text-slate-500 hover:text-slate-700
+           dark:text-slate-400 dark:hover:text-slate-200
+           hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          title="Dismiss"
         >
-          <X class="h-5 w-5 text-purple-600 dark:text-purple-400" />
+          <X class="h-5 w-5" />
         </button>
 
+        <!-- Header -->
         <div class="flex items-center gap-3 mb-4">
-          <Zap class="h-6 w-6 text-purple-600 dark:text-purple-400" />
-          <h2 class="text-xl font-semibold text-purple-800 dark:text-purple-300">Welcome to the Overlabels MVP</h2>
+          <Zap class="h-5 w-5 text-purple-500 dark:text-purple-400" />
+          <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100">
+            Welcome to Overlabels (MVP)
+          </h2>
         </div>
 
-        <div class="bg-purple-100/50 dark:bg-purple-900/30 border-l-4 border-purple-500/50 p-4 mb-5 rounded-r-md">
-          <div class="flex items-center gap-2">
-            <Sparkles class="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            <span class="font-medium text-purple-800 dark:text-purple-300">PLEASE READ THIS TO GET STARTED (this will be automated later):</span>
-          </div>
-        </div>
+        <!-- Intro -->
+        <p class="mb-5 text-sm text-slate-600 dark:text-slate-400">
+          A few one-time setup steps to get your overlays responding to events correctly.
+          This will be automated later.
+        </p>
 
-        <ul class="space-y-4">
-          <li class="flex items-start gap-3">
-            <div class="mt-1.5 h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 flex-shrink-0"></div>
-            <p class="text-gray-700 dark:text-gray-300">
-              Generate your <Link :href="route('tags.generator')" class="text-purple-600 dark:text-purple-400 hover:underline">Template Tags</Link>
+        <!-- Steps -->
+        <ul class="space-y-4 text-sm">
+          <li class="flex gap-3">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+            <p class="text-slate-700 dark:text-slate-300">
+              Generate your
+              <Link
+                :href="route('tags.generator')"
+                class="text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Template Tags</Link>.
             </p>
           </li>
 
-          <li class="flex items-start gap-3">
-            <div class="mt-1.5 h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 flex-shrink-0"></div>
-            <div class="text-gray-700 dark:text-gray-300">
-              Generate a <Link :href="route('tokens.index')" class="text-purple-600 dark:text-purple-400 hover:underline">Secure Token</Link> and store it somewhere safe! Remember: It's only shown once after creating it!
-              <div class="mt-3 bg-red-100/50 dark:bg-red-900/30 border border-red-200/50 dark:border-red-800/50 p-3 rounded-md">
-                <div class="flex items-start gap-2">
-                  <AlertTriangle class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5" />
-                  <div>
-                    <span class="text-red-700 dark:text-red-300">Treat that thing <u class="text-red-800 dark:text-red-200">like a password</u> and </span>
-                    <strong class="text-red-800 dark:text-red-200 font-medium">DO NOT EVER SHARE YOUR SECURE TOKEN WITH ANYBODY. DO NOT SHOW IT ON STREAM!</strong>
-                  </div>
-                </div>
+          <li class="flex gap-3">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+            <div class="text-slate-700 dark:text-slate-300 space-y-2">
+              <p>
+                Generate a
+                <Link
+                  :href="route('tokens.index')"
+                  class="text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  Secure Token</Link> and store it somewhere safe. It's shown only once.
+              </p>
+
+              <!-- Warning (calm, serious, not screamy) -->
+              <div
+                class="flex gap-2 rounded-md border border-amber-300/40 dark:border-amber-700/40
+                 bg-amber-50/60 dark:bg-amber-900/20 p-3"
+              >
+                <AlertTriangle class="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <p class="text-amber-800 dark:text-amber-300">
+                  Treat this like a password. Never share it or show it on stream.
+                </p>
               </div>
             </div>
           </li>
 
-          <li class="flex items-start gap-3">
-            <div class="mt-1.5 h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 flex-shrink-0"></div>
-            <p class="text-gray-700 dark:text-gray-300">
-              Visit <Link class="text-purple-600 dark:text-purple-400 hover:underline" :href="route('kits.index')">Kits</Link> and fork the Starter Kit to get a sensible set of defaults to work with.
+          <li class="flex gap-3">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+            <p class="text-slate-700 dark:text-slate-300">
+              Visit
+              <Link
+                :href="route('kits.index')"
+                class="text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Kits</Link> and fork the Starter Kit for sensible defaults.
             </p>
           </li>
 
-          <li class="flex items-start gap-3">
-            <div class="mt-1.5 h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 flex-shrink-0"></div>
-            <p class="text-gray-700 dark:text-gray-300">
-              Assign the Event Alerts to your Events in the <Link class="text-purple-600 dark:text-purple-400 hover:underline" :href="route('events.index')">Alerts Builder</Link> so that new EventSub events trigger the correct overlay.
+          <li class="flex gap-3">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+            <p class="text-slate-700 dark:text-slate-300">
+              Assign Event Alerts in the
+              <Link
+                :href="route('events.index')"
+                class="text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Alerts Builder</Link> so EventSub triggers the correct overlay.
             </p>
           </li>
 
-          <li class="flex items-start gap-3">
-            <div class="mt-1.5 h-2 w-2 rounded-full bg-purple-600 dark:bg-purple-400 flex-shrink-0"></div>
-            <p class="text-green-600 dark:text-green-400 font-medium">Start fiddling! Enjoy!</p>
+          <li class="flex gap-3">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+            <p class="text-slate-700 dark:text-slate-300">
+              You’re good to go. Start fiddling.
+            </p>
           </li>
         </ul>
       </section>
+
 
       <!-- Show Welcome Again Section -->
       <section v-if="!showWelcomeAlert" class="mb-6">

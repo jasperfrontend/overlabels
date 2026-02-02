@@ -30,7 +30,7 @@
             }
         </style>
 
-        <link rel="icon" href="https://overlabels.com/favicon.png" sizes="any">
+        <link rel="icon" href="/favicon.png" sizes="any">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=akshar:300,400,500,600,700" rel="stylesheet" />
 
