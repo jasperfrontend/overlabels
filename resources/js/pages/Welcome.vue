@@ -69,7 +69,7 @@ const activeTab = ref('template');
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
-            <img src="https://overlabels.com/favicon.png" alt="" class="w-10 h-10 p-2" />
+            <img src="/favicon.png" alt="" class="w-10 h-10 p-2" />
             <span class="ml-2 text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
               Overlabels
             </span>
@@ -515,7 +515,7 @@ const activeTab = ref('template');
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2">
-            <img src="https://overlabels.com/favicon.png" alt="" class="w-10 h-10 p-2" />
+            <img src="/favicon.png" alt="" class="w-10 h-10 p-2" />
             <span class="font-semibold">Overlabels</span>
             <Badge variant="outline" class="ml-2">Beta</Badge>
           </div>

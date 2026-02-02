@@ -4,7 +4,7 @@ import { Ratio } from 'lucide-vue-next';
 
 <template>
     <div class="flex text-left text-sm">
-      <img src="https://overlabels.com/favicon.png" alt="Overlabels logo" class="app-logo" />
+      <img src="/favicon.png" alt="Overlabels logo" class="app-logo" />
       <span class="ml-2 text-lg font-medium">Overlabels</span>
     </div>
 </template>

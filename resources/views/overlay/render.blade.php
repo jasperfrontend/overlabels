@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="https://overlabels.com/favicon.png" sizes="any">
+    <link rel="icon" href="/favicon.png" sizes="any">
     <title>{{ $template->name }} - Public Preview</title>
     <style>
         {!! $css !!}
