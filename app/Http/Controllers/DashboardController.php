@@ -14,6 +14,7 @@ class DashboardController extends Controller
     {
         // $request->user() grabs the currently authenticated user
         $user = $request->user();
+        // random comment to force a new commit.
 
         // Get user's latest alert templates (limit 5)
         $userAlertTemplates = OverlayTemplate::where('owner_id', $user->id)
