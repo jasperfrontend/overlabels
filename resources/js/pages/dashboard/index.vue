@@ -194,7 +194,7 @@ const showWelcomeAlertAgain = () => {
             <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-8 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
           <TemplateCard v-for="template in userAlertTemplates" :key="template.id" :template="template" :current-user-id="userId" />
         </div>
       </section>
@@ -213,7 +213,7 @@ const showWelcomeAlertAgain = () => {
             <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-8 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
           <TemplateCard v-for="template in userStaticTemplates" :key="template.id" :template="template" :current-user-id="userId" />
         </div>
       </section>

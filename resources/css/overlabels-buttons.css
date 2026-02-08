@@ -1,6 +1,6 @@
 @layer components {
   .btn {
-    @apply text-sm font-medium px-4 py-1.5 rounded-sm cursor-pointer flex items-center justify-center duration-150;
+    @apply text-sm px-4 py-1.5 border border-accent-foreground/20 rounded-sm cursor-pointer flex items-center justify-center duration-150;
     @apply bg-sidebar hover:bg-slate-300 text-accent-foreground;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background;
@@ -15,9 +15,10 @@
   }
 
   .btn-white {
-    @apply text-white dark:text-gray-200;
+    @apply text-accent-foreground dark:text-gray-200;
+    @apply bg-accent dark:bg-gray-800;
     @apply hover:border-white dark:hover:border-gray-800;
-    @apply hover:bg-white/10 dark:hover:bg-white/20;
+    @apply hover:bg-accent dark:hover:bg-gray-900/50;
     @apply active:bg-white/20;
     @apply focus-visible:ring-white dark:focus-visible:ring-gray-800;
   }
