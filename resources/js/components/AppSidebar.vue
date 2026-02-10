@@ -19,12 +19,12 @@ const mainNavItems: NavItem[] = [
     icon: Users,
   },
   {
-    title: 'Template kits',
+    title: 'Overlay kits',
     href: route('kits.index'),
     icon: LayoutGrid,
   },
   {
-    title: 'All Templates',
+    title: 'All Overlays',
     href: route('templates.index'),
     icon: Building,
   },

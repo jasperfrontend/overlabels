@@ -87,7 +87,7 @@ The Alerts Builder lets you:
 *   Set display duration for each alert
 *   Choose transition effects (currently in development)
 
-## Forking, Template Kits, and the Overlay Ecosystem
+## Forking, Overlay Kits, and the Overlay Ecosystem
 
 Overlabels is built around sharing.
 
@@ -101,9 +101,9 @@ Forking is simple:
 
 Overlays are **public by default**, but you can choose to keep your work private at any time.
 
-### Template Kits
+### Overlay Kits
 
-Template Kits are collections of overlays and event alerts designed to work together as a cohesive system rather than isolated files. Template Kits can be forked just like individual overlays.
+Overlay Kits are collections of overlays and event alerts designed to work together as a cohesive system rather than isolated files. Template Kits can be forked just like individual overlays.
 
 This enables a growing ecosystem where:
 

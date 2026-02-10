@@ -111,7 +111,7 @@ const breadcrumbs = [
       <section v-if="recentKits && recentKits.length > 0" class="mt-4 space-y-6">
         <div class="flex items-center gap-3">
           <Package class="mr-1 h-6 w-6 text-primary" />
-          <Heading title="Recent Template Kits" description="Collections of templates ready to fork and use" />
+          <Heading title="Recent Overlay Kits" description="Collections of templates ready to fork and use" />
         </div>
 
         <div class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">

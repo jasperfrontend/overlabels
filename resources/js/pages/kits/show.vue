@@ -193,9 +193,9 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <div class="mt-8">
-          <h2 class="mt-8 text-3xl font-semibold">How do Template Kits work</h2>
+          <h2 class="mt-8 text-3xl font-semibold">How do Overlays Kits work</h2>
           <p>
-            Template Kits contain both static templates (like overlays, panels, or screens) and alert templates (for follows, subscriptions, etc.).
+            Overlay Kits contain both static templates (like overlays, panels, or screens) and alert templates (for follows, subscriptions, etc.).
             Forking this kit creates a complete copy in your account with all pre-configured templates. You can use the
             <a href="https://dev.twitch.tv/docs/cli/event-command/" class="text-primary underline" target="_blank">Twitch CLI</a> to test alert events
             and preview how your alerts will look in action.

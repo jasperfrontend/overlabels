@@ -46,7 +46,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Template kits',
+    title: 'Overlay kits',
     href: route('kits.index'),
   }
 ]
@@ -62,7 +62,7 @@ defineProps<Props>();
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <LayoutGrid class="w-6 h-6 mr-2" />
-          <Heading title="Template Kits" />
+          <Heading title="Overlay Kits" />
         </div>
         <Link :href="route('kits.create')" class="btn btn-primary">
           Create Kit
