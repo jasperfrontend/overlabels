@@ -56,6 +56,9 @@
         "vue-codemirror": "^6.1.1",
         "ziggy-js": "^2.6.0"
     },
+    "engines": {
+        "node": ">=22.0.0 <23.0.0"
+    },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
