@@ -1,4 +1,20 @@
 <template>
+  <!-- Health Status Banner -->
+  <div v-if="health.hasError.value || health.isRetrying.value" class="overlay-health-banner">
+    <div class="overlay-health-banner__inner">
+      <div class="overlay-health-banner__icon">!</div>
+      <div class="overlay-health-banner__text">
+        <div class="overlay-health-banner__message">{{ health.statusMessage.value }}</div>
+        <div v-if="health.willAutoReload.value" class="overlay-health-banner__reload">
+          Auto-reloading in {{ health.autoReloadIn.value }}s...
+        </div>
+        <div v-else-if="health.isRetrying.value && health.retryCountdown.value > 0" class="overlay-health-banner__retry">
+          Next retry in {{ health.retryCountdown.value }}s...
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <!-- Dynamic Alert Overlay -->
@@ -25,12 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
+import { useOverlayHealth } from '@/composables/useOverlayHealth';
 
 interface AlertData {
   head: string;
@@ -68,6 +85,7 @@ const eventStore = useEventsStore();
 const eventHandler = useEventHandler();
 const giftBombDetector = useGiftBombDetector();
 const { processTemplate } = useConditionalTemplates();
+const health = useOverlayHealth();
 
 // Alert system state
 const currentAlert = ref<AlertData | null>(null);
@@ -226,13 +244,6 @@ function hideAlert() {
     clearTimeout(alertTimeout.value);
     alertTimeout.value = null;
   }
-
-  // Remove alert styles
-  // const alertStyle = document.getElementById('alert-style');
-  // if (alertStyle) {
-  //   alertStyle.remove();
-  // }
-
 }
 
 function injectAlertStyle(styleString: string) {
@@ -252,46 +263,36 @@ const onAlertLeave = () => {
 
 onMounted(async () => {
   data.value = {};
-  try {
-    // Get CSRF token from meta tag
-    const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-    const response = await fetch('/api/overlay/render', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken || '',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ slug: props.slug, token: props.token }),
-    });
+  // Use resilient fetch with retry
+  const result = await health.fetchWithRetry(props.slug, props.token);
 
-    if (response.ok) {
-      const json = await response.json();
-      head.value = json.template.head;
-      rawHtml.value = json.template.html;
+  if (result.ok) {
+    const json = result.data;
+    head.value = json.template.head;
+    rawHtml.value = json.template.html;
 
-      // Ensure tags is always an array, even if the server sends something unexpected
-      templateTags.value = Array.isArray(json.template.tags) ? json.template.tags : [];
+    // Ensure tags is always an array, even if the server sends something unexpected
+    templateTags.value = Array.isArray(json.template.tags) ? json.template.tags : [];
 
-      css.value = json.template.css;
-      data.value = json.data ?? {};
+    css.value = json.template.css;
+    data.value = json.data ?? {};
 
-      userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
+    userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
-      injectStyle(css.value);
-      injectHead(head.value);
+    injectStyle(css.value);
+    injectHead(head.value);
 
-      document.title = json.meta?.name || 'Overlay';
-      document.getElementById('loading')?.remove();
+    document.title = json.meta?.name || 'Overlay';
+    document.getElementById('loading')?.remove();
 
-      setupAlertListener();
-    } else {
-      console.error('Failed to load overlay', response.status, response.statusText);
-    }
-  } catch (err: any) {
-    error.value = err.message;
+    setupAlertListener();
+
+    // Start health monitoring now that we're connected
+    health.startHealthChecks(props.slug, props.token);
+    health.startPusherMonitoring();
+  } else {
+    // fetchWithRetry already set status/message and scheduled auto-reload
     document.getElementById('loading')?.remove();
   }
 
@@ -320,6 +321,10 @@ onMounted(async () => {
   });
 });
 
+onUnmounted(() => {
+  health.destroy();
+});
+
 // Set up alert listener for broadcasted alerts
 function setupAlertListener() {
 
@@ -336,21 +341,18 @@ function setupAlertListener() {
   // Listen for alert broadcasts on the user's channel
   const channelName = `alerts.${userId.value}`;
 
-
-
   // Use Laravel Echo to listen for real-time alert broadcasts
   const channel = window.Echo.channel(channelName);
 
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
   channel.listen('.alert.triggered', handleAlertTriggered);
 
-  // Add debugging for channel events
   channel.subscribed(() => {
-    console.log('✅ Successfully subscribed to channel:', channelName);
+    console.log('Successfully subscribed to channel:', channelName);
   });
 
-  channel.error((error: any) => {
-    console.error('❌ Channel subscription error:', error);
+  channel.error((err: any) => {
+    console.error('Channel subscription error:', err);
   });
 
 }

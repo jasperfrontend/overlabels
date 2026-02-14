@@ -9,14 +9,18 @@ const pinia = createPinia();
 // Set up Echo for overlay
 window.Pusher = Pusher;
 
-window.Echo = new Echo({
-  broadcaster: 'pusher',
-  key: import.meta.env.VITE_PUSHER_APP_KEY,
-  cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-  forceTLS: true,
-  encrypted: true,
-});
-
+try {
+  window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true,
+    encrypted: true,
+  });
+} catch (err) {
+  console.error('Failed to initialize Pusher/Echo:', err);
+  window.Echo = null;
+}
 
 // Mount the Vue app once the DOM is ready and window.__OVERLAY__ is available
 document.addEventListener('DOMContentLoaded', () => {

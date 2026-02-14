@@ -30,9 +30,73 @@
         }
         .error {
             display: none;
-            color: orangered;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999999;
+            background: #dc2626;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 18px;
+            font-weight: 700;
             text-align: center;
-            padding: 20px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.5);
+            animation: healthBannerSlideIn 0.3s ease-out;
+        }
+
+        /* Health status banner — rendered by Vue but styled here so it's available immediately */
+        .overlay-health-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999999;
+            background: #dc2626;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.5);
+            animation: healthBannerSlideIn 0.3s ease-out;
+        }
+        .overlay-health-banner__inner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            max-width: 100%;
+        }
+        .overlay-health-banner__icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+        }
+        .overlay-health-banner__text {
+            flex: 1;
+            min-width: 0;
+        }
+        .overlay-health-banner__message {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .overlay-health-banner__reload,
+        .overlay-health-banner__retry {
+            font-size: 14px;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+        @keyframes healthBannerSlideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
         }
     </style>
 
@@ -44,13 +108,12 @@
 <script>
     const slug = '{{ $slug }}';
     const token = window.location.hash.substring(1);
-    const style = HTMLStyleElement;
 
     if (!token || token.length !== 64) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Invalid or missing authentication token';
-        document.title = 'Invalid or missing authentication token';
+        document.getElementById('error').innerHTML = '<strong>Your overlay link is broken or incomplete.</strong><br><br>To fix this:<br>1. Go to <u>overlabels.com</u> and log in with your Twitch account<br>2. Go to Token Generator and create a new overlay token. Copy the fresh overlay token from your dashboard<br>3. Paste it at the end of your OBS browser source after the # like #12345etc<br><br>Then right-click this source in OBS and click <strong>Refresh</strong>.';
+        document.title = 'Overlay link broken — visit overlabels.com';
     } else {
         window.__OVERLAY__ = { slug, token };
     }
