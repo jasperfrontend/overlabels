@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import TemplateCard from '@/components/TemplateCard.vue';
+import TemplateTable from '@/components/TemplateTable.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, Plus, Bell, Users, Zap, Sparkles, AlertTriangle, X, RotateCcw } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
@@ -194,9 +194,7 @@ const showWelcomeAlertAgain = () => {
             <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid grid-cols-1 gap-8 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
-          <TemplateCard v-for="template in userAlertTemplates" :key="template.id" :template="template" :current-user-id="userId" />
-        </div>
+        <TemplateTable :templates="userAlertTemplates" :current-user-id="userId" />
       </section>
 
       <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
@@ -213,9 +211,7 @@ const showWelcomeAlertAgain = () => {
             <Plus class="h-4 w-4" />
           </a>
         </div>
-        <div class="grid grid-cols-1 gap-8 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3">
-          <TemplateCard v-for="template in userStaticTemplates" :key="template.id" :template="template" :current-user-id="userId" />
-        </div>
+        <TemplateTable :templates="userStaticTemplates" :current-user-id="userId" />
       </section>
 
       <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
@@ -251,12 +247,12 @@ const showWelcomeAlertAgain = () => {
           </Link>
         </div>
 
-        <div
+        <TemplateTable
           v-if="communityTemplates.length > 0"
-          class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
-        >
-          <TemplateCard v-for="template in communityTemplates" :key="template.id" :template="template" :show-owner="true" :current-user-id="userId" />
-        </div>
+          :templates="communityTemplates"
+          :show-owner="true"
+          :current-user-id="userId"
+        />
 
         <Card v-else class="border border-sidebar">
           <CardHeader class="flex-column justify-center gap-2 py-8 text-center">

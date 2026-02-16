@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import TemplateCard from '@/components/TemplateCard.vue';
+import TemplateTable from '@/components/TemplateTable.vue';
 import KitCard from '@/components/KitCard.vue';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Package, Plus, Bell } from 'lucide-vue-next';
@@ -86,12 +86,12 @@ const breadcrumbs = [
           </a>
         </div>
 
-        <div
+        <TemplateTable
           v-if="communityTemplates.length > 0"
-          class="grid grid-cols-1 gap-6 min-[2560px]:grid-cols-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3"
-        >
-          <TemplateCard v-for="template in communityTemplates" :key="template.id" :template="template" :show-owner="true" :current-user-id="userId" />
-        </div>
+          :templates="communityTemplates"
+          :show-owner="true"
+          :current-user-id="userId"
+        />
 
         <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
           <CardHeader>

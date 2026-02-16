@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import TemplateCard from '@/components/TemplateCard.vue';
+import TemplateTable from '@/components/TemplateTable.vue';
 import { Badge } from '@/components/ui/badge';
 import { BreadcrumbItem } from '@/types';
 
@@ -176,15 +176,11 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div>
         <h2 class="mb-4 text-xl font-semibold">Templates in this Kit ({{ kit.templates?.length || 0 }})</h2>
 
-        <div v-if="kit.templates && kit.templates.length > 0" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <TemplateCard
-            v-for="template in kit.templates"
-            :key="template.id"
-            :template="template"
-            :current-user-id="auth?.user?.id"
-            :show-owner="false"
-          />
-        </div>
+        <TemplateTable
+          v-if="kit.templates && kit.templates.length > 0"
+          :templates="kit.templates"
+          :current-user-id="auth?.user?.id"
+        />
 
         <div v-else class="rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center">
           <Package class="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
