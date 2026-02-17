@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TwitchEvent extends Model
 {
@@ -13,6 +14,7 @@ class TwitchEvent extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'event_type',
         'event_data',
         'twitch_timestamp',
@@ -36,6 +38,11 @@ class TwitchEvent extends Model
      * @param Builder $query
      * @return Builder
      */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function scopeUnprocessed(Builder $query): Builder
     {
         return $query->where('processed', false);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Kit;
 use App\Models\OverlayTemplate;
+use App\Models\TwitchEvent;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,25 +49,38 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function recentCommunityTemplates(): Response
+    public function recentActivity(Request $request): Response
     {
-        $communityTemplates = OverlayTemplate::where('owner_id', '!=', auth()->id())
-            ->where('is_public', true)
+        $user = $request->user();
+
+        $recentTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->with('owner:id,name,avatar')
-            ->latest()
-            ->limit(50) // @TODO: Make pagination of community templates page configurable
+            ->latest('updated_at')
+            ->limit(20)
             ->get();
 
-        // Get the 10 latest public kits
-        $recentKits = Kit::with(['owner:id,name,avatar', 'templates'])
-            ->public()
+        $recentEvents = TwitchEvent::where('user_id', $user->id)
             ->latest()
-            ->limit(10)
+            ->limit(30)
             ->get();
 
         return Inertia::render('dashboard/recents', [
-            'communityTemplates' => $communityTemplates,
-            'recentKits' => $recentKits,
+            'recentTemplates' => $recentTemplates,
+            'recentEvents' => $recentEvents,
+        ]);
+    }
+
+    public function recentEvents(Request $request): Response
+    {
+        $user = $request->user();
+
+        $events = TwitchEvent::where('user_id', $user->id)
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        return Inertia::render('dashboard/events', [
+            'events' => $events,
         ]);
     }
 }

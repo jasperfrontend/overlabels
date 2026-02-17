@@ -1,31 +1,29 @@
 <?php
 
-use App\Services\TwitchApiService;
-use App\Services\TwitchTokenService;
-use Illuminate\Support\Facades\Route;
+use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TwitchDataController;
-use App\Http\Controllers\TemplateTagController;
-use App\Http\Controllers\PageController;
 use App\Http\Controllers\KitController;
-
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\TemplateTagController;
+use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
-
-use Inertia\Inertia;
-use Laravel\Socialite\Facades\Socialite;
+use App\Http\Controllers\TwitchEventSubController;
+use App\Models\User;
+use App\Services\TwitchApiService;
+use App\Services\TwitchTokenService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\User;
+use Inertia\Inertia;
+use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
-use App\Events\UserRegistered;
 
-//use App\Http\Controllers\StorageConnectionController;
-//use App\Http\Controllers\StorageBrowserController;
-
+// use App\Http\Controllers\StorageConnectionController;
+// use App\Http\Controllers\StorageBrowserController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -51,9 +49,13 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
 
-Route::get('/dashboard/recents', [DashboardController::class, 'recentCommunityTemplates'])
+Route::get('/dashboard/recents', [DashboardController::class, 'recentActivity'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.recents');
+
+Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.events');
 
 Route::get('/login', [PageController::class, 'notAuthorized'])
     ->middleware(['guest'])
@@ -125,12 +127,11 @@ Route::get('/auth/redirect/twitch', function (Request $request) {
     ])->redirect();
 });
 
-
 // Refresh Twitch token endpoint
 Route::post('/auth/refresh/twitch', function () {
     $user = Auth::user();
 
-    if (!$user) {
+    if (! $user) {
         return response()->json(['error' => 'Not authenticated'], 401);
     }
 
@@ -147,7 +148,7 @@ Route::get('/auth/callback/twitch', function () {
     try {
         $twitchUser = Socialite::driver('twitch')->user();
 
-        $twitchService = new TwitchApiService();
+        $twitchService = new TwitchApiService;
         $extendedData = $twitchService->getExtendedUserData(
             $twitchUser->token,
             $twitchUser->getId()
@@ -155,9 +156,9 @@ Route::get('/auth/callback/twitch', function () {
 
         // Always match by Twitch ID only
         $user = User::where('twitch_id', $twitchUser->getId())->first();
-        $isNewUser = !$user;
+        $isNewUser = ! $user;
 
-        if (!$user) {
+        if (! $user) {
             // Create a new user if not found
             $user = User::create([
                 'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
@@ -190,19 +191,19 @@ Route::get('/auth/callback/twitch', function () {
         Auth::login($user);
 
         // Auto-setup EventSub subscriptions for new users or users who have auto-connect enabled
-        if (($isNewUser || $user->eventsub_auto_connect) && !$user->eventsub_connected_at) {
+        if (($isNewUser || $user->eventsub_auto_connect) && ! $user->eventsub_connected_at) {
             try {
-                Log::info("Dispatching EventSub setup for user", [
+                Log::info('Dispatching EventSub setup for user', [
                     'user_id' => $user->id,
                     'twitch_id' => $user->twitch_id,
                     'is_new_user' => $isNewUser,
                 ]);
-                
+
                 // Dispatch the job to setup EventSub subscriptions
                 \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, false);
-                
+
             } catch (Exception $e) {
-                Log::warning("Failed to dispatch EventSub setup job", [
+                Log::warning('Failed to dispatch EventSub setup job', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -216,20 +217,18 @@ Route::get('/auth/callback/twitch', function () {
     } catch (Exception $e) {
         Log::error('Twitch OAuth callback failed', [
             'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+            'trace' => $e->getTraceAsString(),
         ]);
 
         return redirect('/')->with('error', 'Authentication failed. Please try again.');
     }
 });
 
-
-
 Route::post('/logout', function () {
     Auth::logout();
+
     return redirect('/');
 });
-
 
 Route::middleware('auth.redirect')->group(function () {
 
@@ -308,6 +307,8 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
         ->name('template.export');
 
+    // Replay a historical event as an alert
+    Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');
 
     // Twitch events API - protected by authentication
     Route::prefix('/api/twitch/events')->middleware('auth:sanctum')->group(function () {
@@ -318,7 +319,6 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
     });
 });
-
 
 Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');
 

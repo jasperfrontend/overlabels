@@ -3,23 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Events\TwitchEventReceived;
+use App\Models\EventTemplateMapping;
 use App\Models\TwitchEvent;
 use App\Models\User;
-use App\Models\EventTemplateMapping;
+use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
-use App\Services\TemplateDataMapperService;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use function Laravel\Prompts\warning;
 
 class TwitchEventSubController extends Controller
 {
     private TwitchEventSubService $eventSubService;
+
     private TwitchApiService $twitchService;
+
     private TemplateDataMapperService $mapper;
 
     public function __construct(
@@ -47,13 +48,13 @@ class TwitchEventSubController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->access_token || !$user->twitch_id) {
+        if (! $user || ! $user->access_token || ! $user->twitch_id) {
             return response()->json(['error' => 'User not authenticated with Twitch'], 401);
         }
 
         try {
             // The callback URL that Twitch will send events to
-            $callbackUrl = config('app.url') . '/api/twitch/webhook';
+            $callbackUrl = config('app.url').'/api/twitch/webhook';
 
             // Subscribe to follow events
             $followSub = $this->eventSubService->subscribeToFollows(
@@ -101,21 +102,21 @@ class TwitchEventSubController extends Controller
                 'resub_subscription' => $resubSub,
                 'raid_subscription' => $raidSub,
                 'online_subscription' => $onlineSub,
-                'callback_url' => $callbackUrl
+                'callback_url' => $callbackUrl,
             ];
 
             return response()->json([
                 'success' => true,
                 'message' => 'EventSub subscriptions created',
-                'data' => $results
+                'data' => $results,
             ]);
 
         } catch (Exception $e) {
-            Log::error('EventSub connection failed: ' . $e->getMessage());
+            Log::error('EventSub connection failed: '.$e->getMessage());
 
             return response()->json([
                 'error' => 'Failed to connect to EventSub',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -127,7 +128,7 @@ class TwitchEventSubController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
@@ -135,20 +136,20 @@ class TwitchEventSubController extends Controller
             // Get app access token (since subscriptions were created with app token)
             $appToken = $this->eventSubService->getAppAccessToken();
 
-            if (!$appToken) {
+            if (! $appToken) {
                 return response()->json([
                     'error' => 'Could not get app access token for cleanup',
-                    'message' => 'Failed to get app token'
+                    'message' => 'Failed to get app token',
                 ], 500);
             }
 
             // Get all current subscriptions using an app token
             $subscriptions = $this->eventSubService->getSubscriptions($appToken);
 
-            if (!$subscriptions || !isset($subscriptions['data'])) {
+            if (! $subscriptions || ! isset($subscriptions['data'])) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'No subscriptions to remove'
+                    'message' => 'No subscriptions to remove',
                 ]);
             }
 
@@ -163,7 +164,7 @@ class TwitchEventSubController extends Controller
                     $errors[] = "Failed to delete subscription: {$subscription['id']}";
                     Log::warning('Failed to delete subscription', [
                         'id' => $subscription['id'],
-                        'type' => $subscription['type']
+                        'type' => $subscription['type'],
                     ]);
                 }
             }
@@ -172,15 +173,15 @@ class TwitchEventSubController extends Controller
                 'success' => true,
                 'message' => "Removed $deletedCount subscriptions",
                 'deleted_count' => $deletedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (Exception $e) {
-            Log::error('EventSub disconnection failed: ' . $e->getMessage());
+            Log::error('EventSub disconnection failed: '.$e->getMessage());
 
             return response()->json([
                 'error' => 'Failed to disconnect from EventSub',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -202,8 +203,9 @@ class TwitchEventSubController extends Controller
             if ($jsonError !== JSON_ERROR_NONE) {
                 Log::error('JSON parsing failed', [
                     'error' => json_last_error_msg(),
-                    'body' => $body
+                    'body' => $body,
                 ]);
+
                 return response('Invalid JSON', 400);
             }
 
@@ -213,7 +215,6 @@ class TwitchEventSubController extends Controller
             // Step 4: Check if it's a challenge
             $isChallenge = $messageType === 'webhook_callback_verification' && isset($data['challenge']);
 
-
             // Step 5: Store webhook activity
             $webhookLog = [
                 'timestamp' => now()->toISOString(),
@@ -222,7 +223,7 @@ class TwitchEventSubController extends Controller
                 'challenge' => $data['challenge'] ?? null,
                 'event_type' => $data['subscription']['type'] ?? null,
                 'status' => 'received',
-                'debug' => true
+                'debug' => true,
             ];
 
             Cache::put('last_webhook_activity', $webhookLog, 300);
@@ -241,7 +242,7 @@ class TwitchEventSubController extends Controller
                     // Ultra-simple response - bypass Laravel response system
                     http_response_code(200);
                     header('Content-Type: text/plain');
-                    header('Content-Length: ' . strlen($challenge));
+                    header('Content-Length: '.strlen($challenge));
                     echo $challenge;
 
                     exit(); // Important: exit immediately to prevent Laravel from adding anything
@@ -249,13 +250,13 @@ class TwitchEventSubController extends Controller
                 } catch (Exception $e) {
                     Log::error('Step 6: Failed to send challenge response', [
                         'error' => $e->getMessage(),
-                        'challenge' => $challenge
+                        'challenge' => $challenge,
                     ]);
 
                     // Fallback to Laravel response
                     return response($challenge, 200, [
                         'Content-Type' => 'text/plain',
-                        'Content-Length' => strlen($challenge)
+                        'Content-Length' => strlen($challenge),
                     ]);
                 }
             }
@@ -264,8 +265,9 @@ class TwitchEventSubController extends Controller
 
             // For all other message types, verify signature
             if ($messageType !== 'webhook_callback_verification') {
-                if (!$this->verifyTwitchSignature($request)) {
+                if (! $this->verifyTwitchSignature($request)) {
                     Log::warning('Invalid Twitch webhook signature', ['message_type' => $messageType]);
+
                     return response('Invalid signature', 403);
                 }
             }
@@ -296,23 +298,23 @@ class TwitchEventSubController extends Controller
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             Cache::put('webhook_error', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'timestamp' => now()->toISOString()
+                'timestamp' => now()->toISOString(),
             ], 300);
 
-            return response('Error: ' . $e->getMessage(), 500);
+            return response('Error: '.$e->getMessage(), 500);
         }
     }
 
     public function webhookStatus()
     {
-    return response()->json([
+        return response()->json([
             'last_activity' => Cache::get('last_webhook_activity'),
             'challenge_received' => Cache::get('webhook_challenge_received', false),
             'error' => Cache::get('webhook_error'),
@@ -326,7 +328,7 @@ class TwitchEventSubController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
@@ -334,7 +336,7 @@ class TwitchEventSubController extends Controller
             // Get an app access token to check app-created subscriptions
             $appToken = $this->eventSubService->getAppAccessToken();
 
-            if (!$appToken) {
+            if (! $appToken) {
                 return response()->json(['error' => 'Could not get app token'], 500);
             }
 
@@ -345,11 +347,12 @@ class TwitchEventSubController extends Controller
                 'subscriptions' => $subscriptions['data'] ?? [],
                 'total' => $subscriptions['total'] ?? 0,
                 'breakdown' => collect($subscriptions['data'] ?? [])->groupBy('status')->map->count(),
-                'token_type' => 'app_token'
+                'token_type' => 'app_token',
             ]);
 
         } catch (Exception $e) {
-            Log::error('Failed to check EventSub status: ' . $e->getMessage());
+            Log::error('Failed to check EventSub status: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to get status'], 500);
         }
     }
@@ -361,7 +364,7 @@ class TwitchEventSubController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
@@ -404,16 +407,16 @@ class TwitchEventSubController extends Controller
                 'success' => true,
                 'message' => "Cleaned up $deletedCount subscriptions",
                 'deleted_count' => $deletedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (Exception $e) {
-            Log::error('EventSub cleanup failed: ' . $e->getMessage());
+            Log::error('EventSub cleanup failed: '.$e->getMessage());
 
             return response()->json([
                 'error' => 'Failed to cleanup subscriptions',
                 'message' => $e->getMessage(),
-                'deleted_count' => $deletedCount
+                'deleted_count' => $deletedCount,
             ], 500);
         }
     }
@@ -428,12 +431,12 @@ class TwitchEventSubController extends Controller
         $body = $request->getContent();
         $secret = config('app.twitch_webhook_secret');
 
-        if (!$signature || !$timestamp) {
+        if (! $signature || ! $timestamp) {
             return false;
         }
 
-        $message = $request->header('Twitch-Eventsub-Message-Id') . $timestamp . $body;
-        $expectedSignature = 'sha256=' . hash_hmac('sha256', $message, $secret);
+        $message = $request->header('Twitch-Eventsub-Message-Id').$timestamp.$body;
+        $expectedSignature = 'sha256='.hash_hmac('sha256', $message, $secret);
 
         return hash_equals($expectedSignature, $signature);
     }
@@ -443,7 +446,7 @@ class TwitchEventSubController extends Controller
      */
     private function refreshCachesForEvent(string $eventType, ?string $broadcasterId): void
     {
-        if (!$broadcasterId) {
+        if (! $broadcasterId) {
             return;
         }
 
@@ -454,8 +457,8 @@ class TwitchEventSubController extends Controller
                     // New follower - refresh followers and goals
                     $this->twitchService->clearChannelFollowersCaches($broadcasterId);
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info("Cleared follower and goals caches for new follow event", [
-                        'broadcaster_id' => $broadcasterId
+                    Log::info('Cleared follower and goals caches for new follow event', [
+                        'broadcaster_id' => $broadcasterId,
                     ]);
                     break;
 
@@ -465,17 +468,17 @@ class TwitchEventSubController extends Controller
                     // New subscriber - refresh subscribers and goals
                     $this->twitchService->clearSubscribersCaches($broadcasterId);
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info("Cleared subscriber and goals caches for subscription event", [
+                    Log::info('Cleared subscriber and goals caches for subscription event', [
                         'event_type' => $eventType,
-                        'broadcaster_id' => $broadcasterId
+                        'broadcaster_id' => $broadcasterId,
                     ]);
                     break;
 
                 case 'channel.raid':
                     // Raid might affect goals
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info("Cleared goals cache for raid event", [
-                        'broadcaster_id' => $broadcasterId
+                    Log::info('Cleared goals cache for raid event', [
+                        'broadcaster_id' => $broadcasterId,
                     ]);
                     break;
 
@@ -483,9 +486,9 @@ class TwitchEventSubController extends Controller
                 case 'stream.offline':
                     // Stream status change - might want to refresh channel info
                     $this->twitchService->clearChannelInfoCaches($broadcasterId);
-                    Log::info("Cleared channel info cache for stream status change", [
+                    Log::info('Cleared channel info cache for stream status change', [
                         'event_type' => $eventType,
-                        'broadcaster_id' => $broadcasterId
+                        'broadcaster_id' => $broadcasterId,
                     ]);
                     break;
 
@@ -494,10 +497,10 @@ class TwitchEventSubController extends Controller
                     break;
             }
         } catch (Exception $e) {
-            Log::warning("Failed to clear caches for event", [
+            Log::warning('Failed to clear caches for event', [
                 'event_type' => $eventType,
                 'broadcaster_id' => $broadcasterId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             // Don't throw - cache clearing failure shouldn't break event processing
         }
@@ -512,8 +515,17 @@ class TwitchEventSubController extends Controller
         $event = $data['event'] ?? [];
 
         try {
+            // Find the broadcaster user
+            // For raid events, the broadcaster is in 'to_broadcaster_user_id'
+            $broadcasterId = $eventType === 'channel.raid'
+                ? ($event['to_broadcaster_user_id'] ?? null)
+                : ($event['broadcaster_user_id'] ?? null);
+
+            $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+
             // Store the event in the database
             $twitchEvent = TwitchEvent::create([
+                'user_id' => $user?->id,
                 'event_type' => $eventType,
                 'event_data' => $event,
                 'twitch_timestamp' => now(),
@@ -522,24 +534,16 @@ class TwitchEventSubController extends Controller
 
             Log::info("Stored Twitch event in database: $eventType (ID: $twitchEvent->id)");
 
-            // Find the broadcaster user
-            // For raid events, the broadcaster is in 'to_broadcaster_user_id'
-            $broadcasterId = $eventType === 'channel.raid'
-                ? ($event['to_broadcaster_user_id'] ?? null)
-                : ($event['broadcaster_user_id'] ?? null);
-
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
 
-            Log::info("Processing event for broadcaster", [
+            Log::info('Processing event for broadcaster', [
                 'event_type' => $eventType,
                 'broadcaster_id' => $broadcasterId,
-                'event_keys' => array_keys($event)
+                'event_keys' => array_keys($event),
             ]);
 
             if ($broadcasterId) {
-                $user = User::where('twitch_id', $broadcasterId)->first();
-
                 if ($user) {
                     // Check if user has a template mapping for this event
                     $mapping = EventTemplateMapping::with('template')
@@ -549,28 +553,28 @@ class TwitchEventSubController extends Controller
                         ->first();
 
                     if ($mapping && $mapping->template) {
-                        Log::info("Found template mapping for event", [
+                        Log::info('Found template mapping for event', [
                             'event_type' => $eventType,
                             'template_id' => $mapping->template_id,
-                            'user_id' => $user->id
+                            'user_id' => $user->id,
                         ]);
                         // Render the user's custom alert template
                         $this->renderEventAlert($user, $mapping, $data);
                     } else {
-                        Log::warning("No enabled template mapping found", [
+                        Log::warning('No enabled template mapping found', [
                             'event_type' => $eventType,
                             'user_id' => $user->id,
                             'mapping_exists' => EventTemplateMapping::where('user_id', $user->id)
-                                ->where('event_type', $eventType)->exists()
+                                ->where('event_type', $eventType)->exists(),
                         ]);
                     }
                 } else {
                     Log::warning("User not found for Twitch ID: $broadcasterId");
                 }
             } else {
-                Log::warning("No broadcaster ID found in event", [
+                Log::warning('No broadcaster ID found in event', [
                     'event_type' => $eventType,
-                    'event_keys' => array_keys($event)
+                    'event_keys' => array_keys($event),
                 ]);
             }
 
@@ -635,13 +639,44 @@ class TwitchEventSubController extends Controller
     }
 
     /**
+     * Replay a historical event as an alert
+     */
+    public function replay(Request $request, TwitchEvent $twitchEvent)
+    {
+        $user = $request->user();
+
+        if ($twitchEvent->user_id !== $user->id) {
+            return back()->with('message', 'You do not own this event.')->with('type', 'error');
+        }
+
+        $mapping = EventTemplateMapping::with('template')
+            ->where('user_id', $user->id)
+            ->where('event_type', $twitchEvent->event_type)
+            ->where('enabled', true)
+            ->first();
+
+        if (! $mapping || ! $mapping->template) {
+            return back()->with('message', 'No active template mapping found for this event type.')->with('type', 'error');
+        }
+
+        $reconstructedData = [
+            'subscription' => ['type' => $twitchEvent->event_type],
+            'event' => $twitchEvent->event_data,
+        ];
+
+        $this->renderEventAlert($user, $mapping, $reconstructedData);
+
+        return back()->with('message', 'Alert replayed successfully!')->with('type', 'success');
+    }
+
+    /**
      * Get current subscription status
      */
     public function status(Request $request)
     {
         $user = $request->user();
 
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
@@ -650,11 +685,12 @@ class TwitchEventSubController extends Controller
 
             return response()->json([
                 'subscriptions' => $subscriptions['data'] ?? [],
-                'total' => $subscriptions['total'] ?? 0
+                'total' => $subscriptions['total'] ?? 0,
             ]);
 
         } catch (Exception $e) {
-            Log::error('Failed to get EventSub status: ' . $e->getMessage());
+            Log::error('Failed to get EventSub status: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to get status'], 500);
         }
     }
