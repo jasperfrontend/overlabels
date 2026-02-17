@@ -31,6 +31,8 @@ class User extends Authenticatable
         'email_verified_at',
         'eventsub_connected_at',
         'eventsub_auto_connect',
+        'onboarded_at',
+        'webhook_secret',
     ];
 
     /**
@@ -41,6 +43,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'webhook_secret',
     ];
 
     /**
@@ -55,6 +58,7 @@ class User extends Authenticatable
             'token_expires_at' => 'datetime',
             'eventsub_connected_at' => 'datetime',
             'eventsub_auto_connect' => 'boolean',
+            'onboarded_at' => 'datetime',
             'twitch_data' => 'array',
             'password' => 'hashed',
         ];
@@ -90,5 +94,15 @@ class User extends Authenticatable
         return $this->eventsubSubscriptions()
             ->where('status', 'enabled')
             ->exists();
+    }
+
+    public function isOnboarded(): bool
+    {
+        return $this->onboarded_at !== null;
+    }
+
+    public function hasAlertMappings(): bool
+    {
+        return EventTemplateMapping::where('user_id', $this->id)->exists();
     }
 }

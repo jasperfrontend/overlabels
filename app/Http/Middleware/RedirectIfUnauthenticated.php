@@ -17,13 +17,13 @@ class RedirectIfUnauthenticated
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             // Store the intended URL for redirect after authentication
             $intendedUrl = $request->fullUrl();
-            
+
             // Build login URL with redirect parameter
-            $loginUrl = route('login') . '?redirect_to=' . urlencode($intendedUrl);
-            
+            $loginUrl = route('login').'?redirect_to='.urlencode($intendedUrl);
+
             return redirect($loginUrl);
         }
 

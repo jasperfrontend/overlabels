@@ -21,7 +21,7 @@ return new class extends Migration
             $table->boolean('enabled')->default(true);
             $table->json('settings')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'event_type']);
             $table->index(['user_id', 'enabled']);
         });

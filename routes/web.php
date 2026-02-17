@@ -3,10 +3,12 @@
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KitController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\TemplateTagController;
+use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
@@ -171,6 +173,7 @@ Route::get('/auth/callback/twitch', function () {
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
                 'email_verified_at' => now(),
                 'password' => bcrypt(Str::random(32)),
+                'webhook_secret' => bin2hex(random_bytes(32)),
                 'eventsub_auto_connect' => true, // New users default to auto-connect
             ]);
 
@@ -178,14 +181,21 @@ Route::get('/auth/callback/twitch', function () {
             UserRegistered::dispatch($user);
         } else {
             // Existing user — update tokens and data
-            $user->update([
+            $updateData = [
                 'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
                 'avatar' => $twitchUser->getAvatar(),
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken ?? null,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
-            ]);
+            ];
+
+            // Backfill webhook_secret for users created before per-user secrets
+            if (! $user->webhook_secret) {
+                $updateData['webhook_secret'] = bin2hex(random_bytes(32));
+            }
+
+            $user->update($updateData);
         }
 
         Auth::login($user);
@@ -231,6 +241,16 @@ Route::post('/logout', function () {
 });
 
 Route::middleware('auth.redirect')->group(function () {
+
+    // Onboarding
+    Route::prefix('onboarding')->name('onboarding.')->group(function () {
+        Route::get('/status', [OnboardingController::class, 'status'])->name('status');
+        Route::post('/token', [OnboardingController::class, 'createToken'])->name('token');
+        Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
+    });
+
+    // Testing Guide
+    Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');
 
     // Access Token Management
     Route::prefix('tokens')->name('tokens.')->group(function () {

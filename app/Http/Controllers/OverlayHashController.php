@@ -7,18 +7,18 @@ use App\Services\DefaultTemplateProviderService;
 use App\Services\OverlayTemplateParserService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class OverlayHashController extends Controller
 {
-
     private DefaultTemplateProviderService $defaultTemplateProvider;
+
     private TemplateDataMapperService $templateDataMapper;
 
     public function __construct(
@@ -39,7 +39,7 @@ class OverlayHashController extends Controller
         $hashes = OverlayHash::forUser($user->id)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function($hash) {
+            ->map(function ($hash) {
                 return [
                     'id' => $hash->id,
                     'overlay_name' => $hash->overlay_name,
@@ -103,7 +103,7 @@ class OverlayHashController extends Controller
                 'hash_key' => $hash->hash_key,
                 'overlay_url' => $hash->getOverlayUrl(),
                 'overlay_name' => $hash->overlay_name,
-            ]
+            ],
         ]);
     }
 
@@ -127,7 +127,7 @@ class OverlayHashController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Overlay hash revoked successfully'
+            'message' => 'Overlay hash revoked successfully',
         ]);
     }
 
@@ -148,8 +148,8 @@ class OverlayHashController extends Controller
             'user_id' => $request->user()->id,
             'hash_id' => $hash->id,
             'overlay_name' => $hash->overlay_name,
-            'old_hash' => substr($oldHashKey, 0, 8) . '...',
-            'new_hash' => substr($newHashKey, 0, 8) . '...',
+            'old_hash' => substr($oldHashKey, 0, 8).'...',
+            'new_hash' => substr($newHashKey, 0, 8).'...',
         ]);
 
         return response()->json([
@@ -180,7 +180,7 @@ class OverlayHashController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Overlay hash deleted successfully'
+            'message' => 'Overlay hash deleted successfully',
         ]);
     }
 
@@ -195,7 +195,7 @@ class OverlayHashController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if (!$hash) {
+            if (! $hash) {
                 return response('Overlay not found', 404);
             }
 
@@ -213,7 +213,7 @@ class OverlayHashController extends Controller
                 'user_name' => $hash->user->name,
                 'access_count' => $hash->access_count,
                 'timestamp' => now()->toISOString(),
-                'data' => $twitchData
+                'data' => $twitchData,
             ];
 
             // Determine output format
@@ -247,7 +247,7 @@ class OverlayHashController extends Controller
         // Find and validate the hash (we still use the hashKey for security)
         $hash = OverlayHash::findValidHash($hashKey, $clientIp);
         Log::info($hash);
-        if (!$hash) {
+        if (! $hash) {
             // Return a completely empty response for invalid hashes (as requested)
             return response('', 404);
         }
@@ -259,18 +259,19 @@ class OverlayHashController extends Controller
             Log::info('Slug mismatch in overlay request', [
                 'expected_slug' => $hash->slug,
                 'provided_slug' => $slug,
-                'hash_id' => $hash->id
+                'hash_id' => $hash->id,
             ]);
         }
 
         // Get the user who owns this hash
         $user = $hash->user;
 
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             Log::error('Overlay hash has no valid user or access token', [
                 'hash_id' => $hash->id,
                 'user_id' => $hash->user_id,
             ]);
+
             return response('', 500);
         }
 
@@ -289,7 +290,7 @@ class OverlayHashController extends Controller
                 'user_name' => $user->name,
                 'access_count' => $hash->access_count,
                 'timestamp' => now()->toISOString(),
-                'data' => $twitchData // Full Twitch data for template parsing/API use
+                'data' => $twitchData, // Full Twitch data for template parsing/API use
             ];
 
             // Return different formats based on request
@@ -317,7 +318,7 @@ class OverlayHashController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if (!$hash) {
+            if (! $hash) {
                 return response('Overlay not found', 404);
             }
 
@@ -331,7 +332,7 @@ class OverlayHashController extends Controller
             $htmlTemplate = $metadata['html_template'] ?? $this->defaultTemplateProvider->getDefaultHtml();
             $cssTemplate = $metadata['css_template'] ?? $this->defaultTemplateProvider->getDefaultCss();
 
-            $htmlStripped = str_replace("[[[style]]]", "", $htmlTemplate);
+            $htmlStripped = str_replace('[[[style]]]', '', $htmlTemplate);
 
             // Record access (optional - you may want to track public access differently)
             $hash->recordAccess($request->ip());
@@ -349,7 +350,7 @@ class OverlayHashController extends Controller
             Log::error('Error serving public overlay', [
                 'slug' => $slug,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response('Internal Server Error', 500);
@@ -375,7 +376,7 @@ class OverlayHashController extends Controller
     {$htmlTemplate}
 </body>
 </html>";
-}
+    }
 
     /**
      * Determine output format from request
@@ -424,8 +425,8 @@ class OverlayHashController extends Controller
                 'format' => 'json',
                 'documentation' => 'Add ?format=html for overlay, ?format=csv for CSV export',
                 'rate_limit' => 'No rate limit - data is always fresh from Twitch API',
-                'authentication' => 'Hash-based - no API keys required'
-            ]
+                'authentication' => 'Hash-based - no API keys required',
+            ],
         ]);
     }
 
@@ -450,9 +451,9 @@ class OverlayHashController extends Controller
 
         $output = '';
         foreach ($csv as $row) {
-            $output .= implode(',', array_map(function($field) {
-                return '"' . str_replace('"', '""', $field) . '"';
-            }, $row)) . "\n";
+            $output .= implode(',', array_map(function ($field) {
+                return '"'.str_replace('"', '""', $field).'"';
+            }, $row))."\n";
         }
 
         return response($output, 200)
@@ -470,7 +471,7 @@ class OverlayHashController extends Controller
         $htmlTemplate = $hash->metadata['html_template'] ?? null;
         $cssTemplate = $hash->metadata['css_template'] ?? null;
 
-        if (!$htmlTemplate) {
+        if (! $htmlTemplate) {
             // No custom template - return default overlay using the service
             return $this->returnDefaultHtmlOverlay($hash, $data);
         }
@@ -493,10 +494,7 @@ class OverlayHashController extends Controller
             ->header('Expires', '0');
     }
 
-    private function returnEmptyHtmlOverlay(string $slug, array $data) {
-
-    }
-
+    private function returnEmptyHtmlOverlay(string $slug, array $data) {}
 
     /**
      * Build a complete HTML document with a parsed template
@@ -509,7 +507,6 @@ class OverlayHashController extends Controller
             $hash->overlay_name
         );
     }
-
 
     /**
      * Return the default HTML overlay using DefaultTemplateProviderService
@@ -530,9 +527,6 @@ class OverlayHashController extends Controller
             ->header('Expires', '0');
     }
 
-
-
-
     /**
      * Helper: Flatten nested array for CSV
      */
@@ -541,7 +535,7 @@ class OverlayHashController extends Controller
         $result = [];
 
         foreach ($array as $key => $value) {
-            $newKey = $prefix ? $prefix . '.' . $key : $key;
+            $newKey = $prefix ? $prefix.'.'.$key : $key;
 
             if (is_array($value)) {
                 $result = array_merge($result, $this->flattenArray($value, $newKey));
@@ -561,7 +555,7 @@ class OverlayHashController extends Controller
         $clientIp = $request->ip();
         $hash = OverlayHash::findValidHash($hashKey, $clientIp);
 
-        if (!$hash) {
+        if (! $hash) {
             return response()->json(['valid' => false, 'message' => 'Invalid or expired hash']);
         }
 

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('overlay_templates', function (Blueprint $table) {
-            if (!Schema::hasColumn('overlay_templates', 'head')) {
+            if (! Schema::hasColumn('overlay_templates', 'head')) {
                 $table->string('head')->nullable();
             }
         });

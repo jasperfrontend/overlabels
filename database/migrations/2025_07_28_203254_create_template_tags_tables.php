@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('is_group')->default(false); // true for groups like [[[subscribers]]], false for singles
             $table->integer('sort_order')->default(0);
             $table->timestamps();
-            
+
             $table->unique('name');
         });
 
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->json('formatting_options')->nullable(); // Store formatting rules (dates, numbers, etc.)
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->unique(['category_id', 'tag_name']);
             $table->index('json_path');
         });

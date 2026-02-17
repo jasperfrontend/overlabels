@@ -7,9 +7,9 @@ use App\Models\OverlayTemplate;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Log;
 
 class EventTemplateMappingController extends Controller
 {
@@ -34,7 +34,7 @@ class EventTemplateMappingController extends Controller
 
         foreach ($eventTypes as $eventType => $displayName) {
             $mapping = $mappings->get($eventType);
-            if (!$mapping) {
+            if (! $mapping) {
                 // Create a proper array structure for non-existing mappings
                 $mapping = [
                     'id' => null,
@@ -67,10 +67,10 @@ class EventTemplateMappingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'event_type' => 'required|string|in:' . implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
+            'event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
             'template_id' => 'nullable|exists:overlay_templates,id',
             'duration_ms' => 'nullable|integer|min:1000|max:30000',
-            'transition_type' => 'nullable|string|in:' . implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+            'transition_type' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
             'enabled' => 'nullable|boolean',
         ]);
 
@@ -83,7 +83,7 @@ class EventTemplateMappingController extends Controller
                 ->where('type', 'alert')
                 ->first();
 
-            if (!$template) {
+            if (! $template) {
                 return response()->json(['error' => 'Invalid template selected'], 422);
             }
         }
@@ -112,10 +112,10 @@ class EventTemplateMappingController extends Controller
         try {
             $validated = $request->validate([
                 'mappings' => 'required|array',
-                'mappings.*.event_type' => 'required|string|in:' . implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
+                'mappings.*.event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
                 'mappings.*.template_id' => 'nullable|integer|exists:overlay_templates,id',
                 'mappings.*.duration_ms' => 'nullable|integer|min:1000|max:30000',
-                'mappings.*.transition_type' => 'nullable|string|in:' . implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+                'mappings.*.transition_type' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
                 'mappings.*.enabled' => 'nullable|boolean',
             ]);
 
@@ -124,16 +124,16 @@ class EventTemplateMappingController extends Controller
 
             foreach ($validated['mappings'] as $mappingData) {
                 // Verify template ownership if template_id is provided
-                if (!empty($mappingData['template_id'])) {
+                if (! empty($mappingData['template_id'])) {
                     $template = OverlayTemplate::where('id', $mappingData['template_id'])
                         ->where('owner_id', $user->id)
                         ->where('type', 'alert')
                         ->first();
 
-                    if (!$template) {
+                    if (! $template) {
                         return response()->json([
                             'success' => false,
-                            'error' => 'Invalid template selected for event: ' . $mappingData['event_type']
+                            'error' => 'Invalid template selected for event: '.$mappingData['event_type'],
                         ], 422);
                     }
                 }
@@ -157,14 +157,14 @@ class EventTemplateMappingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Event mappings updated successfully',
-                'updated_count' => count($updatedMappings)
+                'updated_count' => count($updatedMappings),
             ]);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (Exception $e) {
             Log::error('Failed to update event mappings', [
@@ -174,7 +174,7 @@ class EventTemplateMappingController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to update event mappings'
+                'error' => 'Failed to update event mappings',
             ], 500);
         }
     }

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('kit_id')->constrained('kits')->onDelete('cascade');
             $table->foreignId('overlay_template_id')->constrained('overlay_templates')->onDelete('restrict');
             $table->timestamps();
-            
+
             $table->unique(['kit_id', 'overlay_template_id']);
             $table->index('kit_id');
             $table->index('overlay_template_id');

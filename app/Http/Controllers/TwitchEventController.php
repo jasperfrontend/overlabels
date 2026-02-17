@@ -13,9 +13,9 @@ class TwitchEventController extends Controller
     /**
      * Display a listing of the Twitch events.
      *
-     * @param Request $request
-     * @throws Exception
      * @return JsonResponse
+     *
+     * @throws Exception
      */
     public function index(Request $request)
     {
@@ -41,7 +41,8 @@ class TwitchEventController extends Controller
 
             return response()->json($events);
         } catch (Exception $e) {
-            Log::error('Failed to retrieve Twitch events: ' . $e->getMessage());
+            Log::error('Failed to retrieve Twitch events: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to retrieve events'], 500);
         }
     }
@@ -49,17 +50,19 @@ class TwitchEventController extends Controller
     /**
      * Display the specified Twitch event.
      *
-     * @param int $id
-     * @throws Exception
      * @return JsonResponse
+     *
+     * @throws Exception
      */
     public function show(int $id)
     {
         try {
             $event = TwitchEvent::findOrFail($id);
+
             return response()->json($event);
         } catch (Exception $e) {
-            Log::error('Failed to retrieve Twitch event: ' . $e->getMessage());
+            Log::error('Failed to retrieve Twitch event: '.$e->getMessage());
+
             return response()->json(['error' => 'Event not found'], 404);
         }
     }
@@ -67,9 +70,9 @@ class TwitchEventController extends Controller
     /**
      * Mark an event as processed.
      *
-     * @param int $id
-     * @throws Exception
      * @return JsonResponse
+     *
+     * @throws Exception
      */
     public function markAsProcessed(int $id)
     {
@@ -80,10 +83,11 @@ class TwitchEventController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Event marked as processed',
-                'event' => $event
+                'event' => $event,
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to mark event as processed: ' . $e->getMessage());
+            Log::error('Failed to mark event as processed: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to update event'], 500);
         }
     }
@@ -91,16 +95,16 @@ class TwitchEventController extends Controller
     /**
      * Mark multiple events as processed.
      *
-     * @param Request $request
-     * @throws Exception
      * @return JsonResponse
+     *
+     * @throws Exception
      */
     public function batchMarkAsProcessed(Request $request)
     {
         try {
             $request->validate([
                 'ids' => 'required|array',
-                'ids.*' => 'integer'
+                'ids.*' => 'integer',
             ]);
 
             $count = TwitchEvent::whereIn('id', $request->ids)
@@ -108,10 +112,11 @@ class TwitchEventController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "$count events marked as processed"
+                'message' => "$count events marked as processed",
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to batch mark events as processed: ' . $e->getMessage());
+            Log::error('Failed to batch mark events as processed: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to update events'], 500);
         }
     }
@@ -119,9 +124,9 @@ class TwitchEventController extends Controller
     /**
      * Remove the specified event from storage.
      *
-     * @param int $id
-     * @throws Exception
      * @return JsonResponse
+     *
+     * @throws Exception
      */
     public function destroy(int $id)
     {
@@ -131,10 +136,11 @@ class TwitchEventController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Event deleted successfully'
+                'message' => 'Event deleted successfully',
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to delete Twitch event: ' . $e->getMessage());
+            Log::error('Failed to delete Twitch event: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to delete event'], 500);
         }
     }

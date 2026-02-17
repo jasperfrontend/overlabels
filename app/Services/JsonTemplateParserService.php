@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
 use Exception;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * JsonTemplateParserService
@@ -22,7 +22,7 @@ class JsonTemplateParserService
     // Only these BASE standardized tags will get scalar _0, _1, ... tags
     // e.g. 'channel.tags' → standardized 'channel_tags' (in your mapper)
     private const INDEXED_ARRAY_BASE_TAGS = [
-        'channel_tags'
+        'channel_tags',
     ];
 
     // Arrays we do not recurse deeply (keep your existing list)
@@ -69,7 +69,7 @@ class JsonTemplateParserService
         return [
             'categories' => $categories,
             'tags' => $createdTags,
-            'total_tags' => count($createdTags)
+            'total_tags' => count($createdTags),
         ];
     }
 
@@ -123,12 +123,10 @@ class JsonTemplateParserService
             if (is_array($v)) {
                 $this->parseLevel($v, $childPath, $createdTags, $categories, $key, $processedPaths);
             } else {
-                $this->createTagFromValue((string)$k, $v, $childPath, $createdTags, $categories, $key, $processedPaths);
+                $this->createTagFromValue((string) $k, $v, $childPath, $createdTags, $categories, $key, $processedPaths);
             }
         }
     }
-
-
 
     /**
      * Create a template tag from a value using the centralized mapper
@@ -136,7 +134,7 @@ class JsonTemplateParserService
      */
     private function createTagFromValue(
         string $key,
-               $value,
+        $value,
         string $jsonPath,
         array &$createdTags,
         array &$categories,
@@ -153,13 +151,13 @@ class JsonTemplateParserService
 
         // Standardized base tag from mapper (or fallback)
         $baseTag = $this->templateDataMapper->getStandardizedTagName($jsonPath);
-        if (!$baseTag) {
+        if (! $baseTag) {
             $baseTag = str_replace('.', '_', $jsonPath);
         }
 
         // Category ensure once
         $categoryName = $this->determineCategoryForTag($baseTag);
-        if (!isset($categories[$categoryName])) {
+        if (! isset($categories[$categoryName])) {
             $categoryDefinitions = $this->templateDataMapper->getTagCategories();
             if (isset($categoryDefinitions[$categoryName])) {
                 $this->createCategory(
@@ -193,7 +191,7 @@ class JsonTemplateParserService
             // 2) Count tag
             $countTag = "{$baseTag}_count";
             $countPath = "{$jsonPath}_count";
-            if (!$this->tagExists($createdTags, $countTag)) {
+            if (! $this->tagExists($createdTags, $countTag)) {
                 $this->createTag(
                     $countTag,
                     $countPath,
@@ -207,12 +205,12 @@ class JsonTemplateParserService
             // 3) First-item scalar fields for arrays-of-objects → enables *latest* mappings
             // Example: channel_followers.data.0.user_name -> followers_latest_user_name
             $firstItem = reset($value);
-            if (is_array($firstItem) && !empty($firstItem)) {
+            if (is_array($firstItem) && ! empty($firstItem)) {
                 foreach ($firstItem as $objKey => $objVal) {
                     if (is_scalar($objVal) || $this->getDataType($objVal) !== 'array') {
                         $firstPath = "$jsonPath.0.$objKey";
                         // This will hit mapper's '...data.0.*' rules → *_latest_* tag names
-                        $this->createTagFromValue((string)$objKey, $objVal, $firstPath, $createdTags, $categories, $key, $processedPaths);
+                        $this->createTagFromValue((string) $objKey, $objVal, $firstPath, $createdTags, $categories, $key, $processedPaths);
                     }
                 }
             }
@@ -221,7 +219,7 @@ class JsonTemplateParserService
             // ONLY for simple scalar arrays, NOT for arrays of objects
             $limit = self::ARRAY_INDEX_LIMIT;
             $baseIsIndexed = in_array($baseTag, self::INDEXED_ARRAY_BASE_TAGS, true);
-            if ($baseIsIndexed && !empty($value)) {
+            if ($baseIsIndexed && ! empty($value)) {
                 // Check if this is a simple scalar array
                 $firstItem = reset($value);
                 $isScalarArray = is_scalar($firstItem);
@@ -233,7 +231,7 @@ class JsonTemplateParserService
                         if (is_scalar($item)) {
                             $indexTag = "{$baseTag}_$index";
                             $indexPath = "$jsonPath.$index";
-                            if (!$this->tagExists($createdTags, $indexTag)) {
+                            if (! $this->tagExists($createdTags, $indexTag)) {
                                 $this->createTag(
                                     $indexTag,
                                     $indexPath,
@@ -253,7 +251,7 @@ class JsonTemplateParserService
         }
 
         // ===== NON-ARRAY =====
-        if (!$this->tagExists($createdTags, $baseTag)) {
+        if (! $this->tagExists($createdTags, $baseTag)) {
             $this->createTag(
                 $baseTag,
                 $jsonPath,
@@ -273,9 +271,9 @@ class JsonTemplateParserService
                 return true;
             }
         }
+
         return false;
     }
-
 
     /**
      * Determine which category a tag belongs to based on its name
@@ -292,13 +290,27 @@ class JsonTemplateParserService
         }
 
         // Default category if not found
-        if (str_starts_with($tagName, 'user_')) return 'user';
-        if (str_starts_with($tagName, 'channel_')) return 'channel';
-        if (str_starts_with($tagName, 'followers_')) return 'followers';
-        if (str_starts_with($tagName, 'followed_')) return 'followed';
-        if (str_starts_with($tagName, 'subscribers_')) return 'subscribers';
-        if (str_starts_with($tagName, 'goals_')) return 'goals';
-        if (str_starts_with($tagName, 'overlay_')) return 'overlay';
+        if (str_starts_with($tagName, 'user_')) {
+            return 'user';
+        }
+        if (str_starts_with($tagName, 'channel_')) {
+            return 'channel';
+        }
+        if (str_starts_with($tagName, 'followers_')) {
+            return 'followers';
+        }
+        if (str_starts_with($tagName, 'followed_')) {
+            return 'followed';
+        }
+        if (str_starts_with($tagName, 'subscribers_')) {
+            return 'subscribers';
+        }
+        if (str_starts_with($tagName, 'goals_')) {
+            return 'goals';
+        }
+        if (str_starts_with($tagName, 'overlay_')) {
+            return 'overlay';
+        }
 
         return 'other';
     }
@@ -308,13 +320,13 @@ class JsonTemplateParserService
      */
     private function createCategory(string $name, string $displayName, string $description, array &$categories): void
     {
-        if (!isset($categories[$name])) {
+        if (! isset($categories[$name])) {
             $categories[$name] = [
                 'name' => $name,
                 'display_name' => $displayName,
                 'description' => $description,
                 'is_group' => false,
-                'sort_order' => count($categories)
+                'sort_order' => count($categories),
             ];
         }
     }
@@ -341,7 +353,7 @@ class JsonTemplateParserService
             'tag_name' => $tagName,
             'json_path' => $jsonPath,
             'category' => $categoryName,
-            'sample_value' => $sampleValue
+            'sample_value' => $sampleValue,
         ]);
 
         // Create the tag data
@@ -369,7 +381,7 @@ class JsonTemplateParserService
             'categories' => 0,
             'tags' => 0,
             'errors' => [],
-            'updated_tags' => 0
+            'updated_tags' => 0,
         ];
 
         try {
@@ -378,7 +390,7 @@ class JsonTemplateParserService
                 $category = TemplateTagCategory::firstOrCreate(
                     [
                         'user_id' => $userId,
-                        'name' => $categoryData['name']
+                        'name' => $categoryData['name'],
                     ],
                     array_merge($categoryData, ['user_id' => $userId])
                 );
@@ -404,14 +416,14 @@ class JsonTemplateParserService
                         $existingTag->update([
                             'sample_data' => $tagData['sample_data'],
                             'json_path' => $tagData['json_path'],
-                            'description' => $tagData['description']
+                            'description' => $tagData['description'],
                         ]);
                         $saved['updated_tags']++;
                     } else {
                         // Create new tag
                         TemplateTag::create(array_merge($tagData, [
                             'user_id' => $userId,
-                            'category_id' => $category->id
+                            'category_id' => $category->id,
                         ]));
                         $saved['tags']++;
                     }
@@ -424,7 +436,7 @@ class JsonTemplateParserService
             $saved['errors'][] = $e->getMessage();
             Log::error('Error saving template tags to database', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 
@@ -433,6 +445,7 @@ class JsonTemplateParserService
 
     /**
      * Legacy method - kept for backwards compatibility
+     *
      * @deprecated Use saveTagsToDatabaseForUser instead
      */
     public function saveTagsToDatabase(array $tagData): array
@@ -458,7 +471,7 @@ class JsonTemplateParserService
         foreach ($categories as $category) {
             $organized[$category->name] = [
                 'category' => $category,
-                'tags' => $category->activeTemplateTags->map(function($tag) {
+                'tags' => $category->activeTemplateTags->map(function ($tag) {
                     return [
                         'id' => $tag->id,
                         'tag_name' => $tag->tag_name,
@@ -467,9 +480,9 @@ class JsonTemplateParserService
                         'description' => $tag->description,
                         'data_type' => $tag->data_type,
                         'sample_data' => $tag->sample_data,
-                        'json_path' => $tag->json_path
+                        'json_path' => $tag->json_path,
                     ];
-                })
+                }),
             ];
         }
 
@@ -478,6 +491,7 @@ class JsonTemplateParserService
 
     /**
      * Legacy method - kept for backwards compatibility
+     *
      * @deprecated Use getOrganizedTemplateTagsForUser instead
      */
     public function getOrganizedTemplateTags(): array
@@ -493,7 +507,7 @@ class JsonTemplateParserService
         foreach ($categories as $category) {
             $organized[$category->name] = [
                 'category' => $category,
-                'tags' => $category->activeTemplateTags->map(function($tag) {
+                'tags' => $category->activeTemplateTags->map(function ($tag) {
                     return [
                         'id' => $tag->id,
                         'tag_name' => $tag->tag_name,
@@ -502,9 +516,9 @@ class JsonTemplateParserService
                         'description' => $tag->description,
                         'data_type' => $tag->data_type,
                         'sample_data' => $tag->sample_data,
-                        'json_path' => $tag->json_path
+                        'json_path' => $tag->json_path,
                     ];
-                })
+                }),
             ];
         }
 
@@ -574,7 +588,7 @@ class JsonTemplateParserService
         }
 
         // Fallback to generated description
-        $baseDescription = match($dataType) {
+        $baseDescription = match ($dataType) {
             'datetime' => 'Date and time value',
             'integer' => 'Numeric value',
             'float' => 'Decimal number',
@@ -618,7 +632,7 @@ class JsonTemplateParserService
                 'd-m-Y H:i' => 'DD-MM-YYYY HH:MM',
                 'Y-m-d H:i:s' => 'YYYY-MM-DD HH:MM:SS',
                 'M j, Y' => 'Month Day, Year',
-                'D, M j Y' => 'Day, Month Day Year'
+                'D, M j Y' => 'Day, Month Day Year',
             ];
         }
 
@@ -626,7 +640,7 @@ class JsonTemplateParserService
         if (in_array($dataType, ['integer', 'float'])) {
             $options['number_format'] = [
                 'decimals' => $dataType === 'float' ? 2 : 0,
-                'thousands_separator' => ','
+                'thousands_separator' => ',',
             ];
         }
 

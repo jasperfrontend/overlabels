@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
-use App\Models\User;
 
 class TemplateTag extends Model
 {
@@ -29,7 +28,7 @@ class TemplateTag extends Model
         'description',
         'sample_data',
         'formatting_options',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -73,6 +72,7 @@ class TemplateTag extends Model
 
     /**
      * Create a custom variant of this tag
+     *
      * @throws Exception
      */
     public function createCustomVariant(string $newTagName, array $customOptions = []): self
@@ -112,7 +112,7 @@ class TemplateTag extends Model
      */
     public function formatData($data): string
     {
-        if (!$this->formatting_options) {
+        if (! $this->formatting_options) {
             return $data;
         }
 
@@ -135,7 +135,7 @@ class TemplateTag extends Model
             return implode($this->formatting_options['array_join'], $data);
         }
         if ($data === null) {
-            return "N/A";
+            return 'N/A';
         }
 
         return $data;
@@ -147,6 +147,7 @@ class TemplateTag extends Model
     public function getFormattedOutput(array $jsonData): string
     {
         $data = $this->extractDataFromJson($jsonData);
+
         return $this->formatData($data);
     }
 }

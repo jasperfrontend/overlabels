@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\OverlayTemplateController;
+use App\Http\Controllers\TemplateTagController;
+use App\Http\Controllers\TwitchEventSubController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TwitchEventSubController;
-use App\Http\Controllers\TemplateTagController;
-use App\Http\Controllers\OverlayTemplateController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 Route::get('/user', function (Request $request) {
@@ -37,7 +37,7 @@ Route::get('/eventsub-health-check', function () {
     try {
         $manager = app(\App\Services\UserEventSubManager::class);
         $stats = $manager->getGlobalStats();
-        
+
         // Get failed subscriptions
         $failedSubs = \App\Models\UserEventsubSubscription::whereIn('status', [
             'webhook_callback_verification_failed',
@@ -45,7 +45,7 @@ Route::get('/eventsub-health-check', function () {
             'authorization_revoked',
             'user_removed',
         ])->with('user')->get();
-        
+
         // Auto-fix if there are failed subscriptions
         if ($failedSubs->count() > 0) {
             foreach ($failedSubs->groupBy('user_id') as $userId => $userFailedSubs) {
@@ -53,16 +53,16 @@ Route::get('/eventsub-health-check', function () {
                 \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, true);
             }
         }
-        
+
         // Check for users who should be connected but aren't
         $usersNeedingSetup = \App\Models\User::where('eventsub_auto_connect', true)
             ->whereNull('eventsub_connected_at')
             ->get();
-            
+
         foreach ($usersNeedingSetup as $user) {
             \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, false);
         }
-        
+
         return response()->json([
             'status' => 'ok',
             'timestamp' => now()->toISOString(),
@@ -72,13 +72,13 @@ Route::get('/eventsub-health-check', function () {
                 'users_auto_setup' => $usersNeedingSetup->count(),
             ],
         ]);
-        
+
     } catch (Exception $e) {
         \Log::error('EventSub health check failed', [
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);
-        
+
         return response()->json([
             'status' => 'error',
             'timestamp' => now()->toISOString(),

@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Log;
 class TwitchEventSubService
 {
     private string $clientId;
+
     private string $clientSecret;
+
     private string $baseUrl = 'https://api.twitch.tv/helix/eventsub/subscriptions';
 
     public function __construct()
@@ -33,16 +35,19 @@ class TwitchEventSubService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return $data['access_token'];
             }
 
             Log::error('Failed to get app access token', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
+
             return null;
         } catch (Exception $e) {
-            Log::error('Exception getting app access token: ' . $e->getMessage());
+            Log::error('Exception getting app access token: '.$e->getMessage());
+
             return null;
         }
     }
@@ -68,19 +73,20 @@ class TwitchEventSubService
                 'error' => true,
                 'status' => $response->status(),
                 'message' => $response->body(),
-                'payload' => $payload
+                'payload' => $payload,
             ];
 
         } catch (Exception $e) {
             Log::error('EventSub subscription exception', [
                 'event_type' => $payload['type'] ?? 'unknown',
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return [
                 'error' => true,
                 'message' => $e->getMessage(),
-                'payload' => $payload
+                'payload' => $payload,
             ];
         }
     }
@@ -102,7 +108,8 @@ class TwitchEventSubService
 
             return null;
         } catch (Exception $e) {
-            Log::error('Error getting EventSub subscriptions: ' . $e->getMessage());
+            Log::error('Error getting EventSub subscriptions: '.$e->getMessage());
+
             return null;
         }
     }
@@ -117,12 +124,13 @@ class TwitchEventSubService
                 'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
             ])->delete($this->baseUrl, [
-                'id' => $subscriptionId
+                'id' => $subscriptionId,
             ]);
 
             return $response->successful();
         } catch (Exception $e) {
-            Log::error('Error deleting EventSub subscription: ' . $e->getMessage());
+            Log::error('Error deleting EventSub subscription: '.$e->getMessage());
+
             return false;
         }
     }
@@ -134,11 +142,11 @@ class TwitchEventSubService
     {
         // Get app access token for follow events (v2 requires app token)
         $appToken = $this->getAppAccessToken();
-        
-        if (!$appToken) {
+
+        if (! $appToken) {
             return [
                 'error' => true,
-                'message' => 'Could not get app access token for follow events'
+                'message' => 'Could not get app access token for follow events',
             ];
         }
 
@@ -148,13 +156,13 @@ class TwitchEventSubService
             'condition' => [
                 'broadcaster_user_id' => $userId,
                 // Required for follows, but since broadcaster also is moderator in their own channel, this should be fine.
-                'moderator_user_id' => $userId
+                'moderator_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         // Use APP access token for follow events (not user token)
@@ -166,10 +174,10 @@ class TwitchEventSubService
      */
     public function subscribeToSubscriptions(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for subscription events'
+                'message' => 'User access token required for subscription events',
             ];
         }
 
@@ -177,13 +185,13 @@ class TwitchEventSubService
             'type' => 'channel.subscribe',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         // Use user access token for subscription events
@@ -199,15 +207,16 @@ class TwitchEventSubService
             'type' => 'channel.raid',
             'version' => '1',
             'condition' => [
-                'to_broadcaster_user_id' => $userId // When someone raids YOU
+                'to_broadcaster_user_id' => $userId, // When someone raids YOU
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
         Log::info('Subscribing to raid events', $payload);
+
         return $this->createSubscription($userAccessToken, $payload);
     }
 
@@ -220,13 +229,13 @@ class TwitchEventSubService
             'type' => 'stream.online',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);
@@ -237,10 +246,10 @@ class TwitchEventSubService
      */
     public function subscribeToSubscriptionGifts(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for gift subscription events'
+                'message' => 'User access token required for gift subscription events',
             ];
         }
 
@@ -248,13 +257,13 @@ class TwitchEventSubService
             'type' => 'channel.subscription.gift',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);
@@ -265,10 +274,10 @@ class TwitchEventSubService
      */
     public function subscribeToSubscriptionMessages(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for subscription message events'
+                'message' => 'User access token required for subscription message events',
             ];
         }
 
@@ -276,27 +285,27 @@ class TwitchEventSubService
             'type' => 'channel.subscription.message',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);
     }
-    
+
     /**
      * Subscribe to channel point redemption events (add)
      */
     public function subscribeToChannelPointsRedemptionAdd(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for channel point redemption events'
+                'message' => 'User access token required for channel point redemption events',
             ];
         }
 
@@ -304,27 +313,27 @@ class TwitchEventSubService
             'type' => 'channel.channel_points_custom_reward_redemption.add',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);
     }
-    
+
     /**
      * Subscribe to channel point redemption events (update)
      */
     public function subscribeToChannelPointsRedemptionUpdate(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for channel point redemption update events'
+                'message' => 'User access token required for channel point redemption update events',
             ];
         }
 
@@ -332,27 +341,27 @@ class TwitchEventSubService
             'type' => 'channel.channel_points_custom_reward_redemption.update',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);
     }
-    
+
     /**
      * Subscribe to stream offline events
      */
     public function subscribeToStreamOffline(string $userAccessToken, string $userId, string $callbackUrl): ?array
     {
-        if (!$userAccessToken) {
+        if (! $userAccessToken) {
             return [
                 'error' => true,
-                'message' => 'User access token required for stream offline events'
+                'message' => 'User access token required for stream offline events',
             ];
         }
 
@@ -360,13 +369,13 @@ class TwitchEventSubService
             'type' => 'stream.offline',
             'version' => '1',
             'condition' => [
-                'broadcaster_user_id' => $userId
+                'broadcaster_user_id' => $userId,
             ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret')
-            ]
+                'secret' => config('app.twitch_webhook_secret'),
+            ],
         ];
 
         return $this->createSubscription($userAccessToken, $payload);

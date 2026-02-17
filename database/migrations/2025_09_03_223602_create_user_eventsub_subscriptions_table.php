@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('twitch_created_at')->nullable();
             $table->timestamp('last_verified_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'event_type']);
             $table->index('status');
         });

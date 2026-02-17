@@ -20,18 +20,18 @@ class EnsureValidTwitchToken
     /**
      * Handle an incoming request.
      *
-     * @param Closure(Request): (Response) $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
         // Check and refresh token if needed
-        if (!$this->tokenService->ensureValidToken($user)) {
+        if (! $this->tokenService->ensureValidToken($user)) {
             Log::warning('Failed to ensure valid Twitch token for user', ['user_id' => $user->id]);
 
             // If we're making an API call, return a specific error
@@ -39,7 +39,7 @@ class EnsureValidTwitchToken
                 return response()->json([
                     'error' => 'Token refresh failed',
                     'message' => 'Unable to refresh Twitch authentication. Please re-authenticate.',
-                    'requires_reauth' => true
+                    'requires_reauth' => true,
                 ], 401);
             }
 

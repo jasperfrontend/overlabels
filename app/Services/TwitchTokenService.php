@@ -10,8 +10,11 @@ use Illuminate\Support\Facades\Log;
 class TwitchTokenService
 {
     private string $clientId;
+
     private string $clientSecret;
+
     private string $tokenUrl = 'https://id.twitch.tv/oauth2/token';
+
     private string $validateUrl = 'https://id.twitch.tv/oauth2/validate';
 
     public function __construct()
@@ -27,12 +30,13 @@ class TwitchTokenService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer $accessToken"
+                'Authorization' => "Bearer $accessToken",
             ])->get($this->validateUrl);
 
             return $response->successful();
         } catch (Exception $e) {
-            Log::error('Token validation failed: ' . $e->getMessage());
+            Log::error('Token validation failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -52,6 +56,7 @@ class TwitchTokenService
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return [
                     'access_token' => $data['access_token'],
                     'refresh_token' => $data['refresh_token'] ?? $refreshToken,
@@ -61,12 +66,13 @@ class TwitchTokenService
 
             Log::error('Failed to refresh token', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
 
             return null;
         } catch (Exception $e) {
-            Log::error('Token refresh exception: ' . $e->getMessage());
+            Log::error('Token refresh exception: '.$e->getMessage());
+
             return null;
         }
     }
@@ -82,7 +88,7 @@ class TwitchTokenService
         }
 
         // Validate token with Twitch
-        if (!$this->validateToken($user->access_token)) {
+        if (! $this->validateToken($user->access_token)) {
             return $this->refreshUserToken($user);
         }
 
@@ -94,15 +100,17 @@ class TwitchTokenService
      */
     public function refreshUserToken(User $user): bool
     {
-        if (!$user->refresh_token) {
+        if (! $user->refresh_token) {
             Log::error('No refresh token available for user', ['user_id' => $user->id]);
+
             return false;
         }
 
         $tokenData = $this->refreshAccessToken($user->refresh_token);
 
-        if (!$tokenData) {
+        if (! $tokenData) {
             Log::error('Failed to refresh token for user', ['user_id' => $user->id]);
+
             return false;
         }
 
@@ -114,6 +122,7 @@ class TwitchTokenService
         ]);
 
         Log::info('Successfully refreshed token for user', ['user_id' => $user->id]);
+
         return true;
     }
 }

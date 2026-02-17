@@ -24,7 +24,7 @@ return new class extends Migration
         DB::table('template_tags')->update([
             'tag_type' => 'standard',
             'version' => '1.0',
-            'is_editable' => false
+            'is_editable' => false,
         ]);
     }
 
@@ -36,9 +36,9 @@ return new class extends Migration
         Schema::table('template_tags', function (Blueprint $table) {
             $table->dropColumn([
                 'tag_type',
-                'version', 
+                'version',
                 'is_editable',
-                'original_tag_name'
+                'original_tag_name',
             ]);
         });
     }

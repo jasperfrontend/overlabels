@@ -73,7 +73,7 @@ class KitController extends Controller
             return back()->withErrors(['template_ids' => 'Invalid template selection.']);
         }
 
-        $kit = new Kit();
+        $kit = new Kit;
         $kit->owner_id = $request->user()->id;
         $kit->title = $validated['title'];
         $kit->description = $validated['description'];
@@ -99,7 +99,7 @@ class KitController extends Controller
     public function show(Kit $kit)
     {
         // Allow viewing if public or owned by a user
-        if (!$kit->is_public && $kit->owner_id !== auth()->id()) {
+        if (! $kit->is_public && $kit->owner_id !== auth()->id()) {
             abort(403);
         }
 
@@ -171,7 +171,7 @@ class KitController extends Controller
         // Handle thumbnail upload - now using Cloudinary URL directly from the frontend
         if ($request->filled('thumbnail_url')) {
             // Delete old local thumbnail if exists (for legacy support)
-            if ($kit->thumbnail && !filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
+            if ($kit->thumbnail && ! filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
                 Storage::disk('public')->delete($kit->thumbnail);
             }
 
@@ -198,7 +198,7 @@ class KitController extends Controller
         }
 
         // Check if the kit can be deleted
-        if (!$kit->canBeDeleted()) {
+        if (! $kit->canBeDeleted()) {
             return back()->withErrors(['error' => 'This kit has been forked and cannot be deleted.']);
         }
 
@@ -213,12 +213,12 @@ class KitController extends Controller
      */
     public function fork(Request $request, Kit $kit)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         // Kit must be public or owned by user to fork
-        if (!$kit->is_public && $kit->owner_id !== auth()->id()) {
+        if (! $kit->is_public && $kit->owner_id !== auth()->id()) {
             abort(403);
         }
 
@@ -228,7 +228,7 @@ class KitController extends Controller
             return redirect()->route('kits.show', $forkedKit)
                 ->with('success', 'Kit forked successfully!');
         } catch (Exception $e) {
-            return back()->withErrors(['error' => 'Failed to fork kit: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to fork kit: '.$e->getMessage()]);
         }
     }
 

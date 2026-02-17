@@ -55,7 +55,7 @@ class Kit extends Model
             }
 
             // Delete thumbnail if exists and is local storage (not Cloudinary URL)
-            if ($kit->thumbnail && !filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
+            if ($kit->thumbnail && ! filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
                 Storage::disk('public')->delete($kit->thumbnail);
             }
         });
@@ -107,7 +107,7 @@ class Kit extends Model
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->forked_from_id = $this->id;
-        $fork->title = 'Fork of ' . Str::limit($this->title, 80);
+        $fork->title = 'Fork of '.Str::limit($this->title, 80);
         $fork->fork_count = 0;
         $fork->save();
 
@@ -140,7 +140,7 @@ class Kit extends Model
      */
     public function getThumbnailUrlAttribute(): ?string
     {
-        if (!$this->thumbnail) {
+        if (! $this->thumbnail) {
             return null;
         }
 

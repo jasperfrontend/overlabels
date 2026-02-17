@@ -10,7 +10,7 @@ class RateLimitOverlayAccess
 {
     public function handle(Request $request, Closure $next)
     {
-        $key = 'overlay-access:' . $request->ip();
+        $key = 'overlay-access:'.$request->ip();
 
         // 100 requests per minute per IP
         if (RateLimiter::tooManyAttempts($key, 100)) {

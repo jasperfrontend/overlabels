@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\OverlayTemplate;
+use App\Models\User;
 use App\Services\FunSlugGenerationService;
 use Illuminate\Database\Seeder;
 
@@ -13,7 +13,7 @@ class OverlayTemplateSeeder extends Seeder
     {
         $user = User::first();
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

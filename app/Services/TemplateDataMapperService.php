@@ -16,10 +16,8 @@ use Illuminate\Support\Facades\Log;
  * - Both template generation AND template parsing use this same mapping logic
  * - This ensures consistency between database tags and runtime template parsing
  */
-
 class TemplateDataMapperService
 {
-
     private const NUMERIC_TAGS = [
         'followers_total', 'followed_total', 'subscribers_total', 'subscribers_points',
         'user_view_count', 'goals_latest_target', 'goals_latest_current', 'channel_delay',
@@ -28,6 +26,7 @@ class TemplateDataMapperService
     private const BOOLEAN_TAGS = [
         'channel_is_branded', 'subscribers_latest_is_gift',
     ];
+
     /**
      * MASTER MAPPING - Single source of truth for all template tag mappings
      * Format: 'json_path' => 'template_tag_name'
@@ -114,15 +113,15 @@ class TemplateDataMapperService
     }
 
     /**
-    * Wraps the provided HTML body and CSS into a complete HTML document.
-    * Used to generate a full HTML page for overlay rendering.
-    *
-    * @param string $headHtml The HTML content to include in the head.
-    * @param string $bodyHtml The HTML content to include in the body.
-    * @param string $css The CSS styles to inject into the document.
-    * @param string $title The title of the HTML document (default: 'Overlay').
-    * @return string The complete HTML document as a string.
-    **/
+     * Wraps the provided HTML body and CSS into a complete HTML document.
+     * Used to generate a full HTML page for overlay rendering.
+     *
+     * @param  string  $headHtml  The HTML content to include in the head.
+     * @param  string  $bodyHtml  The HTML content to include in the body.
+     * @param  string  $css  The CSS styles to inject into the document.
+     * @param  string  $title  The title of the HTML document (default: 'Overlay').
+     * @return string The complete HTML document as a string.
+     **/
     public function wrapHtmlAndCssIntoDocument(string $headHtml, string $bodyHtml, string $css, string $title = 'Overlay'): string
     {
         return '<!DOCTYPE html>
@@ -130,12 +129,12 @@ class TemplateDataMapperService
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>' . htmlspecialchars($title) . '</title>
-        ' . $headHtml . '
-        <style>' . $css . '</style>
+        <title>'.htmlspecialchars($title).'</title>
+        '.$headHtml.'
+        <style>'.$css.'</style>
     </head>
     <body>
-    ' . $bodyHtml . '
+    '.$bodyHtml.'
     </body>
     </html>';
     }
@@ -160,7 +159,8 @@ class TemplateDataMapperService
         if (count($parts) >= 3 && $parts[count($parts) - 2] === '0' && $parts[count($parts) - 3] === 'data') {
             $parentObject = $parts[count($parts) - 4] ?? 'unknown';
             $fieldName = $parts[count($parts) - 1];
-            return $parentObject . '_latest_' . $fieldName;
+
+            return $parentObject.'_latest_'.$fieldName;
         }
 
         // For simple paths, convert dots to underscores
@@ -356,37 +356,37 @@ class TemplateDataMapperService
             'user' => [
                 'display_name' => 'User Information',
                 'description' => 'Basic user account information',
-                'tags' => ['user_id', 'user_login', 'user_name', 'user_type', 'user_broadcaster_type', 'user_description', 'user_avatar', 'user_offline_banner', 'user_view_count', 'user_email', 'user_created']
+                'tags' => ['user_id', 'user_login', 'user_name', 'user_type', 'user_broadcaster_type', 'user_description', 'user_avatar', 'user_offline_banner', 'user_view_count', 'user_email', 'user_created'],
             ],
             'channel' => [
                 'display_name' => 'Channel Information',
                 'description' => 'Channel settings and current stream info',
-                'tags' => ['channel_id', 'channel_login', 'channel_name', 'channel_language', 'channel_game_id', 'channel_game', 'channel_title', 'channel_delay', 'channel_tags', 'channel_content_labels', 'channel_is_branded']
+                'tags' => ['channel_id', 'channel_login', 'channel_name', 'channel_language', 'channel_game_id', 'channel_game', 'channel_title', 'channel_delay', 'channel_tags', 'channel_content_labels', 'channel_is_branded'],
             ],
             'followers' => [
                 'display_name' => 'Followers',
                 'description' => 'Follower statistics and latest follower info',
-                'tags' => ['followers_total', 'followers_latest_id', 'followers_latest_login', 'followers_latest_name', 'followers_latest_date']
+                'tags' => ['followers_total', 'followers_latest_id', 'followers_latest_login', 'followers_latest_name', 'followers_latest_date'],
             ],
             'followed' => [
                 'display_name' => 'Followed Channels',
                 'description' => 'Channels that this user follows',
-                'tags' => ['followed_total', 'followed_latest_id', 'followed_latest_login', 'followed_latest_name', 'followed_latest_date']
+                'tags' => ['followed_total', 'followed_latest_id', 'followed_latest_login', 'followed_latest_name', 'followed_latest_date'],
             ],
             'subscribers' => [
                 'display_name' => 'Subscribers',
                 'description' => 'Subscriber statistics and latest subscriber info',
-                'tags' => ['subscribers_total', 'subscribers_points', 'subscribers_latest_user_id', 'subscribers_latest_user_login', 'subscribers_latest_user_name', 'subscribers_latest_broadcaster_id', 'subscribers_latest_broadcaster_login', 'subscribers_latest_broadcaster_name', 'subscribers_latest_is_gift', 'subscribers_latest_tier', 'subscribers_latest_plan_name', 'subscribers_latest_gifter_id', 'subscribers_latest_gifter_login', 'subscribers_latest_gifter_name']
+                'tags' => ['subscribers_total', 'subscribers_points', 'subscribers_latest_user_id', 'subscribers_latest_user_login', 'subscribers_latest_user_name', 'subscribers_latest_broadcaster_id', 'subscribers_latest_broadcaster_login', 'subscribers_latest_broadcaster_name', 'subscribers_latest_is_gift', 'subscribers_latest_tier', 'subscribers_latest_plan_name', 'subscribers_latest_gifter_id', 'subscribers_latest_gifter_login', 'subscribers_latest_gifter_name'],
             ],
             'goals' => [
                 'display_name' => 'Goals',
                 'description' => 'Channel goals and progress',
-                'tags' => ['goals_latest_type', 'goals_latest_target', 'goals_latest_current', 'goals_latest_description', 'goals_latest_created_at']
+                'tags' => ['goals_latest_type', 'goals_latest_target', 'goals_latest_current', 'goals_latest_description', 'goals_latest_created_at'],
             ],
             'overlay' => [
                 'display_name' => 'Overlay Metadata',
                 'description' => 'Information about the overlay itself',
-                'tags' => ['overlay_name', 'timestamp']
+                'tags' => ['overlay_name', 'timestamp'],
             ],
             'event' => [
                 'display_name' => 'Event Data',
@@ -401,9 +401,9 @@ class TemplateDataMapperService
                     'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name',
                     'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
                     'event.reward_id', 'event.reward_title', 'event.reward_prompt', 'event.reward_cost',
-                    'event.user_input', 'event.status', 'event.redeemed_at'
-                ]
-            ]
+                    'event.user_input', 'event.status', 'event.redeemed_at',
+                ],
+            ],
         ];
     }
 
@@ -445,6 +445,7 @@ class TemplateDataMapperService
                 if ($nestedKey !== '0') { // Don't log missing array indices, those are expected
                     Log::debug("Missing nested value for key: $key at $nestedKey");
                 }
+
                 return null;
             }
         }
@@ -461,26 +462,31 @@ class TemplateDataMapperService
             if ($templateTag === 'channel_tags') {
                 return implode(', ', $value);
             }
+
             return json_encode($value);
         }
 
         if (in_array($templateTag, self::BOOLEAN_TAGS, true)) {
             // Coerce anything truthy/falsy into real bool
-            return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool)$value;
+            return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool) $value;
         }
 
         if (in_array($templateTag, self::NUMERIC_TAGS, true) && is_numeric($value)) {
-            return (!str_contains((string)$value, '.')) ? (int)$value : (float)$value;
+            return (! str_contains((string) $value, '.')) ? (int) $value : (float) $value;
         }
 
-        if (is_bool($value)) return $value;
-        if (is_int($value) || is_float($value)) return $value;
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_int($value) || is_float($value)) {
+            return $value;
+        }
 
         if (str_contains($templateTag, '_date') || str_contains($templateTag, '_created')) {
             return $this->formatDate(is_string($value) ? $value : null);
         }
 
-        return (string)$value;
+        return (string) $value;
     }
 
     /**
@@ -495,6 +501,7 @@ class TemplateDataMapperService
             str_contains($templateTag, 'is_') || str_contains($templateTag, '_gift')) {
             return false;
         }
+
         // Dates/strings default to ''
         return '';
     }
@@ -504,7 +511,7 @@ class TemplateDataMapperService
      */
     private function formatDate(?string $dateString): string
     {
-        if (!$dateString) {
+        if (! $dateString) {
             return 'N/A';
         }
 
@@ -521,7 +528,7 @@ class TemplateDataMapperService
      */
     private function formatTier($tier): string
     {
-        if (!$tier) {
+        if (! $tier) {
             return '';
         }
 
@@ -529,7 +536,7 @@ class TemplateDataMapperService
             '1000' => '1',
             '2000' => '2',
             '3000' => '3',
-            'Prime' => 'Prime'
+            'Prime' => 'Prime',
         ];
 
         // Convert to string to handle both string and numeric inputs
@@ -553,7 +560,7 @@ class TemplateDataMapperService
         // Map all event fields with event. prefix
         if (isset($eventData['event'])) {
             foreach ($eventData['event'] as $key => $value) {
-                $tagName = 'event.' . $key;
+                $tagName = 'event.'.$key;
 
                 // Special handling for tier field - provide both raw and formatted versions
                 if ($key === 'tier') {
@@ -561,9 +568,9 @@ class TemplateDataMapperService
                     $mapped['event.tier_display'] = $this->formatTier($value); // Add formatted version
                 }
                 // Handle nested objects (flatten them)
-                elseif (is_array($value) && !array_is_list($value)) {
+                elseif (is_array($value) && ! array_is_list($value)) {
                     foreach ($value as $nestedKey => $nestedValue) {
-                        $mapped['event.' . $key . '.' . $nestedKey] = $this->formatValueForTemplate($nestedValue, 'event.' . $key . '.' . $nestedKey);
+                        $mapped['event.'.$key.'.'.$nestedKey] = $this->formatValueForTemplate($nestedValue, 'event.'.$key.'.'.$nestedKey);
                     }
                 } else {
                     $mapped[$tagName] = $this->formatValueForTemplate($value, $tagName);
@@ -631,6 +638,7 @@ class TemplateDataMapperService
                 return true;
             }
         }
+
         return false;
     }
 }

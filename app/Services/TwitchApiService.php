@@ -4,13 +4,14 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class TwitchApiService
 {
     private string $clientId;
+
     private string $baseUrl = 'https://api.twitch.tv/helix';
 
     // Cache keys mapping for different data types
@@ -30,6 +31,7 @@ class TwitchApiService
 
     /**
      * Generic method to make API requests to Twitch with retry logic
+     *
      * @throws ConnectionException
      */
     private function makeApiRequest(string $accessToken, string $endpoint, array $params = [], string $errorContext = 'API request'): ?array
@@ -59,6 +61,7 @@ class TwitchApiService
                     $retryAfter = $response->header('Retry-After') ?? 60;
                     Log::warning("Rate limited on $errorContext, waiting $retryAfter seconds");
                     sleep(min($retryAfter, 60)); // Cap at 60 seconds
+
                     continue;
                 }
 
@@ -66,10 +69,11 @@ class TwitchApiService
                 if ($response->status() >= 500 && $attempt < $maxRetries) {
                     Log::warning("Server error on attempt $attempt for $errorContext, retrying...", [
                         'status' => $response->status(),
-                        'endpoint' => $endpoint
+                        'endpoint' => $endpoint,
                     ]);
                     usleep($retryDelay * 1000); // Convert to microseconds
                     $retryDelay *= 2; // Exponential backoff
+
                     continue;
                 }
 
@@ -77,7 +81,7 @@ class TwitchApiService
                     'status' => $response->status(),
                     'response' => $response->body(),
                     'endpoint' => $endpoint,
-                    'params' => $params
+                    'params' => $params,
                 ]);
 
                 return null;
@@ -87,11 +91,12 @@ class TwitchApiService
                 }
 
                 if ($attempt === $maxRetries) {
-                    Log::error("Error during $errorContext after $maxRetries attempts: " . $e->getMessage());
+                    Log::error("Error during $errorContext after $maxRetries attempts: ".$e->getMessage());
+
                     return null;
                 }
 
-                Log::warning("Error on attempt $attempt for $errorContext: " . $e->getMessage());
+                Log::warning("Error on attempt $attempt for $errorContext: ".$e->getMessage());
                 usleep($retryDelay * 1000);
                 $retryDelay *= 2;
             }
@@ -105,7 +110,8 @@ class TwitchApiService
      */
     private function getCachedData(string $cacheKey, string $userId, callable $dataCallback): array
     {
-        $fullCacheKey = self::CACHE_KEYS[$cacheKey] . $userId;
+        $fullCacheKey = self::CACHE_KEYS[$cacheKey].$userId;
+
         return Cache::remember($fullCacheKey, now()->addDays(365), function () use ($dataCallback) {
             return $dataCallback() ?? [];
         });
@@ -116,7 +122,7 @@ class TwitchApiService
      */
     private function clearCache(string $cacheKey, string $userId): void
     {
-        $fullCacheKey = self::CACHE_KEYS[$cacheKey] . $userId;
+        $fullCacheKey = self::CACHE_KEYS[$cacheKey].$userId;
         Cache::forget($fullCacheKey);
     }
 
@@ -171,8 +177,9 @@ class TwitchApiService
         // Special case: needs channel info first to get broadcaster_id
         $channelInfo = $this->getChannelInfo($accessToken, $userId);
 
-        if (!$channelInfo) {
+        if (! $channelInfo) {
             Log::warning('Could not get channel info for followers request', ['user_id' => $userId]);
+
             return null;
         }
 
@@ -213,32 +220,32 @@ class TwitchApiService
     // Cache the everliving heck out of the data because any EventSub event will kick off a cache refresh for that user anyway.
     protected function getCachedChannelInfo(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('channel', $userId, fn() => $this->getChannelInfo($accessToken, $userId));
+        return $this->getCachedData('channel', $userId, fn () => $this->getChannelInfo($accessToken, $userId));
     }
 
     protected function getCachedUserInfo(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('user', $userId, fn() => $this->getUserInfo($accessToken, $userId));
+        return $this->getCachedData('user', $userId, fn () => $this->getUserInfo($accessToken, $userId));
     }
 
     protected function getCachedFollowedChannels(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('followed_channels', $userId, fn() => $this->getFollowedChannels($accessToken, $userId));
+        return $this->getCachedData('followed_channels', $userId, fn () => $this->getFollowedChannels($accessToken, $userId));
     }
 
     protected function getCachedChannelFollowers(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('channel_followers', $userId, fn() => $this->getChannelFollowers($accessToken, $userId));
+        return $this->getCachedData('channel_followers', $userId, fn () => $this->getChannelFollowers($accessToken, $userId));
     }
 
     protected function getCachedSubscribers(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('subscribers', $userId, fn() => $this->getChannelSubscribers($accessToken, $userId));
+        return $this->getCachedData('subscribers', $userId, fn () => $this->getChannelSubscribers($accessToken, $userId));
     }
 
     protected function getCachedGoals(string $accessToken, string $userId): array
     {
-        return $this->getCachedData('goals', $userId, fn() => $this->getChannelGoals($accessToken, $userId));
+        return $this->getCachedData('goals', $userId, fn () => $this->getChannelGoals($accessToken, $userId));
     }
 
     /*

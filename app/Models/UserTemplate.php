@@ -17,7 +17,7 @@ class UserTemplate extends Model
         'html_content',
         'css_content',
         'used_tags',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -37,7 +37,7 @@ class UserTemplate extends Model
      */
     public function getUsedTemplateTagsAttribute()
     {
-        if (!$this->used_tags) {
+        if (! $this->used_tags) {
             return collect();
         }
 
@@ -50,19 +50,19 @@ class UserTemplate extends Model
     public function renderWithData(array $jsonData): string
     {
         $html = $this->html_content;
-        
+
         // Find all [[[tag]]] patterns in the HTML
         preg_match_all('/\[\[\[([^\]]+)\]\]\]/', $html, $matches);
-        
+
         foreach ($matches[1] as $tagName) {
             $tag = TemplateTag::where('tag_name', $tagName)->first();
-            
+
             if ($tag) {
                 $data = $tag->getFormattedOutput($jsonData);
                 $html = str_replace("[[[{$tagName}]]]", $data, $html);
             }
         }
-        
+
         return $html;
     }
 }

@@ -2,10 +2,10 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import TemplateTable from '@/components/TemplateTable.vue';
+import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Layers, Plus, Bell, Users, Zap, Sparkles, AlertTriangle, X, RotateCcw } from 'lucide-vue-next';
+import { Layers, Plus, Bell, Users } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
-import { ref, onMounted } from 'vue';
 
 interface Template {
   id: number;
@@ -31,6 +31,8 @@ defineProps<{
   userAlertTemplates: Template[];
   userStaticTemplates: Template[];
   communityTemplates: Template[];
+  needsOnboarding: boolean;
+  twitchId: string;
 }>();
 
 const breadcrumbs = [
@@ -39,26 +41,6 @@ const breadcrumbs = [
     href: '/dashboard',
   },
 ];
-
-// Welcome alert state management
-const showWelcomeAlert = ref(true);
-
-onMounted(() => {
-  const stored = localStorage.getItem('overlabels-welcome-dismissed');
-  if (stored === 'true') {
-    showWelcomeAlert.value = false;
-  }
-});
-
-const dismissWelcomeAlert = () => {
-  showWelcomeAlert.value = false;
-  localStorage.setItem('overlabels-welcome-dismissed', 'true');
-};
-
-const showWelcomeAlertAgain = () => {
-  showWelcomeAlert.value = true;
-  localStorage.setItem('overlabels-welcome-dismissed', 'false');
-};
 </script>
 
 <template>
@@ -68,119 +50,9 @@ const showWelcomeAlertAgain = () => {
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
-      <!-- Welcome Alert Section -->
-      <section
-        v-if="showWelcomeAlert"
-        class="relative mb-6 rounded-lg border border-slate-200 dark:border-slate-800
-         bg-slate-50 dark:bg-slate-900/40 p-6 shadow-sm"
-      >
-        <button
-          @click="dismissWelcomeAlert"
-          class="absolute top-4 right-4 p-1.5 rounded-md
-           text-slate-500 hover:text-slate-700
-           dark:text-slate-400 dark:hover:text-slate-200
-           hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          title="Dismiss"
-        >
-          <X class="h-5 w-5" />
-        </button>
-
-        <!-- Header -->
-        <div class="flex items-center gap-3 mb-4">
-          <Zap class="h-5 w-5 text-purple-500 dark:text-purple-400" />
-          <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100">
-            Welcome to Overlabels (MVP)
-          </h2>
-        </div>
-
-        <!-- Intro -->
-        <p class="mb-5 text-sm text-slate-600 dark:text-slate-400">
-          A few one-time setup steps to get your overlays responding to events correctly.
-          This will be automated later.
-        </p>
-
-        <!-- Steps -->
-        <ul class="space-y-4 text-sm">
-          <li class="flex gap-3">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-            <p class="text-slate-700 dark:text-slate-300">
-              Generate your
-              <Link
-                :href="route('tags.generator')"
-                class="text-purple-600 dark:text-purple-400 hover:underline"
-              >
-                Template Tags</Link>.
-            </p>
-          </li>
-
-          <li class="flex gap-3">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-            <div class="text-slate-700 dark:text-slate-300 space-y-2">
-              <p>
-                Generate a
-                <Link
-                  :href="route('tokens.index')"
-                  class="text-purple-600 dark:text-purple-400 hover:underline"
-                >
-                  Secure Token</Link> and store it somewhere safe. It's shown only once.
-              </p>
-
-              <!-- Warning (calm, serious, not screamy) -->
-              <div
-                class="flex gap-2 rounded-md border border-amber-300/40 dark:border-amber-700/40
-                 bg-amber-50/60 dark:bg-amber-900/20 p-3"
-              >
-                <AlertTriangle class="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <p class="text-amber-800 dark:text-amber-300">
-                  Treat this like a password. Never share it or show it on stream.
-                </p>
-              </div>
-            </div>
-          </li>
-
-          <li class="flex gap-3">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-            <p class="text-slate-700 dark:text-slate-300">
-              Visit
-              <Link
-                :href="route('kits.index')"
-                class="text-purple-600 dark:text-purple-400 hover:underline"
-              >
-                Kits</Link> and fork the Starter Kit for sensible defaults.
-            </p>
-          </li>
-
-          <li class="flex gap-3">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-            <p class="text-slate-700 dark:text-slate-300">
-              Assign Event Alerts in the
-              <Link
-                :href="route('events.index')"
-                class="text-purple-600 dark:text-purple-400 hover:underline"
-              >
-                Alerts Builder</Link> so EventSub triggers the correct overlay.
-            </p>
-          </li>
-
-          <li class="flex gap-3">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-            <p class="text-slate-700 dark:text-slate-300">
-              You’re good to go. Start fiddling.
-            </p>
-          </li>
-        </ul>
-      </section>
-
-
-      <!-- Show Welcome Again Section -->
-      <section v-if="!showWelcomeAlert" class="mb-6">
-        <button
-          @click="showWelcomeAlertAgain"
-          class="flex items-center gap-2 text-sm text-muted-foreground hover:text-violet-400 transition-colors group cursor-pointer"
-        >
-          <RotateCcw class="h-4 w-4 group-hover:text-violet-400" />
-          <span>Show getting started guide</span>
-        </button>
+      <!-- Onboarding Wizard -->
+      <section v-if="needsOnboarding" class="mb-6">
+        <OnboardingWizard :twitch-id="twitchId" />
       </section>
 
       <section v-if="userAlertTemplates.length > 0" class="space-y-4">

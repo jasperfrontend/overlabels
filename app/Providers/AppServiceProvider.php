@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Services\DefaultTemplateProviderService;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,13 +20,13 @@ class AppServiceProvider extends ServiceProvider
         // Register DefaultTemplateProviderService as singleton
         // This ensures we only load template files once per request cycle
         $this->app->singleton(DefaultTemplateProviderService::class, function ($app) {
-            return new DefaultTemplateProviderService();
+            return new DefaultTemplateProviderService;
         });
 
         // Register TemplateDataMapperService as singleton
         // This handles transformation of nested API data to flat template structure
         $this->app->singleton(\App\Services\TemplateDataMapperService::class, function ($app) {
-            return new \App\Services\TemplateDataMapperService();
+            return new \App\Services\TemplateDataMapperService;
         });
     }
 
@@ -74,10 +74,15 @@ class AppServiceProvider extends ServiceProvider
             $event->extendSocialite('twitch', \SocialiteProviders\Twitch\Provider::class);
         });
 
-        // Register user registration event listener
+        // Register user registration event listeners
         Event::listen(
             \App\Events\UserRegistered::class,
             \App\Listeners\SendSignupNotification::class
+        );
+
+        Event::listen(
+            \App\Events\UserRegistered::class,
+            \App\Listeners\OnboardNewUserListener::class
         );
     }
 }

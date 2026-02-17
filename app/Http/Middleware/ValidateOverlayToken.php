@@ -12,19 +12,19 @@ class ValidateOverlayToken
     {
         $token = $request->bearerToken() ?? $request->input('token');
 
-        if (!$token) {
+        if (! $token) {
             return response()->json(['error' => 'No token provided'], 401);
         }
 
         $accessToken = OverlayAccessToken::findByToken($token, $request->ip());
 
-        if (!$accessToken) {
+        if (! $accessToken) {
             return response()->json(['error' => 'Invalid or expired token'], 401);
         }
 
         // Check abilities if specified
         foreach ($abilities as $ability) {
-            if (!$accessToken->hasAbility($ability)) {
+            if (! $accessToken->hasAbility($ability)) {
                 return response()->json(['error' => 'Insufficient permissions'], 403);
             }
         }

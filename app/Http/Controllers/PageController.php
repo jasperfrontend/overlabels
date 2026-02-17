@@ -13,5 +13,4 @@ class PageController extends Controller
     {
         return route('login');
     }
-
 }

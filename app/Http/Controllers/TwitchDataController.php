@@ -12,6 +12,7 @@ use Inertia\Inertia;
 class TwitchDataController extends Controller
 {
     protected TwitchApiService $twitch;
+
     protected TwitchTokenService $tokenService;
 
     public function __construct(TwitchApiService $twitch, TwitchTokenService $tokenService)
@@ -23,7 +24,7 @@ class TwitchDataController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if (!$user || !$user->access_token) {
+        if (! $user || ! $user->access_token) {
             Log::error('No authenticated user or access token');
             abort(403);
         }
@@ -43,12 +44,12 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Twitch data', [
                 'error' => $e->getMessage(),
-                'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
 
             return Inertia::render('TwitchData', [
                 'twitchData' => [],
-                'error' => 'Failed to fetch Twitch data. Please try refreshing the page.'
+                'error' => 'Failed to fetch Twitch data. Please try refreshing the page.',
             ]);
         }
     }
@@ -56,9 +57,10 @@ class TwitchDataController extends Controller
     private function getUserOrAbort(Request $request)
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
+
         return $user;
     }
 
@@ -83,6 +85,7 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Twitch data', [$e->getMessage()]);
         }
+
         return redirect()->back()->with([
             'message' => 'Twitch API data refreshed.',
             'type' => 'success',
@@ -111,13 +114,14 @@ class TwitchDataController extends Controller
             $user = $this->getUserOrAbort($request);
             $this->twitch->clearChannelInfoCaches($user->twitch_id);
             $this->twitch->getChannelInfo($user->access_token, $user->twitch_id);
+
             return redirect()->back()->with([
                 'message' => 'Twitch channel info (bio, tags) refreshed!',
                 'type' => 'success',
             ]);
         } catch (Exception $e) {
             return redirect()->back()->with([
-                'message' => 'Failed to refresh Twitch channel info: ' . $e->getMessage(),
+                'message' => 'Failed to refresh Twitch channel info: '.$e->getMessage(),
                 'type' => 'error',
             ]);
         } finally {
@@ -134,6 +138,7 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Followed Channels data', [$e->getMessage()]);
         }
+
         return redirect()->back()->with([
             'message' => 'Twitch followed channels data refreshed!',
             'type' => 'success',
@@ -149,6 +154,7 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Channel Followers data', [$e->getMessage()]);
         }
+
         return redirect()->back()->with([
             'message' => 'Twitch channel followers data refreshed!',
             'type' => 'success',
@@ -164,6 +170,7 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Channel Subscribers data', [$e->getMessage()]);
         }
+
         return redirect()->back()->with([
             'message' => 'Twitch subscribers data refreshed!',
             'type' => 'success',
@@ -179,10 +186,10 @@ class TwitchDataController extends Controller
         } catch (Exception $e) {
             Log::error('Failed to fetch Channel Goals data', [$e->getMessage()]);
         }
+
         return redirect()->back()->with([
             'message' => 'Twitch goals data refreshed!',
             'type' => 'success',
         ]);
     }
-
 }

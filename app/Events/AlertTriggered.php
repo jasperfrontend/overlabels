@@ -4,8 +4,6 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -15,10 +13,15 @@ class AlertTriggered implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $html;
+
     public string $css;
+
     public array $data;
+
     public int $duration;
+
     public string $transition;
+
     public string $broadcasterId;
 
     /**
@@ -48,7 +51,7 @@ class AlertTriggered implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('alerts.' . $this->broadcasterId),
+            new Channel('alerts.'.$this->broadcasterId),
         ];
     }
 
@@ -65,7 +68,7 @@ class AlertTriggered implements ShouldBroadcast
                 'duration' => $this->duration,
                 'transition' => $this->transition,
                 'timestamp' => now()->timestamp,
-            ]
+            ],
         ];
     }
 

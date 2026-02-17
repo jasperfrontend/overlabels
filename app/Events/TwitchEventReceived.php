@@ -14,8 +14,11 @@ class TwitchEventReceived implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $eventType;
+
     public array $eventData;
+
     public string $timestamp;
+
     /**
      * Create a new event instance.
      */
@@ -24,7 +27,7 @@ class TwitchEventReceived implements ShouldBroadcast
         $this->eventType = $eventType;
         $this->eventData = $eventData;
         $this->timestamp = now()->toISOString();
-        Log::info('Twitch event received: ' . $eventType);
+        Log::info('Twitch event received: '.$eventType);
 
     }
 
@@ -43,5 +46,4 @@ class TwitchEventReceived implements ShouldBroadcast
     {
         return 'twitch.event';
     }
-
 }

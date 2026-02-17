@@ -24,7 +24,7 @@ return [
         'client_id' => env('TWITCH_CLIENT_ID'),
         'client_secret' => env('TWITCH_CLIENT_SECRET'),
         'redirect' => env('TWITCH_REDIRECT_URI'),
-        'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10)
+        'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10),
     ],
 
 ];

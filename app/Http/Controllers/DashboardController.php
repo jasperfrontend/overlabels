@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kit;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use Illuminate\Http\Request;
@@ -46,6 +45,8 @@ class DashboardController extends Controller
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
             'communityTemplates' => $communityTemplates,
+            'needsOnboarding' => ! $user->isOnboarded() && ! $user->hasAlertMappings(),
+            'twitchId' => $user->twitch_id,
         ]);
     }
 

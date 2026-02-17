@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TemplateTagCategory extends Model
 {
@@ -15,10 +14,10 @@ class TemplateTagCategory extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'display_name', 
+        'display_name',
         'description',
         'is_group',
-        'sort_order'
+        'sort_order',
     ];
 
     protected $casts = [

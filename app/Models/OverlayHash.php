@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Services\FunSlugGenerationService;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 use Log;
 
 class OverlayHash extends Model
@@ -62,7 +62,7 @@ class OverlayHash extends Model
     public static function generateSecureHash(): string
     {
         // Generate a random string, then hash it for extra security
-        $randomString = Str::random(32) . time() . Str::random(32);
+        $randomString = Str::random(32).time().Str::random(32);
 
         // Use Laravel's Hash facade to create a secure hash
         // We'll use a combination approach for maximum security
@@ -76,7 +76,7 @@ class OverlayHash extends Model
 
         // Make sure this hash doesn't already exist (extremely unlikely, but good practice)
         while (self::where('hash_key', $finalHash)->exists()) {
-            $randomString = Str::random(32) . time() . Str::random(32);
+            $randomString = Str::random(32).time().Str::random(32);
             $hashedString = Hash::make($randomString);
             $cleanHash = preg_replace('/[^a-zA-Z0-9]/', '', $hashedString);
             $finalHash = substr(str_pad($cleanHash, 64, '0'), 0, 64);
@@ -91,6 +91,7 @@ class OverlayHash extends Model
     public static function generateSlug(): string
     {
         $slugService = app(FunSlugGenerationService::class);
+
         return $slugService->generateUniqueSlug();
     }
 
@@ -123,7 +124,7 @@ class OverlayHash extends Model
     public function isValid(?string $clientIp = null): bool
     {
         // Check if hash is active
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -134,7 +135,7 @@ class OverlayHash extends Model
 
         // Check the IP allowlist if configured
         if ($this->allowed_ips && $clientIp) {
-            if (!in_array($clientIp, $this->allowed_ips)) {
+            if (! in_array($clientIp, $this->allowed_ips)) {
                 return false;
             }
         }
@@ -186,7 +187,7 @@ class OverlayHash extends Model
      */
     public function getOverlayUrl(): string
     {
-        return config('app.url') . "/overlay/$this->slug/$this->hash_key";
+        return config('app.url')."/overlay/$this->slug/$this->hash_key";
     }
 
     /**
@@ -194,7 +195,7 @@ class OverlayHash extends Model
      */
     public function getShareableUrl(): string
     {
-        return config('app.url') . "/overlay/$this->slug/YOUR_HASH_HERE";
+        return config('app.url')."/overlay/$this->slug/YOUR_HASH_HERE";
     }
 
     /**
@@ -204,7 +205,7 @@ class OverlayHash extends Model
     {
         $hash = self::where('hash_key', $hashKey)->first();
 
-        if (!$hash || !$hash->isValid($clientIp)) {
+        if (! $hash || ! $hash->isValid($clientIp)) {
             return null;
         }
 

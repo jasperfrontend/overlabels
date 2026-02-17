@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('forked_from_id')->nullable();
             $table->unsignedInteger('fork_count')->default(0);
             $table->timestamps();
-            
+
             $table->foreign('forked_from_id')->references('id')->on('kits')->onDelete('set null');
             $table->index('owner_id');
             $table->index('is_public');

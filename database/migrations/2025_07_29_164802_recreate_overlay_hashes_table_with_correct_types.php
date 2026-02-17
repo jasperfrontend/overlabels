@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Drop the existing table completely
         Schema::dropIfExists('overlay_hashes');
-        
+
         // Recreate the table with correct column types
         Schema::create('overlay_hashes', function (Blueprint $table) {
             $table->id();
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->json('allowed_ips')->nullable(); // Optional IP whitelist for extra security
             $table->json('metadata')->nullable(); // Store any additional overlay-specific data
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['hash_key', 'is_active']);
             $table->index(['user_id', 'is_active']);

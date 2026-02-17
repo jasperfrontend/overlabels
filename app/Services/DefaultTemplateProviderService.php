@@ -20,9 +20,11 @@ use Illuminate\Support\Facades\Log;
 class DefaultTemplateProviderService
 {
     private ?string $defaultHtml = null;
+
     private ?string $defaultCss = null;
 
     private const DEFAULT_HTML_PATH = 'resources/templates/default-overlay.html';
+
     private const DEFAULT_CSS_PATH = 'resources/templates/default-overlay.css';
 
     /**
@@ -58,7 +60,7 @@ class DefaultTemplateProviderService
     {
         return [
             'html' => $this->getDefaultHtml(),
-            'css' => $this->getDefaultCss()
+            'css' => $this->getDefaultCss(),
         ];
     }
 
@@ -72,7 +74,7 @@ class DefaultTemplateProviderService
         $css = $this->getDefaultCss();
 
         // Replace template data if provided (for direct serving)
-        if (!empty($data)) {
+        if (! empty($data)) {
             foreach ($data as $key => $value) {
                 $html = str_replace("[[[{$key}]]]", htmlspecialchars($value), $html);
             }
@@ -124,7 +126,7 @@ class DefaultTemplateProviderService
                 Log::warning('Default HTML template file not found or not readable', [
                     'path' => $htmlPath,
                     'exists' => File::exists($htmlPath),
-                    'readable' => File::exists($htmlPath) ? File::isReadable($htmlPath) : false
+                    'readable' => File::exists($htmlPath) ? File::isReadable($htmlPath) : false,
                 ]);
             }
 
@@ -134,14 +136,14 @@ class DefaultTemplateProviderService
                 Log::warning('Default CSS template file not found or not readable', [
                     'path' => $cssPath,
                     'exists' => File::exists($cssPath),
-                    'readable' => File::exists($cssPath) ? File::isReadable($cssPath) : false
+                    'readable' => File::exists($cssPath) ? File::isReadable($cssPath) : false,
                 ]);
             }
 
         } catch (\Exception $e) {
             Log::error('Error loading default templates', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -186,6 +188,7 @@ class DefaultTemplateProviderService
     {
         // Use the TemplateDataMapperService for consistent sample data
         $templateDataMapper = app(\App\Services\TemplateDataMapperService::class);
+
         return $templateDataMapper->getSampleTemplateData();
     }
 

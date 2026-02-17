@@ -9,7 +9,6 @@ use Inertia\Inertia;
 
 class OverlayAccessTokenController extends Controller
 {
-
     /**
      * Display listing of user's tokens
      */

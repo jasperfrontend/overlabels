@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class FunSlugGenerationService
 {
@@ -32,7 +32,7 @@ class FunSlugGenerationService
         'mountain', 'valley', 'river', 'lake', 'ocean', 'beach', 'island', 'forest', 'desert', 'field',
         'bridge', 'tower', 'castle', 'house', 'garden', 'path', 'road', 'trail', 'door', 'window',
         'book', 'song', 'dance', 'game', 'toy', 'ball', 'box', 'key', 'coin', 'gem',
-        'fire', 'ice', 'wind', 'earth', 'water', 'thunder', 'lightning', 'rainbow', 'prism', 'crystal'
+        'fire', 'ice', 'wind', 'earth', 'water', 'thunder', 'lightning', 'rainbow', 'prism', 'crystal',
     ];
 
     private array $adjectives3 = [
@@ -40,7 +40,7 @@ class FunSlugGenerationService
         'wooden', 'stone', 'metal', 'glass', 'plastic', 'fabric', 'paper', 'leather', 'silk', 'wool',
         'striped', 'spotted', 'dotted', 'lined', 'curved', 'hooked', 'round', 'square', 'triangle', 'spiral',
         'frozen', 'melted', 'heated', 'cooled', 'twisted', 'bent', 'broken', 'fixed', 'lost', 'found',
-        'hidden', 'visible', 'secret', 'open', 'closed', 'locked', 'unlocked', 'empty', 'full', 'half'
+        'hidden', 'visible', 'secret', 'open', 'closed', 'locked', 'unlocked', 'empty', 'full', 'half',
     ];
 
     private array $animals = [
@@ -48,7 +48,7 @@ class FunSlugGenerationService
         'rabbit', 'hare', 'deer', 'elk', 'moose', 'horse', 'zebra', 'giraffe', 'elephant', 'rhino',
         'bird', 'eagle', 'hawk', 'owl', 'raven', 'swan', 'duck', 'goose', 'penguin', 'flamingo',
         'fish', 'shark', 'whale', 'dolphin', 'seal', 'otter', 'crab', 'lobster', 'octopus', 'squid',
-        'butterfly', 'bee', 'ant', 'spider', 'dragonfly', 'beetle', 'moth', 'cricket', 'grasshopper', 'firefly'
+        'butterfly', 'bee', 'ant', 'spider', 'dragonfly', 'beetle', 'moth', 'cricket', 'grasshopper', 'firefly',
     ];
 
     /**
@@ -61,14 +61,14 @@ class FunSlugGenerationService
             $slug = $this->generateRandomSlug();
 
             // Fast lookup: Check if the slug exists using an indexed query
-            if (!$this->slugExists($slug)) {
+            if (! $this->slugExists($slug)) {
                 return $slug;
             }
 
             // If we're on later attempts, add some randomness
             if ($attempt > 5) {
-                $slug .= '-' . rand(10, 99);
-                if (!$this->slugExists($slug)) {
+                $slug .= '-'.rand(10, 99);
+                if (! $this->slugExists($slug)) {
                     return $slug;
                 }
             }
@@ -79,7 +79,7 @@ class FunSlugGenerationService
         $random = rand(1000, 9999);
         $baseSlug = $this->generateRandomSlug();
 
-        return $baseSlug . '-' . $timestamp . $random;
+        return $baseSlug.'-'.$timestamp.$random;
     }
 
     /**
@@ -149,7 +149,7 @@ class FunSlugGenerationService
             'total_possible' => $totalPossible,
             'current_count' => $currentCount,
             'collision_risk_percent' => round($collisionRisk, 2),
-            'recommended_action' => $collisionRisk > 70 ? 'Add more words to pools' : 'All good!'
+            'recommended_action' => $collisionRisk > 70 ? 'Add more words to pools' : 'All good!',
         ];
     }
 
@@ -191,7 +191,7 @@ class FunSlugGenerationService
         }
 
         // Batch database check for uncached slugs
-        if (!empty($uncachedSlugs)) {
+        if (! empty($uncachedSlugs)) {
             $existingSlugs = DB::table('overlay_hashes')
                 ->whereIn('slug', $uncachedSlugs)
                 ->pluck('slug')

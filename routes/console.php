@@ -28,6 +28,7 @@ Schedule::command('queue:restart')
     ->when(function () {
         // Only restart if queue seems stuck (no jobs processed in 10 minutes)
         $lastJob = cache()->get('last_job_processed_at');
+
         return $lastJob && now()->diffInMinutes($lastJob) > 10;
     });
 

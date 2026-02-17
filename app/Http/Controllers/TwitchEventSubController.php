@@ -429,16 +429,36 @@ class TwitchEventSubController extends Controller
         $signature = $request->header('Twitch-Eventsub-Message-Signature');
         $timestamp = $request->header('Twitch-Eventsub-Message-Timestamp');
         $body = $request->getContent();
-        $secret = config('app.twitch_webhook_secret');
 
         if (! $signature || ! $timestamp) {
             return false;
         }
 
         $message = $request->header('Twitch-Eventsub-Message-Id').$timestamp.$body;
-        $expectedSignature = 'sha256='.hash_hmac('sha256', $message, $secret);
 
-        return hash_equals($expectedSignature, $signature);
+        // Try per-user webhook secret first
+        $data = json_decode($body, true);
+        $event = $data['event'] ?? [];
+        $eventType = $data['subscription']['type'] ?? '';
+        $broadcasterId = $eventType === 'channel.raid'
+            ? ($event['to_broadcaster_user_id'] ?? null)
+            : ($event['broadcaster_user_id'] ?? null);
+
+        if ($broadcasterId) {
+            $user = User::where('twitch_id', $broadcasterId)->first();
+            if ($user && $user->webhook_secret) {
+                $expected = 'sha256='.hash_hmac('sha256', $message, $user->webhook_secret);
+                if (hash_equals($expected, $signature)) {
+                    return true;
+                }
+            }
+        }
+
+        // Fall back to global secret (backward-compatible for existing users)
+        $globalSecret = config('app.twitch_webhook_secret');
+        $expectedGlobal = 'sha256='.hash_hmac('sha256', $message, $globalSecret);
+
+        return hash_equals($expectedGlobal, $signature);
     }
 
     /**

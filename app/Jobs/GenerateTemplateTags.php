@@ -37,18 +37,18 @@ class GenerateTemplateTags implements ShouldQueue
 
             Log::info('Starting template tag generation job', [
                 'user_id' => $this->user->id,
-                'job_id' => $this->jobRecord->id
+                'job_id' => $this->jobRecord->id,
             ]);
 
             // Update progress
             $this->jobRecord->updateProgress([
                 'step' => 'fetching_twitch_data',
                 'message' => 'Fetching Twitch data...',
-                'progress' => 10
+                'progress' => 10,
             ]);
 
             // Get Twitch data
-            if (!$this->user->access_token) {
+            if (! $this->user->access_token) {
                 throw new Exception('User has no Twitch access token');
             }
 
@@ -61,7 +61,7 @@ class GenerateTemplateTags implements ShouldQueue
             $this->jobRecord->updateProgress([
                 'step' => 'processing_data',
                 'message' => 'Processing Twitch data structures...',
-                'progress' => 30
+                'progress' => 30,
             ]);
 
             // Ensure data arrays exist before processing
@@ -71,7 +71,7 @@ class GenerateTemplateTags implements ShouldQueue
             $this->jobRecord->updateProgress([
                 'step' => 'generating_tags',
                 'message' => 'Generating template tags...',
-                'progress' => 50
+                'progress' => 50,
             ]);
 
             // Generate template tags from the Twitch data
@@ -81,20 +81,20 @@ class GenerateTemplateTags implements ShouldQueue
             $this->jobRecord->updateProgress([
                 'step' => 'saving_tags',
                 'message' => 'Saving tags to database...',
-                'progress' => 80
+                'progress' => 80,
             ]);
 
             // Save the generated tags to database with user_id
             $saved = $parser->saveTagsToDatabaseForUser($generatedTags, $this->user->id);
 
             // Clear the cache when tags are updated
-            cache()->forget('template_tags_v1_user_' . $this->user->id);
+            cache()->forget('template_tags_v1_user_'.$this->user->id);
 
             // Update progress to completion
             $this->jobRecord->updateProgress([
                 'step' => 'completed',
                 'message' => 'Template tags generated successfully!',
-                'progress' => 100
+                'progress' => 100,
             ]);
 
             // Mark job as completed
@@ -102,21 +102,21 @@ class GenerateTemplateTags implements ShouldQueue
                 'generated' => $generatedTags['total_tags'],
                 'saved' => $saved,
                 'categories' => count($generatedTags['categories']),
-                'tags' => count($generatedTags['tags'])
+                'tags' => count($generatedTags['tags']),
             ]);
 
             Log::info('Template tag generation job completed', [
                 'user_id' => $this->user->id,
                 'job_id' => $this->jobRecord->id,
                 'generated' => $generatedTags['total_tags'],
-                'saved' => $saved
+                'saved' => $saved,
             ]);
 
             // Dispatch cleanup job automatically
             $cleanupJobRecord = TemplateTagJob::create([
                 'user_id' => $this->user->id,
                 'job_type' => 'cleanup',
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
 
             CleanupRedundantTags::dispatch($this->user, $cleanupJobRecord);
@@ -126,7 +126,7 @@ class GenerateTemplateTags implements ShouldQueue
                 'user_id' => $this->user->id,
                 'job_id' => $this->jobRecord->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $this->jobRecord->markAsFailed($e->getMessage());
@@ -146,11 +146,11 @@ class GenerateTemplateTags implements ShouldQueue
             'channel_followers' => ['total' => 0, 'data' => []],
             'followed_channels' => ['total' => 0, 'data' => []],
             'subscribers' => ['total' => 0, 'points' => 0, 'data' => []],
-            'goals' => ['data' => []]
+            'goals' => ['data' => []],
         ];
 
         foreach ($requiredStructures as $key => $defaultValue) {
-            if (!isset($twitchData[$key])) {
+            if (! isset($twitchData[$key])) {
                 $twitchData[$key] = $defaultValue;
                 Log::warning("Missing Twitch data structure: $key, using default");
             }

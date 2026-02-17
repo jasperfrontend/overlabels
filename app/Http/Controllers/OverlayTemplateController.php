@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OverlayTemplate;
 use App\Models\OverlayAccessToken;
+use App\Models\OverlayTemplate;
+use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
-use App\Services\TemplateDataMapperService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -15,8 +15,11 @@ use Inertia\Inertia;
 class OverlayTemplateController extends Controller
 {
     protected TwitchApiService $twitchService;
+
     protected TemplateTagController $templateTagController;
+
     protected TwitchEventSubService $eventSubService;
+
     protected TemplateDataMapperService $mapper;
 
     public function __construct(
@@ -53,7 +56,7 @@ class OverlayTemplateController extends Controller
             })
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $searchTerm = '%' . strtolower($search) . '%';
+                    $searchTerm = '%'.strtolower($search).'%';
                     $q->whereRaw('LOWER(name) LIKE ?', [$searchTerm])
                         ->orWhereRaw('LOWER(description) LIKE ?', [$searchTerm]);
                 });
@@ -87,7 +90,7 @@ class OverlayTemplateController extends Controller
     public function show(OverlayTemplate $template)
     {
         // Check if the user can view this template
-        if (!$template->is_public && $template->owner_id !== auth()->id()) {
+        if (! $template->is_public && $template->owner_id !== auth()->id()) {
             abort(403, 'This template is private');
         }
 
@@ -130,8 +133,6 @@ class OverlayTemplateController extends Controller
             Log::error('Failed to fetch available tags', ['error' => $e->getMessage()]);
         }
 
-
-
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
@@ -152,7 +153,7 @@ class OverlayTemplateController extends Controller
         $template->delete();
 
         // For API/JSON requests
-        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'message' => 'Template deleted successfully',
             ]);
@@ -170,7 +171,7 @@ class OverlayTemplateController extends Controller
         $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
 
         // Check if the template is public
-        if (!$template->is_public) {
+        if (! $template->is_public) {
             abort(404, 'This overlay is private');
         }
 
@@ -211,7 +212,7 @@ class OverlayTemplateController extends Controller
         // Find and validate token
         $token = OverlayAccessToken::findByToken($validated['token'], $request->ip());
 
-        if (!$token) {
+        if (! $token) {
             return response()->json(['error' => 'Invalid token.'], 401);
         }
 
@@ -221,12 +222,12 @@ class OverlayTemplateController extends Controller
         // Get user and their Twitch data
         $user = $token->user;
 
-        if (!$user->access_token) {
+        if (! $user->access_token) {
             return response()->json(['error' => 'User has no Twitch connection.'], 400);
         }
 
         // Check if the template is public or set to private by the owner
-        if(!$template->is_public && $template->owner_id !== $token->user_id){
+        if (! $template->is_public && $template->owner_id !== $token->user_id) {
             return response()->json(['error' => 'This overlay is private.'], 403);
         }
 
@@ -272,7 +273,6 @@ class OverlayTemplateController extends Controller
                 ]),
             ]);
 
-
         } catch (Exception $e) {
             Log::error('Failed to render authenticated overlay', [
                 'error' => $e->getMessage(),
@@ -306,7 +306,7 @@ class OverlayTemplateController extends Controller
         $template->save();
 
         // For Inertia requests, redirect to the show page
-        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json([
                 'template' => $template,
                 'message' => 'Template created successfully',
@@ -363,7 +363,7 @@ class OverlayTemplateController extends Controller
     public function fork(Request $request, OverlayTemplate $template)
     {
         // Check if the template is public or set to private by the owner
-        if (!$template->is_public && $template->owner_id !== $request->user()->id) {
+        if (! $template->is_public && $template->owner_id !== $request->user()->id) {
             abort(403, 'Cannot fork private template');
         }
 
@@ -379,6 +379,6 @@ class OverlayTemplateController extends Controller
 
         // For regular form submissions, redirect to templates index
         return redirect()->route('templates.index')
-            ->with('success', 'Template forked successfully! The template "' . $fork->name . '" has been added to your templates.');
+            ->with('success', 'Template forked successfully! The template "'.$fork->name.'" has been added to your templates.');
     }
 }

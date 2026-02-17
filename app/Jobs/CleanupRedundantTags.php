@@ -35,14 +35,14 @@ class CleanupRedundantTags implements ShouldQueue
 
             Log::info('Starting template tag cleanup job', [
                 'user_id' => $this->user->id,
-                'job_id' => $this->jobRecord->id
+                'job_id' => $this->jobRecord->id,
             ]);
 
             // Update progress
             $this->jobRecord->updateProgress([
                 'step' => 'scanning_tags',
                 'message' => 'Scanning for redundant tags...',
-                'progress' => 20
+                'progress' => 20,
             ]);
 
             // Pattern to match tags with _data_[number]_ in them
@@ -51,7 +51,7 @@ class CleanupRedundantTags implements ShouldQueue
             // Find all tags that match the pattern for this user
             $redundantTags = TemplateTag::where('user_id', $this->user->id)
                 ->get()
-                ->filter(function($tag) use ($redundantPattern) {
+                ->filter(function ($tag) use ($redundantPattern) {
                     return preg_match($redundantPattern, $tag->tag_name);
                 });
 
@@ -59,14 +59,14 @@ class CleanupRedundantTags implements ShouldQueue
 
             Log::info('Found redundant tags for cleanup', [
                 'user_id' => $this->user->id,
-                'count' => $totalRedundant
+                'count' => $totalRedundant,
             ]);
 
             // Update progress
             $this->jobRecord->updateProgress([
                 'step' => 'deleting_tags',
                 'message' => "Deleting {$totalRedundant} redundant tags...",
-                'progress' => 40
+                'progress' => 40,
             ]);
 
             $deletedCount = 0;
@@ -83,7 +83,7 @@ class CleanupRedundantTags implements ShouldQueue
                     $this->jobRecord->updateProgress([
                         'step' => 'deleting_tags',
                         'message' => "Deleted {$deletedCount}/{$totalRedundant} redundant tags...",
-                        'progress' => min(80, $progressPercent)
+                        'progress' => min(80, $progressPercent),
                     ]);
                 }
             }
@@ -92,14 +92,14 @@ class CleanupRedundantTags implements ShouldQueue
             $this->jobRecord->updateProgress([
                 'step' => 'cleaning_categories',
                 'message' => 'Cleaning up empty categories...',
-                'progress' => 85
+                'progress' => 85,
             ]);
 
             // Also clean up any empty categories for this user
             $emptyCategories = TemplateTagCategory::where('user_id', $this->user->id)
                 ->doesntHave('templateTags')
                 ->get();
-            
+
             $deletedCategoriesCount = 0;
             foreach ($emptyCategories as $category) {
                 $category->delete();
@@ -107,27 +107,27 @@ class CleanupRedundantTags implements ShouldQueue
             }
 
             // Clear the cache when tags are cleaned up
-            cache()->forget('template_tags_v1_user_' . $this->user->id);
+            cache()->forget('template_tags_v1_user_'.$this->user->id);
 
             // Update progress to completion
             $this->jobRecord->updateProgress([
                 'step' => 'completed',
                 'message' => "Cleanup completed! Removed {$deletedCount} redundant tags.",
-                'progress' => 100
+                'progress' => 100,
             ]);
 
             // Mark job as completed
             $this->jobRecord->markAsCompleted([
                 'deleted_tags_count' => $deletedCount,
                 'deleted_categories_count' => $deletedCategoriesCount,
-                'deleted_tags' => $deletedTags
+                'deleted_tags' => $deletedTags,
             ]);
 
             Log::info('Template tag cleanup job completed', [
                 'user_id' => $this->user->id,
                 'job_id' => $this->jobRecord->id,
                 'deleted_tags_count' => $deletedCount,
-                'deleted_categories_count' => $deletedCategoriesCount
+                'deleted_categories_count' => $deletedCategoriesCount,
             ]);
 
         } catch (Exception $e) {
@@ -135,7 +135,7 @@ class CleanupRedundantTags implements ShouldQueue
                 'user_id' => $this->user->id,
                 'job_id' => $this->jobRecord->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $this->jobRecord->markAsFailed($e->getMessage());

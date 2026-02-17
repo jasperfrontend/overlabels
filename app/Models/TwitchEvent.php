@@ -35,7 +35,7 @@ class TwitchEvent extends Model
     /**
      * Scope a query to only include unprocessed events.
      *
-     * @param Builder $query
+     * @param  Builder  $query
      * @return Builder
      */
     public function user(): BelongsTo
@@ -50,10 +50,6 @@ class TwitchEvent extends Model
 
     /**
      * Scope a query to only include events of a specific type.
-     *
-     * @param Builder $query
-     * @param string $type
-     * @return Builder
      */
     public function scopeOfType(Builder $query, string $type): Builder
     {
@@ -62,8 +58,6 @@ class TwitchEvent extends Model
 
     /**
      * Mark the event as processed.
-     *
-     * @return bool
      */
     public function markAsProcessed(): bool
     {

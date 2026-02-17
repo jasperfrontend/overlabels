@@ -34,7 +34,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'provider', 'provider_user_id']);
             $table->index(['user_id', 'provider', 'is_active']);
         });

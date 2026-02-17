@@ -50,7 +50,7 @@ class OverlayTemplate extends Model
         parent::boot();
 
         static::creating(function ($template) {
-            if (!$template->slug) {
+            if (! $template->slug) {
                 $template->slug = app(FunSlugGenerationService::class)->generateUniqueSlug();
             }
         });
@@ -68,7 +68,7 @@ class OverlayTemplate extends Model
      */
     public function getAuthUrl(): string
     {
-        return config('app.url') . "/overlay/$this->slug#YOUR_TOKEN_HERE";
+        return config('app.url')."/overlay/$this->slug#YOUR_TOKEN_HERE";
     }
 
     /**
@@ -97,7 +97,7 @@ class OverlayTemplate extends Model
         $tags = array_merge($tags, $conditionalTags);
 
         // Remove transformation suffixes and return unique tags with re-indexed array
-        $uniqueTags = array_unique(array_map(function($tag) {
+        $uniqueTags = array_unique(array_map(function ($tag) {
             return explode('|', $tag)[0];
         }, $tags));
 
@@ -119,7 +119,7 @@ class OverlayTemplate extends Model
 
         preg_match_all($conditionalPattern, $content, $matches);
 
-        if (!empty($matches[1])) {
+        if (! empty($matches[1])) {
             $tags = array_merge($tags, $matches[1]);
         }
 
@@ -139,7 +139,7 @@ class OverlayTemplate extends Model
         $forkedName = 'Forked from '.$this->name;
         if (strlen($forkedName) > 70) {
             // If it's too long, truncate and add ellipsis
-            $forkedName = substr($forkedName, 0, 97) . '...';
+            $forkedName = substr($forkedName, 0, 97).'...';
         }
         $fork->name = $forkedName;
 

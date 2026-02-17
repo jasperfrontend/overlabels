@@ -43,6 +43,7 @@ class OverlayAccessToken extends Model
     /**
      * Generate a new secure token
      * Returns array with plain token (to show user once) and hashed version (to store)
+     *
      * @throws RandomException
      */
     public static function generateToken(): array
@@ -77,7 +78,7 @@ class OverlayAccessToken extends Model
             ->where('is_active', true)
             ->first();
 
-        if (!$token || !$token->isValid($clientIp)) {
+        if (! $token || ! $token->isValid($clientIp)) {
             return null;
         }
 
@@ -90,7 +91,7 @@ class OverlayAccessToken extends Model
     public function isValid(?string $clientIp = null): bool
     {
         // Check if active
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -101,7 +102,7 @@ class OverlayAccessToken extends Model
 
         // Check IP restrictions if configured
         if ($this->allowed_ips && count($this->allowed_ips) > 0 && $clientIp) {
-            if (!in_array($clientIp, $this->allowed_ips)) {
+            if (! in_array($clientIp, $this->allowed_ips)) {
                 return false;
             }
         }
@@ -134,11 +135,12 @@ class OverlayAccessToken extends Model
      */
     public function hasAbility(string $ability): bool
     {
-        if (!$this->abilities) {
+        if (! $this->abilities) {
             return true; // No restrictions
         }
 
         $abilities = explode(',', $this->abilities);
+
         return in_array($ability, $abilities) || in_array('*', $abilities);
     }
 
