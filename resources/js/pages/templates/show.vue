@@ -48,7 +48,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 <template>
   <Head :title="`Overlabels Overlay Editor: ${props.template?.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6">

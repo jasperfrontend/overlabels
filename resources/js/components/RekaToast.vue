@@ -25,11 +25,14 @@ const props = defineProps({
   duration: { type: Number, default: 4000 }
 })
 
+const emit = defineEmits<{ dismiss: [] }>()
+
 const visible = ref(true)
-let timeout = null
+let timeout:any = null
 
 const dismiss = () => {
   visible.value = false
+  emit('dismiss')
 }
 
 const pauseTimeout = () => {

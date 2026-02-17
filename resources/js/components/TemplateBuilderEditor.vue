@@ -319,7 +319,7 @@ onMounted(() => {
 <template>
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
     <!-- Toast Component -->
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @update:visible="hideToast" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <!-- Left sidebar with template tags and actions -->
     <div class="space-y-6 lg:col-span-1">
       <!-- Action buttons -->

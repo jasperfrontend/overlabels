@@ -283,7 +283,7 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
   <Head title="Secure Overlay Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
+    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 
       <!-- Header -->
       <div class="flex items-center justify-between">

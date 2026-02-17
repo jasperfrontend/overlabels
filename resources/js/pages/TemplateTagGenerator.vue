@@ -440,7 +440,7 @@ const getDataTypeClass = (dataType: string) => {
 <template>
   <Head title="Template Tags Generator" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @update:visible="hideToast" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <div class="p-4">
       <div class="mb-6 flex items-center justify-between">
         <Heading title="Template Tags Generator" description="Generate template tags from Twitch data" />

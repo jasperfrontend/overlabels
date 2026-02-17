@@ -58,5 +58,5 @@ watch(
     </p>
   </div>
 
-  <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
+  <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 </template>

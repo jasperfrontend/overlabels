@@ -166,7 +166,7 @@ watch (
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col items-center gap-8 px-4 py-10">
       <div class="w-full max-w-4xl">
-        <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" />
+        <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
         <h1 class="mb-6 text-center text-4xl font-extrabold tracking-tight">Your Twitch Data</h1>
         <div v-if="connectionError" class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
           <p class="font-semibold">Connection Error</p>

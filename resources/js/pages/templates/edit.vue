@@ -508,8 +508,8 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
     </div>
 
     <!-- Toast Notification -->
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <!-- Template Actions Toast Notification -->
-    <RekaToast v-if="showTemplateToast" :message="templateToastMessage" :type="templateToastType" />
+    <RekaToast v-if="showTemplateToast" :message="templateToastMessage" :type="templateToastType" @dismiss="showTemplateToast = false" />
   </AppLayout>
 </template>

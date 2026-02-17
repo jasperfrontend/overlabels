@@ -59,7 +59,7 @@ const eventCommands = [
 ];
 
 function getCommand(eventType: string): string {
-  return `twitch event trigger ${eventType} --transport=webhook -F ${props.webhookUrl} -s ${props.webhookSecret} -b ${props.twitchId}`;
+  return `twitch event trigger ${eventType} --transport=webhook -F ${props.webhookUrl} -s ${props.webhookSecret} --to-user ${props.twitchId} --from-user 1234567`;
 }
 
 async function copyCommand(eventType: string) {
@@ -83,24 +83,23 @@ async function copyCommand(eventType: string) {
         <h1 class="text-2xl font-semibold">Testing Guide</h1>
       </div>
 
-      <p class="text-sm text-muted-foreground max-w-2xl">
+      <p class="max-w-2xl text-sm text-muted-foreground">
         Use the
         <a
           href="https://dev.twitch.tv/docs/cli/"
           target="_blank"
           rel="noopener"
-          class="text-purple-400 hover:underline inline-flex items-center gap-1"
+          class="inline-flex items-center gap-1 text-purple-400 hover:underline"
         >
           Twitch CLI
           <ExternalLink class="h-3 w-3" />
         </a>
-        to trigger test events against your webhook. Each command below is pre-filled with your
-        Twitch ID, webhook URL, and secret.
+        to trigger test events against your webhook. Each command below is pre-filled with your Twitch ID, webhook URL, and secret.
       </p>
 
       <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-300">
-        You don't have a per-user webhook secret yet. These commands use the global secret,
-        which will work but won't be unique to your account. Complete onboarding to get a personal secret.
+        You don't have a per-user webhook secret yet. These commands use the global secret, which will work but won't be unique to your account.
+        Complete onboarding to get a personal secret.
       </div>
 
       <div class="grid gap-4">
@@ -108,12 +107,7 @@ async function copyCommand(eventType: string) {
           <CardHeader class="pb-2">
             <div class="flex items-center justify-between">
               <CardTitle class="text-base">{{ event.label }}</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="gap-1.5 text-xs"
-                @click="copyCommand(event.type)"
-              >
+              <Button variant="ghost" size="sm" class="gap-1.5 text-xs" @click="copyCommand(event.type)">
                 <Check v-if="copiedCommand === event.type" class="h-3.5 w-3.5 text-green-400" />
                 <Copy v-else class="h-3.5 w-3.5" />
                 {{ copiedCommand === event.type ? 'Copied!' : 'Copy' }}
@@ -122,22 +116,18 @@ async function copyCommand(eventType: string) {
             <p class="text-xs text-muted-foreground">{{ event.description }}</p>
           </CardHeader>
           <CardContent>
-            <pre
-              class="overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-green-300 font-mono whitespace-pre-wrap break-all"
-            >{{ getCommand(event.type) }}</pre>
+            <pre class="overflow-x-auto rounded-md bg-slate-950 p-3 font-mono text-xs break-all whitespace-pre-wrap text-green-300">{{
+              getCommand(event.type)
+            }}</pre>
           </CardContent>
         </Card>
       </div>
 
-      <div class="text-sm text-muted-foreground space-y-2 pb-8">
+      <div class="space-y-2 pb-8 text-sm text-muted-foreground">
         <p>
           <strong>Prerequisites:</strong> Install the
-          <a
-            href="https://dev.twitch.tv/docs/cli/"
-            target="_blank"
-            rel="noopener"
-            class="text-purple-400 hover:underline"
-          >Twitch CLI</a> and run <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> first.
+          <a href="https://dev.twitch.tv/docs/cli/" target="_blank" rel="noopener" class="text-purple-400 hover:underline">Twitch CLI</a> and run
+          <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> first.
         </p>
         <p>
           Full event reference:
@@ -145,7 +135,7 @@ async function copyCommand(eventType: string) {
             href="https://dev.twitch.tv/docs/eventsub/eventsub-reference/"
             target="_blank"
             rel="noopener"
-            class="text-purple-400 hover:underline inline-flex items-center gap-1"
+            class="inline-flex items-center gap-1 text-purple-400 hover:underline"
           >
             Twitch EventSub Reference
             <ExternalLink class="h-3 w-3" />

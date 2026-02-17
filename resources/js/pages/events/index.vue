@@ -313,7 +313,7 @@ const saveAllMappings = async () => {
     </div>
 
     <!-- Toast Notification -->
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>
 </template>
 

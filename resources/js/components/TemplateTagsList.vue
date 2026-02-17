@@ -204,7 +204,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" />
+  <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
   <!-- Conditional Syntax Section -->
   <div class="mb-4 gap-2">
