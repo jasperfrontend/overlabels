@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
+use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\TemplateTagController;
@@ -271,6 +272,18 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
         Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
     });
+
+    // Controls Management
+    Route::prefix('templates/{template}/controls')
+        ->name('controls.')
+        ->group(function () {
+            Route::get('/', [OverlayControlController::class, 'index'])->name('index');
+            Route::post('/', [OverlayControlController::class, 'store'])->name('store');
+            Route::post('/import', [OverlayControlController::class, 'importForkedControls'])->name('import');
+            Route::put('/{control}', [OverlayControlController::class, 'update'])->name('update');
+            Route::delete('/{control}', [OverlayControlController::class, 'destroy'])->name('destroy');
+            Route::post('/{control}/value', [OverlayControlController::class, 'setValue'])->name('value');
+        });
 
     // Kit Management
     Route::prefix('kits')->name('kits.')->group(function () {

@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OverlayTemplate extends Model
 {
+    // Transient properties set after fork() for the fork wizard
+    public array $_sourceControls = [];
+
+    public bool $_hasControls = false;
+
     use HasFactory;
 
     protected $fillable = [
@@ -78,8 +83,8 @@ class OverlayTemplate extends Model
     {
         $tags = [];
 
-        // Pattern to match [[[tag_name]]] syntax including dots for event.* tags
-        $pattern = '/\[\[\[([a-zA-Z0-9_.]+)(?:\|[a-zA-Z0-9_]+)?]]]/';
+        // Pattern to match [[[tag_name]]] syntax including dots for event.* tags and c: prefix for controls
+        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:]*?)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
         // Extract from HTML
         preg_match_all($pattern, $this->html, $htmlMatches);
@@ -115,7 +120,7 @@ class OverlayTemplate extends Model
         // Pattern to match conditional statements: [[[if:tag_name operator value]]]
         // Also matches: [[[elseif:tag_name operator value]]]
         // Updated to properly support dots in tag names like event.bits, event.user_name
-        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.]+)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^]]+)?]]]/';
+        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.][a-zA-Z0-9_.:]*?)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^]]+)?]]]/';
 
         preg_match_all($conditionalPattern, $content, $matches);
 
@@ -151,6 +156,16 @@ class OverlayTemplate extends Model
 
         $this->increment('fork_count');
 
+        // Attach source controls metadata for the fork wizard (not persisted to DB)
+        $sourceControls = $this->controls()
+            ->select(['key', 'label', 'type', 'config', 'sort_order'])
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
+
+        $fork->_sourceControls = $sourceControls;
+        $fork->_hasControls = count($sourceControls) > 0;
+
         return $fork;
     }
 
@@ -183,6 +198,11 @@ class OverlayTemplate extends Model
     public function eventMappings(): HasMany
     {
         return $this->hasMany(EventTemplateMapping::class, 'template_id');
+    }
+
+    public function controls(): HasMany
+    {
+        return $this->hasMany(OverlayControl::class, 'overlay_template_id');
     }
 
     /**

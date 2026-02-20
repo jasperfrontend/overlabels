@@ -141,8 +141,8 @@ const compiledHtml = computed(() => {
   }
 
   // Finally replace any remaining template tags with empty string
-  // This prevents showing raw tags like [[[total]]] before data arrives
-  html = html.replace(/\[\[\[[\w.]+]]]/g,'');
+  // This prevents showing raw tags like [[[total]]] or [[[c:key]]] before data arrives
+  html = html.replace(/\[\[\[[\w.:]+]]]/g,'');
 
   return html;
 });
@@ -185,7 +185,7 @@ const compiledAlertHtml = computed(() => {
 
   if (!alertData || typeof alertData !== 'object') {
     // If no data, replace all template tags with empty string to avoid showing raw tags
-    html = html.replace(/\[\[\[[\w.]+]]]/g, '');
+    html = html.replace(/\[\[\[[\w.:]+]]]/g, '');
     return html;
   }
 
@@ -210,7 +210,7 @@ const compiledAlertHtml = computed(() => {
 
   // Finally, replace any remaining template tags with empty string
   // This handles tags that don't have data yet (like event.total before it arrives)
-  html = html.replace(/\[\[\[[\w.]+]]]/g, '');
+  html = html.replace(/\[\[\[[\w.:]+]]]/g, '');
 
   return html;
 });
@@ -347,6 +347,16 @@ function setupAlertListener() {
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
   channel.listen('.alert.triggered', handleAlertTriggered);
 
+  // Listen for control value updates
+  channel.listen('.control.updated', handleControlUpdated);
+
+  // Hard-reload when the template itself is saved
+  channel.listen('.template.updated', (event: any) => {
+    if (event.overlay_slug === props.slug) {
+      window.location.reload();
+    }
+  });
+
   channel.subscribed(() => {
     console.log('Successfully subscribed to channel:', channelName);
   });
@@ -355,6 +365,16 @@ function setupAlertListener() {
     console.error('Channel subscription error:', err);
   });
 
+}
+
+function handleControlUpdated(event: any) {
+  if (event.overlay_slug !== props.slug) return;
+  if (!data.value || typeof data.value !== 'object') return;
+
+  data.value = {
+    ...data.value,
+    [`c:${event.key}`]: event.value,
+  };
 }
 
 function handleAlertTriggered(event: any) {

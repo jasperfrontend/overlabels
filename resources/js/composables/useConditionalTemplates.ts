@@ -24,8 +24,8 @@ export function useConditionalTemplates() {
         condition = condition.trim();
 
         // Check for comparison operators
-        // Updated regex to support dots in variable names like event.bits, event.user_name
-        const comparisonMatch = condition.match(/^([a-zA-Z0-9_.]+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
+        // Updated regex to support dots and colons in variable names like event.bits, c:deaths
+        const comparisonMatch = condition.match(/^([a-zA-Z0-9_.:]+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
         if (comparisonMatch) {
             return {
                 variable: comparisonMatch[1],

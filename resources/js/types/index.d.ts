@@ -16,6 +16,7 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    target?: string;
 }
 
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
@@ -73,3 +74,17 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export interface OverlayControl {
+  id: number;
+  overlay_template_id: number;
+  user_id: number;
+  key: string;
+  label: string | null;
+  type: 'text' | 'number' | 'counter' | 'timer' | 'datetime';
+  value: string | null;
+  config: Record<string, any> | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}

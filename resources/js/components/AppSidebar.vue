@@ -4,67 +4,21 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { House, LayoutGrid, Radio, Grid2x2Check, Code, Shield, Building, Users, Brackets, FileText, Terminal } from 'lucide-vue-next';
+import { Brackets, Building, FileText, House, LayoutGrid, Radio, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    href: route('dashboard.index'),
-    icon: House,
-  },
-  {
-    title: 'Recents',
-    href: route('dashboard.recents'),
-    icon: Users,
-  },
-  {
-    title: 'Overlay kits',
-    href: route('kits.index'),
-    icon: LayoutGrid,
-  },
-  {
-    title: 'All Overlays',
-    href: route('templates.index'),
-    icon: Building,
-  },
-  {
-    title: 'Alerts Builder',
-    href: route('events.index'),
-    icon: Radio,
-  },
+  { title: 'Dashboard', href: route('dashboard.index'), icon: House },
+  { title: 'My activity', href: route('dashboard.recents'), icon: Users },
+  { title: 'All Overlays', href: route('templates.index'), icon: Building },
 ];
-const userNavItems: NavItem[] = [
-  {
-    title: 'Syntax Help',
-    href: route('help'),
-    icon: Brackets,
-  },
-  {
-    title: 'Manifesto',
-    href: route('manifesto'),
-    icon: FileText,
-  },
-  {
-    title: 'Token Generator',
-    href: route('tokens.index'),
-    icon: Shield,
-  },
-  {
-    title: 'Tags Generator',
-    href: route('tags.generator'),
-    icon: Code,
-  },
-  {
-    title: 'Your Twitch Data',
-    href: route('twitchdata'),
-    icon: Grid2x2Check,
-  },
-  {
-    title: 'Testing Guide',
-    href: route('testing.index'),
-    icon: Terminal,
-  },
+const alertsNavItems: NavItem[] = [{ title: 'Alerts Builder', href: route('events.index'), icon: Radio }];
+
+const kitsNavItems: NavItem[] = [{ title: 'Overlay Kits', href: route('kits.index'), icon: LayoutGrid }];
+
+const learnNavItems: NavItem[] = [
+  { title: 'Syntax Help', href: route('help'), icon: Brackets },
+  { title: 'Manifesto', href: route('manifesto'), icon: FileText },
 ];
 </script>
 
@@ -83,11 +37,14 @@ const userNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain :items="mainNavItems" />
+      <NavMain label="Platform" :items="mainNavItems" />
+      <NavMain label="Alerts" :items="alertsNavItems" />
+      <NavMain label="Kits" :items="kitsNavItems" />
+      <NavMain label="Learn" :items="learnNavItems" />
     </SidebarContent>
 
     <SidebarFooter>
-      <NavUser :items="userNavItems" />
+      <NavUser />
     </SidebarFooter>
   </Sidebar>
   <slot />

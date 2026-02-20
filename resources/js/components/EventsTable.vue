@@ -111,8 +111,8 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
   <Table>
     <TableHeader>
       <TableRow class="hover:bg-transparent">
-        <TableHead class="w-[120px]">Event</TableHead>
-        <TableHead>Who</TableHead>
+        <TableHead class="w-[120px]">Alert</TableHead>
+        <TableHead>From</TableHead>
         <TableHead class="w-[48px]"><span class="sr-only">Actions</span></TableHead>
       </TableRow>
     </TableHeader>

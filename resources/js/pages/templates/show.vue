@@ -5,16 +5,22 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from "@/components/RekaToast.vue"
 import TooltipBase from '@/components/TooltipBase.vue';
-import type { BreadcrumbItem } from '@/types/index.js';
-import { GitForkIcon, EyeIcon, SplitIcon, ExternalLinkIcon, PencilIcon, TrashIcon, CircleAlertIcon } from 'lucide-vue-next';
+import ControlsManager from '@/components/ControlsManager.vue';
+import ControlPanel from '@/components/ControlPanel.vue';
+import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
+import { GitForkIcon, EyeIcon, SplitIcon, ExternalLinkIcon, PencilIcon, TrashIcon, CircleAlertIcon, SlidersHorizontalIcon, LayoutIcon } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
-const props = defineProps({
-  template: Object,
-  canEdit: Boolean,
-});
+const props = defineProps<{
+  template: any;
+  canEdit: boolean;
+  controls?: OverlayControl[];
+}>();
 
 const activeTab = ref('html');
+const mainTab = ref<'overview' | 'controls' | 'panel'>('overview');
+const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
 // Use the template actions composable
 const {
@@ -26,6 +32,10 @@ const {
   toastMessage,
   toastType,
   showToast,
+  forkWizardOpen,
+  forkWizardTemplateId,
+  forkWizardTemplateSlug,
+  forkWizardSourceControls,
 } = useTemplateActions(props.template);
 
 // Local toast state for clipboard copy
@@ -49,6 +59,12 @@ const breadcrumbs: BreadcrumbItem[] = [
   <Head :title="`Overlabels Overlay Editor: ${props.template?.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
+    <ForkImportWizard
+      v-model:open="forkWizardOpen"
+      :forked-template-id="forkWizardTemplateId"
+      :forked-template-slug="forkWizardTemplateSlug"
+      :source-controls="forkWizardSourceControls"
+    />
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6">
@@ -201,8 +217,51 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <!-- Code Tabs -->
-      <div class="overflow-hidden rounded-sm border border-sidebar">
+      <!-- Main Tabs (owner only) -->
+      <div v-if="canEdit" class="mb-6">
+        <div class="flex border-b border-sidebar">
+          <button
+            @click="mainTab = 'overview'"
+            :class="['flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors', mainTab === 'overview' ? 'border-b-2 border-primary text-accent-foreground' : 'text-muted-foreground hover:text-foreground']"
+          >
+            <LayoutIcon class="h-4 w-4" />
+            Overview
+          </button>
+          <button
+            @click="mainTab = 'controls'"
+            :class="['flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors', mainTab === 'controls' ? 'border-b-2 border-primary text-accent-foreground' : 'text-muted-foreground hover:text-foreground']"
+          >
+            <SlidersHorizontalIcon class="h-4 w-4" />
+            Controls
+          </button>
+          <button
+            @click="mainTab = 'panel'"
+            :class="['flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors', mainTab === 'panel' ? 'border-b-2 border-primary text-accent-foreground' : 'text-muted-foreground hover:text-foreground']"
+          >
+            Control Panel
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls Manager tab -->
+      <div v-if="canEdit && mainTab === 'controls'" class="mb-6">
+        <ControlsManager
+          :template="template"
+          :initial-controls="localControls"
+          @change="localControls = $event"
+        />
+      </div>
+
+      <!-- Control Panel tab -->
+      <div v-if="canEdit && mainTab === 'panel'" class="mb-6">
+        <ControlPanel
+          :template="template"
+          :controls="localControls"
+        />
+      </div>
+
+      <!-- Code Tabs (overview only) -->
+      <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden rounded-sm border border-sidebar">
         <div class="flex border-b border-b-sidebar">
           <button
             v-for="tab in ['head', 'html', 'css']"

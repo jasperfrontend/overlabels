@@ -74,48 +74,20 @@ const breadcrumbs = [
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-8 p-4">
-      <!-- Recently Updated Templates -->
-      <section class="space-y-4">
-        <div class="flex items-center gap-3">
-          <FileText class="mr-2 h-6 w-6" />
-          <Heading title="Recently Updated Templates" />
-        </div>
-
-        <TemplateTable
-          v-if="recentTemplates.length > 0"
-          :templates="recentTemplates"
-          :show-owner="false"
-        />
-
-        <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
-          <CardHeader>
-            <CardTitle class="text-md">No Templates Yet</CardTitle>
-            <CardDescription class="-mt-0.5 text-sm">
-              Create your first template to get started!
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </section>
-
-      <div class="h-px w-full bg-muted-foreground/10" />
-
       <!-- Recent Stream Events -->
       <section class="space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <Radio class="mr-2 h-6 w-6" />
-            <Heading title="Recent Stream Events" />
+            <Heading title="Recent stream alerts" />
           </div>
-          <Link href="/dashboard/events" class="btn btn-primary">
-            Embed View
+          <a href="/dashboard/events" target="_blank" class="btn btn-primary">
+            Embed view
             <ExternalLink class="ml-2 h-4 w-4" />
-          </Link>
+          </a>
         </div>
 
-        <EventsTable
-          v-if="recentEvents.length > 0"
-          :events="recentEvents"
-        />
+        <EventsTable v-if="recentEvents.length > 0" :events="recentEvents" />
 
         <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
           <CardHeader>
@@ -126,6 +98,25 @@ const breadcrumbs = [
           </CardHeader>
         </Card>
       </section>
+
+      <!-- Recently Updated Templates -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-3">
+          <FileText class="mr-2 h-6 w-6" />
+          <Heading title="Recently Updated Templates" />
+        </div>
+
+        <TemplateTable v-if="recentTemplates.length > 0" :templates="recentTemplates" :show-owner="false" />
+
+        <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
+          <CardHeader>
+            <CardTitle class="text-md">No Templates Yet</CardTitle>
+            <CardDescription class="-mt-0.5 text-sm"> Create your first template to get started! </CardDescription>
+          </CardHeader>
+        </Card>
+      </section>
+
+      <div class="h-px w-full bg-muted-foreground/10" />
     </div>
 
     <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />

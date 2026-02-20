@@ -7,6 +7,12 @@ export function useTemplateActions(template: any) {
   const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
   const showToast = ref(false);
 
+  // Fork Import Wizard state
+  const forkWizardOpen = ref(false);
+  const forkWizardTemplateId = ref<number>(0);
+  const forkWizardTemplateSlug = ref<string>('');
+  const forkWizardSourceControls = ref<any[]>([]);
+
   const publicUrl = computed(() => {
     return `${window.location.origin}/overlay/${template?.slug}/public`;
   });
@@ -25,7 +31,17 @@ export function useTemplateActions(template: any) {
 
     try {
       const response = await axios.post(route('templates.fork', template));
-      router.visit(route('templates.show', response.data.template));
+      const data = response.data;
+
+      if (data.has_controls && data.source_controls?.length > 0) {
+        // Show import wizard before navigating
+        forkWizardTemplateId.value = data.template.id;
+        forkWizardTemplateSlug.value = data.template.slug;
+        forkWizardSourceControls.value = data.source_controls;
+        forkWizardOpen.value = true;
+      } else {
+        router.visit(route('templates.show', data.template));
+      }
     } catch (error) {
       console.error('Failed to fork template:', error);
       showToast.value = true;
@@ -53,5 +69,9 @@ export function useTemplateActions(template: any) {
     toastMessage,
     toastType,
     showToast,
+    forkWizardOpen,
+    forkWizardTemplateId,
+    forkWizardTemplateSlug,
+    forkWizardSourceControls,
   };
 }

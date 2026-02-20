@@ -97,9 +97,15 @@ class OverlayTemplateController extends Controller
         $template->load(['owner:id,name,avatar', 'forkParent:id,name,slug']);
         $template->loadCount('forks');
 
+        $canEdit = auth()->id() === $template->owner_id;
+        $controls = $canEdit
+            ? $template->controls()->orderBy('sort_order')->get()
+            : collect();
+
         return Inertia::render('templates/show', [
             'template' => $template,
-            'canEdit' => auth()->id() === $template->owner_id,
+            'canEdit' => $canEdit,
+            'controls' => $controls,
         ]);
     }
 
@@ -252,6 +258,21 @@ class OverlayTemplateController extends Controller
                 $template->slug
             );
 
+            // Inject control values as c:{key} entries
+            $controls = \App\Models\OverlayControl::where('overlay_template_id', $template->id)
+                ->orderBy('sort_order')
+                ->get();
+
+            $controlData = [];
+            foreach ($controls as $control) {
+                $controlData['c:'.$control->key] = $control->resolveDisplayValue();
+            }
+
+            // Build final data: Twitch data + controls + Twitch ID
+            $finalData = array_merge($mapped, $controlData, [
+                'user_twitch_id' => $user->twitch_id,
+            ]);
+
             // Directly return JSON as a response so frontend can handle rendering
             return response()->json([
                 'template' => [
@@ -268,9 +289,7 @@ class OverlayTemplateController extends Controller
                     'created_at' => $template->created_at,
                     'updated_at' => $template->updated_at,
                 ],
-                'data' => array_merge($mapped, [
-                    'user_twitch_id' => $user->twitch_id, // Add user's Twitch ID for alert channels
-                ]),
+                'data' => $finalData,
             ]);
 
         } catch (Exception $e) {
@@ -345,6 +364,11 @@ class OverlayTemplateController extends Controller
             $template->save();
         }
 
+        // Notify any open overlays to reload
+        if ($request->user()->twitch_id) {
+            \App\Events\TemplateUpdated::dispatch($template->slug, $request->user()->twitch_id);
+        }
+
         // For Inertia requests, redirect to the show page with a success message
         if ($request->wantsJson()) {
             return response()->json([
@@ -374,6 +398,8 @@ class OverlayTemplateController extends Controller
             return response()->json([
                 'template' => $fork,
                 'message' => 'Template forked successfully',
+                'source_controls' => $fork->_sourceControls,
+                'has_controls' => $fork->_hasControls,
             ]);
         }
 
