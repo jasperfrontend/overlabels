@@ -264,8 +264,19 @@ class OverlayTemplateController extends Controller
                 ->get();
 
             $controlData = [];
+            $timerStates = [];
             foreach ($controls as $control) {
                 $controlData['c:'.$control->key] = $control->resolveDisplayValue();
+                if ($control->type === 'timer') {
+                    $cfg = $control->config ?? [];
+                    $timerStates[$control->key] = [
+                        'mode' => $cfg['mode'] ?? 'countup',
+                        'base_seconds' => (int) ($cfg['base_seconds'] ?? 0),
+                        'offset_seconds' => (int) ($cfg['offset_seconds'] ?? 0),
+                        'running' => (bool) ($cfg['running'] ?? false),
+                        'started_at' => $cfg['started_at'] ?? null,
+                    ];
+                }
             }
 
             // Build final data: Twitch data + controls + Twitch ID
@@ -290,6 +301,7 @@ class OverlayTemplateController extends Controller
                     'updated_at' => $template->updated_at,
                 ],
                 'data' => $finalData,
+                'timer_states' => $timerStates,
             ]);
 
         } catch (Exception $e) {

@@ -107,7 +107,12 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
           <code class="rounded bg-sidebar px-1 py-0.5 text-xs">[[[c:key]]]</code>.
         </p>
       </div>
-      <button class="btn btn-primary btn-sm" @click="openAdd">
+      <button
+        class="btn btn-primary btn-sm"
+        :disabled="controls.length >= 20"
+        :title="controls.length >= 20 ? 'Maximum 20 controls per template' : undefined"
+        @click="openAdd"
+      >
         <PlusIcon class="mr-1.5 h-3.5 w-3.5" />
         Add control
       </button>

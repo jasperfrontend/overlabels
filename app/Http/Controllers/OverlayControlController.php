@@ -29,6 +29,7 @@ class OverlayControlController extends Controller
     public function store(Request $request, OverlayTemplate $template): JsonResponse
     {
         abort_if($template->owner_id !== auth()->id(), 403);
+        abort_if($template->controls()->count() >= 20, 422, 'Templates are limited to 20 controls.');
 
         $validated = $request->validate([
             'key' => [

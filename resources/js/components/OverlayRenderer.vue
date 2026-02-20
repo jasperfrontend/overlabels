@@ -87,6 +87,49 @@ const giftBombDetector = useGiftBombDetector();
 const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
 
+// Timer control state — keyed by control key (not c:key)
+const timerStates = ref<Record<string, any>>({});
+const timerIntervals: Record<string, number> = {};
+
+function computeTimerSeconds(state: any): number {
+  const mode = state.mode ?? 'countup';
+  const base = Number(state.base_seconds ?? 0);
+  const offset = Number(state.offset_seconds ?? 0);
+  const running = Boolean(state.running ?? false);
+  const startedAt = state.started_at ? new Date(state.started_at).getTime() : null;
+
+  let elapsed = offset;
+  if (running && startedAt) {
+    elapsed = offset + Math.floor((Date.now() - startedAt) / 1000);
+  }
+
+  return mode === 'countdown' ? Math.max(0, base - elapsed) : elapsed;
+}
+
+function startTimerTick(key: string, state: any) {
+  stopTimerTick(key);
+  timerStates.value[key] = state;
+
+  // Write the current value immediately
+  if (data.value) {
+    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(state)) };
+  }
+
+  if (!state.running) return;
+
+  timerIntervals[key] = window.setInterval(() => {
+    if (!data.value) return;
+    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(timerStates.value[key])) };
+  }, 250);
+}
+
+function stopTimerTick(key: string) {
+  if (timerIntervals[key]) {
+    clearInterval(timerIntervals[key]);
+    delete timerIntervals[key];
+  }
+}
+
 // Alert system state
 const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
@@ -280,6 +323,13 @@ onMounted(async () => {
 
     userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
+    // Start local ticking for any timer controls that are currently running
+    if (json.timer_states && typeof json.timer_states === 'object') {
+      for (const [key, state] of Object.entries(json.timer_states)) {
+        startTimerTick(key, state);
+      }
+    }
+
     injectStyle(css.value);
     injectHead(head.value);
 
@@ -323,6 +373,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   health.destroy();
+  for (const key of Object.keys(timerIntervals)) {
+    stopTimerTick(key);
+  }
 });
 
 // Set up alert listener for broadcasted alerts
@@ -371,10 +424,15 @@ function handleControlUpdated(event: any) {
   if (event.overlay_slug !== props.slug) return;
   if (!data.value || typeof data.value !== 'object') return;
 
-  data.value = {
-    ...data.value,
-    [`c:${event.key}`]: event.value,
-  };
+  if (event.type === 'timer' && event.timer_state) {
+    // For timers, start/update the local tick interval using the broadcast state
+    startTimerTick(event.key, event.timer_state);
+  } else {
+    data.value = {
+      ...data.value,
+      [`c:${event.key}`]: event.value,
+    };
+  }
 }
 
 function handleAlertTriggered(event: any) {
