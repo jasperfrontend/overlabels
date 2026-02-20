@@ -10,14 +10,14 @@ import AppLogo from './AppLogo.vue';
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My activity', href: route('dashboard.recents'), icon: Users },
-  { title: 'All Overlays', href: route('templates.index'), icon: Building },
+  { title: 'All overlays', href: route('templates.index'), icon: Building },
 ];
-const alertsNavItems: NavItem[] = [{ title: 'Alerts Builder', href: route('events.index'), icon: Radio }];
+const alertsNavItems: NavItem[] = [{ title: 'Alerts builder', href: route('events.index'), icon: Radio }];
 
-const kitsNavItems: NavItem[] = [{ title: 'Overlay Kits', href: route('kits.index'), icon: LayoutGrid }];
+const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.index'), icon: LayoutGrid }];
 
 const learnNavItems: NavItem[] = [
-  { title: 'Syntax Help', href: route('help'), icon: Brackets },
+  { title: 'Syntax help', href: route('help'), icon: Brackets },
   { title: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
   { title: 'Manifesto', href: route('manifesto'), icon: FileText },
 ];
