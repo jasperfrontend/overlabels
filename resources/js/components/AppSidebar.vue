@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Brackets, Building, FileText, House, LayoutGrid, Radio, Users } from 'lucide-vue-next';
+import { Brackets, Building, FileText, House, LayoutGrid, Radio, SlidersHorizontal, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -18,6 +18,7 @@ const kitsNavItems: NavItem[] = [{ title: 'Overlay Kits', href: route('kits.inde
 
 const learnNavItems: NavItem[] = [
   { title: 'Syntax Help', href: route('help'), icon: Brackets },
+  { title: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
   { title: 'Manifesto', href: route('manifesto'), icon: FileText },
 ];
 </script>
