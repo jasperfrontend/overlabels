@@ -48,6 +48,10 @@ Route::get('/manifesto', function () {
     return Inertia::render('Manifesto');
 })->name('manifesto');
 
+Route::get('/help/controls', function () {
+    return Inertia::render('HelpControls');
+})->name('help.controls');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
