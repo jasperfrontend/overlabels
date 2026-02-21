@@ -25,8 +25,6 @@ use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 
-// use App\Http\Controllers\StorageConnectionController;
-// use App\Http\Controllers\StorageBrowserController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');

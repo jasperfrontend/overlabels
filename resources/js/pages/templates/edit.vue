@@ -30,6 +30,7 @@ import {
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import TooltipBase from '@/components/TooltipBase.vue';
@@ -137,12 +138,23 @@ const openExternalLink = (link: any, target: string) => {
 };
 
 const submitForm = () => {
+  const { sanitized, removed } = stripScriptsFromFields({
+    name: form.name,
+    description: form.description,
+    head: form.head,
+    html: form.html,
+    css: form.css,
+  });
+  Object.assign(form, sanitized);
+
   form.put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
       showToast.value = false;
-      toastMessage.value = 'Template saved successfully!';
-      toastType.value = 'success';
+      toastMessage.value = removed > 0
+        ? `Template saved! Also quietly removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported in overlays.`
+        : 'Template saved successfully!';
+      toastType.value = removed > 0 ? 'warning' : 'success';
       showToast.value = true;
     },
     onError: () => {
@@ -296,7 +308,8 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                   <CardHeader class="px-4">
                     <CardTitle class="text-base">HEAD Template</CardTitle>
                     <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                      You're on your own here. Very little validating is done on this contents.
+                      Here you can add stuff to the <code>&lt;head&gt;</code> of your overlay. You cannot add <code>&lt;script&gt;</code>,
+                      but external font, icon or graphic libraries are fine.
                     </p>
                   </CardHeader>
                   <CardContent>

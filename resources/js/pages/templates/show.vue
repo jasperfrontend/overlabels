@@ -20,6 +20,9 @@ import {
   SlidersHorizontalIcon,
   LightbulbIcon,
   SquarePenIcon,
+  FileCode2Icon,
+  CodeIcon,
+  PaletteIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
@@ -28,6 +31,18 @@ const props = defineProps<{
   canEdit: boolean;
   controls?: OverlayControl[];
 }>();
+
+const editorTabs = [
+  { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
+  { key: 'html', label: 'HTML', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
+];
+
+const mainTabs = [
+  { key: 'overview', label: 'Details', icon: LightbulbIcon },
+  { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
+  { key: 'panel', label: 'Values', icon: SquarePenIcon },
+] as const;
 
 const activeTab = ref('html');
 const mainTab = ref<'overview' | 'controls' | 'panel'>('overview');
@@ -130,23 +145,27 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="space-y-3">
           <div v-if="props.template?.is_public">
             <label for="public-url">Overlay URL</label>
-            <small class="text-xs cursor-pointer ml-2 bg-background p-1 rounded" @click="copyToClipboard(publicUrl, 'Public URL')">(Click to copy)</small>
+            <small
+              class="ml-2 p-1 px-2 relative -top-0.5 cursor-pointer rounded-full bg-background text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
+              @click="copyToClipboard(publicUrl, 'Public URL')"
+              >Click to copy</small
+            >
             <div class="mt-4 flex items-center">
               <input
                 :value="publicUrl"
                 id="public-url"
                 readonly
-                class="peer flex-1 rounded-l-none border border-border p-1.5 text-sm text-muted-foreground transition outline-none focus:border-1 focus:border-gray-400 focus:text-accent-foreground"
+                class="peer flex-1 rounded-l-md border border-border p-2 text-sm text-muted-foreground bg-background transition outline-none focus:border-1 focus:border-gray-400 focus:text-accent-foreground"
               />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm rounded-none rounded-r-none border-1 border-l-0 border-sidebar p-1.5 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+                class="btn btn-sm rounded-none rounded-r-none border border-border border-l-0 p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
               >
                 Copy
               </button>
             </div>
           </div>
-          <p class="mt-3 text-xs text-muted-foreground">
+          <p class="pt-0.5 text-sm text-muted-foreground">
             Replace <code class="rounded-sm bg-accent p-0.5 px-1">/public</code> at the end of this link with your own
             <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a> to enable the overlay.
           </p>
@@ -157,37 +176,21 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">
         <div class="flex border-b border-violet-600 dark:border-violet-400">
           <button
-            @click="mainTab = 'overview'"
+            v-for="(tab, index) in mainTabs"
+            :key="tab.key"
+            @click="mainTab = tab.key"
             :class="[
-              'flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors',
-              mainTab === 'overview' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
+              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+              index === 0 && 'rounded-tl-sm',
+              mainTab === tab.key ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
             ]"
           >
-            <LightbulbIcon class="h-4 w-4" />
-            Details
-          </button>
-          <button
-            @click="mainTab = 'controls'"
-            :class="[
-              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
-              mainTab === 'controls' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
-            ]"
-          >
-            <SlidersHorizontalIcon class="h-4 w-4" />
-            Controls
-          </button>
-          <button
-            @click="mainTab = 'panel'"
-            :class="[
-              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
-              mainTab === 'panel' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
-            ]"
-          >
-            <SquarePenIcon class="h-4 w-4" />
-            Values
+            <component :is="tab.icon" class="h-4 w-4" />
+            {{ tab.label }}
           </button>
         </div>
       </div>
+
       <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6">
@@ -242,25 +245,26 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- File tabs sidebar -->
             <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
               <button
-                v-for="tab in ['head', 'html', 'css']"
-                :key="tab"
-                @click="activeTab = tab"
+                v-for="tab in editorTabs"
+                :key="tab.key"
+                @click="activeTab = tab.key"
                 :class="[
-                  'cursor-pointer px-5 py-3 text-left text-xs font-semibold tracking-widest uppercase transition-colors',
-                  activeTab === tab
+                  'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase transition-colors',
+                  activeTab === tab.key
                     ? 'bg-background text-accent-foreground'
                     : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',
                 ]"
               >
-                {{ tab }}
+                <component :is="tab.icon" :class="tab.color" class="size-3.5" />
+                {{ tab.label }}
               </button>
             </div>
             <!-- Code panel -->
             <div class="relative flex-1 bg-background text-gray-700 dark:text-accent-foreground">
-              <pre class="max-h-[50vh] overflow-auto p-4"><code class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
+              <pre class="h-[50vh] overflow-auto p-4"><code class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
               <button
                 @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
-                class="btn btn-sm btn-primary absolute top-3 right-3"
+                class="btn btn-sm btn-primary absolute top-4 right-8 w-30"
               >
                 Copy {{ activeTab.toUpperCase() }}
               </button>

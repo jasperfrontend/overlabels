@@ -5,9 +5,7 @@
       <div class="overlay-health-banner__icon">!</div>
       <div class="overlay-health-banner__text">
         <div class="overlay-health-banner__message">{{ health.statusMessage.value }}</div>
-        <div v-if="health.willAutoReload.value" class="overlay-health-banner__reload">
-          Auto-reloading in {{ health.autoReloadIn.value }}s...
-        </div>
+        <div v-if="health.willAutoReload.value" class="overlay-health-banner__reload">Auto-reloading in {{ health.autoReloadIn.value }}s...</div>
         <div v-else-if="health.isRetrying.value && health.retryCountdown.value > 0" class="overlay-health-banner__retry">
           Next retry in {{ health.retryCountdown.value }}s...
         </div>
@@ -18,20 +16,9 @@
   <div v-if="error" class="error">{{ error }}</div>
   <div v-else>
     <!-- Dynamic Alert Overlay -->
-    <transition
-      :name="currentAlert?.transition || 'fade'"
-      @leave="onAlertLeave"
-    >
-      <div
-        v-if="currentAlert"
-        class="alert-overlay"
-      >
-        <div
-          v-html="compiledAlertHtml"
-          class="alert-content"
-          :id="`alert-content-${currentAlert.timestamp}`"
-
-        />
+    <transition :name="currentAlert?.transition || 'fade'" @leave="onAlertLeave">
+      <div v-if="currentAlert" class="alert-overlay">
+        <div v-html="compiledAlertHtml" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
       </div>
     </transition>
 
@@ -77,7 +64,7 @@ const props = defineProps<{
 
 const head = ref<string | null>(null);
 const rawHtml = ref<string>('');
-const css = ref('');
+const css = ref<string>('');
 const data = ref<Record<string, any> | undefined>(undefined);
 const error = ref('');
 const templateTags = ref<string[]>([]);
@@ -135,7 +122,6 @@ const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
 
-
 // Utility: escape regex special characters in keys
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -146,7 +132,6 @@ const tagRegexMap = computed(() => {
   const m = new Map<string, RegExp>();
 
   const sourceData = data.value && typeof data.value === 'object' ? data.value : {};
-
 
   // Ensure templateTags is always an array before iterating
   const tags = Array.isArray(templateTags.value) ? templateTags.value : [];
@@ -168,27 +153,24 @@ const tagRegexMap = computed(() => {
   return m;
 });
 
-const compiledHtml = computed(() => {
-  let html = rawHtml.value;
+function parseSource(source: string): string {
+  let result = source;
 
-  // First process conditional logic (before replacing tags)
   if (data.value && typeof data.value === 'object') {
-    html = processTemplate(html, data.value);
+    result = processTemplate(result, data.value);
   }
 
-  // Then replace all known tags with their values
   for (const [key, regex] of tagRegexMap.value.entries()) {
-    if(data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
-      html = html.replace(regex, String(data?.value[key]));
+    if (data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
+      result = result.replace(regex, String(data.value[key]));
     }
   }
 
-  // Finally replace any remaining template tags with empty string
-  // This prevents showing raw tags like [[[total]]] or [[[c:key]]] before data arrives
-  html = html.replace(/\[\[\[[\w.:]+]]]/g,'');
+  return result.replace(/\[\[\[[\w.:]+]]]/g, '');
+}
 
-  return html;
-});
+const compiledHtml = computed(() => parseSource(rawHtml.value));
+const compiledCss = computed(() => parseSource(css.value));
 
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
@@ -209,10 +191,10 @@ function injectHead(headString: string | null) {
   const headElements = doc.head.children;
 
   // Remove any previously injected custom head elements
-  document.querySelectorAll('[data-overlay-head]').forEach(el => el.remove());
+  document.querySelectorAll('[data-overlay-head]').forEach((el) => el.remove());
 
   // Inject each element from the template head into the actual document head
-  Array.from(headElements).forEach(element => {
+  Array.from(headElements).forEach((element) => {
     const clonedElement = element.cloneNode(true) as Element;
     clonedElement.setAttribute('data-overlay-head', 'true');
     document.head.appendChild(clonedElement);
@@ -258,7 +240,6 @@ const compiledAlertHtml = computed(() => {
   return html;
 });
 
-
 // Alert management functions
 function showAlert(alertData: AlertData) {
   // Clear any existing alert
@@ -299,7 +280,6 @@ function injectAlertStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
-
 const onAlertLeave = () => {
   eventStore.clearOverlayTriggers();
 };
@@ -330,7 +310,7 @@ onMounted(async () => {
       }
     }
 
-    injectStyle(css.value);
+    injectStyle(compiledCss.value);
     injectHead(head.value);
 
     document.title = json.meta?.name || 'Overlay';
@@ -351,9 +331,9 @@ onMounted(async () => {
 
     const restructuredEvent = {
       subscription: {
-        type: event.eventType || event.type
+        type: event.eventType || event.type,
       },
-      event: event.eventData || event.data
+      event: event.eventData || event.data,
     };
 
     // First, we normalize the event
@@ -380,7 +360,6 @@ onUnmounted(() => {
 
 // Set up alert listener for broadcasted alerts
 function setupAlertListener() {
-
   if (!window.Echo) {
     console.error('ERROR: window.Echo is not available');
     return;
@@ -417,7 +396,6 @@ function setupAlertListener() {
   channel.error((err: any) => {
     console.error('Channel subscription error:', err);
   });
-
 }
 
 function handleControlUpdated(event: any) {
@@ -436,7 +414,6 @@ function handleControlUpdated(event: any) {
 }
 
 function handleAlertTriggered(event: any) {
-
   const alertData = event.alert;
   if (!alertData) {
     console.error('No alert data in Echo event');
@@ -447,9 +424,8 @@ function handleAlertTriggered(event: any) {
   // This ensures both static tags (from data.value) and dynamic tags (from alertData.data) are available
   const mergedData = {
     ...data.value,
-    ...alertData.data
+    ...alertData.data,
   };
-
 
   showAlert({
     head: alertData.head,
@@ -458,7 +434,7 @@ function handleAlertTriggered(event: any) {
     data: mergedData,
     duration: alertData.duration,
     transition: alertData.transition,
-    timestamp: alertData.timestamp || Date.now()
+    timestamp: alertData.timestamp || Date.now(),
   });
 }
 </script>

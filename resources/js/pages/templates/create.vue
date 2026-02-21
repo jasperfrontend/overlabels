@@ -32,6 +32,7 @@ import {
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { stripScriptsFromFields } from '@/utils/sanitize';
 
 // Define interfaces for template tags
 interface TemplateTag {
@@ -120,6 +121,15 @@ const showKeyboardShortcuts = ref(false);
 const { register, getAllShortcuts } = useKeyboardShortcuts();
 
 const submitForm = () => {
+  const { sanitized } = stripScriptsFromFields({
+    name: form.name,
+    description: form.description,
+    head: form.head,
+    html: form.html,
+    css: form.css,
+  });
+  Object.assign(form, sanitized);
+
   form.post(route('templates.store'), {
     onSuccess: () => {
       // Will redirect to index or show page
