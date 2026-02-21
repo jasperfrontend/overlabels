@@ -87,18 +87,18 @@ class OverlayTemplate extends Model
         $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:]*?)(?:\|[a-zA-Z0-9_]+)?]]]/';
 
         // Extract from HTML
-        preg_match_all($pattern, $this->html, $htmlMatches);
+        preg_match_all($pattern, $this->html ?? '', $htmlMatches);
         $tags = array_merge($tags, $htmlMatches[1] ?? []);
 
         // Extract from CSS
-        preg_match_all($pattern, $this->css, $cssMatches);
+        preg_match_all($pattern, $this->css ?? '', $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
         // NEW: Extract tags from conditional statements
-        $conditionalTags = $this->extractConditionalTags($this->html);
+        $conditionalTags = $this->extractConditionalTags($this->html ?? '');
         $tags = array_merge($tags, $conditionalTags);
 
-        $conditionalTags = $this->extractConditionalTags($this->css);
+        $conditionalTags = $this->extractConditionalTags($this->css ?? '');
         $tags = array_merge($tags, $conditionalTags);
 
         // Remove transformation suffixes and return unique tags with re-indexed array

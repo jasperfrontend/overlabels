@@ -1,29 +1,21 @@
 <template>
-  <NotificationBase
-    :visible="visible"
-    v-bind="baseProps"
-    :custom-class="customClass"
-  >
+  <NotificationBase :visible="visibility" v-bind="baseProps" :custom-class="customClass">
     <div class="cheer-notification">
       <div v-if="showIcon" class="cheer-icon">
         <component :is="iconComponent" v-if="iconComponent" />
         <span v-else class="default-icon">💎</span>
       </div>
-      
+
       <div class="cheer-body">
         <h3 class="cheer-title" :style="{ color: titleColor }">
           {{ title }}
         </h3>
-        
-        <div class="cheer-amount" :style="{ color: amountColor }">
-          {{ bits }} {{ bitsLabel }}
-        </div>
-        
-        <div v-if="showMessage && message" class="cheer-message" :style="{ color: messageColor }">
-          "{{ message }}"
-        </div>
+
+        <div class="cheer-amount" :style="{ color: amountColor }">{{ bits }} {{ bitsLabel }}</div>
+
+        <div v-if="showMessage && message" class="cheer-message" :style="{ color: messageColor }">"{{ message }}"</div>
       </div>
-      
+
       <div v-if="showAnimation" class="cheer-animation">
         <slot name="animation">
           <div class="bits-rain"></div>
@@ -64,13 +56,22 @@ const baseProps = computed(() => {
 });
 
 // Suppress unused variable warnings
-void (props.event && props.showIcon && props.showMessage && props.showAnimation && props.titleColor && props.messageColor && props.amountColor && props.iconComponent);
+void (
+  props.event &&
+  props.showIcon &&
+  props.showMessage &&
+  props.showAnimation &&
+  props.titleColor &&
+  props.messageColor &&
+  props.amountColor &&
+  props.iconComponent
+);
 
 const userName = computed(() => props.event.user_name || 'Anonymous');
 const bits = computed(() => props.event.raw?.event?.bits || 0);
 const message = computed(() => props.event.raw?.event?.message || '');
 
-const bitsLabel = computed(() => bits.value === 1 ? 'bit' : 'bits');
+const bitsLabel = computed(() => (bits.value === 1 ? 'bit' : 'bits'));
 
 const title = computed(() => {
   if (bits.value >= 10000) {
@@ -115,9 +116,16 @@ const customClass = computed(() => {
 }
 
 @keyframes sparkle {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.1) rotate(5deg); }
-  75% { transform: scale(0.95) rotate(-5deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  75% {
+    transform: scale(0.95) rotate(-5deg);
+  }
 }
 
 .cheer-body {
@@ -142,8 +150,15 @@ const customClass = computed(() => {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; text-shadow: 0 0 10px currentColor; }
-  50% { opacity: 0.9; text-shadow: 0 0 20px currentColor; }
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 10px currentColor;
+  }
+  50% {
+    opacity: 0.9;
+    text-shadow: 0 0 20px currentColor;
+  }
 }
 
 .cheer-message {
@@ -168,7 +183,7 @@ const customClass = computed(() => {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 50%, rgba(145, 70, 255, 0.3) 0%, transparent 50%);
   animation: float-up 3s ease-out infinite;
@@ -191,17 +206,17 @@ const customClass = computed(() => {
   }
 }
 
-/* Special styles for big cheers */
-.mega-cheer {
-  border-width: 3px !important;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(145, 70, 255, 0.2)) !important;
-  animation: rainbow-border 3s linear infinite;
-}
-
 @keyframes rainbow-border {
-  0%, 100% { border-color: #00d4ff; }
-  33% { border-color: #9146ff; }
-  66% { border-color: #ff6b00; }
+  0%,
+  100% {
+    border-color: #00d4ff;
+  }
+  33% {
+    border-color: #9146ff;
+  }
+  66% {
+    border-color: #ff6b00;
+  }
 }
 
 .big-cheer .cheer-amount {

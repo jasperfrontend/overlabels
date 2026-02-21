@@ -1,24 +1,7 @@
 <template>
-  <transition
-    :name="transitionName"
-    @enter="onEnter"
-    @leave="onLeave"
-  >
-    <div
-      v-if="visible"
-      class="notification-container"
-      :class="[
-        positionClass,
-        sizeClass,
-        customClass
-      ]"
-      :style="computedStyles"
-    >
-      <div
-        v-if="backgroundImage"
-        class="notification-background"
-        :style="{ backgroundImage: `url(${backgroundImage})` }"
-      />
+  <transition :name="transitionName" @enter="onEnter" @leave="onLeave">
+    <div v-if="visibility" class="notification-container" :class="[positionClass, sizeClass, customClass]" :style="computedStyles">
+      <div v-if="backgroundImage" class="notification-background" :style="{ backgroundImage: `url(${backgroundImage})` }" />
 
       <div class="notification-content">
         <slot />
@@ -31,8 +14,17 @@
 import { computed, CSSProperties } from 'vue';
 
 export interface NotificationBaseProps {
-  visible?: boolean;
-  position?: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'middle-center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  visibility?: boolean;
+  position?:
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'middle-left'
+    | 'middle-center'
+    | 'middle-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right';
   size?: 'small' | 'medium' | 'large' | 'xl';
   transitionName?: string;
   backgroundColor?: string;
@@ -125,21 +117,65 @@ const computedStyles = computed(() => {
 }
 
 /* Position classes */
-.position-top-left { top: 0; left: 0; }
-.position-top-center { top: 0; left: 50%; transform: translateX(-50%); }
-.position-top-right { top: 0; right: 0; }
-.position-middle-left { top: 50%; left: 0; transform: translateY(-50%); }
-.position-middle-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.position-middle-right { top: 50%; right: 0; transform: translateY(-50%); }
-.position-bottom-left { bottom: 0; left: 0; }
-.position-bottom-center { bottom: 0; left: 50%; transform: translateX(-50%); }
-.position-bottom-right { bottom: 0; right: 0; }
+.position-top-left {
+  top: 0;
+  left: 0;
+}
+.position-top-center {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.position-top-right {
+  top: 0;
+  right: 0;
+}
+.position-middle-left {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+.position-middle-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.position-middle-right {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+.position-bottom-left {
+  bottom: 0;
+  left: 0;
+}
+.position-bottom-center {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.position-bottom-right {
+  bottom: 0;
+  right: 0;
+}
 
 /* Size classes */
-.size-small { min-width: 200px; max-width: 300px; }
-.size-medium { min-width: 300px; max-width: 500px; }
-.size-large { min-width: 400px; max-width: 700px; }
-.size-xl { min-width: 500px; max-width: 900px; }
+.size-small {
+  min-width: 200px;
+  max-width: 300px;
+}
+.size-medium {
+  min-width: 300px;
+  max-width: 500px;
+}
+.size-large {
+  min-width: 400px;
+  max-width: 700px;
+}
+.size-xl {
+  min-width: 500px;
+  max-width: 900px;
+}
 
 /* Transitions */
 .notification-slide-enter-active,

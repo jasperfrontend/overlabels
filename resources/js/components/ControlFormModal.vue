@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import type { OverlayControl } from '@/types';
 
 interface Template {
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 const isEditing = computed(() => !!props.control);
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
+const booleanValue = ref(false);
 
 const form = ref({
   key: '',
@@ -69,6 +71,7 @@ watch(() => props.open, (open) => {
         },
         sort_order: c.sort_order,
       };
+      booleanValue.value = c.value === '1';
     } else {
       form.value = {
         key: '',
@@ -78,6 +81,7 @@ watch(() => props.open, (open) => {
         config: { min: null, max: null, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0 },
         sort_order: 0,
       };
+      booleanValue.value = false;
     }
   }
 });
@@ -115,7 +119,7 @@ function buildPayload() {
   }
 
   if (!isEditing.value && t !== 'timer' && t !== 'datetime') {
-    payload.value = form.value.value || null;
+    payload.value = t === 'boolean' ? (booleanValue.value ? '1' : '0') : (form.value.value || null);
   }
 
   return payload;
@@ -207,12 +211,13 @@ async function save() {
             <option value="counter">Counter</option>
             <option value="timer">Timer</option>
             <option value="datetime">Date/Time</option>
+            <option value="boolean">Boolean (on/off switch)</option>
           </select>
           <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
         </div>
 
         <!-- Initial Value (text/number/counter/datetime) -->
-        <div v-if="!isEditing && form.type !== 'timer'" class="space-y-1">
+        <div v-if="!isEditing && form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
           <Label for="ctrl-value">Initial Value <span class="text-muted-foreground text-xs">(optional)</span></Label>
           <Input
             id="ctrl-value"
@@ -220,6 +225,16 @@ async function save() {
             :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
             placeholder="Leave blank to start empty"
           />
+          <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+        </div>
+
+        <!-- Initial Value (boolean) -->
+        <div v-if="!isEditing && form.type === 'boolean'" class="space-y-1">
+          <Label>Initial Value</Label>
+          <div class="flex items-center gap-3 pt-1">
+            <Switch v-model:checked="booleanValue" />
+            <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
+          </div>
           <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
         </div>
 

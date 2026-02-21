@@ -83,7 +83,7 @@ async function copyCommand(eventType: string) {
         <h1 class="text-2xl font-semibold">Testing Guide</h1>
       </div>
 
-      <p class="max-w-2xl text-sm text-muted-foreground">
+      <p class="max-w-4xl text-sm text-muted-foreground">
         Use the
         <a
           href="https://dev.twitch.tv/docs/cli/"
@@ -95,6 +95,7 @@ async function copyCommand(eventType: string) {
           <ExternalLink class="h-3 w-3" />
         </a>
         to trigger test events against your webhook. Each command below is pre-filled with your Twitch ID, webhook URL, and secret.
+        Events are blurred on this page for your security. <span class="bg-purple-400 text-purple-900 px-1">Do not show these commands on stream!</span>
       </p>
 
       <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-amber-300">
@@ -115,7 +116,7 @@ async function copyCommand(eventType: string) {
             </div>
             <p class="text-xs text-muted-foreground">{{ event.description }}</p>
           </CardHeader>
-          <CardContent>
+          <CardContent class="blur-xs hover:blur-none transition">
             <pre class="overflow-x-auto rounded-md bg-slate-950 p-3 font-mono text-xs break-all whitespace-pre-wrap text-green-300">{{
               getCommand(event.type)
             }}</pre>

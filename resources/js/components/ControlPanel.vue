@@ -5,6 +5,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { Input } from '@/components/ui/input';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon } from 'lucide-vue-next';
 import type { OverlayControl } from '@/types';
+import RefreshIcon from '@/components/RefreshIcon.vue';
 
 interface Template {
   id: number;
@@ -32,7 +33,9 @@ function showMsg(msg: string, type: 'success' | 'error' = 'success') {
   toastMessage.value = msg;
   toastType.value = type;
   showToast.value = false;
-  setTimeout(() => { showToast.value = true; }, 10);
+  setTimeout(() => {
+    showToast.value = true;
+  }, 10);
 }
 
 function getLocalValue(ctrl: OverlayControl): string {
@@ -85,7 +88,7 @@ function stopTimerTick(id: number) {
 }
 
 // Initialize timer displays
-props.controls.forEach(ctrl => {
+props.controls.forEach((ctrl) => {
   if (ctrl.type === 'timer') {
     startTimerTick(ctrl);
   }
@@ -94,10 +97,7 @@ props.controls.forEach(ctrl => {
 async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
   saving.value[ctrl.id] = true;
   try {
-    const { data } = await axios.post(
-      `/templates/${props.template.id}/controls/${ctrl.id}/value`,
-      payload
-    );
+    const { data } = await axios.post(`/templates/${props.template.id}/controls/${ctrl.id}/value`, payload);
 
     // Update local control state
     if (data.control) {
@@ -131,42 +131,50 @@ async function timerAction(ctrl: OverlayControl, action: 'start' | 'stop' | 'res
 }
 
 const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
+
+async function toggleBoolean(ctrl: OverlayControl) {
+  const newValue = ctrl.value === '1' ? '0' : '1';
+  await postValue(ctrl, { value: newValue });
+  showMsg(`"${ctrl.label || ctrl.key}" ${newValue === '1' ? 'enabled' : 'disabled'}.`);
+}
 </script>
 
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
   <div class="space-y-4">
-    <div v-if="controls.length === 0" class="rounded-sm border border-sidebar bg-sidebar-accent p-8 text-center text-muted-foreground">
-      No controls for this template.
+    <div class="flex items-center justify-between">
+      <p class="text-sm text-muted-foreground">
+        Manage the values of the Controls created in this overlay. Check
+        <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a> to see how to implement Controls in your
+        Overlays.
+      </p>
+      <button class="btn btn-primary btn-sm btn-dead opacity-0">
+        <RefreshIcon class="mr-1.5 h-3.5 w-3.5" />
+        Refresh
+      </button>
     </div>
 
-    <div
-      v-for="ctrl in controls"
-      :key="ctrl.id"
-      class="rounded-sm border border-sidebar bg-sidebar-accent p-4"
-    >
-      <div class="mb-3 flex items-center justify-between">
+    <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No controls for this template.</div>
+
+    <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
+      <div class="mb-2 flex items-center justify-between">
         <div>
           <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
-          <span class="ml-2 font-mono text-xs text-muted-foreground">[[[c:{{ ctrl.key }}]]]</span>
+          <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
         </div>
-        <span class="text-xs capitalize text-muted-foreground">{{ ctrl.type }}</span>
+        <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
       </div>
 
       <!-- Text control -->
       <div v-if="ctrl.type === 'text'" class="flex gap-2">
         <Input
           :model-value="getLocalValue(ctrl)"
-          @update:model-value="localValues[ctrl.id] = $event"
+          @update:model-value="localValues[ctrl.id] = String($event)"
           class="flex-1"
           placeholder="Enter text..."
         />
-        <button
-          class="btn btn-primary btn-sm"
-          :disabled="saving[ctrl.id]"
-          @click="saveTextValue(ctrl)"
-        >
+        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
           <SaveIcon class="h-3.5 w-3.5" />
           <span class="ml-1">Save</span>
         </button>
@@ -176,18 +184,14 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
       <div v-else-if="ctrl.type === 'number'" class="flex gap-2">
         <Input
           :model-value="getLocalValue(ctrl)"
-          @update:model-value="localValues[ctrl.id] = $event"
+          @update:model-value="localValues[ctrl.id] = String($event)"
           type="number"
           :min="ctrl.config?.min"
           :max="ctrl.config?.max"
           :step="ctrl.config?.step ?? 1"
           class="flex-1"
         />
-        <button
-          class="btn btn-primary btn-sm"
-          :disabled="saving[ctrl.id]"
-          @click="saveTextValue(ctrl)"
-        >
+        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
           <SaveIcon class="h-3.5 w-3.5" />
           <span class="ml-1">Save</span>
         </button>
@@ -204,19 +208,13 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
             :disabled="saving[ctrl.id]"
             @click="counterAction(ctrl, 'decrement')"
             title="Decrement"
-          >−</button>
-          <button
-            class="btn btn-sm btn-primary px-3 text-lg"
-            :disabled="saving[ctrl.id]"
-            @click="counterAction(ctrl, 'increment')"
-            title="Increment"
-          >+</button>
-          <button
-            class="btn btn-sm btn-cancel px-3 text-xs"
-            :disabled="saving[ctrl.id]"
-            @click="counterAction(ctrl, 'reset')"
-            title="Reset"
           >
+            −
+          </button>
+          <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
+            +
+          </button>
+          <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
             <RotateCcwIcon class="h-3.5 w-3.5" />
           </button>
         </div>
@@ -224,28 +222,43 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
 
       <!-- Timer control -->
       <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
-        <div class="min-w-[90px] text-center text-2xl font-mono font-bold tabular-nums">
+        <div class="min-w-[90px] text-center font-mono text-2xl font-bold tabular-nums">
           {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
         </div>
         <div class="flex gap-1.5">
-          <button
-            class="btn btn-sm btn-primary px-3"
-            :disabled="saving[ctrl.id]"
-            @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')"
-          >
+          <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
             <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
             <PlayIcon v-else class="h-3.5 w-3.5" />
             <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
           </button>
-          <button
-            class="btn btn-sm btn-cancel px-3"
-            :disabled="saving[ctrl.id]"
-            @click="timerAction(ctrl, 'reset')"
-          >
+          <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
             <RotateCcwIcon class="h-3.5 w-3.5" />
             <span class="ml-1">Reset</span>
           </button>
         </div>
+      </div>
+
+      <!-- Boolean control -->
+      <div v-else-if="ctrl.type === 'boolean'" class="flex items-center gap-3">
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="ctrl.value === '1'"
+          :disabled="saving[ctrl.id]"
+          @click="toggleBoolean(ctrl)"
+          :class="[
+            'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+            ctrl.value === '1' ? 'bg-accent' : 'bg-input',
+          ]"
+        >
+          <span
+            :class="[
+              'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
+              ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
+            ]"
+          />
+        </button>
+        <span class="uppercase text-sm" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{ ctrl.value === '1' ? 'On' : 'Off' }}</span>
       </div>
 
       <!-- Datetime control -->
@@ -256,11 +269,7 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
           type="datetime-local"
           class="flex-1 rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none"
         />
-        <button
-          class="btn btn-primary btn-sm"
-          :disabled="saving[ctrl.id]"
-          @click="saveTextValue(ctrl)"
-        >
+        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
           <SaveIcon class="h-3.5 w-3.5" />
           <span class="ml-1">Save</span>
         </button>

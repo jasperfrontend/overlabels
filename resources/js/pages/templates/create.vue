@@ -32,7 +32,6 @@ import {
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { Input } from '@/components/ui/input';
 
 // Define interfaces for template tags
 interface TemplateTag {

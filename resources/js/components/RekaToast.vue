@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="visible"
-    class="fixed top-0 left-0 z-50 w-full text-center rounded-none shadow-xl px-4 py-3 border flex items-start gap-3 text-sm"
+    class="toast fixed top-0 left-0 z-50 w-full text-center rounded-none shadow-xl px-4 py-3 border flex items-start gap-3 text-sm"
     :class="[
       color.bg,
       color.text
@@ -93,3 +93,19 @@ const color = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+.toast {
+  animation: slide-down 0.5s ease-out;
+}
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

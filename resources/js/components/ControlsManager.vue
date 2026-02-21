@@ -33,7 +33,9 @@ function showMsg(msg: string, type: 'success' | 'error' = 'success') {
   toastMessage.value = msg;
   toastType.value = type;
   showToast.value = false;
-  setTimeout(() => { showToast.value = true; }, 10);
+  setTimeout(() => {
+    showToast.value = true;
+  }, 10);
 }
 
 function openAdd() {
@@ -47,7 +49,7 @@ function openEdit(control: OverlayControl) {
 }
 
 function onSaved(saved: OverlayControl) {
-  const idx = controls.value.findIndex(c => c.id === saved.id);
+  const idx = controls.value.findIndex((c) => c.id === saved.id);
   if (idx >= 0) {
     controls.value[idx] = saved;
   } else {
@@ -63,7 +65,7 @@ async function deleteControl(control: OverlayControl) {
 
   try {
     await axios.delete(`/templates/${props.template.id}/controls/${control.id}`);
-    controls.value = controls.value.filter(c => c.id !== control.id);
+    controls.value = controls.value.filter((c) => c.id !== control.id);
     emit('change', [...controls.value]);
     showMsg('Control deleted.');
   } catch {
@@ -86,27 +88,19 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   counter: 'default',
   timer: 'secondary',
   datetime: 'outline',
+  boolean: 'default',
 };
 </script>
 
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-  <ControlFormModal
-    v-model:open="modalOpen"
-    :template="template"
-    :control="editingControl"
-    @saved="onSaved"
-  />
+  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" @saved="onSaved" />
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-muted-foreground">
-          Define mutable values your template can reference with
-          <code class="rounded bg-sidebar px-1 py-0.5 text-xs">[[[c:key]]]</code>.
-        </p>
-      </div>
+      <p class="text-sm text-muted-foreground">Define mutable values your template can reference. Check <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a>
+      to see how to implement Controls in your Overlays.</p>
       <button
         class="btn btn-primary btn-sm"
         :disabled="controls.length >= 20"
@@ -122,7 +116,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
       No controls yet. Add one to get started.
     </div>
 
-    <Table v-else>
+    <Table v-else class="border border-border bg-background">
       <TableHeader>
         <TableRow class="hover:bg-transparent">
           <TableHead>Key</TableHead>
@@ -143,7 +137,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
           </TableCell>
           <TableCell>
             <button
-              class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 group-hover:opacity-80"
+              class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-60 transition group-hover:opacity-80 hover:opacity-100"
               :title="`Copy [[[c:${ctrl.key}]]] to clipboard`"
               @click="copySnippet(ctrl.key)"
             >

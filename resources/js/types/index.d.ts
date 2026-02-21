@@ -81,7 +81,7 @@ export interface OverlayControl {
   user_id: number;
   key: string;
   label: string | null;
-  type: 'text' | 'number' | 'counter' | 'timer' | 'datetime';
+  type: 'text' | 'number' | 'counter' | 'timer' | 'datetime' | 'boolean';
   value: string | null;
   config: Record<string, any> | null;
   sort_order: number;

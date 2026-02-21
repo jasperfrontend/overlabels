@@ -26,7 +26,7 @@ class OverlayControl extends Model
         'sort_order' => 'integer',
     ];
 
-    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime'];
+    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean'];
 
     const KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
@@ -38,6 +38,7 @@ class OverlayControl extends Model
         return match ($type) {
             'text' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
+            'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
             default => '', // timer, datetime: value derived from config
         };
     }
