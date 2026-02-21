@@ -38,14 +38,14 @@
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://overlabels.com/" />
         <meta property="og:site_name" content="Overlabels" />
-        <meta property="og:title" content="Overlabels — A live overlay DSL for Twitch" />
+        <meta property="og:title" content="Overlabels — A live overlay DSL for Twitch streamers" />
         <meta property="og:description" content="Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS." />
         <meta property="og:image" content="https://jasper.monster/sharex/firefox_Zjj3cHvRVW.png" />
         <meta property="og:image:width" content="770" />
         <meta property="og:image:height" content="364" />
         <meta property="og:image:alt" content="Overlabels — write HTML and CSS, bind live Twitch data with triple-bracket tags" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Overlabels — A live overlay DSL for Twitch" />
+        <meta name="twitter:title" content="Overlabels — A live overlay DSL for Twitch streamers" />
         <meta name="twitter:description" content="Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS." />
         <meta name="twitter:image" content="https://jasper.monster/sharex/firefox_Zjj3cHvRVW.png" />
         <meta name="twitter:image:alt" content="Overlabels — write HTML and CSS, bind live Twitch data with triple-bracket tags" />
