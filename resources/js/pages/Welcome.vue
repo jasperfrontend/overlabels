@@ -533,7 +533,8 @@ const alertPipelineSteps = [
           <div v-else class="flex flex-col items-center gap-6">
             <LoginSocial />
             <p class="text-xs text-muted-foreground">
-              Authenticate with Twitch. No email required. Revoke access anytime from your Twitch settings.
+              Authenticate with Twitch. You must have an email address attached to your account before you can login.
+              Revoke access anytime from your Twitch settings.
             </p>
           </div>
         </div>

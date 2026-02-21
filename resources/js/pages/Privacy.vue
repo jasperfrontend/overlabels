@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Layers } from 'lucide-vue-next';
+import DarkModeToggle from '@/components/DarkModeToggle.vue';
+import LoginSocial from '@/components/LoginSocial.vue';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight } from 'lucide-vue-next';
 
 const lastUpdated = 'January 13, 2025';
 </script>
@@ -14,21 +16,23 @@ const lastUpdated = 'January 13, 2025';
     
     <div class="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
         <!-- Navigation -->
-        <nav class="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md dark:bg-gray-950/80 dark:border-gray-800">
-            <div class="container mx-auto px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <Link href="/" class="flex items-center gap-2">
-                        <Layers class="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                        <span class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                            Overlabels
-                        </span>
+        <nav class="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <Link href="/" class="flex items-center gap-2.5">
+                        <img src="/favicon.png" alt="" class="w-8 h-8" />
+                        <span class="text-lg font-bold tracking-tight">Overlabels</span>
+                        <Badge variant="outline" class="text-xs">Beta</Badge>
                     </Link>
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href="/" class="gap-2">
-                            <ArrowLeft class="h-4 w-4" />
-                            Back to Home
+                    <div class="flex items-center gap-6">
+                        <Link href="/help" class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
+                        <Link href="/manifesto" class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Manifesto</Link>
+                        <DarkModeToggle />
+                        <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
+                            Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
                         </Link>
-                    </Button>
+                        <LoginSocial v-else />
+                    </div>
                 </div>
             </div>
         </nav>
