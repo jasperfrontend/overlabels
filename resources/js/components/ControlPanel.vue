@@ -145,7 +145,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <p class="text-sm text-muted-foreground">
-        Manage the values of the Controls created in this overlay. Check
+        Manage the values of the Controls created in this Overlay. Check
         <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a> to see how to implement Controls in your
         Overlays.
       </p>
@@ -155,7 +155,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
       </button>
     </div>
 
-    <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No controls for this template.</div>
+    <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
     <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
       <div class="mb-2 flex items-center justify-between">

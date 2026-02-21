@@ -100,11 +100,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               <template #content>
                 <div class="space-y-1 text-sm">
                   <div class="flex items-center space-x-2">
-                    <CircleAlertIcon class="mr-2 h-6 w-6 text-purple-400" />
+                    <CircleAlertIcon class="mr-2 h-6 w-6 text-violet-400" />
                     <h3 class="text-xl font-bold">Don't forget</h3>
                   </div>
                   Add your token to the end of the URL like this:<br />
-                  <code class="text-purple-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
+                  <code class="text-violet-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
                 </div>
               </template>
             </TooltipBase>
@@ -155,12 +155,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Main Tabs (owner only) -->
       <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">
-        <div class="flex border-b border-purple-600 dark:border-purple-400">
+        <div class="flex border-b border-violet-600 dark:border-violet-400">
           <button
             @click="mainTab = 'overview'"
             :class="[
               'flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors',
-              mainTab === 'overview' ? 'bg-purple-600 text-accent dark:bg-purple-400' : 'text-accent-foreground',
+              mainTab === 'overview' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
             ]"
           >
             <LightbulbIcon class="h-4 w-4" />
@@ -170,7 +170,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             @click="mainTab = 'controls'"
             :class="[
               'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
-              mainTab === 'controls' ? 'bg-purple-600 text-accent dark:bg-purple-400' : 'text-accent-foreground',
+              mainTab === 'controls' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
             ]"
           >
             <SlidersHorizontalIcon class="h-4 w-4" />
@@ -180,7 +180,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             @click="mainTab = 'panel'"
             :class="[
               'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
-              mainTab === 'panel' ? 'bg-purple-600 text-accent dark:bg-purple-400' : 'text-accent-foreground',
+              mainTab === 'panel' ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
             ]"
           >
             <SquarePenIcon class="h-4 w-4" />
