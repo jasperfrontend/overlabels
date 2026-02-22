@@ -1,8 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/vue-starter-kit",
+    "name": "overlabels/overlabels",
+    "version": "0.1.0",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Overlabels — Twitch overlay manager.",
     "keywords": [
         "Laravel",
         "framework"

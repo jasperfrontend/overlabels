@@ -1,4 +1,8 @@
 # CHANGELOG
+
+## v0.1.0 — Milestone 1: "This shit actually works" (February 2026)
+Early access launch. See MILESTONES.md for the full scope of what this covers.
+
 ## February 22nd, 2026
 - Added a new admin panel.
 - Completely redid the homepage.

@@ -139,9 +139,12 @@ class OverlayTemplateController extends Controller
             Log::error('Failed to fetch available tags', ['error' => $e->getMessage()]);
         }
 
+        $controls = $template->controls()->orderBy('sort_order')->get();
+
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
+            'controls' => $controls,
         ]);
 
     }
