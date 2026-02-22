@@ -58,7 +58,7 @@ Route::prefix('admin')
         Route::get('/logs', [AdminAccessLogController::class, 'index'])->name('logs.index');
         Route::get('/audit', [AdminAuditLogController::class, 'index'])->name('audit.index');
 
-        // Impersonation
-        Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
+        // Impersonation — stop must be before {user} to avoid "stop" being treated as a user ID
         Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('impersonate.stop');
+        Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
     });

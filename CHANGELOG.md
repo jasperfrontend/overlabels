@@ -1,8 +1,9 @@
 # CHANGELOG
-## February 17th, 2026
-- Implemented a massive onboarding system for new users.
-- Trying to fix the bug where alerts don't show more than once.
-- Added a Twitch CLI test endpoints explanation page.
+## February 22nd, 2026
+- Added a new admin panel.
+- Completely redid the homepage.
+- Improved the og:image.
+- Flipped the order of contents in this CHANGELOG.
 ## February 21st, 2026
 - Implemented Controls.
   Users can now create single-purpose data stores as string, number, countup, countdown, datetime, or boolean. The implementation is portable, forkable, unique per overlay, straightforward to use, and on top of it all, the new Controls also work well with the comparison engine baked into Overlabels. This means you can now compare values you set and manipulate yourself without having to dive back into your code to make changes. [See how it works](https://overlabels.com/help/controls).
@@ -12,3 +13,7 @@
 - I re-organised the main sidebar navigation, so it's easier to understand where you need to go. I also removed the menu items you don't really need and added those in a "Debug" menu in your profile link.
 - I removed the whole community part of Overlabels because its implementation was awful, to say the least. I will work on a better implementation of the Community part of Overlabels, but this is honestly not a top priority right now. You can still view all public overlays on the "All overlays" page.
 - The Overlabels Dashboard is still in no way, shape, or form responsive – but at least the Events view is now responsive. The new "Events view" offers a simple way for streamers to see an overview of the latest alerts and the option to replay them on your overlay. You can find this overview under "My activity" in the Overlabels Dashboard.
+## February 17th, 2026
+- Implemented a massive onboarding system for new users.
+- Trying to fix the bug where alerts don't show more than once.
+- Added a Twitch CLI test endpoints explanation page.

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -56,12 +57,19 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
-            'impersonating' => fn () => $request->session()->has('impersonating_user_id')
-                ? [
+            'impersonating' => function () use ($request) {
+                $targetId = $request->session()->get('impersonating_user_id');
+                if (! $targetId) {
+                    return null;
+                }
+                $target = User::find($targetId);
+
+                return [
                     'real_admin_id' => $request->session()->get('real_admin_id'),
-                    'target_user_id' => $request->session()->get('impersonating_user_id'),
-                ]
-                : null,
+                    'target_user_id' => $targetId,
+                    'target_name' => $target?->name,
+                ];
+            },
         ];
     }
 }

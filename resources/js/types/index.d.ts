@@ -27,7 +27,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     sidebarOpen: boolean;
     flash: FlashMessage;
     isAdmin: boolean;
-    impersonating: { real_admin_id: number; target_user_id: number } | null;
+    impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
 };
 
 

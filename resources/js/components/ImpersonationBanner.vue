@@ -5,7 +5,6 @@ import type { AppPageProps } from '@/types';
 
 const page = usePage<AppPageProps>();
 const impersonating = computed(() => page.props.impersonating);
-const auth = computed(() => page.props.auth);
 
 function stopImpersonating() {
   router.post(route('admin.impersonate.stop'));
@@ -18,7 +17,7 @@ function stopImpersonating() {
     class="flex items-center justify-between bg-yellow-400 px-4 py-2 text-sm font-medium text-yellow-900"
   >
     <span>
-      You are impersonating <strong>{{ auth.user?.name }}</strong>.
+      You are impersonating <strong>{{ impersonating?.target_name }}</strong>.
       Actions you take affect their account.
     </span>
     <button
