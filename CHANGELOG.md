@@ -5,7 +5,7 @@
 - Added a Twitch CLI test endpoints explanation page.
 ## February 21st, 2026
 - Implemented Controls.
-  Users can now create single-purpose data stores as string, number, countup, countdown, datetime, or boolean. The implementation is portable, forkable, unique per overlay, very easy to use, and on top of it all, the new Controls also work well with the comparison engine baked into Overlabels already. This means you can now compare values you set and manipulate yourself without having to dive back into your code to make changes. [Read more](https://overlabels.com/help/controls).
+  Users can now create single-purpose data stores as string, number, countup, countdown, datetime, or boolean. The implementation is portable, forkable, unique per overlay, straightforward to use, and on top of it all, the new Controls also work well with the comparison engine baked into Overlabels. This means you can now compare values you set and manipulate yourself without having to dive back into your code to make changes. [See how it works](https://overlabels.com/help/controls).
 - Any HTML, CSS, or HEAD change to an overlay triggers a hard refresh of the overlay now. This removes any issues with cached data being left behind when embedding this overlay in OBS.
 - The Dashboard and Template Details screen had a visual update which makes them more coherent and easier to understand.
 - I ditched all Card layouts in favour of tables wherever it made sense. A list of stored overlays is tabular data after all, no matter how you look at it.

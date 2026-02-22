@@ -355,7 +355,8 @@ Route::middleware('auth.redirect')->group(function () {
     });
 });
 
-Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');
-
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+require __DIR__.'/admin.php';
+
+Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');

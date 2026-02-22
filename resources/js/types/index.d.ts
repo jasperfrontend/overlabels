@@ -26,6 +26,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
     flash: FlashMessage;
+    isAdmin: boolean;
+    impersonating: { real_admin_id: number; target_user_id: number } | null;
 };
 
 
@@ -71,6 +73,9 @@ export interface User {
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
+    role: 'user' | 'admin';
+    is_system_user: boolean;
+    deleted_at: string | null;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

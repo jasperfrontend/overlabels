@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureValidTwitchToken;
 use App\Http\Middleware\HandleAppearance;
+use App\Http\Middleware\HandleImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RateLimitOverlayAccess;
 use App\Http\Middleware\RedirectIfUnauthenticated;
@@ -32,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            HandleImpersonation::class,
         ]);
 
         // Add Sanctum's stateful middleware to API routes
@@ -45,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'overlay.token' => ValidateOverlayToken::class,
             'rate.limit.overlay' => RateLimitOverlayAccess::class,
             'twitch.token' => EnsureValidTwitchToken::class,
+            'admin.role' => EnsureAdminRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
