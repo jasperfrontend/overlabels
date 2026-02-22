@@ -8,27 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { css } from '@codemirror/lang-css';
-import { html } from '@codemirror/lang-html';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { EditorView } from '@codemirror/view';
-import { Codemirror } from 'vue-codemirror';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
+import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
+import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import {
   Brackets,
   Code,
   InfoIcon,
-  Palette,
   RefreshCcwDot,
   Save,
   ExternalLink,
   Split,
   Trash,
   CircleAlert,
-  Keyboard,
-  ChevronUp,
-  ChevronDown,
-  FileCode2,
   SlidersHorizontal,
   CopyIcon,
 } from 'lucide-vue-next';
@@ -113,48 +105,31 @@ const mainTabs = [
   { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
 ] as const;
 
-const editorTabs = [
-  { key: 'head', label: 'HEAD', icon: FileCode2, color: 'text-pink-500 dark:text-pink-400' },
-  { key: 'html', label: 'HTML', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: Palette, color: 'text-lime-500 dark:text-lime-400' },
-] as const;
-
 const mainTab = ref<'code' | 'meta' | 'tags' | 'controls'>('code');
-const codeTab = ref<'head' | 'html' | 'css'>('html');
-const tallEditor = ref(true);
-
-const htmlExtensions = computed(() => [
-  html(),
-  EditorView.theme({
-    '&': { fontSize: '14px' },
-    '.cm-content': { padding: '16px' },
-    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
-  }),
-  ...(isDark.value ? [oneDark] : []),
-]);
-
-const cssExtensions = computed(() => [
-  css(),
-  EditorView.theme({
-    '&': { fontSize: '14px' },
-    '.cm-content': { padding: '16px' },
-    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
-  }),
-  ...(isDark.value ? [oneDark] : []),
-]);
 
 const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const showToast = ref(false);
 
+const pushToast = (message: string, type: typeof toastType.value = 'info') => {
+  showToast.value = false;
+  toastMessage.value = message;
+  toastType.value = type;
+  showToast.value = true;
+};
+
+// Bridge template-action toasts into the unified toast
+watch(showTemplateToast, (on) => {
+  if (!on) return;
+  pushToast(templateToastMessage.value, templateToastType.value);
+  showTemplateToast.value = false;
+});
+
 const openExternalLink = (link: any, target: string) => window.open(link, target);
 
 const copySnippet = (snippet: string) => {
   navigator.clipboard.writeText(snippet);
-  showToast.value = false;
-  toastMessage.value = `${snippet} copied to clipboard!`;
-  toastType.value = 'success';
-  showToast.value = true;
+  pushToast(`${snippet} copied to clipboard!`, 'success');
 };
 
 const submitForm = () => {
@@ -170,25 +145,22 @@ const submitForm = () => {
   form.put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
-      showToast.value = false;
-      toastMessage.value = removed > 0
-        ? `Saved! Also removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported.`
-        : 'Overlay saved successfully!';
-      toastType.value = removed > 0 ? 'warning' : 'success';
-      showToast.value = true;
+      pushToast(
+        removed > 0
+          ? `Saved! Also removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported.`
+          : 'Overlay saved successfully!',
+        removed > 0 ? 'warning' : 'success',
+      );
     },
-    onError: () => {
-      showToast.value = false;
-      toastMessage.value = 'Failed to save overlay.';
-      toastType.value = 'error';
-      showToast.value = true;
-    },
+    onError: () => pushToast('Failed to save overlay.', 'error'),
   });
 };
 
 watch(
   () => document.documentElement.classList.contains('dark'),
-  (newDark) => { isDark.value = newDark; },
+  (newDark) => {
+    isDark.value = newDark;
+  },
 );
 
 const { register, getAllShortcuts } = useKeyboardShortcuts();
@@ -196,15 +168,25 @@ const showKeyboardShortcuts = ref(false);
 
 onMounted(() => {
   register('save-template', 'ctrl+s', () => submitForm(), { description: 'Save overlay' });
-  register('preview-live', 'ctrl+p', () => {
-    triggerLinkWarning(
-      () => openExternalLink(`/overlay/${props.template?.slug}/public`, '_blank'),
-      'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.',
-    );
-  }, { description: 'Preview in new tab' });
-  register('toggle-shortcuts', 'ctrl+k', () => {
-    showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
-  }, { description: 'Show keyboard shortcuts' });
+  register(
+    'preview-live',
+    'ctrl+p',
+    () => {
+      triggerLinkWarning(
+        () => openExternalLink(`/overlay/${props.template?.slug}/public`, '_blank'),
+        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.',
+      );
+    },
+    { description: 'Preview in new tab' },
+  );
+  register(
+    'toggle-shortcuts',
+    'ctrl+k',
+    () => {
+      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
+    },
+    { description: 'Show keyboard shortcuts' },
+  );
 });
 
 const keyboardShortcutsList = computed(() => getAllShortcuts());
@@ -275,84 +257,17 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
         <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
 
           <!-- Code Tab -->
-          <div v-if="mainTab === 'code'">
-            <div class="overflow-hidden rounded-sm border border-border" :style="{ height: tallEditor ? '500px' : '800px' }">
-              <div class="flex h-full">
-                <!-- Vertical file tabs -->
-                <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
-                  <button
-                    v-for="tab in editorTabs"
-                    :key="tab.key"
-                    type="button"
-                    @click="codeTab = tab.key"
-                    :class="[
-                      'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase transition-colors',
-                      codeTab === tab.key
-                        ? 'bg-background text-accent-foreground'
-                        : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',
-                    ]"
-                  >
-                    <component :is="tab.icon" :class="tab.color" class="size-3.5" />
-                    {{ tab.label }}
-                  </button>
-                  <p class="mt-auto px-3 py-2 text-xs text-sidebar-foreground/30 uppercase">HEAD</p>
-                  <p class="px-3 pb-2 text-[10px] text-sidebar-foreground/20 leading-tight">Use &lt;link&gt; tags only.<br />Scripts are stripped.</p>
-                </div>
-                <!-- Editor panel -->
-                <div class="relative flex-1 overflow-hidden bg-background">
-                  <textarea
-                    v-show="codeTab === 'head'"
-                    v-model="form.head"
-                    class="font-mono h-full w-full resize-none bg-background p-4 text-sm text-foreground outline-none"
-                    placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
-                  />
-                  <Codemirror
-                    v-show="codeTab === 'html'"
-                    v-model="form.html"
-                    class="h-full"
-                    :autofocus="true"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="htmlExtensions"
-                    placeholder="Enter your HTML here… Use [[[tag_name]]] for dynamic content"
-                  />
-                  <Codemirror
-                    v-show="codeTab === 'css'"
-                    v-model="form.css"
-                    class="h-full"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="cssExtensions"
-                    placeholder="Enter your CSS styles here…"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Toggle + shortcuts row -->
-            <div class="mt-3 flex justify-between">
-              <button
-                type="button"
-                @click="tallEditor = !tallEditor"
-                class="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-accent-foreground"
-              >
-                <ChevronDown v-if="tallEditor" class="h-4 w-4" />
-                <ChevronUp v-else class="h-4 w-4" />
-                {{ tallEditor ? 'Expand editor' : 'Collapse editor' }}
-              </button>
-              <a
-                @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
-                href="#"
-                class="flex cursor-pointer items-center text-sm text-muted-foreground hover:text-accent-foreground"
-              >
-                <Keyboard class="mr-2 h-4 w-4" />
-                Keyboard Shortcuts
-              </a>
-            </div>
-          </div>
+          <TemplateCodeEditor
+            v-if="mainTab === 'code'"
+            v-model:head="form.head"
+            v-model:html="form.html"
+            v-model:css="form.css"
+            :is-dark="isDark"
+            @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
+          />
 
           <!-- Meta Tab -->
-          <div v-if="mainTab === 'meta'" class="max-w-2xl space-y-4">
+          <div v-else-if="mainTab === 'meta'" class="max-w-2xl space-y-4">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Title *</label>
               <input
@@ -409,20 +324,20 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
             <div v-if="template?.template_tags && template.template_tags.length > 0" class="rounded-sm bg-sidebar p-4 text-sm">
               <p class="mb-2 text-muted-foreground">Tags in use:</p>
               <div class="flex flex-wrap gap-1">
-                <code v-for="tag in template.template_tags" :key="String(tag)" class="rounded bg-sidebar-accent px-2 py-1 text-xs">
-                  [[[{{ tag }}]]]
+                <code v-for="tag in template.template_tags" :key="tag.display_tag" class="rounded bg-sidebar-accent px-2 py-1 text-xs">
+                  {{ tag.display_tag }}
                 </code>
               </div>
             </div>
           </div>
 
           <!-- Tags Tab -->
-          <div v-if="mainTab === 'tags'">
+          <div v-else-if="mainTab === 'tags'">
             <TemplateTagsList />
           </div>
 
           <!-- Controls Tab -->
-          <div v-if="mainTab === 'controls'">
+          <div v-else-if="mainTab === 'controls'">
             <div v-if="!controls || controls.length === 0" class="py-8 text-center text-sm text-muted-foreground">
               No controls defined for this overlay yet.
               <a :href="route('templates.show', template)" class="ml-1 text-violet-400 hover:underline">Go to the overlay page</a>
@@ -474,35 +389,12 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </form>
     </div>
 
-    <!-- Keyboard Shortcuts Dialog -->
-    <div
-      v-if="showKeyboardShortcuts"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      @click.self="showKeyboardShortcuts = false"
-    >
-      <div class="w-full max-w-md overflow-hidden rounded-lg border border-sidebar bg-sidebar-accent p-6 shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
-          <button @click.prevent="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-background">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div class="space-y-2">
-          <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id" class="flex items-center justify-between rounded-md border p-2 text-sm">
-            <span>{{ shortcut.description }}</span>
-            <kbd class="rounded bg-sidebar px-2 py-1 font-mono text-xs">{{ shortcut.keys }}</kbd>
-          </div>
-          <p class="mt-4 text-xs text-muted-foreground">
-            Press <kbd class="rounded bg-sidebar px-1">Ctrl+K</kbd> to toggle this dialog.<br /><br />
-            Shortcuts don't work when focused inside the code editor — click outside first.
-          </p>
-        </div>
-      </div>
-    </div>
+    <KeyboardShortcutsDialog
+      :show="showKeyboardShortcuts"
+      :shortcuts="keyboardShortcutsList"
+      @close="showKeyboardShortcuts = false"
+    />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
-    <RekaToast v-if="showTemplateToast" :message="templateToastMessage" :type="templateToastType" @dismiss="showTemplateToast = false" />
   </AppLayout>
 </template>

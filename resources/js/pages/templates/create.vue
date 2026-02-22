@@ -6,25 +6,17 @@ import type { BreadcrumbItem } from '@/types';
 import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { css } from '@codemirror/lang-css';
-import { html } from '@codemirror/lang-html';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { EditorView } from '@codemirror/view';
-import { Codemirror } from 'vue-codemirror';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
+import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
+import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import {
   Brackets,
   Code,
   InfoIcon,
-  Palette,
   Save,
   ExternalLink,
-  Keyboard,
-  ChevronUp,
-  ChevronDown,
   Zap,
   Layout,
-  FileCode2,
 } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
@@ -46,27 +38,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 const isDark = ref(document.documentElement.classList.contains('dark'));
 const showPreview = ref(false);
 const previewHtml = ref('');
-const tallEditor = ref(true);
-
-const htmlExtensions = computed(() => [
-  html(),
-  EditorView.theme({
-    '&': { fontSize: '14px' },
-    '.cm-content': { padding: '16px' },
-    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
-  }),
-  ...(isDark.value ? [oneDark] : []),
-]);
-
-const cssExtensions = computed(() => [
-  css(),
-  EditorView.theme({
-    '&': { fontSize: '14px' },
-    '.cm-content': { padding: '16px' },
-    '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
-  }),
-  ...(isDark.value ? [oneDark] : []),
-]);
 
 const mainTabs = [
   { key: 'meta', label: 'Meta', icon: InfoIcon },
@@ -74,14 +45,7 @@ const mainTabs = [
   { key: 'tags', label: 'Tags', icon: Brackets },
 ] as const;
 
-const editorTabs = [
-  { key: 'head', label: 'HEAD', icon: FileCode2, color: 'text-pink-500 dark:text-pink-400' },
-  { key: 'html', label: 'HTML', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: Palette, color: 'text-lime-500 dark:text-lime-400' },
-] as const;
-
 const mainTab = ref<'meta' | 'code' | 'tags'>('meta');
-const codeTab = ref<'head' | 'html' | 'css'>('html');
 
 const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -305,79 +269,14 @@ watch(
           </div>
 
           <!-- Code Tab -->
-          <div v-if="mainTab === 'code'">
-            <div class="overflow-hidden rounded-sm border border-border" :style="{ height: tallEditor ? '500px' : '800px' }">
-              <div class="flex h-full">
-                <!-- Vertical file tabs -->
-                <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
-                  <button
-                    v-for="tab in editorTabs"
-                    :key="tab.key"
-                    type="button"
-                    @click="codeTab = tab.key"
-                    :class="[
-                      'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase transition-colors',
-                      codeTab === tab.key
-                        ? 'bg-background text-accent-foreground'
-                        : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',
-                    ]"
-                  >
-                    <component :is="tab.icon" :class="tab.color" class="size-3.5" />
-                    {{ tab.label }}
-                  </button>
-                </div>
-                <!-- Editor panel -->
-                <div class="relative flex-1 overflow-hidden bg-background">
-                  <textarea
-                    v-show="codeTab === 'head'"
-                    v-model="form.head"
-                    class="font-mono h-full w-full resize-none bg-background p-4 text-sm text-foreground outline-none"
-                    placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
-                  />
-                  <Codemirror
-                    v-show="codeTab === 'html'"
-                    v-model="form.html"
-                    class="h-full"
-                    :autofocus="true"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="htmlExtensions"
-                    placeholder="Enter your HTML here… Use [[[tag_name]]] for dynamic content"
-                  />
-                  <Codemirror
-                    v-show="codeTab === 'css'"
-                    v-model="form.css"
-                    class="h-full"
-                    :indent-with-tab="true"
-                    :tab-size="2"
-                    :extensions="cssExtensions"
-                    placeholder="Enter your CSS styles here…"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Toggle + shortcuts -->
-            <div class="mt-3 flex justify-between">
-              <button
-                type="button"
-                @click="tallEditor = !tallEditor"
-                class="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-accent-foreground"
-              >
-                <ChevronDown v-if="tallEditor" class="h-4 w-4" />
-                <ChevronUp v-else class="h-4 w-4" />
-                {{ tallEditor ? 'Expand editor' : 'Collapse editor' }}
-              </button>
-              <a
-                @click.prevent="showKeyboardShortcuts = !showKeyboardShortcuts"
-                href="#"
-                class="flex cursor-pointer items-center text-sm text-muted-foreground hover:text-accent-foreground"
-              >
-                <Keyboard class="mr-2 h-4 w-4" />
-                Keyboard Shortcuts
-              </a>
-            </div>
-          </div>
+          <TemplateCodeEditor
+            v-if="mainTab === 'code'"
+            v-model:head="form.head"
+            v-model:html="form.html"
+            v-model:css="form.css"
+            :is-dark="isDark"
+            @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
+          />
 
           <!-- Tags Tab -->
           <div v-if="mainTab === 'tags'">
@@ -411,33 +310,11 @@ watch(
       </div>
     </Modal>
 
-    <!-- Keyboard Shortcuts Dialog -->
-    <div
-      v-if="showKeyboardShortcuts"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      @click.self="showKeyboardShortcuts = false"
-    >
-      <div class="w-full max-w-md overflow-hidden rounded-lg border border-sidebar bg-sidebar-accent p-6 shadow-lg">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-lg font-medium">Keyboard Shortcuts</h3>
-          <button @click.prevent="showKeyboardShortcuts = false" class="rounded-full p-1 hover:bg-background">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div class="space-y-2">
-          <div v-for="shortcut in keyboardShortcutsList" :key="shortcut.id" class="flex items-center justify-between rounded-md border p-2 text-sm">
-            <span>{{ shortcut.description }}</span>
-            <kbd class="rounded bg-sidebar px-2 py-1 font-mono text-xs">{{ shortcut.keys }}</kbd>
-          </div>
-          <p class="mt-4 text-xs text-muted-foreground">
-            Press <kbd class="rounded bg-sidebar px-1">Ctrl+K</kbd> to toggle this dialog.<br /><br />
-            Shortcuts don't work when focused inside the code editor — click outside first.
-          </p>
-        </div>
-      </div>
-    </div>
+    <KeyboardShortcutsDialog
+      :show="showKeyboardShortcuts"
+      :shortcuts="keyboardShortcutsList"
+      @close="showKeyboardShortcuts = false"
+    />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>
