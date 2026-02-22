@@ -85,7 +85,7 @@ const breadcrumbs = [
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Layers class="h-6 w-6 text-primary" />
-              <h2 class="text-xl font-semibold">My static overlays</h2>
+              <h2 class="text-xl font-semibold">My overlays</h2>
             </div>
             <div class="flex items-center gap-2">
               <a

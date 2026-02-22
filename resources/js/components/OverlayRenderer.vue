@@ -153,7 +153,8 @@ const tagRegexMap = computed(() => {
   return m;
 });
 
-function parseSource(source: string): string {
+function parseSource(source: string | null | undefined): string {
+  if (!source) return '';
   let result = source;
 
   if (data.value && typeof data.value === 'object') {
@@ -293,12 +294,12 @@ onMounted(async () => {
   if (result.ok) {
     const json = result.data;
     head.value = json.template.head;
-    rawHtml.value = json.template.html;
+    rawHtml.value = json.template.html ?? '';
 
     // Ensure tags is always an array, even if the server sends something unexpected
     templateTags.value = Array.isArray(json.template.tags) ? json.template.tags : [];
 
-    css.value = json.template.css;
+    css.value = json.template.css ?? '';
     data.value = json.data ?? {};
 
     userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;

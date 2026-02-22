@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import { Brackets, Building, FileText, House, LayoutGrid, Radio, ShieldCheck, SlidersHorizontal, Users } from 'lucide-vue-next';
+import { Bell, Brackets, Building, FileText, House, Layers, LayoutGrid, Radio, ShieldCheck, SlidersHorizontal, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';
@@ -16,7 +16,8 @@ const isAdmin = computed(() => page.props.isAdmin);
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My activity', href: route('dashboard.recents'), icon: Users },
-  { title: 'All overlays', href: route('templates.index'), icon: Building },
+  { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
+  { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
 ];
 const alertsNavItems: NavItem[] = [{ title: 'Alerts builder', href: route('events.index'), icon: Radio }];
 
@@ -55,7 +56,7 @@ const adminNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain label="Platform" :items="mainNavItems" />
+      <NavMain label="  Platform" :items="mainNavItems" />
       <NavMain label="Alerts" :items="alertsNavItems" />
       <NavMain label="Kits" :items="kitsNavItems" />
       <NavMain label="Learn" :items="learnNavItems" />
