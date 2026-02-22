@@ -128,7 +128,10 @@ function handleFork(t: Template) {
 
 function handleDelete(t: Template) {
   if (confirm(`Delete "${t.name}"? This cannot be undone.`)) {
-    router.delete(`/templates/${t.id}`);
+    const returnUrl = window.location.pathname + window.location.search;
+    router.delete(`/templates/${t.id}`, {
+      onSuccess: () => router.visit(returnUrl),
+    });
   }
 }
 </script>
