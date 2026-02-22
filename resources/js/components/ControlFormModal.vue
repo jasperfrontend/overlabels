@@ -119,7 +119,12 @@ function buildPayload() {
   }
 
   if (t !== 'timer' && t !== 'datetime') {
-    payload.value = t === 'boolean' ? (booleanValue.value ? '1' : '0') : (form.value.value || null);
+    if (t === 'boolean') {
+      payload.value = booleanValue.value ? '1' : '0';
+    } else {
+      const raw = form.value.value;
+      payload.value = raw !== '' && raw != null ? String(raw) : null;
+    }
   }
 
   return payload;

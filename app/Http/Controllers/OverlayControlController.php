@@ -65,7 +65,11 @@ class OverlayControlController extends Controller
 
         $validated = $request->validate([
             'label' => 'nullable|string|max:100',
-            'value' => 'nullable|string|max:1000',
+            'value' => ['nullable', function ($attribute, $value, $fail) {
+                if (strlen((string) $value) > 1000) {
+                    $fail("The $attribute must not exceed 1000 characters.");
+                }
+            }],
             'config' => 'nullable|array',
             'sort_order' => 'nullable|integer|min:0',
         ]);
