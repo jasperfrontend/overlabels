@@ -31,7 +31,8 @@ const codeTab = ref<CodeTab>('html');
 const isExpanded = ref(false);
 
 const baseTheme = EditorView.theme({
-  '&': { fontSize: '14px' },
+  '&': { height: '100%', fontSize: '14px' },
+  '.cm-scroller': { overflow: 'auto' },
   '.cm-content': { padding: '16px' },
   '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
 });
@@ -70,17 +71,17 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
         </div>
 
         <!-- Editor panel -->
-        <div class="relative flex-1 overflow-hidden bg-background">
+        <div class="relative flex-1 bg-background">
           <textarea
             v-show="codeTab === 'head'"
             v-model="headValue"
-            class="font-mono h-full w-full resize-none bg-background p-4 text-sm text-foreground outline-none"
+            class="font-mono absolute inset-0 resize-none bg-background p-4 text-sm text-foreground outline-none"
             placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
           />
           <Codemirror
             v-show="codeTab === 'html'"
             v-model="htmlValue"
-            class="h-full"
+            class="absolute inset-0"
             :autofocus="true"
             :indent-with-tab="true"
             :tab-size="2"
@@ -90,7 +91,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
           <Codemirror
             v-show="codeTab === 'css'"
             v-model="cssValue"
-            class="h-full"
+            class="absolute inset-0"
             :indent-with-tab="true"
             :tab-size="2"
             :extensions="cssExtensions"
