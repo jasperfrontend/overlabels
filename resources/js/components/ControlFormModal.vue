@@ -118,7 +118,7 @@ function buildPayload() {
     payload.config = null;
   }
 
-  if (!isEditing.value && t !== 'timer' && t !== 'datetime') {
+  if (t !== 'timer' && t !== 'datetime') {
     payload.value = t === 'boolean' ? (booleanValue.value ? '1' : '0') : (form.value.value || null);
   }
 
@@ -216,9 +216,9 @@ async function save() {
           <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
         </div>
 
-        <!-- Initial Value (text/number/counter/datetime) -->
-        <div v-if="!isEditing && form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
-          <Label for="ctrl-value">Initial Value <span class="text-muted-foreground text-xs">(optional)</span></Label>
+        <!-- Value (text/number/counter/datetime) -->
+        <div v-if="form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
+          <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
           <Input
             id="ctrl-value"
             v-model="form.value"
@@ -228,9 +228,9 @@ async function save() {
           <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
         </div>
 
-        <!-- Initial Value (boolean) -->
-        <div v-if="!isEditing && form.type === 'boolean'" class="space-y-1">
-          <Label>Initial Value</Label>
+        <!-- Value (boolean) -->
+        <div v-if="form.type === 'boolean'" class="space-y-1">
+          <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
           <div class="flex items-center gap-3 pt-1">
             <Switch v-model:checked="booleanValue" />
             <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>

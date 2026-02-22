@@ -65,9 +65,16 @@ class OverlayControlController extends Controller
 
         $validated = $request->validate([
             'label' => 'nullable|string|max:100',
+            'value' => 'nullable|string|max:1000',
             'config' => 'nullable|array',
             'sort_order' => 'nullable|integer|min:0',
         ]);
+
+        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime'])) {
+            $validated['value'] = OverlayControl::sanitizeValue($control->type, $validated['value'] ?? '');
+        } else {
+            unset($validated['value']);
+        }
 
         $control->update($validated);
 
