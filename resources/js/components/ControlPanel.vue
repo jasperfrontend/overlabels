@@ -2,7 +2,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import RekaToast from '@/components/RekaToast.vue';
-import { Input } from '@/components/ui/input';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon } from 'lucide-vue-next';
 import type { OverlayControl } from '@/types';
 import RefreshIcon from '@/components/RefreshIcon.vue';
@@ -167,14 +166,19 @@ async function toggleBoolean(ctrl: OverlayControl) {
       </div>
 
       <!-- Text control -->
-      <div v-if="ctrl.type === 'text'" class="flex gap-2">
-        <Input
-          :model-value="getLocalValue(ctrl)"
-          @update:model-value="localValues[ctrl.id] = String($event)"
-          class="flex-1"
+      <div v-if="ctrl.type === 'text'" class="flex gap-0">
+        <input
+          type="text"
+          :value="getLocalValue(ctrl)"
+          @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+          class="peer input-border flex-1"
           placeholder="Enter text..."
         />
-        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+        <button
+          class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+          :disabled="saving[ctrl.id]"
+          @click="saveTextValue(ctrl)"
+        >
           <SaveIcon class="h-3.5 w-3.5" />
           <span class="ml-1">Save</span>
         </button>
@@ -182,14 +186,14 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
       <!-- Number control -->
       <div v-else-if="ctrl.type === 'number'" class="flex gap-2">
-        <Input
-          :model-value="getLocalValue(ctrl)"
-          @update:model-value="localValues[ctrl.id] = String($event)"
+        <input
+          :value="getLocalValue(ctrl)"
+          @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
           type="number"
           :min="ctrl.config?.min"
           :max="ctrl.config?.max"
           :step="ctrl.config?.step ?? 1"
-          class="flex-1"
+          class="input-border flex-1"
         />
         <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
           <SaveIcon class="h-3.5 w-3.5" />
@@ -258,7 +262,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
             ]"
           />
         </button>
-        <span class="uppercase text-sm" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{ ctrl.value === '1' ? 'On' : 'Off' }}</span>
+        <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
+          ctrl.value === '1' ? 'On' : 'Off'
+        }}</span>
       </div>
 
       <!-- Datetime control -->

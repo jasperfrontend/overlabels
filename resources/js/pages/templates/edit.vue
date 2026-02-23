@@ -11,19 +11,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
-import {
-  Brackets,
-  Code,
-  InfoIcon,
-  RefreshCcwDot,
-  Save,
-  ExternalLink,
-  Split,
-  Trash,
-  CircleAlert,
-  SlidersHorizontal,
-  CopyIcon,
-} from 'lucide-vue-next';
+import { Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, CircleAlert, SlidersHorizontal, CopyIcon } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -196,19 +184,20 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
   <Head :title="`Editing: ${template.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
-        <Heading :title="template.name" :description="template.description || 'No description set.'" description-class="text-sm text-muted-foreground" />
+        <Heading
+          :title="template.name"
+          :description="template.description || 'No description set.'"
+          description-class="text-sm text-muted-foreground"
+        />
         <div class="flex shrink-0 items-center gap-2">
           <a v-if="template?.is_public" @click.prevent="previewTemplate" href="#" class="btn btn-cancel">
             Preview <ExternalLink class="ml-2 h-4 w-4" />
           </a>
           <TooltipBase v-else tt-content-class="tooltip-base tooltip-content" align="start" side="left">
             <template #trigger>
-              <a @click.prevent="previewTemplate" href="#" class="btn btn-private">
-                Preview <ExternalLink class="ml-2 h-4 w-4" />
-              </a>
+              <a @click.prevent="previewTemplate" href="#" class="btn btn-private"> Preview <ExternalLink class="ml-2 h-4 w-4" /> </a>
             </template>
             <template #content>
               <div class="space-y-1 text-sm">
@@ -232,7 +221,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </div>
 
       <form @submit.prevent="submitForm">
-
         <!-- Tab bar -->
         <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
           <div class="flex border-b border-violet-600 dark:border-violet-400">
@@ -255,7 +243,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
         <!-- Content box -->
         <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
-
           <!-- Code Tab -->
           <TemplateCodeEditor
             v-if="mainTab === 'code'"
@@ -267,42 +254,27 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           />
 
           <!-- Meta Tab -->
-          <div v-else-if="mainTab === 'meta'" class="max-w-2xl space-y-4">
+          <div v-else-if="mainTab === 'meta'" class="max-w-5xl space-y-4">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Title *</label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm"
-                required
-              />
+              <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
               <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
             </div>
 
             <div>
               <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
-              <textarea
-                id="description"
-                v-model="form.description"
-                rows="3"
-                class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm"
-              />
+              <textarea id="description" v-model="form.description" rows="3" class="input-border w-full" />
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
             </div>
 
             <div>
               <label class="flex items-center gap-2">
-                <input
-                  v-model="form.is_public"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                />
+                <input v-model="form.is_public" type="checkbox" />
                 <span class="text-sm">Make this overlay public (others can view and fork it)</span>
               </label>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 rounded-sm bg-sidebar p-4 text-sm">
+            <div class="grid grid-cols-2 gap-4 rounded-sm bg-background p-4 text-sm">
               <div>
                 <span class="text-muted-foreground">Created:</span>
                 <span class="ml-2">{{ new Date(template?.created_at).toLocaleDateString() }}</span>
@@ -321,11 +293,11 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               </div>
             </div>
 
-            <div v-if="template?.template_tags && template.template_tags.length > 0" class="rounded-sm bg-sidebar p-4 text-sm">
-              <p class="mb-2 text-muted-foreground">Tags in use:</p>
+            <div v-if="template?.template_tags && template.template_tags.length > 0" class="rounded-sm bg-background p-4 text-sm">
+              <p class="mb-2 text-muted-foreground">Template Tags Used</p>
               <div class="flex flex-wrap gap-1">
-                <code v-for="tag in template.template_tags" :key="tag.display_tag" class="rounded bg-sidebar-accent px-2 py-1 text-xs">
-                  {{ tag.display_tag }}
+                <code v-for="tag in template.template_tags" :key="tag.display_tag" class="btn btn-chill btn-xs btn-dead">
+                  {{ tag }}
                 </code>
               </div>
             </div>
@@ -344,9 +316,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               to add some.
             </div>
             <template v-else>
-              <p class="mb-3 text-sm text-muted-foreground">
-                Reference-only. Use these snippets in your HTML or CSS — click any snippet to copy it.
-              </p>
+              <p class="mb-3 text-sm text-muted-foreground">Reference-only. Use these snippets in your HTML or CSS — click any snippet to copy it.</p>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -389,11 +359,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </form>
     </div>
 
-    <KeyboardShortcutsDialog
-      :show="showKeyboardShortcuts"
-      :shortcuts="keyboardShortcutsList"
-      @close="showKeyboardShortcuts = false"
-    />
+    <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>

@@ -40,15 +40,11 @@ watch(
   </Head>
 
   <div class="mx-auto max-w-3xl px-2 py-2">
-    <div class="mb-2 flex items-center gap-2">
-      <Link
-        href="/dashboard/recents"
-        class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      >
-        <ArrowLeft class="h-3 w-3" />
-        Back
-      </Link>
+    <div class="mb-2 flex items-center justify-between gap-2">
       <h1 class="text-sm font-medium">Stream Events</h1>
+      <Link :href="route('dashboard.events')" class="rounded-full bg-sidebar px-2 py-0.5 text-sm text-muted-foreground hover:text-foreground"
+        >Refresh</Link
+      >
     </div>
 
     <EventsTable v-if="events.length > 0" :events="events" />

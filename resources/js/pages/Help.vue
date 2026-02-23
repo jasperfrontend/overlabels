@@ -17,12 +17,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">Template Help & Reference</h1>
+          <h1 class="mb-4 text-4xl font-bold">Conditional Tags Reference</h1>
           <p class="text-lg text-muted-foreground">Complete guide to conditional template tags and available event data for your overlays.</p>
         </div>
 
         <!-- Conditional Syntax Section -->
-        <div class="mb-12">
+        <div class="mb-12" id="conditionals">
           <h2 class="mb-6 text-2xl font-bold">Conditional Template Syntax</h2>
           <p class="mb-6 text-muted-foreground">
             Use conditional logic to dynamically show or hide content in your templates based on real-time data. All conditionals are processed
@@ -110,7 +110,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- Event-based Template Tags Section -->
-        <div class="mb-12">
+        <div class="mb-12" id="event-based-template-tags">
           <h2 class="mb-6 text-2xl font-bold">Event-based Template Tags</h2>
           <p class="mb-6 text-muted-foreground">
             These tags are available in alert templates and contain data specific to each Twitch event. Use <code>[[[event.tag_name]]]</code> syntax.
@@ -162,7 +162,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <h4 class="mb-2 font-semibold">Subscription Data</h4>
                   <div class="space-y-2 font-mono text-sm">
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000)</div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
                     <div><code>[[[event.is_gift]]]</code> - true/false if gifted</div>
                   </div>
                 </div>
@@ -189,7 +190,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <h4 class="mb-2 font-semibold">Gift Data</h4>
                   <div class="space-y-2 font-mono text-sm">
                     <div><code>[[[event.total]]]</code> - Number of subs gifted</div>
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000)</div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
                     <div><code>[[[event.cumulative_total]]]</code> - Total gifts ever</div>
                     <div><code>[[[event.is_anonymous]]]</code> - true/false if anonymous</div>
                   </div>
@@ -209,7 +211,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <h4 class="mb-2 font-semibold">User Information</h4>
                   <div class="space-y-2 font-mono text-sm">
                     <div><code>[[[event.user_name]]]</code> - Subscriber's display name</div>
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000)</div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
                   </div>
                 </div>
                 <div>
@@ -373,14 +376,12 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h4 class="font-semibold text-foreground">Test Your Conditions</h4>
               <p>
                 Use the
-                <a
-                  class="text-accent-foreground underline hover:no-underline"
-                  href="https://dev.twitch.tv/docs/cli/event-command/"
-                  target="_blank"
-                  rel="nofollow noopener"
-                  >Twitch CLI</a
+                <a class="text-accent-foreground underline hover:no-underline" href="/testing" target="_blank" rel="nofollow noopener"
+                  >Twitch Testing Guide</a
                 >
-                to test your alert templates with different event values to ensure they work as expected.
+                to test your alert templates with different event values to ensure they work as expected. Be sure to install the
+                <a class="text-accent-foreground underline hover:no-underline" href="https://dev.twitch.tv/docs/cli/" target="_blank">Twitch CLI</a>
+                first!
               </p>
             </div>
             <div>
@@ -389,15 +390,15 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <div>
               <h4 class="font-semibold text-foreground">Fork the Starter Kit</h4>
-              <p><Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Fork the Overlabels Starter Kit</Link> to get a great set of defaults to work with.</p>
+              <p>
+                <Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Fork the Overlabels Starter Kit</Link> to get a great
+                set of defaults to work with.
+              </p>
             </div>
             <div>
               <h4 class="font-semibold text-foreground">If you speak HTML & CSS and understand conditional logic, you're in the right place</h4>
               <p>
-                Overlabels assumes you know your way around HTML, CSS and a template engine. If those sound like foreign words, you'll probably have a
-                better time with a drag-and-drop overlay tool like
-                <a class="text-accent-foreground underline hover:no-underline" href="https://streamelements.com" target="_blank">StreamElements</a> or
-                <a class="text-accent-foreground underline hover:no-underline" href="https://streamlabs.com" target="_blank">StreamLabs</a> instead.
+                Overlabels assumes you know your way around HTML, CSS and a template engine.
               </p>
             </div>
           </div>

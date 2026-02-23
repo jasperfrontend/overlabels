@@ -84,4 +84,10 @@
   .btn-xs {
     @apply text-sm py-1 px-2;
   }
+
+  .input-border {
+    @apply flex-1 rounded-l-md border border-border p-2 text-sm text-muted-foreground bg-background transition outline-none;
+    @apply focus:border-1 focus:border-gray-400 focus:text-accent-foreground
+  }
+
 }

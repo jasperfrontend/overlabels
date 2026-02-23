@@ -18,7 +18,7 @@ export function useTemplateActions(template: any) {
   });
 
   const authUrl = computed(() => {
-    return `${window.location.origin}/overlay/${template?.slug}#YOUR_TOKEN_HERE`;
+    return `${window.location.origin}/overlay/${template?.slug}/#YOUR_TOKEN_HERE`;
   });
 
   const previewTemplate = () => {

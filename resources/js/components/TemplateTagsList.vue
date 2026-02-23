@@ -185,7 +185,7 @@ const copyTag = async (tagName: string) => {
 
 const copyAllTags = async () => {
   try {
-    const allTags = tagList.value.map(tag => tag.display_tag).join(' ');
+    const allTags = tagList.value.map((tag) => tag.display_tag).join(' ');
     await navigator.clipboard.writeText(allTags);
     toastMessage.value = `Copied ${tagList.value.length} tags to clipboard`;
     toastType.value = 'success';
@@ -208,36 +208,43 @@ onMounted(() => {
 
   <!-- Conditional Syntax Section -->
   <div class="mb-4 gap-2">
-    <p>Template Tags are the bread and butter of Overlabels. These tags represent real Twitch data and you can easily use them in your HTML <strong>and</strong> CSS templates
-      to create interactive overlays for your Twitch stream. This simple and easy to understand template syntax has been created to just work and mostly
-    stay out of your way. Click a tag below to copy it to your clipboard.</p>
+    <p class="text-sm text-muted-foreground">
+      Template Tags are the bread and butter of Overlabels. These tags represent real Twitch data and you can easily use them in your HTML
+      <strong>and</strong> CSS templates to create interactive overlays for your Twitch stream. This simple and easy to understand template syntax has
+      been created to just work and mostly stay out of your way. Click a tag below to copy it to your clipboard.
+    </p>
 
     <p class="pt-4 text-sm text-muted-foreground">
       Visit
       <a class="text-violet-400 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a>
       to learn more about <strong>Dynamic & Conditional Template Syntax</strong>.
     </p>
-
   </div>
 
-  <div class="flex gap-2 mb-4">
-    <button @click.prevent="showUserTagInfo = true" class="cursor-pointer text-violet-400 border border-dotted p-2 hover:text-violet-800 dark:hover:text-violet-300">
+  <div class="mb-4 flex gap-4">
+    <button
+      @click.prevent="showUserTagInfo = true"
+      class="cursor-pointer border border-dotted bg-background px-5 py-2 text-orange-500 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+    >
       IMPORTANT INFO ABOUT <code>user_*</code> TAGS
     </button>
-    <button @click.prevent="copyAllTags" class="cursor-pointer bg-violet-500 text-white border border-violet-600 px-4 py-2 rounded hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700">
+    <button
+      @click.prevent="copyAllTags"
+      class="cursor-pointer border border-violet-600 bg-violet-500 px-5 py-2 text-white hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700"
+    >
       Copy All Tags
     </button>
   </div>
   <!-- Regular Template Tags -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-    <div class="bg-sidebar-accent border border-sidebar rounded-sm p-4" v-for="(tags, category) in groupedTags" :key="category">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div class="rounded-sm border border-sidebar bg-background p-4" v-for="(tags, category) in groupedTags" :key="category">
       <h2 class="mb-2 text-lg font-bold">{{ category }}</h2>
 
       <ul class="mb-4">
         <li v-for="tag in tags" :key="tag.display_tag">
           <button
             @click.prevent="copyTag(tag.display_tag)"
-            class="cursor-pointer rounded bg-sidebar border border-card-foreground/20 hover:border-violet-300/40 hover:bg-violet-400/20 mb-1 px-1 py-0.5 text-sm"
+            class="mb-1 cursor-pointer rounded border border-card-foreground/20 bg-sidebar px-1 py-0.5 text-sm hover:border-violet-300/40 hover:bg-violet-400 hover:text-background"
             :title="`Click to copy ${tag.display_tag}`"
           >
             {{ tag.display_tag }}
@@ -263,30 +270,38 @@ onMounted(() => {
     <p class="text-sm text-muted-foreground">No tags available</p>
   </div>
 
-
   <Dialog v-model:open="showUserTagInfo">
     <DialogContent class="max-w-lg">
       <DialogHeader>
         <div class="flex items-center space-x-2">
           <DialogTitle>[[[user_*]]] Tags</DialogTitle>
-          <button @click.prevent="showUserTagInfo = false" class="rounded-full ml-auto w-[26px] h-[26px] cursor-pointer text-xl font-bold text-muted-foreground hover:text-muted-foreground hover:bg-accent">&times;</button>
+          <button
+            @click.prevent="showUserTagInfo = false"
+            class="ml-auto h-[26px] w-[26px] cursor-pointer rounded-full text-xl font-bold text-muted-foreground hover:bg-accent hover:text-muted-foreground"
+          >
+            &times;
+          </button>
         </div>
       </DialogHeader>
       <DialogDescription class="text-sm text-muted-foreground">
-        <p><code>[[[user_*]]]</code> represents the most recent user who <strong>triggered an event</strong> on your stream. This is not your channel data.</p>
-        <h2 class="text-lg mt-4 mb-2"><strong>For example:</strong></h2>
-        <ul class="list-disc pl-5 mb-4">
+        <p>
+          <code>[[[user_*]]]</code> represents the most recent user who <strong>triggered an event</strong> on your stream.
+          <span class="text-orange-500 dark:text-orange-400">This is not your channel data.</span>
+        </p>
+        <h2 class="mt-4 mb-2 text-lg"><strong>For example:</strong></h2>
+        <ul class="mb-4 list-disc pl-5">
           <li>Subscription → the subscriber's details</li>
           <li>Gift sub / cheer / follow → that user's details</li>
           <li>Default → your user account details</li>
         </ul>
-        These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br><br>
-        <div class="bg-violet-100 border border-violet-400 text-violet-700 p-4 rounded relative dark:border-violet-500 dark:text-violet-800 dark:bg-violet-200">
-          Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info.<br><br>
+        These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br /><br />
+        <div
+          class="relative rounded border border-orange-400 bg-orange-100 p-4 text-orange-700 dark:border-orange-500 dark:bg-orange-200 dark:text-orange-800"
+        >
+          Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info.<br /><br />
           Currently your avatar is not in your channel data. In future updates this may happen if people want this.
         </div>
       </DialogDescription>
     </DialogContent>
   </Dialog>
-
 </template>

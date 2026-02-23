@@ -5,7 +5,20 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import { Bell, Brackets, Building, FileText, House, Layers, LayoutGrid, Radio, ShieldCheck, SlidersHorizontal, Users } from 'lucide-vue-next';
+import {
+  Bell,
+  Brackets,
+  Building,
+  FileText,
+  HashIcon,
+  House,
+  Layers,
+  LayoutGrid,
+  Radio,
+  ShieldCheck,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';
@@ -32,10 +45,10 @@ const learnNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck },
   { title: 'Users', href: route('admin.users.index'), icon: Users },
-  { title: 'Templates', href: route('admin.templates.index'), icon: Building },
+  { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
   { title: 'Events', href: route('admin.events.index'), icon: Radio },
   { title: 'Tags', href: route('admin.tags.index'), icon: Brackets },
-  { title: 'Tokens', href: route('admin.tokens.index'), icon: SlidersHorizontal },
+  { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },
   { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
 ];

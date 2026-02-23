@@ -73,7 +73,7 @@ class OverlayTemplate extends Model
      */
     public function getAuthUrl(): string
     {
-        return config('app.url')."/overlay/$this->slug#YOUR_TOKEN_HERE";
+        return config('app.url')."/overlay/$this->slug/#YOUR_TOKEN_HERE";
     }
 
     /**

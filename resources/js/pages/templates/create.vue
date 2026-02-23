@@ -9,15 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
-import {
-  Brackets,
-  Code,
-  InfoIcon,
-  Save,
-  ExternalLink,
-  Zap,
-  Layout,
-} from 'lucide-vue-next';
+import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 
@@ -31,9 +23,7 @@ const form = useForm({
   is_public: true,
 });
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Create New Overlay', href: '/templates/create' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
 
 const isDark = ref(document.documentElement.classList.contains('dark'));
 const showPreview = ref(false);
@@ -104,16 +94,23 @@ const previewTemplate = (): void => {
 onMounted(() => {
   register('save-overlay', 'ctrl+s', () => submitForm(), { description: 'Create overlay' });
   register('preview-overlay', 'ctrl+p', () => previewTemplate(), { description: 'Preview overlay' });
-  register('toggle-shortcuts', 'ctrl+k', () => {
-    showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
-  }, { description: 'Show keyboard shortcuts' });
+  register(
+    'toggle-shortcuts',
+    'ctrl+k',
+    () => {
+      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
+    },
+    { description: 'Show keyboard shortcuts' },
+  );
 });
 
 const keyboardShortcutsList = computed(() => getAllShortcuts());
 
 watch(
   () => document.documentElement.classList.contains('dark'),
-  (newDark) => { isDark.value = newDark; },
+  (newDark) => {
+    isDark.value = newDark;
+  },
 );
 </script>
 
@@ -121,14 +118,11 @@ watch(
   <Head title="Create Overlay" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
         <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags." description-class="text-sm text-muted-foreground" />
         <div class="flex shrink-0 items-center gap-2">
-          <button type="button" @click="previewTemplate" class="btn btn-cancel">
-            Preview <ExternalLink class="ml-2 h-4 w-4" />
-          </button>
+          <button type="button" @click="previewTemplate" class="btn btn-cancel">Preview <ExternalLink class="ml-2 h-4 w-4" /></button>
           <button @click="submitForm" :disabled="form.processing" class="btn btn-primary">
             <Save class="mr-2 h-4 w-4" />
             Create Overlay
@@ -137,7 +131,6 @@ watch(
       </div>
 
       <form @submit.prevent="submitForm">
-
         <!-- Tab bar -->
         <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
           <div class="flex border-b border-violet-600 dark:border-violet-400">
@@ -160,16 +153,15 @@ watch(
 
         <!-- Content box -->
         <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
-
           <!-- Meta Tab -->
-          <div v-if="mainTab === 'meta'" class="max-w-2xl space-y-5">
+          <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Overlay Name *</label>
               <input
                 id="name"
                 v-model="form.name"
                 type="text"
-                class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm"
+                class="input-border w-full"
                 placeholder="My Awesome Overlay"
                 required
                 autofocus
@@ -184,7 +176,7 @@ watch(
                 id="description"
                 v-model="form.description"
                 rows="3"
-                class="w-full rounded border border-sidebar p-2 transition hover:shadow-sm"
+                class="input-border w-full"
                 placeholder="Describe what your overlay does…"
               />
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
@@ -201,7 +193,7 @@ watch(
                   <input v-model="form.type" type="radio" value="static" class="sr-only" required />
                   <div class="flex items-start">
                     <div
-                      class="mr-3 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
                       :class="form.type === 'static' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
                       <div v-if="form.type === 'static'" class="h-2 w-2 rounded-full bg-white" />
@@ -211,9 +203,7 @@ watch(
                         <Layout class="h-4 w-4" />
                         <span class="text-sm font-medium">Static Overlay</span>
                       </div>
-                      <p class="mt-1 text-sm text-muted-foreground">
-                        Persistent content with live Twitch data (follower count, stream title, etc.)
-                      </p>
+                      <p class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower count, stream title, etc.)</p>
                     </div>
                   </div>
                 </label>
@@ -225,7 +215,7 @@ watch(
                   <input v-model="form.type" type="radio" value="alert" class="sr-only" required />
                   <div class="flex items-start">
                     <div
-                      class="mr-3 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
                       :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
                       <div v-if="form.type === 'alert'" class="h-2 w-2 rounded-full bg-white" />
@@ -235,9 +225,7 @@ watch(
                         <Zap class="h-4 w-4" />
                         <span class="text-sm font-medium">Event Alert</span>
                       </div>
-                      <p class="mt-1 text-sm text-muted-foreground">
-                        Shows temporarily when events occur (new follower, subscription, raid, etc.)
-                      </p>
+                      <p class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower, subscription, raid, etc.)</p>
                     </div>
                   </div>
                 </label>
@@ -249,8 +237,10 @@ watch(
             <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
               <strong class="text-accent-foreground/70">Event Alert tips:</strong>
               <ul class="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
-                <li>Visit the <a class="text-violet-400 hover:underline" href="/help" target="_blank">Help docs</a> for all event-based tags.</li>
-                <li>Only <code class="rounded bg-sidebar-accent px-1">channel.raid</code> exposes <code class="rounded bg-sidebar-accent px-1">event.from_broadcaster_user_name</code>.</li>
+                <li>
+                  Visit the <a class="text-violet-400 hover:underline" href="/help#event-based-template-tags" target="_blank">Help docs</a> for all
+                  event-based tags.
+                </li>
                 <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.</li>
                 <li>Keep alert overlays simple — they display briefly on screen.</li>
               </ul>
@@ -299,22 +289,22 @@ watch(
           <h3 class="text-lg font-semibold text-foreground">Overlay Preview</h3>
           <button @click="showPreview = false" class="rounded-full p-1 hover:bg-sidebar-accent">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <path
+                fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
         </div>
-        <div class="rounded-sm border border-border bg-muted" style="height: 400px;">
+        <div class="rounded-sm border border-border bg-muted" style="height: 400px">
           <iframe v-if="previewHtml" :srcdoc="previewHtml" class="h-full w-full border-0" sandbox="allow-scripts" />
         </div>
         <p class="mt-4 text-sm text-muted-foreground">Tags are shown with sample data in preview.</p>
       </div>
     </Modal>
 
-    <KeyboardShortcutsDialog
-      :show="showKeyboardShortcuts"
-      :shortcuts="keyboardShortcutsList"
-      @close="showKeyboardShortcuts = false"
-    />
+    <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>

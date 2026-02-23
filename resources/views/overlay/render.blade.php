@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/favicon.png" sizes="any">
-    <title>{{ $template->name }} - Public Preview</title>
+    <title>{{ $template->name }} - {{ $isParsed ? 'Live' : 'Public Preview' }}</title>
     <style>
         {!! $css !!}
         button:hover {
@@ -13,11 +13,12 @@
             color: #000 !important;
         }
     </style>
-    @vite('resources/js/overlay/app.js')
-    <script
-        src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js"
-        type="module"
-    ></script>
+    @if($isParsed)
+        @vite('resources/js/overlay/app.js')
+    @endif
+    @if(str_contains($html, 'dotlottie-wc'))
+        <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+    @endif
     <script>
         // Helper function
         let domReady = (cb) => {
@@ -47,22 +48,25 @@
                 Click to copy:
                 <button
                     title="Copy the <head> from this overlay"
-                    id="overlabels-copy-to-clipboard-html-34jkd0scnj2e3mg"
-                    onclick="copyToClipboard('head')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
+                    id="overlabels-copy-to-clipboard-head-{{ $template->id }}"
+                    data-copy="head"
+                    style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
                 >
                     HEAD
                 </button>
                 <button
                     title="Copy the html from this overlay"
-                    id="overlabels-copy-to-clipboard-html-34jkd0scnj2e3mg"
-                    onclick="copyToClipboard('html')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
+                    id="overlabels-copy-to-clipboard-html-{{ $template->id }}"
+                    data-copy="html"
+                    style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;"
                 >
                     HTML
                 </button>
                 <button
                     title="Copy the css from this overlay"
-                    id="overlabels-copy-to-clipboard-css-34jkd0scnj2e3mg"
-                    onclick="copyToClipboard('css')" style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;">
+                    id="overlabels-copy-to-clipboard-css-{{ $template->id }}"
+                    data-copy="css"
+                    style="margin-left: 10px; padding: 2px 5px; border-radius: 3px; border: 1px solid white; background: transparent; color: white; cursor: pointer;">
                     CSS
                 </button>
                 @auth
@@ -82,22 +86,28 @@
             </div>
         </div>
         <script>
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-copy]');
+                if (!btn) return;
+                copyToClipboard(btn.dataset.copy);
+            });
+
+            const OVERLABELS_COPY = {
+                head: @json($head),
+                html: @json($html),
+                css:  @json($css),
+            };
+
             function copyToClipboard(type) {
-                let content = null;
-                if (type === 'html') {
-                    content = {!! json_encode($html) !!}
-                } else if (type === 'css') {
-                    content = {!! json_encode($css) !!}
-                } else if (type === 'head') {
-                    content = {!! json_encode($head) !!}
-                } else {
-                    alert('You are trying to copy something that does not exist.')
+                const content = OVERLABELS_COPY[type];
+                if (typeof content !== 'string') {
+                    alert('You are trying to copy something that does not exist.');
+                    return;
                 }
-                navigator.clipboard.writeText(content).then(() => {
-                    alert(`<${type}> copied to clipboard!`);
-                }).catch(err => {
-                    console.error('Failed to copy:', err);
-                });
+                navigator.clipboard.writeText(content)
+                    .then(() => alert(`<${type}> copied to clipboard!`))
+                    .catch(err => console.error('Failed to copy:', err));
             }
         </script>
     </div>

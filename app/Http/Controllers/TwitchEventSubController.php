@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Random\RandomException;
 
 class TwitchEventSubController extends Controller
 {
@@ -660,6 +661,7 @@ class TwitchEventSubController extends Controller
 
     /**
      * Replay a historical event as an alert
+     * @throws RandomException
      */
     public function replay(Request $request, TwitchEvent $twitchEvent)
     {
@@ -685,8 +687,9 @@ class TwitchEventSubController extends Controller
         ];
 
         $this->renderEventAlert($user, $mapping, $reconstructedData);
-
-        return back()->with('message', 'Alert replayed successfully!')->with('type', 'success');
+        $randomString = str_pad(random_int(1, 999999), 6, '0', STR_PAD_LEFT); // @TODO: Make sure every alert is treated as a unique new payload but not like this.
+        $message = "Replayed alert {$twitchEvent->event_type} (ID: {$twitchEvent->id}) #{$randomString}";
+        return back()->with('message', $message)->with('type', 'success');
     }
 
     /**

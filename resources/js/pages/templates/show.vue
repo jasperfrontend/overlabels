@@ -144,30 +144,27 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mb-6 rounded-sm border border-sidebar bg-sidebar-accent p-4">
         <div class="space-y-3">
           <div v-if="props.template?.is_public">
-            <label for="public-url">Overlay URL</label>
+            <label for="public-url">OBS Overlay URL</label>
             <small
-              class="ml-2 p-1 px-2 relative -top-0.5 cursor-pointer rounded-full bg-background text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
+              class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
               @click="copyToClipboard(publicUrl, 'Public URL')"
               >Click to copy</small
             >
             <div class="mt-4 flex items-center">
-              <input
-                :value="publicUrl"
-                id="public-url"
-                readonly
-                class="peer flex-1 rounded-l-md border border-border p-2 text-sm text-muted-foreground bg-background transition outline-none focus:border-1 focus:border-gray-400 focus:text-accent-foreground"
-              />
+              <input :value="publicUrl" id="public-url" readonly class="peer input-border" />
               <button
                 @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm rounded-none rounded-r-none border border-border border-l-0 p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+                class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
               >
                 Copy
               </button>
             </div>
           </div>
           <p class="pt-0.5 text-sm text-muted-foreground">
-            Replace <code class="rounded-sm bg-accent p-0.5 px-1">/public</code> at the end of this link with your own
-            <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a> to enable the overlay.
+            Replace <code class="rounded-sm bg-accent p-0.5 px-1">public</code> in this URL with your own
+            <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline"> access token </a>
+            to activate the overlay. The final link should look like this:
+            <code class="rounded-sm bg-accent p-0.5 px-1">{{ authUrl }}</code>
           </p>
         </div>
       </div>

@@ -79,7 +79,8 @@ const breadcrumbs = [
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <Radio class="mr-2 h-6 w-6" />
-            <Heading title="Recent stream alerts" />
+            <Heading title="Recent stream activity" />
+            <Link :href="route('dashboard.recents')" class="text-sm bg-sidebar py-0.5 px-2 rounded-full text-muted-foreground hover:text-foreground">Refresh</Link>
           </div>
           <a href="/dashboard/events" target="_blank" class="btn btn-primary">
             Embed view
