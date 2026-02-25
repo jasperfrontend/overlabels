@@ -164,6 +164,13 @@ const formatDate = (date: string | null | undefined) =>
           <div v-if="!token.is_active" class="mt-2 text-sm font-semibold text-red-600">REVOKED</div>
         </div>
       </div>
+      <div class="my-4 text-sm bg-background">
+        <Heading title="Important!" description="Your Overlay Tokens are only shown once during creation. The Prefix you see here is just for reference. Create a new Overlay Token if you lost
+        access to it, or if you think it may have leaked on stream." description-class="text-orange-300" />
+      </div>
+      <div class="my-4 text-sm bg-background">
+        <Heading title="Treat your Overlay Token like a password." description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone." description-class="text-orange-300" />
+      </div>
     </div>
 
     <!-- Create Token Modal -->

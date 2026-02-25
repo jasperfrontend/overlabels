@@ -90,7 +90,7 @@ const pageTitle = computed(() => {
               @input="debounceSearch"
               type="text"
               placeholder="Search overlays and alerts..."
-              class="h-[40px] w-full rounded-sm border border-sidebar bg-background px-3 py-1 text-foreground placeholder-muted-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              class="input-border h-[40px] w-full rounded-sm"
               id="filter-search"
             />
           </div>
@@ -101,7 +101,7 @@ const pageTitle = computed(() => {
             <select
               v-model="filters.type"
               @change="applyFilter"
-              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              class="input-border h-[40px] w-full rounded-sm"
               id="filter-type"
             >
               <option value="">All Types</option>
@@ -116,7 +116,7 @@ const pageTitle = computed(() => {
             <select
               v-model="filters.filter"
               @change="applyFilter"
-              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              class="input-border h-[40px] w-full rounded-sm"
               id="filter-visibility"
             >
               <option value="all_templates">All overlays</option>
@@ -131,7 +131,7 @@ const pageTitle = computed(() => {
             <select
               v-model="filters.sort"
               @change="applyFilter"
-              class="rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              class="input-border h-[40px] w-full rounded-sm"
               id="filter-sort"
             >
               <option value="created_at">Date created</option>

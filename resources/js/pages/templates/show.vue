@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
@@ -23,6 +23,9 @@ import {
   FileCode2Icon,
   CodeIcon,
   PaletteIcon,
+  HelpCircle,
+  EllipsisVerticalIcon,
+  ShieldCheck,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
@@ -79,6 +82,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/templates/*',
   },
 ];
+
+const forkTitle = computed(() => {
+  return 'This Overlay has been forked from ' + props.template?.owner.name + "'s template" + ' "' + props.template?.fork_parent.name + '"';
+});
 </script>
 
 <template>
@@ -148,8 +155,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <small
               class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
               @click="copyToClipboard(publicUrl, 'Public URL')"
-              >Click to copy</small
-            >
+            >Click to copy</small>
             <div class="mt-4 flex items-center">
               <input :value="publicUrl" id="public-url" readonly class="peer input-border" />
               <button
@@ -160,11 +166,20 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
           </div>
-          <p class="pt-0.5 text-sm text-muted-foreground">
-            Replace <code class="rounded-sm bg-accent p-0.5 px-1">public</code> in this URL with your own
-            <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline"> access token </a>
-            to activate the overlay. The final link should look like this:
-            <code class="rounded-sm bg-accent p-0.5 px-1">{{ authUrl }}</code>
+          <p class="mt-4 text-sm text-muted-foreground">
+            Before use in OBS, replace <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">public</code> in this OBS Overlay URL with
+            your own <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a> to activate the
+            overlay:
+            <TooltipBase tt-content-class="tooltip-base tooltip-content" align="top" side="top">
+              <template #trigger>
+                <small class="relative  rounded-full bg-background p-1 px-2 text-xs transition-colors text-accent-foreground hover:bg-background/50 cursor-help">Example</small>
+              </template>
+              <template #content>
+                <p class="text-sm">
+                  <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">{{ authUrl }}</code>
+                </p>
+              </template>
+            </TooltipBase>
           </p>
         </div>
       </div>
@@ -219,14 +234,15 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div v-if="props.template?.fork_parent">
               <SplitIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
               Forked from
-              <Link :href="route('templates.show', props.template?.fork_parent)" class="m-1">
+              <Link :href="route('templates.show', props.template?.fork_parent)" class="m-1 text-foreground/70 hover:underline" :title="forkTitle">
                 {{ props.template?.fork_parent.name }}
               </Link>
             </div>
             <div>
-              <TooltipBase tt-content-class="tooltip-base tooltip-content" align="center" side="top">
+              <TooltipBase tt-content-class="tooltip-base tooltip-content" align="center" side="right">
                 <template #trigger>
                   <span class="font-medium">
+                    <ShieldCheck class="inline-block h-4 w-4 text-sidebar-foreground" />
                     {{ props.template?.is_public ? 'Public' : 'Private' }}
                   </span>
                 </template>
