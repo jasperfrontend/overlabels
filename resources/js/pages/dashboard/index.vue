@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import Heading from '@/components/Heading.vue';
 import TemplateList from '@/components/TemplateList.vue';
-import { Layers, Plus, Bell, MoveUpRight } from 'lucide-vue-next';
+import { Plus, List, MoveUpRight } from 'lucide-vue-next';
 import type { OverlayTemplate } from '@/types';
+import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 
 defineProps<{
   userName: string;
@@ -40,41 +41,24 @@ const breadcrumbs = [
 
       <div v-else class="flex flex-col justify-between gap-6 space-y-6 lg:flex-row">
         <section v-if="userAlertTemplates.length > 0" class="flex-1">
-          <div class="flex flex-col justify-between md:flex-row">
-            <Heading title="My alerts" />
-            <div class="flex-col-2 mt-2 flex gap-2 md:mt-0 md:flex-row">
-              <a
-                class="btn btn-sm btn-chill flex-1 items-center gap-2 md:flex-none"
-                :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
-                title="View all of your alerts"
-              >
-                <MoveUpRight class="h-4 w-4" />
-              </a>
-              <a class="btn btn-sm btn-primary flex-1 items-center gap-2 md:flex-none" :href="route('templates.create')" title="Create a new Alert">
-                <Plus class="h-4 w-4" />
-              </a>
-            </div>
-          </div>
+          <DashboardSectionHeader
+            title="My alerts"
+            :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
+            view-title="View all of your alerts"
+            :create-href="route('templates.create')"
+            create-title="Create a new Alert"
+          />
           <TemplateList :templates="userAlertTemplates" :current-user-id="userId" />
         </section>
 
         <section v-if="userStaticTemplates.length > 0" class="flex-1">
-          <div class="flex flex-col justify-between md:flex-row">
-            <Heading title="My overlays" />
-            <div class="flex-col-2 mt-2 flex gap-2 md:mt-0 md:flex-row">
-              <a
-                class="btn btn-sm btn-chill flex-1 items-center gap-2 md:flex-none"
-                :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' })"
-                title="View all of your overlays"
-              >
-                <MoveUpRight class="h-4 w-4" />
-              </a>
-              <a class="btn btn-sm btn-primary flex-1 items-center gap-2 md:flex-none" :href="route('templates.create')" title="Create a new Overlay">
-                <Plus class="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
+          <DashboardSectionHeader
+            title="My overlays"
+            :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' })"
+            view-title="View all of your overlays"
+            :create-href="route('templates.create')"
+            create-title="Create a new Overlay"
+          />
           <TemplateList :templates="userStaticTemplates" :current-user-id="userId" />
         </section>
       </div>

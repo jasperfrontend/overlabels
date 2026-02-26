@@ -3,8 +3,8 @@ import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import TooltipBase from '@/components/TooltipBase.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -48,11 +48,11 @@ const mainTabs = [
 const activeTab = ref('html');
 const mainTab = ref<'overview' | 'controls' | 'panel'>('overview');
 const showCode = ref(false);
+const showOBSHelp = ref(false);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
 // Use the template actions composable
 const {
-  publicUrl,
   authUrl,
   previewTemplate,
   forkTemplate,
@@ -158,33 +158,63 @@ const forkTitle = computed(() => {
         <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">OBS URL</span>
         <div class="flex min-w-0 flex-1 items-center">
           <input
-            :value="template?.is_public ? publicUrl : authUrl"
+            :value="authUrl"
             readonly
             class="peer input-border min-w-0 flex-1 rounded-r-none"
           />
           <button
-            @click="copyToClipboard(template?.is_public ? publicUrl : authUrl, 'OBS URL')"
-            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
+            @click="copyToClipboard(authUrl, 'OBS URL')"
+            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 h-[38px] peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
             title="Copy URL"
           >
             <CopyIcon class="h-4 w-4" />
           </button>
         </div>
-        <TooltipBase v-if="!template?.is_public" tt-content-class="tooltip-base tooltip-content" align="end" side="bottom">
-          <template #trigger>
-            <button class="shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground" title="How to use this URL">
-              <InfoIcon class="h-4 w-4" />
-            </button>
-          </template>
-          <template #content>
-            <div class="max-w-xs space-y-2 text-sm">
-              <p class="font-semibold">Activate this overlay</p>
-              <p>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> with your <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a>.</p>
-              <code class="block break-all rounded bg-accent px-2 py-1 text-xs text-accent-foreground">{{ authUrl }}</code>
-            </div>
-          </template>
-        </TooltipBase>
+        <button
+          @click="showOBSHelp = true"
+          class="shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
+          title="How to add this overlay to OBS"
+        >
+          <InfoIcon class="h-4 w-4" />
+        </button>
       </div>
+
+      <!-- OBS Setup Dialog -->
+      <Dialog v-model:open="showOBSHelp">
+        <DialogContent class="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adding this overlay to OBS</DialogTitle>
+          </DialogHeader>
+          <div class="space-y-4 text-sm">
+            <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
+              <p class="font-semibold">Your personal access token is required</p>
+              <p class="mt-1">Every overlay URL contains a <code class="rounded bg-black/10 px-1 dark:bg-white/10">#YOUR_TOKEN_HERE</code> placeholder. You must replace it with your real token before the overlay will work.</p>
+            </div>
+
+            <div>
+              <p class="mb-1 font-medium">Where is my token?</p>
+              <p class="text-muted-foreground">Your token was generated during onboarding and shown to you once — it is never stored in full and cannot be retrieved again. You can find the partial preview (first few characters) on your <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">Access Tokens page</a>. If you no longer have it, create a new token there.</p>
+            </div>
+
+            <div>
+              <p class="mb-2 font-medium">Steps to add in OBS</p>
+              <ol class="list-decimal space-y-1.5 pl-4 text-muted-foreground">
+                <li>Copy the OBS URL above using the copy button.</li>
+                <li>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> at the end of the URL with your actual token. KEEP THE #!!</li>
+                <li>In OBS, add a new <strong class="text-foreground">Browser Source</strong>.</li>
+                <li>Paste the full URL (with your real token) into the URL field.</li>
+                <li>Set <strong class="text-foreground">Width</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1920</code> and <strong class="text-foreground">Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code> for full-screen coverage.</li>
+                <li>Click <strong class="text-foreground">OK</strong>. Your overlay is now live!</li>
+              </ol>
+            </div>
+
+            <div class="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
+              <p class="font-semibold">Never share your token URL on stream</p>
+              <p class="mt-1">Your token acts like a password. Anyone with it can trigger your overlays. Keep the URL out of screen recordings, screenshots, and live video.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <!-- Main Tabs (owner only) -->
       <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">

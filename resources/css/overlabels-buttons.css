@@ -1,6 +1,6 @@
 @layer components {
   .btn {
-    @apply text-sm px-4 py-1.5 border border-accent-foreground/20 rounded-sm cursor-pointer flex items-center justify-center duration-150;
+    @apply text-sm leading-4 px-4 py-1.5 border border-accent-foreground/20 rounded-sm cursor-pointer flex items-center justify-center duration-150;
     @apply bg-sidebar hover:bg-slate-300 text-accent-foreground;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background;

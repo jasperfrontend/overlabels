@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Layers, Zap, Clock } from 'lucide-vue-next';
+import { Users, Layers, Zap, Clock, FlaskConical } from 'lucide-vue-next';
 
 interface StatCards {
   users: number;
@@ -38,6 +38,10 @@ defineProps<{
 }>();
 
 const breadcrumbs = [{ title: 'Admin', href: route('admin.dashboard') }];
+
+function previewOnboarding() {
+  router.post(route('admin.onboarding.preview'));
+}
 </script>
 
 <template>
@@ -136,6 +140,26 @@ const breadcrumbs = [{ title: 'Admin', href: route('admin.dashboard') }];
           </CardContent>
         </Card>
       </div>
+      <!-- Dev Tools -->
+      <Card class="border-dashed border-muted-foreground/30">
+        <CardHeader class="pb-2">
+          <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
+            <FlaskConical class="h-4 w-4" />
+            Dev Tools
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="flex flex-wrap gap-3">
+            <button
+              class="btn btn-sm btn-secondary"
+              title="Preview the onboarding wizard as it appears to new users"
+              @click="previewOnboarding"
+            >
+              Preview Onboarding Wizard
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </AppLayout>
 </template>

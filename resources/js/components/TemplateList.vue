@@ -128,7 +128,7 @@ function handleDelete(t: OverlayTemplate) {
             <!-- Kebab menu -->
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <button class="btn btn-sm btn-secondary px-2 ml-2" title="More actions">
+                <button class="btn btn-sm btn-secondary px-2 ml-2 md:ml-0" title="More actions">
                   <MoreVertical class="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>

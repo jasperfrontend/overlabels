@@ -61,4 +61,7 @@ Route::prefix('admin')
         // Impersonation — stop must be before {user} to avoid "stop" being treated as a user ID
         Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('impersonate.stop');
         Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
+
+        // Onboarding preview
+        Route::post('/onboarding-preview', [AdminDashboardController::class, 'previewOnboarding'])->name('onboarding.preview');
     });

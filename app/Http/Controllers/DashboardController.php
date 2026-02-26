@@ -45,7 +45,7 @@ class DashboardController extends Controller
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
             'communityTemplates' => $communityTemplates,
-            'needsOnboarding' => ! $user->isOnboarded() && ! $user->hasAlertMappings(),
+            'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
         ]);
     }

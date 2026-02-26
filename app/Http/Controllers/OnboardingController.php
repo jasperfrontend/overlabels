@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EventTemplateMapping;
 use App\Models\Kit;
 use App\Models\OverlayAccessToken;
+use App\Models\OverlayTemplate;
 use App\Models\TemplateTagJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,21 @@ class OnboardingController extends Controller
             ->where('is_active', true)
             ->exists();
 
+        // Collect static overlay slugs — prefer from the forked starter kit, fall back to any owned static overlay
+        $forkedKit = Kit::where('owner_id', $user->id)
+            ->where('forked_from_id', $starterKitId)
+            ->with(['templates' => fn ($q) => $q->where('type', 'static')->select('overlay_templates.id', 'slug', 'name')])
+            ->first();
+
+        $forkedOverlays = $forkedKit && $forkedKit->templates->isNotEmpty()
+            ? $forkedKit->templates->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name])->values()
+            : OverlayTemplate::where('owner_id', $user->id)
+                ->where('type', 'static')
+                ->latest()
+                ->get(['slug', 'name'])
+                ->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name])
+                ->values();
+
         return response()->json([
             'kit_forked' => $hasForkedKit,
             'tags_status' => $tagsStatus,
@@ -46,6 +62,7 @@ class OnboardingController extends Controller
             ]),
             'token_created' => $hasToken,
             'has_webhook_secret' => $user->webhook_secret !== null,
+            'forked_overlays' => $forkedOverlays,
         ]);
     }
 
