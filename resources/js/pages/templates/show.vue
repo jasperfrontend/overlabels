@@ -284,11 +284,11 @@ const forkTitle = computed(() => {
           </div>
 
           <button
-            class="flex w-full items-center gap-2 rounded-sm border border-border bg-sidebar px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
+            class="mb-2 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-sidebar px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
             @click="showCode = !showCode"
           >
             <CodeIcon class="h-4 w-4 shrink-0" />
-            <span>View source</span>
+            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>
             <ChevronDownIcon
               class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"
               :class="{ 'rotate-180': showCode }"
