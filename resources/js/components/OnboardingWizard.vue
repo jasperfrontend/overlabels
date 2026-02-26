@@ -269,9 +269,9 @@ function dismiss() {
       <CardHeader>
         <div class="flex items-center gap-3">
           <KeyRound class="h-6 w-6 text-amber-400" />
-          <CardTitle class="text-xl">Stop — read this first</CardTitle>
+          <CardTitle class="text-xl">Stop!!! Read this first</CardTitle>
         </div>
-        <p class="mt-2 text-sm text-muted-foreground">
+        <p class="mt-2 mb-2 text-sm text-muted-foreground">
           The next screen generates your personal access token. Here's what you need to know before you click.
         </p>
       </CardHeader>
@@ -280,17 +280,15 @@ function dismiss() {
           <div class="flex gap-3">
             <EyeOff class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
-              <strong class="text-amber-300">Shown exactly once.</strong>
-              <span class="text-amber-300/80"
-                >Your token will appear on screen one time. Once you leave or reload, it is gone forever. There is no recovery option.</span
+              <strong class="text-amber-300">Shown exactly once.</strong>               <span class="text-amber-300/80"
+            >Your token will appear on screen <strong class="animate-caret-blink">one time</strong>. Once you leave or reload, it is gone forever. There is no recovery option.</span
               >
             </p>
           </div>
           <div class="flex gap-3">
             <ClipboardCopy class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
-              <strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong>
-              <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span>
+              <strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong> <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span>
             </p>
           </div>
           <div class="flex gap-3">
@@ -298,7 +296,7 @@ function dismiss() {
             <p>
               <strong class="text-amber-300">Without this, nothing works.</strong>
               <span class="text-amber-300/80"
-                >Every alert — follows, subs, raids — fires inside this overlay. No overlay in OBS = no alerts on stream.</span
+                > Every alert, like follows, subs, raids etc., fires inside this overlay. No overlay in OBS = no alerts on stream.</span
               >
             </p>
           </div>
@@ -306,13 +304,13 @@ function dismiss() {
             <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
               <strong class="text-amber-300">Never share it.</strong>
-              <span class="text-amber-300/80">Your token is a password. Don't show it on stream, in screenshots, or anywhere public.</span>
+              <span class="text-amber-300/80"> Your token is a password. Don't show it on stream, in screenshots, or anywhere public.</span>
             </p>
           </div>
         </div>
 
-        <Button class="w-full gap-2" @click="goToStep3">
-          I'm ready — generate my token
+        <Button class="w-full gap-2 cursor-pointer p-8" @click="goToStep3">
+          I read all of the above. Generate my token
           <ArrowRight class="h-4 w-4" />
         </Button>
       </CardContent>
