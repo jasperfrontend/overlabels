@@ -4,7 +4,22 @@ import { router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, Loader2, Copy, Check, AlertTriangle, PartyPopper, Rocket, Shield, Zap, ArrowRight, Monitor, KeyRound, EyeOff, ClipboardCopy } from 'lucide-vue-next';
+import {
+  CheckCircle,
+  Loader2,
+  Copy,
+  Check,
+  AlertTriangle,
+  PartyPopper,
+  Rocket,
+  Shield,
+  Zap,
+  ArrowRight,
+  Monitor,
+  KeyRound,
+  EyeOff,
+  ClipboardCopy,
+} from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 
 interface AlertMapping {
@@ -256,25 +271,43 @@ function dismiss() {
           <KeyRound class="h-6 w-6 text-amber-400" />
           <CardTitle class="text-xl">Stop — read this first</CardTitle>
         </div>
-        <p class="mt-2 text-sm text-muted-foreground">The next screen generates your personal access token. Here's what you need to know before you click.</p>
+        <p class="mt-2 text-sm text-muted-foreground">
+          The next screen generates your personal access token. Here's what you need to know before you click.
+        </p>
       </CardHeader>
       <CardContent class="space-y-4">
         <div class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
           <div class="flex gap-3">
             <EyeOff class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p><strong class="text-amber-300">Shown exactly once.</strong> <span class="text-amber-300/80">Your token will appear on screen one time. Once you leave or reload, it is gone forever. There is no recovery option.</span></p>
+            <p>
+              <strong class="text-amber-300">Shown exactly once.</strong>
+              <span class="text-amber-300/80"
+                >Your token will appear on screen one time. Once you leave or reload, it is gone forever. There is no recovery option.</span
+              >
+            </p>
           </div>
           <div class="flex gap-3">
             <ClipboardCopy class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p><strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong> <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span></p>
+            <p>
+              <strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong>
+              <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span>
+            </p>
           </div>
           <div class="flex gap-3">
             <Monitor class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p><strong class="text-amber-300">Without this, nothing works.</strong> <span class="text-amber-300/80">Every alert — follows, subs, raids — fires inside this overlay. No overlay in OBS = no alerts on stream.</span></p>
+            <p>
+              <strong class="text-amber-300">Without this, nothing works.</strong>
+              <span class="text-amber-300/80"
+                >Every alert — follows, subs, raids — fires inside this overlay. No overlay in OBS = no alerts on stream.</span
+              >
+            </p>
           </div>
           <div class="flex gap-3">
             <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p><strong class="text-amber-300">Never share it.</strong> <span class="text-amber-300/80">Your token is a password. Don't show it on stream, in screenshots, or anywhere public.</span></p>
+            <p>
+              <strong class="text-amber-300">Never share it.</strong>
+              <span class="text-amber-300/80">Your token is a password. Don't show it on stream, in screenshots, or anywhere public.</span>
+            </p>
           </div>
         </div>
 
@@ -299,7 +332,11 @@ function dismiss() {
         </p>
       </CardHeader>
       <div>
-        <img alt="" src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODdoa3c5cHF3ZnlleDUxZGRraWs2enhidDM0MHVmY2x1aDY2OHE0dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cZskL3prfU4hwZI4l9/giphy.gif" class="p-4">
+        <img
+          alt=""
+          src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODdoa3c5cHF3ZnlleDUxZGRraWs2enhidDM0MHVmY2x1aDY2OHE0dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cZskL3prfU4hwZI4l9/giphy.gif"
+          class="p-4"
+        />
       </div>
       <CardContent class="space-y-5">
         <!-- Token not yet generated -->
@@ -357,8 +394,12 @@ function dismiss() {
 
             <!-- Raw token (secondary) -->
             <div class="group">
-
-              <Heading title="STEP 2: Save this token (for future overlays)" description="DO NOT LOSE THIS TOKEN!!! Please I beg you: SAVE THIS TOKEN" description-class="text-red-400" class="mt-6" />
+              <Heading
+                title="STEP 2: Save this token (for future overlays)"
+                description="DO NOT LOSE THIS TOKEN!!! Please I beg you: SAVE THIS TOKEN"
+                description-class="text-red-400"
+                class="mt-6"
+              />
 
               <div class="mt-2 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-950/10 p-3 font-mono text-sm break-all">
                 <span class="flex-1 text-green-300/80 select-all">{{ plainToken }}</span>
@@ -372,7 +413,9 @@ function dismiss() {
             <!-- Confirmation checkbox -->
             <label class="flex cursor-pointer items-center gap-3">
               <Checkbox v-model="tokenSaved" />
-              <span class="text-sm">STEP 3: I'M NOT RETARDED AND HAVE READ THIS WHOLE PAGE AND THEN -> I've copied my token and added the Browser Source</span>
+              <span class="text-sm"
+                >STEP 3: I'M NOT STUPID AND HAVE READ THIS WHOLE PAGE AND THEN -> I've copied my token and added the Browser Source</span
+              >
             </label>
 
             <Button :disabled="!tokenSaved" class="gap-2" @click="completeOnboarding">
