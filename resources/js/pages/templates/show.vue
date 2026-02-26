@@ -8,6 +8,7 @@ import TooltipBase from '@/components/TooltipBase.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
 import {
   GitForkIcon,
@@ -16,7 +17,7 @@ import {
   ExternalLinkIcon,
   PencilIcon,
   TrashIcon,
-  CircleAlertIcon,
+  MoreVertical,
   SlidersHorizontalIcon,
   LightbulbIcon,
   SquarePenIcon,
@@ -104,44 +105,42 @@ const forkTitle = computed(() => {
             <Heading :title="props.template?.name" :description="props.template?.description" description-class="text-sm text-muted-foreground" />
           </div>
 
-          <div class="flex space-x-2">
-            <a v-if="$page.props.template?.is_public" @click.prevent="previewTemplate" href="#" class="btn btn-cancel">
-              Preview
-              <ExternalLinkIcon class="ml-2 h-4 w-4" />
-            </a>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                <MoreVertical class="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuItem @click="previewTemplate">
+                <ExternalLinkIcon class="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="!template?.is_public" class="pointer-events-none text-xs text-muted-foreground">
+                Add token to URL: #YOUR_TOKEN_HERE
+              </DropdownMenuItem>
 
-            <TooltipBase v-else tt-content-class="tooltip-base tooltip-content" align="start" side="left">
-              <template #trigger>
-                <a @click.prevent="previewTemplate" href="#" class="btn btn-private">
-                  Preview
-                  <ExternalLinkIcon class="ml-2 h-4 w-4" />
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem v-if="canEdit" as-child>
+                <a :href="route('templates.edit', template)">
+                  <PencilIcon class="mr-2 h-4 w-4" />
+                  Edit
                 </a>
-              </template>
-              <template #content>
-                <div class="space-y-1 text-sm">
-                  <div class="flex items-center space-x-2">
-                    <CircleAlertIcon class="mr-2 h-6 w-6 text-violet-400" />
-                    <h3 class="text-xl font-bold">Don't forget</h3>
-                  </div>
-                  Add your token to the end of the URL like this:<br />
-                  <code class="text-violet-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
-                </div>
-              </template>
-            </TooltipBase>
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="forkTemplate">
+                <SplitIcon class="mr-2 h-4 w-4" />
+                Fork
+              </DropdownMenuItem>
 
-            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-secondary">
-              Edit
-              <PencilIcon class="ml-2 h-4 w-4" />
-            </a>
-            <button @click="forkTemplate" class="btn btn-warning">
-              Fork
-              <SplitIcon class="ml-2 h-4 w-4" />
-            </button>
-            <button v-if="canEdit" @click="deleteTemplate" class="btn btn-danger">
-              Delete
-              <TrashIcon class="ml-2 h-4 w-4" />
-            </button>
-          </div>
+              <DropdownMenuSeparator v-if="canEdit" />
+
+              <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+                <TrashIcon class="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
