@@ -4,7 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, Loader2, Copy, Check, AlertTriangle, PartyPopper, Rocket, Shield, Zap, ArrowRight, Monitor } from 'lucide-vue-next';
+import { CheckCircle, Loader2, Copy, Check, AlertTriangle, PartyPopper, Rocket, Shield, Zap, ArrowRight, Monitor, KeyRound, EyeOff, ClipboardCopy } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 
 interface AlertMapping {
@@ -101,6 +101,10 @@ function goToStep2() {
   step.value = 2;
 }
 
+function goToStep3() {
+  step.value = 3;
+}
+
 async function generateToken() {
   generatingToken.value = true;
   try {
@@ -146,7 +150,7 @@ async function completeOnboarding() {
         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
       },
     });
-    step.value = 3;
+    step.value = 4;
   } catch {
     // completion failed
   }
@@ -245,19 +249,58 @@ function dismiss() {
       </CardContent>
     </template>
 
-    <!-- Step 2: Token Creation -->
+    <!-- Step 2: Warning interstitial -->
     <template v-if="step === 2">
+      <CardHeader>
+        <div class="flex items-center gap-3">
+          <KeyRound class="h-6 w-6 text-amber-400" />
+          <CardTitle class="text-xl">Stop — read this first</CardTitle>
+        </div>
+        <p class="mt-2 text-sm text-muted-foreground">The next screen generates your personal access token. Here's what you need to know before you click.</p>
+      </CardHeader>
+      <CardContent class="space-y-4">
+        <div class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+          <div class="flex gap-3">
+            <EyeOff class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <p><strong class="text-amber-300">Shown exactly once.</strong> <span class="text-amber-300/80">Your token will appear on screen one time. Once you leave or reload, it is gone forever. There is no recovery option.</span></p>
+          </div>
+          <div class="flex gap-3">
+            <ClipboardCopy class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <p><strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong> <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span></p>
+          </div>
+          <div class="flex gap-3">
+            <Monitor class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <p><strong class="text-amber-300">Without this, nothing works.</strong> <span class="text-amber-300/80">Every alert — follows, subs, raids — fires inside this overlay. No overlay in OBS = no alerts on stream.</span></p>
+          </div>
+          <div class="flex gap-3">
+            <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <p><strong class="text-amber-300">Never share it.</strong> <span class="text-amber-300/80">Your token is a password. Don't show it on stream, in screenshots, or anywhere public.</span></p>
+          </div>
+        </div>
+
+        <Button class="w-full gap-2" @click="goToStep3">
+          I'm ready — generate my token
+          <ArrowRight class="h-4 w-4" />
+        </Button>
+      </CardContent>
+    </template>
+
+    <!-- Step 3: Token Creation -->
+    <template v-if="step === 3">
       <CardHeader>
         <div class="flex items-center gap-3">
           <Shield class="h-6 w-6 text-purple-400" />
           <CardTitle class="text-xl">Generate Your Secure Token</CardTitle>
         </div>
         <!-- Warning -->
-        <p class="mb-4 text-sm text-red-400 dark:text-red-300">
-          This token is shown <strong>only once</strong> and cannot be recovered.
+        <p class="text-sm">
+          This token is shown <strong class="text-orange-300">only once</strong> and cannot be recovered.
           <strong>Never share it or show it on stream.</strong>
         </p>
       </CardHeader>
+      <div>
+        <img alt="" src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODdoa3c5cHF3ZnlleDUxZGRraWs2enhidDM0MHVmY2x1aDY2OHE0dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cZskL3prfU4hwZI4l9/giphy.gif" class="p-4">
+      </div>
       <CardContent class="space-y-5">
         <!-- Token not yet generated -->
         <template v-if="!plainToken">
@@ -274,19 +317,19 @@ function dismiss() {
             <!-- OBS URL block — shown first and most prominently when overlay slugs are known -->
             <template v-if="obsUrls.length">
               <!-- Urgency banner -->
-              <div class="flex gap-3 rounded-md border border-red-500/40 bg-red-500/10 p-4">
-                <Monitor class="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+              <div class="flex gap-3 rounded-md border border-orange-500/40 bg-orange-500/10 p-4">
+                <Monitor class="mt-0.5 h-5 w-5 shrink-0 text-orange-400" />
                 <div class="space-y-1">
-                  <p class="text-lg font-semibold text-red-300">Add this to OBS before you continue</p>
-                  <p class="text-md text-red-300/80">
+                  <p class="text-lg font-semibold text-orange-300">Add this to OBS before you continue</p>
+                  <p class="text-md text-orange-300/80">
                     Every alert (follows, subs, raids, everything) plays <em>inside</em> this overlay. Without it in your OBS scene, your alerts will
                     never appear on stream.
                   </p>
                 </div>
               </div>
               <Heading
-                title="Copy this link as an OBS Browser Source"
-                description="You must do this right now"
+                title="STEP 1: Copy this link as an OBS Browser Source"
+                description="YOU MUST DO THIS RIGHT NOW"
                 class="mt-6"
                 description-class="text-red-400"
               />
@@ -315,7 +358,7 @@ function dismiss() {
             <!-- Raw token (secondary) -->
             <div class="group">
 
-              <Heading title="Save this token (for future overlays)" description="Copy this token to a safe place" class="mt-6" />
+              <Heading title="STEP 2: Save this token (for future overlays)" description="DO NOT LOSE THIS TOKEN!!! Please I beg you: SAVE THIS TOKEN" description-class="text-red-400" class="mt-6" />
 
               <div class="mt-2 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-950/10 p-3 font-mono text-sm break-all">
                 <span class="flex-1 text-green-300/80 select-all">{{ plainToken }}</span>
@@ -329,7 +372,7 @@ function dismiss() {
             <!-- Confirmation checkbox -->
             <label class="flex cursor-pointer items-center gap-3">
               <Checkbox v-model="tokenSaved" />
-              <span class="text-sm">I've copied my token and added the Browser Source</span>
+              <span class="text-sm">STEP 3: I'M NOT RETARDED AND HAVE READ THIS WHOLE PAGE AND THEN -> I've copied my token and added the Browser Source</span>
             </label>
 
             <Button :disabled="!tokenSaved" class="gap-2" @click="completeOnboarding">
@@ -341,8 +384,8 @@ function dismiss() {
       </CardContent>
     </template>
 
-    <!-- Step 3: Celebration -->
-    <template v-if="step === 3">
+    <!-- Step 4: Celebration -->
+    <template v-if="step === 4">
       <CardHeader>
         <div class="flex items-center gap-3">
           <PartyPopper class="h-6 w-6 text-purple-400" />
