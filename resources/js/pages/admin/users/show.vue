@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import type { AdminTemplate } from '@/types';
 
 interface User {
   id: number;
@@ -19,15 +20,6 @@ interface User {
   deleted_at: string | null;
   created_at: string;
   onboarded_at: string | null;
-}
-
-interface Template {
-  id: number;
-  name: string;
-  slug: string;
-  type: string;
-  is_public: boolean;
-  created_at: string;
 }
 
 interface Token {
@@ -51,7 +43,7 @@ interface AuditEntry {
 
 const props = defineProps<{
   user: User;
-  recentTemplates: Template[];
+  recentTemplates: AdminTemplate[];
   accessTokens: Token[];
   recentAuditEntries: AuditEntry[];
 }>();

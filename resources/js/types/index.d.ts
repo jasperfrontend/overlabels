@@ -80,6 +80,39 @@ export interface User {
 
 export type BreadcrumbItemType = BreadcrumbItem;
 
+export interface AdminTemplate {
+  id: number;
+  name: string;
+  slug: string;
+  type: string;
+  is_public: boolean;
+  fork_count?: number;
+  view_count?: number;
+  created_at: string;
+  updated_at?: string;
+  owner?: { id: number; name: string; twitch_id: string | null } | null;
+}
+
+export interface OverlayTemplate {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  type: 'static' | 'alert';
+  is_public: boolean;
+  view_count: number;
+  fork_count: number;
+  has_controls?: boolean;
+  owner?: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
+  event_mappings?: { event_type: string }[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OverlayControl {
   id: number;
   overlay_template_id: number;

@@ -4,25 +4,7 @@ import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, Trash2Icon } from
 import AppLayout from '@/layouts/AppLayout.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
 import { Badge } from '@/components/ui/badge';
-import { BreadcrumbItem } from '@/types';
-
-interface Template {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  type: 'static' | 'alert';
-  is_public: boolean;
-  view_count: number;
-  fork_count: number;
-  owner?: {
-    id: number;
-    name: string;
-    avatar?: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 
 interface Kit {
   id: number;
@@ -37,7 +19,7 @@ interface Kit {
     name: string;
     avatar?: string;
   };
-  templates?: Template[];
+  templates?: OverlayTemplate[];
   forked_from?: {
     id: number;
     title: string;

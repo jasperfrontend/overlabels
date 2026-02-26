@@ -5,27 +5,10 @@ import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, Chevro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-
-interface Template {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  type: 'static' | 'alert';
-  is_public: boolean;
-  view_count: number;
-  fork_count: number;
-  owner?: {
-    id: number;
-    name: string;
-    avatar?: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import type { OverlayTemplate } from '@/types';
 
 const props = defineProps<{
-  template: Template;
+  template: OverlayTemplate;
   showOwner?: boolean;
   currentUserId?: number;
 }>();

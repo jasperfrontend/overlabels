@@ -8,13 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-
-interface Template {
-  id: number;
-  name: string;
-  type: string;
-  slug: string;
-}
+import type { OverlayTemplate } from '@/types';
 
 interface Kit {
   id: number;
@@ -28,7 +22,7 @@ interface Kit {
 
 interface Props {
   kit: Kit;
-  templates: Template[];
+  templates: OverlayTemplate[];
   selectedTemplateIds: number[];
 }
 

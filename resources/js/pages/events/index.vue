@@ -6,7 +6,7 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles, Radio, Save, Plus } from 'lucide-vue-next';
 import axios from 'axios';
-import type { BreadcrumbItem } from '@/types/index.js';
+import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 
 interface EventMapping {
   id?: number;
@@ -17,15 +17,9 @@ interface EventMapping {
   enabled: boolean;
 }
 
-interface Template {
-  id: number;
-  name: string;
-  description: string;
-}
-
 const props = defineProps<{
   mappings: EventMapping[];
-  alertTemplates: Template[];
+  alertTemplates: OverlayTemplate[];
   eventTypes: Record<string, string>;
   transitionTypes: Record<string, string>;
 }>();

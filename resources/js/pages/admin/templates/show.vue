@@ -5,22 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ref } from 'vue';
-
-interface Template {
-  id: number;
-  name: string;
-  slug: string;
-  type: string;
-  is_public: boolean;
-  fork_count: number;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  owner: { id: number; name: string; twitch_id: string | null } | null;
-}
+import type { AdminTemplate } from '@/types';
 
 const props = defineProps<{
-  template: Template;
+  template: AdminTemplate;
   forksCount: number;
   controlsCount: number;
   eventMappingsCount: number;

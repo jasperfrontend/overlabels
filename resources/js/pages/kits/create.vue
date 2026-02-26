@@ -9,16 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-
-interface Template {
-  id: number;
-  name: string;
-  type: string;
-  slug: string;
-}
+import type { OverlayTemplate } from '@/types';
 
 interface Props {
-  templates: Template[];
+  templates: OverlayTemplate[];
 }
 
 const props = defineProps<Props>();

@@ -4,21 +4,10 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
-
-interface Template {
-  id: number;
-  name: string;
-  slug: string;
-  type: string;
-  is_public: boolean;
-  fork_count: number;
-  view_count: number;
-  created_at: string;
-  owner: { id: number; name: string; twitch_id: string | null } | null;
-}
+import type { AdminTemplate } from '@/types';
 
 interface Paginator {
-  data: Template[];
+  data: AdminTemplate[];
   total: number;
   links: { url: string | null; label: string; active: boolean }[];
 }

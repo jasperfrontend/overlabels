@@ -6,15 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { PlusIcon, PencilIcon, Trash2Icon, CopyIcon } from 'lucide-vue-next';
 import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import type { OverlayControl } from '@/types';
-
-interface Template {
-  id: number;
-  slug: string;
-}
+import type { OverlayControl, OverlayTemplate } from '@/types';
 
 const props = defineProps<{
-  template: Template;
+  template: OverlayTemplate;
   initialControls: OverlayControl[];
 }>();
 

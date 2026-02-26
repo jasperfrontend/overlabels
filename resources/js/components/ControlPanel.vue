@@ -3,16 +3,11 @@ import { ref } from 'vue';
 import axios from 'axios';
 import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon } from 'lucide-vue-next';
-import type { OverlayControl } from '@/types';
+import type { OverlayControl, OverlayTemplate } from '@/types';
 import RefreshIcon from '@/components/RefreshIcon.vue';
 
-interface Template {
-  id: number;
-  slug: string;
-}
-
 const props = defineProps<{
-  template: Template;
+  template: OverlayTemplate;
   controls: OverlayControl[];
 }>();
 

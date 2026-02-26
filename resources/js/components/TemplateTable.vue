@@ -4,32 +4,10 @@ import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, Chevro
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-
-interface EventMapping {
-  event_type: string;
-}
-
-interface Template {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  type: 'static' | 'alert';
-  is_public: boolean;
-  view_count: number;
-  fork_count: number;
-  owner?: {
-    id: number;
-    name: string;
-    avatar?: string;
-  };
-  event_mappings?: EventMapping[];
-  created_at: string;
-  updated_at: string;
-}
+import type { OverlayTemplate } from '@/types';
 
 const props = defineProps<{
-  templates: Template[];
+  templates: OverlayTemplate[];
   showOwner?: boolean;
   showEvent?: boolean;
   currentUserId?: number;
@@ -59,23 +37,23 @@ const eventTypeLabels: Record<string, string> = {
   'stream.offline': 'Offline',
 };
 
-function firstEventMapping(t: Template) {
+function firstEventMapping(t: OverlayTemplate) {
   return t.event_mappings?.[0] ?? null;
 }
 
 // --- helpers ---
 
-function detailsHref(t: Template) {
+function detailsHref(t: OverlayTemplate) {
   return `/templates/${t.id}`;
 }
-function editHref(t: Template) {
+function editHref(t: OverlayTemplate) {
   return `/templates/${t.id}/edit`;
 }
-function previewHref(t: Template) {
+function previewHref(t: OverlayTemplate) {
   return `/overlay/${t.slug}/public`;
 }
 
-function isOwn(t: Template) {
+function isOwn(t: OverlayTemplate) {
   return !!props.currentUserId && t.owner?.id === props.currentUserId;
 }
 
@@ -120,13 +98,13 @@ async function copyLink(path: string) {
   }
 }
 
-function handleFork(t: Template) {
+function handleFork(t: OverlayTemplate) {
   if (confirm('Are you sure you want to fork this template to your own account?')) {
     router.post(`/templates/${t.id}/fork`);
   }
 }
 
-function handleDelete(t: Template) {
+function handleDelete(t: OverlayTemplate) {
   if (confirm(`Delete "${t.name}"? This cannot be undone.`)) {
     const returnUrl = window.location.pathname + window.location.search;
     router.delete(`/templates/${t.id}`, {

@@ -8,25 +8,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, FileText, Radio } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
-import type { AppPageProps } from '@/types';
-
-interface Template {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  type: 'static' | 'alert';
-  is_public: boolean;
-  view_count: number;
-  fork_count: number;
-  owner?: {
-    id: number;
-    name: string;
-    avatar?: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import type { AppPageProps, OverlayTemplate } from '@/types';
 
 interface TwitchEvent {
   id: number;
@@ -36,7 +18,7 @@ interface TwitchEvent {
 }
 
 defineProps<{
-  recentTemplates: Template[];
+  recentTemplates: OverlayTemplate[];
   recentEvents: TwitchEvent[];
 }>();
 

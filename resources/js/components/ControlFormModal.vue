@@ -11,16 +11,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import type { OverlayControl } from '@/types';
-
-interface Template {
-  id: number;
-  slug: string;
-}
+import type { OverlayControl, OverlayTemplate } from '@/types';
 
 const props = defineProps<{
   open: boolean;
-  template: Template;
+  template: OverlayTemplate;
   control?: OverlayControl | null;
 }>();
 

@@ -5,32 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import Heading from '@/components/Heading.vue';
 import TemplateList from '@/components/TemplateList.vue';
-import { Layers, Plus, Bell } from 'lucide-vue-next';
-
-interface Template {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  type: 'static' | 'alert';
-  is_public: boolean;
-  view_count: number;
-  fork_count: number;
-  owner?: {
-    id: number;
-    name: string;
-    avatar?: string;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import { Layers, Plus, Bell, MoveUpRight } from 'lucide-vue-next';
+import type { OverlayTemplate } from '@/types';
 
 defineProps<{
   userName: string;
   userId: number;
-  userAlertTemplates: Template[];
-  userStaticTemplates: Template[];
-  // communityTemplates: Template[];
+  userAlertTemplates: OverlayTemplate[];
+  userStaticTemplates: OverlayTemplate[];
   needsOnboarding: boolean;
   twitchId: string;
 }>();
@@ -56,23 +38,19 @@ const breadcrumbs = [
       </section>
       <!-- // Onboarding Wizard -->
 
-      <div v-else class="flex flex-col justify-between space-y-6">
+      <div v-else class="flex flex-col justify-between gap-6 space-y-6 lg:flex-row">
         <section v-if="userAlertTemplates.length > 0" class="flex-1">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <Bell class="mr-2 h-6 w-6" />
-              <Heading title="My alerts" />
-            </div>
-            <div class="flex items-center gap-2">
+          <div class="flex flex-col justify-between md:flex-row">
+            <Heading title="My alerts" />
+            <div class="flex-col-2 mt-2 flex gap-2 md:mt-0 md:flex-row">
               <a
-                class="btn btn-xs btn-chill flex items-center gap-2"
+                class="btn btn-sm btn-chill flex-1 items-center gap-2 md:flex-none"
                 :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
+                title="View all of your alerts"
               >
-                View all
-                <Bell class="h-4 w-4" />
+                <MoveUpRight class="h-4 w-4" />
               </a>
-              <a class="btn btn-xs btn-cancel flex items-center gap-2" :href="route('templates.create')">
-                New alert
+              <a class="btn btn-sm btn-primary flex-1 items-center gap-2 md:flex-none" :href="route('templates.create')" title="Create a new Alert">
                 <Plus class="h-4 w-4" />
               </a>
             </div>
@@ -81,25 +59,22 @@ const breadcrumbs = [
         </section>
 
         <section v-if="userStaticTemplates.length > 0" class="flex-1">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <Layers class="h-6 w-6 text-primary" />
-              <Heading title="My overlays" />
-            </div>
-            <div class="flex items-center gap-2">
+          <div class="flex flex-col justify-between md:flex-row">
+            <Heading title="My overlays" />
+            <div class="flex-col-2 mt-2 flex gap-2 md:mt-0 md:flex-row">
               <a
-                class="btn btn-xs btn-chill flex items-center gap-2"
+                class="btn btn-sm btn-chill flex-1 items-center gap-2 md:flex-none"
                 :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' })"
+                title="View all of your overlays"
               >
-                View all
-                <Layers class="h-4 w-4" />
+                <MoveUpRight class="h-4 w-4" />
               </a>
-              <a class="btn btn-xs btn-cancel flex items-center gap-2" :href="route('templates.create')">
-                New overlay
+              <a class="btn btn-sm btn-primary flex-1 items-center gap-2 md:flex-none" :href="route('templates.create')" title="Create a new Overlay">
                 <Plus class="h-4 w-4" />
               </a>
             </div>
           </div>
+
           <TemplateList :templates="userStaticTemplates" :current-user-id="userId" />
         </section>
       </div>
