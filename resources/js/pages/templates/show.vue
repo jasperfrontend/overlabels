@@ -105,42 +105,42 @@ const forkTitle = computed(() => {
             <Heading :title="props.template?.name" :description="props.template?.description" description-class="text-sm text-muted-foreground" />
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                <MoreVertical class="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-56">
-              <DropdownMenuItem @click="previewTemplate">
-                <ExternalLinkIcon class="mr-2 h-4 w-4" />
-                Preview
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="!template?.is_public" class="pointer-events-none text-xs text-muted-foreground">
-                Add token to URL: #YOUR_TOKEN_HERE
-              </DropdownMenuItem>
+          <div class="flex shrink-0 items-center gap-2">
+            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary">
+              <PencilIcon class="mr-2 h-4 w-4" />
+              Edit
+            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                  <MoreVertical class="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="w-56">
+                <DropdownMenuItem @click="previewTemplate">
+                  <ExternalLinkIcon class="mr-2 h-4 w-4" />
+                  Preview
+                </DropdownMenuItem>
+                <DropdownMenuItem v-if="!template?.is_public" class="pointer-events-none text-xs text-muted-foreground">
+                  Add token to URL: #YOUR_TOKEN_HERE
+                </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
 
-              <DropdownMenuItem v-if="canEdit" as-child>
-                <a :href="route('templates.edit', template)">
-                  <PencilIcon class="mr-2 h-4 w-4" />
-                  Edit
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="forkTemplate">
-                <SplitIcon class="mr-2 h-4 w-4" />
-                Fork
-              </DropdownMenuItem>
+                <DropdownMenuItem @click="forkTemplate">
+                  <SplitIcon class="mr-2 h-4 w-4" />
+                  Fork
+                </DropdownMenuItem>
 
-              <DropdownMenuSeparator v-if="canEdit" />
+                <DropdownMenuSeparator v-if="canEdit" />
 
-              <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
-                <TrashIcon class="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+                  <TrashIcon class="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 

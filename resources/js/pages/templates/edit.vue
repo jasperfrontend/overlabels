@@ -192,6 +192,11 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
+          <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
+            <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
+            <Save v-else class="mr-2 h-4 w-4" />
+            Save
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
               <button class="btn btn-sm btn-secondary px-2" title="More actions">
@@ -222,11 +227,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
-            <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
-            <Save v-else class="mr-2 h-4 w-4" />
-            Save
-          </button>
         </div>
       </div>
 
