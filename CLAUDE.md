@@ -42,7 +42,7 @@ php artisan optimize     # Cache configuration
 This app is being built on a Windows 10 machine. Do NOT use linux commands for file manipulation and handling, but use the
 Windows equivalents.
 
-PHP.exe is located at `C:\Users\jmstu\.config\herd\bin\php84.bat`
+`php` is available on PATH — use `php artisan ...` directly.
 
 This project uses Postgres.
 

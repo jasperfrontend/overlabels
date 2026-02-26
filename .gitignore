@@ -25,3 +25,13 @@ yarn-error.log
 /.vscode
 /.zed
 *.exe
+/tests/Feature/Admin/AdminAccessTest.php
+/tests/Feature/Admin/AdminTemplateTest.php
+/tests/Feature/Admin/AdminUserTest.php
+/tests/Feature/OnboardNewUserJobTest.php
+/tests/Feature/OverlayControlTest.php
+/tests/Unit/.gitkeep
+/tests/Unit/GhostUserTest.php
+/tests/Unit/OverlayControlSanitizationTest.php
+/.env.testing
+/nul

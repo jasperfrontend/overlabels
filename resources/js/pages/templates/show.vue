@@ -23,8 +23,6 @@ import {
   FileCode2Icon,
   CodeIcon,
   PaletteIcon,
-  HelpCircle,
-  EllipsisVerticalIcon,
   ShieldCheck,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
@@ -155,7 +153,8 @@ const forkTitle = computed(() => {
             <small
               class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
               @click="copyToClipboard(publicUrl, 'Public URL')"
-            >Click to copy</small>
+              >Click to copy</small
+            >
             <div class="mt-4 flex items-center">
               <input :value="publicUrl" id="public-url" readonly class="peer input-border" />
               <button
@@ -166,13 +165,42 @@ const forkTitle = computed(() => {
               </button>
             </div>
           </div>
+
+          <div v-else>
+            <div class="flex flex-row">
+              <div>
+                <label for="public-url"> OBS Overlay URL</label>
+                <small
+                  class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
+                  @click="copyToClipboard(authUrl, 'Public URL')"
+                  >Click to copy</small
+                >
+              </div>
+              <div class="ml-auto flex flex-row gap-2 text-sm text-violet-400"><ShieldCheck class="mt-0.5 h-4 w-4" /> Private Overlay</div>
+            </div>
+            <div class="mt-4 flex items-center">
+              <input :value="authUrl" id="public-url" readonly class="peer input-border" />
+              <button
+                @click="copyToClipboard(authUrl, 'Public URL')"
+                class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
           <p class="mt-4 text-sm text-muted-foreground">
-            Before use in OBS, replace <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">public</code> in this OBS Overlay URL with
+            Before use in OBS, replace
+            <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground" v-if="props.template?.is_public">public</code
+            ><code v-else class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> in this Private OBS Overlay URL with
             your own <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a> to activate the
             overlay:
             <TooltipBase tt-content-class="tooltip-base tooltip-content" align="top" side="top">
               <template #trigger>
-                <small class="relative  rounded-full bg-background p-1 px-2 text-xs transition-colors text-accent-foreground hover:bg-background/50 cursor-help">Example</small>
+                <small
+                  class="relative cursor-help rounded-full bg-background p-1 px-2 text-xs text-accent-foreground transition-colors hover:bg-background/50"
+                  >Example</small
+                >
               </template>
               <template #content>
                 <p class="text-sm">
@@ -194,7 +222,7 @@ const forkTitle = computed(() => {
             :class="[
               'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
               index === 0 && 'rounded-tl-sm',
-              mainTab === tab.key ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
+              mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
             ]"
           >
             <component :is="tab.icon" class="h-4 w-4" />
@@ -238,7 +266,7 @@ const forkTitle = computed(() => {
                 {{ props.template?.fork_parent.name }}
               </Link>
             </div>
-            <div>
+            <div class="ml-auto">
               <TooltipBase tt-content-class="tooltip-base tooltip-content" align="center" side="right">
                 <template #trigger>
                   <span class="font-medium">

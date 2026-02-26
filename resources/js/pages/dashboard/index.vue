@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import TemplateTable from '@/components/TemplateTable.vue';
-import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Layers, Plus, Bell, EyeIcon } from 'lucide-vue-next';
+import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import Heading from '@/components/Heading.vue';
+import TemplateList from '@/components/TemplateList.vue';
+import { Layers, Plus, Bell } from 'lucide-vue-next';
 
 interface Template {
   id: number;
@@ -30,7 +30,7 @@ defineProps<{
   userId: number;
   userAlertTemplates: Template[];
   userStaticTemplates: Template[];
-  communityTemplates: Template[];
+  // communityTemplates: Template[];
   needsOnboarding: boolean;
   twitchId: string;
 }>();
@@ -54,57 +54,56 @@ const breadcrumbs = [
       <section v-if="needsOnboarding" class="mb-6">
         <OnboardingWizard :twitch-id="twitchId" />
       </section>
-      <div v-else class="space-y-6">
-        <section v-if="userAlertTemplates.length > 0" class="space-y-4">
+      <!-- // Onboarding Wizard -->
+
+      <div v-else class="flex flex-col justify-between space-y-6">
+        <section v-if="userAlertTemplates.length > 0" class="flex-1">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Bell class="mr-2 h-6 w-6" />
-              <Heading title="My event alerts" />
+              <Heading title="My alerts" />
             </div>
             <div class="flex items-center gap-2">
               <a
-                class="btn btn-sm btn-chill flex items-center gap-2"
+                class="btn btn-xs btn-chill flex items-center gap-2"
                 :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
               >
-                My event alerts
+                View all
                 <Bell class="h-4 w-4" />
               </a>
-              <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
-                New event alert
+              <a class="btn btn-xs btn-cancel flex items-center gap-2" :href="route('templates.create')">
+                New alert
                 <Plus class="h-4 w-4" />
               </a>
             </div>
           </div>
-          <TemplateTable :templates="userAlertTemplates" :current-user-id="userId" />
+          <TemplateList :templates="userAlertTemplates" :current-user-id="userId" />
         </section>
 
-        <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
-
-        <!-- My Static Templates Section -->
-        <section v-if="userStaticTemplates.length > 0" class="space-y-6">
+        <section v-if="userStaticTemplates.length > 0" class="flex-1">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Layers class="h-6 w-6 text-primary" />
-              <h2 class="text-xl font-semibold">My overlays</h2>
+              <Heading title="My overlays" />
             </div>
             <div class="flex items-center gap-2">
               <a
-                class="btn btn-sm btn-chill flex items-center gap-2"
+                class="btn btn-xs btn-chill flex items-center gap-2"
                 :href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' })"
               >
-                My static overlays
+                View all
                 <Layers class="h-4 w-4" />
               </a>
-              <a class="btn btn-sm btn-cancel flex items-center gap-2" :href="route('templates.create')">
-                New static overlay
+              <a class="btn btn-xs btn-cancel flex items-center gap-2" :href="route('templates.create')">
+                New overlay
                 <Plus class="h-4 w-4" />
               </a>
             </div>
           </div>
-          <TemplateTable :templates="userStaticTemplates" :current-user-id="userId" />
+          <TemplateList :templates="userStaticTemplates" :current-user-id="userId" />
         </section>
-
-      </div> <!-- end onboarding pivot -->
+      </div>
+      <!-- end onboarding pivot -->
 
       <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />
 

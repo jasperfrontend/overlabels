@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link, router } from '@inertiajs/vue3';
-import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, ChevronRight, LinkIcon, Trash2 } from 'lucide-vue-next';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+import { ChevronRight, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 interface EventMapping {
   event_type: string;
@@ -13,7 +12,7 @@ interface Template {
   id: number;
   slug: string;
   name: string;
-  description: string | null;
+  description: string | undefined;
   type: 'static' | 'alert';
   is_public: boolean;
   view_count: number;
@@ -137,100 +136,17 @@ function handleDelete(t: Template) {
 </script>
 
 <template>
-  <Table>
-    <TableHeader>
-      <TableRow class="hover:bg-transparent">
-        <TableHead>Name</TableHead>
-        <TableHead class="hidden lg:table-cell">Description</TableHead>
-        <TableHead class="w-[90px]">Type</TableHead>
-        <TableHead v-if="showEvent" class="w-[110px]">Event</TableHead>
-        <TableHead class="w-[90px]">Visibility</TableHead>
-        <TableHead v-if="showOwner" class="hidden md:table-cell">Owner</TableHead>
-        <TableHead class="hidden w-[70px] text-right sm:table-cell">Views</TableHead>
-        <TableHead class="hidden w-[70px] text-right sm:table-cell">Forks</TableHead>
-        <TableHead class="hidden w-[130px] md:table-cell">Updated</TableHead>
-        <TableHead class="w-[120px] text-right">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-
-    <TableBody>
-      <TableRow v-for="t in templates" :key="t.id" class="group">
-        <!-- Name -->
-        <TableCell class="cursor-pointer font-medium" @click="router.visit(detailsHref(t))">
-          <Link :href="detailsHref(t)" class="transition-colors hover:text-accent-foreground/80">
-            {{ t.name }}
-          </Link>
-        </TableCell>
-
-        <!-- Description -->
-        <TableCell class="hidden max-w-[280px] lg:table-cell">
-          <span
-            v-if="t.description"
-            class="line-clamp-1 text-muted-foreground opacity-20 transition-opacity group-hover:opacity-100"
-            :title="t.description"
-          >
-            {{ t.description }}
-          </span>
-          <span v-else class="text-muted-foreground/50 italic opacity-20 transition-opacity group-hover:opacity-100">None</span>
-        </TableCell>
-
-        <!-- Type -->
-        <TableCell>
-          <Badge variant="secondary" class="capitalize opacity-20 group-hover:opacity-100">{{ t.type }}</Badge>
-        </TableCell>
-
-        <!-- Event -->
-        <TableCell v-if="showEvent">
-          <div v-if="firstEventMapping(t)" class="flex items-center gap-1.5 opacity-20 group-hover:opacity-100">
-            <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
-            <span class="text-sm text-muted-foreground">{{
-              eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type
-            }}</span>
-          </div>
-          <span v-else class="text-muted-foreground/50 opacity-20 group-hover:opacity-100">—</span>
-        </TableCell>
-
-        <!-- Visibility -->
-        <TableCell>
-          <Badge :variant="t.is_public ? 'outline' : 'destructive'" class="opacity-20 group-hover:opacity-100">
-            {{ t.is_public ? 'Public' : 'Private' }}
-          </Badge>
-        </TableCell>
-
-        <!-- Owner -->
-        <TableCell v-if="showOwner" class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-          <div v-if="t.owner" class="flex items-center gap-2">
-            <img v-if="t.owner.avatar" :src="t.owner.avatar" :alt="t.owner.name" class="h-5 w-5 rounded-full" />
-            <span class="truncate text-sm">{{ t.owner.name }}</span>
-          </div>
-        </TableCell>
-
-        <!-- Views -->
-        <TableCell class="hidden text-right tabular-nums opacity-20 group-hover:opacity-100 sm:table-cell">
-          <div class="flex items-center justify-end gap-1 text-muted-foreground" :title="`${t.view_count} views`">
-            <Eye class="h-3.5 w-3.5" />
-            <span>{{ compact(t.view_count) }}</span>
-          </div>
-        </TableCell>
-
-        <!-- Forks -->
-        <TableCell class="hidden text-right tabular-nums sm:table-cell">
-          <div class="flex items-center justify-end gap-1 text-muted-foreground opacity-20 group-hover:opacity-100" :title="`${t.fork_count} forks`">
-            <GitFork class="h-3.5 w-3.5" />
-            <span>{{ compact(t.fork_count) }}</span>
-          </div>
-        </TableCell>
-
-        <!-- Updated -->
-        <TableCell class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-          <div class="flex items-center gap-1 text-xs text-muted-foreground" :title="formatDateFull(t.updated_at)">
-            <Clock class="h-3.5 w-3.5 shrink-0" />
-            <span class="truncate">{{ relativeTime(t.updated_at) }}</span>
-          </div>
-        </TableCell>
+  <div class="my-4 w-auto rounded-sm border bg-background">
+    <div v-for="t in templates" :key="t.id" class="group text-sm">
+      <Link
+        :href="detailsHref(t)"
+        class="flex flex-row justify-between p-4 transition-colors hover:bg-sidebar-accent"
+        :class="{ 'rounded-t-sm': templates.indexOf(t) === 0 }"
+      >
+        <Heading :title="t.name" title-class="text-md" :description="t.description" />
 
         <!-- Actions -->
-        <TableCell class="text-right opacity-20 group-hover:opacity-100">
+        <div class="self-center text-right opacity-20 group-hover:opacity-100">
           <div class="flex items-center justify-end gap-1">
             <!-- Primary action -->
             <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
@@ -299,8 +215,8 @@ function handleDelete(t: Template) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+        </div>
+      </Link>
+    </div>
+  </div>
 </template>
