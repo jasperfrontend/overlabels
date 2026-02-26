@@ -11,12 +11,12 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
-import { Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, CircleAlert, SlidersHorizontal, CopyIcon } from 'lucide-vue-next';
+import { Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, MoreVertical, SlidersHorizontal, CopyIcon } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import TooltipBase from '@/components/TooltipBase.vue';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface TemplateTag {
   display_tag: string;
@@ -192,26 +192,36 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
-          <a v-if="template?.is_public" @click.prevent="previewTemplate" href="#" class="btn btn-cancel">
-            Preview <ExternalLink class="ml-2 h-4 w-4" />
-          </a>
-          <TooltipBase v-else tt-content-class="tooltip-base tooltip-content" align="start" side="left">
-            <template #trigger>
-              <a @click.prevent="previewTemplate" href="#" class="btn btn-private"> Preview <ExternalLink class="ml-2 h-4 w-4" /> </a>
-            </template>
-            <template #content>
-              <div class="space-y-1 text-sm">
-                <div class="flex items-center space-x-2">
-                  <CircleAlert class="mr-2 h-6 w-6 text-violet-400" />
-                  <h3 class="text-xl font-bold">Don't forget</h3>
-                </div>
-                Add your token to the end of the URL like this:<br />
-                <code class="text-violet-400/80">/overlay/your-template-slug/#YOUR_TOKEN_HERE</code>
-              </div>
-            </template>
-          </TooltipBase>
-          <button @click="deleteTemplate" class="btn btn-danger">Delete <Trash class="ml-2 h-4 w-4" /></button>
-          <button @click="forkTemplate" class="btn btn-warning">Fork <Split class="ml-2 h-4 w-4" /></button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                <MoreVertical class="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuItem @click="previewTemplate">
+                <ExternalLink class="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="!template?.is_public" class="pointer-events-none text-xs text-muted-foreground">
+                Add token to URL: #YOUR_TOKEN_HERE
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem @click="forkTemplate">
+                <Split class="mr-2 h-4 w-4" />
+                Fork
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem class="text-destructive focus:text-destructive" @click="deleteTemplate">
+                <Trash class="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
