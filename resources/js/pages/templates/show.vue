@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TooltipBase from '@/components/TooltipBase.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
@@ -11,8 +10,6 @@ import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
 import {
-  GitForkIcon,
-  EyeIcon,
   SplitIcon,
   ExternalLinkIcon,
   PencilIcon,
@@ -24,8 +21,9 @@ import {
   FileCode2Icon,
   CodeIcon,
   PaletteIcon,
-  ShieldCheck,
   ChevronDownIcon,
+  CopyIcon,
+  InfoIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
@@ -101,116 +99,91 @@ const forkTitle = computed(() => {
     />
     <div class="p-4">
       <!-- Header -->
-      <div class="mb-6">
-        <div class="flex items-start justify-between">
-          <div>
-            <Heading :title="props.template?.name" :description="props.template?.description" description-class="text-sm text-muted-foreground" />
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
+            <span
+              class="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium"
+              :class="template?.is_public
+                ? 'border-green-500/40 text-green-500 dark:text-green-400'
+                : 'border-violet-500/40 text-violet-500 dark:text-violet-400'"
+            >
+              {{ template?.is_public ? 'Public' : 'Private' }}
+            </span>
           </div>
-
-          <div class="flex shrink-0 items-center gap-2">
-            <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary">
-              <PencilIcon class="mr-2 h-4 w-4" />
-              Edit
-            </a>
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                  <MoreVertical class="h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-56">
-                <DropdownMenuItem @click="previewTemplate">
-                  <ExternalLinkIcon class="mr-2 h-4 w-4" />
-                  Preview
-                </DropdownMenuItem>
-                <DropdownMenuItem v-if="!template?.is_public" class="pointer-events-none text-xs text-muted-foreground">
-                  Add token to URL: #YOUR_TOKEN_HERE
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem @click="forkTemplate">
-                  <SplitIcon class="mr-2 h-4 w-4" />
-                  Fork
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator v-if="canEdit" />
-
-                <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
-                  <TrashIcon class="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <p v-if="template?.description" class="mt-1 text-sm text-muted-foreground">{{ template?.description }}</p>
+          <div v-if="template?.fork_parent" class="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <SplitIcon class="h-3 w-3 shrink-0" />
+            <span>Forked from</span>
+            <Link :href="route('templates.show', template?.fork_parent)" class="text-foreground/60 transition-colors hover:text-foreground hover:underline" :title="forkTitle">
+              {{ template?.fork_parent.name }}
+            </Link>
           </div>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+          <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary">
+            <PencilIcon class="mr-2 h-4 w-4" />
+            Edit
+          </a>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                <MoreVertical class="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuItem @click="previewTemplate">
+                <ExternalLinkIcon class="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem @click="forkTemplate">
+                <SplitIcon class="mr-2 h-4 w-4" />
+                Fork
+              </DropdownMenuItem>
+              <DropdownMenuSeparator v-if="canEdit" />
+              <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+                <TrashIcon class="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <!-- URLs Section -->
-      <div class="mb-6 rounded-sm border border-sidebar bg-sidebar-accent p-4">
-        <div class="space-y-3">
-          <div v-if="props.template?.is_public">
-            <label for="public-url">OBS Overlay URL</label>
-            <small
-              class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
-              @click="copyToClipboard(publicUrl, 'Public URL')"
-              >Click to copy</small
-            >
-            <div class="mt-4 flex items-center">
-              <input :value="publicUrl" id="public-url" readonly class="peer input-border" />
-              <button
-                @click="copyToClipboard(publicUrl, 'Public URL')"
-                class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-
-          <div v-else>
-            <div class="flex flex-row">
-              <div>
-                <label for="public-url"> OBS Overlay URL</label>
-                <small
-                  class="relative -top-0.5 ml-2 cursor-pointer rounded-full bg-background p-1 px-2 text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
-                  @click="copyToClipboard(authUrl, 'Public URL')"
-                  >Click to copy</small
-                >
-              </div>
-              <div class="ml-auto flex flex-row gap-2 text-sm text-violet-400"><ShieldCheck class="mt-0.5 h-4 w-4" /> Private Overlay</div>
-            </div>
-            <div class="mt-4 flex items-center">
-              <input :value="authUrl" id="public-url" readonly class="peer input-border" />
-              <button
-                @click="copyToClipboard(authUrl, 'Public URL')"
-                class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-
-          <p class="mt-4 text-sm text-muted-foreground">
-            Before use in OBS, replace
-            <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground" v-if="props.template?.is_public">public</code
-            ><code v-else class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> in this Private OBS Overlay URL with
-            your own <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a> to activate the
-            overlay:
-            <TooltipBase tt-content-class="tooltip-base tooltip-content" align="top" side="top">
-              <template #trigger>
-                <small
-                  class="relative cursor-help rounded-full bg-background p-1 px-2 text-xs text-accent-foreground transition-colors hover:bg-background/50"
-                  >Example</small
-                >
-              </template>
-              <template #content>
-                <p class="text-sm">
-                  <code class="rounded-sm bg-accent p-0.5 px-1 text-accent-foreground">{{ authUrl }}</code>
-                </p>
-              </template>
-            </TooltipBase>
-          </p>
+      <!-- OBS URL — compact row -->
+      <div class="mb-5 flex items-center gap-2">
+        <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">OBS URL</span>
+        <div class="flex min-w-0 flex-1 items-center">
+          <input
+            :value="template?.is_public ? publicUrl : authUrl"
+            readonly
+            class="peer input-border min-w-0 flex-1 rounded-r-none"
+          />
+          <button
+            @click="copyToClipboard(template?.is_public ? publicUrl : authUrl, 'OBS URL')"
+            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
+            title="Copy URL"
+          >
+            <CopyIcon class="h-4 w-4" />
+          </button>
         </div>
+        <TooltipBase v-if="!template?.is_public" tt-content-class="tooltip-base tooltip-content" align="end" side="bottom">
+          <template #trigger>
+            <button class="shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground" title="How to use this URL">
+              <InfoIcon class="h-4 w-4" />
+            </button>
+          </template>
+          <template #content>
+            <div class="max-w-xs space-y-2 text-sm">
+              <p class="font-semibold">Activate this overlay</p>
+              <p>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> with your <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">access token</a>.</p>
+              <code class="block break-all rounded bg-accent px-2 py-1 text-xs text-accent-foreground">{{ authUrl }}</code>
+            </div>
+          </template>
+        </TooltipBase>
       </div>
 
       <!-- Main Tabs (owner only) -->
@@ -245,44 +218,6 @@ const forkTitle = computed(() => {
 
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
-          <!-- Meta Information -->
-          <div class="mt-2 mb-5.5 flex items-center space-x-6 text-sm text-muted-foreground">
-            <div class="flex items-center">
-              <img :src="props.template?.owner.avatar" :alt="props.template?.owner.name" class="mr-2 size-5 rounded-full" />
-              <span>by {{ props.template?.owner.name }}</span>
-            </div>
-            <div>
-              <EyeIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
-              <span class="font-medium">{{ props.template?.view_count }}</span>
-              <span class="ml-1">{{ props.template?.view_count === 1 ? 'view' : 'views' }}</span>
-            </div>
-            <div>
-              <GitForkIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
-              <span class="font-medium">{{ props.template?.forks_count }}</span> <span class="ml-1">forks</span>
-            </div>
-            <div v-if="props.template?.fork_parent">
-              <SplitIcon class="mr-1 inline-block h-4 w-4 text-sidebar-foreground" />
-              Forked from
-              <Link :href="route('templates.show', props.template?.fork_parent)" class="m-1 text-foreground/70 hover:underline" :title="forkTitle">
-                {{ props.template?.fork_parent.name }}
-              </Link>
-            </div>
-            <div class="ml-auto">
-              <TooltipBase tt-content-class="tooltip-base tooltip-content" align="center" side="right">
-                <template #trigger>
-                  <span class="font-medium">
-                    <ShieldCheck class="inline-block h-4 w-4 text-sidebar-foreground" />
-                    {{ props.template?.is_public ? 'Public' : 'Private' }}
-                  </span>
-                </template>
-                <template #content>
-                  <span class="text-xl font-bold">{{ props.template?.is_public ? 'Public' : 'Private' }} template</span><br />
-                  Private templates can only be viewed by you.<br />Public templates can be viewed by anyone.
-                </template>
-              </TooltipBase>
-            </div>
-          </div>
-
           <button
             class="mb-2 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-sidebar px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
             @click="showCode = !showCode"
