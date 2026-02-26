@@ -25,6 +25,7 @@ import {
   CodeIcon,
   PaletteIcon,
   ShieldCheck,
+  ChevronDownIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
@@ -48,6 +49,7 @@ const mainTabs = [
 
 const activeTab = ref('html');
 const mainTab = ref<'overview' | 'controls' | 'panel'>('overview');
+const showCode = ref(false);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
 // Use the template actions composable
@@ -77,7 +79,7 @@ const copyToClipboard = (url: string, shownValue: string) => {
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: `Editing: ${props.template?.name}`,
+    title: `Viewing: ${props.template?.name}`,
     href: '/templates/*',
   },
 ];
@@ -88,7 +90,7 @@ const forkTitle = computed(() => {
 </script>
 
 <template>
-  <Head :title="`Editing: ${props.template?.name}`" />
+  <Head :title="`Viewing: ${props.template?.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <ForkImportWizard
@@ -281,7 +283,19 @@ const forkTitle = computed(() => {
             </div>
           </div>
 
-          <div class="flex min-h-[30vh] overflow-hidden border border-border">
+          <button
+            class="flex w-full items-center gap-2 rounded-sm border border-border bg-sidebar px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
+            @click="showCode = !showCode"
+          >
+            <CodeIcon class="h-4 w-4 shrink-0" />
+            <span>View source</span>
+            <ChevronDownIcon
+              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"
+              :class="{ 'rotate-180': showCode }"
+            />
+          </button>
+
+          <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-border border-b-border">
             <!-- File tabs sidebar -->
             <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
               <button
