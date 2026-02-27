@@ -40,16 +40,29 @@ class EventTemplateMapping extends Model
     ];
 
     /**
-     * Available transition types
+     * Available transition types for enter animations
      */
-    public const TRANSITION_TYPES = [
-        'fade'         => 'Fade',
-        'scale'        => 'Scale',
-        'slide-bottom' => 'Slide ↓ from bottom',
-        'slide-top'    => 'Slide ↑ from top',
-        'slide-left'   => 'Slide ← from left',
-        'slide-right'  => 'Slide → from right',
-        'none'         => 'None',
+    public const TRANSITION_IN_TYPES = [
+        'fade'         => 'Fade in',
+        'scale'        => 'Scale in',
+        'slide-bottom' => 'Slide up from bottom',
+        'slide-top'    => 'Slide down from top',
+        'slide-left'   => 'Slide in from left',
+        'slide-right'  => 'Slide in from right',
+        'none'         => 'None (instant)',
+    ];
+
+    /**
+     * Available transition types for exit animations
+     */
+    public const TRANSITION_OUT_TYPES = [
+        'fade'         => 'Fade out',
+        'scale'        => 'Scale out',
+        'slide-bottom' => 'Slide down to bottom',
+        'slide-top'    => 'Slide up to top',
+        'slide-left'   => 'Slide out to left',
+        'slide-right'  => 'Slide out to right',
+        'none'         => 'None (instant)',
     ];
 
     /**

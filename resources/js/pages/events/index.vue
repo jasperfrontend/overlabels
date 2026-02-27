@@ -22,7 +22,8 @@ const props = defineProps<{
   mappings: EventMapping[];
   alertTemplates: OverlayTemplate[];
   eventTypes: Record<string, string>;
-  transitionTypes: Record<string, string>;
+  transitionInTypes: Record<string, string>;
+  transitionOutTypes: Record<string, string>;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -211,7 +212,7 @@ const saveAllMappings = async () => {
                 <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
                 <span class="text-sidebar-foreground/80">•</span>
                 <span class="text-sidebar-foreground/80">
-                  in: {{ transitionTypes[mapping.transition_in] }} / out: {{ transitionTypes[mapping.transition_out] }}
+                  in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
                 </span>
               </div>
             </div>
@@ -282,7 +283,7 @@ const saveAllMappings = async () => {
                   v-model="mapping.transition_in"
                   class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                 >
-                  <option v-for="(label, value) in transitionTypes" :key="value" :value="value">
+                  <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
                     {{ label }}
                   </option>
                 </select>
@@ -295,7 +296,7 @@ const saveAllMappings = async () => {
                   v-model="mapping.transition_out"
                   class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                 >
-                  <option v-for="(label, value) in transitionTypes" :key="value" :value="value">
+                  <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
                     {{ label }}
                   </option>
                 </select>
@@ -307,8 +308,8 @@ const saveAllMappings = async () => {
               <p class="text-sm">
                 <span class="font-medium">Preview:</span>
                 When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the "{{ getTemplateName(mapping.template_id) }}" alert will
-                enter as <strong>{{ transitionTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
-                then exit as <strong>{{ transitionTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
+                enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
+                then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
               </p>
             </div>
           </div>

@@ -58,7 +58,8 @@ class EventTemplateMappingController extends Controller
             'mappings' => $allMappings,
             'alertTemplates' => $alertTemplates,
             'eventTypes' => $eventTypes,
-            'transitionTypes' => EventTemplateMapping::TRANSITION_TYPES,
+            'transitionInTypes' => EventTemplateMapping::TRANSITION_IN_TYPES,
+            'transitionOutTypes' => EventTemplateMapping::TRANSITION_OUT_TYPES,
         ]);
     }
 
@@ -71,8 +72,8 @@ class EventTemplateMappingController extends Controller
             'event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
             'template_id' => 'nullable|exists:overlay_templates,id',
             'duration_ms' => 'nullable|integer|min:1000|max:30000',
-            'transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
-            'transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+            'transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_IN_TYPES)),
+            'transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_OUT_TYPES)),
             'enabled' => 'nullable|boolean',
         ]);
 
@@ -118,8 +119,8 @@ class EventTemplateMappingController extends Controller
                 'mappings.*.event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
                 'mappings.*.template_id' => 'nullable|integer|exists:overlay_templates,id',
                 'mappings.*.duration_ms' => 'nullable|integer|min:1000|max:30000',
-                'mappings.*.transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
-                'mappings.*.transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+                'mappings.*.transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_IN_TYPES)),
+                'mappings.*.transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_OUT_TYPES)),
                 'mappings.*.enabled' => 'nullable|boolean',
             ]);
 
