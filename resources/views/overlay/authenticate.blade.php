@@ -98,6 +98,38 @@
             from { transform: translateY(-100%); opacity: 0; }
             to   { transform: translateY(0);     opacity: 1; }
         }
+
+        /* ── Alert transitions ────────────────────────────────────── */
+
+        .fade-enter-active,
+        .fade-leave-active  { transition: opacity 0.4s ease; }
+        .fade-enter-from,
+        .fade-leave-to      { opacity: 0; }
+
+        .scale-enter-active,
+        .scale-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .scale-enter-from,
+        .scale-leave-to     { opacity: 0; transform: scale(0.85); }
+
+        .slide-bottom-enter-active,
+        .slide-bottom-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+        .slide-bottom-enter-from,
+        .slide-bottom-leave-to     { opacity: 0; transform: translateY(60px); }
+
+        .slide-top-enter-active,
+        .slide-top-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+        .slide-top-enter-from,
+        .slide-top-leave-to     { opacity: 0; transform: translateY(-60px); }
+
+        .slide-left-enter-active,
+        .slide-left-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+        .slide-left-enter-from,
+        .slide-left-leave-to     { opacity: 0; transform: translateX(-60px); }
+
+        .slide-right-enter-active,
+        .slide-right-leave-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+        .slide-right-enter-from,
+        .slide-right-leave-to     { opacity: 0; transform: translateX(60px); }
     </style>
 
 </head>

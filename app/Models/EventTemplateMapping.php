@@ -42,10 +42,13 @@ class EventTemplateMapping extends Model
      * Available transition types
      */
     public const TRANSITION_TYPES = [
-        'fade' => 'Fade',
-        'slide' => 'Slide',
-        'scale' => 'Scale',
-        'none' => 'None',
+        'fade'         => 'Fade',
+        'scale'        => 'Scale',
+        'slide-bottom' => 'Slide ↓ from bottom',
+        'slide-top'    => 'Slide ↑ from top',
+        'slide-left'   => 'Slide ← from left',
+        'slide-right'  => 'Slide → from right',
+        'none'         => 'None',
     ];
 
     /**
