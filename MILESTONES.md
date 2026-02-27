@@ -19,6 +19,21 @@ Completed milestones are kept here as a record of intent vs. reality.
 
 ---
 
+## Milestone 1.5 — Separate In/Out Alert Transitions
+> *Alerts should be able to enter one way and leave another. A hard prerequisite before accepting*
+> *external event sources — every new source will want its own transition feel.*
+
+- Replace the single `transition_type` column on `event_template_mappings` with `transition_in` and `transition_out`
+- Migration with a default of `fade` for both new columns; drop `transition_type`
+- Backend validation and broadcast updated to send `transition_in` / `transition_out`
+- `OverlayRenderer.vue` uses `:css="false"` + GSAP or pure CSS `@keyframes` — or a dynamic computed transition name for enter vs. leave
+- UI: two separate selects (Enter animation / Exit animation) in the alert mapping form
+- Available options: `fade`, `scale`, `slide-top`, `slide-bottom`, `slide-left`, `slide-right`, `none`
+- No Animate.css — all transitions are hand-rolled in the overlay shell CSS
+- Existing `none` behaviour (instant cut) must still work correctly for both enter and exit independently
+
+---
+
 ## Milestone 2 — External Systems: Foundations
 > *Build the integration layer BEFORE integrating anything. The goal of this milestone is a clean,*
 > *extensible architecture that makes MS3, MS4+, and any future system a "plug in, not rebuild" job.*
