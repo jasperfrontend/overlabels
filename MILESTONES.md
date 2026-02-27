@@ -19,7 +19,7 @@ Completed milestones are kept here as a record of intent vs. reality.
 
 ---
 
-## Milestone 1.5 — Separate In/Out Alert Transitions
+## ✅ Milestone 1.5 — Separate In/Out Alert Transitions
 > *Alerts should be able to enter one way and leave another. A hard prerequisite before accepting*
 > *external event sources — every new source will want its own transition feel.*
 
@@ -108,5 +108,20 @@ Completed milestones are kept here as a record of intent vs. reality.
 > *lol*
 
 ---
+
+## Sidequests
+> *Optional features that don't belong to a specific milestone. Too good to forget, too niche to prioritise.*
+
+### Sidequest: YouTube Quota Dashboard
+YouTube's Live Chat API is polling-only (no webhooks, no websockets) and costs 5 quota units per call against a 10,000 unit/day limit — shared across the entire app unless users bring their own OAuth credentials. A "YouTube bot" is just an OAuth'd account hammering this same endpoint; there is no separate protocol.
+
+The idea:
+- Use the `stream.online` EventSub event to start a polling job and `stream.offline` to kill it
+- Users set their own poll interval (5s / 10s / 30s) with a live preview: "at this rate you get ~X hours of coverage today"
+- A dashboard widget shows remaining quota units, current burn rate, and estimated time until the midnight Pacific reset
+- Users with high coverage needs register their own YouTube OAuth app (like Twitch's client ID/secret) to get their own quota bucket
+
+Captures: superchats (with amount, currency, message), memberships (new + gifted).
+Notably: nobody surfaces API quota to users in a meaningful way — this would feel crafted.
 
 *Last updated: February 2026*
