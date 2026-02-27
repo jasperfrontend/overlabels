@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## February 27th, 2026
+- **Onboarding now captures users at exactly the right moment.** When you generate your token during setup, the wizard immediately constructs your complete OBS Browser Source URL — token already embedded — with a one-click copy button. No more explaining what a URL hash is or asking users to manually paste a token into the right spot.
+- **New interstitial warning step before token generation.** A dedicated screen now appears between the setup summary and the token reveal, with four amber-coloured callouts: your token is shown exactly once, you'll get a ready-to-use OBS URL, alerts won't fire without the overlay in OBS, and never share it on stream. A big "I read all of the above" button gets you through.
+- **OBS setup dialog on the overlay detail page.** The ⓘ button next to the OBS URL is now always visible (not just for private overlays) and opens a modal with step-by-step OBS Browser Source setup instructions, a reminder that the `#YOUR_TOKEN_HERE` placeholder must be replaced, where to find a lost token, and a security warning.
+- **Collapsible source viewer on the overlay detail page.** HTML, CSS, and HEAD source is now hidden behind a "View source / Hide source" toggle so the page isn't overwhelming by default.
+- **Kebab menus on the overlay detail and edit pages.** Secondary actions (Preview, Fork, Delete) are now tucked into a `⋮` dropdown. The primary action (Edit / Save) stays as a standalone button to the left.
+- **Admin: onboarding preview tool.** Admins can now trigger a fake onboarding run from the admin dashboard without needing a fresh account. The session flag is consumed on first render so it cleans itself up automatically.
+- **Fixed: global Pusher socket was running on every page.** The main app was unconditionally creating a Pusher WebSocket connection on boot, causing a persistent reconnection loop and console spam on every page. Removed — the overlay's own connection is unaffected.
+- **Fixed: shared TypeScript types.** Fifteen files each had their own local `interface Template`, causing TS2719 type incompatibility errors. Consolidated into shared `OverlayTemplate` and `AdminTemplate` types in `types/index.d.ts`.
+
 ## v0.1.0 — Milestone 1: "This shit actually works" (February 2026)
 Early access launch. See MILESTONES.md for the full scope of what this covers.
 
