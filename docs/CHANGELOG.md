@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## February 28th, 2026
+- **Fixed: control values in CSS now update live.** Using `[[[c:key]]]` tags inside overlay CSS (e.g. to drive `font-size` or `background-color` from a control) now reacts instantly when values change, just like HTML does. Previously the style tag was only injected once on load and never updated.
+
 ## February 27th, 2026
 - **Onboarding now captures users at exactly the right moment.** When you generate your token during setup, the wizard immediately constructs your complete OBS Browser Source URL — token already embedded — with a one-click copy button. No more explaining what a URL hash is or asking users to manually paste a token into the right spot.
 - **New interstitial warning step before token generation.** A dedicated screen now appears between the setup summary and the token reveal, with four amber-coloured callouts: your token is shown exactly once, you'll get a ready-to-use OBS URL, alerts won't fire without the overlay in OBS, and never share it on stream. A big "I read all of the above" button gets you through.
