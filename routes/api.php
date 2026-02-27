@@ -16,6 +16,30 @@ Route::prefix('/overlay')->group(function () {
         ->name('api.overlay.render')
         ->middleware(['throttle:overlay', 'rate.limit.overlay'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
+    // Returns Twitch global + channel emotes as [{code, url}] for frontend emote parsing.
+    // Uses server-side app credentials so client IDs/secrets never reach the browser.
+    // Cached 24 h server-side; rate-limited to prevent abuse.
+    Route::get('/emotes/{channelId}', function (string $channelId) {
+        if (! ctype_digit($channelId)) {
+            return response()->json(['error' => 'Invalid channel ID'], 400);
+        }
+
+        $emotes = \Illuminate\Support\Facades\Cache::remember(
+            "twitch_channel_emotes_{$channelId}",
+            now()->addHours(24),
+            function () use ($channelId) {
+                $appToken = app(\App\Services\TwitchEventSubService::class)->getAppAccessToken();
+                if (! $appToken) {
+                    return [];
+                }
+
+                return app(\App\Services\TwitchApiService::class)->getChannelEmotes($appToken, $channelId);
+            }
+        );
+
+        return response()->json($emotes);
+    })->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Get all template tags (API endpoint)

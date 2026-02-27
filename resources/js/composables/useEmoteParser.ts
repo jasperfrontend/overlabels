@@ -7,9 +7,16 @@ interface TwitchEmotePosition {
   id: string
 }
 
+interface TwitchEmoteEntry {
+  code: string
+  url: string
+}
+
 export function useEmoteParser() {
   const isReady = ref(false)
   let parser: InstanceType<typeof EmoteParser> | null = null
+  // Twitch emotes fetched from backend proxy (credentials stay server-side)
+  const twitchEmoteMap = new Map<string, string>() // code → CDN URL
 
   async function initialize(channelId: string): Promise<void> {
     const fetcher = new EmoteFetcher() // No Twitch credentials — BTTV/FFZ/7TV only
@@ -26,13 +33,44 @@ export function useEmoteParser() {
       fetcher.fetchSevenTVEmotes(channelId),
       fetcher.fetchFFZEmotes(),
       fetcher.fetchFFZEmotes(Number(channelId)),
+      // Fetch Twitch emotes via backend proxy so credentials never reach the browser
+      fetch(`/api/overlay/emotes/${channelId}`)
+        .then((r) => r.json())
+        .then((entries: TwitchEmoteEntry[]) => {
+          for (const { code, url } of entries) {
+            twitchEmoteMap.set(code, url)
+          }
+        }),
     ])
 
     isReady.value = true
   }
 
+  /**
+   * Parse a single whitespace-free token: check Twitch map first, then BTTV/FFZ/7TV library.
+   * Splitting by whitespace before calling this ensures the library regex never sees
+   * already-generated <img> HTML.
+   */
+  function parseToken(token: string): string {
+    const twitchUrl = twitchEmoteMap.get(token)
+    if (twitchUrl) {
+      return `<img class="overlay-emote twitch-emote" alt="${token}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`
+    }
+    return parser ? parser.parse(token) : token
+  }
+
+  /** Split text on whitespace runs, parse each word token independently. */
+  function parseByTokens(text: string): string {
+    return text
+      .split(/(\s+)/)
+      .map((chunk) => (/^\s+$/.test(chunk) ? chunk : parseToken(chunk)))
+      .join('')
+  }
+
   function parseEmotes(text: string, twitchEmotesJson?: string): string {
-    // Parse Twitch emote positions from EventSub payload (already JSON-encoded by backend)
+    if (!isReady.value) return text
+
+    // Parse Twitch emote positions from EventSub payload (resub messages have these)
     let twitchEmotes: TwitchEmotePosition[] = []
     if (twitchEmotesJson) {
       try {
@@ -43,23 +81,21 @@ export function useEmoteParser() {
       }
     }
 
-    // No Twitch emotes — pass entire text through library for BTTV/FFZ/7TV
+    // No position data (e.g. channel points user_input) — use token-based parsing
     if (!twitchEmotes.length) {
-      return isReady.value && parser ? parser.parse(text) : text
+      return parseByTokens(text)
     }
 
-    // Split text around Twitch emote positions; parse non-Twitch segments with library.
-    // This prevents the library regex from matching words inside generated <img> tags.
+    // Position-based splitting for resub messages: more accurate than code-matching,
+    // prevents false positives on partial word matches.
     const sorted = [...twitchEmotes].sort((a, b) => a.begin - b.begin)
     const parts: string[] = []
     let lastIndex = 0
 
     for (const emote of sorted) {
       if (emote.begin > lastIndex) {
-        const segment = text.slice(lastIndex, emote.begin)
-        parts.push(isReady.value && parser ? parser.parse(segment) : segment)
+        parts.push(parseByTokens(text.slice(lastIndex, emote.begin)))
       }
-      // Twitch emote → construct CDN URL directly from position data
       const emoteName = text.slice(emote.begin, emote.end + 1)
       const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`
       parts.push(
@@ -69,8 +105,7 @@ export function useEmoteParser() {
     }
 
     if (lastIndex < text.length) {
-      const segment = text.slice(lastIndex)
-      parts.push(isReady.value && parser ? parser.parse(segment) : segment)
+      parts.push(parseByTokens(text.slice(lastIndex)))
     }
 
     return parts.join('')

@@ -319,4 +319,36 @@ class TwitchApiService
     {
         $this->clearCache('goals', $userId);
     }
+
+    /**
+     * Fetch Twitch global + channel emotes using an app access token.
+     * Returns an array of ['code' => string, 'url' => string] entries.
+     * No user credentials required — app token (client credentials) is sufficient.
+     */
+    public function getChannelEmotes(string $appToken, string $broadcasterId): array
+    {
+        $emotes = [];
+
+        $global = $this->makeApiRequest($appToken, 'chat/emotes/global', [], 'get global Twitch emotes');
+        if ($global && isset($global['data'])) {
+            foreach ($global['data'] as $emote) {
+                $emotes[] = [
+                    'code' => $emote['name'],
+                    'url' => "https://static-cdn.jtvnw.net/emoticons/v2/{$emote['id']}/default/dark/1.0",
+                ];
+            }
+        }
+
+        $channel = $this->makeApiRequest($appToken, 'chat/emotes', ['broadcaster_id' => $broadcasterId], 'get channel Twitch emotes');
+        if ($channel && isset($channel['data'])) {
+            foreach ($channel['data'] as $emote) {
+                $emotes[] = [
+                    'code' => $emote['name'],
+                    'url' => "https://static-cdn.jtvnw.net/emoticons/v2/{$emote['id']}/default/dark/1.0",
+                ];
+            }
+        }
+
+        return $emotes;
+    }
 }
