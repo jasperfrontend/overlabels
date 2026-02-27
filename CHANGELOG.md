@@ -10,6 +10,7 @@
 - **Fixed: global Pusher socket was running on every page.** The main app was unconditionally creating a Pusher WebSocket connection on boot, causing a persistent reconnection loop and console spam on every page. Removed — the overlay's own connection is unaffected.
 - **Fixed: shared TypeScript types.** Fifteen files each had their own local `interface Template`, causing TS2719 type incompatibility errors. Consolidated into shared `OverlayTemplate` and `AdminTemplate` types in `types/index.d.ts`.
 - **Alert transitions are now actually implemented.** Fade, scale, and four directional slide variants (↑ ↓ ← →) all work. Previously the transition type was stored and sent with the broadcast but no CSS existed to back it up, so every alert hard-cut regardless of what you'd configured. The `slide` legacy value falls back to fade gracefully.
+- **Enter and exit animations are now independent.** You can configure a separate animation for when an alert appears and when it disappears — slide up from the bottom on entry, fade out on exit, for example. The Alerts Builder now shows two dropdowns per event with labels that reflect direction correctly for each context.
 
 ## v0.1.0 — Milestone 1: "This shit actually works" (February 2026)
 Early access launch. See MILESTONES.md for the full scope of what this covers.
