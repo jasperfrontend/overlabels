@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
@@ -175,6 +175,7 @@ function parseSource(source: string | null | undefined): string {
 
 const compiledHtml = computed(() => parseSource(rawHtml.value));
 const compiledCss = computed(() => parseSource(css.value));
+watch(compiledCss, (newCss) => injectStyle(newCss));
 
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
