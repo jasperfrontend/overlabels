@@ -12,7 +12,8 @@ class EventTemplateMapping extends Model
         'event_type',
         'template_id',
         'duration_ms',
-        'transition_type',
+        'transition_in',
+        'transition_out',
         'enabled',
         'settings',
     ];

@@ -20,7 +20,9 @@ class AlertTriggered implements ShouldBroadcast
 
     public int $duration;
 
-    public string $transition;
+    public string $transitionIn;
+
+    public string $transitionOut;
 
     public string $broadcasterId;
 
@@ -32,14 +34,16 @@ class AlertTriggered implements ShouldBroadcast
         string $css,
         array $data,
         int $duration,
-        string $transition,
+        string $transitionIn,
+        string $transitionOut,
         string $broadcasterId
     ) {
         $this->html = $html;
         $this->css = $css;
         $this->data = $data;
         $this->duration = $duration;
-        $this->transition = $transition;
+        $this->transitionIn = $transitionIn;
+        $this->transitionOut = $transitionOut;
         $this->broadcasterId = $broadcasterId;
     }
 
@@ -66,7 +70,8 @@ class AlertTriggered implements ShouldBroadcast
                 'css' => $this->css,
                 'data' => $this->data,
                 'duration' => $this->duration,
-                'transition' => $this->transition,
+                'transition_in' => $this->transitionIn,
+                'transition_out' => $this->transitionOut,
                 'timestamp' => now()->timestamp,
             ],
         ];

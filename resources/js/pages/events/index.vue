@@ -13,7 +13,8 @@ interface EventMapping {
   event_type: string;
   template_id: number | null;
   duration_ms: number;
-  transition_type: string;
+  transition_in: string;
+  transition_out: string;
   enabled: boolean;
 }
 
@@ -35,7 +36,8 @@ const localMappings = ref<EventMapping[]>(
   props.mappings.map((mapping) => ({
     ...mapping,
     duration_ms: mapping.duration_ms || 5000,
-    transition_type: mapping.transition_type || 'fade',
+    transition_in: mapping.transition_in || 'fade',
+    transition_out: mapping.transition_out || 'fade',
     enabled: mapping.enabled || false,
   })),
 );
@@ -83,7 +85,8 @@ const saveAllMappings = async () => {
       event_type: mapping.event_type,
       template_id: mapping.template_id,
       duration_ms: mapping.duration_ms,
-      transition_type: mapping.transition_type,
+      transition_in: mapping.transition_in,
+      transition_out: mapping.transition_out,
       enabled: mapping.enabled,
     }));
 
@@ -208,7 +211,7 @@ const saveAllMappings = async () => {
                 <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
                 <span class="text-sidebar-foreground/80">•</span>
                 <span class="text-sidebar-foreground/80">
-                  {{ transitionTypes[mapping.transition_type] }}
+                  in: {{ transitionTypes[mapping.transition_in] }} / out: {{ transitionTypes[mapping.transition_out] }}
                 </span>
               </div>
             </div>
@@ -234,7 +237,7 @@ const saveAllMappings = async () => {
             class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
             @click.stop
           >
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
               <!-- Template Selection -->
               <div>
                 <label class="mb-2 block text-sm font-medium text-foreground"> Alert Template </label>
@@ -272,11 +275,24 @@ const saveAllMappings = async () => {
                 </div>
               </div>
 
-              <!-- Transition Type -->
+              <!-- Enter Animation -->
               <div>
-                <label class="mb-2 block text-sm font-medium text-foreground"> Transition Effect </label>
+                <label class="mb-2 block text-sm font-medium text-foreground">Enter Animation</label>
                 <select
-                  v-model="mapping.transition_type"
+                  v-model="mapping.transition_in"
+                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                >
+                  <option v-for="(label, value) in transitionTypes" :key="value" :value="value">
+                    {{ label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Exit Animation -->
+              <div>
+                <label class="mb-2 block text-sm font-medium text-foreground">Exit Animation</label>
+                <select
+                  v-model="mapping.transition_out"
                   class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                 >
                   <option v-for="(label, value) in transitionTypes" :key="value" :value="value">
@@ -291,7 +307,8 @@ const saveAllMappings = async () => {
               <p class="text-sm">
                 <span class="font-medium">Preview:</span>
                 When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the "{{ getTemplateName(mapping.template_id) }}" alert will
-                {{ transitionTypes[mapping.transition_type].toLowerCase() }} in for {{ mapping.duration_ms / 1000 }} seconds.
+                enter as <strong>{{ transitionTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
+                then exit as <strong>{{ transitionTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
               </p>
             </div>
           </div>

@@ -639,7 +639,8 @@ class TwitchEventSubController extends Controller
                 $mapping->template->css,
                 $templateData,
                 $mapping->duration_ms,
-                $mapping->transition_type,
+                $mapping->transition_in,
+                $mapping->transition_out,
                 $user->twitch_id
             ));
 

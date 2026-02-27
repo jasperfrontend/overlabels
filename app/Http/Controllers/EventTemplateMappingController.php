@@ -42,7 +42,8 @@ class EventTemplateMappingController extends Controller
                     'event_type' => $eventType,
                     'template_id' => null,
                     'duration_ms' => 5000,
-                    'transition_type' => 'fade',
+                    'transition_in' => 'fade',
+                    'transition_out' => 'fade',
                     'enabled' => false,
                     'template' => null,
                 ];
@@ -70,7 +71,8 @@ class EventTemplateMappingController extends Controller
             'event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
             'template_id' => 'nullable|exists:overlay_templates,id',
             'duration_ms' => 'nullable|integer|min:1000|max:30000',
-            'transition_type' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+            'transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+            'transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
             'enabled' => 'nullable|boolean',
         ]);
 
@@ -96,7 +98,8 @@ class EventTemplateMappingController extends Controller
             [
                 'template_id' => $request->template_id,
                 'duration_ms' => $request->duration_ms ?? 5000,
-                'transition_type' => $request->transition_type ?? 'fade',
+                'transition_in' => $request->transition_in ?? 'fade',
+                'transition_out' => $request->transition_out ?? 'fade',
                 'enabled' => $request->enabled ?? false,
             ]
         );
@@ -115,7 +118,8 @@ class EventTemplateMappingController extends Controller
                 'mappings.*.event_type' => 'required|string|in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES)),
                 'mappings.*.template_id' => 'nullable|integer|exists:overlay_templates,id',
                 'mappings.*.duration_ms' => 'nullable|integer|min:1000|max:30000',
-                'mappings.*.transition_type' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+                'mappings.*.transition_in' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
+                'mappings.*.transition_out' => 'nullable|string|in:'.implode(',', array_keys(EventTemplateMapping::TRANSITION_TYPES)),
                 'mappings.*.enabled' => 'nullable|boolean',
             ]);
 
@@ -146,7 +150,8 @@ class EventTemplateMappingController extends Controller
                     [
                         'template_id' => $mappingData['template_id'] ?? null,
                         'duration_ms' => $mappingData['duration_ms'] ?? 5000,
-                        'transition_type' => $mappingData['transition_type'] ?? 'fade',
+                        'transition_in' => $mappingData['transition_in'] ?? 'fade',
+                        'transition_out' => $mappingData['transition_out'] ?? 'fade',
                         'enabled' => $mappingData['enabled'] ?? false,
                     ]
                 );

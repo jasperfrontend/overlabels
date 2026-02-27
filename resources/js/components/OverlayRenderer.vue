@@ -19,7 +19,7 @@
   <div v-else v-html="compiledHtml" />
 
   <!-- Dynamic Alert Overlay -->
-  <transition :name="currentAlert?.transition || 'fade'" @leave="onAlertLeave">
+  <transition :name="activeTransitionName" @leave="onAlertLeave">
     <div v-if="!error && currentAlert" class="alert-overlay">
       <div v-html="compiledAlertHtml" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
     </div>
@@ -42,7 +42,8 @@ interface AlertData {
   css: string;
   data: Record<string, any>;
   duration: number;
-  transition: string;
+  transitionIn: string;
+  transitionOut: string;
   timestamp: number;
 }
 
@@ -119,6 +120,7 @@ function stopTimerTick(key: string) {
 }
 
 // Alert system state
+const activeTransitionName = ref('fade');
 const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
@@ -255,17 +257,23 @@ function showAlert(alertData: AlertData) {
     injectAlertStyle(alertData.css);
   }
 
+  // Set enter transition before showing alert — Vue reads :name at transition-start time
+  activeTransitionName.value = alertData.transitionIn || 'fade';
+
   // Show the alert
   currentAlert.value = alertData;
 
   // Auto-hide after duration
   alertTimeout.value = window.setTimeout(() => {
-    hideAlert();
+    dismissAlert();
   }, alertData.duration);
 }
 
-function hideAlert() {
-  currentAlert.value = null;
+function dismissAlert() {
+  if (currentAlert.value) {
+    activeTransitionName.value = currentAlert.value.transitionOut || 'fade';
+    currentAlert.value = null;
+  }
   if (alertTimeout.value) {
     clearTimeout(alertTimeout.value);
     alertTimeout.value = null;
@@ -457,7 +465,8 @@ function handleAlertTriggered(event: any) {
     css: alertData.css,
     data: mergedData,
     duration: alertData.duration,
-    transition: alertData.transition,
+    transitionIn: alertData.transition_in || 'fade',
+    transitionOut: alertData.transition_out || 'fade',
     timestamp: alertData.timestamp || Date.now(),
   });
 }
