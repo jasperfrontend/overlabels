@@ -14,17 +14,16 @@
   </div>
 
   <div v-if="error" class="error">{{ error }}</div>
-  <div v-else>
-    <!-- Dynamic Alert Overlay -->
-    <transition :name="currentAlert?.transition || 'fade'" @leave="onAlertLeave">
-      <div v-if="currentAlert" class="alert-overlay">
-        <div v-html="compiledAlertHtml" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
-      </div>
-    </transition>
 
-    <!-- Static Overlay Content -->
-    <div v-html="compiledHtml" />
-  </div>
+  <!-- Static Overlay Content -->
+  <div v-else v-html="compiledHtml" />
+
+  <!-- Dynamic Alert Overlay -->
+  <transition :name="currentAlert?.transition || 'fade'" @leave="onAlertLeave">
+    <div v-if="!error && currentAlert" class="alert-overlay">
+      <div v-html="compiledAlertHtml" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -35,6 +34,7 @@ import { useEventHandler } from '@/composables/useEventHandler';
 import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
+import { useEmoteParser } from '@/composables/useEmoteParser';
 
 interface AlertData {
   head: string;
@@ -73,6 +73,7 @@ const eventHandler = useEventHandler();
 const giftBombDetector = useGiftBombDetector();
 const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
+const emoteParser = useEmoteParser();
 
 // Timer control state — keyed by control key (not c:key)
 const timerStates = ref<Record<string, any>>({});
@@ -304,6 +305,13 @@ onMounted(async () => {
 
     userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
+    // Start loading emotes for this broadcaster's channel
+    if (userId.value) {
+      emoteParser.initialize(userId.value).catch(() => {
+        console.warn('[OverlayRenderer] Emote parser failed to initialize');
+      });
+    }
+
     // Start local ticking for any timer controls that are currently running
     if (json.timer_states && typeof json.timer_states === 'object') {
       for (const [key, state] of Object.entries(json.timer_states)) {
@@ -421,11 +429,26 @@ function handleAlertTriggered(event: any) {
     return;
   }
 
-  // Merge current overlay data with event data for template rendering
-  // This ensures both static tags (from data.value) and dynamic tags (from alertData.data) are available
+  // Parse emotes in user-generated text fields before template substitution
+  const processedData = { ...alertData.data };
+
+  const EMOTE_TEXT_FIELDS: Array<{ field: string; emotesField?: string }> = [
+    { field: 'event.message.text', emotesField: 'event.message.emotes' },
+    { field: 'event.user_input' },
+  ];
+
+  for (const { field, emotesField } of EMOTE_TEXT_FIELDS) {
+    if (typeof processedData[field] === 'string' && processedData[field]) {
+      processedData[field] = emoteParser.parseEmotes(
+        processedData[field],
+        emotesField ? processedData[emotesField] : undefined,
+      );
+    }
+  }
+
   const mergedData = {
     ...data.value,
-    ...alertData.data,
+    ...processedData,
   };
 
   showAlert({
