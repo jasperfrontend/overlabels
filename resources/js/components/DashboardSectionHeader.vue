@@ -6,10 +6,10 @@ defineProps<{
   title: string;
 
   viewHref: string;
-  viewTitle?: string;
+  viewTitle?: string | null | undefined;
 
-  createHref: string;
-  createTitle?: string;
+  createHref?: string | null | undefined;
+  createTitle?: string | null | undefined;
 
   createIconOnly?: boolean; // if later you want labels conditionally
 }>();
@@ -29,7 +29,13 @@ defineProps<{
         <List class="h-4 w-4" />
       </a>
 
-      <a class="btn btn-sm btn-primary flex-1 md:flex-none" :href="createHref" :title="createTitle ?? `Create new`" aria-label="Create new">
+      <a
+        v-if="createHref"
+        class="btn btn-sm btn-primary flex-1 md:flex-none"
+        :href="createHref"
+        :title="createTitle ?? `Create new`"
+        aria-label="Create new"
+      >
         <Plus class="h-4 w-4" />
       </a>
     </div>

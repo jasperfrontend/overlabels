@@ -3,14 +3,9 @@ import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Clock, Info, MoreVertical, RefreshCw } from 'lucide-vue-next';
+
 
 interface TwitchEvent {
   id: number;
@@ -33,12 +28,16 @@ function canReplay(type: string): boolean {
 
 function replay(event: TwitchEvent) {
   replayingId.value = event.id;
-  router.post(`/events/${event.id}/replay`, {}, {
-    preserveScroll: true,
-    onFinish: () => {
-      replayingId.value = null;
+  router.post(
+    `/events/${event.id}/replay`,
+    {},
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        replayingId.value = null;
+      },
     },
-  });
+  );
 }
 
 const eventLabels: Record<string, string> = {
@@ -77,7 +76,7 @@ function details(event: TwitchEvent): string | null {
     case 'channel.raid':
       return d.viewers ? `${d.viewers} viewers` : null;
     case 'channel.channel_points_custom_reward_redemption.add':
-      return (d.reward as Record<string, unknown>)?.title as string ?? null;
+      return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
     default:
       return null;
   }
@@ -118,8 +117,8 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
     </TableHeader>
 
     <TableBody>
-      <TableRow v-for="event in events" :key="event.id">
-        <TableCell>
+      <TableRow v-for="event in events" :key="event.id" class="group">
+        <TableCell class="opacity-20 transition-colors group-hover:opacity-100">
           <Badge :variant="badgeVariant(event.event_type)">
             {{ label(event.event_type) }}
           </Badge>
@@ -130,7 +129,7 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
           <span v-else class="text-muted-foreground/50 italic">-</span>
         </TableCell>
 
-        <TableCell class="text-right">
+        <TableCell class="text-right opacity-20 transition-colors group-hover:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
               <button class="btn btn-sm btn-secondary px-2" title="More actions">
@@ -139,11 +138,7 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" class="w-52">
-              <DropdownMenuItem
-                v-if="canReplay(event.event_type)"
-                :disabled="replayingId === event.id"
-                @click="replay(event)"
-              >
+              <DropdownMenuItem v-if="canReplay(event.event_type)" :disabled="replayingId === event.id" @click="replay(event)">
                 <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': replayingId === event.id }" />
                 Replay alert
               </DropdownMenuItem>

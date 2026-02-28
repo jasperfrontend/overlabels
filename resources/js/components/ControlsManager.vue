@@ -113,7 +113,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 
     <Table v-else class="border border-border bg-background">
       <TableHeader>
-        <TableRow class="hover:bg-transparent">
+        <TableRow>
           <TableHead>Order</TableHead>
           <TableHead>Key</TableHead>
           <TableHead>Label</TableHead>
@@ -142,7 +142,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
               [[[c:{{ ctrl.key }}]]]
             </button>
           </TableCell>
-          <TableCell class="text-right">
+          <TableCell class="text-right opacity-20 transition group-hover:opacity-100">
             <div class="flex items-center justify-end gap-1">
               <button class="btn btn-sm btn-secondary px-2" title="Edit" @click="openEdit(ctrl)">
                 <PencilIcon class="h-3.5 w-3.5" />

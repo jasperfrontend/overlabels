@@ -151,129 +151,134 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
-    <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
-      <div class="mb-2 flex items-center justify-between">
-        <div>
-          <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
-          <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
+        <div class="mb-2 flex items-center justify-between">
+          <div>
+            <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
+            <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
+          </div>
+          <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
         </div>
-        <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
-      </div>
 
-      <!-- Text control -->
-      <div v-if="ctrl.type === 'text'" class="flex gap-0">
-        <input
-          type="text"
-          :value="getLocalValue(ctrl)"
-          @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-          class="peer input-border flex-1"
-          placeholder="Enter text..."
-        />
-        <button
-          class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
-          :disabled="saving[ctrl.id]"
-          @click="saveTextValue(ctrl)"
-        >
-          <SaveIcon class="h-3.5 w-3.5" />
-          <span class="ml-1">Save</span>
-        </button>
-      </div>
-
-      <!-- Number control -->
-      <div v-else-if="ctrl.type === 'number'" class="flex gap-2">
-        <input
-          :value="getLocalValue(ctrl)"
-          @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-          type="number"
-          :min="ctrl.config?.min"
-          :max="ctrl.config?.max"
-          :step="ctrl.config?.step ?? 1"
-          class="input-border flex-1"
-        />
-        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
-          <SaveIcon class="h-3.5 w-3.5" />
-          <span class="ml-1">Save</span>
-        </button>
-      </div>
-
-      <!-- Counter control -->
-      <div v-else-if="ctrl.type === 'counter'" class="flex items-center gap-3">
-        <div class="min-w-[60px] text-center text-2xl font-bold tabular-nums">
-          {{ ctrl.value ?? '0' }}
-        </div>
-        <div class="flex gap-1.5">
-          <button
-            class="btn btn-sm btn-secondary px-3 text-lg"
-            :disabled="saving[ctrl.id]"
-            @click="counterAction(ctrl, 'decrement')"
-            title="Decrement"
-          >
-            −
-          </button>
-          <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
-            +
-          </button>
-          <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
-            <RotateCcwIcon class="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Timer control -->
-      <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
-        <div class="min-w-[90px] text-center font-mono text-2xl font-bold tabular-nums">
-          {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
-        </div>
-        <div class="flex gap-1.5">
-          <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
-            <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
-            <PlayIcon v-else class="h-3.5 w-3.5" />
-            <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
-          </button>
-          <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
-            <RotateCcwIcon class="h-3.5 w-3.5" />
-            <span class="ml-1">Reset</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Boolean control -->
-      <div v-else-if="ctrl.type === 'boolean'" class="flex items-center gap-3">
-        <button
-          type="button"
-          role="switch"
-          :aria-checked="ctrl.value === '1'"
-          :disabled="saving[ctrl.id]"
-          @click="toggleBoolean(ctrl)"
-          :class="[
-            'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-            ctrl.value === '1' ? 'bg-accent' : 'bg-input',
-          ]"
-        >
-          <span
-            :class="[
-              'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
-              ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
-            ]"
+        <!-- Text control -->
+        <div v-if="ctrl.type === 'text'" class="flex gap-0">
+          <input
+            type="text"
+            :value="getLocalValue(ctrl)"
+            :title="getLocalValue(ctrl) || 'Click to edit'"
+            @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+            class="peer input-border flex-1"
+            placeholder="Enter text..."
           />
-        </button>
-        <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
-          ctrl.value === '1' ? 'On' : 'Off'
-        }}</span>
-      </div>
+          <button
+            class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+            :disabled="saving[ctrl.id]"
+            @click="saveTextValue(ctrl)"
+          >
+            <SaveIcon class="h-3.5 w-3.5" />
+            <span class="ml-1">Save</span>
+          </button>
+        </div>
 
-      <!-- Datetime control -->
-      <div v-else-if="ctrl.type === 'datetime'" class="flex gap-2">
-        <input
-          :value="getLocalValue(ctrl)"
-          @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
-          type="datetime-local"
-          class="flex-1 rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none"
-        />
-        <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
-          <SaveIcon class="h-3.5 w-3.5" />
-          <span class="ml-1">Save</span>
-        </button>
+        <!-- Number control -->
+        <div v-else-if="ctrl.type === 'number'" class="flex gap-2">
+          <input
+            :value="getLocalValue(ctrl)"
+            :title="getLocalValue(ctrl) || 'Click to edit'"
+            @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+            type="number"
+            :min="ctrl.config?.min"
+            :max="ctrl.config?.max"
+            :step="ctrl.config?.step ?? 1"
+            class="input-border flex-1"
+          />
+          <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+            <SaveIcon class="h-3.5 w-3.5" />
+            <span class="ml-1">Save</span>
+          </button>
+        </div>
+
+        <!-- Counter control -->
+        <div v-else-if="ctrl.type === 'counter'" class="flex items-center gap-3">
+          <div class="min-w-[60px] text-center text-2xl font-bold tabular-nums">
+            {{ ctrl.value ?? '0' }}
+          </div>
+          <div class="flex gap-1.5">
+            <button
+              class="btn btn-sm btn-secondary px-3 text-lg"
+              :disabled="saving[ctrl.id]"
+              @click="counterAction(ctrl, 'decrement')"
+              title="Decrement"
+            >
+              −
+            </button>
+            <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
+              +
+            </button>
+            <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
+              <RotateCcwIcon class="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Timer control -->
+        <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
+          <div class="min-w-[90px] text-center font-mono text-2xl font-bold tabular-nums">
+            {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
+          </div>
+          <div class="flex gap-1.5">
+            <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
+              <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
+              <PlayIcon v-else class="h-3.5 w-3.5" />
+              <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
+            </button>
+            <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
+              <RotateCcwIcon class="h-3.5 w-3.5" />
+              <span class="ml-1">Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Boolean control -->
+        <div v-else-if="ctrl.type === 'boolean'" class="flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="ctrl.value === '1'"
+            :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
+            :disabled="saving[ctrl.id]"
+            @click="toggleBoolean(ctrl)"
+            :class="[
+              'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+              ctrl.value === '1' ? 'bg-accent' : 'bg-input',
+            ]"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
+                ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
+              ]"
+            />
+          </button>
+          <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
+            ctrl.value === '1' ? 'On' : 'Off'
+          }}</span>
+        </div>
+
+        <!-- Datetime control -->
+        <div v-else-if="ctrl.type === 'datetime'" class="flex gap-2">
+          <input
+            :value="getLocalValue(ctrl)"
+            @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
+            type="datetime-local"
+            class="flex-1 rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none"
+          />
+          <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+            <SaveIcon class="h-3.5 w-3.5" />
+            <span class="ml-1">Save</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

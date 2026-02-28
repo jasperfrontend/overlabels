@@ -39,12 +39,19 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // Get user's most recent events
+        $userRecentEvents = TwitchEvent::where('user_id', $user->id)
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return Inertia::render('dashboard/index', [
             'userName' => $user->name,
             'userId' => $user->id,
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
             'communityTemplates' => $communityTemplates,
+            'userRecentEvents' => $userRecentEvents,
             'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
         ]);
@@ -66,6 +73,27 @@ class DashboardController extends Controller
             ->get();
 
         return Inertia::render('dashboard/recents', [
+            'recentTemplates' => $recentTemplates,
+            'recentEvents' => $recentEvents,
+        ]);
+    }
+
+    public function recentActivityDashboard(Request $request): Response
+    {
+        $user = $request->user();
+
+        $recentTemplates = OverlayTemplate::where('owner_id', $user->id)
+            ->with('owner:id,name,avatar')
+            ->latest('updated_at')
+            ->limit(5)
+            ->get();
+
+        $recentEvents = TwitchEvent::where('user_id', $user->id)
+            ->latest()
+            ->limit(30)
+            ->get();
+
+        return Inertia::render('dashboard/index', [
             'recentTemplates' => $recentTemplates,
             'recentEvents' => $recentEvents,
         ]);

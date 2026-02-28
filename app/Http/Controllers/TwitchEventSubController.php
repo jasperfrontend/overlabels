@@ -688,8 +688,8 @@ class TwitchEventSubController extends Controller
         ];
 
         $this->renderEventAlert($user, $mapping, $reconstructedData);
-        $randomString = str_pad(random_int(1, 999999), 6, '0', STR_PAD_LEFT); // @TODO: Make sure every alert is treated as a unique new payload but not like this.
-        $message = "Replayed alert {$twitchEvent->event_type} (ID: {$twitchEvent->id}) #{$randomString}";
+        $randomString = str_pad(random_int(1, 999999), 4, '0', STR_PAD_LEFT);
+        $message = "Replayed alert {$twitchEvent->event_type} (ID: {$twitchEvent->id}-{$randomString})";
         return back()->with('message', $message)->with('type', 'success');
     }
 

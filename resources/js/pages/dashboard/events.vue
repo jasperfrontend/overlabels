@@ -3,7 +3,6 @@ import { ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { ArrowLeft } from 'lucide-vue-next';
 import type { AppPageProps } from '@/types';
 
 interface TwitchEvent {
