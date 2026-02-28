@@ -114,6 +114,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
     <Table v-else class="border border-border bg-background">
       <TableHeader>
         <TableRow class="hover:bg-transparent">
+          <TableHead>Order</TableHead>
           <TableHead>Key</TableHead>
           <TableHead>Label</TableHead>
           <TableHead class="w-[90px]">Type</TableHead>
@@ -123,6 +124,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
       </TableHeader>
       <TableBody>
         <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group">
+          <TableCell class="text-sm font-mono w-10 text-center">{{ctrl.sort_order}}</TableCell>
           <TableCell class="font-mono text-sm font-medium">{{ ctrl.key }}</TableCell>
           <TableCell class="text-muted-foreground">{{ ctrl.label || '—' }}</TableCell>
           <TableCell>

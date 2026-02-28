@@ -5,32 +5,28 @@ Completed milestones are kept here as a record of intent vs. reality.
 
 ---
 
-## ✅ Milestone 1 — "This shit actually works"
-> *Early access launch. Core overlay system is feature-complete for a v0.x release.*
+## ✅ Completed Milestones
+
+<details>
+<summary><strong>Milestone 1 — "This shit actually works"</strong></summary>
 
 - HTML/CSS/HEAD overlay editor with CodeMirror
-- Template tag system (`[[[tag_name]]]`) with live Twitch data
-- Controls system — per-overlay mutable values (`[[[c:key]]]`) with counter, timer, datetime, text, number types
-- EventSub webhook pipeline for real-time alerts (follow, sub, raid, etc.)
-- Access token system for secure OBS embedding
-- Fork system with control import wizard
-- Admin panel with user management, impersonation, and audit log
-- No sugar, no animations, no confetti. Overlays do what you build them to do.
+- Template tag system (`[[[tag_name]]]`)
+- Controls system
+- EventSub pipeline
+- Access token system
+- Fork system
+- Admin panel
+</details>
 
----
+<details>
+<summary><strong>Milestone 1.5 — Separate In/Out Alert Transitions</strong></summary>
 
-## ✅ Milestone 1.5 — Separate In/Out Alert Transitions
-> *Alerts should be able to enter one way and leave another. A hard prerequisite before accepting*
-> *external event sources — every new source will want its own transition feel.*
-
-- Replace the single `transition_type` column on `event_template_mappings` with `transition_in` and `transition_out`
-- Migration with a default of `fade` for both new columns; drop `transition_type`
-- Backend validation and broadcast updated to send `transition_in` / `transition_out`
-- `OverlayRenderer.vue` uses `:css="false"` + GSAP or pure CSS `@keyframes` — or a dynamic computed transition name for enter vs. leave
-- UI: two separate selects (Enter animation / Exit animation) in the alert mapping form
-- Available options: `fade`, `scale`, `slide-top`, `slide-bottom`, `slide-left`, `slide-right`, `none`
-- No Animate.css — all transitions are hand-rolled in the overlay shell CSS
-- Existing `none` behaviour (instant cut) must still work correctly for both enter and exit independently
+- `transition_in` / `transition_out`
+- Migration & validation updates
+- UI split for enter/exit animations
+- Hand-rolled CSS transitions
+</details>
 
 ---
 

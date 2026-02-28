@@ -2,6 +2,8 @@
 
 ## February 28th, 2026
 - **Fixed: control values in CSS now update live.** Using `[[[c:key]]]` tags inside overlay CSS (e.g. to drive `font-size` or `background-color` from a control) now reacts instantly when values change, just like HTML does. Previously the style tag was only injected once on load and never updated.
+- **Fixed: channel points reward tags now use dot notation.** `[[[event.reward.title]]]`, `[[[event.reward.prompt]]]`, and `[[[event.reward.cost]]]` now correctly reflect the nested payload shape. The old underscore variants (`event.reward_title` etc.) were wrong.
+- **Controls table now shows sort order and current value.** The controls list in the template editor and the controls manager both show the `sort_order` column and the current stored value at a glance.
 
 ## February 27th, 2026
 - **Onboarding now captures users at exactly the right moment.** When you generate your token during setup, the wizard immediately constructs your complete OBS Browser Source URL — token already embedded — with a one-click copy button. No more explaining what a URL hash is or asking users to manually paste a token into the right spot.

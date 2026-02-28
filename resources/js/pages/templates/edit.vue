@@ -11,7 +11,19 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
-import { Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, MoreVertical, SlidersHorizontal, CopyIcon } from 'lucide-vue-next';
+import {
+  Brackets,
+  Code,
+  InfoIcon,
+  RefreshCcwDot,
+  Save,
+  ExternalLink,
+  Split,
+  Trash,
+  MoreVertical,
+  SlidersHorizontal,
+  CopyIcon,
+} from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -334,6 +346,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                     <TableHead>Label</TableHead>
                     <TableHead class="w-28">Type</TableHead>
                     <TableHead>Snippet</TableHead>
+                    <TableHead>Value</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -353,6 +366,9 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                         [[[c:{{ control.key }}]]]
                         <CopyIcon class="h-3 w-3 opacity-40 group-hover:opacity-100" />
                       </button>
+                    </TableCell>
+                    <TableCell class="text-sm text-muted-foreground">
+                      {{ control.value }}
                     </TableCell>
                   </TableRow>
                 </TableBody>

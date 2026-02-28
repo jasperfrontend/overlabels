@@ -400,7 +400,7 @@ class TemplateDataMapperService
                     'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name',
                     'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name',
                     'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
-                    'event.reward_id', 'event.reward_title', 'event.reward_prompt', 'event.reward_cost',
+                    'event.reward_id', 'event.reward.title', 'event.reward.prompt', 'event.reward.cost',
                     'event.user_input', 'event.status', 'event.redeemed_at',
                 ],
             ],
@@ -619,9 +619,9 @@ class TemplateDataMapperService
 
             // Channel Points Redemption
             'event.reward_id' => 'Reward ID',
-            'event.reward_title' => 'Reward title',
-            'event.reward_prompt' => 'Reward prompt',
-            'event.reward_cost' => 'Reward cost in points',
+            'event.reward.title' => 'Reward title',
+            'event.reward.prompt' => 'Reward prompt',
+            'event.reward.cost' => 'Reward cost in points',
             'event.user_input' => 'User input for the reward',
             'event.status' => 'Redemption status',
             'event.redeemed_at' => 'When the reward was redeemed',
