@@ -69,16 +69,6 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
-        <section v-if="props.userAlertTemplates.length > 0" class="flex-1">
-          <DashboardSectionHeader
-            title="My alerts"
-            :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
-            view-title="View all of your alerts"
-            :create-href="route('templates.create')"
-            create-title="Create a new Alert"
-          />
-          <TemplateList :templates="props.userAlertTemplates" :current-user-id="userId" />
-        </section>
 
         <section v-if="props.userStaticTemplates.length > 0" class="flex-1">
           <DashboardSectionHeader
@@ -91,6 +81,17 @@ const breadcrumbs = [
           <TemplateList :templates="props.userStaticTemplates" :current-user-id="userId" />
         </section>
 
+        <section v-if="props.userAlertTemplates.length > 0" class="flex-1">
+          <DashboardSectionHeader
+            title="My alerts"
+            :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
+            view-title="View all of your alerts"
+            :create-href="route('templates.create')"
+            create-title="Create a new Alert"
+          />
+          <TemplateList :templates="props.userAlertTemplates" :current-user-id="userId" />
+        </section>
+
         <section class="flex-1">
           <DashboardSectionHeader
             title="Recent stream activity"
@@ -100,7 +101,7 @@ const breadcrumbs = [
           <EventsTable v-if="props.userRecentEvents.length > 0" :events="props.userRecentEvents" />
 
           <p v-else class="py-4 text-center text-sm text-muted-foreground">
-            No events yet. Events will appear here once your Twitch EventSub subscriptions are active.
+            No events yet. Events will appear here once your Twitch EventSub subscriptions are active and you have received 1 or more stream events.
           </p>
         </section>
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link, router } from '@inertiajs/vue3';
-import { ChevronRight, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from 'lucide-vue-next';
+import { AppWindow, Check, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from 'lucide-vue-next';
+import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import type { OverlayTemplate } from '@/types';
 
@@ -61,11 +62,15 @@ function compact(n: number) {
   return new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n);
 }
 
-async function copyLink(path: string) {
+const copiedId = ref<number | null>(null);
+
+async function copyLink(path: string, id: number) {
   try {
     await navigator.clipboard.writeText(location.origin + path);
+    copiedId.value = id;
+    setTimeout(() => (copiedId.value = null), 2000);
   } catch {
-    // optional: toast
+    // ignore
   }
 }
 
@@ -96,71 +101,73 @@ function handleDelete(t: OverlayTemplate) {
         <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" />
 
         <!-- Actions -->
-        <div class="self-center text-right opacity-20 group-hover:opacity-100">
+        <div class="self-center text-right" :class="copiedId === t.id ? 'opacity-100' : 'opacity-20 group-hover:opacity-100'">
           <div class="flex items-center justify-end gap-1">
-            <!-- Primary action -->
-            <a v-if="isOwn(t)" class="btn btn-sm btn-primary hidden md:block" :href="editHref(t)" :title="`Edit ${t.name}`">
-              <PencilIcon class="h-3.5 w-3.5" />
-            </a>
-            <a v-else class="btn btn-sm btn-primary hidden md:block" :href="detailsHref(t)" :title="`View details of ${t.name}`">
-              <ChevronRight class="h-3.5 w-3.5" />
-            </a>
-
-            <!-- Preview -->
-            <a
-              v-if="t.is_public"
-              class="btn btn-sm btn-secondary hidden px-2 md:block"
-              :href="previewHref(t)"
-              target="_blank"
-              :title="`Preview ${t.name}`"
-            >
-              <ExternalLinkIcon class="h-3.5 w-3.5" />
-            </a>
-            <button
-              v-else
-              class="btn btn-sm btn-secondary hidden px-2 opacity-50 md:block"
-              disabled
-              :title="`Private template: preview from Edit screen`"
-            >
-              <ExternalLinkIcon class="h-3.5 w-3.5" />
-            </button>
 
             <!-- Kebab menu -->
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <button class="btn btn-sm btn-secondary px-2 ml-2 md:ml-0" title="More actions">
-                  <MoreVertical class="h-3.5 w-3.5" />
+                <button class="btn btn-sm btn-secondary px-2 ml-2 md:ml-0 cursor-pointer" title="More actions">
+                  <Check v-if="copiedId === t.id" class="h-3.5 w-3.5 text-green-500" />
+                  <MoreVertical v-else class="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" class="w-52">
+
                 <DropdownMenuItem as-child>
-                  <Link :href="detailsHref(t)">
+                  <Link :href="detailsHref(t)" :title="`View details of ${t.name}`" class="cursor-pointer">
                     <Eye class="mr-2 h-4 w-4" />
-                    View details
+                    Details
                   </Link>
                 </DropdownMenuItem>
 
+                <DropdownMenuItem as-child>
+                  <Link
+                    v-if="t.is_public"
+                    :href="previewHref(t)"
+                    target="_blank"
+                    :title="`Preview ${t.name}`"
+                    class="cursor-pointer"
+                  >
+                    <AppWindow class="mr-2 h-4 w-4" />
+                    Preview (inline)
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem as-child>
+                  <a
+                    v-if="t.is_public"
+                    :href="previewHref(t)"
+                    target="_blank"
+                    :title="`Preview ${t.name}`"
+                    class="cursor-pointer"
+                  >
+                    <ExternalLinkIcon class="mr-2 h-4 w-4" />
+                    Preview (new tab)
+                  </a>
+                </DropdownMenuItem>
+
                 <DropdownMenuItem v-if="isOwn(t)" as-child>
-                  <Link :href="editHref(t)">
+                  <Link :href="editHref(t)" class="cursor-pointer">
                     <PencilIcon class="mr-2 h-4 w-4" />
                     Edit
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+                <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive cursor-pointer" @click="handleDelete(t)">
                   <Trash2 class="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
+                <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)" class="cursor-pointer">
                   <GitFork class="mr-2 h-4 w-4" />
                   Fork template
                 </DropdownMenuItem>
 
-                <DropdownMenuItem @click="copyLink(detailsHref(t))">
+                <DropdownMenuItem @click="copyLink(detailsHref(t), t.id)" class="cursor-pointer">
                   <LinkIcon class="mr-2 h-4 w-4" />
                   Copy link
                 </DropdownMenuItem>
