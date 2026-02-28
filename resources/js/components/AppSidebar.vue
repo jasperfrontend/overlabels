@@ -59,7 +59,7 @@ const adminNavItems: NavItem[] = [
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg" as-child>
+          <SidebarMenuButton as-child>
             <Link :href="route('dashboard.index')">
               <AppLogo />
             </Link>

@@ -258,7 +258,7 @@ const generateTags = async () => {
 
 // Clear all existing tags
 const clearAllTags = async () => {
-  if (!confirm('Are you sure you want to clear all template tags? This cannot be undone.')) {
+  if (!confirm('DO NOT DO THIS UNLESS YOU KNOW WHAT YOU ARE DOING. Are you sure you want to clear all template tags? This cannot be undone. This will also ruin any live overlay or alert you may have created.')) {
     return;
   }
 
@@ -438,14 +438,14 @@ const getDataTypeClass = (dataType: string) => {
 </script>
 
 <template>
-  <Head title="Template Tags Generator" />
+  <Head title="Your Template Tags" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <div class="p-4">
       <div class="mb-6 flex items-center justify-between">
-        <Heading title="Template Tags Generator" description="Generate template tags from Twitch data" />
+        <Heading title="Your Template Tags" description="These template tags represent your Twitch account data. You can also view these tags while creating or editing an overlay or alert." />
         <div class="flex gap-2">
-          <button @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
+          <button v-if="!hasExistingTags" @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
             <RefreshCw v-if="isGenerating" class="h-4 w-4 animate-spin" />
             <RefreshCw v-else class="mr-3 h-4 w-4" />
             {{ isGenerating ? 'Generating...' : 'Generate Tags' }}

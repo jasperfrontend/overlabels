@@ -24,6 +24,9 @@ function editHref(t: OverlayTemplate) {
 function previewHref(t: OverlayTemplate) {
   return `/overlay/${t.slug}/public`;
 }
+function previewAuthHref(t: OverlayTemplate) {
+  return `/overlay/${t.slug}/#YOUR_TOKEN_HERE`;
+}
 
 function isOwn(t: OverlayTemplate) {
   return !!props.currentUserId && t.owner?.id === props.currentUserId;
@@ -167,9 +170,9 @@ function handleDelete(t: OverlayTemplate) {
                   Fork template
                 </DropdownMenuItem>
 
-                <DropdownMenuItem @click="copyLink(detailsHref(t), t.id)" class="cursor-pointer">
+                <DropdownMenuItem @click="copyLink(previewAuthHref(t), t.id)" class="cursor-pointer">
                   <LinkIcon class="mr-2 h-4 w-4" />
-                  Copy link
+                  Copy link for OBS
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

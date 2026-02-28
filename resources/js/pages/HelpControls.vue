@@ -18,9 +18,12 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-8">
           <h1 class="mb-4 text-4xl font-bold">Controls</h1>
-          <p class="text-lg text-muted-foreground">
-            Controls are mutable, overlay-scoped values you can update live during a stream — no code, no deployment.
+          <p class="text-lg text-foreground mb-4">
+            Controls are mutable, overlay-scoped values you can update live during a stream. No code, no deployment.
             Use them to display death counts, donation goals, timers, custom text, or anything that changes while you play.
+          </p>
+          <p class="text-lg text-foreground">
+            You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly powerful.
           </p>
         </div>
 
@@ -33,7 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-muted-foreground">
                 A Control is a named value that lives on your template. You define its key, type, and optional label, and then
                 reference it in your overlay HTML with the <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> syntax.
-                During your stream, you update its value from the <strong>Control Panel</strong> — and the change appears in OBS instantly.
+                During your stream, you update its value from the <strong>Control Panel</strong> and the change appears in OBS within a few seconds.
               </p>
               <p class="text-muted-foreground">
                 Controls are <strong>overlay-scoped</strong>: each template has its own set. They are never shared between templates unless

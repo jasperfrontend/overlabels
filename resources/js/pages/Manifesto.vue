@@ -29,7 +29,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               Overlabels is a data engine, not a design engine.
             </h2>
             <p class="text-muted-foreground">
-              We exist to pipe live Twitch data into overlays. Styling and animation belong to CSS, not to us.
+              We exist to pipe live Twitch data into overlays. Styling and animation belong to your own CSS, not to us. The only animation styling
+              Overlabels provides is optional Alert entrance and exit transitions, because that seemed like a good idea.
             </p>
           </div>
 
@@ -40,7 +41,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               The template layer is declarative, not decorative.
             </h2>
             <p class="text-muted-foreground">
-              Template tags describe what data to show and when to show it, not how it should look.
+              Template tags describe what data to show and when to show it, not how it should look. Overlabels never delivers any styled contents as a payload,
+              that's all up to you. Wrap the output in a class, style the class. It's HTML and CSS after all.
             </p>
           </div>
 
@@ -48,10 +50,11 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white text-sm font-bold">3</span>
-              Native web standards do the heavy lifting.
+              Native web standards do the heavy lifting. Scripting is a no-no.
             </h2>
             <p class="text-muted-foreground">
-              If something can be achieved with plain HTML and CSS, it should be. JavaScript is filtered out entirely from frontend templates. If you can't solve your problem with HTML and CSS alone, it doesn't belong on Overlabels.
+              If something can be achieved with plain HTML, CSS and some conditional logic, it's perfect for Overlabels.
+              If you can't solve your problem with HTML and CSS alone, it doesn't belong on Overlabels.
             </p>
           </div>
 
@@ -59,11 +62,11 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white text-sm font-bold">4</span>
-              Logic is allowed, but only for data.
+              Logic is allowed, for all your data.
             </h2>
             <p class="text-muted-foreground">
-              Conditions (if/else), comparisons, and loops exist to control data flow. They do not control styles, animations, or transforms.
-              You can use the conditional template tags in your CSS declarations as well. Use them wisely.
+              Conditions (if/else), comparisons, and what we call <a href="/help/controls" class="text-violet-400 hover:underline">"controls"</a>, exist to control data flow. They can also control styles, animations, or transforms.
+              You can use the conditional template tags in your CSS declarations as well. Overlabels gives you the tools, it's up to you how to use them.
             </p>
           </div>
 
@@ -74,7 +77,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               No opinionated sugar.
             </h2>
             <p class="mb-4 text-muted-foreground">
-              There will never be tags like <code>[[[blink]]]</code>, <code>[[[rotation=90]]]</code>, or <code>[[[rainbow]]]</code>. Those belong to CSS.
+              There will never be tags like <code>[[[blink]]]</code>, <code>[[[rotation=90]]]</code>, or <code>[[[rainbow]]]</code>. Those belong to CSS.<br>
+              Then again, if you want to create a Control that blinks your text and you work it out in CSS and conditionals, please - be my guest.
             </p>
           </div>
 
@@ -98,7 +102,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               Minimum viable magic.
             </h2>
             <p class="text-muted-foreground">
-              If you can explain a feature in one sentence without referencing JS, it probably belongs in Overlabels. If it takes a paragraph, it probably doesn't.
+              Overlabels is like Minecraft in a sense. Immensely powerful and based on logic and options, but don't expect a 20-page guidebook. You can use
+              HTML, CSS, conditionals and Controls to create overlays. How you style them, what you do with them and how you control them, is up to you.
             </p>
           </div>
         </div>

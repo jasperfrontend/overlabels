@@ -19,6 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-8">
           <h1 class="mb-4 text-4xl font-bold">Conditional Tags Reference</h1>
           <p class="text-lg text-muted-foreground">Complete guide to conditional template tags and available event data for your overlays.</p>
+          <p class="text-lg text-muted-foreground">See your <a href="/tags" class="text-violet-400 hover:underline">static Template Tags</a> you can use for your account level.</p>
         </div>
 
         <!-- Conditional Syntax Section -->

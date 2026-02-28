@@ -15,20 +15,24 @@ class DashboardController extends Controller
         // $request->user() grabs the currently authenticated user
         $user = $request->user();
 
-        // Get user's latest alert templates (limit 5)
+        $limit = in_array($request->integer('limit', 5), [5, 10, 20, 0])
+            ? $request->integer('limit', 5)
+            : 5;
+
+        // Get user's latest alert templates
         $userAlertTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->alert()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->limit(5)
+            ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get();
 
-        // Get user's latest static templates (limit 5)
+        // Get user's latest static templates
         $userStaticTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->static()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->limit(5)
+            ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get();
 
         // Get community templates (public templates from other users)
@@ -36,13 +40,13 @@ class DashboardController extends Controller
             ->where('is_public', true)
             ->with('owner:id,name,avatar')
             ->latest()
-            ->limit(10)
+            ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get();
 
         // Get user's most recent events
         $userRecentEvents = TwitchEvent::where('user_id', $user->id)
             ->latest()
-            ->limit(5)
+            ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get();
 
         return Inertia::render('dashboard/index', [
@@ -54,6 +58,7 @@ class DashboardController extends Controller
             'userRecentEvents' => $userRecentEvents,
             'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
+            'templateLimit' => $limit,
         ]);
     }
 

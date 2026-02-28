@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, watch } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import TemplateList from '@/components/TemplateList.vue';
@@ -41,11 +41,20 @@ const props = defineProps<{
   userRecentEvents: TwitchEvent[];
   needsOnboarding: boolean;
   twitchId: string;
-  template: OverlayTemplate;
-  message: { type: String; required: true };
-  type: { type: String; default: 'info' }; // info | success | warning | error
-  duration: { type: Number; default: 4000 };
+  templateLimit: number;
 }>();
+
+const LIMIT_OPTIONS = [
+  { value: 5, label: '5' },
+  { value: 10, label: '10' },
+  { value: 20, label: '20' },
+  { value: 0, label: 'All' },
+];
+
+function changeLimit(e: Event) {
+  const value = parseInt((e.target as HTMLSelectElement).value, 10);
+  router.get(route('dashboard.index'), { limit: value }, { preserveScroll: true, replace: true });
+}
 
 const breadcrumbs = [
   {
@@ -68,7 +77,21 @@ const breadcrumbs = [
       </section>
       <!-- // Onboarding Wizard -->
 
-      <div v-else class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
+      <div v-else>
+        <div class="mb-4 flex items-center justify-end gap-2 text-sm text-muted-foreground">
+          <label for="template-limit">Show</label>
+          <select
+            id="template-limit"
+            :value="props.templateLimit"
+            class="rounded border border-input bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            @change="changeLimit"
+          >
+            <option v-for="opt in LIMIT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+          <span>per section</span>
+        </div>
+
+        <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
 
         <section v-if="props.userStaticTemplates.length > 0" class="flex-1">
           <DashboardSectionHeader
@@ -105,6 +128,7 @@ const breadcrumbs = [
           </p>
         </section>
 
+        </div>
       </div>
 
       <div class="mt-6 mb-2 h-px w-full bg-muted-foreground/10" />

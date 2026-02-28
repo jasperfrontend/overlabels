@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ratio } from 'lucide-vue-next';
+
 </script>
 
 <template>
@@ -11,7 +11,7 @@ import { Ratio } from 'lucide-vue-next';
 
 <style scoped>
 .app-logo {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
 }
 </style>
