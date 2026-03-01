@@ -33,6 +33,7 @@ const props = defineProps<{
   template: OverlayTemplate;
   control?: OverlayControl | null;
   connectedServices?: string[];
+  existingControls?: OverlayControl[];
 }>();
 
 const emit = defineEmits<{
@@ -45,14 +46,48 @@ const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
 
-// External preset selection — only applicable when adding a new control on a static template
-const selectedKofiPreset = ref<KofiPreset | null>(null);
+// Ko-fi preset — driven by a single select value
+const kofiPresetKey = ref('');
+const selectedKofiPreset = computed(() =>
+  KOFI_PRESETS.find((p) => p.key === kofiPresetKey.value) ?? null,
+);
 const showKofiPresets = computed(
   () =>
     !isEditing.value &&
     props.template?.type === 'static' &&
     (props.connectedServices ?? []).includes('kofi'),
 );
+
+watch(kofiPresetKey, (key) => {
+  const preset = KOFI_PRESETS.find((p) => p.key === key) ?? null;
+  if (preset) {
+    form.value.key = preset.key;
+    form.value.label = preset.label;
+    form.value.type = preset.type;
+  } else {
+    form.value.key = '';
+    form.value.label = '';
+    form.value.type = 'text';
+  }
+  errors.value = {};
+});
+
+// Sort order mode
+type SortMode = 'before' | 'after' | 'manual';
+const sortMode = ref<SortMode>('after');
+
+function resolvedSortOrder(): number {
+  const existing = props.existingControls ?? [];
+  if (sortMode.value === 'before') {
+    if (existing.length === 0) return 0;
+    return Math.min(...existing.map((c) => c.sort_order)) - 1;
+  }
+  if (sortMode.value === 'after') {
+    if (existing.length === 0) return 0;
+    return Math.max(...existing.map((c) => c.sort_order)) + 1;
+  }
+  return form.value.sort_order;
+}
 
 const form = ref({
   key: '',
@@ -70,26 +105,10 @@ const form = ref({
   sort_order: 0,
 });
 
-function selectKofiPreset(preset: KofiPreset) {
-  if (selectedKofiPreset.value?.key === preset.key) {
-    // Deselect
-    selectedKofiPreset.value = null;
-    form.value.key = '';
-    form.value.label = '';
-    form.value.type = 'text';
-  } else {
-    selectedKofiPreset.value = preset;
-    form.value.key = preset.key;
-    form.value.label = preset.label;
-    form.value.type = preset.type;
-  }
-  errors.value = {};
-}
-
 watch(() => props.open, (open) => {
   if (open) {
     errors.value = {};
-    selectedKofiPreset.value = null;
+    kofiPresetKey.value = '';
     if (props.control) {
       const c = props.control;
       const cfg = c.config ?? {};
@@ -109,6 +128,7 @@ watch(() => props.open, (open) => {
         sort_order: c.sort_order,
       };
       booleanValue.value = c.value === '1';
+      sortMode.value = 'manual';
     } else {
       form.value = {
         key: '',
@@ -119,6 +139,7 @@ watch(() => props.open, (open) => {
         sort_order: 0,
       };
       booleanValue.value = false;
+      sortMode.value = 'after';
     }
   }
 });
@@ -126,20 +147,19 @@ watch(() => props.open, (open) => {
 function buildPayload() {
   const payload: Record<string, any> = {
     label: form.value.label || null,
-    sort_order: form.value.sort_order,
+    sort_order: resolvedSortOrder(),
   };
 
   if (!isEditing.value) {
     payload.key = form.value.key;
     payload.type = form.value.type;
 
-    // Attach source for Ko-fi preset controls
     if (selectedKofiPreset.value) {
       payload.source = 'kofi';
     }
   }
 
-  // If a Ko-fi preset is selected, don't send config/value (driver handles it)
+  // Ko-fi preset: don't send config/value (driver handles it)
   if (selectedKofiPreset.value) {
     return payload;
   }
@@ -227,29 +247,19 @@ async function save() {
         <!-- Ko-fi External Service Presets (new controls on static templates only) -->
         <div v-if="showKofiPresets" class="space-y-2 rounded-sm border border-orange-400/30 bg-orange-400/5 p-3">
           <p class="text-sm font-medium text-orange-500 dark:text-orange-400">Ko-fi Controls</p>
-          <p class="text-xs text-muted-foreground">Select a preset to add a Ko-fi data control. Values update automatically when Ko-fi events arrive.</p>
-          <div class="flex flex-wrap gap-2 pt-1">
-            <button
-              v-for="preset in KOFI_PRESETS"
-              :key="preset.key"
-              type="button"
-              class="rounded-sm border px-2 py-1 text-xs font-mono transition-colors"
-              :class="selectedKofiPreset?.key === preset.key
-                ? 'border-orange-400 bg-orange-400/20 text-orange-500 dark:text-orange-400'
-                : 'border-sidebar text-muted-foreground hover:border-orange-400/50 hover:text-foreground'"
-              @click="selectKofiPreset(preset)"
-            >
-              {{ preset.key }}
-              <span class="ml-1 text-muted-foreground/60">({{ preset.type }})</span>
-            </button>
-          </div>
+          <select
+            v-model="kofiPresetKey"
+            class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+          >
+            <option value="">— Select a Ko-fi control —</option>
+            <option v-for="preset in KOFI_PRESETS" :key="preset.key" :value="preset.key">
+              {{ preset.label }} ({{ preset.type }})
+            </option>
+          </select>
           <p v-if="selectedKofiPreset" class="text-xs text-muted-foreground">
-            Selected: <strong>{{ selectedKofiPreset.label }}</strong> — use
-            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:{{ selectedKofiPreset.key }}]]]</code> in your template.
+            Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:{{ selectedKofiPreset.key }}]]]</code>
+            in your template. Key, type, and value are managed by Ko-fi.
           </p>
-          <div v-if="selectedKofiPreset" class="pt-1">
-            <p class="text-xs text-muted-foreground italic">Key, type, and value are locked — managed by Ko-fi. You can set a label below.</p>
-          </div>
         </div>
 
         <!-- Only show manual fields if no Ko-fi preset selected -->
@@ -369,10 +379,26 @@ async function save() {
           </div>
         </template>
 
-        <!-- Sort order (always shown) -->
+        <!-- Sort order -->
         <div class="space-y-1">
-          <Label for="ctrl-sort">Sort order</Label>
-          <Input id="ctrl-sort" v-model.number="form.sort_order" type="number" min="0" />
+          <Label for="ctrl-sort">Position</Label>
+          <select
+            id="ctrl-sort"
+            v-model="sortMode"
+            class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+          >
+            <option value="after">After existing (last)</option>
+            <option value="before">Before existing (first)</option>
+            <option value="manual">Enter sort order manually</option>
+          </select>
+          <Input
+            v-if="sortMode === 'manual'"
+            v-model.number="form.sort_order"
+            type="number"
+            min="0"
+            placeholder="0"
+            class="mt-1.5"
+          />
         </div>
       </div>
 

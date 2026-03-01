@@ -96,7 +96,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" :connected-services="connectedServices" @saved="onSaved" />
+  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" :connected-services="connectedServices" :existing-controls="controls" @saved="onSaved" />
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">

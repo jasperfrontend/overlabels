@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## March 1st, 2026 — Add Control modal UX improvements
+
+- **Ko-fi preset selector replaced with a dropdown.** The button-chip grid for Ko-fi control presets is gone. A single `<select>` now lists all 6 presets as "Label (type)". Selecting one still pre-fills key/type (locked) and shows the template snippet hint below.
+- **Sort order replaced with a Position dropdown.** The raw number input is replaced with three options: "After existing (last)" (default when adding — places the control after the highest current sort order), "Before existing (first)" (places it before the lowest), and "Enter sort order manually" (reveals the number input). When editing an existing control the dropdown defaults to manual with the current value pre-filled. Sort order math is computed from the live controls list passed down from `ControlsManager`.
+
 ## March 1st, 2026 — External events in Activity Feed + Replay
 
 - **Ko-fi events now appear in the dashboard activity feed.** The Recent Stream Activity section on the dashboard and `/dashboard/recents` now merges Twitch events and Ko-fi (external) events into a single unified list, sorted newest-first.
