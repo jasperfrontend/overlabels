@@ -60,7 +60,6 @@ class KofiIntegrationController extends Controller
             'enabled_events' => 'nullable|array',
             'enabled_events.*' => 'string|in:donation,subscription,shop_order,commission',
             'enabled' => 'nullable|boolean',
-            'test_mode' => 'nullable|boolean',
         ]);
 
         $isNew = ! ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->exists();
@@ -81,10 +80,28 @@ class KofiIntegrationController extends Controller
 
         // Force enabled on first connection; respect the submitted value on updates.
         $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
-        $integration->test_mode = (bool) ($validated['test_mode'] ?? false);
         $integration->save();
 
         return back()->with('success', 'Ko-fi integration saved.');
+    }
+
+    public function setTestMode(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = auth()->user();
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'kofi')
+            ->first();
+
+        if (! $integration) {
+            return response()->json(['error' => 'Not connected.'], 404);
+        }
+
+        $validated = $request->validate(['test_mode' => 'required|boolean']);
+
+        $integration->update(['test_mode' => $validated['test_mode']]);
+
+        return response()->json(['test_mode' => $integration->test_mode]);
     }
 
     public function disconnect(): RedirectResponse

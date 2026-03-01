@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -41,8 +42,11 @@ const form = useForm({
     verification_token: '',
     enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
     enabled: props.integration.connected ? props.integration.enabled : true,
-    test_mode: props.integration.test_mode ?? false,
 });
+
+// Test mode is independent of the main form — toggled instantly via its own endpoint
+const testMode = ref(props.integration.test_mode ?? false);
+const testModeLoading = ref(false);
 
 const copied = ref(false);
 
@@ -67,6 +71,21 @@ function save() {
     form.post('/settings/integrations/kofi', {
         preserveScroll: true,
     });
+}
+
+async function toggleTestMode() {
+    testModeLoading.value = true;
+    try {
+        const { data } = await axios.patch('/settings/integrations/kofi/test-mode', {
+            test_mode: testMode.value,
+        });
+        testMode.value = data.test_mode;
+    } catch {
+        // revert on failure
+        testMode.value = !testMode.value;
+    } finally {
+        testModeLoading.value = false;
+    }
 }
 
 function disconnect() {
@@ -96,6 +115,7 @@ function formatDate(iso: string | null): string {
                     <Badge v-if="integration.connected" variant="default" class="bg-green-400">Connected</Badge>
                     <Badge v-else variant="secondary">Not connected</Badge>
                 </div>
+
                 <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
                   <p class="font-medium text-foreground">What to do next</p>
                   <ol class="list-decimal pl-4 space-y-1">
@@ -109,6 +129,7 @@ function formatDate(iso: string | null): string {
                     </li>
                   </ol>
                 </div>
+
                 <form class="space-y-6" @submit.prevent="save">
                     <!-- Verification Token -->
                     <div class="space-y-2">
@@ -166,26 +187,6 @@ function formatDate(iso: string | null): string {
                         </div>
                     </div>
 
-                    <!-- Test mode -->
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-3">
-                            <input
-                                id="test_mode"
-                                type="checkbox"
-                                v-model="form.test_mode"
-                                class="h-4 w-4 rounded border-border accent-violet-500 cursor-pointer"
-                            />
-                            <Label for="test_mode" class="cursor-pointer">Test mode</Label>
-                        </div>
-                        <p class="text-muted-foreground text-sm">
-                            Disables duplicate event detection — fire the same Ko-fi webhook as many times as you like.
-                            Turn this off before going live.
-                        </p>
-                        <div v-if="form.test_mode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
-                            Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
-                        </div>
-                    </div>
-
                     <!-- Last received -->
                     <p v-if="integration.connected" class="text-muted-foreground text-sm">
                         Last event received: {{ formatDate(integration.last_received_at) }}
@@ -200,6 +201,40 @@ function formatDate(iso: string | null): string {
                         </Button>
                     </div>
                 </form>
+
+                <!-- Test mode — independent toggle, saves instantly -->
+                <template v-if="integration.connected">
+                    <Separator />
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="testMode"
+                                :disabled="testModeLoading"
+                                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                                :class="testMode ? 'bg-violet-500' : 'bg-muted-foreground/30'"
+                                @click="testMode = !testMode; toggleTestMode()"
+                            >
+                                <span
+                                    class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
+                                    :class="testMode ? 'translate-x-[18px]' : 'translate-x-[2px]'"
+                                />
+                            </button>
+                            <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
+                                Test mode
+                                <span v-if="testModeLoading" class="ml-1 text-xs text-muted-foreground">saving…</span>
+                            </Label>
+                        </div>
+                        <p class="text-muted-foreground text-sm">
+                            Disables duplicate event detection — fire the same Ko-fi webhook as many times as you like.
+                            Turn this off before going live.
+                        </p>
+                        <div v-if="testMode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+                            Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
+                        </div>
+                    </div>
+                </template>
 
                 <!-- Danger zone -->
                 <template v-if="integration.connected">

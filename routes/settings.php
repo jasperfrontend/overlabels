@@ -14,6 +14,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/', [IntegrationController::class, 'index'])->name('index');
         Route::get('/kofi', [KofiIntegrationController::class, 'show'])->name('kofi.show');
         Route::post('/kofi', [KofiIntegrationController::class, 'save'])->name('kofi.save');
+        Route::patch('/kofi/test-mode', [KofiIntegrationController::class, 'setTestMode'])->name('kofi.test-mode');
         Route::delete('/kofi', [KofiIntegrationController::class, 'disconnect'])->name('kofi.disconnect');
     });
 });
