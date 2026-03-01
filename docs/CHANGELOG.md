@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## March 1st, 2026 — MS2 + MS3 hotfix
+
+- **Fixed: Ko-fi webhook URL showing "false" after connecting.** The Ko-fi settings page used `:value` to pass the webhook URL to the Input component, which does not correspond to the component's declared `modelValue` prop. Changed to `:model-value` so the value routes through the component correctly.
+- **Fixed: Ko-fi integration saving as disabled on first connect.** The form initialised `enabled` from `props.integration.enabled`, which is `false` in the disconnected state. This meant every first-time connect immediately stored `enabled: false`, causing the webhook pipeline to silently drop all incoming Ko-fi events. The form now defaults `enabled: true` when not yet connected, and the controller forces `enabled: true` on first save.
+
 ## March 1st, 2026 — MS2 + MS3: External Integrations & Ko-fi
 
 ### External integration rails (MS2)

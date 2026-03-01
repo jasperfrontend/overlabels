@@ -77,7 +77,8 @@ class KofiIntegrationController extends Controller
             'enabled_events' => $validated['enabled_events'] ?? ['donation', 'subscription', 'shop_order'],
         ];
 
-        $integration->enabled = $validated['enabled'] ?? true;
+        // Force enabled on first connection; respect the submitted value on updates.
+        $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
         $integration->save();
 
         // Auto-provision controls on first connection

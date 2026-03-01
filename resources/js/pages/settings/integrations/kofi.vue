@@ -39,7 +39,7 @@ const EVENT_TYPES = [
 const form = useForm({
     verification_token: '',
     enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
-    enabled: props.integration.enabled,
+    enabled: props.integration.connected ? props.integration.enabled : true,
 });
 
 const copied = ref(false);
@@ -121,7 +121,7 @@ function formatDate(iso: string | null): string {
                         </p>
                         <div class="flex gap-2">
                             <Input
-                                :value="integration.webhook_url"
+                                :model-value="integration.webhook_url ?? ''"
                                 readonly
                                 class="font-mono text-sm"
                             />
