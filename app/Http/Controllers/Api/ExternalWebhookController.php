@@ -70,12 +70,18 @@ class ExternalWebhookController extends Controller
 
         // 8. Store in external_events (dedup check)
 
+        // In test mode, append a unique suffix so the same payload can be fired
+        // repeatedly without hitting the dedup constraint.
+        $messageId = $integration->test_mode
+            ? $normalizedEvent->getMessageId() . '_test_' . microtime(true)
+            : $normalizedEvent->getMessageId();
+
         try {
             $storedEvent = ExternalEvent::create([
                 'user_id' => $user->id,
                 'service' => $service,
                 'event_type' => $eventType,
-                'message_id' => $normalizedEvent->getMessageId(),
+                'message_id' => $messageId,
                 'raw_payload' => $payload,
                 'normalized_payload' => $normalizedEvent->getTemplateTags(),
             ]);

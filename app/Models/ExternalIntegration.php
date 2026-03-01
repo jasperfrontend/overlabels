@@ -21,12 +21,14 @@ class ExternalIntegration extends Model
         'credentials',
         'settings',
         'enabled',
+        'test_mode',
         'last_received_at',
     ];
 
     protected $casts = [
         'settings' => 'array',
         'enabled' => 'boolean',
+        'test_mode' => 'boolean',
         'last_received_at' => 'datetime',
     ];
 

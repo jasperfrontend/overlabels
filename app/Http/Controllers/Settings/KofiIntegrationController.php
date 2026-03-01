@@ -34,6 +34,7 @@ class KofiIntegrationController extends Controller
             'integration' => $integration ? [
                 'connected' => true,
                 'enabled' => $integration->enabled,
+                'test_mode' => $integration->test_mode,
                 'webhook_url' => $webhookUrl,
                 'last_received_at' => $integration->last_received_at?->toIso8601String(),
                 'settings' => $integration->settings ?? [],
@@ -41,6 +42,7 @@ class KofiIntegrationController extends Controller
             ] : [
                 'connected' => false,
                 'enabled' => false,
+                'test_mode' => false,
                 'webhook_url' => null,
                 'last_received_at' => null,
                 'settings' => [],
@@ -58,6 +60,7 @@ class KofiIntegrationController extends Controller
             'enabled_events' => 'nullable|array',
             'enabled_events.*' => 'string|in:donation,subscription,shop_order,commission',
             'enabled' => 'nullable|boolean',
+            'test_mode' => 'nullable|boolean',
         ]);
 
         $isNew = ! ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->exists();
@@ -78,6 +81,7 @@ class KofiIntegrationController extends Controller
 
         // Force enabled on first connection; respect the submitted value on updates.
         $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
+        $integration->test_mode = (bool) ($validated['test_mode'] ?? false);
         $integration->save();
 
         return back()->with('success', 'Ko-fi integration saved.');

@@ -14,6 +14,7 @@ import { type BreadcrumbItem } from '@/types';
 interface IntegrationData {
     connected: boolean;
     enabled: boolean;
+    test_mode: boolean;
     webhook_url: string | null;
     last_received_at: string | null;
     settings: { enabled_events?: string[] };
@@ -40,6 +41,7 @@ const form = useForm({
     verification_token: '',
     enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
     enabled: props.integration.connected ? props.integration.enabled : true,
+    test_mode: props.integration.test_mode ?? false,
 });
 
 const copied = ref(false);
@@ -161,6 +163,26 @@ function formatDate(iso: string | null): string {
                             >
                                 {{ et.label }}
                             </Button>
+                        </div>
+                    </div>
+
+                    <!-- Test mode -->
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                            <input
+                                id="test_mode"
+                                type="checkbox"
+                                v-model="form.test_mode"
+                                class="h-4 w-4 rounded border-border accent-violet-500 cursor-pointer"
+                            />
+                            <Label for="test_mode" class="cursor-pointer">Test mode</Label>
+                        </div>
+                        <p class="text-muted-foreground text-sm">
+                            Disables duplicate event detection — fire the same Ko-fi webhook as many times as you like.
+                            Turn this off before going live.
+                        </p>
+                        <div v-if="form.test_mode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+                            Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
                         </div>
                     </div>
 
