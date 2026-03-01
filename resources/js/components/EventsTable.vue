@@ -7,29 +7,35 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Clock, Info, MoreVertical, RefreshCw } from 'lucide-vue-next';
 
 
-interface TwitchEvent {
+interface UnifiedEvent {
   id: number;
+  source: string; // 'twitch' | 'kofi' | etc.
   event_type: string;
-  event_data: Record<string, unknown>;
   created_at: string;
+  event_data?: Record<string, unknown> | null;
+  normalized_payload?: Record<string, unknown> | null;
 }
 
 defineProps<{
-  events: TwitchEvent[];
+  events: UnifiedEvent[];
 }>();
 
 const replayingId = ref<number | null>(null);
 
 const nonReplayableTypes = ['stream.online', 'stream.offline'];
 
-function canReplay(type: string): boolean {
-  return !nonReplayableTypes.includes(type);
+function canReplay(event: UnifiedEvent): boolean {
+  if (event.source !== 'twitch') return true;
+  return !nonReplayableTypes.includes(event.event_type);
 }
 
-function replay(event: TwitchEvent) {
+function replay(event: UnifiedEvent) {
   replayingId.value = event.id;
+  const url = event.source === 'twitch'
+    ? `/events/${event.id}/replay`
+    : `/external-events/${event.id}/replay`;
   router.post(
-    `/events/${event.id}/replay`,
+    url,
     {},
     {
       preserveScroll: true,
@@ -40,7 +46,7 @@ function replay(event: TwitchEvent) {
   );
 }
 
-const eventLabels: Record<string, string> = {
+const twitchEventLabels: Record<string, string> = {
   'channel.follow': 'Follow',
   'channel.subscribe': 'Subscription',
   'channel.subscription.gift': 'Gift Sub',
@@ -52,19 +58,43 @@ const eventLabels: Record<string, string> = {
   'stream.offline': 'Stream Offline',
 };
 
-function label(type: string): string {
-  return eventLabels[type] ?? type;
+const externalEventLabels: Record<string, Record<string, string>> = {
+  kofi: {
+    donation: 'Ko-fi Donation',
+    subscription: 'Ko-fi Subscription',
+    shop_order: 'Ko-fi Shop Order',
+    commission: 'Ko-fi Commission',
+  },
+};
+
+function label(event: UnifiedEvent): string {
+  if (event.source === 'twitch') {
+    return twitchEventLabels[event.event_type] ?? event.event_type;
+  }
+  return externalEventLabels[event.source]?.[event.event_type] ?? `${event.source}: ${event.event_type}`;
 }
 
-function who(event: TwitchEvent): string | null {
-  const d = event.event_data;
+function who(event: UnifiedEvent): string | null {
+  if (event.source !== 'twitch') {
+    return (event.normalized_payload?.['event.from_name'] as string) ?? null;
+  }
+  const d = event.event_data ?? {};
   if (event.event_type === 'channel.raid') return (d.from_broadcaster_user_name as string) ?? null;
   if (event.event_type === 'stream.online' || event.event_type === 'stream.offline') return null;
   return (d.user_name as string) ?? null;
 }
 
-function details(event: TwitchEvent): string | null {
-  const d = event.event_data;
+function details(event: UnifiedEvent): string | null {
+  if (event.source !== 'twitch') {
+    const p = event.normalized_payload;
+    if (!p) return null;
+    const amount = p['event.amount'] as string | undefined;
+    const currency = p['event.currency'] as string | undefined;
+    if (amount) return currency ? `${amount} ${currency}` : amount;
+    const tier = p['event.tier_name'] as string | undefined;
+    return tier ?? null;
+  }
+  const d = event.event_data ?? {};
   switch (event.event_type) {
     case 'channel.subscribe':
     case 'channel.subscription.message':
@@ -97,7 +127,9 @@ function relativeTime(iso: string): string {
   return rtf.format(Math.round(diff / week), 'week');
 }
 
-function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'destructive' {
+function badgeVariant(event: UnifiedEvent): 'default' | 'secondary' | 'outline' | 'destructive' {
+  if (event.source !== 'twitch') return 'secondary';
+  const type = event.event_type;
   if (type.startsWith('channel.subscribe') || type === 'channel.subscription.gift' || type === 'channel.subscription.message') return 'default';
   if (type === 'channel.cheer') return 'default';
   if (type === 'channel.raid') return 'secondary';
@@ -117,10 +149,10 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
     </TableHeader>
 
     <TableBody>
-      <TableRow v-for="event in events" :key="event.id" class="group">
+      <TableRow v-for="event in events" :key="`${event.source}-${event.id}`" class="group">
         <TableCell class="opacity-20 transition-colors group-hover:opacity-100">
-          <Badge :variant="badgeVariant(event.event_type)">
-            {{ label(event.event_type) }}
+          <Badge :variant="badgeVariant(event)">
+            {{ label(event) }}
           </Badge>
         </TableCell>
 
@@ -138,12 +170,12 @@ function badgeVariant(type: string): 'default' | 'secondary' | 'outline' | 'dest
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" class="w-52">
-              <DropdownMenuItem v-if="canReplay(event.event_type)" :disabled="replayingId === event.id" @click="replay(event)">
+              <DropdownMenuItem v-if="canReplay(event)" :disabled="replayingId === event.id" @click="replay(event)">
                 <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': replayingId === event.id }" />
                 Replay alert
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator v-if="canReplay(event.event_type) && (details(event) || true)" />
+              <DropdownMenuSeparator v-if="canReplay(event) && (details(event) || true)" />
 
               <DropdownMenuItem v-if="details(event)" disabled class="text-muted-foreground">
                 <Info class="mr-2 h-4 w-4" />

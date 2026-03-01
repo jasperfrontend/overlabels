@@ -10,16 +10,18 @@ import { ExternalLink, FileText, Radio } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 
-interface TwitchEvent {
+interface UnifiedEvent {
   id: number;
+  source: string;
   event_type: string;
-  event_data: Record<string, unknown>;
   created_at: string;
+  event_data?: Record<string, unknown> | null;
+  normalized_payload?: Record<string, unknown> | null;
 }
 
 defineProps<{
   recentTemplates: OverlayTemplate[];
-  recentEvents: TwitchEvent[];
+  recentEvents: UnifiedEvent[];
 }>();
 
 const page = usePage<AppPageProps>();

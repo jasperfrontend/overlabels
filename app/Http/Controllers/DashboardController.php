@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExternalEvent;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use Illuminate\Http\Request;
@@ -43,11 +44,8 @@ class DashboardController extends Controller
             ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get();
 
-        // Get user's most recent events
-        $userRecentEvents = TwitchEvent::where('user_id', $user->id)
-            ->latest()
-            ->when($limit > 0, fn ($q) => $q->limit($limit))
-            ->get();
+        // Get user's most recent events (Twitch + external, merged)
+        $userRecentEvents = $this->mergeRecentEvents($user->id, $limit > 0 ? $limit : 30);
 
         return Inertia::render('dashboard/index', [
             'userName' => $user->name,
@@ -72,10 +70,7 @@ class DashboardController extends Controller
             ->limit(20)
             ->get();
 
-        $recentEvents = TwitchEvent::where('user_id', $user->id)
-            ->latest()
-            ->limit(30)
-            ->get();
+        $recentEvents = $this->mergeRecentEvents($user->id, 30);
 
         return Inertia::render('dashboard/recents', [
             'recentTemplates' => $recentTemplates,
@@ -93,10 +88,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $recentEvents = TwitchEvent::where('user_id', $user->id)
-            ->latest()
-            ->limit(30)
-            ->get();
+        $recentEvents = $this->mergeRecentEvents($user->id, 30);
 
         return Inertia::render('dashboard/index', [
             'recentTemplates' => $recentTemplates,
@@ -108,13 +100,51 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $events = TwitchEvent::where('user_id', $user->id)
-            ->latest()
-            ->limit(50)
-            ->get();
+        $events = $this->mergeRecentEvents($user->id, 50);
 
         return Inertia::render('dashboard/events', [
             'events' => $events,
         ]);
+    }
+
+    /**
+     * Merge Twitch and external events into a unified shape, sorted newest-first.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeRecentEvents(int $userId, int $limit): array
+    {
+        $twitchEvents = TwitchEvent::where('user_id', $userId)
+            ->latest()
+            ->limit($limit)
+            ->get()
+            ->map(fn (TwitchEvent $e) => [
+                'id' => $e->id,
+                'source' => 'twitch',
+                'event_type' => $e->event_type,
+                'created_at' => $e->created_at->toIso8601String(),
+                'event_data' => $e->event_data,
+                'normalized_payload' => null,
+            ]);
+
+        $externalEvents = ExternalEvent::where('user_id', $userId)
+            ->latest()
+            ->limit($limit)
+            ->get()
+            ->map(fn (ExternalEvent $e) => [
+                'id' => $e->id,
+                'source' => $e->service,
+                'event_type' => $e->event_type,
+                'created_at' => $e->created_at->toIso8601String(),
+                'event_data' => null,
+                'normalized_payload' => $e->normalized_payload,
+            ]);
+
+        return $twitchEvents
+            ->concat($externalEvents)
+            ->sortByDesc('created_at')
+            ->values()
+            ->take($limit)
+            ->all();
     }
 }

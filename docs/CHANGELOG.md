@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## March 1st, 2026 — External events in Activity Feed + Replay
+
+- **Ko-fi events now appear in the dashboard activity feed.** The Recent Stream Activity section on the dashboard and `/dashboard/recents` now merges Twitch events and Ko-fi (external) events into a single unified list, sorted newest-first.
+- **Ko-fi events are replayable.** Every Ko-fi event row in the activity table has the same "Replay alert" dropdown menu option as Twitch events. Triggering it re-broadcasts the stored `normalized_payload` through the user's active `ExternalEventTemplateMapping`, re-firing the alert on connected overlays. New `POST /external-events/{id}/replay` endpoint handles this.
+- **Unified event shape.** The backend merges `TwitchEvent` and `ExternalEvent` records into a common `UnifiedEvent` array with a `source` discriminator (`'twitch'` or service name). `EventsTable.vue` renders both types with correct labels, "From" names, and detail summaries (amount + currency for Ko-fi donations).
+
 ## March 1st, 2026 — Ko-fi Integration Finalization (Alerts + Controls)
 
 ### Part 1 — Ko-fi alert mappings in Alerts Builder

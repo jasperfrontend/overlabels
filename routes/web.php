@@ -12,6 +12,7 @@ use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
+use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Models\User;
 use App\Services\TwitchApiService;
@@ -351,6 +352,9 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Replay a historical event as an alert
     Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');
+
+    // Replay a stored external (Ko-fi, etc.) event as an alert
+    Route::post('/external-events/{externalEvent}/replay', [ExternalEventController::class, 'replay'])->name('external-events.replay');
 
     // Twitch events API - protected by authentication
     Route::prefix('/api/twitch/events')->middleware('auth:sanctum')->group(function () {

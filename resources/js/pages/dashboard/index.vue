@@ -26,11 +26,13 @@ watch(
   { immediate: true },
 );
 
-interface TwitchEvent {
+interface UnifiedEvent {
   id: number;
+  source: string;
   event_type: string;
-  event_data: Record<string, unknown>;
   created_at: string;
+  event_data?: Record<string, unknown> | null;
+  normalized_payload?: Record<string, unknown> | null;
 }
 
 const props = defineProps<{
@@ -38,7 +40,7 @@ const props = defineProps<{
   userId: number;
   userAlertTemplates: OverlayTemplate[];
   userStaticTemplates: OverlayTemplate[];
-  userRecentEvents: TwitchEvent[];
+  userRecentEvents: UnifiedEvent[];
   needsOnboarding: boolean;
   twitchId: string;
   templateLimit: number;

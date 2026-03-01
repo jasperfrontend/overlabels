@@ -5,15 +5,17 @@ import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { AppPageProps } from '@/types';
 
-interface TwitchEvent {
+interface UnifiedEvent {
   id: number;
+  source: string;
   event_type: string;
-  event_data: Record<string, unknown>;
   created_at: string;
+  event_data?: Record<string, unknown> | null;
+  normalized_payload?: Record<string, unknown> | null;
 }
 
 defineProps<{
-  events: TwitchEvent[];
+  events: UnifiedEvent[];
 }>();
 
 const page = usePage<AppPageProps>();
