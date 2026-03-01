@@ -73,6 +73,7 @@ class KofiServiceDriver implements ExternalServiceDriver
             'event.amount' => (string) ($amount ?? ''),
             'event.currency' => (string) ($currency ?? ''),
             'event.type' => $eventType,
+            'event.source' => 'Ko-fi',
             'event.tier_name' => (string) ($payload['tier_name'] ?? ''),
             'event.is_first_sub' => ($payload['is_first_subscription_payment'] ?? false) ? '1' : '0',
             'event.is_subscription' => ($payload['is_subscription_payment'] ?? false) ? '1' : '0',

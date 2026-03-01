@@ -383,6 +383,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-muted-foreground">Available on every Ko-fi event type (donation, subscription, shop_order, commission).</p>
               <div class="space-y-2 font-mono text-sm">
                 <div><code>[[[event.from_name]]]</code> — name of the supporter</div>
+                <div><code>[[[event.source]]]</code> — display name of the platform (e.g. <code>"Ko-fi"</code>) — useful for reusing the same template across multiple donation services</div>
                 <div><code>[[[event.type]]]</code> — normalized type: <code>donation</code>, <code>subscription</code>, <code>shop_order</code>, or <code>commission</code></div>
                 <div><code>[[[event.transaction_id]]]</code> — unique Ko-fi transaction ID</div>
                 <div><code>[[[event.url]]]</code> — supporter's Ko-fi page URL</div>
