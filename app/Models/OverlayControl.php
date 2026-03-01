@@ -19,11 +19,14 @@ class OverlayControl extends Model
         'value',
         'config',
         'sort_order',
+        'source',
+        'source_managed',
     ];
 
     protected $casts = [
         'config' => 'array',
         'sort_order' => 'integer',
+        'source_managed' => 'boolean',
     ];
 
     const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean'];
@@ -81,6 +84,20 @@ class OverlayControl extends Model
     }
 
     /**
+     * The broadcast key used for ControlValueUpdated events.
+     * For service-managed controls, includes the source namespace: "kofi:kofis_received"
+     * For template controls, is just the key: "goal"
+     */
+    public function broadcastKey(): string
+    {
+        if ($this->source) {
+            return "{$this->source}:{$this->key}";
+        }
+
+        return $this->key;
+    }
+
+    /**
      * Single entry point to create a control for a template.
      * Validates key uniqueness within the template.
      */
@@ -96,6 +113,30 @@ class OverlayControl extends Model
             'config' => $data['config'] ?? null,
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
+    }
+
+    /**
+     * Create or update a service-managed (user-scoped) control.
+     * These controls have overlay_template_id = NULL.
+     */
+    public static function provisionServiceControl(User $user, string $source, array $data): self
+    {
+        return static::firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'source' => $source,
+                'key' => $data['key'],
+            ],
+            [
+                'overlay_template_id' => null,
+                'label' => $data['label'] ?? null,
+                'type' => $data['type'],
+                'value' => $data['value'] ?? '0',
+                'config' => $data['config'] ?? null,
+                'sort_order' => $data['sort_order'] ?? 0,
+                'source_managed' => true,
+            ]
+        );
     }
 
     /**

@@ -417,13 +417,17 @@ function setupAlertListener() {
 }
 
 function handleControlUpdated(event: any) {
-  if (event.overlay_slug !== props.slug) return;
+  // User-scoped (service-managed) controls broadcast with an empty overlay_slug — apply to all overlays.
+  // Template-scoped controls include the slug and are filtered to match only their overlay.
+  const isUserScoped = !event.overlay_slug;
+  if (!isUserScoped && event.overlay_slug !== props.slug) return;
   if (!data.value || typeof data.value !== 'object') return;
 
   if (event.type === 'timer' && event.timer_state) {
     // For timers, start/update the local tick interval using the broadcast state
     startTimerTick(event.key, event.timer_state);
   } else {
+    // event.key may be namespaced (e.g. "kofi:kofis_received") — store as "c:kofi:kofis_received"
     data.value = {
       ...data.value,
       [`c:${event.key}`]: event.value,

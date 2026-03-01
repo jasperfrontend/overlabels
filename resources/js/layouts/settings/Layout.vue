@@ -10,6 +10,10 @@ const sidebarNavItems: NavItem[] = [
         title: 'Appearance',
         href: '/settings/appearance',
     },
+    {
+        title: 'Integrations',
+        href: '/settings/integrations',
+    },
 ];
 
 const page = usePage();

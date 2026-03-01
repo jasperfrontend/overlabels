@@ -63,6 +63,11 @@ class OverlayControlController extends Controller
         abort_if($template->owner_id !== auth()->id(), 403);
         abort_if($control->overlay_template_id !== $template->id, 404);
 
+        if ($control->source_managed) {
+            $source = ucfirst($control->source ?? 'an external service');
+            abort(403, "This control is managed by {$source} and cannot be edited manually.");
+        }
+
         $validated = $request->validate([
             'label' => 'nullable|string|max:100',
             'value' => ['nullable', function ($attribute, $value, $fail) {
@@ -105,6 +110,11 @@ class OverlayControlController extends Controller
     {
         abort_if($template->owner_id !== auth()->id(), 403);
         abort_if($control->overlay_template_id !== $template->id, 404);
+
+        if ($control->source_managed) {
+            $source = ucfirst($control->source ?? 'an external service');
+            abort(403, "This control is managed by {$source} and cannot be edited manually.");
+        }
 
         if ($control->type === 'timer') {
             return $this->setTimerValue($request, $template, $control);
@@ -281,7 +291,7 @@ class OverlayControlController extends Controller
 
         ControlValueUpdated::dispatch(
             $template->slug,
-            $control->key,
+            $control->broadcastKey(),
             $control->type,
             $value,
             $user->twitch_id,

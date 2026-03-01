@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## March 1st, 2026 — MS2 + MS3: External Integrations & Ko-fi
+
+### External integration rails (MS2)
+- **New: external integration infrastructure.** A new `POST /api/webhooks/{service}/{webhook_token}` route handles incoming payloads from any supported third-party service. The pipeline: verify → deduplicate → normalize → update Controls → fire alert — exactly mirrors the Twitch EventSub pipeline. Adding a new service in the future means writing one driver class.
+- **New: service-managed Controls.** Controls now support a `source` / `source_managed` flag. When a service (e.g. Ko-fi) writes to a control, the overlay receives the update over the existing `control.updated` broadcast — no renderer changes needed. Service-managed controls return 403 to any manual edit attempt from the dashboard.
+- **New: user-scoped Controls.** `overlay_template_id` is now nullable. Controls with `NULL` template ID are user-global — they appear in every overlay belonging to that user. Ko-fi donation counters, latest donor name, etc. are all user-scoped.
+- **New: namespaced control keys.** Service controls use a namespaced tag syntax: `[[[c:kofi:kofis_received]]]`. The broadcast key is `kofi:kofis_received`; the data map key is `c:kofi:kofis_received`. The colon was already in the tag extraction regex — no parser changes needed. CSS `[[[c:kofi:...]]]` works the same as any other tag replacement.
+- **New: Settings → Integrations page.** `/settings/integrations` lists all supported services with connected/disconnected status. Additional services show "Coming soon".
+- **New: `ExternalServiceDriver` interface + `ExternalServiceRegistry`.** Clean extensibility pattern for adding Throne, Patreon, Fourthwall, etc. in future milestones.
+
+### Ko-fi integration (MS3)
+- **New: Ko-fi connected.** Connect Ko-fi from Settings → Integrations → Ko-fi. Paste your verification token, copy your webhook URL into Ko-fi's API settings, and donation/subscription/shop order events flow directly into your overlays.
+- **Automatic Ko-fi controls provisioned on connect.** Six controls are created automatically: `kofis_received` (counter), `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`. Use them in any template as `[[[c:kofi:kofis_received]]]` etc.
+- **Ko-fi alerts.** Map Ko-fi donation/subscription/shop order events to any alert template from the Integrations settings page. The alert fires on the same broadcast channel as Twitch events — existing alert rendering requires no changes.
+- **Disconnect Ko-fi** removes the integration and all auto-provisioned controls.
+- **28 new tests** cover: KofiServiceDriver (unit), webhook pipeline (404/403/200/409/dedup/control updates), and source_managed guard (feature).
+
 ## February 28th, 2026
 - **Fixed: control values in CSS now update live.** Using `[[[c:key]]]` tags inside overlay CSS (e.g. to drive `font-size` or `background-color` from a control) now reacts instantly when values change, just like HTML does. Previously the style tag was only injected once on load and never updated.
 - **Fixed: channel points reward tags now use dot notation.** `[[[event.reward.title]]]`, `[[[event.reward.prompt]]]`, and `[[[event.reward.cost]]]` now correctly reflect the nested payload shape. The old underscore variants (`event.reward_title` etc.) were wrong.
