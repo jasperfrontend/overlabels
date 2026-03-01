@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Services\External\ExternalControlService;
-use App\Services\External\ExternalServiceRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,12 +79,6 @@ class KofiIntegrationController extends Controller
         // Force enabled on first connection; respect the submitted value on updates.
         $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
         $integration->save();
-
-        // Auto-provision controls on first connection
-        if ($isNew) {
-            $driver = ExternalServiceRegistry::driver('kofi');
-            $this->controlService->provision($user, $driver);
-        }
 
         return back()->with('success', 'Ko-fi integration saved.');
     }

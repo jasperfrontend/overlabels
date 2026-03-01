@@ -36,9 +36,9 @@ class ExternalAlertService
                 html: $template->html ?? '',
                 css: $template->css ?? '',
                 data: $data,
-                duration: 5000, // default 5 s; future: per-mapping setting
-                transitionIn: 'fade',
-                transitionOut: 'fade',
+                duration: $mapping->duration_ms ?? 5000,
+                transitionIn: $mapping->transition_in ?? 'fade',
+                transitionOut: $mapping->transition_out ?? 'fade',
                 broadcasterId: $user->twitch_id,
             ));
 

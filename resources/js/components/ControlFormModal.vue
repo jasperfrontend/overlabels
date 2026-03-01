@@ -13,10 +13,26 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
+interface KofiPreset {
+  key: string;
+  label: string;
+  type: OverlayControl['type'];
+}
+
+const KOFI_PRESETS: KofiPreset[] = [
+  { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Total Received (session)', type: 'number' },
+];
+
 const props = defineProps<{
   open: boolean;
   template: OverlayTemplate;
   control?: OverlayControl | null;
+  connectedServices?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -28,6 +44,15 @@ const isEditing = computed(() => !!props.control);
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
+
+// External preset selection — only applicable when adding a new control on a static template
+const selectedKofiPreset = ref<KofiPreset | null>(null);
+const showKofiPresets = computed(
+  () =>
+    !isEditing.value &&
+    props.template?.type === 'static' &&
+    (props.connectedServices ?? []).includes('kofi'),
+);
 
 const form = ref({
   key: '',
@@ -45,9 +70,26 @@ const form = ref({
   sort_order: 0,
 });
 
+function selectKofiPreset(preset: KofiPreset) {
+  if (selectedKofiPreset.value?.key === preset.key) {
+    // Deselect
+    selectedKofiPreset.value = null;
+    form.value.key = '';
+    form.value.label = '';
+    form.value.type = 'text';
+  } else {
+    selectedKofiPreset.value = preset;
+    form.value.key = preset.key;
+    form.value.label = preset.label;
+    form.value.type = preset.type;
+  }
+  errors.value = {};
+}
+
 watch(() => props.open, (open) => {
   if (open) {
     errors.value = {};
+    selectedKofiPreset.value = null;
     if (props.control) {
       const c = props.control;
       const cfg = c.config ?? {};
@@ -90,6 +132,16 @@ function buildPayload() {
   if (!isEditing.value) {
     payload.key = form.value.key;
     payload.type = form.value.type;
+
+    // Attach source for Ko-fi preset controls
+    if (selectedKofiPreset.value) {
+      payload.source = 'kofi';
+    }
+  }
+
+  // If a Ko-fi preset is selected, don't send config/value (driver handles it)
+  if (selectedKofiPreset.value) {
+    return payload;
   }
 
   const t = form.value.type;
@@ -154,7 +206,7 @@ async function save() {
       }
       errors.value = flat;
     } else {
-      errors.value = { general: 'An error occurred. Please try again.' };
+      errors.value = { general: err.response?.data?.message || 'An error occurred. Please try again.' };
     }
   } finally {
     saving.value = false;
@@ -172,118 +224,152 @@ async function save() {
       <div class="space-y-4 py-2">
         <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
-        <!-- Key (immutable after creation) -->
-        <div class="space-y-1">
-          <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
-          <Input
-            id="ctrl-key"
-            v-model="form.key"
-            :disabled="isEditing"
-            placeholder="e.g. deaths"
-            :class="{ 'border-destructive': errors.key }"
-          />
-          <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
-          <p v-else class="text-xs text-muted-foreground">Lowercase letters, numbers, underscores only. Cannot be changed after creation.</p>
+        <!-- Ko-fi External Service Presets (new controls on static templates only) -->
+        <div v-if="showKofiPresets" class="space-y-2 rounded-sm border border-orange-400/30 bg-orange-400/5 p-3">
+          <p class="text-sm font-medium text-orange-500 dark:text-orange-400">Ko-fi Controls</p>
+          <p class="text-xs text-muted-foreground">Select a preset to add a Ko-fi data control. Values update automatically when Ko-fi events arrive.</p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button
+              v-for="preset in KOFI_PRESETS"
+              :key="preset.key"
+              type="button"
+              class="rounded-sm border px-2 py-1 text-xs font-mono transition-colors"
+              :class="selectedKofiPreset?.key === preset.key
+                ? 'border-orange-400 bg-orange-400/20 text-orange-500 dark:text-orange-400'
+                : 'border-sidebar text-muted-foreground hover:border-orange-400/50 hover:text-foreground'"
+              @click="selectKofiPreset(preset)"
+            >
+              {{ preset.key }}
+              <span class="ml-1 text-muted-foreground/60">({{ preset.type }})</span>
+            </button>
+          </div>
+          <p v-if="selectedKofiPreset" class="text-xs text-muted-foreground">
+            Selected: <strong>{{ selectedKofiPreset.label }}</strong> — use
+            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:{{ selectedKofiPreset.key }}]]]</code> in your template.
+          </p>
+          <div v-if="selectedKofiPreset" class="pt-1">
+            <p class="text-xs text-muted-foreground italic">Key, type, and value are locked — managed by Ko-fi. You can set a label below.</p>
+          </div>
         </div>
 
-        <!-- Label -->
+        <!-- Only show manual fields if no Ko-fi preset selected -->
+        <template v-if="!selectedKofiPreset">
+          <!-- Key (immutable after creation) -->
+          <div class="space-y-1">
+            <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
+            <Input
+              id="ctrl-key"
+              v-model="form.key"
+              :disabled="isEditing"
+              placeholder="e.g. deaths"
+              :class="{ 'border-destructive': errors.key }"
+            />
+            <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
+            <p v-else class="text-xs text-muted-foreground">Lowercase letters, numbers, underscores only. Cannot be changed after creation.</p>
+          </div>
+        </template>
+
+        <!-- Label (always shown) -->
         <div class="space-y-1">
           <Label for="ctrl-label">Label <span class="text-muted-foreground text-xs">(optional display name)</span></Label>
           <Input
             id="ctrl-label"
             v-model="form.label"
-            placeholder="e.g. Death Counter"
+            :placeholder="selectedKofiPreset ? selectedKofiPreset.label : 'e.g. Death Counter'"
             :class="{ 'border-destructive': errors.label }"
           />
           <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
         </div>
 
-        <!-- Type -->
-        <div v-if="!isEditing" class="space-y-1">
-          <Label for="ctrl-type">Type</Label>
-          <select
-            id="ctrl-type"
-            v-model="form.type"
-            class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
-          >
-            <option value="text">Text</option>
-            <option value="number">Number</option>
-            <option value="counter">Counter</option>
-            <option value="timer">Timer</option>
-            <option value="datetime">Date/Time</option>
-            <option value="boolean">Boolean (on/off switch)</option>
-          </select>
-          <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
-        </div>
-
-        <!-- Value (text/number/counter/datetime) -->
-        <div v-if="form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
-          <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
-          <Input
-            id="ctrl-value"
-            v-model="form.value"
-            :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
-            placeholder="Leave blank to start empty"
-          />
-          <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
-        </div>
-
-        <!-- Value (boolean) -->
-        <div v-if="form.type === 'boolean'" class="space-y-1">
-          <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
-          <div class="flex items-center gap-3 pt-1">
-            <Switch v-model:checked="booleanValue" />
-            <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
+        <!-- Only show type/value/config if no Ko-fi preset selected -->
+        <template v-if="!selectedKofiPreset">
+          <!-- Type -->
+          <div v-if="!isEditing" class="space-y-1">
+            <Label for="ctrl-type">Type</Label>
+            <select
+              id="ctrl-type"
+              v-model="form.type"
+              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+            >
+              <option value="text">Text</option>
+              <option value="number">Number</option>
+              <option value="counter">Counter</option>
+              <option value="timer">Timer</option>
+              <option value="datetime">Date/Time</option>
+              <option value="boolean">Boolean (on/off switch)</option>
+            </select>
+            <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
           </div>
-          <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
-        </div>
 
-        <!-- Number/Counter config -->
-        <div v-if="form.type === 'number' || form.type === 'counter'" class="space-y-3 rounded-sm border border-sidebar p-3">
-          <p class="text-sm font-medium">Numeric settings</p>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <Label for="ctrl-min">Min</Label>
-              <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
-            </div>
-            <div class="space-y-1">
-              <Label for="ctrl-max">Max</Label>
-              <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
-            </div>
-            <div class="space-y-1">
-              <Label for="ctrl-step">Step</Label>
-              <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
-            </div>
-            <div class="space-y-1">
-              <Label for="ctrl-reset">Reset value</Label>
-              <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
-            </div>
+          <!-- Value (text/number/counter/datetime) -->
+          <div v-if="form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
+            <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
+            <Input
+              id="ctrl-value"
+              v-model="form.value"
+              :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
+              placeholder="Leave blank to start empty"
+            />
+            <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
           </div>
-        </div>
 
-        <!-- Timer config -->
-        <div v-if="form.type === 'timer'" class="space-y-3 rounded-sm border border-sidebar p-3">
-          <p class="text-sm font-medium">Timer settings</p>
-          <div class="space-y-2">
-            <Label>Mode</Label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" v-model="form.config.mode" value="countup" />
-                <span class="text-sm">Count up</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" v-model="form.config.mode" value="countdown" />
-                <span class="text-sm">Count down</span>
-              </label>
+          <!-- Value (boolean) -->
+          <div v-if="form.type === 'boolean'" class="space-y-1">
+            <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
+            <div class="flex items-center gap-3 pt-1">
+              <Switch v-model:checked="booleanValue" />
+              <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
+            </div>
+            <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+          </div>
+
+          <!-- Number/Counter config -->
+          <div v-if="form.type === 'number' || form.type === 'counter'" class="space-y-3 rounded-sm border border-sidebar p-3">
+            <p class="text-sm font-medium">Numeric settings</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <Label for="ctrl-min">Min</Label>
+                <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
+              </div>
+              <div class="space-y-1">
+                <Label for="ctrl-max">Max</Label>
+                <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
+              </div>
+              <div class="space-y-1">
+                <Label for="ctrl-step">Step</Label>
+                <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
+              </div>
+              <div class="space-y-1">
+                <Label for="ctrl-reset">Reset value</Label>
+                <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
+              </div>
             </div>
           </div>
-          <div v-if="form.config.mode === 'countdown'" class="space-y-1">
-            <Label for="ctrl-base">Base duration (seconds)</Label>
-            <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
-          </div>
-        </div>
 
-        <!-- Sort order -->
+          <!-- Timer config -->
+          <div v-if="form.type === 'timer'" class="space-y-3 rounded-sm border border-sidebar p-3">
+            <p class="text-sm font-medium">Timer settings</p>
+            <div class="space-y-2">
+              <Label>Mode</Label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="form.config.mode" value="countup" />
+                  <span class="text-sm">Count up</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" v-model="form.config.mode" value="countdown" />
+                  <span class="text-sm">Count down</span>
+                </label>
+              </div>
+            </div>
+            <div v-if="form.config.mode === 'countdown'" class="space-y-1">
+              <Label for="ctrl-base">Base duration (seconds)</Label>
+              <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
+            </div>
+          </div>
+        </template>
+
+        <!-- Sort order (always shown) -->
         <div class="space-y-1">
           <Label for="ctrl-sort">Sort order</Label>
           <Input id="ctrl-sort" v-model.number="form.sort_order" type="number" min="0" />

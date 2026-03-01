@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
 use App\Services\TemplateDataMapperService;
@@ -102,10 +103,15 @@ class OverlayTemplateController extends Controller
             ? $template->controls()->orderBy('sort_order')->get()
             : collect();
 
+        $connectedServices = $canEdit
+            ? ExternalIntegration::where('user_id', auth()->id())->pluck('service')->toArray()
+            : [];
+
         return Inertia::render('templates/show', [
-            'template' => $template,
-            'canEdit' => $canEdit,
-            'controls' => $controls,
+            'template'          => $template,
+            'canEdit'           => $canEdit,
+            'controls'          => $controls,
+            'connectedServices' => $connectedServices,
         ]);
     }
 
@@ -269,7 +275,12 @@ class OverlayTemplateController extends Controller
             $controlData = [];
             $timerStates = [];
             foreach ($controls as $control) {
-                $controlData['c:'.$control->key] = $control->resolveDisplayValue();
+                // Service-managed controls use namespaced broadcast key (e.g. "kofi:kofis_received")
+                // matching the [[[c:kofi:kofis_received]]] template tag syntax.
+                $dataKey = $control->source_managed
+                    ? 'c:' . $control->broadcastKey()
+                    : 'c:' . $control->key;
+                $controlData[$dataKey] = $control->resolveDisplayValue();
                 if ($control->type === 'timer') {
                     $cfg = $control->config ?? [];
                     $timerStates[$control->key] = [

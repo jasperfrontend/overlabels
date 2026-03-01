@@ -18,12 +18,26 @@ interface EventMapping {
   enabled: boolean;
 }
 
+interface ExternalEventMapping {
+  id?: number;
+  service: string;
+  event_type: string;
+  overlay_template_id: number | null;
+  duration_ms: number;
+  transition_in: string;
+  transition_out: string;
+  enabled: boolean;
+}
+
 const props = defineProps<{
   mappings: EventMapping[];
   alertTemplates: OverlayTemplate[];
   eventTypes: Record<string, string>;
   transitionInTypes: Record<string, string>;
   transitionOutTypes: Record<string, string>;
+  externalServices: string[];
+  externalMappings: Record<string, ExternalEventMapping>;
+  externalEventTypes: Record<string, Record<string, string>>;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,6 +57,31 @@ const localMappings = ref<EventMapping[]>(
   })),
 );
 
+// Build local external mappings for each connected service, one entry per event type
+function buildExternalMappings(): ExternalEventMapping[] {
+  const result: ExternalEventMapping[] = [];
+  for (const service of props.externalServices) {
+    const serviceEventTypes = props.externalEventTypes[service] ?? {};
+    for (const eventType of Object.keys(serviceEventTypes)) {
+      const key = `${service}:${eventType}`;
+      const existing = props.externalMappings[key];
+      result.push({
+        id: existing?.id,
+        service,
+        event_type: eventType,
+        overlay_template_id: existing?.overlay_template_id ?? null,
+        duration_ms: existing?.duration_ms ?? 5000,
+        transition_in: existing?.transition_in ?? 'fade',
+        transition_out: existing?.transition_out ?? 'fade',
+        enabled: existing?.enabled ?? false,
+      });
+    }
+  }
+  return result;
+}
+
+const localExternalMappings = ref<ExternalEventMapping[]>(buildExternalMappings());
+
 // Computed properties
 const activeEvents = computed(() => {
   return localMappings.value.filter((m) => m.enabled && m.template_id).length;
@@ -58,6 +97,7 @@ const totalEnabled = computed(() => {
 
 const isSaving = ref(false);
 const expandedEvent = ref<string | null>(null);
+const expandedExternalEvent = ref<string | null>(null);
 
 // Toast state
 const toastMessage = ref<string>('');
@@ -78,10 +118,21 @@ const toggleEvent = (eventType: string) => {
   }
 };
 
+const toggleExternalEvent = (key: string) => {
+  if (expandedExternalEvent.value === key) {
+    expandedExternalEvent.value = null;
+  } else {
+    expandedExternalEvent.value = key;
+  }
+};
+
+const externalEventKey = (m: ExternalEventMapping) => `${m.service}:${m.event_type}`;
+
 const saveAllMappings = async () => {
   isSaving.value = true;
 
   try {
+    // Save Twitch mappings
     const mappingsToSave = localMappings.value.map((mapping) => ({
       event_type: mapping.event_type,
       template_id: mapping.template_id,
@@ -91,9 +142,22 @@ const saveAllMappings = async () => {
       enabled: mapping.enabled,
     }));
 
-    const response = await axios.put('/alerts/bulk', {
-      mappings: mappingsToSave,
-    });
+    await axios.put('/alerts/bulk', { mappings: mappingsToSave });
+
+    // Save external mappings if any
+    if (localExternalMappings.value.length > 0) {
+      const externalToSave = localExternalMappings.value.map((m) => ({
+        service: m.service,
+        event_type: m.event_type,
+        overlay_template_id: m.overlay_template_id,
+        duration_ms: m.duration_ms,
+        transition_in: m.transition_in,
+        transition_out: m.transition_out,
+        enabled: m.enabled,
+      }));
+
+      await axios.put('/alerts/external/bulk', { mappings: externalToSave });
+    }
 
     showToast.value = true;
     toastMessage.value = 'Settings saved successfully!';
@@ -108,6 +172,10 @@ const saveAllMappings = async () => {
   } finally {
     isSaving.value = false;
   }
+};
+
+const serviceLabel: Record<string, string> = {
+  kofi: 'Ko-fi',
 };
 </script>
 
@@ -171,8 +239,9 @@ const saveAllMappings = async () => {
         </div>
       </div>
 
-      <!-- Events List -->
-      <div class="space-y-2">
+      <!-- Twitch Events List -->
+      <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">Twitch Events</h3>
+      <div class="space-y-2 mb-8">
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
@@ -264,7 +333,7 @@ const saveAllMappings = async () => {
                 <div class="flex items-center gap-2">
                   <input
                     :value="mapping.duration_ms / 1000"
-                    @input="mapping.duration_ms = Math.min(30, Math.max(1, Number($event.target.value) || 1)) * 1000"
+                    @input="mapping.duration_ms = Math.min(30, Math.max(1, Number(($event.target as HTMLInputElement).value) || 1)) * 1000"
                     type="number"
                     min="1"
                     max="30"
@@ -315,6 +384,168 @@ const saveAllMappings = async () => {
           </div>
         </div>
       </div>
+
+      <!-- External Integrations Section -->
+      <template v-if="externalServices.length > 0">
+        <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">External Integrations</h3>
+
+        <template v-for="service in externalServices" :key="service">
+          <div class="mb-6">
+            <div class="mb-2 flex items-center gap-2">
+              <span class="text-base font-semibold text-foreground">{{ serviceLabel[service] ?? service }}</span>
+              <span class="rounded-full border border-orange-400/40 px-2 py-0.5 text-xs text-orange-400">external</span>
+            </div>
+
+            <div class="space-y-2">
+              <div
+                v-for="mapping in localExternalMappings.filter(m => m.service === service)"
+                :key="externalEventKey(mapping)"
+                class="group"
+              >
+                <!-- Event Row -->
+                <div
+                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4 text-center"
+                  :class="{
+                    'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
+                    'bg-sidebar-accent': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping),
+                  }"
+                  @click="toggleExternalEvent(externalEventKey(mapping))"
+                >
+                  <!-- Enable Toggle -->
+                  <label class="relative inline-flex cursor-pointer items-center" @click.stop>
+                    <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
+                    <span
+                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-700 dark:after:bg-gray-100"
+                    ></span>
+                  </label>
+
+                  <!-- Event Info -->
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-3">
+                      <h3 class="font-medium text-foreground">
+                        {{ externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type }}
+                      </h3>
+                      <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+                        {{ mapping.event_type }}
+                      </span>
+                    </div>
+
+                    <!-- Quick Status when enabled -->
+                    <div v-if="mapping.enabled" class="mt-1 flex items-center gap-4 text-sm">
+                      <span class="flex items-center gap-1.5" :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
+                        <span class="font-medium">Template:</span>
+                        {{ getTemplateName(mapping.overlay_template_id) }}
+                      </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
+                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80">
+                        in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Status Indicator -->
+                  <div class="flex items-center gap-2">
+                    <div v-if="mapping.enabled && !mapping.overlay_template_id" class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
+                    <div v-else-if="mapping.enabled" class="h-2 w-2 rounded-full bg-green-500" title="Active"></div>
+                    <svg
+                      class="h-5 w-5 text-muted-foreground transition-transform"
+                      :class="{ 'rotate-180': expandedExternalEvent === externalEventKey(mapping) }"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Configuration Panel -->
+                <div
+                  v-if="mapping.enabled && expandedExternalEvent === externalEventKey(mapping)"
+                  class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
+                  @click.stop
+                >
+                  <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+                    <!-- Template Selection -->
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-foreground"> Alert Template </label>
+                      <select
+                        v-model="mapping.overlay_template_id"
+                        class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                        :class="{
+                          'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.overlay_template_id,
+                          'border-input': mapping.overlay_template_id,
+                        }"
+                      >
+                        <option :value="null">Select a template...</option>
+                        <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id" :value="template.id">
+                          {{ template.name }}
+                        </option>
+                      </select>
+                      <p v-if="!mapping.overlay_template_id" class="mt-1 text-xs text-yellow-600">Select a template to show alerts</p>
+                    </div>
+
+                    <!-- Duration Input -->
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-foreground">Duration (seconds)</label>
+                      <div class="flex items-center gap-2">
+                        <input
+                          :value="mapping.duration_ms / 1000"
+                          @input="mapping.duration_ms = Math.min(30, Math.max(1, Number(($event.target as HTMLInputElement).value) || 1)) * 1000"
+                          type="number"
+                          min="1"
+                          max="30"
+                          step="1"
+                          class="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          placeholder="1-30"
+                        />
+                        <span class="text-sm text-muted-foreground">seconds</span>
+                      </div>
+                    </div>
+
+                    <!-- Enter Animation -->
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-foreground">Enter Animation</label>
+                      <select
+                        v-model="mapping.transition_in"
+                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                      >
+                        <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
+                          {{ label }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Exit Animation -->
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-foreground">Exit Animation</label>
+                      <select
+                        v-model="mapping.transition_out"
+                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                      >
+                        <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
+                          {{ label }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Preview Description -->
+                  <div v-if="mapping.overlay_template_id" class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
+                    <p class="text-sm">
+                      <span class="font-medium">Preview:</span>
+                      When a {{ (externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type).toLowerCase() }} occurs, the "{{ getTemplateName(mapping.overlay_template_id) }}" alert will
+                      enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
+                      then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </template>
 
       <!-- Bottom Save Button -->
       <div class="mt-8 flex justify-end border-t border-border pt-6">

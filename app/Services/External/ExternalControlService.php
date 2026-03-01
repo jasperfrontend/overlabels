@@ -56,42 +56,48 @@ class ExternalControlService
     public function applyUpdates(User $user, string $service, array $updates): void
     {
         foreach ($updates as $key => $update) {
-            $control = OverlayControl::where('user_id', $user->id)
+            $controls = OverlayControl::where('user_id', $user->id)
                 ->where('source', $service)
                 ->where('key', $key)
                 ->where('source_managed', true)
-                ->first();
+                ->with('template')
+                ->get();
 
-            if (! $control) {
+            if ($controls->isEmpty()) {
                 continue;
             }
 
-            $action = is_array($update) ? ($update['action'] ?? null) : null;
-            $newValue = $update;
+            foreach ($controls as $control) {
+                $action = is_array($update) ? ($update['action'] ?? null) : null;
 
-            if ($action === 'increment') {
-                $step = (float) ($control->config['step'] ?? 1);
-                $current = (float) ($control->value ?? 0);
-                $newValue = (string) ($current + $step);
-            } elseif ($action === 'add') {
-                $current = (float) ($control->value ?? 0);
-                $amount = (float) ($update['amount'] ?? 0);
-                $newValue = (string) ($current + $amount);
-            } else {
-                $newValue = OverlayControl::sanitizeValue($control->type, $update);
+                if ($action === 'increment') {
+                    $step = (float) ($control->config['step'] ?? 1);
+                    $current = (float) ($control->value ?? 0);
+                    $newValue = (string) ($current + $step);
+                } elseif ($action === 'add') {
+                    $current = (float) ($control->value ?? 0);
+                    $amount = (float) ($update['amount'] ?? 0);
+                    $newValue = (string) ($current + $amount);
+                } else {
+                    $newValue = OverlayControl::sanitizeValue($control->type, $update);
+                }
+
+                $control->update(['value' => $newValue]);
+
+                // For template-scoped controls, broadcast to the specific overlay slug.
+                // For user-scoped (overlay_template_id=null), use empty slug so all overlays receive it.
+                $overlaySlug = $control->overlay_template_id
+                    ? ($control->template?->slug ?? '')
+                    : '';
+
+                ControlValueUpdated::dispatch(
+                    $overlaySlug,
+                    $control->broadcastKey(),
+                    $control->type,
+                    $newValue,
+                    $user->twitch_id,
+                );
             }
-
-            $control->update(['value' => $newValue]);
-
-            // Broadcast using the namespaced key (e.g. "kofi:kofis_received")
-            // Empty overlay_slug = user-scoped; the renderer accepts it for all overlays.
-            ControlValueUpdated::dispatch(
-                '',
-                $control->broadcastKey(),
-                $control->type,
-                $newValue,
-                $user->twitch_id,
-            );
         }
     }
 }

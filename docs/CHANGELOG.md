@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## March 1st, 2026 — Ko-fi Integration Finalization (Alerts + Controls)
+
+### Part 1 — Ko-fi alert mappings in Alerts Builder
+- **New: Ko-fi events section in Alerts Builder.** When Ko-fi is connected, a new "External Integrations" section appears below the Twitch events list on `/alerts`. Each Ko-fi event type (Donation, Subscription, Shop Order, Commission) can be mapped to an alert template with independent duration and enter/exit animation settings.
+- **Alert mappings persist per user+service+event_type.** Saved via a new `PUT /alerts/external/bulk` endpoint. New `ExternalEventTemplateMappingController` mirrors the Twitch `EventTemplateMappingController` with the same store/updateMultiple/destroy pattern.
+- **Alert duration and transitions now come from the mapping.** `ExternalAlertService` previously hardcoded `duration: 5000, fade/fade`. It now reads `duration_ms`, `transition_in`, and `transition_out` from the stored mapping, so each event type can have its own animation.
+- **Migration:** `duration_ms` (int, default 5000), `transition_in`, `transition_out`, `settings` (JSON) added to `external_event_template_mappings`.
+
+### Part 2 — Ko-fi controls via ControlFormModal (template-scoped)
+- **Ko-fi controls are now explicitly added to templates.** Instead of auto-provisioning 6 user-scoped controls on Ko-fi connect (invisible in all template Controls tabs), users now add them explicitly from the Controls tab on any static overlay template. The "Add control" modal shows a Ko-fi presets panel listing all 6 controls — selecting one pre-fills the key/type (locked) and sets `source=kofi, source_managed=true`.
+- **Removed auto-provisioning.** `KofiIntegrationController::save()` no longer calls `ExternalControlService::provision()` on first connect.
+- **Disconnect now cleans up template-scoped Ko-fi controls.** The existing `deprovision()` query (`source=kofi, source_managed=true`) now correctly targets template-scoped controls since that's what gets created.
+- **`applyUpdates()` now handles multiple controls per key.** When a Ko-fi donation arrives, all controls with that key (potentially across multiple templates) receive the update and each broadcasts to their specific overlay slug.
+- **Fixed: `renderAuthenticated()` now uses correct namespaced data key for service controls.** Service-managed controls (e.g. `kofis_received` with `source=kofi`) previously stored as `c:kofis_received` (wrong) — now correctly stored as `c:kofi:kofis_received`, matching the `[[[c:kofi:kofis_received]]]` template tag syntax.
+- **Snippet column in Controls table shows namespaced key.** `[[[c:kofi:kofis_received]]]` is displayed and copied, not `[[[c:kofis_received]]]`.
+- **Ko-fi settings page updated.** The "doesn't do anything" warning banner is replaced with clear guidance: configure alert templates on `/alerts`, add controls from any static template's Controls tab.
+
+### Part 3 — Ko-fi event tags in Help docs
+- **New: Ko-fi Integration Events section in `/help`.** Documents all `event.*` tags available in Ko-fi alert templates, organized by: all Ko-fi events, donation/subscription, subscription-only, with a working example template snippet.
+
+### Bug fixes
+- **Fixed: `message_id` deduplication hack removed.** The webhook controller was appending `substr(md5(microtime()),rand(0,26),5)` to every stored `message_id`, making all Ko-fi events unique and breaking the 409 dedup check. Removed — transaction IDs are stored exactly as received.
+
 ## March 1st, 2026 — MS2 + MS3 hotfix
 
 - **Fixed: Ko-fi webhook URL showing "false" after connecting.** The Ko-fi settings page used `:value` to pass the webhook URL to the Input component, which does not correspond to the component's declared `modelValue` prop. Changed to `:model-value` so the value routes through the component correctly.

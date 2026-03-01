@@ -94,10 +94,18 @@ function formatDate(iso: string | null): string {
                     <Badge v-if="integration.connected" variant="default" class="bg-green-400">Connected</Badge>
                     <Badge v-else variant="secondary">Not connected</Badge>
                 </div>
-                <div class="bg-orange-400/40 p-4 mb-8">
-                  Integrating external services like Ko-fi is still in <strong>active development</strong> and therefore this integration <strong>doesn't
-                  do anything</strong> noteworthy right now. In the future you can add a Ko-fi Control to your template which live updates whenever a new
-                  Ko-fi event happens on your account. <em>I think.</em>
+                <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+                  <p class="font-medium text-foreground">What to do next</p>
+                  <ol class="list-decimal pl-4 space-y-1">
+                    <li>
+                      Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
+                      to configure which alert template fires for each Ko-fi event type (Donation, Subscription, etc.).
+                    </li>
+                    <li>
+                      Open any <strong>static</strong> overlay template → <strong>Controls</strong> tab → <strong>Add control</strong>
+                      to add Ko-fi data controls (donation count, latest donor name, etc.) that update live.
+                    </li>
+                  </ol>
                 </div>
                 <form class="space-y-6" @submit.prevent="save">
                     <!-- Verification Token -->

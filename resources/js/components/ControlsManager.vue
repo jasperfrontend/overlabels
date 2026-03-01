@@ -11,6 +11,7 @@ import type { OverlayControl, OverlayTemplate } from '@/types';
 const props = defineProps<{
   template: OverlayTemplate;
   initialControls: OverlayControl[];
+  connectedServices?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -68,7 +69,12 @@ async function deleteControl(control: OverlayControl) {
   }
 }
 
-async function copySnippet(key: string) {
+function snippetKey(ctrl: OverlayControl): string {
+  return ctrl.source_managed && ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
+}
+
+async function copySnippet(ctrl: OverlayControl) {
+  const key = snippetKey(ctrl);
   try {
     await navigator.clipboard.writeText(`[[[c:${key}]]]`);
     showMsg(`[[[c:${key}]]] copied to clipboard!`);
@@ -90,7 +96,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" @saved="onSaved" />
+  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" :connected-services="connectedServices" @saved="onSaved" />
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
@@ -135,11 +141,11 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
           <TableCell>
             <button
               class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-60 transition group-hover:opacity-80 hover:opacity-100"
-              :title="`Copy [[[c:${ctrl.key}]]] to clipboard`"
-              @click="copySnippet(ctrl.key)"
+              :title="`Copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
+              @click="copySnippet(ctrl)"
             >
               <CopyIcon class="h-3 w-3 shrink-0" />
-              [[[c:{{ ctrl.key }}]]]
+              [[[c:{{ snippetKey(ctrl) }}]]]
             </button>
           </TableCell>
           <TableCell class="text-right opacity-20 transition group-hover:opacity-100">

@@ -305,6 +305,13 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/', [App\Http\Controllers\EventTemplateMappingController::class, 'store'])->name('store');
         Route::put('/bulk', [App\Http\Controllers\EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
         Route::delete('/{eventType}', [App\Http\Controllers\EventTemplateMappingController::class, 'destroy'])->name('destroy');
+
+        // External service event mappings
+        Route::prefix('external')->name('external.')->group(function () {
+            Route::post('/{service}', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'store'])->name('store');
+            Route::put('/bulk', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
+            Route::delete('/{service}/{eventType}', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // EventSub Management

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
+use App\Models\ExternalIntegration;
 use App\Models\OverlayTemplate;
 use Exception;
 use Illuminate\Http\Request;
@@ -54,12 +56,31 @@ class EventTemplateMappingController extends Controller
             $allMappings[] = $mapping;
         }
 
+        // Load connected integrations for external services
+        $connectedServices = ExternalIntegration::where('user_id', $user->id)
+            ->where('enabled', true)
+            ->pluck('service')
+            ->toArray();
+
+        // Load external event mappings keyed by "service:event_type"
+        $rawExternalMappings = ExternalEventTemplateMapping::with('template')
+            ->where('user_id', $user->id)
+            ->get();
+
+        $externalMappings = [];
+        foreach ($rawExternalMappings as $em) {
+            $externalMappings["{$em->service}:{$em->event_type}"] = $em->toArray();
+        }
+
         return Inertia::render('events/index', [
-            'mappings' => $allMappings,
-            'alertTemplates' => $alertTemplates,
-            'eventTypes' => $eventTypes,
-            'transitionInTypes' => EventTemplateMapping::TRANSITION_IN_TYPES,
+            'mappings'           => $allMappings,
+            'alertTemplates'     => $alertTemplates,
+            'eventTypes'         => $eventTypes,
+            'transitionInTypes'  => EventTemplateMapping::TRANSITION_IN_TYPES,
             'transitionOutTypes' => EventTemplateMapping::TRANSITION_OUT_TYPES,
+            'externalServices'   => $connectedServices,
+            'externalMappings'   => $externalMappings,
+            'externalEventTypes' => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES,
         ]);
     }
 

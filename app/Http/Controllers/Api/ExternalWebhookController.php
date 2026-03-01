@@ -71,12 +71,11 @@ class ExternalWebhookController extends Controller
         // 8. Store in external_events (dedup check)
 
         try {
-            // @todo fix this random char hack in `message_id`
             $storedEvent = ExternalEvent::create([
                 'user_id' => $user->id,
                 'service' => $service,
                 'event_type' => $eventType,
-                'message_id' => $normalizedEvent->getMessageId() . substr(md5(microtime()),rand(0,26),5),
+                'message_id' => $normalizedEvent->getMessageId(),
                 'raw_payload' => $payload,
                 'normalized_payload' => $normalizedEvent->getTemplateTags(),
             ]);

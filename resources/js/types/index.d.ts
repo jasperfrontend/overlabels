@@ -115,7 +115,7 @@ export interface OverlayTemplate {
 
 export interface OverlayControl {
   id: number;
-  overlay_template_id: number;
+  overlay_template_id: number | null;
   user_id: number;
   key: string;
   label: string | null;
@@ -123,6 +123,8 @@ export interface OverlayControl {
   value: string | null;
   config: Record<string, any> | null;
   sort_order: number;
+  source: string | null;
+  source_managed: boolean;
   created_at: string;
   updated_at: string;
 }

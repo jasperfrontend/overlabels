@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Services\External\ExternalServiceRegistry;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,7 +49,36 @@ class OverlayControlController extends Controller
             'value' => 'nullable|string|max:1000',
             'config' => 'nullable|array',
             'sort_order' => 'nullable|integer|min:0',
+            'source' => 'nullable|string|max:50',
         ]);
+
+        // If source is provided, this is an external service control preset
+        if (! empty($validated['source'])) {
+            $source = $validated['source'];
+
+            abort_unless(ExternalServiceRegistry::has($source), 422, "Unknown service: {$source}");
+
+            $driver = ExternalServiceRegistry::driver($source);
+            $provisionedDefs = collect($driver->getAutoProvisionedControls())->keyBy('key');
+            $def = $provisionedDefs->get($validated['key']);
+
+            abort_unless($def !== null, 422, "Invalid key '{$validated['key']}' for service '{$source}'");
+
+            $control = OverlayControl::create([
+                'overlay_template_id' => $template->id,
+                'user_id'             => auth()->id(),
+                'key'                 => $def['key'],
+                'label'               => $validated['label'] ?? $def['label'] ?? null,
+                'type'                => $def['type'],
+                'value'               => $def['value'] ?? null,
+                'config'              => $def['config'] ?? null,
+                'sort_order'          => $validated['sort_order'] ?? 0,
+                'source'              => $source,
+                'source_managed'      => true,
+            ]);
+
+            return response()->json(['control' => $control], 201);
+        }
 
         $control = OverlayControl::createForTemplate($template, auth()->user(), $validated);
 

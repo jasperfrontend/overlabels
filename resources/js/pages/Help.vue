@@ -365,6 +365,72 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
         </div>
 
+        <!-- Ko-fi Integration Events Section -->
+        <div class="mb-12" id="kofi-events">
+          <h2 class="mb-6 text-2xl font-bold">Ko-fi Integration Events</h2>
+          <p class="mb-6 text-muted-foreground">
+            These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure which template fires for each
+            event type on the <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
+          </p>
+
+          <div class="space-y-8">
+            <!-- Tags available on all Ko-fi events -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">
+                <span class="mr-2 inline-block h-4 w-4 rounded bg-orange-400"></span>
+                All Ko-fi Events
+              </h3>
+              <p class="mb-4 text-muted-foreground">Available on every Ko-fi event type (donation, subscription, shop_order, commission).</p>
+              <div class="space-y-2 font-mono text-sm">
+                <div><code>[[[event.from_name]]]</code> — name of the supporter</div>
+                <div><code>[[[event.type]]]</code> — normalized type: <code>donation</code>, <code>subscription</code>, <code>shop_order</code>, or <code>commission</code></div>
+                <div><code>[[[event.transaction_id]]]</code> — unique Ko-fi transaction ID</div>
+                <div><code>[[[event.url]]]</code> — supporter's Ko-fi page URL</div>
+              </div>
+            </div>
+
+            <!-- Donation / Subscription -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">
+                <span class="mr-2 inline-block h-4 w-4 rounded bg-yellow-400"></span>
+                Donation &amp; Subscription Events
+              </h3>
+              <p class="mb-4 text-muted-foreground">Additional tags available for <code>donation</code> and <code>subscription</code> events.</p>
+              <div class="space-y-2 font-mono text-sm">
+                <div><code>[[[event.message]]]</code> — supporter's message</div>
+                <div><code>[[[event.amount]]]</code> — amount as a string (e.g. <code>"5.00"</code>)</div>
+                <div><code>[[[event.currency]]]</code> — currency code (e.g. <code>"USD"</code>)</div>
+              </div>
+            </div>
+
+            <!-- Subscription-only -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">
+                <span class="mr-2 inline-block h-4 w-4 rounded bg-purple-400"></span>
+                Subscription Events Only
+              </h3>
+              <p class="mb-4 text-muted-foreground">Extra tags exclusive to Ko-fi <code>subscription</code> events.</p>
+              <div class="space-y-2 font-mono text-sm">
+                <div><code>[[[event.tier_name]]]</code> — subscription tier name</div>
+                <div><code>[[[event.is_first_sub]]]</code> — <code>"1"</code> if this is the supporter's first payment, <code>"0"</code> otherwise</div>
+                <div><code>[[[event.is_subscription]]]</code> — always <code>"1"</code> for subscription events</div>
+              </div>
+            </div>
+
+            <!-- Example -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">Example Ko-fi Alert Template</h3>
+              <div class="rounded bg-sidebar p-4 font-mono text-sm">
+                &lt;div class="donor"&gt;[[[event.from_name]]] donated [[[event.amount]]] [[[event.currency]]]!&lt;/div&gt;<br />
+                &lt;div class="message"&gt;[[[if:event.message]]][[[event.message]]][[[endif]]]&lt;/div&gt;
+              </div>
+              <p class="mt-4 text-sm text-muted-foreground">
+                The <code>[[[if:event.message]]]</code> guard ensures the message block is only rendered when the supporter left a message.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Tips Section -->
         <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
           <h2 class="mb-4 text-2xl font-bold">Tips & Best Practices</h2>
