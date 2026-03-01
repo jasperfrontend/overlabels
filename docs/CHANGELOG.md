@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## March 1st, 2026 — Ko-fi starting donation count seed
+
+- **New: Starting donation count on Ko-fi settings page.** Users who had Ko-fi donations before joining can set a starting number so the `kofis_received` control doesn't begin from zero. Setting it immediately updates all existing `kofis_received` controls across all their overlay templates.
+- **One-time lock.** Once set, the field is replaced with a locked read-only display. Corrections go through admin@overlabels.com — the value is stored in the integration settings and survives re-saves.
+- **Fixed: `save()` was silently wiping seed settings.** The settings JSON was being overwritten instead of merged on each form save. Now uses `array_merge` so `kofis_seed_set` and `kofis_seed_value` survive a token update or event-type change.
+
 ## March 1st, 2026 — Add Control modal UX improvements
 
 - **Ko-fi preset selector replaced with a dropdown.** The button-chip grid for Ko-fi control presets is gone. A single `<select>` now lists all 6 presets as "Label (type)". Selecting one still pre-fills key/type (locked) and shows the template snippet hint below.

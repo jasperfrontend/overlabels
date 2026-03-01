@@ -20,6 +20,8 @@ interface IntegrationData {
     last_received_at: string | null;
     settings: { enabled_events?: string[] };
     has_token: boolean;
+    kofis_seed_set: boolean;
+    kofis_seed_value: number | null;
 }
 
 const props = defineProps<{
@@ -47,6 +49,30 @@ const form = useForm({
 // Test mode is independent of the main form — toggled instantly via its own endpoint
 const testMode = ref(props.integration.test_mode ?? false);
 const testModeLoading = ref(false);
+
+// Starting donation count — one-time seed, locked after setting
+const seedCount = ref<number | null>(null);
+const seedLoading = ref(false);
+const seedError = ref<string | null>(null);
+const kofisSeedSet = ref(props.integration.kofis_seed_set);
+const kofisSeedValue = ref(props.integration.kofis_seed_value);
+
+async function setSeedCount() {
+    if (seedCount.value === null || seedCount.value < 0) return;
+    seedLoading.value = true;
+    seedError.value = null;
+    try {
+        const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
+            initial_count: seedCount.value,
+        });
+        kofisSeedSet.value = data.kofis_seed_set;
+        kofisSeedValue.value = data.kofis_seed_value;
+    } catch (e: any) {
+        seedError.value = e.response?.data?.error ?? 'Something went wrong.';
+    } finally {
+        seedLoading.value = false;
+    }
+}
 
 const copied = ref(false);
 
@@ -233,6 +259,56 @@ function formatDate(iso: string | null): string {
                         <div v-if="testMode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
                             Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
                         </div>
+                    </div>
+                </template>
+
+                <!-- Starting donation count (one-time seed) -->
+                <template v-if="integration.connected">
+                    <Separator />
+                    <div class="space-y-2">
+                        <p class="font-medium text-sm">Starting donation count</p>
+
+                        <!-- Already seeded — locked -->
+                        <template v-if="kofisSeedSet">
+                            <p class="text-muted-foreground text-sm">
+                                Starting count set to <strong>{{ kofisSeedValue?.toLocaleString() }}</strong>.
+                                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:kofis_received]]]</code>
+                                controls started from this value.
+                            </p>
+                            <p class="text-muted-foreground text-sm">
+                                Need to correct it? Email
+                                <a href="mailto:admin@overlabels.com" class="text-violet-400 hover:underline">admin@overlabels.com</a>.
+                            </p>
+                        </template>
+
+                        <!-- Not seeded yet -->
+                        <template v-else>
+                            <p class="text-muted-foreground text-sm">
+                                Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
+                                This can only be set once — all your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
+                                controls update immediately.
+                            </p>
+                            <div class="flex gap-2 items-start">
+                                <div class="flex-1 space-y-1">
+                                    <Input
+                                        v-model.number="seedCount"
+                                        type="number"
+                                        min="0"
+                                        placeholder="e.g. 1256"
+                                        :disabled="seedLoading"
+                                    />
+                                    <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    :disabled="seedLoading || seedCount === null"
+                                    @click="setSeedCount"
+                                >
+                                    {{ seedLoading ? 'Saving…' : 'Set starting count' }}
+                                </Button>
+                            </div>
+                        </template>
                     </div>
                 </template>
 

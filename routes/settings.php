@@ -15,6 +15,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/kofi', [KofiIntegrationController::class, 'show'])->name('kofi.show');
         Route::post('/kofi', [KofiIntegrationController::class, 'save'])->name('kofi.save');
         Route::patch('/kofi/test-mode', [KofiIntegrationController::class, 'setTestMode'])->name('kofi.test-mode');
+        Route::post('/kofi/seed-count', [KofiIntegrationController::class, 'seedDonationCount'])->name('kofi.seed-count');
         Route::delete('/kofi', [KofiIntegrationController::class, 'disconnect'])->name('kofi.disconnect');
     });
 });
