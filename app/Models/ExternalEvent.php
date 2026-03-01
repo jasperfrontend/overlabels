@@ -28,6 +28,7 @@ class ExternalEvent extends Model
         'alert_dispatched' => 'boolean',
     ];
 
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

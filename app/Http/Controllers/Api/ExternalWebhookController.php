@@ -69,12 +69,14 @@ class ExternalWebhookController extends Controller
         $normalizedEvent = $driver->normalizeEvent($payload, $eventType);
 
         // 8. Store in external_events (dedup check)
+
         try {
+            // @todo fix this random char hack in `message_id`
             $storedEvent = ExternalEvent::create([
                 'user_id' => $user->id,
                 'service' => $service,
                 'event_type' => $eventType,
-                'message_id' => $normalizedEvent->getMessageId(),
+                'message_id' => $normalizedEvent->getMessageId() . substr(md5(microtime()),rand(0,26),5),
                 'raw_payload' => $payload,
                 'normalized_payload' => $normalizedEvent->getTemplateTags(),
             ]);
@@ -111,7 +113,7 @@ class ExternalWebhookController extends Controller
      */
     private function parsePayload(Request $request, string $service): array
     {
-        // Ko-fi sends application/x-www-form-urlencoded with a `data` JSON field
+        // Ko-fi sends `application/x-www-form-urlencoded` with a `data` JSON field
         if ($service === 'kofi') {
             $data = $request->input('data');
             if (is_string($data)) {
