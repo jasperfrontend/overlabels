@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ExternalWebhookController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
@@ -57,11 +58,10 @@ Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
 // External service webhooks - no auth/CSRF, rate-limited
-Route::post('/webhooks/{service}/{webhookToken}', [\App\Http\Controllers\Api\ExternalWebhookController::class, 'handle'])
+Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'handle'])
     ->middleware(['throttle:60,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class])
     ->name('webhooks.external');
-
 // EventSub health check endpoint for external cron services
 Route::get('/eventsub-health-check', function () {
     try {
