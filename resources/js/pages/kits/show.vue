@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { PencilIcon, GitFork, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
+import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
 import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
+import { computed } from 'vue';
 
 interface Kit {
   id: number;
@@ -42,14 +43,14 @@ interface Props {
 const props = defineProps<Props>();
 
 const handleFork = () => {
-  if (confirm('Fork this kit to your account? This will also fork all templates within the kit.')) {
+  if (confirm('Clone this kit to your account? This will also clone all templates within the kit.')) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };
 
 const handleDelete = () => {
   if (props.kit.fork_count > 0) {
-    alert('This kit cannot be deleted because it has been forked.');
+    alert('This kit cannot be deleted because it has been cloned by others.');
     return;
   }
 
@@ -59,6 +60,33 @@ const handleDelete = () => {
     });
   }
 };
+const totalTemplates = computed(() => {
+  const templates = props.kit.templates ?? [];
+
+  const counts = templates.reduce<Record<string, number>>((acc, t) => {
+    acc[t.type] = (acc[t.type] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const entries = Object.entries(counts);
+
+  if (!entries.length) {
+    return 'No templates in this kit';
+  }
+
+  const parts = entries.map(([type, count]) => {
+    const label =
+      type === 'static'
+        ? 'static overlay'
+        : type === 'alert'
+          ? 'alert'
+          : type;
+
+    return `${count} ${label}${count > 1 ? 's' : ''}`;
+  });
+
+  return `${parts.join(' and ')} in this kit`;
+});
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', {
@@ -88,7 +116,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </Link>
 
       <!-- Kit header -->
-      <div class="mb-8 overflow-hidden rounded-lg bg-card lg:max-w-[75%]">
+      <div class="mb-8 overflow-hidden rounded-lg bg-card lg:max-w-[55%]">
         <!-- Thumbnail -->
         <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[16/9]">
           <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
@@ -102,7 +130,11 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-3">
                 <h1 class="text-3xl font-bold">{{ kit.title }}</h1>
-                <Badge :variant="kit.is_public ? 'default' : 'secondary'" class="flex items-center gap-1">
+                <Badge
+                  :variant="kit.is_public ? 'default' : 'secondary'"
+                  class="flex items-center gap-1"
+                  :class="kit.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                >
                   <component :is="kit.is_public ? Globe : Lock" class="h-3 w-3" />
                   {{ kit.is_public ? 'Public' : 'Private' }}
                 </Badge>
@@ -119,16 +151,16 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
 
                 <div v-if="kit.forked_from" class="flex items-center gap-1">
-                  <GitFork class="h-4 w-4" />
-                  <span>Forked from</span>
+                  <BookCopy class="h-4 w-4" />
+                  <span>Copied from</span>
                   <Link :href="`/kits/${kit.forked_from.id}`" class="font-medium hover:underline">
                     {{ kit.forked_from.title }}
                   </Link>
                 </div>
 
                 <div class="flex items-center gap-1">
-                  <GitFork class="h-4 w-4" />
-                  <span>{{ kit.fork_count }} fork{{ kit.fork_count !== 1 ? 's' : '' }}</span>
+                  <BookCopy class="h-4 w-4" />
+                  <span>{{ kit.fork_count }} cop{{ kit.fork_count !== 1 ? 'ies' : 'y' }}</span>
                 </div>
 
                 <div>Created {{ formatDate(kit.created_at) }}</div>
@@ -136,17 +168,31 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <div class="flex gap-2">
-              <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-secondary">
-                Edit Kit
-                <PencilIcon class="ml-2 h-4 w-4" />
+              <Link
+                v-if="canEdit"
+                :href="`/kits/${kit.id}/edit`"
+                class="btn btn-primary"
+                title="Edit kit"
+              >
+                <PencilIcon class="h-4 w-4" />
               </Link>
 
-              <button v-if="canFork" @click="handleFork" class="btn btn-primary">
-                Fork Kit
-                <GitFork class="ml-2 h-4 w-4" />
+              <button
+                v-if="canFork"
+                @click="handleFork"
+                class="btn btn-warning"
+                :disabled="!kit.is_public"
+                title="Copy this kit to your own account"
+              >
+                <BookCopy class="h-4 w-4" />
               </button>
 
-              <button v-if="canEdit && kit.fork_count === 0" @click="handleDelete" class="btn btn-danger" title="Delete kit">
+              <button
+                v-if="canEdit && kit.fork_count === 0"
+                @click="handleDelete"
+                class="btn btn-danger"
+                title="Delete kit"
+              >
                 <Trash2Icon class="h-4 w-4" />
               </button>
             </div>
@@ -156,8 +202,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Templates section -->
       <div>
-        <h2 class="mb-4 text-xl font-semibold">Templates in this Kit ({{ kit.templates?.length || 0 }})</h2>
-
+        <h2 class="mb-4 text-xl font-semibold">{{ totalTemplates }}</h2>
         <TemplateTable
           v-if="kit.templates && kit.templates.length > 0"
           :templates="kit.templates"
@@ -170,18 +215,6 @@ const breadcrumbs: BreadcrumbItem[] = [
           <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary mt-4"> Add Templates </Link>
         </div>
 
-        <div class="mt-8">
-          <h2 class="mt-8 text-3xl font-semibold">How do Overlays Kits work</h2>
-          <p>
-            Overlay Kits contain both static templates (like overlays, panels, or screens) and alert templates (for follows, subscriptions, etc.).
-            Forking this kit creates a complete copy in your account with all pre-configured templates. You can use the
-            <a href="https://dev.twitch.tv/docs/cli/event-command/" class="text-primary underline" target="_blank">Twitch CLI</a> to test alert events
-            and preview how your alerts will look in action.
-          </p>
-          <p class="mt-3">
-            You will need a static overlay to render your alert overlays in. You cannot use alert overlays without a static base overlay.
-          </p>
-        </div>
       </div>
     </div>
   </AppLayout>

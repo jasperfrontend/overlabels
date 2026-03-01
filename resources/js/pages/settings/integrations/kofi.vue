@@ -90,10 +90,15 @@ function formatDate(iso: string | null): string {
                         title="Ko-fi"
                         description="Receive donation alerts and update overlay controls from Ko-fi."
                     />
-                    <Badge v-if="integration.connected" variant="default">Connected</Badge>
+
+                    <Badge v-if="integration.connected" variant="default" class="bg-green-400">Connected</Badge>
                     <Badge v-else variant="secondary">Not connected</Badge>
                 </div>
-
+                <div class="bg-orange-400/40 p-4 mb-8">
+                  Integrating external services like Ko-fi is still in <strong>active development</strong> and therefore this integration <strong>doesn't
+                  do anything</strong> noteworthy right now. In the future you can add a Ko-fi Control to your template which live updates whenever a new
+                  Ko-fi event happens on your account. <em>I think.</em>
+                </div>
                 <form class="space-y-6" @submit.prevent="save">
                     <!-- Verification Token -->
                     <div class="space-y-2">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Globe, Lock, Eye, GitFork, Package, Pencil, Trash2 } from 'lucide-vue-next';
+import { Globe, Lock, Eye, GitFork, Package, Trash2, BookCopy } from 'lucide-vue-next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Kit {
@@ -56,9 +56,9 @@ const formatDate = (date: string) => {
 </script>
 
 <template>
-  <Card class="group relative flex h-full pt-0 flex-col overflow-hidden">
+  <Card class="group relative flex h-full pt-0 flex-col overflow-hidden bg-background">
     <!-- Thumbnail -->
-    <div v-if="kit.thumbnail_url" class="aspect-video rounded-sm rounded-b-none w-full overflow-hidden bg-muted">
+    <div v-if="kit.thumbnail_url" class="aspect-video rounded-sm rounded-b-none w-full overflow-hidden bg-background">
       <img
         :src="kit.thumbnail_url"
         :alt="kit.title"
@@ -124,26 +124,19 @@ const formatDate = (date: string) => {
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2">
-        <Link v-if="isOwnKit" :href="`/kits/${kit.id}/edit`" class="btn btn-sm btn-secondary flex text-center">
-          Edit
-          <Pencil class="ml-2 size-4" />
+      <div class="flex gap-2 pt-2 ml-auto">
+        <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-chill">
+          <Eye class=" size-4" />
         </Link>
 
         <button
           v-if="!isOwnKit || kit.is_public"
           class="btn btn-sm btn-warning"
           @click="handleFork"
-          title="Fork kit"
+          title="Copy kit to your own account"
         >
-          Fork
-          <GitFork class="ml-1 size-4" />
+          <BookCopy class="size-4" />
         </button>
-
-        <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-primary">
-          View
-          <Eye class="ml-2 size-4" />
-        </Link>
 
         <button
           v-if="isOwnKit && allowDelete && kit.fork_count === 0"

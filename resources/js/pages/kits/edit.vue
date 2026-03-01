@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { ArrowLeft, Upload, X, Package } from 'lucide-vue-next';
+import { ArrowLeft, Upload, X, Package, CheckCheck, Square } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { OverlayTemplate } from '@/types';
+import type { BreadcrumbItem, OverlayTemplate } from '@/types';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 interface Kit {
   id: number;
@@ -109,10 +107,17 @@ const submit = () => {
     preserveScroll: true,
   });
 };
+
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'Edit Kit "' + props.kit.title + '"',
+    href: route('kits.index'),
+  },
+];
 </script>
 
 <template>
-  <AppLayout>
+  <AppLayout :breadcrumbs="breadcrumbs">
     <Head :title="`Edit ${kit.title}`" />
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
@@ -131,21 +136,22 @@ const submit = () => {
 
       <form @submit.prevent="submit" class="space-y-6">
         <!-- Basic Information -->
-        <Card>
+
+
+
+        <Card class="gap-4">
           <CardHeader>
-            <CardTitle>Kit Information</CardTitle>
-            <CardDescription>
-              Update your kit's name and description
-            </CardDescription>
+            <HeadingSmall title="Kit Information" description="Update your kit's name and description" />
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <Label for="title">Title *</Label>
-              <Input
+              <label for="title" class="block mb-2">Title *</label>
+              <input
                 id="title"
                 v-model="form.title"
                 type="text"
                 placeholder="My Awesome Stream Kit"
+                class="input-border w-full"
                 :class="{ 'border-red-500': form.errors.title }"
                 required
               />
@@ -153,29 +159,43 @@ const submit = () => {
             </div>
 
             <div>
-              <Label for="description">Description</Label>
-              <Textarea
+              <label for="description" class="block mb-2">Description</label>
+              <textarea
                 id="description"
                 v-model="form.description"
-                placeholder="Describe what this kit contains and who might find it useful..."
+                placeholder="Describe what this kit contains and who might find it useful"
                 :rows="4"
+                class="input-border w-full"
                 :class="{ 'border-red-500': form.errors.description }"
               />
               <p v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</p>
             </div>
 
-            <div class="flex items-center justify-between rounded-lg border p-4">
+            <div
+              class="flex items-center justify-between rounded-sm border p-4 cursor-pointer hover:bg-background"
+              :class="form.is_public? 'border-green-500 bg-green-300/5' : 'border-border bg-background-50/20'"
+              @click="form.is_public = !form.is_public">
               <div class="space-y-0.5">
-                <Label for="is_public">Make this kit public</Label>
-                <p class="text-sm text-muted-foreground">
-                  Public kits can be discovered and forked by other users
+                <div v-if="form.is_public">Public Kit <small>(Click to make private)</small></div>
+                <div v-else>Private Kit <small>(Click to make public)</small></div>
+                <p
+                  v-if="form.is_public"
+                  class="text-sm text-green-500"
+                >
+                  Public kits can be discovered and copied by other users.
+                </p>
+                <p
+                  v-else
+                  class="text-sm text-muted-foreground"
+                >
+                  Private kits are only visible to you and cannot be copied by other users.
                 </p>
               </div>
-<!--              <Switch-->
-<!--                id="is_public"-->
-<!--                v-model:checked="form.is_public"-->
-<!--              />-->
-              <input type="checkbox" v-model="form.is_public" />
+
+              <CheckCheck v-if="form.is_public" class="h-5 w-5 text-green-500" />
+              <Square v-else class="h-5 w-5 text-muted-foreground" />
+
+              <input type="checkbox" class="hidden" name="is_public" id="is_public" v-model="form.is_public" />
             </div>
           </CardContent>
         </Card>
@@ -183,11 +203,7 @@ const submit = () => {
         <!-- Thumbnail Upload -->
         <Card>
           <CardHeader>
-            <CardTitle>Kit Thumbnail</CardTitle>
-            <CardDescription>
-              Update your kit's thumbnail image (2560x1440px recommended, max 10MB).
-              Be sure to provide a high quality thumbnail so your kit looks great in the library.
-            </CardDescription>
+            <HeadingSmall title="Kit Thumbnail" description="Update your kit's thumbnail image (2560x1440px recommended, max 10MB). Be sure to provide a high quality thumbnail so your kit looks great in the library." />
           </CardHeader>
           <CardContent>
             <div v-if="thumbnailPreview" class="mt-4">
@@ -228,10 +244,7 @@ const submit = () => {
         <!-- Template Selection -->
         <Card>
           <CardHeader>
-            <CardTitle>Select Templates *</CardTitle>
-            <CardDescription>
-              Choose which of your templates to include in this kit
-            </CardDescription>
+            <HeadingSmall title="Select Templates *" description="Choose which of your templates to include in this kit." />
           </CardHeader>
           <CardContent>
             <div v-if="templates.length === 0" class="mt-4 rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
@@ -258,10 +271,10 @@ const submit = () => {
                   :for="`template-${template.id}`"
                   class="flex flex-1 cursor-pointer items-center justify-between"
                 >
-                  <div>
+                  <span>
                     <span class="font-medium">{{ template.name }}</span>
                     <span class="ml-2 text-sm text-muted-foreground">({{ template.type }})</span>
-                  </div>
+                  </span>
                   <span class="text-xs text-muted-foreground">{{ template.slug }}</span>
                 </label>
               </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,7 +50,7 @@ class ExternalIntegration extends Model
 
         try {
             return json_decode(Crypt::decryptString($this->credentials), true) ?? [];
-        } catch (\Exception) {
+        } catch (Exception) {
             return [];
         }
     }
