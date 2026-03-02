@@ -219,6 +219,20 @@ class OverlayTemplate extends Model
     }
 
     /**
+     * Static overlays this alert template is configured to fire on.
+     * Empty = fires on all static overlays (no restriction).
+     */
+    public function targetStaticOverlays(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'alert_template_static_overlays',
+            'alert_template_id',
+            'static_overlay_id'
+        )->withTimestamps();
+    }
+
+    /**
      * Scope for static overlays
      */
     public function scopeStatic($query)

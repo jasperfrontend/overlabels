@@ -26,6 +26,8 @@ class AlertTriggered implements ShouldBroadcast
 
     public string $broadcasterId;
 
+    public ?array $targetOverlaySlugs;
+
     /**
      * Create a new event instance.
      */
@@ -36,7 +38,8 @@ class AlertTriggered implements ShouldBroadcast
         int $duration,
         string $transitionIn,
         string $transitionOut,
-        string $broadcasterId
+        string $broadcasterId,
+        ?array $targetOverlaySlugs = null
     ) {
         $this->html = $html;
         $this->css = $css;
@@ -45,6 +48,7 @@ class AlertTriggered implements ShouldBroadcast
         $this->transitionIn = $transitionIn;
         $this->transitionOut = $transitionOut;
         $this->broadcasterId = $broadcasterId;
+        $this->targetOverlaySlugs = $targetOverlaySlugs;
     }
 
     /**
@@ -66,13 +70,14 @@ class AlertTriggered implements ShouldBroadcast
     {
         return [
             'alert' => [
-                'html' => $this->html,
-                'css' => $this->css,
-                'data' => $this->data,
-                'duration' => $this->duration,
-                'transition_in' => $this->transitionIn,
-                'transition_out' => $this->transitionOut,
-                'timestamp' => now()->timestamp,
+                'html'                 => $this->html,
+                'css'                  => $this->css,
+                'data'                 => $this->data,
+                'duration'             => $this->duration,
+                'transition_in'        => $this->transitionIn,
+                'transition_out'       => $this->transitionOut,
+                'timestamp'            => now()->timestamp,
+                'target_overlay_slugs' => $this->targetOverlaySlugs,
             ],
         ];
     }

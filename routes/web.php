@@ -274,6 +274,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}', [OverlayTemplateController::class, 'update'])->name('update');
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
         Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
+        Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
     });
 
     // Controls Management

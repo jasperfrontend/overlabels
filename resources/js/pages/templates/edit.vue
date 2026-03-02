@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { BreadcrumbItem } from '@/types';
 import type { OverlayControl } from '@/types';
@@ -11,6 +11,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
+import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import {
   Brackets,
   Code,
@@ -23,6 +24,7 @@ import {
   MoreVertical,
   SlidersHorizontal,
   CopyIcon,
+  Target,
 } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
@@ -36,6 +38,12 @@ interface TemplateTag {
   category?: string;
 }
 
+interface OverlayOption {
+  id: number
+  name: string
+  slug: string
+}
+
 interface Props {
   existingTemplate: { head: string; html: string; css: string };
   template: {
@@ -47,6 +55,7 @@ interface Props {
     css: string;
     is_public: boolean;
     slug: string;
+    type: string;
     created_at: string;
     updated_at: string;
     view_count: number;
@@ -62,6 +71,8 @@ interface Props {
     sample_data?: string;
   }>;
   controls?: OverlayControl[];
+  staticOverlays?: OverlayOption[];
+  targetStaticOverlayIds?: number[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -98,14 +109,34 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-const mainTabs = [
-  { key: 'code', label: 'Code', icon: Code },
-  { key: 'meta', label: 'Meta', icon: InfoIcon },
-  { key: 'tags', label: 'Tags', icon: Brackets },
-  { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
-] as const;
+const mainTabs = computed(() => {
+  const tabs: Array<{ key: string; label: string; icon: any }> = [
+    { key: 'code', label: 'Code', icon: Code },
+    { key: 'meta', label: 'Meta', icon: InfoIcon },
+    { key: 'tags', label: 'Tags', icon: Brackets },
+    { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
+  ];
+  if (props.template.type === 'alert') {
+    tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
+  }
+  return tabs;
+});
 
-const mainTab = ref<'code' | 'meta' | 'tags' | 'controls'>('code');
+const mainTab = ref<string>('code');
+
+const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
+
+function saveTargeting() {
+  router.put(
+    route('templates.target-overlays', props.template),
+    { overlay_ids: localTargetOverlayIds.value },
+    {
+      preserveScroll: true,
+      onSuccess: () => pushToast('Targeting settings saved.', 'success'),
+      onError: () => pushToast('Failed to save targeting settings.', 'error'),
+    },
+  );
+}
 
 const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -331,7 +362,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           </div>
 
           <!-- Controls Tab -->
-          <div v-else-if="mainTab === 'controls'">
+          <div v-else-if="mainTab === 'controls'" class="space-y-2">
             <div v-if="!controls || controls.length === 0" class="py-8 text-center text-sm text-muted-foreground">
               No controls defined for this overlay yet.
               <a :href="route('templates.show', template)" class="ml-1 text-violet-400 hover:underline">Go to the overlay page</a>
@@ -374,6 +405,15 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                 </TableBody>
               </Table>
             </template>
+          </div>
+
+          <!-- Targeting Tab (alert templates only) -->
+          <div v-else-if="mainTab === 'targeting'" class="max-w-2xl">
+            <AlertTargetOverlaySelector
+              v-model="localTargetOverlayIds"
+              :static-overlays="staticOverlays ?? []"
+            />
+            <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
           </div>
         </div>
 

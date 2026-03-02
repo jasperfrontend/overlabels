@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## March 2nd, 2026 — Alert template targeting (Issue #74)
+
+- **New: Per-alert-template overlay targeting.** Alert templates can now be restricted to fire on specific static overlays instead of all of them. On any alert template's edit or show page a new "Targeting" tab lets you select which static overlays receive the alert. Leaving all unchecked keeps the original behaviour (fires on every connected overlay).
+- **New pivot table `alert_template_static_overlays`.** Self-referential pivot on `overlay_templates` recording which alert template fires on which static overlays.
+- **`AlertTriggered` broadcast now carries `target_overlay_slugs`.** All three dispatch points (Twitch EventSub, Ko-fi/external webhook, and event replay for both) populate a `target_overlay_slugs: string[]|null` field. `null` means "all overlays".
+- **`OverlayRenderer.vue` enforces the whitelist.** On receiving an `alert.triggered` event, each overlay instance compares its own slug against the list. If the list is non-null and the slug is absent the alert is silently skipped.
+- **10 new feature tests** covering: `updateTargetOverlays` route (saves pivot, ownership check, type validation, cross-user rejection), `ExternalAlertService` broadcast with/without targets, and `ExternalEventController::replay` with/without targets.
+
 ## March 1st, 2026 — Ko-fi starting donation count seed
 
 - **New: Starting donation count on Ko-fi settings page.** Users who had Ko-fi donations before joining can set a starting number so the `kofis_received` control doesn't begin from zero. Setting it immediately updates all existing `kofis_received` controls across all their overlay templates.

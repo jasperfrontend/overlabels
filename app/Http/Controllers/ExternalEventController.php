@@ -22,7 +22,7 @@ class ExternalEventController extends Controller
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
         }
 
-        $mapping = ExternalEventTemplateMapping::with('template')
+        $mapping = ExternalEventTemplateMapping::with(['template', 'template.targetStaticOverlays'])
             ->where('user_id', $user->id)
             ->where('service', $externalEvent->service)
             ->where('event_type', $externalEvent->event_type)
@@ -36,6 +36,10 @@ class ExternalEventController extends Controller
         $template = $mapping->template;
         $data = $externalEvent->normalized_payload ?? [];
 
+        $targetSlugs = $template->targetStaticOverlays->isNotEmpty()
+            ? $template->targetStaticOverlays->pluck('slug')->all()
+            : null;
+
         broadcast(new AlertTriggered(
             html: $template->html ?? '',
             css: $template->css ?? '',
@@ -44,6 +48,7 @@ class ExternalEventController extends Controller
             transitionIn: $mapping->transition_in ?? 'fade',
             transitionOut: $mapping->transition_out ?? 'fade',
             broadcasterId: $user->twitch_id,
+            targetOverlaySlugs: $targetSlugs,
         ));
 
         $label = ucfirst($externalEvent->event_type) . ' (' . ucfirst($externalEvent->service) . ')';

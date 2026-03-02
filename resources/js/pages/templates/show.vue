@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
+import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
@@ -24,14 +25,23 @@ import {
   ChevronDownIcon,
   CopyIcon,
   InfoIcon,
+  TargetIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+
+interface OverlayOption {
+  id: number
+  name: string
+  slug: string
+}
 
 const props = defineProps<{
   template: any;
   canEdit: boolean;
   controls?: OverlayControl[];
   connectedServices?: string[];
+  staticOverlays?: OverlayOption[];
+  targetStaticOverlayIds?: number[];
 }>();
 
 const editorTabs = [
@@ -40,14 +50,44 @@ const editorTabs = [
   { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
 ];
 
-const mainTabs = [
-  { key: 'overview', label: 'Details', icon: LightbulbIcon },
-  { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
-  { key: 'panel', label: 'Values', icon: SquarePenIcon },
-] as const;
+const mainTabs = computed(() => {
+  const tabs: Array<{ key: string; label: string; icon: any }> = [
+    { key: 'overview', label: 'Details', icon: LightbulbIcon },
+    { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
+    { key: 'panel', label: 'Values', icon: SquarePenIcon },
+  ];
+  if (props.canEdit && props.template?.type === 'alert') {
+    tabs.push({ key: 'targeting', label: 'Targeting', icon: TargetIcon });
+  }
+  return tabs;
+});
 
 const activeTab = ref('html');
-const mainTab = ref<'overview' | 'controls' | 'panel'>('overview');
+const mainTab = ref<string>('overview');
+
+const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
+
+function saveTargeting() {
+  router.put(
+    route('templates.target-overlays', props.template),
+    { overlay_ids: localTargetOverlayIds.value },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        showToast.value = false;
+        toastMessage.value = 'Targeting settings saved.';
+        toastType.value = 'success';
+        showToast.value = true;
+      },
+      onError: () => {
+        showToast.value = false;
+        toastMessage.value = 'Failed to save targeting settings.';
+        toastType.value = 'error';
+        showToast.value = true;
+      },
+    },
+  );
+}
 const showCode = ref(false);
 const showOBSHelp = ref(false);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
@@ -245,6 +285,15 @@ const forkTitle = computed(() => {
         <!-- Control Panel tab -->
         <div v-if="canEdit && mainTab === 'panel'" class="mb-6">
           <ControlPanel :template="template" :controls="localControls" />
+        </div>
+
+        <!-- Targeting tab (alert templates, owner only) -->
+        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 max-w-2xl">
+          <AlertTargetOverlaySelector
+            v-model="localTargetOverlayIds"
+            :static-overlays="staticOverlays ?? []"
+          />
+          <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
         </div>
 
         <!-- Code Tabs (overview only) -->

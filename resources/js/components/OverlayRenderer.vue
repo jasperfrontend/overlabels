@@ -442,6 +442,10 @@ function handleAlertTriggered(event: any) {
     return;
   }
 
+  // Skip if this overlay is not in the target whitelist
+  const targetSlugs: string[] | null = alertData.target_overlay_slugs ?? null;
+  if (targetSlugs !== null && !targetSlugs.includes(props.slug)) return;
+
   // Parse emotes in user-generated text fields before template substitution
   const processedData = { ...alertData.data };
 

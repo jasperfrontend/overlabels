@@ -633,6 +633,12 @@ class TwitchEventSubController extends Controller
                 $eventData // Pass event data for event.* tags
             );
 
+            // Resolve target static overlay slugs (null = fire on all)
+            $mapping->template->loadMissing('targetStaticOverlays');
+            $targetSlugs = $mapping->template->targetStaticOverlays->isNotEmpty()
+                ? $mapping->template->targetStaticOverlays->pluck('slug')->all()
+                : null;
+
             // Broadcast alert data to overlay
             broadcast(new \App\Events\AlertTriggered(
                 $mapping->template->html,
@@ -641,7 +647,8 @@ class TwitchEventSubController extends Controller
                 $mapping->duration_ms,
                 $mapping->transition_in,
                 $mapping->transition_out,
-                $user->twitch_id
+                $user->twitch_id,
+                $targetSlugs
             ));
 
             Log::info("Rendered custom alert for user {$user->id}", [
@@ -672,7 +679,7 @@ class TwitchEventSubController extends Controller
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
         }
 
-        $mapping = EventTemplateMapping::with('template')
+        $mapping = EventTemplateMapping::with(['template', 'template.targetStaticOverlays'])
             ->where('user_id', $user->id)
             ->where('event_type', $twitchEvent->event_type)
             ->where('enabled', true)

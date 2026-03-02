@@ -31,6 +31,12 @@ class ExternalAlertService
         // Build data map: event tags only (no Twitch static data for external events)
         $data = $event->getTemplateTags();
 
+        // Resolve target static overlay slugs (null = fire on all)
+        $template->loadMissing('targetStaticOverlays');
+        $targetSlugs = $template->targetStaticOverlays->isNotEmpty()
+            ? $template->targetStaticOverlays->pluck('slug')->all()
+            : null;
+
         try {
             broadcast(new AlertTriggered(
                 html: $template->html ?? '',
@@ -40,6 +46,7 @@ class ExternalAlertService
                 transitionIn: $mapping->transition_in ?? 'fade',
                 transitionOut: $mapping->transition_out ?? 'fade',
                 broadcasterId: $user->twitch_id,
+                targetOverlaySlugs: $targetSlugs,
             ));
 
             Log::info("External alert dispatched for user {$user->id}", [

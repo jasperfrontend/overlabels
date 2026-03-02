@@ -9,6 +9,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -107,11 +108,24 @@ class OverlayTemplateController extends Controller
             ? ExternalIntegration::where('user_id', auth()->id())->pluck('service')->toArray()
             : [];
 
+        $targetStaticOverlayIds = ($canEdit && $template->type === 'alert')
+            ? $template->targetStaticOverlays()->pluck('overlay_templates.id')->all()
+            : [];
+        $staticOverlays = ($canEdit && $template->type === 'alert')
+            ? OverlayTemplate::where('owner_id', auth()->id())
+                ->where('type', 'static')
+                ->select(['id', 'name', 'slug'])
+                ->orderBy('name')
+                ->get()
+            : collect();
+
         return Inertia::render('templates/show', [
-            'template'          => $template,
-            'canEdit'           => $canEdit,
-            'controls'          => $controls,
-            'connectedServices' => $connectedServices,
+            'template'               => $template,
+            'canEdit'                => $canEdit,
+            'controls'               => $controls,
+            'connectedServices'      => $connectedServices,
+            'targetStaticOverlayIds' => $targetStaticOverlayIds,
+            'staticOverlays'         => $staticOverlays,
         ]);
     }
 
@@ -147,10 +161,23 @@ class OverlayTemplateController extends Controller
 
         $controls = $template->controls()->orderBy('sort_order')->get();
 
+        $targetStaticOverlayIds = $template->type === 'alert'
+            ? $template->targetStaticOverlays()->pluck('overlay_templates.id')->all()
+            : [];
+        $staticOverlays = $template->type === 'alert'
+            ? OverlayTemplate::where('owner_id', auth()->id())
+                ->where('type', 'static')
+                ->select(['id', 'name', 'slug'])
+                ->orderBy('name')
+                ->get()
+            : collect();
+
         return Inertia::render('templates/edit', [
-            'template' => $template,
-            'availableTags' => $availableTags,
-            'controls' => $controls,
+            'template'               => $template,
+            'availableTags'          => $availableTags,
+            'controls'               => $controls,
+            'targetStaticOverlayIds' => $targetStaticOverlayIds,
+            'staticOverlays'         => $staticOverlays,
         ]);
 
     }
@@ -405,6 +432,34 @@ class OverlayTemplateController extends Controller
 
         return redirect()->route('templates.edit', $template)
             ->with('success', 'Template updated successfully!');
+    }
+
+    /**
+     * Update target static overlays for an alert template
+     */
+    public function updateTargetOverlays(Request $request, OverlayTemplate $template): RedirectResponse
+    {
+        abort_unless($template->owner_id === auth()->id(), 403);
+        abort_unless($template->type === 'alert', 422);
+
+        $validated = $request->validate([
+            'overlay_ids'   => ['nullable', 'array'],
+            'overlay_ids.*' => ['integer', 'exists:overlay_templates,id'],
+        ]);
+
+        $ids = $validated['overlay_ids'] ?? [];
+
+        if (! empty($ids)) {
+            $validCount = OverlayTemplate::whereIn('id', $ids)
+                ->where('owner_id', auth()->id())
+                ->where('type', 'static')
+                ->count();
+            abort_if($validCount !== count($ids), 422, 'Invalid overlay IDs.');
+        }
+
+        $template->targetStaticOverlays()->sync($ids);
+
+        return back()->with('message', 'Targeting settings saved.')->with('type', 'success');
     }
 
     /**
