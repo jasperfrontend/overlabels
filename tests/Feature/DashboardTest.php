@@ -4,7 +4,7 @@ use App\Models\User;
 
 test('guests are redirected to the login page', function () {
     $response = $this->get('/dashboard');
-    $response->assertRedirect('/login');
+    $response->assertRedirect('/login?redirect_to=https%3A%2F%2Foverlabels.test%2Fdashboard');
 });
 
 test('authenticated users can visit the dashboard', function () {

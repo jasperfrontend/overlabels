@@ -42,9 +42,12 @@ php artisan optimize     # Cache configuration
 This app is being built on a Windows 10 machine. Do NOT use linux commands for file manipulation and handling, but use the
 Windows equivalents.
 
-`php` is available on PATH — use `php artisan ...` directly.
-
-This project uses Postgres.
+- `php` is available on PATH — use `php artisan ...` directly.
+- `gh` is available as a GitHub CLI tool. (new since March 2nd, 2026).
+- `composer run dev` is aliased as `crd` but both commands work.
+- This project uses Postgres.
+- This project's repo lives on [jasperfrontend/overlabels](https://github.com/jasperfrontend/overlabels) on GitHub.
+- Always refer to this repo when user asks for things related to GitHub (issues, PRs, etc.).
 
 ### Core Systems
 
@@ -78,7 +81,7 @@ This project uses Postgres.
 Templates use a custom tag system (e.g., `{{follower_count}}`) parsed by `TemplateParserService`. Tags are validated against available Twitch data. The template editor uses CodeMirror with custom syntax highlighting.
 
 ### Frontend Development
-- Components follow Shadcn/Vue patterns in `/resources/js/components/ui/`
+- Components follow Shadcn/Reka-UI/Vue patterns in `/resources/js/components/ui/`
 - Use composables in `/resources/js/composables/` for shared logic
 - TypeScript types are in `/resources/js/types/`
 - Tailwind v4 with CSS layers for styling

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ref } from 'vue';
@@ -43,7 +43,7 @@ const showRawPayload = ref(false);
           <div>
             <span class="text-muted-foreground">User</span>
             <div>
-              <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
+              <Link v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</Link>
               <span v-else>—</span>
             </div>
           </div>
@@ -93,7 +93,7 @@ const showRawPayload = ref(false);
       </Card>
 
       <div>
-        <a :href="route('admin.events.index', { source: 'external' })" class="text-sm text-muted-foreground hover:text-foreground">← Back to External Events</a>
+        <Link :href="route('admin.events.index', { source: 'external' })" class="text-sm text-muted-foreground hover:text-foreground">← Back to External Events</Link>
       </div>
     </div>
   </AppLayout>
