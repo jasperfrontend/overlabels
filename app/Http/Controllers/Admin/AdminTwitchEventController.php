@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ExternalEvent;
 use App\Models\TwitchEvent;
 use App\Services\AdminAuditService;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,35 @@ class AdminTwitchEventController extends Controller
 
     public function index(Request $request): Response
     {
+        $source = $request->input('source', 'twitch');
+
+        if ($source === 'external') {
+            $query = ExternalEvent::with('user:id,name,twitch_id');
+
+            if ($type = $request->input('event_type')) {
+                $query->where('event_type', $type);
+            }
+            if ($userId = $request->input('user_id')) {
+                $query->where('user_id', $userId);
+            }
+            if ($from = $request->input('from')) {
+                $query->where('created_at', '>=', $from);
+            }
+            if ($to = $request->input('to')) {
+                $query->where('created_at', '<=', $to);
+            }
+
+            $events = $query->latest()->paginate(50)->withQueryString();
+            $eventTypes = ExternalEvent::distinct()->pluck('event_type')->sort()->values();
+
+            return Inertia::render('admin/events/index', [
+                'events' => $events,
+                'filters' => $request->only(['event_type', 'user_id', 'from', 'to', 'source']),
+                'eventTypes' => $eventTypes,
+                'source' => 'external',
+            ]);
+        }
+
         $query = TwitchEvent::with('user:id,name,twitch_id');
 
         if ($type = $request->input('event_type')) {
@@ -44,8 +74,18 @@ class AdminTwitchEventController extends Controller
 
         return Inertia::render('admin/events/index', [
             'events' => $events,
-            'filters' => $request->only(['event_type', 'processed', 'user_id', 'from', 'to']),
+            'filters' => $request->only(['event_type', 'processed', 'user_id', 'from', 'to', 'source']),
             'eventTypes' => $eventTypes,
+            'source' => 'twitch',
+        ]);
+    }
+
+    public function showExternal(ExternalEvent $externalEvent): Response
+    {
+        $externalEvent->load('user:id,name,twitch_id');
+
+        return Inertia::render('admin/events/show-external', [
+            'event' => $externalEvent,
         ]);
     }
 

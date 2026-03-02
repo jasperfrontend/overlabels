@@ -36,6 +36,7 @@ Route::prefix('admin')
         Route::get('/events/{event}', [AdminTwitchEventController::class, 'show'])->name('events.show');
         Route::patch('/events/{event}', [AdminTwitchEventController::class, 'update'])->name('events.update');
         Route::delete('/events/{event}', [AdminTwitchEventController::class, 'destroy'])->name('events.destroy');
+        Route::get('/external-events/{externalEvent}', [AdminTwitchEventController::class, 'showExternal'])->name('events.external.show');
 
         // Tags — categories must come before {tag} to avoid route conflict
         Route::get('/tags/categories', [AdminTemplateTagController::class, 'indexCategories'])->name('tags.categories.index');

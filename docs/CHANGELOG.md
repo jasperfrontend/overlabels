@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## March 2nd, 2026 — External events visible in admin panel (Issue #77)
+
+- **`/admin/events` now shows both Twitch and External events.** A source toggle (Twitch | External) appears above the filter row. Clicking "External" switches to a table showing Ko-fi (and future) external events with Service, Type, User, Controls Updated, and Alert Dispatched columns.
+- **New read-only detail page `/admin/external-events/{id}`.** Shows metadata, the normalized payload, and (collapsed by default) the raw payload. External events are append-only so no edit/delete actions are present.
+- **Filters persist across source switches.** `applyFilters()` now includes the active `source` in every router.get call; the "processed" filter dropdown is hidden when viewing External events (it only applies to Twitch events).
+
 ## March 2nd, 2026 — Alert template targeting (Issue #74)
 
 - **New: Per-alert-template overlay targeting.** Alert templates can now be restricted to fire on specific static overlays instead of all of them. On any alert template's edit or show page a new "Targeting" tab lets you select which static overlays receive the alert. Leaving all unchecked keeps the original behaviour (fires on every connected overlay).
