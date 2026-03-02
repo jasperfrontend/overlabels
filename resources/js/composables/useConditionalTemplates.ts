@@ -16,6 +16,100 @@ interface ParsedCondition {
     isBoolean: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Token-based scanner helpers (module-level, not exported)
+// These replace the old regex-only approach which couldn't handle nesting.
+// ---------------------------------------------------------------------------
+
+type Tag =
+    | { kind: 'if'; condition: string; index: number; length: number }
+    | { kind: 'elseif'; condition: string; index: number; length: number }
+    | { kind: 'else'; index: number; length: number }
+    | { kind: 'endif'; index: number; length: number };
+
+// Single regex that matches all four token types.
+// We reset lastIndex before each call so this is safe to share.
+const TOKEN_REGEX = /\[\[\[(if:([^\]]+)|elseif:([^\]]+)|else|endif)]]]/g;
+
+/**
+ * Return the next token at or after `fromIndex` in string `s`, or null.
+ */
+function nextTag(s: string, fromIndex: number): Tag | null {
+    TOKEN_REGEX.lastIndex = fromIndex;
+    const m = TOKEN_REGEX.exec(s);
+    if (!m) return null;
+
+    const body = m[1];
+    const idx = m.index;
+    const len = m[0].length;
+
+    if (body.startsWith('if:'))     return { kind: 'if',     condition: m[2].trim(), index: idx, length: len };
+    if (body.startsWith('elseif:')) return { kind: 'elseif', condition: m[3].trim(), index: idx, length: len };
+    if (body === 'else')            return { kind: 'else',   index: idx, length: len };
+    return                                 { kind: 'endif',  index: idx, length: len };
+}
+
+/**
+ * Given an `if` tag, scan forward tracking depth to find its matching `[[[endif]]]`.
+ * Returns the endif Tag, or null if the template is malformed (unmatched if).
+ */
+function findMatchingEndif(s: string, ifTag: Tag): Tag | null {
+    let depth = 1; // we're already inside the if
+    let pos = ifTag.index + ifTag.length;
+
+    while (true) {
+        const t = nextTag(s, pos);
+        if (!t) return null; // malformed — no matching endif
+
+        if (t.kind === 'if') depth++;
+        if (t.kind === 'endif') {
+            depth--;
+            if (depth === 0) return t;
+        }
+
+        pos = t.index + t.length;
+    }
+}
+
+/**
+ * Split the content between an `if` and its matching `endif` into ConditionalBlocks.
+ * Only splits on `else`/`elseif` tokens at depth 0 (belonging to this if, not a nested one).
+ */
+function splitTopLevel(inner: string, firstCondition: string): ConditionalBlock[] {
+    const blocks: ConditionalBlock[] = [];
+    let depth = 0;
+    let cursor = 0;
+    let currentType: ConditionalBlock['type'] = 'if';
+    let currentCondition: string | undefined = firstCondition;
+    let pos = 0;
+
+    while (true) {
+        const t = nextTag(inner, pos);
+        if (!t) break;
+
+        pos = t.index + t.length;
+
+        if (t.kind === 'if') {
+            depth++;
+        } else if (t.kind === 'endif') {
+            depth--;
+        } else if (depth === 0 && (t.kind === 'else' || t.kind === 'elseif')) {
+            // This else/elseif belongs to the outermost block — split here
+            blocks.push({ type: currentType, condition: currentCondition, content: inner.substring(cursor, t.index) });
+            cursor = pos;
+            currentType = t.kind;
+            currentCondition = t.kind === 'elseif' ? t.condition : undefined;
+        }
+    }
+
+    // Push the final block (else branch or the only if branch)
+    blocks.push({ type: currentType, condition: currentCondition, content: inner.substring(cursor) });
+
+    return blocks;
+}
+
+// ---------------------------------------------------------------------------
+
 export function useConditionalTemplates() {
     /**
      * Parse a condition string into its components
@@ -94,89 +188,66 @@ export function useConditionalTemplates() {
     };
 
     /**
-     * Process a template with conditional logic
+     * Process a template string, replacing all [[[if:...]]]...[[[endif]]] blocks
+     * with the content of the first branch whose condition is true.
+     *
+     * Uses a depth-aware token scanner so nested conditionals are handled correctly.
      */
     const processConditionalBlocks = (template: string, data: Record<string, any>, depth: number = 0): string => {
-        // Prevent infinite recursion
         if (depth > 10) {
             console.warn('Maximum conditional nesting depth reached');
             return template;
         }
 
-        // Regex to match conditional blocks
-        const conditionalRegex = /\[\[\[if:([^\]]+)]]]([\s\S]*?)\[\[\[endif]]]/;
+        let out = template;
+        let searchFrom = 0;
 
-        let result = template;
-        let match;
+        while (true) {
+            const t = nextTag(out, searchFrom);
+            if (!t) break;
 
-        while ((match = conditionalRegex.exec(result)) !== null) {
-            const fullMatch = match[0];
-            const condition = match[1];
-            const innerContent = match[2];
-
-            // Parse the inner content for else/elseif blocks
-            const blocks: ConditionalBlock[] = [];
-            const elseRegex = /\[\[\[else(?:if:([^\]]+))?]]]/g;
-            let lastElseIndex = 0;
-            let elseMatch;
-            let currentCondition = condition;
-
-            while ((elseMatch = elseRegex.exec(innerContent)) !== null) {
-                // Add the content before this else/elseif
-                blocks.push({
-                    type: blocks.length === 0 ? 'if' : 'elseif',
-                    condition: currentCondition,
-                    content: innerContent.substring(lastElseIndex, elseMatch.index)
-                });
-
-                // Set up for the next block
-                lastElseIndex = elseMatch.index + elseMatch[0].length;
-                currentCondition = elseMatch[1]; // Will be undefined for 'else'
+            if (t.kind !== 'if') {
+                // Stray else/elseif/endif with no matching if — skip past it
+                searchFrom = t.index + t.length;
+                continue;
             }
 
-            // Add the final block
-            if (lastElseIndex === 0) {
-                // No else/elseif found, just a simple if
-                blocks.push({
-                    type: 'if',
-                    condition: condition,
-                    content: innerContent
-                });
-            } else {
-                // Add the last else/elseif block
-                blocks.push({
-                    type: currentCondition === undefined ? 'else' : 'elseif',
-                    condition: currentCondition,
-                    content: innerContent.substring(lastElseIndex)
-                });
-            }
+            const endifTag = findMatchingEndif(out, t);
+            if (!endifTag) break; // Malformed template — abort to avoid further corruption
 
-            // Evaluate conditions and select content
-            let selectedContent = '';
+            // Content between [[[if:...]]] and its matching [[[endif]]]
+            const inner = out.substring(t.index + t.length, endifTag.index);
+
+            // Split inner into branches, respecting nesting depth
+            const blocks = splitTopLevel(inner, t.condition);
+
+            // Evaluate each branch in order; pick the first truthy one
+            let selected = '';
             for (const block of blocks) {
                 if (block.type === 'else') {
-                    // Else block always matches if we get here
-                    selectedContent = block.content;
+                    selected = block.content;
                     break;
-                } else if (block.condition) {
-                    const parsedCondition = parseCondition(block.condition);
-                    if (evaluateCondition(parsedCondition, data)) {
-                        selectedContent = block.content;
+                }
+                if (block.condition) {
+                    const parsed = parseCondition(block.condition);
+                    if (evaluateCondition(parsed, data)) {
+                        selected = block.content;
                         break;
                     }
                 }
             }
 
-            // Process nested conditionals in the selected content
-            if (selectedContent.includes('[[[if:')) {
-                selectedContent = processConditionalBlocks(selectedContent, data, depth + 1);
-            }
+            // Recursively process any nested conditionals within the selected branch
+            selected = processConditionalBlocks(selected, data, depth + 1);
 
-            // Replace the entire conditional block with the selected content
-            result = result.substring(0, match.index) + selectedContent + result.substring(match.index + fullMatch.length);
+            // Splice the entire [[[if...]]]...[[[endif]]] block out, insert resolved content
+            out = out.slice(0, t.index) + selected + out.slice(endifTag.index + endifTag.length);
+
+            // Continue scanning after the inserted content (already fully processed)
+            searchFrom = t.index + selected.length;
         }
 
-        return result;
+        return out;
     };
 
     /**
