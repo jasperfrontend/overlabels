@@ -191,9 +191,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
             :min="ctrl.config?.min"
             :max="ctrl.config?.max"
             :step="ctrl.config?.step ?? 1"
-            class="input-border flex-1"
+            class="peer input-border flex-1"
           />
-          <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+          <button class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
             <SaveIcon class="h-3.5 w-3.5" />
             <span class="ml-1">Save</span>
           </button>

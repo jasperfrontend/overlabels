@@ -28,27 +28,30 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Hand-rolled CSS transitions
 </details>
 
----
+<details>
+<summary><strong>Milestone 2 — External Systems: Foundations</strong></summary>
 
-## Milestone 2 — External Systems: Foundations
-> *Build the integration layer BEFORE integrating anything. The goal of this milestone is a clean,*
-> *extensible architecture that makes MS3, MS4+, and any future system a "plug in, not rebuild" job.*
+- `ExternalServiceDriver` interface + `ExternalServiceRegistry` — plug-in architecture for any future service
+- Generic webhook receiver (`POST /api/webhooks/{service}/{token}`) routes to the right driver by source
+- Per-user credential vault (encrypted storage via `Crypt::encryptString`)
+- `NormalizedExternalEvent` DTO — downstream features (alerts, controls) don't care where the event came from
+- `ExternalEvent` append-only store with global dedup on `(service, message_id)`
+- `ExternalControlService` + `ExternalAlertService` as the two action layers
+- No actual integrations shipped in this milestone — only the rails they run on
+</details>
 
-- Define a standard `ExternalEvent` contract / interface that all systems speak
-- Build a generic webhook receiver that routes to the right handler by source
-- Per-user credential vault (encrypted storage for API keys, OAuth tokens per service)
-- Abstract "event normaliser" so downstream features (alerts, controls) don't care where the event came from
-- No actual integrations ship in this milestone — only the rails they'll run on
+<details>
+<summary><strong>Milestone 3 — Ko-fi Integration</strong></summary>
 
----
-
-## Milestone 3 — Ko-fi Integration
-> *First real integration, built entirely on the MS2 foundation.*
-
-- Ko-fi webhook receiver using the MS2 architecture
-- Normalised Ko-fi events: donation, subscription, shop order
-- Ko-fi event tags available in overlay templates
+- Ko-fi webhook receiver using the MS2 architecture (`KofiServiceDriver`)
+- Normalised Ko-fi events: donation, subscription, shop order, commission
+- Ko-fi alert mappings in Alerts Builder — per event type, with duration + enter/exit animations
+- Ko-fi controls addable to static overlay templates via ControlFormModal presets (6 controls: received count, latest donor, amount, message, currency, total)
+- `event.*` template tags available in Ko-fi alert templates (`event.from_name`, `event.amount`, `event.currency`, etc.) + `event.source` for multi-service template reuse
+- Test mode toggle — bypasses dedup so the same payload can be fired repeatedly without a new transaction ID
+- Ko-fi events appear in the dashboard activity feed alongside Twitch events, and are replayable on overlays
 - Verified end-to-end: Ko-fi donation → Overlabels event → alert fires in OBS
+</details>
 
 ---
 
@@ -60,6 +63,41 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Overlay editor is usable on a laptop without a second monitor
 - Tables degrade gracefully (priority columns, horizontal scroll where unavoidable)
 - No new features — this milestone is purely polish and layout
+
+---
+
+## Milestone 4.5 — Security Audit & Dead Code Removal
+> *No new features ship until this is done. The goal is to be able to say with confidence:*
+> *"this codebase is as safe as we can reasonably make it."*
+>
+> *The one known trade-off that is explicitly accepted:* hash-based public overlay URLs are
+> *security-through-obscurity by design. A leaked hash gives read access to an overlay,*
+> *but no write access — mutating state still requires a valid auth session and the correct*
+> *Twitch ID. Streamers are warned about this. It stays.*
+
+### Codebase cleanup
+- Audit all routes — remove or gate anything that shouldn't be publicly reachable
+- Remove dead routes, unused controllers, unused models, unused migrations
+- Remove unused npm packages and composer packages
+- Drop or repurpose any database tables that are no longer referenced
+- Delete dead Vue components, composables, and utility files
+- Confirm every queue job, event, and listener is actually wired up and used
+
+### Security review
+- Audit every controller for missing auth middleware (especially API routes)
+- Confirm all user-owned resources check ownership before read/write/delete (no IDOR)
+- Confirm no raw user input is ever passed to `exec`, `shell_exec`, `system`, or eval-equivalent
+- Review all file upload paths (if any) for extension and MIME validation
+- Confirm CSRF protection is in place on all state-mutating web routes
+- Confirm webhook endpoints that skip CSRF (intentionally) have their own signature/token verification
+- Confirm encrypted credentials (`Crypt::encryptString`) are never logged or serialised into responses
+- Review rate limiting — ensure public-facing endpoints (overlay render, webhooks) are rate-limited
+- Confirm no sensitive values leak into JavaScript via Inertia shared props or `window.*`
+- Review admin panel access — confirm `EnsureAdminRole` middleware is applied everywhere and returns 404 (not 403) to non-admins
+
+### Known accepted risks (document, don't fix)
+- **Hash-based overlay URLs** (`/overlay/{hash}`) — the hash is a client-side decryption key, never parsed or validated on the backend. The alternative — backend-rendered templates gated behind a session — would couple the rendering pipeline to auth state, add server overhead on every overlay frame, and break OBS browser sources entirely (no session support). Frontend stays dumb, backend stays detached. A leaked hash gives read access to static overlay content; it grants no write access and no ability to mutate state, which still requires a valid auth session. Streamers are warned. This is the right trade-off.
+- OBS browser sources cannot hold auth sessions — URL-fragment token delivery is the only viable mechanism for read-only overlay access and that is fine
 
 ---
 
@@ -120,4 +158,4 @@ The idea:
 Captures: superchats (with amount, currency, message), memberships (new + gifted).
 Notably: nobody surfaces API quota to users in a meaningful way — this would feel crafted.
 
-*Last updated: February 2026*
+*Last updated: March 2026*

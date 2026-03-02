@@ -285,12 +285,12 @@ function formatDate(iso: string | null): string {
                         <template v-else>
                             <p class="text-muted-foreground text-sm">
                                 Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
-                                This can only be set once — all your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
+                                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
                                 controls update immediately.
                             </p>
                             <div class="flex gap-2 items-start">
                                 <div class="flex-1 space-y-1">
-                                    <Input
+                                    <input
                                         v-model.number="seedCount"
                                         type="number"
                                         min="0"
