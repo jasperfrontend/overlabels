@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## March 3rd, 2026 — Fix: Ko-fi controls can now be added to multiple templates
+
+- **Fixed unique constraint on `overlay_controls` blocking Ko-fi preset reuse.** The `overlay_controls_user_source_key_unique` index on `(user_id, source, key)` was a full-table constraint, which prevented adding the same Ko-fi control (e.g. `kofis_received`) to more than one static overlay template. Replaced it with a PostgreSQL partial unique index scoped to `WHERE overlay_template_id IS NULL` so user-scoped controls remain unique while template-scoped Ko-fi presets can be freely added to any number of templates.
+
 ## March 2nd, 2026 — External events visible in admin panel (Issue #77)
 
 - **`/admin/events` now shows both Twitch and External events.** A source toggle (Twitch | External) appears above the filter row. Clicking "External" switches to a table showing Ko-fi (and future) external events with Service, Type, User, Controls Updated, and Alert Dispatched columns.
