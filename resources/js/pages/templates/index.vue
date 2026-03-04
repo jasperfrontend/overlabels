@@ -73,7 +73,7 @@ const pageTitle = computed(() => {
           <Heading :title="pageTitle" />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary">
-          Create overlay
+          Create Overlay
           <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
       </div>

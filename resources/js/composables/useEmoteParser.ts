@@ -18,7 +18,7 @@ export function useEmoteParser() {
   // Twitch emotes fetched from backend proxy (credentials stay server-side)
   const twitchEmoteMap = new Map<string, string>() // code → CDN URL
 
-  async function initialize(channelId: string): Promise<void> {
+  async function initialize(channelId: number): Promise<void> {
     const fetcher = new EmoteFetcher() // No Twitch credentials — BTTV/FFZ/7TV only
     parser = new EmoteParser(fetcher, {
       template:
@@ -81,7 +81,7 @@ export function useEmoteParser() {
       }
     }
 
-    // No position data (e.g. channel points user_input) — use token-based parsing
+    // No position data (e.g., channel points user_input) — use token-based parsing
     if (!twitchEmotes.length) {
       return parseByTokens(text)
     }

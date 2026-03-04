@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Controller for managing template tags in the Overlabels application.
+ * This handles the creation, management, preview, and cleanup of template tags
+ * associated with the user account and Twitch data.
+ */
+
 namespace App\Http\Controllers;
 
 use App\Jobs\CleanupRedundantTags;
@@ -13,6 +19,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+
 
 class TemplateTagController extends Controller
 {

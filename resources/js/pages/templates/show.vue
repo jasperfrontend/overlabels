@@ -354,7 +354,7 @@ const forkTitle = computed(() => {
 
       <!-- Actions -->
       <div class="mt-6 flex justify-between">
-        <a :href="route('templates.index')" class="btn btn-cancel"> ← Back to Templates </a>
+        <a :href="route('templates.index')" class="btn btn-cancel"> ← All Overlays </a>
       </div>
     </div>
   </AppLayout>

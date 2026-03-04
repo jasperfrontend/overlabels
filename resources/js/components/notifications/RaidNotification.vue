@@ -1,6 +1,6 @@
 <template>
   <NotificationBase
-    :visible="visible"
+    :visible="visibility"
     v-bind="baseProps"
     :custom-class="customClass"
   >

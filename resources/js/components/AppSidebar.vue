@@ -8,7 +8,6 @@ import { Link } from '@inertiajs/vue3';
 import {
   Bell,
   Brackets,
-  Building,
   FileText,
   HashIcon,
   House,
@@ -30,9 +29,11 @@ const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My activity', href: route('dashboard.recents'), icon: Users },
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
-  { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
 ];
-const alertsNavItems: NavItem[] = [{ title: 'Alerts builder', href: route('events.index'), icon: Radio }];
+const alertsNavItems: NavItem[] = [
+  { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
+  { title: 'Alerts builder', href: route('events.index'), icon: Radio }
+];
 
 const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.index'), icon: LayoutGrid }];
 
@@ -69,7 +70,7 @@ const adminNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain label="  Platform" :items="mainNavItems" />
+      <NavMain label="" :items="mainNavItems" />
       <NavMain label="Alerts" :items="alertsNavItems" />
       <NavMain label="Kits" :items="kitsNavItems" />
       <NavMain label="Learn" :items="learnNavItems" />

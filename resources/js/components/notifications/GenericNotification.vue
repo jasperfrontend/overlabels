@@ -1,6 +1,6 @@
 <template>
   <NotificationBase
-    :visible="visible"
+    :visible="visibility"
     v-bind="baseProps"
     :custom-class="customClass"
   >
@@ -9,20 +9,20 @@
         <component :is="iconComponent" v-if="iconComponent" />
         <span v-else class="default-icon">{{ icon }}</span>
       </div>
-      
+
       <div class="notification-body">
         <h3 v-if="title" class="notification-title" :style="{ color: titleColor }">
           {{ title }}
         </h3>
-        
+
         <div v-if="message" class="notification-message" :style="{ color: messageColor }">
           {{ message }}
         </div>
-        
+
         <div v-if="subMessage" class="notification-submessage" :style="{ color: subMessageColor }">
           {{ subMessage }}
         </div>
-        
+
         <div v-if="metadata && Object.keys(metadata).length > 0" class="notification-metadata">
           <span v-for="(value, key) in metadata" :key="key" class="metadata-item">
             {{ key }}: {{ value }}
@@ -61,19 +61,19 @@ const props = withDefaults(defineProps<GenericNotificationProps>(), {
 });
 
 const baseProps = computed(() => {
-  const { 
-    event, 
-    showIcon, 
-    icon, 
-    title, 
-    message, 
-    subMessage, 
-    metadata, 
-    titleColor, 
-    messageColor, 
-    subMessageColor, 
-    iconComponent, 
-    ...rest 
+  const {
+    event,
+    showIcon,
+    icon,
+    title,
+    message,
+    subMessage,
+    metadata,
+    titleColor,
+    messageColor,
+    subMessageColor,
+    iconComponent,
+    ...rest
   } = props;
   return rest;
 });

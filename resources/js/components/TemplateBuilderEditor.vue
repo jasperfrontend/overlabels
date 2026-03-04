@@ -30,6 +30,13 @@ interface Props {
     html: string;
     css: string;
   };
+  overlayHash: {
+    hash_key?: string;
+    overlay_name?: string;
+    slug?: string;
+    id?: number;
+  }
+
   availableTags: Array<{
     tag_name: string;
     display_name: string;

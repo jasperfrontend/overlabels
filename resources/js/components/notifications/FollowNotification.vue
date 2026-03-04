@@ -1,6 +1,6 @@
 <template>
   <NotificationBase
-    :visible="visible"
+    :visible="visibility"
     v-bind="baseProps"
     :custom-class="customClass"
   >
@@ -9,12 +9,12 @@
         <component :is="iconComponent" v-if="iconComponent" />
         <span v-else class="default-icon">❤️</span>
       </div>
-      
+
       <div class="follow-body">
         <h3 class="follow-title" :style="{ color: titleColor }">
           {{ title }}
         </h3>
-        
+
         <div v-if="showMessage" class="follow-message" :style="{ color: messageColor }">
           {{ message }}
         </div>
