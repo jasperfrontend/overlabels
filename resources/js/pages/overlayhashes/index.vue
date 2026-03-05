@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -286,81 +287,79 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
     <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 
       <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <Heading title="Secure Overlay Generator" description="Manage secure overlay URLs for your OBS overlays." />
-        </div>
-
-        <Dialog v-model:open="showCreateDialog">
-          <DialogTrigger as-child>
-            <Button @click="showCreateDialog = true" class="cursor-pointer">
-              <Plus class="w-4 h-4" />
-              Create New Hash
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New Overlay Hash</DialogTitle>
-              <DialogDescription>
-                Generate a secure hash for accessing your overlay data
-              </DialogDescription>
-            </DialogHeader>
-
-            <div class="space-y-4">
-              <div class="space-y-2">
-                <Label for="overlay_name">Overlay Name *</Label>
-                <Input
-                  id="overlay_name"
-                  v-model="createForm.overlay_name"
-                  placeholder="My Follower Counter"
-                  required
-                />
-              </div>
-
-              <div class="space-y-2">
-                <Label for="description">Description</Label>
-                <Textarea
-                  id="description"
-                  v-model="createForm.description"
-                  placeholder="Optional description of what this overlay does"
-                  :rows="2"
-                />
-              </div>
-
-              <div class="space-y-2">
-                <Label for="expires_in_days">Expires in (days)</Label>
-                <Input
-                  id="expires_in_days"
-                  :v-model="createForm.expires_in_days"
-                  type="number"
-                  placeholder="Leave empty for no expiration"
-                  min="1"
-                  max="365"
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                @click="showCreateDialog = false"
-                variant="outline"
-                class="cursor-pointer"
-              >
-                Cancel
+      <PageHeader title="Secure Overlay Generator" description="Manage secure overlay URLs for your OBS overlays.">
+        <template #actions>
+          <Dialog v-model:open="showCreateDialog">
+            <DialogTrigger as-child>
+              <Button @click="showCreateDialog = true" class="cursor-pointer">
+                <Plus class="w-4 h-4" />
+                Create New Hash
               </Button>
-              <Button
-                @click="createHash"
-                :disabled="isCreating"
-                class="cursor-pointer"
-              >
-                <RefreshCw v-if="isCreating" class="w-4 h-4 animate-spin" />
-                {{ isCreating ? 'Creating...' : 'Create Hash' }}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
+
+            <DialogContent class="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create New Overlay Hash</DialogTitle>
+                <DialogDescription>
+                  Generate a secure hash for accessing your overlay data
+                </DialogDescription>
+              </DialogHeader>
+
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <Label for="overlay_name">Overlay Name *</Label>
+                  <Input
+                    id="overlay_name"
+                    v-model="createForm.overlay_name"
+                    placeholder="My Follower Counter"
+                    required
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <Label for="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    v-model="createForm.description"
+                    placeholder="Optional description of what this overlay does"
+                    :rows="2"
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <Label for="expires_in_days">Expires in (days)</Label>
+                  <Input
+                    id="expires_in_days"
+                    :v-model="createForm.expires_in_days"
+                    type="number"
+                    placeholder="Leave empty for no expiration"
+                    min="1"
+                    max="365"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  @click="showCreateDialog = false"
+                  variant="outline"
+                  class="cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  @click="createHash"
+                  :disabled="isCreating"
+                  class="cursor-pointer"
+                >
+                  <RefreshCw v-if="isCreating" class="w-4 h-4 animate-spin" />
+                  {{ isCreating ? 'Creating...' : 'Create Hash' }}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </PageHeader>
 
       <!-- Info Card -->
       <Card class="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-500/30 rounded-none border-1">

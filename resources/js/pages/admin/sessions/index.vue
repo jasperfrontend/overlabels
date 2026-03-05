@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Head, router } from '@inertiajs/vue3';
 
 interface SessionUser {
@@ -41,10 +42,11 @@ function invalidate(id: string) {
   <Head><title>Admin — Sessions</title></Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Active Sessions</h1>
-        <span class="text-sm text-muted-foreground">{{ sessions.meta.total }} total</span>
-      </div>
+      <PageHeader title="Active Sessions" title-class="text-2xl font-bold">
+        <template #actions>
+          <span class="text-sm text-muted-foreground">{{ sessions.meta.total }} total</span>
+        </template>
+      </PageHeader>
 
       <div class="overflow-x-auto rounded border">
         <table class="w-full text-sm">

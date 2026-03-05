@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
@@ -84,10 +85,11 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
   <Head><title>Admin — Events</title></Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Events</h1>
-        <span class="text-sm text-muted-foreground">{{ events.total }} total</span>
-      </div>
+      <PageHeader title="Events" title-class="text-2xl font-bold">
+        <template #actions>
+          <span class="text-sm text-muted-foreground">{{ events.total }} total</span>
+        </template>
+      </PageHeader>
 
       <div v-if="page.props.flash?.message" class="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-700 dark:bg-green-950 dark:text-green-300">
         {{ page.props.flash.message }}

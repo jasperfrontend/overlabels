@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -65,10 +66,11 @@ watch([search, role, includeDeleted], () => {
   <Head><title>Admin — Users</title></Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Users</h1>
-        <span class="text-sm text-muted-foreground">{{ users.total }} total</span>
-      </div>
+      <PageHeader title="Users" title-class="text-2xl font-bold">
+        <template #actions>
+          <span class="text-sm text-muted-foreground">{{ users.total }} total</span>
+        </template>
+      </PageHeader>
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
