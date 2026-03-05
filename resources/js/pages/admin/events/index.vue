@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
 
@@ -64,6 +64,20 @@ watch([eventType, processed], () => {
   clearTimeout(debounce);
   debounce = setTimeout(applyFilters, 300);
 });
+
+const page = usePage<{ flash?: { message?: string } }>();
+
+const prunePeriod = ref('90');
+const showPruneConfirm = ref(false);
+
+function submitPrune() {
+  router.delete(route('admin.events.prune'), {
+    data: { period: prunePeriod.value, source: props.source },
+    onSuccess: () => { showPruneConfirm.value = false; },
+  });
+}
+
+watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false; });
 </script>
 
 <template>
@@ -73,6 +87,10 @@ watch([eventType, processed], () => {
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Events</h1>
         <span class="text-sm text-muted-foreground">{{ events.total }} total</span>
+      </div>
+
+      <div v-if="page.props.flash?.message" class="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-700 dark:bg-green-950 dark:text-green-300">
+        {{ page.props.flash.message }}
       </div>
 
       <!-- Source tabs -->
@@ -96,6 +114,36 @@ watch([eventType, processed], () => {
           <option value="true">Processed</option>
           <option value="false">Pending</option>
         </select>
+      </div>
+
+      <!-- Prune bar -->
+      <div class="flex items-center gap-2 rounded border border-destructive/30 bg-destructive/5 px-3 py-2">
+        <span class="text-sm text-muted-foreground">Prune {{ source }} events older than</span>
+        <select v-model="prunePeriod" class="rounded border px-2 py-1 text-sm bg-background">
+          <option value="30">30 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+          <option value="all">All records</option>
+        </select>
+        <template v-if="!showPruneConfirm">
+          <button
+            class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            @click="showPruneConfirm = true"
+          >
+            Prune
+          </button>
+        </template>
+        <template v-else>
+          <span class="text-sm font-medium text-destructive">
+            {{ prunePeriod === 'all' ? `Delete ALL ${source} event records?` : `Delete all ${source} events older than ${prunePeriod} days?` }}
+          </span>
+          <button class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90" @click="submitPrune">
+            Yes, prune
+          </button>
+          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">
+            Cancel
+          </button>
+        </template>
       </div>
 
       <!-- Twitch events table -->

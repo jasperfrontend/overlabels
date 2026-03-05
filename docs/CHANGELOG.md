@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## March 5th, 2026 — Admin: data pruning controls + access logs in sidebar
+
+- **Access Logs now appear in the admin sidebar.** The `/admin/logs` page existed but was missing from `adminNavItems` — added with a ScrollText icon between Sessions and Audit Log.
+- **Prune controls on Access Logs, Twitch Events, and External Events pages.** Each page now has a prune bar with a period dropdown (30 days / 60 days / 90 days / All records), a two-stage confirm button, and a success flash message after pruning. The events page is source-aware — pruning on the Twitch tab only deletes `twitch_events`, pruning on the External tab only deletes `external_events`.
+- **All prune actions are audit-logged.** Each prune records the period and row count deleted to `admin_audit_logs` via `AdminAuditService`.
+- **Weekly auto-prune scheduled for all three tables.** `overlay_access_logs`, `twitch_events`, and `external_events` are automatically pruned to 90-day retention every Sunday, guarding against unbounded growth.
+
 ## March 5th, 2026 — Database hygiene: Telescope, cache, sessions autovacuum
 
 - **Telescope now defaults to disabled.** `TELESCOPE_ENABLED` defaults to `false` instead of `true`. Telescope was running in production with all watchers enabled, logging every request, query, cache hit, and job check to `telescope_entries` — the primary cause of the 121 MB database. Set `TELESCOPE_ENABLED=true` explicitly to enable it in local dev.

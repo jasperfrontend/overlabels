@@ -33,6 +33,7 @@ Route::prefix('admin')
 
         // Events
         Route::get('/events', [AdminTwitchEventController::class, 'index'])->name('events.index');
+        Route::delete('/events/prune', [AdminTwitchEventController::class, 'prune'])->name('events.prune');
         Route::get('/events/{event}', [AdminTwitchEventController::class, 'show'])->name('events.show');
         Route::patch('/events/{event}', [AdminTwitchEventController::class, 'update'])->name('events.update');
         Route::delete('/events/{event}', [AdminTwitchEventController::class, 'destroy'])->name('events.destroy');
@@ -56,6 +57,7 @@ Route::prefix('admin')
         Route::delete('/sessions/{session}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
 
         // Logs
+        Route::delete('/logs/prune', [AdminAccessLogController::class, 'prune'])->name('logs.prune');
         Route::get('/logs', [AdminAccessLogController::class, 'index'])->name('logs.index');
         Route::get('/audit', [AdminAuditLogController::class, 'index'])->name('audit.index');
 

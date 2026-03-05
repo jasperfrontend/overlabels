@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\OverlayAccessLog;
+use App\Services\AdminAuditService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminAccessLogController extends Controller
 {
+    public function __construct(private readonly AdminAuditService $audit) {}
+
     public function index(Request $request): Response
     {
         $query = OverlayAccessLog::with(['token:id,user_id,name,token_prefix', 'token.user:id,name,twitch_id']);
@@ -32,5 +36,25 @@ class AdminAccessLogController extends Controller
             'logs' => $logs,
             'filters' => $request->only(['template_slug', 'from', 'to']),
         ]);
+    }
+
+    public function prune(Request $request): RedirectResponse
+    {
+        $period = $request->input('period', '90');
+
+        $query = OverlayAccessLog::query();
+        if ($period !== 'all') {
+            $query->where('accessed_at', '<', now()->subDays((int) $period));
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        $this->audit->log($request->user(), 'access_logs.pruned', null, null, [
+            'period' => $period,
+            'deleted_count' => $count,
+        ], $request);
+
+        return back()->with('message', "Pruned {$count} access log entr" . ($count === 1 ? 'y' : 'ies') . '.');
     }
 }

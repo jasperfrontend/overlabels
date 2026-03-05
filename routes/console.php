@@ -36,6 +36,16 @@ Schedule::command('queue:restart')
 Schedule::command('telescope:prune --hours=48')
     ->daily();
 
+// Auto-prune high-volume log/event tables weekly (keeps last 90 days)
+Schedule::call(fn () => \App\Models\OverlayAccessLog::where('accessed_at', '<', now()->subDays(90))->delete())
+    ->weekly()->name('prune:access-logs')->withoutOverlapping();
+
+Schedule::call(fn () => \App\Models\TwitchEvent::where('created_at', '<', now()->subDays(90))->delete())
+    ->weekly()->name('prune:twitch-events')->withoutOverlapping();
+
+Schedule::call(fn () => \App\Models\ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
+    ->weekly()->name('prune:external-events')->withoutOverlapping();
+
 // Cleanup old logs - runs daily
 Schedule::command('log:clear')
     ->daily()

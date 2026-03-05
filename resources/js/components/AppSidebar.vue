@@ -14,6 +14,7 @@ import {
   Layers,
   LayoutGrid,
   Radio,
+  ScrollText,
   ShieldCheck,
   SlidersHorizontal,
   Users,
@@ -51,6 +52,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Tags', href: route('admin.tags.index'), icon: Brackets },
   { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },
   { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
+  { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
 ];
 </script>

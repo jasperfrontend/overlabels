@@ -107,6 +107,28 @@ class AdminTwitchEventController extends Controller
         return back()->with('message', 'Event updated.');
     }
 
+    public function prune(Request $request): RedirectResponse
+    {
+        $period = $request->input('period', '90');
+        $source = $request->input('source', 'twitch');
+        $model  = $source === 'external' ? ExternalEvent::class : TwitchEvent::class;
+
+        $query = $model::query();
+        if ($period !== 'all') {
+            $query->where('created_at', '<', now()->subDays((int) $period));
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        $this->audit->log($request->user(), "{$source}_events.pruned", null, null, [
+            'period' => $period,
+            'deleted_count' => $count,
+        ], $request);
+
+        return back()->with('message', "Pruned {$count} {$source} event" . ($count === 1 ? '' : 's') . '.');
+    }
+
     public function destroy(Request $request, TwitchEvent $event): RedirectResponse
     {
         $this->audit->log($request->user(), 'event.deleted', 'TwitchEvent', $event->id, [
