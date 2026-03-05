@@ -115,170 +115,256 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <Table>
-    <TableHeader>
-      <TableRow class="hover:bg-transparent">
-        <TableHead>Name</TableHead>
-        <TableHead class="hidden lg:table-cell">Description</TableHead>
-        <TableHead class="w-[90px]">Type</TableHead>
-        <TableHead v-if="showEvent" class="w-[110px]">Event</TableHead>
-        <TableHead class="w-[90px]">Visibility</TableHead>
-        <TableHead v-if="showOwner" class="hidden md:table-cell">Owner</TableHead>
-        <TableHead class="hidden w-[70px] text-right sm:table-cell">Views</TableHead>
-        <TableHead class="hidden w-[70px] text-right sm:table-cell">Forks</TableHead>
-        <TableHead class="hidden w-[130px] md:table-cell">Updated</TableHead>
-        <TableHead class="w-[120px] text-right">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
+  <!-- ── Mobile card view (< sm) ── -->
+  <div class="sm:hidden space-y-2">
+    <div v-for="t in templates" :key="`card-${t.id}`" class="rounded-md border bg-card p-3">
+      <!-- Name row + actions -->
+      <div class="flex items-start justify-between gap-2">
+        <Link :href="detailsHref(t)" class="font-medium leading-snug hover:text-accent-foreground/80">
+          {{ t.name }}
+        </Link>
 
-    <TableBody>
-      <TableRow v-for="t in templates" :key="t.id" class="group">
-        <!-- Name -->
-        <TableCell class="cursor-pointer font-medium" @click="router.visit(detailsHref(t))">
-          <Link :href="detailsHref(t)" class="transition-colors hover:text-accent-foreground/80">
-            {{ t.name }}
-          </Link>
-        </TableCell>
+        <div class="flex shrink-0 items-center gap-1">
+          <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
+            <PencilIcon class="h-3.5 w-3.5" />
+          </a>
+          <a v-else class="btn btn-sm btn-primary" :href="detailsHref(t)" :title="`View ${t.name}`">
+            <ChevronRight class="h-3.5 w-3.5" />
+          </a>
 
-        <!-- Description -->
-        <TableCell class="hidden max-w-[280px] lg:table-cell">
-          <span
-            v-if="t.description"
-            class="line-clamp-1 text-muted-foreground opacity-20 transition-opacity group-hover:opacity-100"
-            :title="t.description"
-          >
-            {{ t.description }}
-          </span>
-          <span v-else class="text-muted-foreground/50 italic opacity-20 transition-opacity group-hover:opacity-100">None</span>
-        </TableCell>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                <MoreVertical class="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-52">
+              <DropdownMenuItem as-child>
+                <Link :href="detailsHref(t)"><Eye class="mr-2 h-4 w-4" />View details</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="isOwn(t)" as-child>
+                <Link :href="editHref(t)"><PencilIcon class="mr-2 h-4 w-4" />Edit</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+                <Trash2 class="mr-2 h-4 w-4" />Delete
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
+                <GitFork class="mr-2 h-4 w-4" />Fork template
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="copyLink(detailsHref(t))">
+                <LinkIcon class="mr-2 h-4 w-4" />Copy link
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem class="text-muted-foreground">
+                <div class="flex w-full flex-col gap-1 text-xs">
+                  <div>Created: {{ formatDateShort(t.created_at) }}</div>
+                  <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
-        <!-- Type -->
-        <TableCell>
-          <Badge variant="secondary" class="capitalize opacity-20 group-hover:opacity-100">{{ t.type }}</Badge>
-        </TableCell>
+      <!-- Badges row -->
+      <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge variant="secondary" class="capitalize">{{ t.type }}</Badge>
+        <Badge :variant="t.is_public ? 'outline' : 'destructive'">{{ t.is_public ? 'Public' : 'Private' }}</Badge>
 
-        <!-- Event -->
-        <TableCell v-if="showEvent">
-          <div v-if="firstEventMapping(t)" class="flex items-center gap-1.5 opacity-20 group-hover:opacity-100">
-            <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
-            <span class="text-sm text-muted-foreground">{{
-              eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type
-            }}</span>
-          </div>
-          <span v-else class="text-muted-foreground/50 opacity-20 group-hover:opacity-100">—</span>
-        </TableCell>
+        <div v-if="showEvent && firstEventMapping(t)" class="flex items-center gap-1.5">
+          <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
+          <span class="text-xs text-muted-foreground">{{ eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type }}</span>
+        </div>
 
-        <!-- Visibility -->
-        <TableCell>
-          <Badge :variant="t.is_public ? 'outline' : 'destructive'" class="opacity-20 group-hover:opacity-100">
-            {{ t.is_public ? 'Public' : 'Private' }}
-          </Badge>
-        </TableCell>
+        <span v-if="showOwner && t.owner" class="text-xs text-muted-foreground">{{ t.owner.name }}</span>
+      </div>
 
-        <!-- Owner -->
-        <TableCell v-if="showOwner" class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-          <div v-if="t.owner" class="flex items-center gap-2">
-            <img v-if="t.owner.avatar" :src="t.owner.avatar" :alt="t.owner.name" class="h-5 w-5 rounded-full" />
-            <span class="truncate text-sm">{{ t.owner.name }}</span>
-          </div>
-        </TableCell>
+      <!-- Stats row -->
+      <div class="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+        <span class="flex items-center gap-1" :title="`${t.view_count} views`">
+          <Eye class="h-3 w-3" />{{ compact(t.view_count) }}
+        </span>
+        <span class="flex items-center gap-1" :title="`${t.fork_count} forks`">
+          <GitFork class="h-3 w-3" />{{ compact(t.fork_count) }}
+        </span>
+        <span class="flex items-center gap-1" :title="formatDateFull(t.updated_at)">
+          <Clock class="h-3 w-3" />{{ relativeTime(t.updated_at) }}
+        </span>
+        <a v-if="t.is_public" :href="previewHref(t)" target="_blank" class="flex items-center gap-1 hover:text-foreground" title="Preview">
+          <ExternalLinkIcon class="h-3 w-3" />Preview
+        </a>
+      </div>
+    </div>
+  </div>
 
-        <!-- Views -->
-        <TableCell class="hidden text-right tabular-nums opacity-20 group-hover:opacity-100 sm:table-cell">
-          <div class="flex items-center justify-end gap-1 text-muted-foreground" :title="`${t.view_count} views`">
-            <Eye class="h-3.5 w-3.5" />
-            <span>{{ compact(t.view_count) }}</span>
-          </div>
-        </TableCell>
+  <!-- ── Desktop table view (≥ sm) ── -->
+  <div class="hidden sm:block">
+    <Table>
+      <TableHeader>
+        <TableRow class="hover:bg-transparent">
+          <TableHead>Name</TableHead>
+          <TableHead class="hidden lg:table-cell">Description</TableHead>
+          <TableHead class="w-[90px]">Type</TableHead>
+          <TableHead v-if="showEvent" class="w-[110px]">Event</TableHead>
+          <TableHead class="w-[90px]">Visibility</TableHead>
+          <TableHead v-if="showOwner" class="hidden md:table-cell">Owner</TableHead>
+          <TableHead class="hidden w-[70px] text-right md:table-cell">Views</TableHead>
+          <TableHead class="hidden w-[70px] text-right md:table-cell">Forks</TableHead>
+          <TableHead class="hidden w-[130px] md:table-cell">Updated</TableHead>
+          <TableHead class="w-[120px] text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
 
-        <!-- Forks -->
-        <TableCell class="hidden text-right tabular-nums sm:table-cell">
-          <div class="flex items-center justify-end gap-1 text-muted-foreground opacity-20 group-hover:opacity-100" :title="`${t.fork_count} forks`">
-            <GitFork class="h-3.5 w-3.5" />
-            <span>{{ compact(t.fork_count) }}</span>
-          </div>
-        </TableCell>
+      <TableBody>
+        <TableRow v-for="t in templates" :key="t.id" class="group">
+          <!-- Name -->
+          <TableCell class="cursor-pointer font-medium" @click="router.visit(detailsHref(t))">
+            <Link :href="detailsHref(t)" class="transition-colors hover:text-accent-foreground/80">
+              {{ t.name }}
+            </Link>
+          </TableCell>
 
-        <!-- Updated -->
-        <TableCell class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-          <div class="flex items-center gap-1 text-xs text-muted-foreground" :title="formatDateFull(t.updated_at)">
-            <Clock class="h-3.5 w-3.5 shrink-0" />
-            <span class="truncate">{{ relativeTime(t.updated_at) }}</span>
-          </div>
-        </TableCell>
+          <!-- Description -->
+          <TableCell class="hidden max-w-[280px] lg:table-cell">
+            <span
+              v-if="t.description"
+              class="line-clamp-1 text-muted-foreground opacity-20 transition-opacity group-hover:opacity-100"
+              :title="t.description"
+            >
+              {{ t.description }}
+            </span>
+            <span v-else class="text-muted-foreground/50 italic opacity-20 transition-opacity group-hover:opacity-100">None</span>
+          </TableCell>
 
-        <!-- Actions -->
-        <TableCell class="text-right opacity-20 group-hover:opacity-100">
-          <div class="flex items-center justify-end gap-1">
-            <!-- Primary action -->
-            <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
-              <PencilIcon class="h-3.5 w-3.5" />
-            </a>
-            <a v-else class="btn btn-sm btn-primary" :href="detailsHref(t)" :title="`View details of ${t.name}`">
-              <ChevronRight class="h-3.5 w-3.5" />
-            </a>
+          <!-- Type -->
+          <TableCell>
+            <Badge variant="secondary" class="capitalize opacity-20 group-hover:opacity-100">{{ t.type }}</Badge>
+          </TableCell>
 
-            <!-- Preview -->
-            <a v-if="t.is_public" class="btn btn-sm btn-secondary px-2" :href="previewHref(t)" target="_blank" :title="`Preview ${t.name}`">
-              <ExternalLinkIcon class="h-3.5 w-3.5" />
-            </a>
-            <button v-else class="btn btn-sm btn-secondary px-2 opacity-50" disabled :title="`Private template: preview from Edit screen`">
-              <ExternalLinkIcon class="h-3.5 w-3.5" />
-            </button>
+          <!-- Event -->
+          <TableCell v-if="showEvent">
+            <div v-if="firstEventMapping(t)" class="flex items-center gap-1.5 opacity-20 group-hover:opacity-100">
+              <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
+              <span class="text-sm text-muted-foreground">{{
+                eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type
+              }}</span>
+            </div>
+            <span v-else class="text-muted-foreground/50 opacity-20 group-hover:opacity-100">—</span>
+          </TableCell>
 
-            <!-- Kebab menu -->
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                  <MoreVertical class="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
+          <!-- Visibility -->
+          <TableCell>
+            <Badge :variant="t.is_public ? 'outline' : 'destructive'" class="opacity-20 group-hover:opacity-100">
+              {{ t.is_public ? 'Public' : 'Private' }}
+            </Badge>
+          </TableCell>
 
-              <DropdownMenuContent align="end" class="w-52">
-                <DropdownMenuItem as-child>
-                  <Link :href="detailsHref(t)">
-                    <Eye class="mr-2 h-4 w-4" />
-                    View details
-                  </Link>
-                </DropdownMenuItem>
+          <!-- Owner -->
+          <TableCell v-if="showOwner" class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
+            <div v-if="t.owner" class="flex items-center gap-2">
+              <img v-if="t.owner.avatar" :src="t.owner.avatar" :alt="t.owner.name" class="h-5 w-5 rounded-full" />
+              <span class="truncate text-sm">{{ t.owner.name }}</span>
+            </div>
+          </TableCell>
 
-                <DropdownMenuItem v-if="isOwn(t)" as-child>
-                  <Link :href="editHref(t)">
-                    <PencilIcon class="mr-2 h-4 w-4" />
-                    Edit
-                  </Link>
-                </DropdownMenuItem>
+          <!-- Views -->
+          <TableCell class="hidden text-right tabular-nums opacity-20 group-hover:opacity-100 md:table-cell">
+            <div class="flex items-center justify-end gap-1 text-muted-foreground" :title="`${t.view_count} views`">
+              <Eye class="h-3.5 w-3.5" />
+              <span>{{ compact(t.view_count) }}</span>
+            </div>
+          </TableCell>
 
-                <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
-                  <Trash2 class="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+          <!-- Forks -->
+          <TableCell class="hidden text-right tabular-nums md:table-cell">
+            <div class="flex items-center justify-end gap-1 text-muted-foreground opacity-20 group-hover:opacity-100" :title="`${t.fork_count} forks`">
+              <GitFork class="h-3.5 w-3.5" />
+              <span>{{ compact(t.fork_count) }}</span>
+            </div>
+          </TableCell>
 
-                <DropdownMenuSeparator />
+          <!-- Updated -->
+          <TableCell class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
+            <div class="flex items-center gap-1 text-xs text-muted-foreground" :title="formatDateFull(t.updated_at)">
+              <Clock class="h-3.5 w-3.5 shrink-0" />
+              <span class="truncate">{{ relativeTime(t.updated_at) }}</span>
+            </div>
+          </TableCell>
 
-                <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
-                  <GitFork class="mr-2 h-4 w-4" />
-                  Fork template
-                </DropdownMenuItem>
+          <!-- Actions -->
+          <TableCell class="text-right opacity-20 group-hover:opacity-100">
+            <div class="flex items-center justify-end gap-1">
+              <!-- Primary action -->
+              <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
+                <PencilIcon class="h-3.5 w-3.5" />
+              </a>
+              <a v-else class="btn btn-sm btn-primary" :href="detailsHref(t)" :title="`View details of ${t.name}`">
+                <ChevronRight class="h-3.5 w-3.5" />
+              </a>
 
-                <DropdownMenuItem @click="copyLink(detailsHref(t))">
-                  <LinkIcon class="mr-2 h-4 w-4" />
-                  Copy link
-                </DropdownMenuItem>
+              <!-- Preview -->
+              <a v-if="t.is_public" class="btn btn-sm btn-secondary px-2" :href="previewHref(t)" target="_blank" :title="`Preview ${t.name}`">
+                <ExternalLinkIcon class="h-3.5 w-3.5" />
+              </a>
+              <button v-else class="btn btn-sm btn-secondary px-2 opacity-50" disabled :title="`Private template: preview from Edit screen`">
+                <ExternalLinkIcon class="h-3.5 w-3.5" />
+              </button>
 
-                <DropdownMenuSeparator />
+              <!-- Kebab menu -->
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <button class="btn btn-sm btn-secondary px-2" title="More actions">
+                    <MoreVertical class="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
 
-                <DropdownMenuItem class="text-muted-foreground">
-                  <div class="flex w-full flex-col gap-1 text-xs">
-                    <div>Created: {{ formatDateShort(t.created_at) }}</div>
-                    <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+                <DropdownMenuContent align="end" class="w-52">
+                  <DropdownMenuItem as-child>
+                    <Link :href="detailsHref(t)">
+                      <Eye class="mr-2 h-4 w-4" />
+                      View details
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem v-if="isOwn(t)" as-child>
+                    <Link :href="editHref(t)">
+                      <PencilIcon class="mr-2 h-4 w-4" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+                    <Trash2 class="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
+                    <GitFork class="mr-2 h-4 w-4" />
+                    Fork template
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem @click="copyLink(detailsHref(t))">
+                    <LinkIcon class="mr-2 h-4 w-4" />
+                    Copy link
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem class="text-muted-foreground">
+                    <div class="flex w-full flex-col gap-1 text-xs">
+                      <div>Created: {{ formatDateShort(t.created_at) }}</div>
+                      <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </div>
 </template>
