@@ -49,7 +49,29 @@ function invalidate(id: string) {
         </template>
       </PageHeader>
 
-      <div class="overflow-x-auto rounded border">
+      <!-- Card view (< lg) -->
+      <div class="lg:hidden space-y-2">
+        <EmptyState v-if="sessions.data.length === 0" message="No sessions found." />
+        <div v-for="session in sessions.data" :key="`card-${session.id}`" class="rounded border p-3 text-sm">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="font-medium">
+                <a v-if="session.user" :href="route('admin.users.show', session.user.id)" class="hover:underline">{{ session.user.name }}</a>
+                <span v-else class="text-muted-foreground">Guest</span>
+              </div>
+              <div class="font-mono text-xs text-muted-foreground">{{ session.id.substring(0, 24) }}…</div>
+            </div>
+            <button @click="invalidate(session.id)" class="shrink-0 text-xs text-destructive hover:underline">Invalidate</button>
+          </div>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span>{{ session.ip_address ?? 'No IP' }}</span>
+            <span>Active {{ session.last_activity_human }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (≥ lg) -->
+      <div class="hidden lg:block overflow-x-auto rounded border">
         <table class="w-full text-sm">
           <thead class="bg-muted text-left text-muted-foreground">
             <tr>

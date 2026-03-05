@@ -10,6 +10,7 @@
 .claude
 .env
 .env.local
+/database/sql/starter-seed.sql
 .env.backup
 .env.production
 .phpactor.json

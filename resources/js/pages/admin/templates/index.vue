@@ -69,7 +69,34 @@ watch([search, type, owner], () => {
         <Input v-model="owner" placeholder="Filter by owner…" class="w-48" />
       </div>
 
-      <div class="overflow-x-auto rounded border">
+      <!-- Card view (< lg) -->
+      <div class="lg:hidden space-y-2">
+        <EmptyState v-if="templates.data.length === 0" message="No templates found." />
+        <div v-for="t in templates.data" :key="`card-${t.id}`" class="rounded border p-3 text-sm">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="font-medium">{{ t.name }}</div>
+              <div class="font-mono text-xs text-muted-foreground">{{ t.slug }}</div>
+            </div>
+            <a :href="route('admin.templates.show', t.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            <Badge variant="outline">{{ t.type }}</Badge>
+            <Badge :variant="t.is_public ? 'default' : 'secondary'">{{ t.is_public ? 'public' : 'private' }}</Badge>
+          </div>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span v-if="t.owner">
+              Owner: <a :href="route('admin.users.show', t.owner.id)" class="hover:underline">{{ t.owner.name }}</a>
+            </span>
+            <span>{{ t.fork_count }} forks</span>
+            <span>{{ t.view_count }} views</span>
+            <span>{{ t.created_at }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (≥ lg) -->
+      <div class="hidden lg:block overflow-x-auto rounded border">
         <table class="w-full text-sm">
           <thead class="bg-muted text-left text-muted-foreground">
             <tr>

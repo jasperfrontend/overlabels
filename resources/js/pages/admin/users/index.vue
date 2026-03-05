@@ -87,8 +87,37 @@ watch([search, role, includeDeleted], () => {
         </label>
       </div>
 
-      <!-- Table -->
-      <div class="overflow-x-auto rounded border">
+      <!-- Card view (< lg) -->
+      <div class="lg:hidden space-y-2">
+        <EmptyState v-if="users.data.length === 0" message="No users found." />
+        <div
+          v-for="user in users.data" :key="`card-${user.id}`"
+          class="rounded border p-3 text-sm"
+          :class="{ 'opacity-50': user.deleted_at }"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="font-medium">{{ user.name }}</div>
+              <div class="text-xs text-muted-foreground">{{ user.email }}</div>
+            </div>
+            <a :href="route('admin.users.show', user.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
+            <Badge v-if="user.is_system_user" variant="outline">system</Badge>
+            <Badge v-if="user.deleted_at" variant="destructive">deleted</Badge>
+          </div>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span v-if="user.twitch_id">Twitch: {{ user.twitch_id }}</span>
+            <span>{{ user.overlay_templates_count }} templates</span>
+            <span>{{ user.overlay_access_tokens_count }} tokens</span>
+            <span>Joined {{ user.created_at }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (≥ lg) -->
+      <div class="hidden lg:block overflow-x-auto rounded border">
         <table class="w-full text-sm">
           <thead class="bg-muted text-left text-muted-foreground">
             <tr>

@@ -120,7 +120,7 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
       </div>
 
       <!-- Prune bar -->
-      <div class="flex items-center gap-2 rounded border border-destructive/30 bg-destructive/5 px-3 py-2">
+      <div class="flex flex-wrap items-center gap-2 rounded border border-destructive/30 bg-destructive/5 px-3 py-2">
         <span class="text-sm text-muted-foreground">Prune {{ source }} events older than</span>
         <select v-model="prunePeriod" class="rounded border px-2 py-1 text-sm bg-background">
           <option value="30">30 days</option>
@@ -129,97 +129,138 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
           <option value="all">All records</option>
         </select>
         <template v-if="!showPruneConfirm">
-          <button
-            class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            @click="showPruneConfirm = true"
-          >
-            Prune
-          </button>
+          <button class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground" @click="showPruneConfirm = true">Prune</button>
         </template>
         <template v-else>
           <span class="text-sm font-medium text-destructive">
             {{ prunePeriod === 'all' ? `Delete ALL ${source} event records?` : `Delete all ${source} events older than ${prunePeriod} days?` }}
           </span>
-          <button class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90" @click="submitPrune">
-            Yes, prune
-          </button>
-          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">
-            Cancel
-          </button>
+          <button class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90" @click="submitPrune">Yes, prune</button>
+          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">Cancel</button>
         </template>
       </div>
 
-      <!-- Twitch events table -->
-      <div v-if="source === 'twitch'" class="overflow-x-auto rounded border">
-        <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Type</th>
-              <th class="px-3 py-2">User</th>
-              <th class="px-3 py-2">Status</th>
-              <th class="px-3 py-2">Created</th>
-              <th class="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="event in (events.data as TwitchEvent[])" :key="event.id" class="border-t">
-              <td class="px-3 py-2 font-mono text-xs">{{ event.event_type }}</td>
-              <td class="px-3 py-2">
-                <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
-                <span v-else class="text-muted-foreground">—</span>
-              </td>
-              <td class="px-3 py-2">
-                <Badge :variant="event.processed ? 'default' : 'secondary'">{{ event.processed ? 'processed' : 'pending' }}</Badge>
-              </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
-              <td class="px-3 py-2">
-                <a :href="route('admin.events.show', event.id)" class="text-primary text-xs hover:underline">View</a>
-              </td>
-            </tr>
-            <EmptyState v-if="events.data.length === 0" :colspan="5" message="No events found." />
-          </tbody>
-        </table>
-      </div>
+      <!-- ── Twitch events ── -->
+      <template v-if="source === 'twitch'">
+        <!-- Card view (< lg) -->
+        <div class="lg:hidden space-y-2">
+          <EmptyState v-if="events.data.length === 0" message="No events found." />
+          <div v-for="event in (events.data as TwitchEvent[])" :key="`card-${event.id}`" class="rounded border p-3 text-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div class="font-mono text-xs font-medium">{{ event.event_type }}</div>
+              <a :href="route('admin.events.show', event.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <Badge :variant="event.processed ? 'default' : 'secondary'">{{ event.processed ? 'processed' : 'pending' }}</Badge>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span v-if="event.user">
+                <a :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
+              </span>
+              <span>{{ event.created_at }}</span>
+            </div>
+          </div>
+        </div>
 
-      <!-- External events table -->
-      <div v-else class="overflow-x-auto rounded border">
-        <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Service</th>
-              <th class="px-3 py-2">Type</th>
-              <th class="px-3 py-2">User</th>
-              <th class="px-3 py-2">Controls</th>
-              <th class="px-3 py-2">Alert</th>
-              <th class="px-3 py-2">Created</th>
-              <th class="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="event in (events.data as ExternalEvent[])" :key="event.id" class="border-t">
-              <td class="px-3 py-2">
+        <!-- Table (≥ lg) -->
+        <div class="hidden lg:block overflow-x-auto rounded border">
+          <table class="w-full text-sm">
+            <thead class="bg-muted text-left text-muted-foreground">
+              <tr>
+                <th class="px-3 py-2">Type</th>
+                <th class="px-3 py-2">User</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">Created</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="event in (events.data as TwitchEvent[])" :key="event.id" class="border-t">
+                <td class="px-3 py-2 font-mono text-xs">{{ event.event_type }}</td>
+                <td class="px-3 py-2">
+                  <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
+                  <span v-else class="text-muted-foreground">—</span>
+                </td>
+                <td class="px-3 py-2">
+                  <Badge :variant="event.processed ? 'default' : 'secondary'">{{ event.processed ? 'processed' : 'pending' }}</Badge>
+                </td>
+                <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
+                <td class="px-3 py-2">
+                  <a :href="route('admin.events.show', event.id)" class="text-primary text-xs hover:underline">View</a>
+                </td>
+              </tr>
+              <EmptyState v-if="events.data.length === 0" :colspan="5" message="No events found." />
+            </tbody>
+          </table>
+        </div>
+      </template>
+
+      <!-- ── External events ── -->
+      <template v-else>
+        <!-- Card view (< lg) -->
+        <div class="lg:hidden space-y-2">
+          <EmptyState v-if="events.data.length === 0" message="No external events found." />
+          <div v-for="event in (events.data as ExternalEvent[])" :key="`card-${event.id}`" class="rounded border p-3 text-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div>
                 <Badge variant="outline" class="font-mono text-xs">{{ event.service }}</Badge>
-              </td>
-              <td class="px-3 py-2 font-mono text-xs">{{ event.event_type }}</td>
-              <td class="px-3 py-2">
-                <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
-                <span v-else class="text-muted-foreground">—</span>
-              </td>
-              <td class="px-3 py-2">
-                <Badge :variant="event.controls_updated ? 'default' : 'secondary'">{{ event.controls_updated ? '✓' : '✗' }}</Badge>
-              </td>
-              <td class="px-3 py-2">
-                <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">{{ event.alert_dispatched ? '✓' : '✗' }}</Badge>
-              </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
-              <td class="px-3 py-2">
-                <a :href="route('admin.events.external.show', event.id)" class="text-primary text-xs hover:underline">View</a>
-              </td>
-            </tr>
-            <EmptyState v-if="events.data.length === 0" :colspan="7" message="No external events found." />
-          </tbody>
-        </table>
-      </div>
+                <span class="ml-2 font-mono text-xs">{{ event.event_type }}</span>
+              </div>
+              <a :href="route('admin.events.external.show', event.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <Badge :variant="event.controls_updated ? 'default' : 'secondary'">controls {{ event.controls_updated ? '✓' : '✗' }}</Badge>
+              <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">alert {{ event.alert_dispatched ? '✓' : '✗' }}</Badge>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span v-if="event.user">
+                <a :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
+              </span>
+              <span>{{ event.created_at }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table (≥ lg) -->
+        <div class="hidden lg:block overflow-x-auto rounded border">
+          <table class="w-full text-sm">
+            <thead class="bg-muted text-left text-muted-foreground">
+              <tr>
+                <th class="px-3 py-2">Service</th>
+                <th class="px-3 py-2">Type</th>
+                <th class="px-3 py-2">User</th>
+                <th class="px-3 py-2">Controls</th>
+                <th class="px-3 py-2">Alert</th>
+                <th class="px-3 py-2">Created</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="event in (events.data as ExternalEvent[])" :key="event.id" class="border-t">
+                <td class="px-3 py-2">
+                  <Badge variant="outline" class="font-mono text-xs">{{ event.service }}</Badge>
+                </td>
+                <td class="px-3 py-2 font-mono text-xs">{{ event.event_type }}</td>
+                <td class="px-3 py-2">
+                  <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
+                  <span v-else class="text-muted-foreground">—</span>
+                </td>
+                <td class="px-3 py-2">
+                  <Badge :variant="event.controls_updated ? 'default' : 'secondary'">{{ event.controls_updated ? '✓' : '✗' }}</Badge>
+                </td>
+                <td class="px-3 py-2">
+                  <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">{{ event.alert_dispatched ? '✓' : '✗' }}</Badge>
+                </td>
+                <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
+                <td class="px-3 py-2">
+                  <a :href="route('admin.events.external.show', event.id)" class="text-primary text-xs hover:underline">View</a>
+                </td>
+              </tr>
+              <EmptyState v-if="events.data.length === 0" :colspan="7" message="No external events found." />
+            </tbody>
+          </table>
+        </div>
+      </template>
 
       <div class="flex gap-1">
         <template v-for="link in events.links" :key="link.label">

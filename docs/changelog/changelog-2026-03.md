@@ -1,5 +1,13 @@
 # CHANGELOG MARCH 2026
 
+## March 6th, 2026 — Responsive admin panel & unified EmptyState
+
+- **Unified `EmptyState` component.** A single `EmptyState.vue` replaces all ad-hoc empty state patterns scattered across the app. Works in two modes: as a `<tr>` inside a `<tbody>` (when `colspan` prop is provided), or as a standalone `<div>` with optional icon, title, dashed border, and `#action` slot. All ~20 pages updated to use it.
+- **Responsive headers.** The greeting + controls row on Dashboard and the Create/action buttons on Templates, Kits, Alerts, and Recents now stack vertically on mobile instead of overlapping.
+- **Responsive alerts page.** Event rows on the `/alerts` page were completely broken on mobile (text-center misalignment, oversized mono tags, cramped quick-status). Fixed: removed `text-center`, hid verbose details behind `hidden sm:inline`, simplified quick-status display.
+- **TemplateTable card layout.** The template table now renders a card list below the `xl` breakpoint (1280px) and the full table only at `≥ xl`, preventing the table from fighting the sidebar at 768–1280px widths.
+- **Admin index pages — card layout below 1024px.** All 8 admin index pages now have a mobile card view hidden at `lg` and the full table visible only at `≥ lg`. Cards include all key fields, badges, and action buttons appropriate to each page.
+
 ## March 5th, 2026 — Admin: system lockdown mode
 
 - **New: emergency lockdown kill switch at `/admin/lockdown`.** A triple-confirmed switch in the admin panel that immediately halts all overlay activity system-wide. Engaging lockdown deactivates every overlay access token, flushes all non-admin user sessions, returns 503 to all overlay render requests (OBS browser sources show an error banner), and silently absorbs Twitch and external webhook events without processing them. All user content is preserved — nothing is deleted.

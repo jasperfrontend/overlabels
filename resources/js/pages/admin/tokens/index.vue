@@ -50,7 +50,35 @@ function deleteToken(id: number) {
         </template>
       </PageHeader>
 
-      <div class="overflow-x-auto rounded border">
+      <!-- Card view (< lg) -->
+      <div class="lg:hidden space-y-2">
+        <EmptyState v-if="tokens.data.length === 0" message="No tokens found." />
+        <div v-for="token in tokens.data" :key="`card-${token.id}`" class="rounded border p-3 text-sm">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="font-medium">{{ token.name }}</div>
+              <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
+            </div>
+            <div class="flex shrink-0 gap-2">
+              <a :href="route('admin.tokens.show', token.id)" class="text-primary text-xs hover:underline">View</a>
+              <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
+            </div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}</Badge>
+          </div>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span v-if="token.user">
+              Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
+            </span>
+            <span>{{ token.access_count }} uses</span>
+            <span>Expires: {{ token.expires_at ?? 'Never' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (≥ lg) -->
+      <div class="hidden lg:block overflow-x-auto rounded border">
         <table class="w-full text-sm">
           <thead class="bg-muted text-left text-muted-foreground">
             <tr>

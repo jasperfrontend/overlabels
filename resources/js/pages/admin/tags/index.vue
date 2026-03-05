@@ -74,7 +74,35 @@ function deleteCategory(cat: Category) {
 
         <!-- Tags tab -->
         <TabsContent value="tags" class="mt-4" v-if="tags">
-          <div class="overflow-x-auto rounded border">
+          <!-- Card view (< lg) -->
+          <div class="lg:hidden space-y-2">
+            <EmptyState v-if="tags.data.length === 0" message="No tags found." />
+            <div v-for="tag in tags.data" :key="`card-${tag.id}`" class="rounded border p-3 text-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-mono text-xs font-medium">{{ tag.tag_name }}</div>
+                  <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline">
+                    {{ tag.is_active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                  <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline">Delete</button>
+                </div>
+              </div>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <Badge variant="outline">{{ tag.tag_type }}</Badge>
+                <Badge :variant="tag.is_active ? 'default' : 'secondary'">{{ tag.is_active ? 'active' : 'inactive' }}</Badge>
+              </div>
+              <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span v-if="tag.category">{{ tag.category.name }}</span>
+                <span>{{ tag.user?.name ?? 'system' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table (≥ lg) -->
+          <div class="hidden lg:block overflow-x-auto rounded border">
             <table class="w-full text-sm">
               <thead class="bg-muted text-left text-muted-foreground">
                 <tr>
@@ -121,7 +149,26 @@ function deleteCategory(cat: Category) {
 
         <!-- Categories tab -->
         <TabsContent value="categories" class="mt-4" v-if="categories">
-          <div class="overflow-x-auto rounded border">
+          <!-- Card view (< lg) -->
+          <div class="lg:hidden space-y-2">
+            <EmptyState v-if="categories.length === 0" message="No categories found." />
+            <div v-for="cat in categories" :key="`card-${cat.id}`" class="rounded border p-3 text-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-mono text-xs font-medium">{{ cat.name }}</div>
+                  <div v-if="cat.display_name" class="text-xs text-muted-foreground">{{ cat.display_name }}</div>
+                </div>
+                <button @click="deleteCategory(cat)" class="shrink-0 text-xs text-destructive hover:underline">Delete</button>
+              </div>
+              <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span>Sort: {{ cat.sort_order }}</span>
+                <span>{{ cat.template_tags_count }} tags</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table (≥ lg) -->
+          <div class="hidden lg:block overflow-x-auto rounded border">
             <table class="w-full text-sm">
               <thead class="bg-muted text-left text-muted-foreground">
                 <tr>

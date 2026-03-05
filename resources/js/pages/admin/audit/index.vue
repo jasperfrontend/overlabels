@@ -66,7 +66,24 @@ watch([action, from, to], () => {
         <input v-model="to" type="date" class="rounded border px-3 py-1.5 text-sm bg-background" />
       </div>
 
-      <div class="overflow-x-auto rounded border">
+      <!-- Card view (< lg) -->
+      <div class="lg:hidden space-y-2">
+        <EmptyState v-if="logs.data.length === 0" message="No audit entries found." />
+        <div v-for="log in logs.data" :key="`card-${log.id}`" class="rounded border p-3 text-sm">
+          <div class="flex items-start justify-between gap-2">
+            <div class="font-mono text-xs font-medium">{{ log.action }}</div>
+            <span class="shrink-0 text-xs text-muted-foreground">{{ log.created_at }}</span>
+          </div>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span>{{ log.admin?.name ?? 'Unknown' }}</span>
+            <span v-if="log.target_type">{{ log.target_type }}#{{ log.target_id }}</span>
+            <span v-if="log.ip_address">{{ log.ip_address }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table (≥ lg) -->
+      <div class="hidden lg:block overflow-x-auto rounded border">
         <table class="w-full text-sm">
           <thead class="bg-muted text-left text-muted-foreground">
             <tr>
