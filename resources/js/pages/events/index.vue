@@ -244,7 +244,7 @@ const serviceLabel: Record<string, string> = {
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
-            class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4 text-center"
+            class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
             :class="{
               'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-sidebar-accent': !mapping.enabled || expandedEvent !== mapping.event_type,
@@ -261,25 +261,19 @@ const serviceLabel: Record<string, string> = {
 
             <!-- Event Info -->
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-3">
-                <h3 class="font-medium text-foreground">
-                  {{ eventTypes[mapping.event_type] }}
-                </h3>
-                <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h3 class="font-medium text-foreground">{{ eventTypes[mapping.event_type] }}</h3>
+                <span class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-[14rem]">
                   {{ mapping.event_type }}
                 </span>
               </div>
 
               <!-- Quick Status when enabled -->
-              <div v-if="mapping.enabled" class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                <span class="flex items-center gap-1.5" :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
-                  <span class="font-medium">Template:</span>
+              <div v-if="mapping.enabled" class="mt-1 text-sm">
+                <span :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                   {{ getTemplateName(mapping.template_id) }}
                 </span>
-                <span class="text-sidebar-foreground/80">{{ mapping.duration_ms / 1000 }}s</span>
-                <span class="text-sidebar-foreground/80">
-                  in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
-                </span>
+                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
               </div>
             </div>
 
@@ -401,7 +395,7 @@ const serviceLabel: Record<string, string> = {
               >
                 <!-- Event Row -->
                 <div
-                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4 text-center"
+                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
                   :class="{
                     'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
                     'bg-sidebar-accent': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping),
@@ -428,15 +422,11 @@ const serviceLabel: Record<string, string> = {
                     </div>
 
                     <!-- Quick Status when enabled -->
-                    <div v-if="mapping.enabled" class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                      <span class="flex items-center gap-1.5" :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
-                        <span class="font-medium">Template:</span>
+                    <div v-if="mapping.enabled" class="mt-1 text-sm">
+                      <span :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                         {{ getTemplateName(mapping.overlay_template_id) }}
                       </span>
-                      <span class="text-sidebar-foreground/80">{{ mapping.duration_ms / 1000 }}s</span>
-                      <span class="text-sidebar-foreground/80">
-                        in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
-                      </span>
+                      <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
                     </div>
                   </div>
 
