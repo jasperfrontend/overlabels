@@ -184,12 +184,12 @@ const serviceLabel: Record<string, string> = {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header Section -->
-      <div class="mb-4 mt-1 flex items-start justify-between">
+      <div class="mb-4 mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <Radio class="w-6 h-6 mr-2" />
           <Heading title="Alerts Builder" />
         </div>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap gap-3">
           <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-secondary">
             {{ isSaving ? 'Saving...' : 'Save Changes' }}
             <Save class="ml-2 h-4 w-4" />
@@ -199,12 +199,11 @@ const serviceLabel: Record<string, string> = {
             Create Template
             <Plus class="ml-2 h-4 w-4" />
           </Link>
-
         </div>
       </div>
 
       <!-- Status Summary - Only show if there are templates -->
-      <div v-if="alertTemplates.length > 0" class="mb-4 flex gap-4">
+      <div v-if="alertTemplates.length > 0" class="mb-4 flex flex-wrap gap-4">
         <div class="flex items-center gap-2 text-sm">
           <CheckCircle2Icon class="h-4 w-4 text-green-500" />
           <span class="text-muted-foreground">
@@ -272,14 +271,12 @@ const serviceLabel: Record<string, string> = {
               </div>
 
               <!-- Quick Status when enabled -->
-              <div v-if="mapping.enabled" class="mt-1 flex items-center gap-4 text-sm">
+              <div v-if="mapping.enabled" class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <span class="flex items-center gap-1.5" :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                   <span class="font-medium">Template:</span>
                   {{ getTemplateName(mapping.template_id) }}
                 </span>
-                <span class="text-sidebar-foreground/80">•</span>
-                <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
-                <span class="text-sidebar-foreground/80">•</span>
+                <span class="text-sidebar-foreground/80">{{ mapping.duration_ms / 1000 }}s</span>
                 <span class="text-sidebar-foreground/80">
                   in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
                 </span>
@@ -421,24 +418,22 @@ const serviceLabel: Record<string, string> = {
 
                   <!-- Event Info -->
                   <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <h3 class="font-medium text-foreground">
                         {{ externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type }}
                       </h3>
-                      <span class="font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+                      <span class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-[14rem]">
                         {{ mapping.event_type }}
                       </span>
                     </div>
 
                     <!-- Quick Status when enabled -->
-                    <div v-if="mapping.enabled" class="mt-1 flex items-center gap-4 text-sm">
+                    <div v-if="mapping.enabled" class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                       <span class="flex items-center gap-1.5" :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                         <span class="font-medium">Template:</span>
                         {{ getTemplateName(mapping.overlay_template_id) }}
                       </span>
-                      <span class="text-sidebar-foreground/80">•</span>
-                      <span class="text-sidebar-foreground/80"> {{ mapping.duration_ms / 1000 }}s </span>
-                      <span class="text-sidebar-foreground/80">•</span>
+                      <span class="text-sidebar-foreground/80">{{ mapping.duration_ms / 1000 }}s</span>
                       <span class="text-sidebar-foreground/80">
                         in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}
                       </span>

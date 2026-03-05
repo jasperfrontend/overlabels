@@ -60,13 +60,13 @@ const breadcrumbs = [
     <div class="flex h-full flex-1 flex-col gap-8 p-4">
       <!-- Recent Stream Events -->
       <section class="space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
             <Radio class="mr-2 h-6 w-6" />
             <Heading title="Recent stream activity" />
             <Link :href="route('dashboard.recents')" class="text-sm bg-sidebar py-0.5 px-2 rounded-full text-muted-foreground hover:text-foreground">Refresh</Link>
           </div>
-          <a href="/dashboard/events" target="_blank" class="btn btn-primary">
+          <a href="/dashboard/events" target="_blank" class="btn btn-primary self-start sm:self-auto">
             Embed view
             <ExternalLink class="ml-2 h-4 w-4" />
           </a>

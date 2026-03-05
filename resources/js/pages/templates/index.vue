@@ -68,12 +68,12 @@ const pageTitle = computed(() => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
-      <div class="mb-4 flex items-center justify-between">
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <Building class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
-        <Link :href="route('templates.create')" class="btn btn-primary">
+        <Link :href="route('templates.create')" class="btn btn-primary self-start sm:self-auto">
           Create Overlay
           <PlusIcon class="ml-2 h-4 w-4" />
         </Link>

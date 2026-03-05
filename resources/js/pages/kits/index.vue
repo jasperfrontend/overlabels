@@ -60,12 +60,12 @@ defineProps<Props>();
     <Head title="My Kits" />
 
     <div class="p-4 space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <LayoutGrid class="w-6 h-6 mr-2" />
           <Heading title="Overlay Kits" />
         </div>
-        <Link :href="route('kits.create')" class="btn btn-primary">
+        <Link :href="route('kits.create')" class="btn btn-primary self-start sm:self-auto">
           Create Kit
           <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
