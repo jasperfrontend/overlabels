@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Services\LockdownService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -57,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
+            'lockdown' => fn () => app(LockdownService::class)->getStatus(),
             'impersonating' => function () use ($request) {
                 $targetId = $request->session()->get('impersonating_user_id');
                 if (! $targetId) {

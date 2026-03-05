@@ -1,5 +1,15 @@
 # CHANGELOG MARCH 2026
 
+## March 5th, 2026 — Admin: system lockdown mode
+
+- **New: emergency lockdown kill switch at `/admin/lockdown`.** A triple-confirmed switch in the admin panel that immediately halts all overlay activity system-wide. Engaging lockdown deactivates every overlay access token, flushes all non-admin user sessions, returns 503 to all overlay render requests (OBS browser sources show an error banner), and silently absorbs Twitch and external webhook events without processing them. All user content is preserved — nothing is deleted.
+- **Fully reversible.** The token IDs suspended during lockdown are stored in the cache. Lifting lockdown restores all those tokens and overlay health checks self-heal within ~5 minutes.
+- **Triple-confirmation UI.** Engaging lockdown requires: (1) clicking "Engage lockdown", (2) reading consequences and optionally providing a reason, (3) typing `LOCKDOWN` verbatim into a confirmation input. Lifting requires a single confirmation step.
+- **Lockdown banner shown to all logged-in users.** A red banner appears at the top of the dashboard for every user while the system is in lockdown. Admins see an additional "Manage lockdown" link.
+- **Lockdown entry in admin sidebar** under the new `ShieldAlert` icon.
+- **CLI fallback commands**: `php artisan lockdown:engage` and `php artisan lockdown:release` for emergencies when the admin panel itself is unreachable. Both run through the same `LockdownService` and write to the audit log.
+- **Audit logged.** Both activation and deactivation write to `admin_audit_logs` with the acting admin, reason, token count, and timestamp.
+
 ## March 5th, 2026 — User-configurable dashboard icon
 
 - **New: pick your own dashboard icon.** The smile icon next to your name on the dashboard is now personalised. Clicking it opens an inline text input where you can type any [lucide.dev](https://lucide.dev/icons/) icon code in kebab-case (e.g. `arrow-big-right`). The same setting is also available under **Settings → Appearance**. Unknown icon names fall back to `heart-crack`. Stored per-user in the database (`users.icon`).

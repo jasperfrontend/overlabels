@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   Radio,
   ScrollText,
+  ShieldAlert,
   ShieldCheck,
   SlidersHorizontal,
   Users,
@@ -54,6 +55,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
   { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
+  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
 ];
 </script>
 

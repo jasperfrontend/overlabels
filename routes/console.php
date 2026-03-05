@@ -8,6 +8,38 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+Artisan::command('lockdown:engage {reason? : Optional reason for the lockdown}', function (string $reason = '') {
+    $lockdown = app(\App\Services\LockdownService::class);
+    if ($lockdown->isActive()) {
+        $this->error('System is already in lockdown.');
+        return;
+    }
+    $ghost = \App\Models\User::where('is_system_user', true)->first();
+    if (! $ghost) {
+        $this->error('No system user found. Cannot engage lockdown via CLI.');
+        return;
+    }
+    $request = \Illuminate\Http\Request::capture();
+    $lockdown->activate($ghost, $request, $reason);
+    $this->info('Lockdown engaged. All overlays are now offline.');
+})->purpose('Engage system lockdown mode (emergency kill switch)');
+
+Artisan::command('lockdown:release', function () {
+    $lockdown = app(\App\Services\LockdownService::class);
+    if (! $lockdown->isActive()) {
+        $this->error('System is not in lockdown.');
+        return;
+    }
+    $ghost = \App\Models\User::where('is_system_user', true)->first();
+    if (! $ghost) {
+        $this->error('No system user found. Cannot release lockdown via CLI.');
+        return;
+    }
+    $request = \Illuminate\Http\Request::capture();
+    $lockdown->deactivate($ghost, $request);
+    $this->info('Lockdown lifted. Access tokens restored.');
+})->purpose('Release system lockdown mode');
+
 // EventSub Health Monitoring - runs every hour
 Schedule::command('eventsub:monitor --fix')
     ->hourly()

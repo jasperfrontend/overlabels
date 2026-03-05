@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckLockdown;
 use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureValidTwitchToken;
 use App\Http\Middleware\HandleAppearance;
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'rate.limit.overlay' => RateLimitOverlayAccess::class,
             'twitch.token' => EnsureValidTwitchToken::class,
             'admin.role' => EnsureAdminRole::class,
+            'lockdown' => CheckLockdown::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

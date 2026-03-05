@@ -6,6 +6,7 @@ use App\Events\TwitchEventReceived;
 use App\Models\EventTemplateMapping;
 use App\Models\TwitchEvent;
 use App\Models\User;
+use App\Services\LockdownService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
@@ -192,6 +193,9 @@ class TwitchEventSubController extends Controller
      */
     public function webhook(Request $request)
     {
+        if (app(LockdownService::class)->isActive()) {
+            return response()->json(['ok' => true]); // absorb silently during lockdown
+        }
 
         try {
             // Step 1: Get the raw body

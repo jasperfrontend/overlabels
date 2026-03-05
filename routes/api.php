@@ -15,7 +15,7 @@ Route::get('/user', function (Request $request) {
 Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
-        ->middleware(['throttle:overlay', 'rate.limit.overlay'])
+        ->middleware(['throttle:overlay', 'rate.limit.overlay', 'lockdown'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
     // Returns Twitch global + channel emotes as [{code, url}] for frontend emote parsing.

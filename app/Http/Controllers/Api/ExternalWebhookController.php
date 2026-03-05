@@ -8,6 +8,7 @@ use App\Models\ExternalIntegration;
 use App\Services\External\ExternalAlertService;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
+use App\Services\LockdownService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,10 @@ class ExternalWebhookController extends Controller
      */
     public function handle(Request $request, string $service, string $webhookToken): JsonResponse
     {
+        if (app(LockdownService::class)->isActive()) {
+            return response()->json(['ok' => true]); // absorb silently during lockdown
+        }
+
         // 1. Validate service key
         if (! ExternalServiceRegistry::has($service)) {
             return response()->json(['error' => 'Unknown service.'], 404);

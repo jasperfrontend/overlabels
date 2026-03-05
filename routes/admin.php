@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAccessLogController;
 use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTemplateTagController;
@@ -64,6 +65,11 @@ Route::prefix('admin')
         // Impersonation — stop must be before {user} to avoid "stop" being treated as a user ID
         Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('impersonate.stop');
         Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
+
+        // Lockdown
+        Route::get('/lockdown', [AdminLockdownController::class, 'index'])->name('lockdown.index');
+        Route::post('/lockdown/activate', [AdminLockdownController::class, 'activate'])->name('lockdown.activate');
+        Route::post('/lockdown/deactivate', [AdminLockdownController::class, 'deactivate'])->name('lockdown.deactivate');
 
         // Onboarding preview
         Route::post('/onboarding-preview', [AdminDashboardController::class, 'previewOnboarding'])->name('onboarding.preview');
