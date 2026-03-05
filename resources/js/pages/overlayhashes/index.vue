@@ -33,7 +33,7 @@ import {
   Clock,
   ShieldQuestion
 } from 'lucide-vue-next';
-import Heading from '@/components/Heading.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 interface OverlayHash {
   id: number;
@@ -385,17 +385,19 @@ const getStatusBadge = (hash: OverlayHash): StatusBadge => {
 
       <!-- Hashes List -->
       <div class="space-y-4">
-        <div v-if="hashes.length === 0" class="text-center py-12">
-          <div class="text-muted-foreground">
-            <ExternalLink class="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <h3 class="text-lg font-medium mb-2">No overlay hashes yet</h3>
-            <p class="text-sm mb-4">Create your first hash to start using secure overlay URLs</p>
+        <EmptyState
+          v-if="hashes.length === 0"
+          :icon="ExternalLink"
+          title="No overlay hashes yet"
+          message="Create your first hash to start using secure overlay URLs"
+        >
+          <template #action>
             <Button @click="showCreateDialog = true" class="cursor-pointer">
               <Plus class="w-4 h-4" />
               Create Your First Hash
             </Button>
-          </div>
-        </div>
+          </template>
+        </EmptyState>
 
         <div v-else>
           <Card v-for="hash in hashes" :key="hash.id" class="overflow-hidden mb-4 rounded-2xl border bg-accent/40 p-4 shadow backdrop-blur-sm transition hover:bg-accent/40 hover:shadow-lg">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 
 interface SessionUser {
@@ -74,9 +75,7 @@ function invalidate(id: string) {
                 <button @click="invalidate(session.id)" class="text-xs text-destructive hover:underline">Invalidate</button>
               </td>
             </tr>
-            <tr v-if="sessions.data.length === 0">
-              <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">No sessions found.</td>
-            </tr>
+            <EmptyState v-if="sessions.data.length === 0" :colspan="5" message="No sessions found." />
           </tbody>
         </table>
       </div>

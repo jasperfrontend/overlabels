@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 interface Kit {
   id: number;
@@ -247,12 +248,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             <HeadingSmall title="Select Templates *" description="Choose which of your templates to include in this kit." />
           </CardHeader>
           <CardContent>
-            <div v-if="templates.length === 0" class="mt-4 rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
-              <Package class="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-              <p class="text-sm text-muted-foreground">
-                You don't have any templates yet. Create some templates first.
-              </p>
-            </div>
+            <EmptyState
+              v-if="templates.length === 0"
+              dashed
+              :icon="Package"
+              message="You don't have any templates yet. Create some templates first."
+              class="mt-4"
+            />
 
             <div v-else class="mt-4 space-y-2">
               <div

@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Layers, Zap, Clock, FlaskConical } from 'lucide-vue-next';
+import EmptyState from '@/components/EmptyState.vue';
 
 interface StatCards {
   users: number;
@@ -135,7 +136,7 @@ function previewOnboarding() {
                 </div>
                 <span class="text-xs text-muted-foreground whitespace-nowrap ml-2">{{ log.created_at }}</span>
               </div>
-              <p v-if="recentAuditLogs.length === 0" class="text-muted-foreground text-sm">No audit activity yet.</p>
+              <EmptyState v-if="recentAuditLogs.length === 0" message="No audit activity yet." />
             </div>
           </CardContent>
         </Card>

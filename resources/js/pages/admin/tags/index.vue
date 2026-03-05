@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
+import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -104,9 +105,7 @@ function deleteCategory(cat: Category) {
                     <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline">Delete</button>
                   </td>
                 </tr>
-                <tr v-if="tags.data.length === 0">
-                  <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No tags found.</td>
-                </tr>
+                <EmptyState v-if="tags.data.length === 0" :colspan="6" message="No tags found." />
               </tbody>
             </table>
           </div>
@@ -143,9 +142,7 @@ function deleteCategory(cat: Category) {
                     <button @click="deleteCategory(cat)" class="text-xs text-destructive hover:underline">Delete</button>
                   </td>
                 </tr>
-                <tr v-if="categories.length === 0">
-                  <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">No categories found.</td>
-                </tr>
+                <EmptyState v-if="categories.length === 0" :colspan="5" message="No categories found." />
               </tbody>
             </table>
           </div>

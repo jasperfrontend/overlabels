@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
@@ -87,9 +88,7 @@ watch([action, from, to], () => {
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.created_at }}</td>
             </tr>
-            <tr v-if="logs.data.length === 0">
-              <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">No audit entries found.</td>
-            </tr>
+            <EmptyState v-if="logs.data.length === 0" :colspan="5" message="No audit entries found." />
           </tbody>
         </table>
       </div>

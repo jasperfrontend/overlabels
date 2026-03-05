@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import EmptyState from '@/components/EmptyState.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import type { AdminTemplate } from '@/types';
@@ -127,9 +128,7 @@ function restore() {
                 <td class="px-3 py-2">{{ t.is_public ? 'Yes' : 'No' }}</td>
                 <td class="px-3 py-2 text-muted-foreground">{{ t.created_at }}</td>
               </tr>
-              <tr v-if="recentTemplates.length === 0">
-                <td colspan="4" class="px-3 py-4 text-center text-muted-foreground">No templates.</td>
-              </tr>
+              <EmptyState v-if="recentTemplates.length === 0" :colspan="4" message="No templates." />
             </tbody>
           </table>
         </TabsContent>
@@ -153,9 +152,7 @@ function restore() {
                 <td class="px-3 py-2">{{ t.access_count }}</td>
                 <td class="px-3 py-2 text-muted-foreground">{{ t.expires_at ?? 'Never' }}</td>
               </tr>
-              <tr v-if="accessTokens.length === 0">
-                <td colspan="5" class="px-3 py-4 text-center text-muted-foreground">No tokens.</td>
-              </tr>
+              <EmptyState v-if="accessTokens.length === 0" :colspan="5" message="No tokens." />
             </tbody>
           </table>
         </TabsContent>
@@ -172,7 +169,7 @@ function restore() {
               </div>
               <pre v-if="entry.metadata" class="mt-1 text-xs text-muted-foreground">{{ JSON.stringify(entry.metadata, null, 2) }}</pre>
             </div>
-            <p v-if="recentAuditEntries.length === 0" class="text-sm text-muted-foreground">No audit entries.</p>
+            <EmptyState v-if="recentAuditEntries.length === 0" message="No audit entries." />
           </div>
         </TabsContent>
 

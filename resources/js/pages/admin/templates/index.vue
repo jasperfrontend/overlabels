@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -101,9 +102,7 @@ watch([search, type, owner], () => {
                 <a :href="route('admin.templates.show', t.id)" class="text-primary text-xs hover:underline">View</a>
               </td>
             </tr>
-            <tr v-if="templates.data.length === 0">
-              <td colspan="8" class="px-3 py-6 text-center text-muted-foreground">No templates found.</td>
-            </tr>
+            <EmptyState v-if="templates.data.length === 0" :colspan="8" message="No templates found." />
           </tbody>
         </table>
       </div>

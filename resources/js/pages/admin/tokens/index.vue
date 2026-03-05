@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 
@@ -81,9 +82,7 @@ function deleteToken(id: number) {
                 <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
               </td>
             </tr>
-            <tr v-if="tokens.data.length === 0">
-              <td colspan="6" class="px-3 py-6 text-center text-muted-foreground">No tokens found.</td>
-            </tr>
+            <EmptyState v-if="tokens.data.length === 0" :colspan="6" message="No tokens found." />
           </tbody>
         </table>
       </div>

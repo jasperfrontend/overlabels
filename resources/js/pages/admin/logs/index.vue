@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
@@ -135,9 +136,7 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.accessed_at }}</td>
             </tr>
-            <tr v-if="logs.data.length === 0">
-              <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">No logs found.</td>
-            </tr>
+            <EmptyState v-if="logs.data.length === 0" :colspan="4" message="No logs found." />
           </tbody>
         </table>
       </div>

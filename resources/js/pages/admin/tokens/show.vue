@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import EmptyState from '@/components/EmptyState.vue';
 
 interface Token {
   id: number;
@@ -94,9 +95,7 @@ const breadcrumbs = [
                 <td class="py-1.5 text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
                 <td class="py-1.5 text-muted-foreground">{{ log.accessed_at }}</td>
               </tr>
-              <tr v-if="accessLogs.length === 0">
-                <td colspan="3" class="py-4 text-center text-muted-foreground">No access logs.</td>
-              </tr>
+              <EmptyState v-if="accessLogs.length === 0" :colspan="3" message="No access logs." />
             </tbody>
           </table>
         </CardContent>

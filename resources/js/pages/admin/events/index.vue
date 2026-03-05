@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
@@ -175,9 +176,7 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
                 <a :href="route('admin.events.show', event.id)" class="text-primary text-xs hover:underline">View</a>
               </td>
             </tr>
-            <tr v-if="events.data.length === 0">
-              <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">No events found.</td>
-            </tr>
+            <EmptyState v-if="events.data.length === 0" :colspan="5" message="No events found." />
           </tbody>
         </table>
       </div>
@@ -217,9 +216,7 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
                 <a :href="route('admin.events.external.show', event.id)" class="text-primary text-xs hover:underline">View</a>
               </td>
             </tr>
-            <tr v-if="events.data.length === 0">
-              <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">No external events found.</td>
-            </tr>
+            <EmptyState v-if="events.data.length === 0" :colspan="7" message="No external events found." />
           </tbody>
         </table>
       </div>

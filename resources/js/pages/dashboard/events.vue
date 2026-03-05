@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import type { AppPageProps } from '@/types';
 
 interface UnifiedEvent {
@@ -50,9 +51,7 @@ watch(
 
     <EventsTable v-if="events.length > 0" :events="events" />
 
-    <p v-else class="py-4 text-center text-sm text-muted-foreground">
-      No events yet. Events will appear here once your Twitch EventSub subscriptions are active.
-    </p>
+    <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active." />
   </div>
 
   <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />

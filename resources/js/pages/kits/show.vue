@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 import { computed } from 'vue';
@@ -209,11 +210,16 @@ const breadcrumbs: BreadcrumbItem[] = [
           :current-user-id="auth?.user?.id"
         />
 
-        <div v-else class="rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center">
-          <Package class="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-          <p class="text-muted-foreground">No templates in this kit yet.</p>
-          <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary mt-4"> Add Templates </Link>
-        </div>
+        <EmptyState
+          v-else
+          dashed
+          :icon="Package"
+          message="No templates in this kit yet."
+        >
+          <template v-if="canEdit" #action>
+            <Link :href="`/kits/${kit.id}/edit`" class="btn btn-primary">Add Templates</Link>
+          </template>
+        </EmptyState>
 
       </div>
     </div>

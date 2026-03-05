@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { PlusIcon, Package, LayoutGrid } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import Heading from '@/components/Heading.vue';
 import { BreadcrumbItem } from '@/types';
 
@@ -80,17 +81,20 @@ defineProps<Props>();
         />
       </div>
 
-      <div v-else class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center">
-        <Package class="mb-4 h-12 w-12 text-muted-foreground/50" />
-        <h3 class="mb-2 text-lg font-semibold">No kits yet</h3>
-        <p class="mb-6 max-w-sm text-sm text-muted-foreground">
-          Create your first template kit to organize and share your overlay templates.
-        </p>
-        <Link :href="route('kits.create')" class="btn btn-primary">
-          <PlusIcon class="mr-2 h-4 w-4" />
-          Create Your First Kit
-        </Link>
-      </div>
+      <EmptyState
+        v-else
+        dashed
+        :icon="Package"
+        title="No kits yet"
+        message="Create your first template kit to organize and share your overlay templates."
+      >
+        <template #action>
+          <Link :href="route('kits.create')" class="btn btn-primary">
+            <PlusIcon class="mr-2 h-4 w-4" />
+            Create Your First Kit
+          </Link>
+        </template>
+      </EmptyState>
 
       <!-- Pagination -->
       <div v-if="kits.last_page > 1" class="mt-8 flex justify-center gap-2">

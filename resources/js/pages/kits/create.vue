@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import EmptyState from '@/components/EmptyState.vue';
 import type { OverlayTemplate } from '@/types';
 
 interface Props {
@@ -225,12 +226,12 @@ const submit = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="templates.length === 0" class="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
-              <Package class="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-              <p class="text-sm text-muted-foreground">
-                You don't have any templates yet. Create some templates first before making a kit.
-              </p>
-            </div>
+            <EmptyState
+              v-if="templates.length === 0"
+              dashed
+              :icon="Package"
+              message="You don't have any templates yet. Create some templates first before making a kit."
+            />
 
             <div v-else class="space-y-2">
               <div

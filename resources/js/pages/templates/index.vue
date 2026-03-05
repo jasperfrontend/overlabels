@@ -7,6 +7,7 @@ import TemplateTable from '@/components/TemplateTable.vue';
 import debounce from 'lodash/debounce';
 import { PlusIcon, Building } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import type { AppPageProps } from '@/types';
 
@@ -153,9 +154,7 @@ const pageTitle = computed(() => {
       />
 
       <!-- Empty State -->
-      <div v-else class="rounded-sm border border-sidebar bg-sidebar-accent p-12 text-center">
-        <p class="text-muted-foreground">No overlays found. Try adjusting your filters or create a new overlay.</p>
-      </div>
+      <EmptyState v-else message="No overlays found. Try adjusting your filters or create a new overlay." />
 
       <!-- Pagination -->
       <div v-if="templates?.last_page > 1" class="mt-6">
