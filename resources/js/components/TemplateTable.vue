@@ -115,8 +115,8 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <!-- ── Mobile card view (< md) ── -->
-  <div class="md:hidden space-y-2">
+  <!-- ── Card view (< lg) ── -->
+  <div class="lg:hidden space-y-2">
     <div v-for="t in templates" :key="`card-${t.id}`" class="rounded-md border bg-card p-3">
       <!-- Name row + actions -->
       <div class="flex items-start justify-between gap-2">
@@ -198,8 +198,8 @@ function handleDelete(t: OverlayTemplate) {
     </div>
   </div>
 
-  <!-- ── Desktop table view (≥ md) ── -->
-  <div class="hidden md:block">
+  <!-- ── Table view (≥ lg) ── -->
+  <div class="hidden lg:block">
     <Table>
       <TableHeader>
         <TableRow class="hover:bg-transparent">
