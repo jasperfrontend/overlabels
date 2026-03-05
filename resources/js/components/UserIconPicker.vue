@@ -24,10 +24,10 @@ watch(() => props.userIcon, v => { localIcon.value = v || 'smile'; });
 
 const iconComponent = computed((): Component => {
   const key = toPascalCase(localIcon.value || 'smile');
-  const candidate = (LucideIcons as Record<string, unknown>)[key];
-  return (candidate && typeof candidate === 'object' && candidate !== null)
-    ? candidate as Component
-    : LucideIcons.HeartCrack as Component;
+  const candidate = (LucideIcons as Record<string, Component | undefined>)[key];
+  // Icons in lucide-vue-next are functions (functional components), not objects.
+  // Use nullish coalescing so any truthy export (function or object) is accepted.
+  return candidate ?? LucideIcons.HeartCrack;
 });
 
 const editing = ref(false);
