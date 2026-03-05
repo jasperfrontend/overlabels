@@ -7,9 +7,11 @@ import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import TemplateList from '@/components/TemplateList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus } from 'lucide-vue-next'
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
+import UserIconPicker from '@/components/UserIconPicker.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
+import Heading from '@/components/Heading.vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -37,6 +39,7 @@ interface UnifiedEvent {
 
 const props = defineProps<{
   userName: string;
+  userIcon: string;
   userId: number;
   userAlertTemplates: OverlayTemplate[];
   userStaticTemplates: OverlayTemplate[];
@@ -52,6 +55,16 @@ const LIMIT_OPTIONS = [
   { value: 20, label: '20' },
   { value: 0, label: 'All' },
 ];
+
+const greetings = [
+  'Hey there',
+  'Howdy',
+  'Heya',
+  'Hey',
+  'Hello',
+  'Hi'
+];
+const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
 
 function changeLimit(e: Event) {
   const value = parseInt((e.target as HTMLSelectElement).value, 10);
@@ -80,17 +93,24 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
-        <div class="mb-4 flex items-center justify-end gap-2 text-sm text-muted-foreground">
-          <label for="template-limit">Show</label>
-          <select
-            id="template-limit"
-            :value="props.templateLimit"
-            class="rounded border border-input bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            @change="changeLimit"
-          >
-            <option v-for="opt in LIMIT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
-          <span>per section</span>
+        <div class="mb-4 flex items-center gap-2 pb-2 text-sm text-muted-foreground">
+          <div class="text-lg font-semibold text-foreground flex items-center gap-2">
+            <UserIconPicker :user-icon="props.userIcon" />
+            <Heading v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
+            <Heading v-else title="Welcome back" />
+          </div>
+          <div class="ml-auto flex items-center gap-2">
+            <label for="template-limit">Show</label>
+            <select
+              id="template-limit"
+              :value="props.templateLimit"
+              class="rounded border border-input bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              @change="changeLimit"
+            >
+              <option v-for="opt in LIMIT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <span>per section</span>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">

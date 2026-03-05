@@ -49,6 +49,7 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard/index', [
             'userName' => $user->name,
+            'userIcon' => $user->icon ?? 'smile',
             'userId' => $user->id,
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
