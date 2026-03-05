@@ -97,7 +97,7 @@ const breadcrumbs = [
           <div class="text-lg font-semibold text-foreground flex items-center gap-2">
             <UserIconPicker :user-icon="props.userIcon" />
             <Heading v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
-            <Heading v-else title="Welcome back" />
+            <Heading v-else :title="randomGreeting" />
           </div>
           <div class="ml-auto flex items-center gap-2">
             <label for="template-limit">Show</label>

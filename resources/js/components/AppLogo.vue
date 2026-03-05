@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 
-const isDark = ref(document.documentElement.classList.contains('dark'));
-console.log(isDark.value);
 </script>
 
 <template>

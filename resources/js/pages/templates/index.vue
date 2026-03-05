@@ -69,7 +69,7 @@ const pageTitle = computed(() => {
       <!-- Header -->
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Building class="mr-2 h-6 w-6" />
+          <Building class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary">

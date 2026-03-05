@@ -29,7 +29,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                 <AppearanceTabs />
 
                 <div class="space-y-2">
-                    <HeadingSmall title="Dashboard icon" description="The icon shown next to your name on the dashboard. Click the icon to change it, or type an icon code below." />
+                    <HeadingSmall title="Dashboard icon" description="The icon shown next to your name on the dashboard. Click to change it." />
                     <div class="flex items-center gap-3">
                         <UserIconPicker :user-icon="userIcon" />
                     </div>

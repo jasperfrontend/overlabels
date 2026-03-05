@@ -1,4 +1,4 @@
-<script setup lang="ts">
+  <script setup lang="ts">
 /**
  * Renders the user's chosen Lucide icon. Clicking it opens an inline
  * text input so the user can type any lucide.dev icon code (kebab-case).
@@ -11,6 +11,7 @@ import * as LucideIcons from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { computed, nextTick, ref, watch } from 'vue';
 import type { Component } from 'vue';
+import { Button } from '@/components/ui/button';
 
 const props = defineProps<{ userIcon: string }>();
 
@@ -65,7 +66,7 @@ function onKeydown(e: KeyboardEvent) {
     <template v-if="!editing">
       <button
         type="button"
-        class="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        class="rounded p-0.5 text-foreground transition-colors hover:text-violet-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
         title="Click to change your icon"
         @click="startEditing"
       >
@@ -80,10 +81,11 @@ function onKeydown(e: KeyboardEvent) {
         placeholder="e.g. arrow-big-right"
         class="w-40 rounded border bg-background px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
         @keydown="onKeydown"
-        @blur="save"
+
       />
       <span class="text-xs text-muted-foreground">
-        Browse at <a href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="underline hover:text-foreground">lucide.dev</a>
+        Browse at <a title="Open this link and click the icon you like. Then click the icon's name to copy it. Due to some versioning issues, not all icons are available." href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="underline hover:text-foreground">lucide.dev</a>
+        <Button variant="outline" size="sm" @click="save" class="ml-2 text-violet-400 cursor-pointer">save</Button>
       </span>
     </template>
   </div>
