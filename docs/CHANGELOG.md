@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## March 5th, 2026 — Database hygiene: Telescope, cache, sessions autovacuum
+
+- **Telescope now defaults to disabled.** `TELESCOPE_ENABLED` defaults to `false` instead of `true`. Telescope was running in production with all watchers enabled, logging every request, query, cache hit, and job check to `telescope_entries` — the primary cause of the 121 MB database. Set `TELESCOPE_ENABLED=true` explicitly to enable it in local dev.
+- **Telescope entries are now pruned daily.** Added `telescope:prune --hours=48` to the scheduler so entries older than 48 hours are automatically removed. Keeps the table from growing unbounded even if Telescope is enabled.
+- **Sessions autovacuum tuned.** Added a PostgreSQL-specific `ALTER TABLE sessions SET (autovacuum_vacuum_scale_factor = 0.01, ...)` so autovacuum cleans up dead rows as soon as ~1% are dead rather than waiting for the default 20% threshold. Fixes the "187.5% dead rows" vacuum health warning.
+- **`foxes` table dropped.** Removed an old experimental table that had no purpose in the application.
+- **`CACHE_STORE` default changed to `file`.** The database cache driver caused the queue worker to poll the `cache` table ~43 times per minute (restart signal checks) with no benefit. File-based cache eliminates that. Update your Railway env var accordingly.
+
 ## March 3rd, 2026 — Fix: Ko-fi controls can now be added to multiple templates
 
 - **Fixed unique constraint on `overlay_controls` blocking Ko-fi preset reuse.** The `overlay_controls_user_source_key_unique` index on `(user_id, source, key)` was a full-table constraint, which prevented adding the same Ko-fi control (e.g. `kofis_received`) to more than one static overlay template. Replaced it with a PostgreSQL partial unique index scoped to `WHERE overlay_template_id IS NULL` so user-scoped controls remain unique while template-scoped Ko-fi presets can be freely added to any number of templates.

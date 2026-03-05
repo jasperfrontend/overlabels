@@ -32,6 +32,10 @@ Schedule::command('queue:restart')
         return $lastJob && now()->diffInMinutes($lastJob) > 10;
     });
 
+// Prune Telescope entries older than 48 hours - keeps the DB from ballooning
+Schedule::command('telescope:prune --hours=48')
+    ->daily();
+
 // Cleanup old logs - runs daily
 Schedule::command('log:clear')
     ->daily()
