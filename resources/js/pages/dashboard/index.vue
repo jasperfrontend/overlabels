@@ -12,6 +12,7 @@ import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 import UserIconPicker from '@/components/UserIconPicker.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 import Heading from '@/components/Heading.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -93,13 +94,13 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
-        <div class="mb-4 flex items-center gap-2 pb-2 text-sm text-muted-foreground">
+        <div class="mb-4 flex flex-col gap-3 pb-2 sm:flex-row sm:items-center">
           <div class="text-lg font-semibold text-foreground flex items-center gap-2">
             <UserIconPicker :user-icon="props.userIcon" />
             <Heading v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
             <Heading v-else :title="randomGreeting" />
           </div>
-          <div class="ml-auto flex items-center gap-2">
+          <div class="sm:ml-auto flex items-center gap-2 text-sm text-muted-foreground">
             <label for="template-limit">Show</label>
             <select
               id="template-limit"
@@ -145,9 +146,7 @@ const breadcrumbs = [
           />
           <EventsTable v-if="props.userRecentEvents.length > 0" :events="props.userRecentEvents" />
 
-          <p v-else class="py-4 text-center text-sm text-muted-foreground">
-            No events yet. Events will appear here once your Twitch EventSub subscriptions are active and you have received 1 or more stream events.
-          </p>
+          <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active and you have received 1 or more stream events." />
         </section>
 
         </div>
