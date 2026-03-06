@@ -188,7 +188,8 @@ function dismiss() {
           <Rocket class="h-6 w-6 text-purple-400" />
           <CardTitle class="text-xl">Welcome to Overlabels!</CardTitle>
         </div>
-        <p class="mt-2 text-sm text-muted-foreground">We've set up the essentials for you. Here's what's ready:</p>
+        <p v-if="loading" class="my-2 text-md text-violet-400">Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.</p>
+        <p v-else class="my-2 text-md text-green-500">We've set up the essentials for you. Click "Create your secure token" to continue!</p>
       </CardHeader>
       <CardContent class="space-y-4">
         <div v-if="loading" class="flex items-center justify-center gap-3 py-8">

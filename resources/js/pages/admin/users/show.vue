@@ -47,6 +47,9 @@ const props = defineProps<{
   recentTemplates: AdminTemplate[];
   accessTokens: Token[];
   recentAuditEntries: AuditEntry[];
+  kofiConnected: boolean;
+  kofiSeedSet: boolean;
+  kofiSeedValue: number | null;
 }>();
 
 const page = usePage();
@@ -62,6 +65,12 @@ const breadcrumbs = [
 const roleForm = useForm({ role: props.user.role });
 function submitRole() {
   roleForm.patch(route('admin.users.role', props.user.id));
+}
+
+// Received Ko-fi donations form
+const kofiSeedValueForm = useForm({ initial_count: props.kofiSeedValue ?? 0 });
+function submitKofiSeedValue() {
+  kofiSeedValueForm.post(route('admin.users.kofi-seed', props.user.id));
 }
 
 // Delete form
@@ -174,6 +183,7 @@ function restore() {
         </TabsContent>
 
         <TabsContent value="admin" class="mt-4 space-y-6">
+
           <!-- Role -->
           <Card v-if="!user.is_system_user">
             <CardHeader><CardTitle>Change Role</CardTitle></CardHeader>
@@ -187,6 +197,24 @@ function restore() {
                 <Button type="submit" size="sm" :disabled="roleForm.processing || user.id === currentUserId">Save</Button>
                 <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot change your own role.</p>
                 <p v-if="roleForm.errors.role" class="text-xs text-destructive">{{ roleForm.errors.role }}</p>
+              </form>
+            </CardContent>
+          </Card>
+
+          <!-- Ko-fi initial seed (donations received) value -->
+          <Card v-if="!user.is_system_user && kofiConnected">
+            <CardHeader><CardTitle>Ko-fi Received Count</CardTitle></CardHeader>
+            <CardContent>
+              <p class="mb-3 text-sm text-muted-foreground">
+                Override the user's Ko-fi received count seed value. This bypasses the one-time lock.
+                <span v-if="kofiSeedSet"> Currently set to <strong>{{ kofiSeedValue }}</strong>.</span>
+                <span v-else> Not yet set by user.</span>
+              </p>
+              <form @submit.prevent="submitKofiSeedValue" class="flex items-center gap-3">
+                <input type="number" v-model="kofiSeedValueForm.initial_count" min="0" max="9999999"
+                  class="rounded border px-3 py-1.5 text-sm bg-background w-32" />
+                <Button type="submit" size="sm" :disabled="kofiSeedValueForm.processing">Save</Button>
+                <p v-if="kofiSeedValueForm.errors.initial_count" class="text-xs text-destructive">{{ kofiSeedValueForm.errors.initial_count }}</p>
               </form>
             </CardContent>
           </Card>

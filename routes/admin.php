@@ -26,6 +26,7 @@ Route::prefix('admin')
         Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role')->withTrashed();
         Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore')->withTrashed();
+        Route::post('/users/{user}/kofi-seed', [AdminUserController::class, 'updateKofiSeed'])->name('users.kofi-seed')->withTrashed();
 
         // Kits
         Route::get('/kits', [AdminKitController::class, 'index'])->name('kits.index');

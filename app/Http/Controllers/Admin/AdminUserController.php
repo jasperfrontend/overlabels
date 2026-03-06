@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminAuditLog;
+use App\Models\ExternalIntegration;
 use App\Models\Kit;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
@@ -71,11 +72,19 @@ class AdminUserController extends Controller
             ->limit(10)
             ->get();
 
+        $kofiIntegration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'kofi')
+            ->first();
+        $kofiSettings = $kofiIntegration?->settings ?? [];
+
         return Inertia::render('admin/users/show', [
             'user' => $user,
             'recentTemplates' => $recentTemplates,
             'accessTokens' => $accessTokens,
             'recentAuditEntries' => $recentAuditEntries,
+            'kofiSeedSet' => ! empty($kofiSettings['kofis_seed_set']),
+            'kofiSeedValue' => $kofiSettings['kofis_seed_value'] ?? null,
+            'kofiConnected' => $kofiIntegration !== null,
         ]);
     }
 
@@ -113,9 +122,14 @@ class AdminUserController extends Controller
         return back()->with('message', 'Role updated successfully.');
     }
 
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return RedirectResponse
+     */
     public function destroy(Request $request, int $id): RedirectResponse
     {
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
         $admin = $request->user();
 
         $request->validate([
@@ -153,6 +167,42 @@ class AdminUserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('message', 'User deleted successfully.');
+    }
+
+    public function updateKofiSeed(Request $request, int $id): RedirectResponse
+    {
+        $user = User::withTrashed()->findOrFail($id);
+        $admin = $request->user();
+
+        $validated = $request->validate([
+            'initial_count' => 'required|integer|min:0|max:9999999',
+        ]);
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'kofi')
+            ->first();
+
+        if (! $integration) {
+            return back()->withErrors(['initial_count' => 'User has no Ko-fi integration.']);
+        }
+
+        OverlayControl::where('user_id', $user->id)
+            ->where('source', 'kofi')
+            ->where('key', 'kofis_received')
+            ->where('source_managed', true)
+            ->update(['value' => (string) $validated['initial_count']]);
+
+        $integration->settings = array_merge($integration->settings ?? [], [
+            'kofis_seed_set' => true,
+            'kofis_seed_value' => $validated['initial_count'],
+        ]);
+        $integration->save();
+
+        $this->audit->log($admin, 'user.kofi_seed_updated', 'User', $user->id, [
+            'initial_count' => $validated['initial_count'],
+        ], $request);
+
+        return back()->with('message', 'Ko-fi seed value updated.');
     }
 
     public function restore(Request $request, int $id): RedirectResponse
