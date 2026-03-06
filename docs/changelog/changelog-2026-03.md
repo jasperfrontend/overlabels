@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Perf: slim down Inertia shared auth payload
+
+- **Reduced `auth.user` payload from ~10.8KB to ~268 bytes per page load (97.5% reduction).** `HandleInertiaRequests::share()` was sending the entire User model on every Inertia request, including the massive `twitch_data` JSON blob (followers, subscribers, channels, goals — ~10KB alone). Replaced `$request->user()` with an explicit `->only()` whitelist of the 8 fields the frontend actually uses: `id`, `name`, `email`, `twitch_id`, `avatar`, `icon`, `onboarded_at`, `role`.
+- **Also removed unused `Inspiring::quotes` shared prop** that was still being computed on every request.
+
 ## March 6th, 2026 — Fix: controls not copied when forking a kit
 
 - **Root cause:** `OverlayTemplate::fork()` only stashes controls in a transient `_sourceControls` property for the interactive fork wizard UI — it never inserts rows. Kit forks (e.g. onboarding) bypass the wizard entirely, so all controls were silently dropped.
