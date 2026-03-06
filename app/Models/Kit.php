@@ -118,6 +118,30 @@ class Kit extends Model
         $forkedTemplates = [];
         foreach ($this->templates as $template) {
             $forkedTemplate = $template->fork($user);
+
+            // Copy non-service-managed controls to the forked template.
+            // The OverlayTemplate::fork() method only stashes controls in a
+            // transient property for the interactive fork wizard — it never
+            // persists them, so kit forks (e.g. onboarding) would lose them.
+            $template->controls()
+                ->whereNull('source')
+                ->orderBy('sort_order')
+                ->get()
+                ->each(function (OverlayControl $control) use ($forkedTemplate, $user) {
+                    OverlayControl::create([
+                        'overlay_template_id' => $forkedTemplate->id,
+                        'user_id' => $user->id,
+                        'key' => $control->key,
+                        'label' => $control->label,
+                        'type' => $control->type,
+                        'value' => $control->value,
+                        'config' => $control->config,
+                        'sort_order' => $control->sort_order,
+                        'source' => null,
+                        'source_managed' => false,
+                    ]);
+                });
+
             $forkedTemplates[] = $forkedTemplate->id;
         }
 
