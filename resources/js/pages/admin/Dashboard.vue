@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Layers, Zap, Clock, FlaskConical } from 'lucide-vue-next';
+import { Users, Layers, Zap, Clock, FlaskConical, Grid2x2 } from 'lucide-vue-next';
 import EmptyState from '@/components/EmptyState.vue';
 
 interface StatCards {
@@ -141,26 +141,47 @@ function previewOnboarding() {
           </CardContent>
         </Card>
       </div>
+      <div class="flex gap-4">
       <!-- Dev Tools -->
-      <Card class="border-dashed border-muted-foreground/30">
-        <CardHeader class="pb-2">
-          <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
-            <FlaskConical class="h-4 w-4" />
-            Dev Tools
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="flex flex-wrap gap-3">
-            <button
-              class="btn btn-sm btn-secondary"
-              title="Preview the onboarding wizard as it appears to new users"
-              @click="previewOnboarding"
-            >
-              Preview Onboarding Wizard
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+        <Card class="border-dashed w-100 border-muted-foreground/30">
+          <CardHeader class="pb-2">
+            <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
+              <FlaskConical class="h-4 w-4" />
+              Dev Tools
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="flex flex-wrap gap-3">
+              <button
+                class="btn btn-sm btn-secondary"
+                title="Preview the onboarding wizard as it appears to new users"
+                @click="previewOnboarding"
+              >
+                Preview Onboarding Wizard
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Kit Selector -->
+        <Card class="border-dashed w-100 border-muted-foreground/30">
+          <CardHeader class="pb-2">
+            <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
+              <Grid2x2 class="h-4 w-4" />
+              Onboarding Kit Selector
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="flex flex-wrap gap-3">
+              <Link href="/admin/kits" class="btn btn-sm btn-warning">Select Kit</Link>
+            </div>
+          </CardContent>
+        </Card>
+
+
+
+      </div>
+
     </div>
   </AppLayout>
 </template>
