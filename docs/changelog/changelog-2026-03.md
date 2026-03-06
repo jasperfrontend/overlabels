@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 6th, 2026 — Fix: onboarding wizard stuck on "Starter Kit forked"
+
+- **Root cause:** `Kit::fork()` uses `$this->replicate()` which copies all model attributes including `is_starter_kit = true` onto the forked kit. After the first onboarding, two kits had `is_starter_kit = true`. Postgres returned either when `->first()` was called (no ORDER BY), so the status check could pick up the user's own fork as the "starter kit", then look for a kit forked from itself — finding nothing — leaving `kit_forked` permanently `false`.
+- **Fix:** `Kit::fork()` now explicitly sets `is_starter_kit = false` on the fork before saving. Data corrected directly on existing rows.
+
 ## March 6th, 2026 — Fix: new user login lands on raw JSON instead of dashboard
 
 - **Root cause:** `OnboardingWizard.vue` polls `/onboarding/status` via `fetch()` every 3 s. When the session expired mid-poll, `RedirectIfUnauthenticated` returned `302 → /login?redirect_to=/onboarding/status`. `fetch()` followed the redirect, which triggered `AuthenticatedSessionController::create()` and stored `/onboarding/status` as `session('url.intended')`. The next Twitch OAuth callback used `redirect()->intended()` and sent the browser straight to the JSON endpoint.

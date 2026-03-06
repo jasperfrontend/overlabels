@@ -111,6 +111,7 @@ class Kit extends Model
         $fork->forked_from_id = $this->id;
         $fork->title = 'Fork of '.Str::limit($this->title, 80);
         $fork->fork_count = 0;
+        $fork->is_starter_kit = false;
         $fork->save();
 
         // Fork all templates in the kit
