@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 6th, 2026 — Fix: new user login lands on raw JSON instead of dashboard
+
+- **Root cause:** `OnboardingWizard.vue` polls `/onboarding/status` via `fetch()` every 3 s. When the session expired mid-poll, `RedirectIfUnauthenticated` returned `302 → /login?redirect_to=/onboarding/status`. `fetch()` followed the redirect, which triggered `AuthenticatedSessionController::create()` and stored `/onboarding/status` as `session('url.intended')`. The next Twitch OAuth callback used `redirect()->intended()` and sent the browser straight to the JSON endpoint.
+- **Fix 1 — middleware:** `RedirectIfUnauthenticated` now returns `401 JSON` for requests that send `Accept: application/json` or `X-Inertia`, instead of redirecting them into the login flow.
+- **Fix 2 — OAuth callback:** `redirect()->intended()` replaced with explicit intended-URL validation. Paths under `/onboarding/` and `/api/` are rejected; falls back to `/dashboard`.
+- **Fix 3 — wizard fetch:** `fetchStatus()` now sends `Accept: application/json` and skips processing non-OK responses, so a 401 on session expiry is handled silently rather than triggering a redirect chain.
+
 ## March 6th, 2026 — Admin: starter kit management
 
 - **New: Admin → Kits page (`/admin/kits`).** Admins can now designate which kit is forked for every new user during onboarding directly from the admin panel — no more hardcoded env var. The page lists all original (non-forked) kits with a "Set as Starter" button; the active starter is highlighted with a star badge.

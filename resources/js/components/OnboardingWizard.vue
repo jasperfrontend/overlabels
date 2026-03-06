@@ -69,7 +69,10 @@ const obsUrls = computed<{ slug: string; name: string; url: string }[]>(() => {
 
 async function fetchStatus() {
   try {
-    const response = await fetch(route('onboarding.status'));
+    const response = await fetch(route('onboarding.status'), {
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return;
     status.value = await response.json();
     loading.value = false;
   } catch {

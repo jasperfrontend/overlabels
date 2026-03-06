@@ -225,8 +225,21 @@ Route::get('/auth/callback/twitch', function () {
             }
         }
 
-        // Redirect to intended URL or dashboard if no intended URL
-        return redirect()->intended('/dashboard');
+        // Redirect to the intended URL if it's a safe full-page destination.
+        // JSON-returning endpoints (onboarding/status, api/, etc.) must never be
+        // used here — they get stored as url.intended when fetch() follows a 302
+        // redirect to /login, which would land the user on a raw JSON response.
+        $intended = session()->pull('url.intended');
+        if ($intended) {
+            $path = parse_url($intended, PHP_URL_PATH) ?? '';
+            $jsonPaths = ['/onboarding/', '/api/'];
+            $isSafe = ! collect($jsonPaths)->contains(fn ($prefix) => str_starts_with($path, $prefix));
+            if ($isSafe) {
+                return redirect($intended);
+            }
+        }
+
+        return redirect('/dashboard');
 
     } catch (Exception $e) {
         Log::error('Twitch OAuth callback failed', [

@@ -18,11 +18,14 @@ class RedirectIfUnauthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if (! Auth::check()) {
-            // Store the intended URL for redirect after authentication
-            $intendedUrl = $request->fullUrl();
+            // Non-navigational requests (fetch, XHR, Inertia) get a 401 — not a redirect.
+            // Redirecting them into the login flow stores their URL as session('url.intended')
+            // which then poisons redirect()->intended() after OAuth, landing the user on a JSON endpoint.
+            if ($request->expectsJson() || $request->header('X-Inertia')) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
 
-            // Build login URL with redirect parameter
-            $loginUrl = route('login').'?redirect_to='.urlencode($intendedUrl);
+            $loginUrl = route('login').'?redirect_to='.urlencode($request->fullUrl());
 
             return redirect($loginUrl);
         }
