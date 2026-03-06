@@ -1,9 +1,12 @@
 # CHANGELOG MARCH 2026
 
-## March 7th, 2026 — Perf: slim down Inertia shared auth payload
+## March 7th, 2026 — Perf: slim down Inertia shared props
 
 - **Reduced `auth.user` payload from ~10.8KB to ~268 bytes per page load (97.5% reduction).** `HandleInertiaRequests::share()` was sending the entire User model on every Inertia request, including the massive `twitch_data` JSON blob (followers, subscribers, channels, goals — ~10KB alone). Replaced `$request->user()` with an explicit `->only()` whitelist of the 8 fields the frontend actually uses: `id`, `name`, `email`, `twitch_id`, `avatar`, `icon`, `onboarded_at`, `role`.
+- **Reduced Ziggy routes payload from ~12.2KB (130 routes) to ~6.3KB (70 routes), a 48% reduction.** Created `config/ziggy.php` with an `except` list filtering out 60 routes that the frontend never calls via the `route()` helper (backend-only endpoints, hardcoded URL routes, webhook receivers, etc.).
+- **Combined: ~23KB → ~6.6KB saved on every page request.**
 - **Also removed unused `Inspiring::quotes` shared prop** that was still being computed on every request.
+- **Bugfix:** Fixed `route('dashboard')` → `route('dashboard.index')` in AppHeader (route name didn't exist).
 
 ## March 6th, 2026 — Fix: controls not copied when forking a kit
 
