@@ -177,7 +177,7 @@ function dismiss() {
 </script>
 
 <template>
-  <Card class="border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-slate-900/40">
+  <Card class="border-purple-500/30 bg-linear-to-br from-purple-950/20 to-slate-900/40">
     <!-- Step 1: Setup Summary -->
     <template v-if="step === 1">
       <CardHeader>

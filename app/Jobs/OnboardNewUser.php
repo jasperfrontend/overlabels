@@ -72,12 +72,10 @@ class OnboardNewUser implements ShouldQueue
 
     private function forkStarterKit(): ?Kit
     {
-        $starterKit = Kit::find(config('app.starter_kit_id'));
+        $starterKit = Kit::where('is_starter_kit', true)->first();
 
         if (! $starterKit) {
-            Log::warning('OnboardNewUser: Starter kit not found', [
-                'starter_kit_id' => config('app.starter_kit_id'),
-            ]);
+            Log::warning('OnboardNewUser: No starter kit configured — set one in Admin → Kits');
 
             return null;
         }

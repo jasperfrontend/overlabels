@@ -125,6 +125,4 @@ return [
 
     'twitch_webhook_secret' => env('TWITCH_WEBHOOK_SECRET'),
 
-    'starter_kit_id' => env('STARTER_KIT_ID', 1),
-
 ];

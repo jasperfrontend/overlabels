@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAccessLogController;
 use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminKitController;
 use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
@@ -25,6 +26,10 @@ Route::prefix('admin')
         Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role')->withTrashed();
         Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore')->withTrashed();
+
+        // Kits
+        Route::get('/kits', [AdminKitController::class, 'index'])->name('kits.index');
+        Route::post('/kits/{kit}/set-starter', [AdminKitController::class, 'setStarter'])->name('kits.set-starter');
 
         // Templates
         Route::get('/templates', [AdminTemplateController::class, 'index'])->name('templates.index');

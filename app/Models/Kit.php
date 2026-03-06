@@ -28,12 +28,14 @@ class Kit extends Model
         'description',
         'thumbnail',
         'is_public',
+        'is_starter_kit',
         'forked_from_id',
         'fork_count',
     ];
 
     protected $casts = [
         'is_public' => 'boolean',
+        'is_starter_kit' => 'boolean',
         'fork_count' => 'integer',
     ];
 

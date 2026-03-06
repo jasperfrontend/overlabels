@@ -1,5 +1,13 @@
 # CHANGELOG MARCH 2026
 
+## March 6th, 2026 — Admin: starter kit management
+
+- **New: Admin → Kits page (`/admin/kits`).** Admins can now designate which kit is forked for every new user during onboarding directly from the admin panel — no more hardcoded env var. The page lists all original (non-forked) kits with a "Set as Starter" button; the active starter is highlighted with a star badge.
+- **`is_starter_kit` column on `kits` table.** Migration adds a boolean flag; only one kit can be the starter at a time. `setStarter()` clears all flags before setting the new one, and writes an audit log entry.
+- **`OnboardNewUser` and `OnboardingController` updated** to look up `Kit::where('is_starter_kit', true)->first()` instead of reading `config('app.starter_kit_id')`.
+- **Removed `starter_kit_id` from `config/app.php` and `.env`.** The config key no longer exists.
+- **Fix: onboarding wizard hung on "Starter Kit forked"** because the local DB kit ID didn't match the hardcoded `STARTER_KIT_ID=1`. Now impossible to misconfigure.
+
 ## March 6th, 2026 — Responsive admin panel & unified EmptyState
 
 - **Unified `EmptyState` component.** A single `EmptyState.vue` replaces all ad-hoc empty state patterns scattered across the app. Works in two modes: as a `<tr>` inside a `<tbody>` (when `colspan` prop is provided), or as a standalone `<div>` with optional icon, title, dashed border, and `#action` slot. All ~20 pages updated to use it.

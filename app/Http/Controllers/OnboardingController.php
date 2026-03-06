@@ -16,9 +16,9 @@ class OnboardingController extends Controller
     {
         $user = $request->user();
 
-        $starterKitId = config('app.starter_kit_id');
-        $hasForkedKit = Kit::where('owner_id', $user->id)
-            ->where('forked_from_id', $starterKitId)
+        $starterKit = Kit::where('is_starter_kit', true)->first();
+        $hasForkedKit = $starterKit && Kit::where('owner_id', $user->id)
+            ->where('forked_from_id', $starterKit->id)
             ->exists();
 
         $alertMappings = EventTemplateMapping::where('user_id', $user->id)->get();
@@ -38,10 +38,12 @@ class OnboardingController extends Controller
             ->exists();
 
         // Collect static overlay slugs — prefer from the forked starter kit, fall back to any owned static overlay
-        $forkedKit = Kit::where('owner_id', $user->id)
-            ->where('forked_from_id', $starterKitId)
-            ->with(['templates' => fn ($q) => $q->where('type', 'static')->select('overlay_templates.id', 'slug', 'name')])
-            ->first();
+        $forkedKit = $starterKit
+            ? Kit::where('owner_id', $user->id)
+                ->where('forked_from_id', $starterKit->id)
+                ->with(['templates' => fn ($q) => $q->where('type', 'static')->select('overlay_templates.id', 'slug', 'name')])
+                ->first()
+            : null;
 
         $forkedOverlays = $forkedKit && $forkedKit->templates->isNotEmpty()
             ? $forkedKit->templates->map(fn ($t) => ['slug' => $t->slug, 'name' => $t->name])->values()
