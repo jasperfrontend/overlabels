@@ -41,6 +41,7 @@ const props = defineProps<{
   canEdit: boolean;
   controls?: OverlayControl[];
   connectedServices?: string[];
+  isLive?: boolean;
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
 }>();
@@ -288,7 +289,7 @@ const forkTitle = computed(() => {
 
         <!-- Control Panel tab -->
         <div v-if="canEdit && mainTab === 'panel'" class="mb-6">
-          <ControlPanel :template="template" :controls="localControls" />
+          <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
         </div>
 
         <!-- Screenshot tab -->

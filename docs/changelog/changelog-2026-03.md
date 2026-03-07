@@ -1,5 +1,16 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Feature: Per-stream Twitch counters via Controls system
+
+- **Stream sessions** — new `stream_sessions` table tracks live/offline state. `stream.online` opens a session, `stream.offline` closes it.
+- **`StreamSessionService`** — core service handling session lifecycle, control resets on go-live, and per-event incrementing of matching twitch controls.
+- **6 Twitch control presets** — `follows_this_stream`, `subs_this_stream`, `gift_subs_this_stream`, `resubs_this_stream`, `raids_this_stream`, `redemptions_this_stream`. All counters, all `source_managed`, all auto-reset when the stream starts.
+- **Unified preset UI** — ControlFormModal now shows Twitch per-stream counters (always on static templates) and Ko-fi controls (when connected) in grouped `<optgroup>` dropdowns.
+- **`StreamStatusChanged` broadcast** — new event on `alerts.{twitch_id}` channel broadcasts `{live: true/false}` so overlays and the dashboard know stream state in real-time.
+- **Overlay integration** — `OverlayRenderer` initializes `stream_live` from the API and listens for `.stream.status` events. User-scoped source_managed controls now included in initial overlay render.
+- **Offline state in ControlPanel** — Twitch controls show an "Offline" badge and 50% opacity when the stream is not live.
+- **Hook in TwitchEventSubController** — `stream.online`/`stream.offline` trigger session open/close; all countable events (follow, sub, raid, etc.) increment matching controls during active sessions.
+
 ## March 7th, 2026 — Feature: Controls & Values on edit page + config visibility
 
 - **ControlsManager & ControlPanel on edit page** — the overlay edit page now has full Add/Edit/Delete controls and value management, matching the show page. No more jumping between pages.

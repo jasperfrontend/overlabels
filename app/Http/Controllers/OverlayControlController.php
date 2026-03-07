@@ -6,6 +6,7 @@ use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
+use App\Services\StreamSessionService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,14 +53,20 @@ class OverlayControlController extends Controller
             'source' => 'nullable|string|max:50',
         ]);
 
-        // If source is provided, this is an external service control preset
+        // If source is provided, this is a service-managed control preset
         if (! empty($validated['source'])) {
             $source = $validated['source'];
 
-            abort_unless(ExternalServiceRegistry::has($source), 422, "Unknown service: {$source}");
+            // Resolve presets from either Twitch stream controls or external service drivers
+            if ($source === 'twitch') {
+                $provisionedDefs = collect(StreamSessionService::CONTROL_PRESETS)->keyBy('key');
+            } elseif (ExternalServiceRegistry::has($source)) {
+                $driver = ExternalServiceRegistry::driver($source);
+                $provisionedDefs = collect($driver->getAutoProvisionedControls())->keyBy('key');
+            } else {
+                abort(422, "Unknown service: {$source}");
+            }
 
-            $driver = ExternalServiceRegistry::driver($source);
-            $provisionedDefs = collect($driver->getAutoProvisionedControls())->keyBy('key');
             $def = $provisionedDefs->get($validated['key']);
 
             abort_unless($def !== null, 422, "Invalid key '{$validated['key']}' for service '{$source}'");

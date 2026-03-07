@@ -75,6 +75,7 @@ interface Props {
   }>;
   controls?: OverlayControl[];
   connectedServices?: string[];
+  isLive?: boolean;
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
 }
@@ -370,7 +371,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
 
           <!-- Values Tab -->
           <div v-else-if="mainTab === 'panel'">
-            <ControlPanel :template="template" :controls="localControls" />
+            <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
           </div>
 
           <!-- Screenshot Tab -->

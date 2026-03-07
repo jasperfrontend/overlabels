@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
+use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
@@ -119,11 +120,16 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
+        $isLive = $canEdit
+            ? StreamSessionService::isLive(auth()->user())
+            : false;
+
         return Inertia::render('templates/show', [
             'template' => $template,
             'canEdit' => $canEdit,
             'controls' => $controls,
             'connectedServices' => $connectedServices,
+            'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
         ]);
@@ -174,11 +180,14 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
+        $isLive = StreamSessionService::isLive(auth()->user());
+
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
             'controls' => $controls,
             'connectedServices' => $connectedServices,
+            'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
         ]);
@@ -297,10 +306,15 @@ class OverlayTemplateController extends Controller
                 $template->slug
             );
 
-            // Inject control values as c:{key} entries
-            $controls = \App\Models\OverlayControl::where('overlay_template_id', $template->id)
-                ->orderBy('sort_order')
-                ->get();
+            // Inject control values: template-scoped + user-scoped (source_managed)
+            $controls = \App\Models\OverlayControl::where(function ($q) use ($template, $user) {
+                $q->where('overlay_template_id', $template->id)
+                    ->orWhere(function ($q2) use ($user) {
+                        $q2->where('user_id', $user->id)
+                            ->whereNull('overlay_template_id')
+                            ->where('source_managed', true);
+                    });
+            })->orderBy('sort_order')->get();
 
             $controlData = [];
             $timerStates = [];
@@ -346,6 +360,7 @@ class OverlayTemplateController extends Controller
                 ],
                 'data' => $finalData,
                 'timer_states' => $timerStates,
+                'stream_live' => StreamSessionService::isLive($user),
             ]);
 
         } catch (Exception $e) {

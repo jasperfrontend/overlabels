@@ -9,7 +9,12 @@ import RefreshIcon from '@/components/RefreshIcon.vue';
 const props = defineProps<{
   template: OverlayTemplate;
   controls: OverlayControl[];
+  isLive?: boolean;
 }>();
+
+function isTwitchOffline(ctrl: OverlayControl): boolean {
+  return ctrl.source === 'twitch' && ctrl.source_managed && !props.isLive;
+}
 
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error'>('success');
@@ -172,14 +177,17 @@ async function toggleBoolean(ctrl: OverlayControl) {
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
+      <div v-for="ctrl in controls" :key="ctrl.id" :class="['border border-border bg-background p-3 pt-2 pb-4', isTwitchOffline(ctrl) && 'opacity-50']">
         <div class="mb-2">
           <div class="flex items-center justify-between">
             <div>
               <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
               <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
             </div>
-            <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+            <div class="flex items-center gap-2">
+              <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
+              <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+            </div>
           </div>
           <div v-if="configSummary(ctrl).length" class="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground/70">
             <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="whitespace-nowrap">{{ part }}</span>

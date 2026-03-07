@@ -13,19 +13,28 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
-interface KofiPreset {
+interface ServicePreset {
   key: string;
   label: string;
   type: OverlayControl['type'];
 }
 
-const KOFI_PRESETS: KofiPreset[] = [
+const KOFI_PRESETS: ServicePreset[] = [
   { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
   { key: 'latest_donor_name', label: 'Latest Donor Name', type: 'text' },
   { key: 'latest_donation_amount', label: 'Latest Donation Amount', type: 'number' },
   { key: 'latest_donation_message', label: 'Latest Donation Message', type: 'text' },
   { key: 'latest_donation_currency', label: 'Latest Currency', type: 'text' },
   { key: 'total_received', label: 'Total Received (session)', type: 'number' },
+];
+
+const TWITCH_PRESETS: ServicePreset[] = [
+  { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
+  { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
+  { key: 'gift_subs_this_stream', label: 'Gift Subs This Stream', type: 'counter' },
+  { key: 'resubs_this_stream', label: 'Resubs This Stream', type: 'counter' },
+  { key: 'raids_this_stream', label: 'Raids This Stream', type: 'counter' },
+  { key: 'redemptions_this_stream', label: 'Redemptions This Stream', type: 'counter' },
 ];
 
 const props = defineProps<{
@@ -46,11 +55,15 @@ const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
 
-// Ko-fi preset — driven by a single select value
-const kofiPresetKey = ref('');
-const selectedKofiPreset = computed(() =>
-  KOFI_PRESETS.find((p) => p.key === kofiPresetKey.value) ?? null,
-);
+// Service preset — driven by a single select value
+const servicePresetKey = ref('');
+const servicePresetSource = ref<string | null>(null);
+
+const selectedServicePreset = computed(() => {
+  if (!servicePresetKey.value) return null;
+  return [...TWITCH_PRESETS, ...KOFI_PRESETS].find((p) => p.key === servicePresetKey.value) ?? null;
+});
+
 const showKofiPresets = computed(
   () =>
     !isEditing.value &&
@@ -58,16 +71,27 @@ const showKofiPresets = computed(
     (props.connectedServices ?? []).includes('kofi'),
 );
 
-watch(kofiPresetKey, (key) => {
-  const preset = KOFI_PRESETS.find((p) => p.key === key) ?? null;
+const showTwitchPresets = computed(
+  () =>
+    !isEditing.value &&
+    props.template?.type === 'static',
+);
+
+watch(servicePresetKey, (key) => {
+  const twitchPreset = TWITCH_PRESETS.find((p) => p.key === key);
+  const kofiPreset = KOFI_PRESETS.find((p) => p.key === key);
+  const preset = twitchPreset ?? kofiPreset ?? null;
+
   if (preset) {
     form.value.key = preset.key;
     form.value.label = preset.label;
     form.value.type = preset.type;
+    servicePresetSource.value = twitchPreset ? 'twitch' : 'kofi';
   } else {
     form.value.key = '';
     form.value.label = '';
     form.value.type = 'text';
+    servicePresetSource.value = null;
   }
   errors.value = {};
 });
@@ -108,7 +132,8 @@ const form = ref({
 watch(() => props.open, (open) => {
   if (open) {
     errors.value = {};
-    kofiPresetKey.value = '';
+    servicePresetKey.value = '';
+    servicePresetSource.value = null;
     if (props.control) {
       const c = props.control;
       const cfg = c.config ?? {};
@@ -154,13 +179,13 @@ function buildPayload() {
     payload.key = form.value.key;
     payload.type = form.value.type;
 
-    if (selectedKofiPreset.value) {
-      payload.source = 'kofi';
+    if (servicePresetSource.value) {
+      payload.source = servicePresetSource.value;
     }
   }
 
-  // Ko-fi preset: don't send config/value (driver handles it)
-  if (selectedKofiPreset.value) {
+  // Service preset: don't send config/value (service handles it)
+  if (selectedServicePreset.value) {
     return payload;
   }
 
@@ -244,26 +269,33 @@ async function save() {
       <div class="space-y-4 py-2">
         <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
-        <!-- Ko-fi External Service Presets (new controls on static templates only) -->
-        <div v-if="showKofiPresets" class="space-y-2 rounded-sm border border-orange-400/30 bg-orange-400/5 p-3">
-          <p class="text-sm font-medium text-orange-500 dark:text-orange-400">Ko-fi Controls</p>
+        <!-- Service Presets (Twitch / Ko-fi) -->
+        <div v-if="showTwitchPresets || showKofiPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+          <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
           <select
-            v-model="kofiPresetKey"
+            v-model="servicePresetKey"
             class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
           >
-            <option value="">— Select a Ko-fi control —</option>
-            <option v-for="preset in KOFI_PRESETS" :key="preset.key" :value="preset.key">
-              {{ preset.label }} ({{ preset.type }})
-            </option>
+            <option value="">— Select a preset control —</option>
+            <optgroup v-if="showTwitchPresets" label="Twitch — Per-Stream Counters">
+              <option v-for="preset in TWITCH_PRESETS" :key="preset.key" :value="preset.key">
+                {{ preset.label }} ({{ preset.type }})
+              </option>
+            </optgroup>
+            <optgroup v-if="showKofiPresets" label="Ko-fi">
+              <option v-for="preset in KOFI_PRESETS" :key="preset.key" :value="preset.key">
+                {{ preset.label }} ({{ preset.type }})
+              </option>
+            </optgroup>
           </select>
-          <p v-if="selectedKofiPreset" class="text-xs text-muted-foreground">
-            Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:{{ selectedKofiPreset.key }}]]]</code>
-            in your template. Key, type, and value are managed by Ko-fi.
+          <p v-if="selectedServicePreset && servicePresetSource" class="text-xs text-muted-foreground">
+            Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:{{ servicePresetSource }}:{{ selectedServicePreset.key }}]]]</code>
+            in your template. Value is managed automatically{{ servicePresetSource === 'twitch' ? ' — resets when you go live' : '' }}.
           </p>
         </div>
 
-        <!-- Only show manual fields if no Ko-fi preset selected -->
-        <template v-if="!selectedKofiPreset">
+        <!-- Only show manual fields if no service preset selected -->
+        <template v-if="!selectedServicePreset">
           <!-- Key (immutable after creation) -->
           <div class="space-y-1">
             <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
@@ -285,14 +317,14 @@ async function save() {
           <Input
             id="ctrl-label"
             v-model="form.label"
-            :placeholder="selectedKofiPreset ? selectedKofiPreset.label : 'e.g. Death Counter'"
+            :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
             :class="{ 'border-destructive': errors.label }"
           />
           <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
         </div>
 
         <!-- Only show type/value/config if no Ko-fi preset selected -->
-        <template v-if="!selectedKofiPreset">
+        <template v-if="!selectedServicePreset">
           <!-- Type -->
           <div v-if="!isEditing" class="space-y-1">
             <Label for="ctrl-type">Type</Label>

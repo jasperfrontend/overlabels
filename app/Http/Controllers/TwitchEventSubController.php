@@ -7,6 +7,7 @@ use App\Models\EventTemplateMapping;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Services\LockdownService;
+use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
@@ -25,14 +26,18 @@ class TwitchEventSubController extends Controller
 
     private TemplateDataMapperService $mapper;
 
+    private StreamSessionService $streamSessionService;
+
     public function __construct(
         TwitchEventSubService $eventSubService,
         TwitchApiService $twitchService,
-        TemplateDataMapperService $mapper
+        TemplateDataMapperService $mapper,
+        StreamSessionService $streamSessionService
     ) {
         $this->eventSubService = $eventSubService;
         $this->twitchService = $twitchService;
         $this->mapper = $mapper;
+        $this->streamSessionService = $streamSessionService;
     }
 
     /**
@@ -561,6 +566,17 @@ class TwitchEventSubController extends Controller
 
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
+
+            // Stream session lifecycle and per-stream controls
+            if ($user) {
+                if ($eventType === 'stream.online') {
+                    $this->streamSessionService->openSession($user);
+                } elseif ($eventType === 'stream.offline') {
+                    $this->streamSessionService->closeSession($user);
+                } else {
+                    $this->streamSessionService->handleEvent($user, $eventType);
+                }
+            }
 
             Log::info('Processing event for broadcaster', [
                 'event_type' => $eventType,

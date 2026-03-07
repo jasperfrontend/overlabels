@@ -76,6 +76,9 @@ const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
 const emoteParser = useEmoteParser();
 
+// Stream live state — Twitch source controls are muted when offline
+const streamLive = ref(false);
+
 // Timer control state — keyed by control key (not c:key)
 const timerStates = ref<Record<string, any>>({});
 const timerIntervals: Record<string, number> = {};
@@ -321,6 +324,9 @@ onMounted(async () => {
       });
     }
 
+    // Initialize stream live state
+    streamLive.value = json.stream_live ?? false;
+
     // Start local ticking for any timer controls that are currently running
     if (json.timer_states && typeof json.timer_states === 'object') {
       for (const [key, state] of Object.entries(json.timer_states)) {
@@ -399,6 +405,11 @@ function setupAlertListener() {
 
   // Listen for control value updates
   channel.listen('.control.updated', handleControlUpdated);
+
+  // Listen for stream online/offline status
+  channel.listen('.stream.status', (event: any) => {
+    streamLive.value = Boolean(event.live);
+  });
 
   // Hard-reload when the template itself is saved
   channel.listen('.template.updated', (event: any) => {
