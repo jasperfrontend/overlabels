@@ -6,6 +6,8 @@
 - **Three upload methods:** Click the drop zone and paste from clipboard (Ctrl+V after Print Screen), drag-and-drop an image, or browse files via a file picker.
 - **Images uploaded to Cloudinary** via direct unsigned upload to the `overlabels-overlay-screenshots` preset, stored in the `overlays/screenshots` folder.
 - **New `screenshot_url` column on `overlay_templates`.** Stores the Cloudinary URL. New `PUT /templates/{id}/screenshot` endpoint for saving/removing screenshots independently from the main template form.
+- **Cloudinary cleanup on replace/remove.** When a screenshot is replaced or removed, the old image is deleted from Cloudinary via the Admin API so orphaned assets don't accumulate.
+- **Focus state UX.** Clicking the drop zone shows a pulsing "Ready — press Ctrl+V" prompt with a violet highlight, making it clear the zone is ready for paste input.
 - **5 new feature tests** covering ownership, removal, validation, and auth guards.
 
 ## March 7th, 2026 — Perf: slim down Inertia shared props

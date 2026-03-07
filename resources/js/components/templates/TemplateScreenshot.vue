@@ -16,6 +16,7 @@ const emit = defineEmits<{
 
 const isUploading = ref(false);
 const isDragging = ref(false);
+const isFocused = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const dropZone = ref<HTMLDivElement | null>(null);
 
@@ -145,11 +146,15 @@ function handleFileSelect(event: Event) {
       @drop.prevent="handleDrop"
       @dragover.prevent="isDragging = true"
       @dragleave="isDragging = false"
+      @focus="isFocused = true"
+      @blur="isFocused = false"
       :class="[
-        'flex flex-col items-center justify-center rounded border-2 border-dashed p-12 text-center transition-colors outline-none',
+        'flex flex-col items-center justify-center rounded border-2 border-dashed p-12 text-center transition-all outline-none',
         isDragging
           ? 'border-violet-500 bg-violet-500/10'
-          : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+          : isFocused
+            ? 'border-violet-500 bg-violet-500/5 ring-2 ring-violet-500/20'
+            : 'border-muted-foreground/25 hover:border-muted-foreground/50',
       ]"
     >
       <template v-if="isUploading">
@@ -157,14 +162,17 @@ function handleFileSelect(event: Event) {
         <p class="text-sm text-muted-foreground">Uploading screenshot...</p>
       </template>
       <template v-else>
-        <ImageIcon class="mb-3 h-10 w-10 text-muted-foreground/50" />
-        <p class="mb-1 text-sm font-medium text-accent-foreground">
+        <ImageIcon :class="['mb-3 h-10 w-10 transition-colors', isFocused ? 'text-violet-500' : 'text-muted-foreground/50']" />
+        <p v-if="!isFocused" class="mb-1 text-sm font-medium text-accent-foreground">
           Click here, then paste from clipboard (Ctrl+V)
+        </p>
+        <p v-else class="mb-1 text-sm font-medium text-violet-500 animate-pulse">
+          Ready — press Ctrl+V to paste your screenshot
         </p>
         <p class="mb-4 text-xs text-muted-foreground">
           or drag and drop an image, or use the button below
         </p>
-        <button type="button" @click="fileInput?.click()" class="btn btn-secondary btn-sm">
+        <button type="button" @click.stop="fileInput?.click()" class="btn btn-secondary btn-sm">
           <Upload class="mr-1.5 h-3.5 w-3.5" />
           Browse files
         </button>
@@ -182,21 +190,25 @@ function handleFileSelect(event: Event) {
     <div v-if="props.screenshotUrl && !isUploading">
       <p class="mb-2 text-xs text-muted-foreground">Replace screenshot:</p>
       <div
-        ref="dropZone"
         tabindex="0"
         @paste="handlePaste"
         @drop.prevent="handleDrop"
         @dragover.prevent="isDragging = true"
         @dragleave="isDragging = false"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
         :class="[
-          'flex items-center justify-center gap-3 rounded border-2 border-dashed p-4 text-center transition-colors outline-none',
+          'flex items-center justify-center gap-3 rounded border-2 border-dashed p-4 text-center transition-all outline-none',
           isDragging
             ? 'border-violet-500 bg-violet-500/10'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+            : isFocused
+              ? 'border-violet-500 bg-violet-500/5 ring-2 ring-violet-500/20'
+              : 'border-muted-foreground/25 hover:border-muted-foreground/50',
         ]"
       >
-        <p class="text-xs text-muted-foreground">Click here and paste (Ctrl+V), drag an image, or</p>
-        <button type="button" @click="fileInput?.click()" class="btn btn-secondary btn-xs">
+        <p v-if="!isFocused" class="text-xs text-muted-foreground">Click here and paste (Ctrl+V), drag an image, or</p>
+        <p v-else class="text-xs font-medium text-violet-500 animate-pulse">Press Ctrl+V to paste, or</p>
+        <button type="button" @click.stop="fileInput?.click()" class="btn btn-secondary btn-xs">
           <Upload class="mr-1 h-3 w-3" />
           Browse
         </button>

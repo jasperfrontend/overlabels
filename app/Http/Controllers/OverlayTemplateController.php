@@ -473,9 +473,36 @@ class OverlayTemplateController extends Controller
             'screenshot_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
+        // Delete old screenshot from Cloudinary if replacing or removing
+        $oldUrl = $template->screenshot_url;
+        if ($oldUrl && $oldUrl !== $validated['screenshot_url']) {
+            $this->deleteCloudinaryAsset($oldUrl);
+        }
+
         $template->update(['screenshot_url' => $validated['screenshot_url']]);
 
         return back()->with('message', 'Screenshot updated.')->with('type', 'success');
+    }
+
+    /**
+     * Delete a Cloudinary asset by its URL
+     */
+    private function deleteCloudinaryAsset(string $url): void
+    {
+        try {
+            // Extract public_id from Cloudinary URL
+            // Format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
+            if (preg_match('#/upload/(?:v\d+/)?(.+)\.\w+$#', $url, $matches)) {
+                $publicId = $matches[1];
+                $cloudinary = new \Cloudinary\Cloudinary(config('services.cloudinary.url'));
+                $cloudinary->adminApi()->deleteAssets($publicId);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to delete Cloudinary asset', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
