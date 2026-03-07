@@ -26,6 +26,7 @@ import {
   CopyIcon,
   InfoIcon,
   TargetIcon,
+  ImageIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 
@@ -56,6 +57,9 @@ const mainTabs = computed(() => {
     { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
     { key: 'panel', label: 'Values', icon: SquarePenIcon },
   ];
+  if (props.template?.screenshot_url) {
+    tabs.push({ key: 'screenshot', label: 'Screenshot', icon: ImageIcon });
+  }
   if (props.canEdit && props.template?.type === 'alert') {
     tabs.push({ key: 'targeting', label: 'Targeting', icon: TargetIcon });
   }
@@ -285,6 +289,15 @@ const forkTitle = computed(() => {
         <!-- Control Panel tab -->
         <div v-if="canEdit && mainTab === 'panel'" class="mb-6">
           <ControlPanel :template="template" :controls="localControls" />
+        </div>
+
+        <!-- Screenshot tab -->
+        <div v-if="mainTab === 'screenshot'" class="mb-6">
+          <img
+            :src="template.screenshot_url"
+            alt="Overlay screenshot"
+            class="max-h-[70vh] rounded border border-sidebar"
+          />
         </div>
 
         <!-- Targeting tab (alert templates, owner only) -->
