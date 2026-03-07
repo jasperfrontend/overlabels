@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
-import { ArrowLeft, Upload, X, Package } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { ArrowLeft, Package } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/EmptyState.vue';
+import ImageDropZone from '@/components/ImageDropZone.vue';
 import type { OverlayTemplate } from '@/types';
 
 interface Props {
@@ -26,64 +27,9 @@ const form = useForm({
   template_ids: [] as number[],
 });
 
-const thumbnailPreview = ref<string | null>(null);
-const isUploading = ref(false);
-
 const selectedTemplates = computed(() => {
   return props.templates.filter(t => form.template_ids.includes(t.id));
 });
-
-// Debug watcher to track the form state
-watch(() => form.template_ids, (newVal, oldVal) => {
-
-}, { deep: true });
-
-const uploadToCloudinary = () => {
-  if (!window.cloudinary) {
-    console.error('Cloudinary widget not loaded');
-    return;
-  }
-
-  isUploading.value = true;
-
-  const widget = window.cloudinary.createUploadWidget(
-    {
-      cloudName: window.cloudinaryCloudName,
-      uploadPreset: 'overlabels-kit-thumbnails',
-      sources: ['local'],
-      multiple: false,
-      maxFiles: 1,
-      clientAllowedFormats: ['jpg', 'jpeg', 'png'],
-      maxFileSize: 10485760, // 10MB
-      cropping: true,
-      croppingAspectRatio: 16/9,
-      showAdvancedOptions: false,
-      showUploadMoreButton: false,
-      folder: 'kits/thumbnails',
-    },
-    (error: any, result: any) => {
-      isUploading.value = false;
-
-      if (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed. Please try again.');
-        return;
-      }
-
-      if (result.event === 'success') {
-        form.thumbnail_url = result.info.secure_url;
-        thumbnailPreview.value = result.info.secure_url;
-      }
-    }
-  );
-
-  widget.open();
-};
-
-const removeThumbnail = () => {
-  form.thumbnail_url = '';
-  thumbnailPreview.value = null;
-};
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
 
@@ -182,37 +128,12 @@ const submit = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="thumbnailPreview" class="mb-4">
-              <div class="relative inline-block">
-                <img
-                  :src="thumbnailPreview"
-                  alt="Thumbnail preview"
-                  class="h-48 w-auto rounded-lg object-cover"
-                />
-                <button
-                  type="button"
-                  @click="removeThumbnail"
-                  class="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-                >
-                  <X class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div v-else>
-              <button
-                type="button"
-                @click="uploadToCloudinary"
-                :disabled="isUploading"
-                class="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
-                <span class="text-sm text-muted-foreground">
-                  {{ isUploading ? 'Uploading...' : 'Click to upload thumbnail' }}
-                </span>
-                <span class="mt-1 text-xs text-muted-foreground">PNG, JPG up to 10MB • Cloudinary powered</span>
-              </button>
-            </div>
+            <ImageDropZone
+              v-model="form.thumbnail_url"
+              upload-preset="overlabels-kit-thumbnails"
+              folder="kits/thumbnails"
+              compact
+            />
             <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>
           </CardContent>
         </Card>

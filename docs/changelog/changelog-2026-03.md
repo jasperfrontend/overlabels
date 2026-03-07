@@ -8,6 +8,8 @@
 - **New `screenshot_url` column on `overlay_templates`.** Stores the Cloudinary URL. New `PUT /templates/{id}/screenshot` endpoint for saving/removing screenshots independently from the main template form.
 - **Cloudinary cleanup on replace/remove.** When a screenshot is replaced or removed, the old image is deleted from Cloudinary via the Admin API so orphaned assets don't accumulate.
 - **Focus state UX.** Clicking the drop zone shows a pulsing "Ready — press Ctrl+V" prompt with a violet highlight, making it clear the zone is ready for paste input.
+- **Reusable `ImageDropZone` component.** Extracted the paste/drop/browse upload UX into a shared `ImageDropZone.vue` component. Used by both overlay screenshots (`TemplateScreenshot.vue`) and kit thumbnails (`kits/create.vue`, `kits/edit.vue`). Replaces the old Cloudinary Upload Widget popup with the same inline experience.
+- **Kit thumbnail upload upgraded.** Both `/kits/create` and `/kits/edit` now use `ImageDropZone` instead of the Cloudinary Upload Widget popup. Paste, drag-and-drop, and browse all work. The Cloudinary widget JS is no longer needed for uploads.
 - **5 new feature tests** covering ownership, removal, validation, and auth guards.
 
 ## March 7th, 2026 — Perf: slim down Inertia shared props
