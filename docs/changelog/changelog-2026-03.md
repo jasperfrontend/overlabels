@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Fix: CodeMirror syntax highlighting restored
+
+- **Root cause** — deprecated `@codemirror/basic-setup@0.20.0` (pre-release) occupied the top-level `@codemirror/language` slot with v0.20.2, forcing all stable v6 packages to install separate nested copies. Since CodeMirror relies on shared module identity for facets, `defaultHighlightStyle` from one copy couldn't style tokens parsed by a language from another — breaking syntax highlighting.
+- **Removed** `@codemirror/basic-setup` — unused, deprecated; replaced by the `codemirror` package that `vue-codemirror` already depends on.
+- **Deduplication** — `npm dedupe` consolidated all `@codemirror/language@6.x` copies into a single shared instance.
+- **Vite config** — updated `manualChunks` in `vite.config.mts` to reference `codemirror` instead of the removed package.
+
 ## March 7th, 2026 — Feature: Per-stream Twitch counters via Controls system
 
 - **Stream sessions** — new `stream_sessions` table tracks live/offline state. `stream.online` opens a session, `stream.offline` closes it.

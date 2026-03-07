@@ -27,11 +27,11 @@ export default defineConfig({
                     // Separate CodeMirror into its own chunk for better loading
                     codemirror: [
                         'vue-codemirror',
+                        'codemirror',
                         '@codemirror/lang-html',
                         '@codemirror/lang-css',
                         '@codemirror/lang-javascript',
                         '@codemirror/theme-one-dark',
-                        '@codemirror/basic-setup',
                         '@codemirror/view',
                         '@codemirror/state'
                     ]
