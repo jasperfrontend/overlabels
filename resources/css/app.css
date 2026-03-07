@@ -151,6 +151,8 @@
     --sidebar: hsl(240 5.9% 10%);
 }
 
+html {scroll-behavior: smooth;}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;
