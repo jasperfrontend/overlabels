@@ -138,7 +138,7 @@ function formatDate(iso: string | null): string {
                         description="Receive donation alerts and update overlay controls from Ko-fi."
                     />
 
-                    <Badge v-if="integration.connected" variant="default" class="bg-green-400">Connected</Badge>
+                    <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
                     <Badge v-else variant="secondary">Not connected</Badge>
                 </div>
 
@@ -239,7 +239,7 @@ function formatDate(iso: string | null): string {
                                 :aria-checked="testMode"
                                 :disabled="testModeLoading"
                                 class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                                :class="testMode ? 'bg-violet-500' : 'bg-muted-foreground/30'"
+                                :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
                                 @click="testMode = !testMode; toggleTestMode()"
                             >
                                 <span
@@ -248,13 +248,13 @@ function formatDate(iso: string | null): string {
                                 />
                             </button>
                             <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
-                                Test mode
-                                <span v-if="testModeLoading" class="ml-1 text-xs text-muted-foreground">saving…</span>
+                                Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
+                                <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving…</span>
                             </Label>
                         </div>
                         <p class="text-muted-foreground text-sm">
-                            Disables duplicate event detection — fire the same Ko-fi webhook as many times as you like.
-                            Turn this off before going live.
+                            Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
+                            <span v-if="testMode" class="text-yellow-500 font-bold">Turn this off before going live.</span>
                         </p>
                         <div v-if="testMode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
                             Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.

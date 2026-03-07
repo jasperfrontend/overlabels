@@ -53,7 +53,7 @@ function formatDate(iso: string | null): string {
                         <div class="space-y-1">
                             <div class="flex items-center gap-2">
                                 <span class="font-medium">{{ service.name }}</span>
-                                <Badge v-if="service.connected" variant="default">Connected</Badge>
+                                <Badge v-if="service.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
                                 <Badge v-else variant="secondary">Not connected</Badge>
                             </div>
                             <p v-if="service.connected" class="text-muted-foreground text-sm">
