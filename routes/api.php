@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ExternalWebhookController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
+use App\Http\Middleware\CheckBanned;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -55,12 +56,12 @@ Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'get
 
 // Twitch webhook endpoint - must be accessible without authentication or CSRF
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
 
 // External service webhooks - no auth/CSRF, rate-limited
 Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'handle'])
     ->middleware(['throttle:60,1'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
     ->name('webhooks.external');
 // EventSub health check endpoint for external cron services
 Route::get('/eventsub-health-check', function () {
@@ -115,4 +116,4 @@ Route::get('/eventsub-health-check', function () {
             'error' => $e->getMessage(),
         ], 500);
     }
-})->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+})->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);

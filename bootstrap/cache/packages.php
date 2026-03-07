@@ -53,6 +53,13 @@
       0 => 'Laravel\\Tinker\\TinkerServiceProvider',
     ),
   ),
+  'mchev/banhammer' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Mchev\\Banhammer\\BanhammerServiceProvider',
+    ),
+  ),
   'nesbot/carbon' => 
   array (
     'providers' => 

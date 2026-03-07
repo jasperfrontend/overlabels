@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Mchev\Banhammer\Models\Ban;
 
 class AdminSessionController extends Controller
 {
@@ -22,9 +23,21 @@ class AdminSessionController extends Controller
         $userIds = collect($sessions->items())->pluck('user_id')->filter()->unique();
         $users = User::whereIn('id', $userIds)->get(['id', 'name', 'email', 'twitch_id'])->keyBy('id');
 
-        $items = collect($sessions->items())->map(function ($session) use ($users) {
+        // Check ban status in bulk
+        $bannedUserIds = $userIds->isNotEmpty()
+            ? User::whereIn('id', $userIds)->banned()->pluck('id')->toArray()
+            : [];
+
+        $ips = collect($sessions->items())->pluck('ip_address')->filter()->unique()->values()->toArray();
+        $bannedIps = ! empty($ips)
+            ? Ban::whereIn('ip', $ips)->notExpired()->pluck('ip')->toArray()
+            : [];
+
+        $items = collect($sessions->items())->map(function ($session) use ($users, $bannedUserIds, $bannedIps) {
             $session->user = $session->user_id ? $users->get($session->user_id) : null;
             $session->last_activity_human = date('Y-m-d H:i:s', $session->last_activity);
+            $session->is_user_banned = in_array($session->user_id, $bannedUserIds);
+            $session->is_ip_banned = in_array($session->ip_address, $bannedIps);
 
             return $session;
         });

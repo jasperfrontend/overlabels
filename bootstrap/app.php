@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckBanned;
 use App\Http\Middleware\CheckLockdown;
 use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureValidTwitchToken;
@@ -36,11 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             HandleImpersonation::class,
+            CheckBanned::class,
         ]);
 
         // Add Sanctum's stateful middleware to API routes
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
+            CheckBanned::class,
         ]);
 
         // Register middleware aliases for use in routes
@@ -51,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'twitch.token' => EnsureValidTwitchToken::class,
             'admin.role' => EnsureAdminRole::class,
             'lockdown' => CheckLockdown::class,
+            'check.banned' => CheckBanned::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

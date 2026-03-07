@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EmptyState from '@/components/EmptyState.vue';
+import { Input } from '@/components/ui/input';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import type { AdminTemplate } from '@/types';
@@ -42,6 +43,14 @@ interface AuditEntry {
   admin: { id: number; name: string } | null;
 }
 
+interface BanInfo {
+  id: number;
+  comment: string | null;
+  expired_at: string | null;
+  created_at: string;
+  ip: string | null;
+}
+
 const props = defineProps<{
   user: User;
   recentTemplates: AdminTemplate[];
@@ -50,6 +59,8 @@ const props = defineProps<{
   kofiConnected: boolean;
   kofiSeedSet: boolean;
   kofiSeedValue: number | null;
+  isBanned: boolean;
+  activeBan: BanInfo | null;
 }>();
 
 const page = usePage();
@@ -72,6 +83,33 @@ const kofiSeedValueForm = useForm({ initial_count: props.kofiSeedValue ?? 0 });
 function submitKofiSeedValue() {
   kofiSeedValueForm.post(route('admin.users.kofi-seed', props.user.id));
 }
+
+// Ban form
+const banForm = useForm({
+  type: 'user' as const,
+  user_id: props.user.id,
+  comment: '',
+  duration: 'permanent',
+});
+
+function submitBan() {
+  banForm.post(route('admin.bans.store'));
+}
+
+function unban() {
+  if (props.activeBan && confirm('Remove this ban?')) {
+    router.delete(route('admin.bans.destroy', props.activeBan.id));
+  }
+}
+
+const durations = [
+  { value: '1h', label: '1 hour' },
+  { value: '6h', label: '6 hours' },
+  { value: '24h', label: '24 hours' },
+  { value: '7d', label: '7 days' },
+  { value: '30d', label: '30 days' },
+  { value: 'permanent', label: 'Permanent' },
+];
 
 // Delete form
 const deleteStrategy = ref<'assign_ghost' | 'delete_content'>('assign_ghost');
@@ -106,6 +144,7 @@ function restore() {
             <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
             <Badge v-if="user.is_system_user" variant="outline">system</Badge>
             <Badge v-if="user.deleted_at" variant="destructive">deleted</Badge>
+            <Badge v-if="isBanned" variant="destructive">BANNED</Badge>
           </div>
         </div>
       </div>
@@ -216,6 +255,36 @@ function restore() {
                 <Button type="submit" size="sm" :disabled="kofiSeedValueForm.processing">Save</Button>
                 <p v-if="kofiSeedValueForm.errors.initial_count" class="text-xs text-destructive">{{ kofiSeedValueForm.errors.initial_count }}</p>
               </form>
+            </CardContent>
+          </Card>
+
+          <!-- Ban Management -->
+          <Card v-if="!user.is_system_user && user.role !== 'admin'">
+            <CardHeader><CardTitle>Ban Management</CardTitle></CardHeader>
+            <CardContent>
+              <div v-if="isBanned && activeBan" class="space-y-3">
+                <div class="rounded border border-destructive bg-destructive/5 p-3 text-sm space-y-1">
+                  <div class="font-medium text-destructive">This user is currently banned</div>
+                  <div v-if="activeBan.comment" class="text-muted-foreground">Reason: {{ activeBan.comment }}</div>
+                  <div class="text-muted-foreground">
+                    {{ activeBan.expired_at ? `Expires: ${new Date(activeBan.expired_at).toLocaleString()}` : 'Permanent ban' }}
+                  </div>
+                  <div class="text-muted-foreground">Banned on: {{ new Date(activeBan.created_at).toLocaleString() }}</div>
+                </div>
+                <Button variant="outline" size="sm" @click="unban">Remove Ban</Button>
+              </div>
+              <div v-else class="space-y-3">
+                <p class="text-sm text-muted-foreground">Ban this user from accessing the application.</p>
+                <form @submit.prevent="submitBan" class="flex flex-wrap items-center gap-3">
+                  <Input v-model="banForm.comment" placeholder="Reason (optional)" class="w-64" />
+                  <select v-model="banForm.duration" class="rounded border px-3 py-1.5 text-sm bg-background">
+                    <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
+                  </select>
+                  <Button type="submit" variant="destructive" size="sm" :disabled="banForm.processing || user.id === currentUserId">Ban User</Button>
+                </form>
+                <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot ban yourself.</p>
+                <p v-if="banForm.errors.user_id" class="text-xs text-destructive">{{ banForm.errors.user_id }}</p>
+              </div>
             </CardContent>
           </Card>
 

@@ -1,5 +1,21 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Feature: Banhammer integration for user/IP ban management
+
+- **Installed `mchev/banhammer` v2.4.3** for user and IP ban management with temporary/permanent ban support.
+- **New `CheckBanned` middleware** applied to both web and API middleware stacks. Blocks banned users (auto-logout + redirect to `/banned`) and banned IPs (redirect or JSON 403). Admins always bypass. Webhook endpoints (Twitch, Ko-fi, EventSub health) are excluded.
+- **New `/admin/bans` page** with full ban management: create bans (user or IP), set duration (1h/6h/24h/7d/30d/permanent), add comments, view/filter/search active and expired bans, unban with one click.
+- **Enhanced `/admin/sessions` page** with per-session ban status badges ("User Banned" / "IP Banned") and inline "Ban User" / "Ban IP" buttons that ban + invalidate sessions in one action.
+- **Ban status on `/admin/users/{id}`** show page — "BANNED" badge in profile header, ban details card in Admin Actions tab with ban/unban controls.
+- **Session invalidation on ban.** When a user or IP is banned, all their active sessions are immediately deleted from the database.
+- **Login protection.** Banned users attempting to authenticate via Twitch OAuth are immediately logged out and redirected to `/banned`.
+- **Simple `/banned` page** with generic "Access Denied" message — no ban details leaked to bad actors.
+- **Dashboard stat card** for "Active Bans" linking to the bans management page.
+- **Sidebar navigation** entry for "Bans" with `ShieldBan` icon in the admin section.
+- **CLI commands** for emergency ban management: `ban:ip`, `ban:unip`, `ban:user` (with admin guards).
+- **Audit trail** — all ban/unban actions logged via `AdminAuditService` with `ban.created` and `ban.removed` actions. Real admin resolved during impersonation.
+- **19 feature tests** covering middleware blocking, admin bypass, CRUD operations, session invalidation, webhook exclusion, audit logging, and UI data.
+
 ## March 7th, 2026 — Feature: overlay screenshot tab
 
 - **New: Screenshot tab on template edit page.** Overlay templates now have a "Screenshot" tab where users can upload a screenshot of their active overlay. This replaces the broken public preview (which shows raw `[[[c:key]]]` tags) with an actual visual representation of the styled overlay.

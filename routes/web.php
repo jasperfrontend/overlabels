@@ -203,6 +203,15 @@ Route::get('/auth/callback/twitch', function () {
 
         Auth::login($user);
 
+        // Block banned users from logging in
+        if ($user->isBanned()) {
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect('/banned');
+        }
+
         // Auto-setup EventSub subscriptions for new users or users who have auto-connect enabled
         if (($isNewUser || $user->eventsub_auto_connect) && ! $user->eventsub_connected_at) {
             try {
@@ -383,5 +392,7 @@ Route::middleware('auth.redirect')->group(function () {
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';
+
+Route::get('/banned', fn () => Inertia::render('Banned'))->name('banned');
 
 Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');

@@ -1,14 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAccessLogController;
+use App\Http\Controllers\Admin\AdminAccessTokenController;
 use App\Http\Controllers\Admin\AdminAuditLogController;
+use App\Http\Controllers\Admin\AdminBanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminKitController;
 use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTemplateTagController;
-use App\Http\Controllers\Admin\AdminAccessTokenController;
 use App\Http\Controllers\Admin\AdminTwitchEventController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\ImpersonationController;
@@ -62,6 +63,12 @@ Route::prefix('admin')
         // Sessions
         Route::get('/sessions', [AdminSessionController::class, 'index'])->name('sessions.index');
         Route::delete('/sessions/{session}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
+
+        // Bans
+        Route::get('/bans', [AdminBanController::class, 'index'])->name('bans.index');
+        Route::post('/bans', [AdminBanController::class, 'store'])->name('bans.store');
+        Route::delete('/bans/{ban}', [AdminBanController::class, 'destroy'])->name('bans.destroy');
+        Route::post('/bans/from-session', [AdminBanController::class, 'banFromSession'])->name('bans.from-session');
 
         // Logs
         Route::delete('/logs/prune', [AdminAccessLogController::class, 'prune'])->name('logs.prune');

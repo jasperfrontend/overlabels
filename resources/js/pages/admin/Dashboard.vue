@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Layers, Zap, Clock, FlaskConical, Grid2x2 } from 'lucide-vue-next';
+import { Users, Layers, Zap, Clock, FlaskConical, Grid2x2, ShieldBan } from 'lucide-vue-next';
 import EmptyState from '@/components/EmptyState.vue';
 
 interface StatCards {
@@ -11,6 +11,7 @@ interface StatCards {
   templates: number;
   events: number;
   pending_events: number;
+  active_bans: number;
 }
 
 interface RecentUser {
@@ -52,7 +53,7 @@ function previewOnboarding() {
       <h1 class="text-2xl font-bold">Admin Dashboard</h1>
 
       <!-- Stat cards -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader class="flex flex-row items-center justify-between pb-2">
             <CardTitle class="text-sm font-medium">Total Users</CardTitle>
@@ -89,6 +90,17 @@ function previewOnboarding() {
             <div class="text-2xl font-bold">{{ stats.pending_events }}</div>
           </CardContent>
         </Card>
+        <Link :href="route('admin.bans.index')" class="block">
+          <Card>
+            <CardHeader class="flex flex-row items-center justify-between pb-2">
+              <CardTitle class="text-sm font-medium">Active Bans</CardTitle>
+              <ShieldBan class="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div class="text-2xl font-bold">{{ stats.active_bans }}</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">

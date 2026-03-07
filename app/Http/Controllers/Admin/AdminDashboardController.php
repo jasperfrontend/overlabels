@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Mchev\Banhammer\Models\Ban;
 
 class AdminDashboardController extends Controller
 {
@@ -28,6 +29,7 @@ class AdminDashboardController extends Controller
             'templates' => OverlayTemplate::count(),
             'events' => TwitchEvent::count(),
             'pending_events' => TwitchEvent::where('processed', false)->count(),
+            'active_bans' => Ban::notExpired()->count(),
         ];
 
         $recentSignups = User::where('is_system_user', false)

@@ -77,6 +77,8 @@ class AdminUserController extends Controller
             ->first();
         $kofiSettings = $kofiIntegration?->settings ?? [];
 
+        $activeBan = $user->bans()->notExpired()->latest()->first();
+
         return Inertia::render('admin/users/show', [
             'user' => $user,
             'recentTemplates' => $recentTemplates,
@@ -85,6 +87,14 @@ class AdminUserController extends Controller
             'kofiSeedSet' => ! empty($kofiSettings['kofis_seed_set']),
             'kofiSeedValue' => $kofiSettings['kofis_seed_value'] ?? null,
             'kofiConnected' => $kofiIntegration !== null,
+            'isBanned' => $user->isBanned(),
+            'activeBan' => $activeBan ? [
+                'id' => $activeBan->id,
+                'comment' => $activeBan->comment,
+                'expired_at' => $activeBan->expired_at?->toISOString(),
+                'created_at' => $activeBan->created_at->toISOString(),
+                'ip' => $activeBan->ip,
+            ] : null,
         ]);
     }
 
