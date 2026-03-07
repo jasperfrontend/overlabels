@@ -54,8 +54,6 @@
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
 
-        {{-- Cloudinary Upload Widget --}}
-        <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
         <script>
             window.cloudinaryCloudName = '{{ config("services.cloudinary.cloud_name") }}';
         </script>
