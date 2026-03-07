@@ -120,12 +120,12 @@ class OverlayTemplateController extends Controller
             : collect();
 
         return Inertia::render('templates/show', [
-            'template'               => $template,
-            'canEdit'                => $canEdit,
-            'controls'               => $controls,
-            'connectedServices'      => $connectedServices,
+            'template' => $template,
+            'canEdit' => $canEdit,
+            'controls' => $controls,
+            'connectedServices' => $connectedServices,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
-            'staticOverlays'         => $staticOverlays,
+            'staticOverlays' => $staticOverlays,
         ]);
     }
 
@@ -173,11 +173,11 @@ class OverlayTemplateController extends Controller
             : collect();
 
         return Inertia::render('templates/edit', [
-            'template'               => $template,
-            'availableTags'          => $availableTags,
-            'controls'               => $controls,
+            'template' => $template,
+            'availableTags' => $availableTags,
+            'controls' => $controls,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
-            'staticOverlays'         => $staticOverlays,
+            'staticOverlays' => $staticOverlays,
         ]);
 
     }
@@ -305,8 +305,8 @@ class OverlayTemplateController extends Controller
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:kofis_received")
                 // matching the [[[c:kofi:kofis_received]]] template tag syntax.
                 $dataKey = $control->source_managed
-                    ? 'c:' . $control->broadcastKey()
-                    : 'c:' . $control->key;
+                    ? 'c:'.$control->broadcastKey()
+                    : 'c:'.$control->key;
                 $controlData[$dataKey] = $control->resolveDisplayValue();
                 if ($control->type === 'timer') {
                     $cfg = $control->config ?? [];
@@ -443,7 +443,7 @@ class OverlayTemplateController extends Controller
         abort_unless($template->type === 'alert', 422);
 
         $validated = $request->validate([
-            'overlay_ids'   => ['nullable', 'array'],
+            'overlay_ids' => ['nullable', 'array'],
             'overlay_ids.*' => ['integer', 'exists:overlay_templates,id'],
         ]);
 
@@ -460,6 +460,22 @@ class OverlayTemplateController extends Controller
         $template->targetStaticOverlays()->sync($ids);
 
         return back()->with('message', 'Targeting settings saved.')->with('type', 'success');
+    }
+
+    /**
+     * Update screenshot URL for a template
+     */
+    public function updateScreenshot(Request $request, OverlayTemplate $template): RedirectResponse
+    {
+        abort_unless($template->owner_id === auth()->id(), 403);
+
+        $validated = $request->validate([
+            'screenshot_url' => ['nullable', 'url', 'max:2048'],
+        ]);
+
+        $template->update(['screenshot_url' => $validated['screenshot_url']]);
+
+        return back()->with('message', 'Screenshot updated.')->with('type', 'success');
     }
 
     /**

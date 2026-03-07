@@ -12,6 +12,7 @@ import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
+import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import {
   Brackets,
   Code,
@@ -25,6 +26,7 @@ import {
   SlidersHorizontal,
   CopyIcon,
   Target,
+  ImageIcon,
 } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
@@ -56,6 +58,7 @@ interface Props {
     is_public: boolean;
     slug: string;
     type: string;
+    screenshot_url: string | null;
     created_at: string;
     updated_at: string;
     view_count: number;
@@ -115,6 +118,7 @@ const mainTabs = computed(() => {
     { key: 'meta', label: 'Meta', icon: InfoIcon },
     { key: 'tags', label: 'Tags', icon: Brackets },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
+    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
   ];
   if (props.template.type === 'alert') {
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
@@ -405,6 +409,17 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
                 </TableBody>
               </Table>
             </template>
+          </div>
+
+          <!-- Screenshot Tab -->
+          <div v-else-if="mainTab === 'screenshot'">
+            <TemplateScreenshot
+              :screenshot-url="template.screenshot_url"
+              :template-id="template.id"
+              @saved="pushToast('Screenshot saved.', 'success')"
+              @removed="pushToast('Screenshot removed.', 'success')"
+              @error="(msg: string) => pushToast(msg, 'error')"
+            />
           </div>
 
           <!-- Targeting Tab (alert templates only) -->

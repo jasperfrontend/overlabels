@@ -1,5 +1,13 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Feature: overlay screenshot tab
+
+- **New: Screenshot tab on template edit page.** Overlay templates now have a "Screenshot" tab where users can upload a screenshot of their active overlay. This replaces the broken public preview (which shows raw `[[[c:key]]]` tags) with an actual visual representation of the styled overlay.
+- **Three upload methods:** Click the drop zone and paste from clipboard (Ctrl+V after Print Screen), drag-and-drop an image, or browse files via a file picker.
+- **Images uploaded to Cloudinary** via direct unsigned upload to the `overlabels-overlay-screenshots` preset, stored in the `overlays/screenshots` folder.
+- **New `screenshot_url` column on `overlay_templates`.** Stores the Cloudinary URL. New `PUT /templates/{id}/screenshot` endpoint for saving/removing screenshots independently from the main template form.
+- **5 new feature tests** covering ownership, removal, validation, and auth guards.
+
 ## March 7th, 2026 — Perf: slim down Inertia shared props
 
 - **Reduced `auth.user` payload from ~10.8KB to ~268 bytes per page load (97.5% reduction).** `HandleInertiaRequests::share()` was sending the entire User model on every Inertia request, including the massive `twitch_data` JSON blob (followers, subscribers, channels, goals — ~10KB alone). Replaced `$request->user()` with an explicit `->only()` whitelist of the 8 fields the frontend actually uses: `id`, `name`, `email`, `twitch_id`, `avatar`, `icon`, `onboarded_at`, `role`.

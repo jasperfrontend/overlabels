@@ -2,6 +2,7 @@
 
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
-use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Models\User;
 use App\Services\TwitchApiService;
@@ -25,7 +25,6 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
-
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -288,6 +287,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
         Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
+        Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
     });
 
     // Controls Management

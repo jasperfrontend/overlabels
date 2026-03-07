@@ -34,6 +34,7 @@ class OverlayTemplate extends Model
         'fork_of_id',
         'template_tags',
         'metadata',
+        'screenshot_url',
         'view_count',
         'fork_count',
     ];

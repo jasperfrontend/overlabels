@@ -103,6 +103,7 @@ export interface OverlayTemplate {
   is_public: boolean;
   view_count: number;
   fork_count: number;
+  screenshot_url?: string | null;
   has_controls?: boolean;
   owner?: {
     id: number;
