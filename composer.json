@@ -22,6 +22,7 @@
         "mchev/banhammer": "^2.4",
         "pusher/pusher-php-server": "^7.2",
         "socialiteproviders/twitch": "^5.4",
+        "stevebauman/location": "^7.6",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {

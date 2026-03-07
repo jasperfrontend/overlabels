@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Mchev\Banhammer\Models\Ban;
+use Stevebauman\Location\Facades\Location;
 
 class AdminSessionController extends Controller
 {
@@ -54,6 +56,17 @@ class AdminSessionController extends Controller
                 'links' => $sessions->linkCollection(),
             ],
         ]);
+    }
+
+    public function ipLookup(Request $request, string $ip): JsonResponse
+    {
+        $position = Location::get($ip);
+
+        if (! $position || $position->isEmpty()) {
+            return response()->json(['error' => 'Could not resolve location for this IP address.'], 404);
+        }
+
+        return response()->json($position->toArray());
     }
 
     public function destroy(Request $request, string $session): RedirectResponse

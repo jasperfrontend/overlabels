@@ -5,6 +5,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ref } from 'vue';
 
 interface SessionUser {
@@ -30,6 +31,20 @@ interface Paginator {
   meta: { current_page: number; last_page: number; total: number; per_page: number };
 }
 
+interface IpLocation {
+  ip: string;
+  countryName: string | null;
+  countryCode: string | null;
+  regionName: string | null;
+  regionCode: string | null;
+  cityName: string | null;
+  zipCode: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  timezone: string | null;
+  currencyCode: string | null;
+}
+
 defineProps<{ sessions: Paginator }>();
 
 const breadcrumbs = [
@@ -40,6 +55,33 @@ const breadcrumbs = [
 function invalidate(id: string) {
   if (confirm('Invalidate this session?')) {
     router.delete(route('admin.sessions.destroy', id));
+  }
+}
+
+// IP Lookup
+const ipDialogOpen = ref(false);
+const ipLoading = ref(false);
+const ipError = ref<string | null>(null);
+const ipLocation = ref<IpLocation | null>(null);
+
+async function lookupIp(ip: string) {
+  ipDialogOpen.value = true;
+  ipLoading.value = true;
+  ipError.value = null;
+  ipLocation.value = null;
+
+  try {
+    const response = await fetch(route('admin.sessions.ip-lookup', ip));
+    if (!response.ok) {
+      const data = await response.json();
+      ipError.value = data.error || 'Failed to look up IP address.';
+      return;
+    }
+    ipLocation.value = await response.json();
+  } catch {
+    ipError.value = 'Network error while looking up IP address.';
+  } finally {
+    ipLoading.value = false;
   }
 }
 
@@ -80,6 +122,19 @@ const durations = [
   { value: '7d', label: '7 days' },
   { value: '30d', label: '30 days' },
   { value: 'permanent', label: 'Permanent' },
+];
+
+const locationFields: { key: keyof IpLocation; label: string }[] = [
+  { key: 'ip', label: 'IP Address' },
+  { key: 'cityName', label: 'City' },
+  { key: 'regionName', label: 'Region' },
+  { key: 'countryName', label: 'Country' },
+  { key: 'countryCode', label: 'Country Code' },
+  { key: 'zipCode', label: 'Zip Code' },
+  { key: 'latitude', label: 'Latitude' },
+  { key: 'longitude', label: 'Longitude' },
+  { key: 'timezone', label: 'Timezone' },
+  { key: 'currencyCode', label: 'Currency' },
 ];
 </script>
 
@@ -136,7 +191,8 @@ const durations = [
             </div>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>{{ session.ip_address ?? 'No IP' }}</span>
+            <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)" class="font-mono hover:underline">{{ session.ip_address }}</button>
+            <span v-else>No IP</span>
             <span>Active {{ session.last_activity_human }}</span>
           </div>
         </div>
@@ -163,7 +219,10 @@ const durations = [
                 </div>
                 <span v-else class="text-muted-foreground">Guest</span>
               </td>
-              <td class="px-3 py-2 text-muted-foreground font-mono text-xs">{{ session.ip_address ?? '—' }}</td>
+              <td class="px-3 py-2 font-mono text-xs">
+                <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)" class="text-muted-foreground cursor-pointer hover:text-foreground hover:underline">{{ session.ip_address }}</button>
+                <span v-else class="text-muted-foreground">&mdash;</span>
+              </td>
               <td class="px-3 py-2">
                 <div class="flex gap-1">
                   <Badge v-if="session.is_user_banned" variant="destructive" class="text-[10px]">User Banned</Badge>
@@ -185,5 +244,26 @@ const durations = [
         </table>
       </div>
     </div>
+
+    <!-- IP Location Dialog -->
+    <Dialog v-model:open="ipDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>IP Location Lookup</DialogTitle>
+          <DialogDescription>Geolocation data from ip-api.com</DialogDescription>
+        </DialogHeader>
+
+        <div v-if="ipLoading" class="py-4 text-center text-sm text-muted-foreground">Loading...</div>
+
+        <div v-else-if="ipError" class="py-4 text-center text-sm text-destructive">{{ ipError }}</div>
+
+        <div v-else-if="ipLocation" class="space-y-1">
+          <div v-for="field in locationFields" :key="field.key" class="flex justify-between gap-4 text-sm border-b border-border py-1.5 last:border-0">
+            <span class="text-muted-foreground shrink-0">{{ field.label }}</span>
+            <span class="font-mono text-right">{{ ipLocation[field.key] ?? '—' }}</span>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </AppLayout>
 </template>

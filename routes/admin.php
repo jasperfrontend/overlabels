@@ -62,6 +62,7 @@ Route::prefix('admin')
 
         // Sessions
         Route::get('/sessions', [AdminSessionController::class, 'index'])->name('sessions.index');
+        Route::get('/sessions/ip-lookup/{ip}', [AdminSessionController::class, 'ipLookup'])->name('sessions.ip-lookup')->where('ip', '[0-9a-fA-F.:]+');
         Route::delete('/sessions/{session}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
 
         // Bans
