@@ -25,7 +25,7 @@ watch(() => props.userIcon, v => { localIcon.value = v || 'smile'; });
 
 const iconComponent = computed((): Component => {
   const key = toPascalCase(localIcon.value || 'smile');
-  const candidate = (LucideIcons as Record<string, Component | undefined>)[key];
+  const candidate = (LucideIcons as unknown as Record<string, Component | undefined>)[key];
   // Icons in lucide-vue-next are functions (functional components), not objects.
   // Use nullish coalescing so any truthy export (function or object) is accepted.
   return candidate ?? LucideIcons.HeartCrack;
@@ -84,7 +84,7 @@ function onKeydown(e: KeyboardEvent) {
 
       />
       <span class="text-xs text-muted-foreground">
-        Browse at <a title="Open this link and click the icon you like. Then click the icon's name to copy it. Due to some versioning issues, not all icons are available." href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="underline hover:text-foreground">lucide.dev</a>
+        Browse at <a title="Open this link and click the icon you like. Then click the icon's name to copy it." href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="underline hover:text-foreground">lucide.dev</a>
         <Button variant="outline" size="sm" @click="save" class="ml-2 text-violet-400 cursor-pointer">save</Button>
       </span>
     </template>
