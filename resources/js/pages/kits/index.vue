@@ -113,30 +113,6 @@ defineProps<Props>();
         </Link>
       </div>
 
-      <!-- Recent Public kits Section -->
-      <div v-if="recentPublicKits && recentPublicKits.length > 0" class="mt-12">
-        <div class="mb-6 h-px w-full bg-background" />
-
-        <div class="mb-6">
-          <div class="flex items-center gap-2 mb-2">
-            <Package class="w-5 h-5 text-primary" />
-            <Heading title="Discover Recent Community Kits" />
-          </div>
-          <p class="text-sm text-muted-foreground">
-            Explore kits created by the community. Fork any kit to get started quickly with a complete set of templates.
-          </p>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-          <KitCard
-            v-for="kit in recentPublicKits"
-            :key="kit.id"
-            :kit="kit"
-            :show-owner="true"
-            :current-user-id="auth?.user?.id"
-          />
-        </div>
-      </div>
 
       <div class="mt-6">
         <Heading title="What are Kits?" />
@@ -144,7 +120,7 @@ defineProps<Props>();
           set of templates with anybody you like.</p>
 
         <p>By default, kits are private. You can set a kit to be publicly available,
-          then everybody who has an Overlabels account can fork your Kit and use it themselves.</p>
+          then everybody who has an Overlabels account can copy your Kit and use it themselves.</p>
         <Heading class="mt-4" title="Can I create a Kit?" />
         <p>Everybody can create Kits! In fact, it would be <span class="bg-cyan-400/50 px-1">amazing</span> if you did.</p>
       </div>
