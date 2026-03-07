@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
-
+import { Pencil, Plus, Trash } from 'lucide-vue-next';
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Controls',
@@ -84,7 +84,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Create -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold">+</span>
+                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold"><Plus class="size-5" /></span>
                 Creating a Control
               </h3>
               <p class="mb-4 mt-3 text-muted-foreground">Click <strong>Add control</strong> in the Controls tab to open the creation modal.</p>
@@ -100,7 +100,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Edit -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold">✎</span>
+                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold"><Pencil class="size-4" /></span>
                 Editing a Control
               </h3>
               <p class="mt-3 text-muted-foreground">
@@ -112,7 +112,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Delete -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">✕</span>
+                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold"><Trash class="size-4" /></span>
                 Deleting a Control
               </h3>
               <p class="mt-3 text-muted-foreground">
@@ -123,8 +123,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <!-- Snippet copy -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
-              <h3 class="mb-3 text-xl font-semibold">Copying the Snippet</h3>
-              <p class="text-muted-foreground">
+              <h3 class="mb-1 text-xl font-semibold">
+                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold"><Trash class="size-4" /></span>
+                Copying the Snippet
+              </h3>
+              <p class="mt-3 text-muted-foreground">
                 Each row in the Controls table shows a copy button with the ready-to-paste snippet
                 <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code>.
                 Click it to copy the snippet to your clipboard so you can paste it directly into your template editor.
