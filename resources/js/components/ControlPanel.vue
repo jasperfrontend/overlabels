@@ -126,6 +126,26 @@ async function timerAction(ctrl: OverlayControl, action: 'start' | 'stop' | 'res
 
 const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
 
+function configSummary(ctrl: OverlayControl): string[] {
+  const cfg = ctrl.config ?? {};
+  const parts: string[] = [];
+
+  if (ctrl.type === 'number' || ctrl.type === 'counter') {
+    if (cfg.min != null) parts.push(`Min: ${cfg.min}`);
+    if (cfg.max != null) parts.push(`Max: ${cfg.max}`);
+    if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
+    if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
+  } else if (ctrl.type === 'timer') {
+    const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
+    parts.push(mode);
+    if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
+  } else if (ctrl.type === 'datetime' && ctrl.value) {
+    parts.push(`Initial: ${ctrl.value}`);
+  }
+
+  return parts;
+}
+
 async function toggleBoolean(ctrl: OverlayControl) {
   const newValue = ctrl.value === '1' ? '0' : '1';
   await postValue(ctrl, { value: newValue });
@@ -153,12 +173,17 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div v-for="ctrl in controls" :key="ctrl.id" class="border border-border bg-background p-3 pt-2 pb-4">
-        <div class="mb-2 flex items-center justify-between">
-          <div>
-            <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
-            <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
+        <div class="mb-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
+              <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
+            </div>
+            <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
           </div>
-          <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+          <div v-if="configSummary(ctrl).length" class="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground/70">
+            <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="whitespace-nowrap">{{ part }}</span>
+          </div>
         </div>
 
         <!-- Text control -->

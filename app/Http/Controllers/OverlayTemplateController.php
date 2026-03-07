@@ -161,6 +161,8 @@ class OverlayTemplateController extends Controller
 
         $controls = $template->controls()->orderBy('sort_order')->get();
 
+        $connectedServices = ExternalIntegration::where('user_id', auth()->id())->pluck('service')->toArray();
+
         $targetStaticOverlayIds = $template->type === 'alert'
             ? $template->targetStaticOverlays()->pluck('overlay_templates.id')->all()
             : [];
@@ -176,6 +178,7 @@ class OverlayTemplateController extends Controller
             'template' => $template,
             'availableTags' => $availableTags,
             'controls' => $controls,
+            'connectedServices' => $connectedServices,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
         ]);

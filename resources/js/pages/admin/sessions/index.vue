@@ -142,7 +142,6 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
   { key: 'isp', label: 'ISP' },
   { key: 'org', label: 'Organization' },
   { key: 'asName', label: 'AS' },
-  { key: 'query', label: 'Query' },
 ];
 </script>
 

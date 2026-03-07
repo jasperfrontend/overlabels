@@ -4,8 +4,6 @@ import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { BreadcrumbItem } from '@/types';
 import type { OverlayControl } from '@/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
@@ -13,6 +11,8 @@ import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
+import ControlsManager from '@/components/ControlsManager.vue';
+import ControlPanel from '@/components/ControlPanel.vue';
 import {
   Brackets,
   Code,
@@ -24,7 +24,7 @@ import {
   Trash,
   MoreVertical,
   SlidersHorizontal,
-  CopyIcon,
+  SquarePenIcon,
   Target,
   ImageIcon,
 } from 'lucide-vue-next';
@@ -74,6 +74,7 @@ interface Props {
     sample_data?: string;
   }>;
   controls?: OverlayControl[];
+  connectedServices?: string[];
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
 }
@@ -118,6 +119,7 @@ const mainTabs = computed(() => {
     { key: 'meta', label: 'Meta', icon: InfoIcon },
     { key: 'tags', label: 'Tags', icon: Brackets },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
+    { key: 'panel', label: 'Values', icon: SquarePenIcon },
     { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
   ];
   if (props.template.type === 'alert') {
@@ -127,6 +129,7 @@ const mainTabs = computed(() => {
 });
 
 const mainTab = ref<string>('code');
+const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -161,11 +164,6 @@ watch(showTemplateToast, (on) => {
 });
 
 const openExternalLink = (link: any, target: string) => window.open(link, target);
-
-const copySnippet = (snippet: string) => {
-  navigator.clipboard.writeText(snippet);
-  pushToast(`${snippet} copied to clipboard!`, 'success');
-};
 
 const submitForm = () => {
   const { sanitized, removed } = stripScriptsFromFields({
@@ -366,49 +364,13 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           </div>
 
           <!-- Controls Tab -->
-          <div v-else-if="mainTab === 'controls'" class="space-y-2">
-            <div v-if="!controls || controls.length === 0" class="py-8 text-center text-sm text-muted-foreground">
-              No controls defined for this overlay yet.
-              <a :href="route('templates.show', template)" class="ml-1 text-violet-400 hover:underline">Go to the overlay page</a>
-              to add some.
-            </div>
-            <template v-else>
-              <p class="mb-3 text-sm text-muted-foreground">Reference-only. Use these snippets in your HTML or CSS — click any snippet to copy it.</p>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-32">Key</TableHead>
-                    <TableHead>Label</TableHead>
-                    <TableHead class="w-28">Type</TableHead>
-                    <TableHead>Snippet</TableHead>
-                    <TableHead>Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="control in controls" :key="control.id">
-                    <TableCell class="font-mono text-xs">{{ control.key }}</TableCell>
-                    <TableCell class="text-sm">{{ control.label ?? '—' }}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" class="font-mono text-xs capitalize">{{ control.type }}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        type="button"
-                        @click="copySnippet(`[[[c:${control.key}]]]`)"
-                        class="group flex items-center gap-1.5 rounded bg-sidebar px-2 py-1 font-mono text-xs transition-colors hover:bg-violet-600 hover:text-accent dark:hover:bg-violet-400"
-                        title="Click to copy"
-                      >
-                        [[[c:{{ control.key }}]]]
-                        <CopyIcon class="h-3 w-3 opacity-40 group-hover:opacity-100" />
-                      </button>
-                    </TableCell>
-                    <TableCell class="text-sm text-muted-foreground">
-                      {{ control.value }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </template>
+          <div v-else-if="mainTab === 'controls'">
+            <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" @change="localControls = $event" />
+          </div>
+
+          <!-- Values Tab -->
+          <div v-else-if="mainTab === 'panel'">
+            <ControlPanel :template="template" :controls="localControls" />
           </div>
 
           <!-- Screenshot Tab -->

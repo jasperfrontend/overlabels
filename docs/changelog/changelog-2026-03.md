@@ -1,5 +1,13 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Feature: Controls & Values on edit page + config visibility
+
+- **ControlsManager & ControlPanel on edit page** — the overlay edit page now has full Add/Edit/Delete controls and value management, matching the show page. No more jumping between pages.
+- **connectedServices passed to edit** — backend now sends connected external integrations (e.g. Ko-fi) to the edit page so service-specific control presets work there too.
+- **Settings column in Controls table** — new "Settings" column in ControlsManager shows config metadata inline: min/max/step/reset for number/counter, mode/duration for timer, initial value for datetime.
+- **Config summary in Values panel** — each ControlPanel card now displays the control's config settings below the header, so all settings are visible while editing values.
+- **Button type fix** — all ControlsManager buttons now have `type="button"` to prevent accidental form submission when used inside the edit page's `<form>` wrapper.
+
 ## March 7th, 2026 — Feature: IP geolocation lookup on admin sessions page
 
 - **Custom `ExtendedIpApi` driver and `ExtendedPosition`** extending `stevebauman/location`'s IpApi driver to include `isp`, `org`, `asName`, and `query` fields that the upstream driver omits.

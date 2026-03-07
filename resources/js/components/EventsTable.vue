@@ -142,7 +142,7 @@ function badgeVariant(event: UnifiedEvent): 'default' | 'secondary' | 'outline' 
   <Table>
     <TableHeader>
       <TableRow class="hover:bg-transparent">
-        <TableHead class="w-[120px]">Alert</TableHead>
+        <TableHead class="w-30">Alert</TableHead>
         <TableHead>From</TableHead>
         <TableHead class="w-[48px]"><span class="sr-only">Actions</span></TableHead>
       </TableRow>

@@ -91,6 +91,26 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   datetime: 'outline',
   boolean: 'default',
 };
+
+function configSummary(ctrl: OverlayControl): string[] {
+  const cfg = ctrl.config ?? {};
+  const parts: string[] = [];
+
+  if (ctrl.type === 'number' || ctrl.type === 'counter') {
+    if (cfg.min != null) parts.push(`Min: ${cfg.min}`);
+    if (cfg.max != null) parts.push(`Max: ${cfg.max}`);
+    if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
+    if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
+  } else if (ctrl.type === 'timer') {
+    const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
+    parts.push(mode);
+    if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
+  } else if (ctrl.type === 'datetime' && ctrl.value) {
+    parts.push(`Initial: ${ctrl.value}`);
+  }
+
+  return parts;
+}
 </script>
 
 <template>
@@ -103,6 +123,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
       <p class="text-sm text-muted-foreground">Define mutable values your template can reference. Check <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a>
       to see how to implement Controls in your Overlays.</p>
       <button
+        type="button"
         class="btn btn-primary btn-sm"
         :disabled="controls.length >= 20"
         :title="controls.length >= 20 ? 'Maximum 20 controls per template' : undefined"
@@ -124,6 +145,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
           <TableHead>Key</TableHead>
           <TableHead>Label</TableHead>
           <TableHead class="w-[90px]">Type</TableHead>
+          <TableHead>Settings</TableHead>
           <TableHead>Snippet</TableHead>
           <TableHead class="w-[100px] text-right">Actions</TableHead>
         </TableRow>
@@ -138,8 +160,15 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
               {{ ctrl.type }}
             </Badge>
           </TableCell>
+          <TableCell class="text-xs text-muted-foreground">
+            <div v-if="configSummary(ctrl).length" class="flex flex-wrap gap-x-2 gap-y-0.5">
+              <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="whitespace-nowrap">{{ part }}</span>
+            </div>
+            <span v-else>—</span>
+          </TableCell>
           <TableCell>
             <button
+              type="button"
               class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-60 transition group-hover:opacity-80 hover:opacity-100"
               :title="`Copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
               @click="copySnippet(ctrl)"
@@ -150,10 +179,10 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
           </TableCell>
           <TableCell class="text-right opacity-20 transition group-hover:opacity-100">
             <div class="flex items-center justify-end gap-1">
-              <button class="btn btn-sm btn-secondary px-2" title="Edit" @click="openEdit(ctrl)">
+              <button type="button" class="btn btn-sm btn-secondary px-2" title="Edit" @click="openEdit(ctrl)">
                 <PencilIcon class="h-3.5 w-3.5" />
               </button>
-              <button class="btn btn-sm btn-danger px-2" title="Delete" @click="deleteControl(ctrl)">
+              <button type="button" class="btn btn-sm btn-danger px-2" title="Delete" @click="deleteControl(ctrl)">
                 <Trash2Icon class="h-3.5 w-3.5" />
               </button>
             </div>
