@@ -13,7 +13,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 <template>
   <Head>
-    <title>How to use Controls    </title>
+    <title>How to use Controls</title>
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
@@ -34,9 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
           <ul class="space-y-2">
             <li><a href="#what" class="text-violet-400 hover:underline">What are Controls?</a></li>
             <li><a href="#managing-controls" class="text-violet-400 hover:underline">Managing Controls</a></li>
-            <li><a href="#using-controls" class="text-violet-400 hover:underline">Using Controls in Templates</a></li>
+            <li><a href="#using-controls" class="text-violet-400 hover:underline">Using Controls in Overlays</a></li>
             <li><a href="#panel" class="text-violet-400 hover:underline">The Control Panel</a></li>
-            <li><a href="#copying" class="text-violet-400 hover:underline">Copying a Template with Controls</a></li>
+            <li><a href="#copying" class="text-violet-400 hover:underline">Copying an overlay with Controls</a></li>
             <li><a href="#tips" class="text-violet-400 hover:underline">Tips and Best Practices</a></li>
           </ul>
         </div>
@@ -48,12 +48,12 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
-                A Control is a named value that lives on your template. You define its key, type, and optional label, and then
+                A Control is a named value that lives on your overlay or alert template. You define its key, type, and optional label, and then
                 reference it in your overlay HTML with the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> syntax.
                 During your stream, you update its value from the <strong>Control Panel</strong> and the change appears in OBS within a few seconds.
               </p>
               <p class="text-foreground">
-                Controls are <strong>overlay-scoped</strong>: each template has its own set. They are never shared between templates unless
+                Controls are <strong>overlay-scoped</strong>: each overlay has its own set. They are never shared between overlays unless
                 you explicitly import them when copying.
               </p>
             </div>
@@ -64,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="space-y-4">
                 <div class="flex gap-4">
                   <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">text</div>
-                  <div class="text-foreground">Free-form text. Displayed as-is in your template. HTML is stripped for safety.</div>
+                  <div class="text-foreground">Free-form text. Displayed as-is in your overlay. HTML is stripped for safety.</div>
                 </div>
                 <div class="flex gap-4">
                   <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">number</div>
@@ -91,7 +91,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12">
           <h2 class="mb-6 text-2xl font-bold" id="managing-controls">Managing Controls</h2>
           <p class="mb-6 text-foreground">
-            Controls live on the <strong>Controls</strong> tab of your template's detail page. You must be the template owner to manage them.
+            Controls live on the <strong>Controls</strong> tab of your overlay's detail page. You must be the overlay owner to manage them.
           </p>
 
           <div class="space-y-6">
@@ -119,7 +119,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </h3>
               <p class="mt-3 text-foreground">
                 Click the pencil icon on any control row in the Controls tab. You can update the label, sort order, and type-specific configuration.
-                The <strong>key</strong> and <strong>type</strong> cannot be changed after creation to protect references already used in your template HTML.
+                The <strong>key</strong> and <strong>type</strong> cannot be changed after creation to protect references already used in your overlay HTML.
               </p>
             </div>
 
@@ -131,7 +131,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </h3>
               <p class="mt-3 text-foreground">
                 Click the trash icon on a control row and confirm the prompt. Deletion is permanent. Any <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> references
-                left in your template will render as blank after deletion  no errors, just empty space.
+                left in your overlay will render as blank after deletion  no errors, just empty space.
               </p>
             </div>
 
@@ -144,17 +144,17 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mt-3 text-foreground">
                 Each row in the Controls table shows a copy button with the ready-to-paste snippet
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code>.
-                Click it to copy the snippet to your clipboard so you can paste it directly into your template editor.
+                Click it to copy the snippet to your clipboard so you can paste it directly into your overlay editor.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Using controls in templates -->
+        <!-- Using controls in overlays -->
         <div class="mb-12">
-          <h2 class="mb-6 text-2xl font-bold" id="using-controls">Using Controls in Templates</h2>
+          <h2 class="mb-6 text-2xl font-bold" id="using-controls">Using Controls in Overlays</h2>
           <p class="mb-6 text-foreground">
-            Once a control exists, reference its current value anywhere in your overlay or alert template HTML using the
+            Once a control exists, reference its current value anywhere in your overlay or alert overlay HTML using the
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> syntax.
           </p>
 
@@ -229,9 +229,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <!-- Alert templates -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
-              <h3 class="mb-4 text-xl font-semibold">Controls in Alert Templates</h3>
+              <h3 class="mb-4 text-xl font-semibold">Controls in Alerts</h3>
               <p class="mb-4 text-foreground">
-                Alert templates also support control tags. This lets an alert read the current state of your overlay to decide what to display.
+                Alerts also support control tags. This lets an alert read the current state of your overlay to decide what to display.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Alert for a sub that mentions the current death count --&gt;<br />
@@ -251,7 +251,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold" id="panel">The Control Panel</h2>
           <p class="mb-6 text-foreground">
             The <strong>Control Panel</strong> is a live dashboard for updating control values during your stream.
-            It lives on the <strong>Control Panel</strong> tab of your template's detail page.
+            It lives on the <strong>Control Panel</strong> tab of your overlay's detail page.
             Open it in a browser window before going live and keep it on a second monitor or phone.
           </p>
 
@@ -304,7 +304,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Access</h3>
               <p class="text-foreground">
-                The Control Panel is available only to the template owner and requires a logged-in session.
+                The Control Panel is available only to the overlay owner and requires a logged-in session.
                 Your viewers or collaborators cannot accidentally change your values  there is no public endpoint for mutations.
               </p>
             </div>
@@ -313,9 +313,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Forking -->
         <div class="mb-12">
-          <h2 class="mb-6 text-2xl font-bold" id="copying">Copying a Template with Controls</h2>
+          <h2 class="mb-6 text-2xl font-bold" id="copying">Copying an Overlay with Controls</h2>
           <p class="mb-6 text-foreground">
-            When you copy a public template that has controls attached, Overlabels walks you through the
+            When you copy a public overlay that has Controls attached, Overlabels walks you through the
             <strong>Import Wizard</strong> before navigating to your new copy.
           </p>
 
@@ -323,7 +323,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">The Import Wizard</h3>
               <p class="mb-4 text-foreground">
-                The wizard shows a table of every control from the source template. For each one you can choose:
+                The wizard shows a table of every control from the source overlay. For each one you can choose:
               </p>
               <div class="space-y-3">
                 <div class="flex gap-3">
@@ -332,7 +332,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
                 <div class="flex gap-3">
                   <span class="mt-0.5 inline-flex h-5 w-14 shrink-0 items-center justify-center rounded bg-red-400 text-xs font-semibold text-foreground">Skip</span>
-                  <span class="text-foreground">Leave this control out of your copy. Any template tags referencing it will render blank until you add a matching control yourself.</span>
+                  <span class="text-foreground">Leave this control out of your copy. Any overlay tags referencing it will render blank until you add a matching control yourself.</span>
                 </div>
               </div>
             </div>
@@ -341,7 +341,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="mb-4 text-xl font-semibold">What gets copied</h3>
               <div class="space-y-3 text-foreground">
                 <div><strong class="text-foreground">Copied:</strong> key, label, type, configuration (min/max/mode/base duration, etc.), and sort order.</div>
-                <div><strong class="text-foreground">Also copied:</strong> the current value. Although this may bring in some stale data when you copy the template to your account, it does allow for sharing fully pre-configured overlay templates.</div>
+                <div><strong class="text-foreground">Also copied:</strong> the current value. Although this may bring in some stale data when you copy the overlay to your account, it does allow for sharing fully pre-configured overlay templates.</div>
                 <div><strong class="text-foreground">New IDs:</strong> Each created control gets a brand-new database ID. Changes you make to your copy's controls never affect the original template.</div>
               </div>
             </div>
@@ -349,9 +349,9 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Skipping the wizard</h3>
               <p class="text-foreground">
-                Clicking <strong>Skip all, take me to the copy</strong> skips import entirely and takes you straight to your new template.
+                Clicking <strong>Skip all, take me to the copy</strong> skips import entirely and takes you straight to your new overlay.
                 Your copy will have zero controls at that point. You can always add controls manually from the Controls tab later,
-                as long as you give them the same keys that your template HTML references.
+                as long as you give them the same keys that your overlay HTML references.
               </p>
             </div>
           </div>
@@ -360,7 +360,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Tips -->
         <h2 class="mb-6 text-2xl font-bold" id="tips">Tips and Best Practices</h2>
         <p class="mb-6 text-foreground">
-          Keep these tips and best practices in mind when using controls in your templates.
+          Keep these tips and best practices in mind when using controls in your overlays.
         </p>
 
         <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6 mb-12">

@@ -26,7 +26,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="conditionals">
           <h2 class="mb-6 text-2xl font-bold">Conditional Template Syntax</h2>
           <p class="mb-6 text-muted-foreground">
-            Use conditional logic to dynamically show or hide content in your templates based on real-time data. All conditionals are processed
+            Use conditional logic to dynamically show or hide content in your overlays based on real-time data. All conditionals are processed
             client-side for security.
           </p>
 
@@ -369,7 +369,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="kofi-events">
           <h2 class="mb-6 text-2xl font-bold">Ko-fi Integration Events</h2>
           <p class="mb-6 text-muted-foreground">
-            These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure which template fires for each
+            These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure which alert fires for each
             event type on the <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
           </p>
 
@@ -383,7 +383,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-muted-foreground">Available on every Ko-fi event type (donation, subscription, shop_order, commission).</p>
               <div class="space-y-2 font-mono text-sm">
                 <div><code>[[[event.from_name]]]</code> — name of the supporter</div>
-                <div><code>[[[event.source]]]</code> — display name of the platform (e.g. <code>"Ko-fi"</code>) — useful for reusing the same template across multiple donation services</div>
+                <div><code>[[[event.source]]]</code> — display name of the platform (e.g. <code>"Ko-fi"</code>) — useful for reusing the same value across multiple donation services</div>
                 <div><code>[[[event.type]]]</code> — normalized type: <code>donation</code>, <code>subscription</code>, <code>shop_order</code>, or <code>commission</code></div>
                 <div><code>[[[event.transaction_id]]]</code> — unique Ko-fi transaction ID</div>
                 <div><code>[[[event.url]]]</code> — supporter's Ko-fi page URL</div>
