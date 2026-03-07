@@ -12,7 +12,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-  <Head title="Controls Help" />
+  <Head>
+    <title>How to use Controls    </title>
+  </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">

@@ -180,7 +180,7 @@ const serviceLabel: Record<string, string> = {
 </script>
 
 <template>
-  <Head title="Event Alerts Builder" />
+  <Head title="Event alerts builder" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header Section -->

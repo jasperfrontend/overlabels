@@ -53,7 +53,7 @@ const breadcrumbs = [
 
 <template>
   <Head>
-    <title>My Activity</title>
+    <title>My activity</title>
     <meta name="description" content="Your recent templates and stream events - Overlabels" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">

@@ -12,7 +12,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-  <Head title="Overlabels Manifesto" />
+  <Head title="The Overlabels Manifesto" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">

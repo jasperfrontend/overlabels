@@ -41,7 +41,7 @@ const alertsNavItems: NavItem[] = [
 const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.index'), icon: LayoutGrid }];
 
 const learnNavItems: NavItem[] = [
-  { title: 'Syntax help', href: route('help'), icon: Brackets },
+  { title: 'Conditional Tags', href: route('help'), icon: Brackets },
   { title: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
   { title: 'Manifesto', href: route('manifesto'), icon: FileText },
 ];

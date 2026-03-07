@@ -57,7 +57,7 @@ defineProps<Props>();
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="My Kits" />
+    <Head title="Overlay kits" />
 
     <div class="p-4 space-y-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
