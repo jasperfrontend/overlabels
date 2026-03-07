@@ -43,6 +43,10 @@ interface IpLocation {
   longitude: string | null;
   timezone: string | null;
   currencyCode: string | null;
+  isp: string | null;
+  org: string | null;
+  asName: string | null;
+  query: string | null;
 }
 
 defineProps<{ sessions: Paginator }>();
@@ -135,6 +139,10 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
   { key: 'longitude', label: 'Longitude' },
   { key: 'timezone', label: 'Timezone' },
   { key: 'currencyCode', label: 'Currency' },
+  { key: 'isp', label: 'ISP' },
+  { key: 'org', label: 'Organization' },
+  { key: 'asName', label: 'AS' },
+  { key: 'query', label: 'Query' },
 ];
 </script>
 

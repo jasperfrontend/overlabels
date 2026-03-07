@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 7th, 2026 — Feature: IP geolocation lookup on admin sessions page
+
+- **Custom `ExtendedIpApi` driver and `ExtendedPosition`** extending `stevebauman/location`'s IpApi driver to include `isp`, `org`, `asName`, and `query` fields that the upstream driver omits.
+- **New `GET /admin/sessions/ip-lookup/{ip}` endpoint** returning JSON geolocation data via the IpApi free tier.
+- **Clickable IP addresses on `/admin/sessions`** — clicking any IP opens a Shadcn Dialog showing city, region, country, coordinates, timezone, currency, ISP, organization, and AS number.
+
 ## March 7th, 2026 — Feature: Banhammer integration for user/IP ban management
 
 - **Installed `mchev/banhammer` v2.4.3** for user and IP ban management with temporary/permanent ban support.

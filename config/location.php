@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'driver' => Stevebauman\Location\Drivers\IpApi::class,
+    'driver' => App\Services\Location\ExtendedIpApi::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -43,7 +43,7 @@ return [
     |
     */
 
-    'position' => Stevebauman\Location\Position::class,
+    'position' => App\Services\Location\ExtendedPosition::class,
 
     /*
     |--------------------------------------------------------------------------
