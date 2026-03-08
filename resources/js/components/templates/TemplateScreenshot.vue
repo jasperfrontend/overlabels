@@ -2,12 +2,13 @@
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import ImageDropZone from '@/components/ImageDropZone.vue';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from 'reka-ui';
 
 const props = defineProps<{
   screenshotUrl: string | null;
   templateId: number;
+  name: string
 }>();
 
 const emit = defineEmits<{
@@ -60,6 +61,15 @@ function onUrlChange(url: string | null) {
         alt="Screenshot preview"
         class="max-h-[85vh] w-auto rounded object-contain"
       />
+      <DialogFooter>
+        <div class="flex w-full items-center justify-between gap-2">
+          <div class="text-sm text-muted-foreground">
+            Screenshot: {{props.name}}
+          </div>
+          <button type="button" class="ml-auto btn btn-chill" @click="showPreview = false">Close</button>
+        </div>
+      </DialogFooter>
     </DialogContent>
+
   </Dialog>
 </template>

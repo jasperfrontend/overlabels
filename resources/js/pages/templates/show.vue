@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -29,6 +29,8 @@ import {
   ImageIcon,
 } from 'lucide-vue-next';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+import { VisuallyHidden } from 'reka-ui';
+const showPreview = ref(false);
 
 interface OverlayOption {
   id: number
@@ -297,9 +299,32 @@ const forkTitle = computed(() => {
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
-            class="max-h-[70vh] rounded border border-sidebar"
+            class="max-h-[70vh] hover:opacity-70 transition-all rounded border border-sidebar cursor-pointer"
+            @click="showPreview = true"
           />
         </div>
+
+        <Dialog :open="showPreview" @update:open="showPreview = $event">
+          <DialogContent class="max-w-[90vw] max-h-[90vh] w-auto p-2 sm:max-w-[90vw]">
+            <VisuallyHidden>
+              <DialogTitle>Screenshot preview</DialogTitle>
+            </VisuallyHidden>
+            <img
+              v-if="template.screenshot_url"
+              :src="template.screenshot_url"
+              alt="Screenshot preview"
+              class="max-h-[85vh] w-auto rounded object-contain"
+            />
+            <DialogFooter>
+              <div class="flex w-full items-center justify-between gap-2">
+                <div class="text-sm text-muted-foreground">
+                  Screenshot: {{props.template?.name}}
+                </div>
+                <button type="button" class="ml-auto btn btn-chill" @click="showPreview = false">Close</button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <!-- Targeting tab (alert templates, owner only) -->
         <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 max-w-2xl">

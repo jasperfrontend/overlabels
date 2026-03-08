@@ -378,6 +378,7 @@ onMounted(() => {
             <TemplateScreenshot
               :screenshot-url="template.screenshot_url"
               :template-id="template.id"
+              :name="template.name"
               @saved="pushToast('Screenshot saved.', 'success')"
               @removed="pushToast('Screenshot removed.', 'success')"
               @error="(msg: string) => pushToast(msg, 'error')"

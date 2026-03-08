@@ -215,7 +215,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
         </div>
 
         <!-- Number control -->
-        <div v-else-if="ctrl.type === 'number'" class="flex gap-2">
+        <div v-else-if="ctrl.type === 'number'" class="flex">
           <input
             :value="getLocalValue(ctrl)"
             :title="getLocalValue(ctrl) || 'Click to edit'"
@@ -234,7 +234,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
         <!-- Counter control -->
         <div v-else-if="ctrl.type === 'counter'" class="flex items-center gap-3">
-          <div class="min-w-[60px] text-center text-2xl font-bold tabular-nums">
+          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
             {{ ctrl.value ?? '0' }}
           </div>
           <div class="flex gap-1.5">
