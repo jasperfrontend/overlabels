@@ -18,8 +18,8 @@ jobs:
           TIMESTAMP=$(date -u +%s)
           BODY='{"name":"version.updated","channel":"app-updates","data":"{\"sha\":\"'$GITHUB_SHA'\"}"}'
           MD5=$(echo -n "$BODY" | md5sum | awk '{print $1}')
-          STRING_TO_SIGN="POST\n/apps/${PUSHER_APP_ID}/events\nauth_key=${PUSHER_APP_KEY}&auth_timestamp=${TIMESTAMP}&auth_version=1.0&body_md5=${MD5}"
-          SIGNATURE=$(echo -ne "$STRING_TO_SIGN" | openssl dgst -sha256 -hmac "$PUSHER_APP_SECRET" | awk '{print $2}')
+          STRING_TO_SIGN="POST"$'\n'"/apps/${PUSHER_APP_ID}/events"$'\n'"auth_key=${PUSHER_APP_KEY}&auth_timestamp=${TIMESTAMP}&auth_version=1.0&body_md5=${MD5}"
+          SIGNATURE=$(printf '%s' "$STRING_TO_SIGN" | openssl dgst -sha256 -hmac "$PUSHER_APP_SECRET" | awk '{print $2}')
 
           curl -s -X POST "https://api-eu.pusher.com/apps/${PUSHER_APP_ID}/events?auth_key=${PUSHER_APP_KEY}&auth_timestamp=${TIMESTAMP}&auth_version=1.0&body_md5=${MD5}&auth_signature=${SIGNATURE}" \
             -H "Content-Type: application/json" \
