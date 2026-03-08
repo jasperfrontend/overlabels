@@ -49,7 +49,7 @@
     </style>
     <div class="olb-bar">
         <div class="olb-inner">
-            <span class="olb-label">Preview &mdash; tags not parsed</span>
+            <span class="olb-label">Preview - tags not parsed</span>
             <div class="olb-actions">
                 <button class="olb-btn" data-copy="head" title="Copy &lt;head&gt;">HEAD</button>
                 <button class="olb-btn" data-copy="html" title="Copy HTML body">HTML</button>
@@ -65,10 +65,10 @@
                 @auth
                     <form action="{{ route('templates.fork', $template) }}" method="POST" style="display:inline">
                         @csrf
-                        <button type="submit" class="olb-btn olb-btn--accent" title="Fork to your account">Fork</button>
+                        <button type="submit" class="olb-btn olb-btn--accent" title="Copy to your account">Copy</button>
                     </form>
                 @else
-                    <button class="olb-btn olb-btn--accent" onclick="window.location.href='/dashboard'" title="Log in to fork">Login to fork</button>
+                    <button class="olb-btn olb-btn--accent" onclick="window.location.href='/dashboard'" title="Log in to copy">Login to copy</button>
                 @endauth
             </div>
         </div>

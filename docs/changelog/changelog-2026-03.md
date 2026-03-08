@@ -1,6 +1,13 @@
 # CHANGELOG MARCH 2026
 
-## March 8th, 2026 — UI: redesigned public overlay preview bar + screenshot button
+## March 8th, 2026 - Templates in kits cannot be deleted (Issue #49)
+
+- **Backend guard:** `OverlayTemplateController::destroy()` now checks `kits()->exists()` before deleting and returns a friendly error instead of a 500. The model `boot()` guard with `restrict` FK constraint remains as a safety net.
+- **Frontend:** Delete buttons on template show, edit, and index pages are hidden when the template belongs to a kit. A disabled "Part of a kit - cannot delete" message shows in the dropdown instead, matching the kit deletion guard pattern.
+- **`kits_exists` flag:** Added via `withExists('kits')` / `loadExists('kits')` on index, show, and edit queries. Exposed in the `OverlayTemplate` TypeScript type.
+- **Renamed "Fork" to "Copy"** across all user-facing UI: template show/edit dropdowns, TemplateTable card/table views, and the public overlay preview bar.
+
+## March 8th, 2026 - UI: redesigned public overlay preview bar + screenshot button
 
 - **Redesigned preview bar.** Moved from top to bottom, frosted glass background (`backdrop-filter: blur`), subtle border, rounded pill-style buttons with smooth hover transitions. Removed the harsh 2001-era inline styles.
 - **Screenshot button.** If the overlay has an uploaded screenshot, a "Screenshot" button appears in the bar (separated by a visual divider) that opens the screenshot page in a new tab.

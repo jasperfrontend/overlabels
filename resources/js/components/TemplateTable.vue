@@ -99,12 +99,17 @@ async function copyLink(path: string) {
 }
 
 function handleFork(t: OverlayTemplate) {
-  if (confirm('Are you sure you want to fork this template to your own account?')) {
+  if (confirm('Copy this template to your own account?')) {
     router.post(`/templates/${t.id}/fork`);
   }
 }
 
+function canDelete(t: OverlayTemplate) {
+  return isOwn(t) && !t.kits_exists;
+}
+
 function handleDelete(t: OverlayTemplate) {
+  if (!canDelete(t)) return;
   if (confirm(`Delete "${t.name}"? This cannot be undone.`)) {
     const returnUrl = window.location.pathname + window.location.search;
     router.delete(`/templates/${t.id}`, {
@@ -145,12 +150,15 @@ function handleDelete(t: OverlayTemplate) {
               <DropdownMenuItem v-if="isOwn(t)" as-child>
                 <Link :href="editHref(t)"><PencilIcon class="mr-2 h-4 w-4" />Edit</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+              <DropdownMenuItem v-if="canDelete(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
                 <Trash2 class="mr-2 h-4 w-4" />Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-muted-foreground text-xs">
+                Part of a kit - cannot delete
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
-                <GitFork class="mr-2 h-4 w-4" />Fork template
+                <GitFork class="mr-2 h-4 w-4" />Copy template
               </DropdownMenuItem>
               <DropdownMenuItem @click="copyLink(detailsHref(t))">
                 <LinkIcon class="mr-2 h-4 w-4" />Copy link
@@ -334,16 +342,19 @@ function handleDelete(t: OverlayTemplate) {
                     </Link>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem v-if="isOwn(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+                  <DropdownMenuItem v-if="canDelete(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
                     <Trash2 class="mr-2 h-4 w-4" />
                     Delete
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-muted-foreground text-xs">
+                    Part of a kit - cannot delete
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
                     <GitFork class="mr-2 h-4 w-4" />
-                    Fork template
+                    Copy template
                   </DropdownMenuItem>
 
                   <DropdownMenuItem @click="copyLink(detailsHref(t))">

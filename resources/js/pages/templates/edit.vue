@@ -89,6 +89,7 @@ const isDark = ref(document.documentElement.classList.contains('dark'));
 const { triggerLinkWarning } = useLinkWarning();
 
 const {
+  canDelete,
   previewTemplate,
   forkTemplate,
   deleteTemplate,
@@ -260,14 +261,17 @@ onMounted(() => {
 
               <DropdownMenuItem @click="forkTemplate">
                 <Split class="mr-2 h-4 w-4" />
-                Fork
+                Copy
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem class="text-destructive focus:text-destructive" @click="deleteTemplate">
+              <DropdownMenuItem v-if="canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
                 <Trash class="mr-2 h-4 w-4" />
                 Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem v-else disabled class="text-muted-foreground text-xs">
+                Part of a kit - cannot delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

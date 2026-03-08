@@ -13,6 +13,8 @@ export function useTemplateActions(template: any) {
   const forkWizardTemplateSlug = ref<string>('');
   const forkWizardSourceControls = ref<any[]>([]);
 
+  const canDelete = computed(() => !template?.kits_exists);
+
   const publicUrl = computed(() => {
     return `${window.location.origin}/overlay/${template?.slug}/public`;
   });
@@ -27,7 +29,7 @@ export function useTemplateActions(template: any) {
   };
 
   const forkTemplate = async () => {
-    if (!confirm('Fork this template?')) return;
+    if (!confirm('Copy this template?')) return;
 
     try {
       const response = await axios.post(route('templates.fork', template));
@@ -43,14 +45,15 @@ export function useTemplateActions(template: any) {
         router.visit(route('templates.show', data.template));
       }
     } catch (error) {
-      console.error('Failed to fork template:', error);
+      console.error('Failed to copy template:', error);
       showToast.value = true;
-      toastMessage.value = 'Failed to fork template.';
+      toastMessage.value = 'Failed to copy template.';
       toastType.value = 'error';
     }
   };
 
   const deleteTemplate = () => {
+    if (!canDelete.value) return;
     if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
 
     router.delete(route('templates.destroy', template), {
@@ -63,6 +66,7 @@ export function useTemplateActions(template: any) {
   return {
     publicUrl,
     authUrl,
+    canDelete,
     previewTemplate,
     forkTemplate,
     deleteTemplate,

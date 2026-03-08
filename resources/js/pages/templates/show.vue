@@ -102,6 +102,7 @@ const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 // Use the template actions composable
 const {
   authUrl,
+  canDelete,
   previewTemplate,
   forkTemplate,
   deleteTemplate,
@@ -191,12 +192,15 @@ const forkTitle = computed(() => {
               <DropdownMenuSeparator />
               <DropdownMenuItem @click="forkTemplate">
                 <SplitIcon class="mr-2 h-4 w-4" />
-                Fork
+                Copy
               </DropdownMenuItem>
               <DropdownMenuSeparator v-if="canEdit" />
-              <DropdownMenuItem v-if="canEdit" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+              <DropdownMenuItem v-if="canEdit && canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
                 <TrashIcon class="mr-2 h-4 w-4" />
                 Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem v-else-if="canEdit" disabled class="text-muted-foreground text-xs">
+                Part of a kit - cannot delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

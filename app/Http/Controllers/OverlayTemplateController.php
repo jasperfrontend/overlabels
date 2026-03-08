@@ -69,7 +69,7 @@ class OverlayTemplateController extends Controller
                 $query->where('user_id', $request->user()->id);
             }])
             ->withCount('forks')
-
+            ->withExists('kits')
             ->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
             ->paginate(12);
 
@@ -99,6 +99,7 @@ class OverlayTemplateController extends Controller
 
         $template->load(['owner:id,name,avatar', 'forkParent:id,name,slug']);
         $template->loadCount('forks');
+        $template->loadExists('kits');
 
         $canEdit = auth()->id() === $template->owner_id;
         $controls = $canEdit
@@ -142,6 +143,8 @@ class OverlayTemplateController extends Controller
         if ($template->owner_id !== auth()->id()) {
             abort(403);
         }
+
+        $template->loadExists('kits');
 
         $availableTags = [];
 
@@ -200,6 +203,17 @@ class OverlayTemplateController extends Controller
         // Check ownership
         if ($template->owner_id !== $request->user()->id) {
             abort(403);
+        }
+
+        // Prevent deletion if template belongs to a kit
+        if ($template->kits()->exists()) {
+            $message = 'This template is part of a kit and cannot be deleted. Remove it from all kits first.';
+
+            if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+                return response()->json(['error' => $message], 422);
+            }
+
+            return back()->withErrors(['error' => $message]);
         }
 
         $template->delete();
