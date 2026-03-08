@@ -46,7 +46,7 @@ function formatDate(iso: string | null): string {
 
                 <div class="space-y-4">
                     <div
-                        v-for="service in services"
+                        v-for="service in props.services"
                         :key="service.key"
                         class="flex items-center justify-between rounded-lg border p-4"
                     >

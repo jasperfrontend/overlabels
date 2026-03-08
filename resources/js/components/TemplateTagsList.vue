@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Configure axios to include CSRF token and credentials
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

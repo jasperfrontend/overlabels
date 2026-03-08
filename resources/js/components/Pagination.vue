@@ -41,9 +41,9 @@
                 index === 0 ? 'rounded-l-md' : '',
                 index === mergedLinks.length - 1 ? 'rounded-r-md' : '',
                 'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors'
-              ]"
-              v-html="link.label"
-            />
+              ]">
+                {{ link.label }}
+            </Link>
             <span
               v-else
               :class="[
@@ -54,8 +54,9 @@
                 index === 0 ? 'rounded-l-md' : '',
                 index === mergedLinks.length - 1 ? 'rounded-r-md' : ''
               ]"
-              v-html="link.label"
-            />
+              >
+                {{ link.label }}
+              </span>
           </template>
         </nav>
       </div>

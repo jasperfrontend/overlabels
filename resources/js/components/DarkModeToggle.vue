@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/composables/useAppearance';
 
-const { appearance, updateAppearance } = useAppearance();
+const { updateAppearance } = useAppearance();
 </script>
 
 <template>

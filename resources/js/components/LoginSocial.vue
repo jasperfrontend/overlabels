@@ -7,7 +7,7 @@
   </a>
 </template>
 
-<script lang="js" setup>
+<script lang="ts" setup>
 function loginWithTwitch () {
   window.location.href = '/auth/redirect/twitch'
 }

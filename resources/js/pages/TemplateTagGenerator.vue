@@ -389,9 +389,9 @@ const clearPreview = (tagId: number) => {
 };
 
 // Hide toast
-const hideToast = () => {
-  showToast.value = false;
-};
+// const hideToast = () => {
+//   showToast.value = false;
+// };
 watch(toastMessage, () => {
   setTimeout(() => {
     showToast.value = false;
@@ -412,10 +412,10 @@ const copyTag = async (tagName: string) => {
   }
 };
 
-const slug = computed(() => {
-  const path = window.location.pathname;
-  return path.replace(/^\/+|\/+$/g, '') || 'home';
-});
+// const slug = computed(() => {
+//   const path = window.location.pathname;
+//   return path.replace(/^\/+|\/+$/g, '') || 'home';
+// });
 
 // Get style classes for data types
 const getDataTypeClass = (dataType: string) => {

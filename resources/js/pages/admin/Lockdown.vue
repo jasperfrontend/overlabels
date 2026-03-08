@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import type { AppPageProps } from '@/types';
+import { Button } from '@/components/ui/button';
 
 interface LockdownStatus {
   active: boolean;
@@ -19,7 +19,6 @@ const props = defineProps<{
   activeTokens: number;
 }>();
 
-const page = usePage<AppPageProps>();
 
 // Engage lockdown flow — 3 steps
 const engageStep = ref<0 | 1 | 2>(0);
@@ -77,38 +76,38 @@ function formatDate(iso?: string) {
 
       <!-- Status card -->
       <div
-        :class="lockdown.active
+        :class="props.lockdown.active
           ? 'border-red-500 bg-red-50 dark:bg-red-950/30'
           : 'border-green-500 bg-green-50 dark:bg-green-950/30'"
         class="rounded-lg border-2 p-6"
       >
         <div class="flex items-center gap-3">
           <span
-            :class="lockdown.active ? 'bg-red-500' : 'bg-green-500'"
+            :class="props.lockdown.active ? 'bg-red-500' : 'bg-green-500'"
             class="inline-block h-3 w-3 rounded-full"
           />
           <h2 class="text-xl font-bold">
-            {{ lockdown.active ? 'LOCKDOWN ACTIVE' : 'System operational' }}
+            {{ props.lockdown.active ? 'LOCKDOWN ACTIVE' : 'System operational' }}
           </h2>
         </div>
 
-        <template v-if="lockdown.active">
+        <template v-if="props.lockdown.active">
           <dl class="mt-4 space-y-2 text-sm">
             <div class="flex gap-2">
               <dt class="font-medium text-gray-600 dark:text-gray-400 w-32 shrink-0">Activated by</dt>
-              <dd>{{ lockdown.activated_by_name ?? lockdown.activated_by ?? '—' }}</dd>
+              <dd>{{ props.lockdown.activated_by_name ?? lockdown.activated_by ?? '—' }}</dd>
             </div>
             <div class="flex gap-2">
               <dt class="font-medium text-gray-600 dark:text-gray-400 w-32 shrink-0">Activated at</dt>
-              <dd>{{ formatDate(lockdown.activated_at) }}</dd>
+              <dd>{{ formatDate(props.lockdown.activated_at) }}</dd>
             </div>
             <div class="flex gap-2">
               <dt class="font-medium text-gray-600 dark:text-gray-400 w-32 shrink-0">Reason</dt>
-              <dd>{{ lockdown.reason || 'No reason provided' }}</dd>
+              <dd>{{ props.lockdown.reason || 'No reason provided' }}</dd>
             </div>
             <div class="flex gap-2">
               <dt class="font-medium text-gray-600 dark:text-gray-400 w-32 shrink-0">Tokens suspended</dt>
-              <dd>{{ lockdown.suspended_token_ids?.length ?? '—' }}</dd>
+              <dd>{{ props.lockdown.suspended_token_ids?.length ?? '—' }}</dd>
             </div>
           </dl>
         </template>
@@ -121,14 +120,14 @@ function formatDate(iso?: string) {
       </div>
 
       <!-- Lift lockdown -->
-      <div v-if="lockdown.active" class="space-y-4">
+      <div v-if="props.lockdown.active" class="space-y-4">
         <div v-if="!liftConfirming">
-          <button
+          <Button
             @click="confirmLift"
             class="rounded bg-green-600 px-5 py-2.5 font-semibold text-white hover:bg-green-700"
           >
             Lift lockdown
-          </button>
+          </Button>
         </div>
 
         <div v-else class="rounded-lg border border-green-400 bg-green-50 dark:bg-green-950/30 p-5 space-y-4">
@@ -139,16 +138,16 @@ function formatDate(iso?: string) {
             <li>Resume Twitch and external webhook processing</li>
           </ul>
           <div class="flex gap-3">
-            <button
+            <Button
               @click="submitLift"
               :disabled="lifting"
               class="rounded bg-green-600 px-5 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
             >
               {{ lifting ? 'Lifting…' : 'Confirm — lift lockdown' }}
-            </button>
-            <button @click="cancelLift" class="rounded border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">
+            </Button>
+            <Button @click="cancelLift" class="rounded border px-5 py-2 text-sm font-medium">
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -158,19 +157,20 @@ function formatDate(iso?: string) {
 
         <!-- Step 0: Initial button -->
         <div v-if="engageStep === 0">
-          <button
+          <Button
             @click="startEngage"
+            size="lg"
             class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white hover:bg-red-700"
           >
             Engage lockdown
-          </button>
+          </Button>
         </div>
 
         <!-- Step 1: Consequences + reason -->
         <div v-else-if="engageStep === 1" class="rounded-lg border border-red-400 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
           <h3 class="font-bold text-red-700 dark:text-red-400">Engaging lockdown will immediately:</h3>
           <ul class="list-disc list-inside text-sm space-y-1 text-gray-700 dark:text-gray-300">
-            <li>Deactivate all <strong>{{ activeTokens }}</strong> overlay access tokens</li>
+            <li>Deactivate all <strong>{{ props.activeTokens }}</strong> overlay access tokens</li>
             <li>Return 503 to all overlay render requests — OBS sources will show an error banner</li>
             <li>Stop processing all Twitch and external webhook events</li>
             <li>Flush all non-admin user sessions</li>
@@ -190,15 +190,15 @@ function formatDate(iso?: string) {
             />
           </div>
           <div class="flex gap-3">
-            <button
+            <Button
               @click="engageStep2"
               class="rounded bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700"
             >
               Continue
-            </button>
-            <button @click="cancelEngage" class="rounded border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">
+            </Button>
+            <Button @click="cancelEngage" class="rounded border px-5 py-2 text-sm font-medium ">
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -218,16 +218,16 @@ function formatDate(iso?: string) {
             :class="engageConfirmValid ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'"
           />
           <div class="flex gap-3">
-            <button
+            <Button
               @click="submitEngage"
               :disabled="!engageConfirmValid || engaging"
               class="rounded bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {{ engaging ? 'Engaging…' : 'Engage lockdown now' }}
-            </button>
-            <button @click="cancelEngage" class="rounded border px-5 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800">
+            </Button>
+            <Button @click="cancelEngage" class="rounded border px-5 py-2 text-sm font-medium ">
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

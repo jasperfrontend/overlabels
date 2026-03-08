@@ -40,30 +40,30 @@ function formatDateShort(iso: string) {
   }).format(new Date(iso));
 }
 
-function formatDateFull(iso: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(new Date(iso));
-}
+// function formatDateFull(iso: string) {
+//   return new Intl.DateTimeFormat(undefined, {
+//     dateStyle: 'full',
+//     timeStyle: 'short',
+//   }).format(new Date(iso));
+// }
+//
+// function relativeTime(iso: string) {
+//   const diff = new Date(iso).getTime() - Date.now();
+//   const abs = Math.abs(diff);
+//   const minute = 60_000;
+//   const hour = 60 * minute;
+//   const day = 24 * hour;
+//   const week = 7 * day;
+//   const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+//   if (abs < hour) return rtf.format(Math.round(diff / minute), 'minute');
+//   if (abs < day) return rtf.format(Math.round(diff / hour), 'hour');
+//   if (abs < week) return rtf.format(Math.round(diff / day), 'day');
+//   return rtf.format(Math.round(diff / week), 'week');
+// }
 
-function relativeTime(iso: string) {
-  const diff = new Date(iso).getTime() - Date.now();
-  const abs = Math.abs(diff);
-  const minute = 60_000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  const week = 7 * day;
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-  if (abs < hour) return rtf.format(Math.round(diff / minute), 'minute');
-  if (abs < day) return rtf.format(Math.round(diff / hour), 'hour');
-  if (abs < week) return rtf.format(Math.round(diff / day), 'day');
-  return rtf.format(Math.round(diff / week), 'week');
-}
-
-function compact(n: number) {
-  return new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n);
-}
+// function compact(n: number) {
+//   return new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n);
+// }
 
 const copiedId = ref<number | null>(null);
 

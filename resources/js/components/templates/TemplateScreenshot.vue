@@ -51,7 +51,7 @@ function onUrlChange(url: string | null) {
   />
 
   <Dialog :open="showPreview" @update:open="showPreview = $event">
-    <DialogContent class="max-w-[90vw] max-h-[90vh] w-auto p-2 sm:max-w-[90vw]">
+    <DialogContent class="max-w-[95vw] max-h-[95vh] w-auto p-2 sm:max-w-[95vw]">
       <VisuallyHidden>
         <DialogTitle>Screenshot preview</DialogTitle>
       </VisuallyHidden>
@@ -59,7 +59,7 @@ function onUrlChange(url: string | null) {
         v-if="localUrl"
         :src="localUrl"
         alt="Screenshot preview"
-        class="max-h-[85vh] w-auto rounded object-contain"
+        class="max-w-[50vw] rounded object-contain"
       />
       <DialogFooter>
         <div class="flex w-full items-center justify-between gap-2">

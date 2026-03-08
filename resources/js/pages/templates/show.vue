@@ -145,10 +145,12 @@ const forkTitle = computed(() => {
       :forked-template-slug="forkWizardTemplateSlug"
       :source-controls="forkWizardSourceControls"
     />
+
     <div class="p-4">
       <!-- Header -->
       <div class="mb-5 flex items-start justify-between gap-4">
         <div class="min-w-0">
+
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
             <span
@@ -313,7 +315,7 @@ const forkTitle = computed(() => {
               v-if="template.screenshot_url"
               :src="template.screenshot_url"
               alt="Screenshot preview"
-              class="max-h-[85vh] w-auto rounded object-contain"
+              class="max-w-[50vw] rounded object-contain"
             />
             <DialogFooter>
               <div class="flex w-full items-center justify-between gap-2">

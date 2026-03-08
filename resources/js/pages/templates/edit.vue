@@ -8,7 +8,6 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
-import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
@@ -197,7 +196,7 @@ watch(
   },
 );
 
-const { register, getAllShortcuts } = useKeyboardShortcuts();
+const { register } = useKeyboardShortcuts();
 const showKeyboardShortcuts = ref(false);
 
 onMounted(() => {

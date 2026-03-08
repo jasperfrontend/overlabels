@@ -9,7 +9,8 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref('');
-const toastType = ref('info');
+const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+
 const isRefreshing = ref(false);
 const connectionError = ref(false);
 const lastRefreshTime = ref(Date.now());

@@ -24,7 +24,7 @@ interface GiftBombBuffer {
  *                    - `getActiveBuffers()` - Retrieves information about currently active gift bomb buffers.
  *                    - `activeBufferCount()` - Returns the count of active gift bomb buffers.
  */
-export function useGiftBombDetector() {
+export function useGiftBombDetector(): object {
   const activeBuffers = ref<Map<string, GiftBombBuffer>>(new Map());
   const GIFT_BOMB_WINDOW = 8000; // 8 seconds to collect all gift events
   const MIN_GIFT_BOMB_SIZE = 2; // Minimum 2 gifts to be considered a bomb (for channel.subscribe events)
@@ -146,6 +146,8 @@ export function useGiftBombDetector() {
         const latestBuffer = activeBuffers.value.get(bufferKey);
         if (latestBuffer) {
           sendLiveUpdate(latestBuffer, callback);
+        } else {
+          sendLiveUpdate(currentBuffer, callback);
         }
       }, LIVE_UPDATE_DELAY);
     }
@@ -200,6 +202,5 @@ export function useGiftBombDetector() {
     processEvent,
     forceFlushAll,
     getActiveBuffers,
-    activeBufferCount: () => activeBuffers.value.size,
   };
 }
