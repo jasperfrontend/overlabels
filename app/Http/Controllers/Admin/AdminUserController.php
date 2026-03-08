@@ -160,7 +160,29 @@ class AdminUserController extends Controller
             OverlayTemplate::where('owner_id', $user->id)->update(['owner_id' => $ghost->id]);
             Kit::where('owner_id', $user->id)->update(['owner_id' => $ghost->id]);
             OverlayControl::where('user_id', $user->id)->update(['user_id' => $ghost->id]);
+
+            // Delete tags/categories that would conflict with existing ghost user rows,
+            // then reassign the rest.
+            $existingGhostTagKeys = TemplateTag::where('user_id', $ghost->id)
+                ->select('category_id', 'tag_name')
+                ->get()
+                ->map(fn ($t) => $t->category_id.':'.$t->tag_name)
+                ->all();
+            TemplateTag::where('user_id', $user->id)
+                ->get()
+                ->each(function ($tag) use ($existingGhostTagKeys) {
+                    if (in_array($tag->category_id.':'.$tag->tag_name, $existingGhostTagKeys)) {
+                        $tag->delete();
+                    }
+                });
             TemplateTag::where('user_id', $user->id)->update(['user_id' => $ghost->id]);
+
+            $existingGhostCategoryNames = TemplateTagCategory::where('user_id', $ghost->id)
+                ->pluck('name')
+                ->all();
+            TemplateTagCategory::where('user_id', $user->id)
+                ->whereIn('name', $existingGhostCategoryNames)
+                ->delete();
             TemplateTagCategory::where('user_id', $user->id)->update(['user_id' => $ghost->id]);
         }
 

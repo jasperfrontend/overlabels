@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 - Fix: admin user deletion crashes on unique constraint violation
+
+- **Root cause:** The "Assign to Ghost User" deletion strategy blindly reassigned all `template_tag_categories` and `template_tags` to the ghost user. When the ghost user already had rows with the same `(user_id, name)` or `(user_id, category_id, tag_name)`, Postgres threw a unique constraint violation (23505).
+- **Fix:** Before reassigning, conflicting rows (duplicates of what the ghost user already owns) are deleted. Non-conflicting rows are then safely reassigned.
+
 ## March 8th, 2026 - Templates in kits cannot be deleted (Issue #49)
 
 - **Backend guard:** `OverlayTemplateController::destroy()` now checks `kits()->exists()` before deleting and returns a friendly error instead of a 500. The model `boot()` guard with `restrict` FK constraint remains as a safety net.
