@@ -247,6 +247,23 @@ class OverlayTemplateController extends Controller
         ]);
     }
 
+    public function servePublicScreenshot(string $slug)
+    {
+        $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
+
+        if (! $template->is_public) {
+            abort(404, 'This overlay is private');
+        }
+
+        if (! $template->screenshot_url) {
+            abort(404, 'No screenshot available');
+        }
+
+        return view('overlay.screenshot', [
+            'template' => $template,
+        ]);
+    }
+
     /**
      * Serve authenticated overlay (parsed with user data)
      */

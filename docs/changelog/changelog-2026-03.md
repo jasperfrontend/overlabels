@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Feature: public screenshot route for overlays
+
+- **New route: `GET /overlay/{slug}/public/screenshot`** renders a minimal page displaying the overlay's uploaded screenshot (from `overlay_templates.screenshot_url`). Returns 404 if the overlay is private or has no screenshot.
+- **Minimal markup** — dark background, centered `<img>` at native 1280x720, responsive via `max-width: 100%`.
+
 ## March 8th, 2026 — Fix: public overlay routes firing spurious GET requests for unresolved tags
 
 - **Root cause:** On public overlay routes (`/overlay/{slug}/public`), the raw template HTML is injected via `{!! $html !!}` without any tag replacement. When a user writes `<img src="[[[c:avatar]]]">`, the browser interprets the raw tag string as a relative URL and fires a GET request for `/overlay/{slug}/[[[c:avatar]]]`.

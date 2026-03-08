@@ -110,6 +110,10 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
+Route::get('/overlay/{slug}/public/screenshot', [OverlayTemplateController::class, 'servePublicScreenshot'])
+    ->name('overlay.public.screenshot')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
+
 // Initiate login with Twitch
 Route::get('/auth/redirect/twitch', function (Request $request) {
     // Preserve the intended URL during OAuth flow
