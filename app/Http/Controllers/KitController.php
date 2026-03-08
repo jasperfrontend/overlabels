@@ -25,6 +25,7 @@ class KitController extends Controller
         $recentPublicKits = Kit::with(['owner:id,name,avatar', 'templates'])
             ->public()
             ->where('owner_id', '!=', $request->user()->id)
+            ->where('title', 'not like', 'Fork of%')
             ->latest()
             ->limit(10)
             ->get();
