@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Chore: fix final 3 ESLint errors (0 remaining)
+
+- **TemplateCard.vue** — `confirm(...) && router.post(...)` flagged as unused expression; rewrote as `if` statement.
+- **TemplateTagGenerator.vue** — destructured-but-unused `removed` / `removedLoading` variables (used only to omit keys from rest spreads); added `void` expressions to satisfy the linter.
+
 ## March 8th, 2026 — Fix + Enhancement: screenshot preview modal & TS fix
 
 - **Fixed TS2769 error in `TemplateScreenshot.vue`.** The ternary `emit(url ? 'saved' : 'removed')` produced a union type that TypeScript couldn't resolve across overloads. Replaced with an explicit `if`/`else`.

@@ -380,11 +380,13 @@ const previewTag = async (tagId: number) => {
 // Clear a tag preview
 const clearPreview = (tagId: number) => {
   // Remove the preview for this specific tag
-  const { [tagId]: removed, ...rest } = tagPreviews.value;
+  const { [tagId]: __removed, ...rest } = tagPreviews.value;
+  void __removed;
   tagPreviews.value = rest;
 
   // Also clear the loading state if it exists
-  const { [tagId]: removedLoading, ...restLoading } = isLoadingPreview.value;
+  const { [tagId]: __removedLoading, ...restLoading } = isLoadingPreview.value;
+  void __removedLoading;
   isLoadingPreview.value = restLoading;
 };
 

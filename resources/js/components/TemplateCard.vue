@@ -67,7 +67,9 @@ const shortUpdatedAt = computed(() => formatDateShort(props.template.updated_at)
 const isOwnTemplate = computed(() => !!props.currentUserId && props.template.owner?.id === props.currentUserId);
 
 const handleFork = () => {
-  confirm('Are you sure you want to fork this template to your own account?') && router.post(`/templates/${props.template.id}/fork`);
+  if (confirm('Are you sure you want to fork this template to your own account?')) {
+    router.post(`/templates/${props.template.id}/fork`);
+  }
 };
 </script>
 
