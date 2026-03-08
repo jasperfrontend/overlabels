@@ -63,7 +63,7 @@
                 <div class="olb-sep"></div>
 
                 @auth
-                    <form action="{{ route('templates.fork', $template) }}" method="POST" style="display:inline">
+                    <form action="{{ route('templates.fork', $template) }}" method="POST" style="display:inline" onsubmit="return confirm('Copy this template to your account?')">
                         @csrf
                         <button type="submit" class="olb-btn olb-btn--accent" title="Copy to your account">Copy</button>
                     </form>
