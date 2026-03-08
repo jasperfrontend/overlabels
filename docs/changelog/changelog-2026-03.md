@@ -6,6 +6,7 @@
 - **GitHub Action trigger.** The `notify-deploy` workflow listens for Railway's `deployment_status: success` event, then sends a signed Pusher event via the HTTP API. The banner only appears after the new code is live - no app server involvement.
 - **`VersionBanner` component** renders a blue top-bar banner with a Refresh button. Mounted in the sidebar layout above all other banners.
 - Requires `PUSHER_SECRET` as a GitHub repository secret.
+- **Commit hash in sidebar footer.** The current git commit short hash is baked into the build via Vite `define` and displayed at the bottom of the sidebar. Hidden when sidebar is collapsed.
 
 ## March 8th, 2026 - Show public kits on the kits page
 

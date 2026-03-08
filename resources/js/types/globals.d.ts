@@ -27,9 +27,11 @@ declare module 'vue' {
     }
 }
 
+declare const __COMMIT_HASH__: string;
+
 declare global {
     let route: typeof route;
-    
+
     interface Window {
         Pusher: typeof Pusher;
         Echo: typeof Echo;

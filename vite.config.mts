@@ -1,9 +1,15 @@
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
+import { execSync } from 'child_process';
 import { defineConfig } from 'vite';
 
+const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+
 export default defineConfig({
+    define: {
+        __COMMIT_HASH__: JSON.stringify(commitHash),
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts', 'resources/js/overlay/app.js'],
