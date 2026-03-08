@@ -223,7 +223,6 @@ onMounted(() => {
   );
 });
 
-const keyboardShortcutsList = computed(() => getAllShortcuts());
 </script>
 
 <template>
@@ -288,7 +287,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
               :class="[
                 'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
                 index === 0 && 'rounded-tl-sm',
-                mainTab === tab.key ? 'bg-violet-600 text-accent dark:bg-violet-400' : 'text-accent-foreground',
+                mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
@@ -303,7 +302,7 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
           <TemplateCodeEditor
             v-if="mainTab === 'code'"
             v-model:head="form.head"
-            v-model:html="form.html"
+            v-model:body="form.html"
             v-model:css="form.css"
             :is-dark="isDark"
             @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
@@ -403,7 +402,6 @@ const keyboardShortcutsList = computed(() => getAllShortcuts());
       </form>
     </div>
 
-    <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>

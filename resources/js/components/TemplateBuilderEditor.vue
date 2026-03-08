@@ -219,6 +219,10 @@ const validateTemplate = async () => {
   }
 };
 
+editor.on("blur", function(){
+  console.log("onBlur");
+});
+
 const saveTemplate = async () => {
   isSaving.value = true;
 

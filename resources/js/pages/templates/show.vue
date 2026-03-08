@@ -48,7 +48,7 @@ const props = defineProps<{
 
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
-  { key: 'html', label: 'HTML', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
+  { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
   { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
 ];
 
@@ -129,7 +129,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const forkTitle = computed(() => {
-  return 'This Overlay has been forked from ' + props.template?.owner.name + "'s template" + ' "' + props.template?.fork_parent.name + '"';
+  return 'This Overlay has been copied from ' + props.template?.owner.name + "'s template" + ' "' + props.template?.fork_parent.name + '"';
 });
 </script>
 
@@ -210,7 +210,7 @@ const forkTitle = computed(() => {
           />
           <button
             @click="copyToClipboard(authUrl, 'OBS URL')"
-            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 h-[38px] peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
+            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 h-9.5 peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
             title="Copy URL"
           >
             <CopyIcon class="h-4 w-4" />
@@ -313,7 +313,8 @@ const forkTitle = computed(() => {
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
           <button
-            class="mb-2 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
+            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
+            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"
             @click="showCode = !showCode"
           >
             <CodeIcon class="h-4 w-4 shrink-0" />

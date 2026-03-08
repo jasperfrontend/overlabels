@@ -120,9 +120,7 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
-        $isLive = $canEdit
-            ? StreamSessionService::isLive(auth()->user())
-            : false;
+        $isLive = $canEdit && StreamSessionService::isLive(auth()->user());
 
         return Inertia::render('templates/show', [
             'template' => $template,

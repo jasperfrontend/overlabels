@@ -11,29 +11,27 @@ const props = defineProps<{
   isDark: boolean;
 }>();
 
-const emit = defineEmits<{
-  'toggle-shortcuts': [];
-}>();
+
 
 const headValue = defineModel<string>('head', { required: true });
-const htmlValue = defineModel<string>('html', { required: true });
+const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
 
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2, color: 'text-pink-500 dark:text-pink-400' },
-  { key: 'html', label: 'HTML', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
+  { key: 'body', label: 'BODY', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
   { key: 'css', label: 'CSS', icon: Palette, color: 'text-lime-500 dark:text-lime-400' },
 ] as const;
 
 type CodeTab = (typeof editorTabs)[number]['key'];
 
-const codeTab = ref<CodeTab>('html');
+const codeTab = ref<CodeTab>('body');
 const isExpanded = ref(false);
 
 const baseTheme = EditorView.theme({
   '&': { height: '100%', fontSize: '14px' },
   '.cm-scroller': { overflow: 'auto' },
-  '.cm-content': { padding: '16px' },
+  '.cm-content': { padding: '0' },
   '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
 });
 
@@ -65,7 +63,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
           <div class="mt-auto px-3 py-2">
             <p class="text-xs uppercase text-sidebar-foreground/30">{{ codeTab }}</p>
             <p v-if="codeTab === 'head'" class="text-[10px] leading-tight text-sidebar-foreground/20">
-              Use &lt;link&gt; tags only.<br />Scripts are stripped.
+              &lt;link&gt; tags only.<br />No scripts.
             </p>
           </div>
         </div>
@@ -79,14 +77,14 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
             placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
           />
           <Codemirror
-            v-show="codeTab === 'html'"
+            v-show="codeTab === 'body'"
             v-model="htmlValue"
             class="absolute inset-0"
             :autofocus="true"
             :indent-with-tab="true"
             :tab-size="2"
             :extensions="htmlExtensions"
-            placeholder="Enter your HTML here… Use [[[tag_name]]] for dynamic content"
+            placeholder="Enter your BODY here… Use [[[tag_name]]] for dynamic content"
           />
           <Codemirror
             v-show="codeTab === 'css'"
@@ -112,14 +110,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
         <ChevronDown v-else class="h-4 w-4" />
         {{ isExpanded ? 'Collapse editor' : 'Expand editor' }}
       </button>
-      <a
-        href="#"
-        @click.prevent="emit('toggle-shortcuts')"
-        class="flex cursor-pointer items-center text-sm text-muted-foreground hover:text-accent-foreground"
-      >
-        <Keyboard class="mr-2 h-4 w-4" />
-        Keyboard Shortcuts
-      </a>
+
     </div>
   </div>
 </template>
