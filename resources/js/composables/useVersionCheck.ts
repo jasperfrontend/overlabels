@@ -1,34 +1,29 @@
+import Pusher from 'pusher-js';
 import { ref, onMounted, onUnmounted } from 'vue';
 
-const POLL_INTERVAL_MS = 60_000; // 60 seconds
-
 const hasNewVersion = ref(false);
-let currentVersion: string | null = null;
-let intervalId: ReturnType<typeof setInterval> | null = null;
+let pusher: Pusher | null = null;
 let activeInstances = 0;
 
-async function fetchVersion(): Promise<string | null> {
-  try {
-    const res = await fetch('/api/version', { cache: 'no-store' });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.version ?? null;
-  } catch {
-    return null;
-  }
+function subscribe() {
+  const key = import.meta.env.VITE_PUSHER_APP_KEY;
+  const cluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+
+  if (!key || !cluster) return;
+
+  pusher = new Pusher(key, { cluster });
+  const channel = pusher.subscribe('app-updates');
+
+  channel.bind('version.updated', () => {
+    hasNewVersion.value = true;
+  });
 }
 
-async function checkVersion() {
-  const version = await fetchVersion();
-  if (!version) return;
-
-  if (currentVersion === null) {
-    currentVersion = version;
-    return;
-  }
-
-  if (version !== currentVersion) {
-    hasNewVersion.value = true;
+function unsubscribe() {
+  if (pusher) {
+    pusher.unsubscribe('app-updates');
+    pusher.disconnect();
+    pusher = null;
   }
 }
 
@@ -36,16 +31,14 @@ export function useVersionCheck() {
   onMounted(() => {
     activeInstances++;
     if (activeInstances === 1) {
-      checkVersion();
-      intervalId = setInterval(checkVersion, POLL_INTERVAL_MS);
+      subscribe();
     }
   });
 
   onUnmounted(() => {
     activeInstances--;
-    if (activeInstances === 0 && intervalId !== null) {
-      clearInterval(intervalId);
-      intervalId = null;
+    if (activeInstances === 0) {
+      unsubscribe();
     }
   });
 

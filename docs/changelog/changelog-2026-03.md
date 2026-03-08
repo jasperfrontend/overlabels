@@ -2,10 +2,10 @@
 
 ## March 8th, 2026 - Version check / deployment refresh prompt
 
-- **New `/api/version` endpoint** returns an MD5 hash of the Vite build manifest, allowing the frontend to detect new deployments.
-- **`useVersionCheck` composable** polls the version endpoint every 60 seconds. When the hash changes, it sets a reactive flag.
-- **`VersionBanner` component** renders a blue top-bar banner with a Refresh button when a new version is detected. Mounted in the sidebar layout above all other banners.
-- Prevents stale frontend from becoming unresponsive after Railway deploys a new build.
+- **Pusher-based version notification.** Instead of polling, the frontend subscribes to a `app-updates` Pusher channel. When a `version.updated` event arrives, a blue banner appears prompting the user to refresh.
+- **GitHub Action trigger.** The `notify-deploy` workflow fires on every push to `main`, sending a signed Pusher event directly via the HTTP API. No app server involvement.
+- **`VersionBanner` component** renders a blue top-bar banner with a Refresh button. Mounted in the sidebar layout above all other banners.
+- Requires `PUSHER_APP_ID`, `PUSHER_APP_KEY`, and `PUSHER_APP_SECRET` as GitHub repository secrets.
 
 ## March 8th, 2026 - Show public kits on the kits page
 
