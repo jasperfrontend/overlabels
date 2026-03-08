@@ -52,6 +52,9 @@ watch(
     <EventsTable v-if="events.length > 0" :events="events" />
 
     <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active." />
+    <div class="text-sm text-muted-foreground pt-2">
+      Short link to this page: <a href="https://bit.ly/ol-embed" target="_blank" class="text-violet-400 hover:underline">bit.ly/ol-embed</a>
+    </div>
   </div>
 
   <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
