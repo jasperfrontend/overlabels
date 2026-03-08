@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Notify clients of new version
         env:
-          PUSHER_APP_ID: ${{ secrets.PUSHER_APP_ID }}
-          PUSHER_APP_KEY: ${{ secrets.PUSHER_APP_KEY }}
-          PUSHER_APP_SECRET: ${{ secrets.PUSHER_APP_SECRET }}
+          PUSHER_APP_ID: "2028130"
+          PUSHER_APP_KEY: "a29561d1e3433f3eb70c"
+          PUSHER_APP_SECRET: ${{ secrets.PUSHER_SECRET }}
         run: |
           TIMESTAMP=$(date -u +%s)
           BODY='{"name":"version.updated","channel":"app-updates","data":"{\"sha\":\"'$GITHUB_SHA'\"}"}'
