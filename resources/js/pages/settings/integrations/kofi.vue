@@ -244,7 +244,7 @@ function formatDate(iso: string | null): string {
                             >
                                 <span
                                     class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
-                                    :class="testMode ? 'translate-x-[18px]' : 'translate-x-[2px]'"
+                                    :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
                                 />
                             </button>
                             <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
@@ -254,7 +254,9 @@ function formatDate(iso: string | null): string {
                         </div>
                         <p class="text-muted-foreground text-sm">
                             Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
-                            <span v-if="testMode" class="text-yellow-500 font-bold">Turn this off before going live.</span>
+                            <span v-if="testMode" class="text-yellow-500 font-bold">
+                                Turn this off before going live — your donation count will reset to {{ kofisSeedValue ?? 0 }}.
+                            </span>
                         </p>
                         <div v-if="testMode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
                             Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.

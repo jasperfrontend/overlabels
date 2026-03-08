@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Events\ControlValueUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
@@ -110,6 +111,35 @@ class KofiIntegrationController extends Controller
         $validated = $request->validate(['test_mode' => 'required|boolean']);
 
         $integration->update(['test_mode' => $validated['test_mode']]);
+
+        // When test mode is turned OFF, reset kofis_received controls to seed value (or 0)
+        if (! $validated['test_mode']) {
+            $settings = $integration->settings ?? [];
+            $resetValue = (string) ($settings['kofis_seed_value'] ?? 0);
+
+            $controls = OverlayControl::where('user_id', $user->id)
+                ->where('source', 'kofi')
+                ->where('key', 'kofis_received')
+                ->where('source_managed', true)
+                ->with('template')
+                ->get();
+
+            foreach ($controls as $control) {
+                $control->update(['value' => $resetValue]);
+
+                $overlaySlug = $control->overlay_template_id
+                    ? ($control->template?->slug ?? '')
+                    : '';
+
+                ControlValueUpdated::dispatch(
+                    $overlaySlug,
+                    $control->broadcastKey(),
+                    $control->type,
+                    $resetValue,
+                    $user->twitch_id,
+                );
+            }
+        }
 
         return response()->json(['test_mode' => $integration->test_mode]);
     }

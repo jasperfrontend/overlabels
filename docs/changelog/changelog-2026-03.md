@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Fix: reset kofis_received controls when disabling test mode
+
+- **When test mode is turned off**, all `kofis_received` overlay controls for the user are reset to the `kofis_seed_value` (if set) or `0`. This prevents inflated donation counts from test webhooks from carrying over to live usage.
+- **Live overlay update.** Each reset control broadcasts a `ControlValueUpdated` event so connected OBS overlays reflect the reset immediately.
+- **Frontend hint.** The test mode toggle warning now tells the user the exact value their count will reset to.
+- **3 new tests** covering: reset to seed value, reset to 0 when no seed, and no reset when enabling test mode.
+
 ## March 8th, 2026 — Fix: onboarding wizard infinite polling + returning user support
 
 - **Root cause:** The `OnboardNewUser` job only dispatched on `UserRegistered` (initial signup). Users who pre-date the onboarding wizard never got the job dispatched, so the starter kit was never forked and the wizard polled forever.

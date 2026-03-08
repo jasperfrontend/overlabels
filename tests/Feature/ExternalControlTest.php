@@ -1,9 +1,12 @@
 <?php
 
+use App\Events\ControlValueUpdated;
+use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 
 uses(DatabaseTransactions::class);
 
@@ -86,6 +89,106 @@ test('provisionServiceControl creates user-scoped control', function () {
     expect($control->source)->toBe('kofi');
     expect($control->source_managed)->toBeTrue();
     expect($control->user_id)->toBe($user->id);
+});
+
+test('disabling test mode resets kofis_received to seed value', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'test_mode' => true,
+        'settings' => [
+            'enabled_events' => ['donation'],
+            'kofis_seed_set' => true,
+            'kofis_seed_value' => 42,
+        ],
+    ]);
+
+    $control = OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'kofis_received',
+        'label' => 'Ko-fi Donations Received',
+        'type' => 'counter',
+        'value' => '50',
+        'source' => 'kofi',
+        'source_managed' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => false])
+        ->assertOk()
+        ->assertJson(['test_mode' => false]);
+
+    expect($control->fresh()->value)->toBe('42');
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('disabling test mode resets kofis_received to 0 when no seed set', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'test_mode' => true,
+        'settings' => ['enabled_events' => ['donation']],
+    ]);
+
+    $control = OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'kofis_received',
+        'label' => 'Ko-fi Donations Received',
+        'type' => 'counter',
+        'value' => '15',
+        'source' => 'kofi',
+        'source_managed' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => false])
+        ->assertOk();
+
+    expect($control->fresh()->value)->toBe('0');
+});
+
+test('enabling test mode does not reset kofis_received', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'test_mode' => false,
+        'settings' => ['enabled_events' => ['donation']],
+    ]);
+
+    $control = OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'kofis_received',
+        'label' => 'Ko-fi Donations Received',
+        'type' => 'counter',
+        'value' => '15',
+        'source' => 'kofi',
+        'source_managed' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => true])
+        ->assertOk();
+
+    expect($control->fresh()->value)->toBe('15');
+    Event::assertNotDispatched(ControlValueUpdated::class);
 });
 
 test('provisionServiceControl is idempotent', function () {
