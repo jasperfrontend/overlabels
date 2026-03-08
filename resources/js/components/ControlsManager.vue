@@ -116,7 +116,14 @@ function configSummary(ctrl: OverlayControl): string[] {
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-  <ControlFormModal v-model:open="modalOpen" :template="template" :control="editingControl" :connected-services="connectedServices" :existing-controls="controls" @saved="onSaved" />
+  <ControlFormModal
+    v-model:open="modalOpen"
+    :template="template"
+    :control="editingControl"
+    :connected-services="connectedServices"
+    :existing-controls="controls"
+    @saved="onSaved"
+  />
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
@@ -144,10 +151,10 @@ function configSummary(ctrl: OverlayControl): string[] {
           <TableHead>Order</TableHead>
           <TableHead>Key</TableHead>
           <TableHead>Label</TableHead>
-          <TableHead class="w-[90px]">Type</TableHead>
+          <TableHead class="w-22.5">Type</TableHead>
           <TableHead>Settings</TableHead>
           <TableHead>Snippet</TableHead>
-          <TableHead class="w-[100px] text-right">Actions</TableHead>
+          <TableHead class="w-25 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

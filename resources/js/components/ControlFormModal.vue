@@ -104,7 +104,7 @@ function resolvedSortOrder(): number {
   const existing = props.existingControls ?? [];
   if (sortMode.value === 'before') {
     if (existing.length === 0) return 0;
-    return Math.min(...existing.map((c) => c.sort_order)) - 1;
+    return Math.max(0, Math.min(...existing.map((c) => c.sort_order)) - 1);
   }
   if (sortMode.value === 'after') {
     if (existing.length === 0) return 0;
@@ -431,6 +431,7 @@ async function save() {
             placeholder="0"
             class="mt-1.5"
           />
+          <p v-if="errors.sort_order" class="text-xs text-destructive">{{ errors.sort_order }}</p>
         </div>
       </div>
 
