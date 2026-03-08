@@ -5,6 +5,7 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LockdownBanner from '@/components/LockdownBanner.vue';
+import VersionBanner from '@/components/VersionBanner.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -20,6 +21,7 @@ withDefaults(defineProps<Props>(), {
   <AppShell variant="sidebar">
     <AppSidebar />
     <AppContent variant="sidebar" class="overflow-x-hidden">
+      <VersionBanner />
       <LockdownBanner />
       <ImpersonationBanner />
       <AppSidebarHeader :breadcrumbs="breadcrumbs" />

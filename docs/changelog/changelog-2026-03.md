@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 - Version check / deployment refresh prompt
+
+- **New `/api/version` endpoint** returns an MD5 hash of the Vite build manifest, allowing the frontend to detect new deployments.
+- **`useVersionCheck` composable** polls the version endpoint every 60 seconds. When the hash changes, it sets a reactive flag.
+- **`VersionBanner` component** renders a blue top-bar banner with a Refresh button when a new version is detected. Mounted in the sidebar layout above all other banners.
+- Prevents stale frontend from becoming unresponsive after Railway deploys a new build.
+
 ## March 8th, 2026 - Show public kits on the kits page
 
 - **Public kits section restored.** The kits index page now shows public kits from other users below the user's own kits, with owner avatars and a "Copy" button. The backend was already sending `recentPublicKits` but the frontend never rendered it.

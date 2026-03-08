@@ -63,6 +63,15 @@ Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::cl
     ->middleware(['throttle:60,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
     ->name('webhooks.external');
+// App version endpoint for frontend polling (detects new deployments)
+Route::get('/version', function () {
+    $manifestPath = public_path('build/manifest.json');
+
+    return response()->json([
+        'version' => file_exists($manifestPath) ? md5_file($manifestPath) : config('app.version', '0.0.0'),
+    ]);
+})->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
 // EventSub health check endpoint for external cron services
 Route::get('/eventsub-health-check', function () {
     try {
