@@ -195,23 +195,26 @@ async function toggleBoolean(ctrl: OverlayControl) {
         </div>
 
         <!-- Text control -->
-        <div v-if="ctrl.type === 'text'" class="flex gap-0">
-          <input
-            type="text"
-            :value="getLocalValue(ctrl)"
-            :title="getLocalValue(ctrl) || 'Click to edit'"
-            @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-            class="peer input-border flex-1"
-            placeholder="Enter text..."
-          />
-          <button
-            class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
-            :disabled="saving[ctrl.id]"
-            @click="saveTextValue(ctrl)"
-          >
-            <SaveIcon class="h-3.5 w-3.5" />
-            <span class="ml-1">Save</span>
-          </button>
+        <div v-if="ctrl.type === 'text'">
+          <form @submit.prevent="saveTextValue(ctrl)" class="flex gap-0">
+            <input
+              type="text"
+              :value="getLocalValue(ctrl)"
+              :title="getLocalValue(ctrl) || 'Click to edit'"
+              @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+              class="peer input-border flex-1"
+              placeholder="Enter text..."
+            />
+            <button
+              type="submit"
+              class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+              :disabled="saving[ctrl.id]"
+              @click="saveTextValue(ctrl)"
+            >
+              <SaveIcon class="h-3.5 w-3.5" />
+              <span class="ml-1">Save</span>
+            </button>
+          </form>
         </div>
 
         <!-- Number control -->
@@ -226,7 +229,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             :step="ctrl.config?.step ?? 1"
             class="peer input-border flex-1"
           />
-          <button class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+          <button type="submit" class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
             <SaveIcon class="h-3.5 w-3.5" />
             <span class="ml-1">Save</span>
           </button>
@@ -257,7 +260,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
         <!-- Timer control -->
         <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
-          <div class="min-w-[90px] text-center font-mono text-2xl font-bold tabular-nums">
+          <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
             {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
           </div>
           <div class="flex gap-1.5">
