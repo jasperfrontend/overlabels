@@ -519,12 +519,12 @@ const getDataTypeClass = (dataType: string) => {
         <div
           v-for="(categoryData, categoryName) in organizedTags"
           :key="categoryName"
-          class="rounded-sm border border-sidebar bg-sidebar-accent p-0 text-center transition"
+          class="rounded-sm border border-sidebar p-0 text-center transition"
         >
           <!-- Category Header -->
           <details class="group">
-            <summary class="flex cursor-pointer list-none items-center justify-between rounded-sm p-4 hover:bg-sidebar">
-              <span class="block flex items-center">
+            <summary class="flex cursor-pointer list-none items-center justify-between rounded-sm p-4 bg-accent hover:bg-sidebar">
+              <span class="flex items-center">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {{ categoryData.category.display_name }}
                 </span>
@@ -544,7 +544,7 @@ const getDataTypeClass = (dataType: string) => {
               <div
                 v-for="tag in categoryData.tags"
                 :key="tag.id"
-                class="rounded-lg border border-sidebar bg-sidebar p-4 text-left transition-all hover:border-sidebar hover:bg-sidebar/60 hover:shadow-sm dark:bg-sidebar/30 dark:hover:bg-sidebar/15"
+                class="rounded-sm border border-sidebar bg-sidebar p-4 text-left transition-all hover:border-sidebar hover:bg-sidebar/60 dark:bg-sidebar/30 dark:hover:bg-sidebar/15"
               >
                 <!-- Tag Header -->
                 <div class="flex items-start justify-between">
@@ -608,16 +608,16 @@ const getDataTypeClass = (dataType: string) => {
                 </div>
 
                 <!-- Preview Output -->
-                <div v-if="tagPreviews[tag.id]" class="mt-3 rounded-lg border border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-800">
+                <div v-if="tagPreviews[tag.id]" class="mt-3 bg-background p-4">
                   <div class="mb-2 flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Live Preview:</span>
+                    <span class="text-sm font-medium text-foreground">Live Preview:</span>
                     <button @click="clearPreview(tag.id)" class="cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300">
                       <svg class="h-4 w-4" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>
                   </div>
-                  <div class="font-mono text-sm break-words text-gray-800 dark:text-gray-200">
+                  <div class="font-mono text-sm wrap-break-word text-gray-800 dark:text-gray-200">
                     {{ tagPreviews[tag.id].output }}
                   </div>
                 </div>

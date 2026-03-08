@@ -41,9 +41,9 @@
                 index === 0 ? 'rounded-l-md' : '',
                 index === mergedLinks.length - 1 ? 'rounded-r-md' : '',
                 'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors'
-              ]">
-                {{ link.label }}
-            </Link>
+              ]"
+              v-html="link.label"
+            />
             <span
               v-else
               :class="[
@@ -54,8 +54,8 @@
                 index === 0 ? 'rounded-l-md' : '',
                 index === mergedLinks.length - 1 ? 'rounded-r-md' : ''
               ]"
-              >
-                {{ link.label }}
+              v-html="link.label"
+            >
               </span>
           </template>
         </nav>
@@ -99,7 +99,7 @@ function mergedUrl(linkUrl: string): string {
 const mergedLinks = computed(() =>
   props.links.map((link) => ({
     ...link,
-    url: link.url ? mergedUrl(link.url) : null,
+    url: link.url ? mergedUrl(link.url) : "#",
   })),
 );
 </script>
