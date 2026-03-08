@@ -229,9 +229,17 @@ class OverlayTemplateController extends Controller
 
         $template->recordView();
 
+        // Rewrite src/srcset attributes that contain unresolved [[[tags]]] to data-src
+        // so the browser doesn't try to fetch them as relative URLs.
+        $html = preg_replace(
+            '/\b(src|srcset)(\s*=\s*["\'][^"\']*\[\[\[)/i',
+            'data-$1$2',
+            $template->html ?? ''
+        );
+
         return view('overlay.render', [
             'head' => $template->head,
-            'html' => $template->html,
+            'html' => $html,
             'css' => $template->css,
             'js' => $template->js,
             'isParsed' => false,

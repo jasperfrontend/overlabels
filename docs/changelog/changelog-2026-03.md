@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Fix: public overlay routes firing spurious GET requests for unresolved tags
+
+- **Root cause:** On public overlay routes (`/overlay/{slug}/public`), the raw template HTML is injected via `{!! $html !!}` without any tag replacement. When a user writes `<img src="[[[c:avatar]]]">`, the browser interprets the raw tag string as a relative URL and fires a GET request for `/overlay/{slug}/[[[c:avatar]]]`.
+- **Fix:** `servePublic()` now rewrites `src` and `srcset` attributes containing `[[[` tags to `data-src`/`data-srcset` before sending to the browser. This prevents the browser fetch while preserving the tags in the markup for the preview copy buttons. Normal URLs are left untouched.
+
 ## March 8th, 2026 — Fix: reset kofis_received controls when disabling test mode
 
 - **When test mode is turned off**, all `kofis_received` overlay controls for the user are reset to the `kofis_seed_value` (if set) or `0`. This prevents inflated donation counts from test webhooks from carrying over to live usage.
