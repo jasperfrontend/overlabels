@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 - Admin: "Delete all content" strategy for user deletion
+
+- **New third option** when deleting a user from the admin panel: "Delete all content" permanently removes all templates, kits, controls, tags, categories, and external integrations belonging to the user. Kits are detached from their templates first, templates are detached from alert targeting pivots, and all child records (controls, event mappings) are cleaned up before deletion.
+- **UI:** Red-highlighted radio option with a clear warning that this cannot be undone.
+
 ## March 8th, 2026 - Fix: admin user deletion crashes on unique constraint violation
 
 - **Root cause:** The "Assign to Ghost User" deletion strategy blindly reassigned all `template_tag_categories` and `template_tags` to the ghost user. When the ghost user already had rows with the same `(user_id, name)` or `(user_id, category_id, tag_name)`, Postgres threw a unique constraint violation (23505).

@@ -143,7 +143,7 @@ class AdminUserController extends Controller
         $admin = $request->user();
 
         $request->validate([
-            'strategy' => 'required|in:delete_content,assign_ghost',
+            'strategy' => 'required|in:delete_content,assign_ghost,delete_all',
         ]);
 
         if ($user->isGhostUser()) {
@@ -184,6 +184,28 @@ class AdminUserController extends Controller
                 ->whereIn('name', $existingGhostCategoryNames)
                 ->delete();
             TemplateTagCategory::where('user_id', $user->id)->update(['user_id' => $ghost->id]);
+        }
+
+        if ($request->input('strategy') === 'delete_all') {
+            // Detach templates from kits (pivot), then delete kits
+            Kit::where('owner_id', $user->id)->each(function ($kit) {
+                $kit->templates()->detach();
+                $kit->delete();
+            });
+
+            // Detach templates from alert targeting pivot, then delete
+            OverlayTemplate::where('owner_id', $user->id)->each(function ($template) {
+                $template->targetStaticOverlays()->detach();
+                $template->kits()->detach();
+                $template->controls()->delete();
+                $template->eventMappings()->delete();
+                $template->delete();
+            });
+
+            OverlayControl::where('user_id', $user->id)->delete();
+            TemplateTag::where('user_id', $user->id)->delete();
+            TemplateTagCategory::where('user_id', $user->id)->delete();
+            ExternalIntegration::where('user_id', $user->id)->delete();
         }
 
         // Always delete access tokens and eventsub subscriptions (security)

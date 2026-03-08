@@ -112,7 +112,7 @@ const durations = [
 ];
 
 // Delete form
-const deleteStrategy = ref<'assign_ghost' | 'delete_content'>('assign_ghost');
+const deleteStrategy = ref<'assign_ghost' | 'delete_content' | 'delete_all'>('assign_ghost');
 const showDeleteConfirm = ref(false);
 function submitDelete() {
   router.delete(route('admin.users.destroy', props.user.id), {
@@ -324,6 +324,13 @@ function restore() {
                 <div>
                   <div class="font-medium">Keep content in place</div>
                   <div class="text-xs text-muted-foreground">User is soft-deleted. Content remains owned by them until purged.</div>
+                </div>
+              </label>
+              <label class="flex items-start gap-2 text-sm">
+                <input type="radio" v-model="deleteStrategy" value="delete_all" />
+                <div>
+                  <div class="font-medium text-destructive">Delete all content</div>
+                  <div class="text-xs text-muted-foreground">Permanently removes all templates, kits, controls, tags, and integrations. Cannot be undone.</div>
                 </div>
               </label>
               <div v-if="!showDeleteConfirm">
