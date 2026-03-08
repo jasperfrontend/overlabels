@@ -4,7 +4,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { execSync } from 'child_process';
 import { defineConfig } from 'vite';
 
-const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+let commitHash = 'dev';
+try {
+    commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+} catch {
+    commitHash = (process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
+}
 
 export default defineConfig({
     define: {
