@@ -5,13 +5,11 @@ import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
-import { ChevronDown, ChevronUp, FileCode2, Code, Palette, Keyboard } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp, FileCode2, Code, Palette } from 'lucide-vue-next';
 
 const props = defineProps<{
   isDark: boolean;
 }>();
-
-
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });

@@ -300,7 +300,7 @@ onMounted(() => {
         <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
           <!-- Code Tab -->
           <TemplateCodeEditor
-            v-if="mainTab === 'code'"
+            v-show="mainTab === 'code'"
             v-model:head="form.head"
             v-model:body="form.html"
             v-model:css="form.css"
@@ -309,7 +309,7 @@ onMounted(() => {
           />
 
           <!-- Meta Tab -->
-          <div v-else-if="mainTab === 'meta'" class="max-w-5xl space-y-4">
+          <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-4">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Title *</label>
               <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
@@ -359,22 +359,22 @@ onMounted(() => {
           </div>
 
           <!-- Tags Tab -->
-          <div v-else-if="mainTab === 'tags'">
+          <div v-if="mainTab === 'tags'">
             <TemplateTagsList />
           </div>
 
           <!-- Controls Tab -->
-          <div v-else-if="mainTab === 'controls'">
+          <div v-if="mainTab === 'controls'">
             <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" @change="localControls = $event" />
           </div>
 
           <!-- Values Tab -->
-          <div v-else-if="mainTab === 'panel'">
+          <div v-if="mainTab === 'panel'">
             <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
           </div>
 
           <!-- Screenshot Tab -->
-          <div v-else-if="mainTab === 'screenshot'">
+          <div v-if="mainTab === 'screenshot'">
             <TemplateScreenshot
               :screenshot-url="template.screenshot_url"
               :template-id="template.id"
@@ -385,7 +385,7 @@ onMounted(() => {
           </div>
 
           <!-- Targeting Tab (alert templates only) -->
-          <div v-else-if="mainTab === 'targeting'" class="max-w-2xl">
+          <div v-if="mainTab === 'targeting'" class="max-w-2xl">
             <AlertTargetOverlaySelector
               v-model="localTargetOverlayIds"
               :static-overlays="staticOverlays ?? []"

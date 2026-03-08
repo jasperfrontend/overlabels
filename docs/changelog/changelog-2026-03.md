@@ -1,5 +1,15 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Fix: preserve CodeMirror state when switching editor tabs
+
+- **Problem:** Switching from the Code tab to another tab (Meta, Tags, etc.) and back reset the CodeMirror editor to its default state — cursor back to line 1, sub-tab reset to BODY, scroll position lost. Alt-tabbing away from the browser and back was fine.
+- **Root cause:** `TemplateCodeEditor` was rendered with `v-if="mainTab === 'code'"`, which destroys and recreates the entire component (and all CodeMirror instances) on every tab switch.
+- **Fix:** Changed `v-if` to `v-show` so the editor stays mounted in the DOM (just hidden via `display: none`). Converted the remaining `v-else-if` chain to independent `v-if` conditions. Cursor position, scroll offset, and active sub-tab (HEAD/BODY/CSS) are now fully preserved.
+
+## March 7th, 2026 — Chore: renamed `HTML` to `BODY` in template editor
+
+- **Renamed** the "HTML" sub-tab label in `TemplateCodeEditor` to "BODY" to accurately reflect that the editor content is injected into the `<body>` tag, not the full HTML document. Updated tab label, footer indicator, and removed unused `Keyboard` icon import.
+
 ## March 7th, 2026 — Fix: CodeMirror syntax highlighting restored
 
 - **Root cause** — deprecated `@codemirror/basic-setup@0.20.0` (pre-release) occupied the top-level `@codemirror/language` slot with v0.20.2, forcing all stable v6 packages to install separate nested copies. Since CodeMirror relies on shared module identity for facets, `defaultHighlightStyle` from one copy couldn't style tokens parsed by a language from another — breaking syntax highlighting.
