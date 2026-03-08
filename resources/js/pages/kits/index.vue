@@ -114,16 +114,20 @@ defineProps<Props>();
       </div>
 
 
-      <div class="mt-6">
-        <Heading title="What are Kits?" />
-        <p>Kits are a collection of premade of templates and alert overlays. You can use kits to quickly share a
-          set of templates with anybody you like.</p>
-
-        <p>By default, kits are private. You can set a kit to be publicly available,
-          then everybody who has an Overlabels account can copy your Kit and use it themselves.</p>
-        <Heading class="mt-4" title="Can I create a Kit?" />
-        <p>Everybody can create Kits! In fact, it would be <span class="bg-cyan-400/50 px-1">amazing</span> if you did.</p>
-      </div>
+      <!-- Public kits from other users -->
+      <template v-if="recentPublicKits && recentPublicKits.length > 0">
+        <Heading title="Public kits" />
+        <p class="text-sm text-muted-foreground mb-3">Kits shared by the community. Copy any kit to use it in your own overlays.</p>
+        <div class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          <KitCard
+            v-for="kit in recentPublicKits"
+            :key="`public-${kit.id}`"
+            :kit="kit"
+            :current-user-id="auth?.user?.id"
+            show-owner
+          />
+        </div>
+      </template>
 
     </div>
   </AppLayout>

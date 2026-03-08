@@ -35,7 +35,7 @@ const props = defineProps<{
 const isOwnKit = props.currentUserId && props.kit.owner?.id === props.currentUserId;
 
 const handleFork = () => {
-  if (confirm('Are you sure you want to fork this kit to your own account?')) {
+  if (confirm('Copy this kit to your own account?')) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };

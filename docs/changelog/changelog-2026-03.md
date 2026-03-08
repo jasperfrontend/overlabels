@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 - Show public kits on the kits page
+
+- **Public kits section restored.** The kits index page now shows public kits from other users below the user's own kits, with owner avatars and a "Copy" button. The backend was already sending `recentPublicKits` but the frontend never rendered it.
+- **Renamed "Fork" to "Copy"** in the KitCard confirm dialog.
+
 ## March 8th, 2026 - Fix: soft-deleted users cannot log back in via Twitch
 
 - **Root cause:** The Twitch OAuth callback used `User::where('twitch_id', ...)->first()` which excludes soft-deleted users by default. A deleted user trying to log back in would find no matching row, attempt to `User::create()` with the same `twitch_id`, hit the unique constraint, and silently fail - leaving the user in a login loop.
