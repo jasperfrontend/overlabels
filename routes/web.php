@@ -163,9 +163,14 @@ Route::get('/auth/callback/twitch', function () {
             $twitchUser->getId()
         );
 
-        // Always match by Twitch ID only
-        $user = User::where('twitch_id', $twitchUser->getId())->first();
+        // Always match by Twitch ID only (including soft-deleted users)
+        $user = User::withTrashed()->where('twitch_id', $twitchUser->getId())->first();
         $isNewUser = ! $user;
+
+        // Restore soft-deleted users on re-login
+        if ($user && $user->trashed()) {
+            $user->restore();
+        }
 
         if (! $user) {
             // Create a new user if not found

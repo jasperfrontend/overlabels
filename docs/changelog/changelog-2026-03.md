@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 - Fix: soft-deleted users cannot log back in via Twitch
+
+- **Root cause:** The Twitch OAuth callback used `User::where('twitch_id', ...)->first()` which excludes soft-deleted users by default. A deleted user trying to log back in would find no matching row, attempt to `User::create()` with the same `twitch_id`, hit the unique constraint, and silently fail - leaving the user in a login loop.
+- **Fix:** Changed to `User::withTrashed()->where(...)` so soft-deleted users are found. If the matched user is trashed, they are automatically restored before the token update and login proceed.
+
 ## March 8th, 2026 - Admin: "Delete all content" strategy for user deletion
 
 - **New third option** when deleting a user from the admin panel: "Delete all content" permanently removes all templates, kits, controls, tags, categories, and external integrations belonging to the user. Kits are detached from their templates first, templates are detached from alert targeting pivots, and all child records (controls, event mappings) are cleaned up before deletion.
