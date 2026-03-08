@@ -3,9 +3,9 @@
 ## March 8th, 2026 - Version check / deployment refresh prompt
 
 - **Pusher-based version notification.** Instead of polling, the frontend subscribes to a `app-updates` Pusher channel. When a `version.updated` event arrives, a blue banner appears prompting the user to refresh.
-- **GitHub Action trigger.** The `notify-deploy` workflow fires on every push to `main`, sending a signed Pusher event directly via the HTTP API. No app server involvement.
+- **GitHub Action trigger.** The `notify-deploy` workflow listens for Railway's `deployment_status: success` event, then sends a signed Pusher event via the HTTP API. The banner only appears after the new code is live - no app server involvement.
 - **`VersionBanner` component** renders a blue top-bar banner with a Refresh button. Mounted in the sidebar layout above all other banners.
-- Requires `PUSHER_APP_ID`, `PUSHER_APP_KEY`, and `PUSHER_APP_SECRET` as GitHub repository secrets.
+- Requires `PUSHER_SECRET` as a GitHub repository secret.
 
 ## March 8th, 2026 - Show public kits on the kits page
 
