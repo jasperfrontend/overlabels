@@ -27,6 +27,7 @@ import type { AppPageProps } from '@/types';
 
 const page = usePage<AppPageProps>();
 const isAdmin = computed(() => page.props.isAdmin);
+const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
@@ -86,7 +87,7 @@ const adminNavItems: NavItem[] = [
     <SidebarFooter>
       <NavUser />
       <div class="px-3 pb-2 text-[10px] text-muted-foreground/50 group-data-[collapsible=icon]:hidden">
-        {{ __COMMIT_HASH__ }}
+        {{ commitHash }}
       </div>
     </SidebarFooter>
   </Sidebar>
