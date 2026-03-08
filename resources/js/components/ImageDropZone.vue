@@ -15,6 +15,7 @@ const emit = defineEmits<{
   'update:modelValue': [url: string | null];
   uploading: [isUploading: boolean];
   error: [message: string];
+  clickImage: [];
 }>();
 
 const isUploading = ref(false);
@@ -103,7 +104,8 @@ function handleFileSelect(event: Event) {
       <img
         :src="props.modelValue"
         alt="Uploaded image"
-        :class="compact ? 'h-48 w-auto rounded-lg object-cover' : 'max-h-96 rounded border border-sidebar'"
+        :class="[compact ? 'h-48 w-auto rounded-lg object-cover' : 'max-h-96 rounded border border-sidebar', 'cursor-pointer hover:opacity-80 transition-opacity']"
+        @click="emit('clickImage')"
       />
       <div class="flex gap-2">
         <button type="button" @click="remove" class="btn btn-cancel btn-sm">

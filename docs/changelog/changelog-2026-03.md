@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Fix + Enhancement: screenshot preview modal & TS fix
+
+- **Fixed TS2769 error in `TemplateScreenshot.vue`.** The ternary `emit(url ? 'saved' : 'removed')` produced a union type that TypeScript couldn't resolve across overloads. Replaced with an explicit `if`/`else`.
+- **Clickable screenshot preview.** Clicking the uploaded screenshot image now opens a responsive full-size modal (up to 90vw/90vh). Uses the existing Shadcn Dialog component. The `ImageDropZone` component gained a new `clickImage` emit and the image thumbnail shows a hover opacity effect as a visual affordance.
+
 ## March 8th, 2026 — Fix: preserve CodeMirror state when switching editor tabs
 
 - **Problem:** Switching from the Code tab to another tab (Meta, Tags, etc.) and back reset the CodeMirror editor to its default state — cursor back to line 1, sub-tab reset to BODY, scroll position lost. Alt-tabbing away from the browser and back was fine.
