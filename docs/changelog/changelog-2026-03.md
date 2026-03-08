@@ -1,9 +1,12 @@
 # CHANGELOG MARCH 2026
 
-## March 8th, 2026 — Feature: public screenshot route for overlays
+## March 8th, 2026 — UI: redesigned public overlay preview bar + screenshot button
 
-- **New route: `GET /overlay/{slug}/public/screenshot`** renders a minimal page displaying the overlay's uploaded screenshot (from `overlay_templates.screenshot_url`). Returns 404 if the overlay is private or has no screenshot.
-- **Minimal markup** — dark background, centered `<img>` at native 1280x720, responsive via `max-width: 100%`.
+- **Redesigned preview bar.** Moved from top to bottom, frosted glass background (`backdrop-filter: blur`), subtle border, rounded pill-style buttons with smooth hover transitions. Removed the harsh 2001-era inline styles.
+- **Screenshot button.** If the overlay has an uploaded screenshot, a "Screenshot" button appears in the bar (separated by a visual divider) that opens the screenshot page in a new tab.
+- **Copy feedback.** Clicking HEAD/HTML/CSS now briefly changes the button text to "Copied!" instead of showing an `alert()` dialog.
+- **Fork button accent.** Fork/Login-to-fork uses a violet accent style to stand out from the copy buttons.
+- **New route: `GET /overlay/{slug}/public/screenshot`** renders a minimal page with the Cloudinary screenshot. Returns 404 if the overlay is private or has no screenshot.
 
 ## March 8th, 2026 — Fix: public overlay routes firing spurious GET requests for unresolved tags
 
