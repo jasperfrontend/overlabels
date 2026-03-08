@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 8th, 2026 — Fix: onboarding wizard infinite polling + returning user support
+
+- **Root cause:** The `OnboardNewUser` job only dispatched on `UserRegistered` (initial signup). Users who pre-date the onboarding wizard never got the job dispatched, so the starter kit was never forked and the wizard polled forever.
+- **Backend fix:** `OnboardingController::status()` now auto-dispatches `OnboardNewUser` when the kit hasn't been forked yet (cache-guarded to avoid re-dispatching on every poll, 5-minute TTL).
+- **Frontend fix:** `OnboardingWizard.vue` polling now has a max of 20 attempts (~60 seconds). When exceeded, shows an amber warning banner with a retry button instead of spinning forever. Status checklist remains visible so users can see partial progress.
+- **Also fixed:** `ControlFormModal.vue` — "Before existing (first)" sort order could produce `-1` when the lowest control was at `sort_order=0`, causing a silent 422. Clamped to `Math.max(0, ...)` and added `errors.sort_order` display in the template.
+
 ## March 8th, 2026 — Chore: fix final 3 ESLint errors (0 remaining)
 
 - **TemplateCard.vue** — `confirm(...) && router.post(...)` flagged as unused expression; rewrote as `if` statement.

@@ -50,6 +50,9 @@ const step = ref(1);
 const status = ref<OnboardingStatus | null>(null);
 const loading = ref(true);
 const pollInterval = ref<ReturnType<typeof setInterval> | null>(null);
+const pollAttempts = ref(0);
+const pollTimedOut = ref(false);
+const MAX_POLL_ATTEMPTS = 20; // ~60 seconds at 3s intervals
 
 // Step 2 state
 const generatingToken = ref(false);
@@ -92,14 +95,36 @@ const tagsGenerating = computed(() => {
   return status.value.tags_status === 'pending' || status.value.tags_status === 'processing';
 });
 
+function stopPolling() {
+  if (pollInterval.value) {
+    clearInterval(pollInterval.value);
+    pollInterval.value = null;
+  }
+}
+
 function startPolling() {
+  pollAttempts.value = 0;
+  pollTimedOut.value = false;
   pollInterval.value = setInterval(async () => {
+    pollAttempts.value++;
     await fetchStatus();
-    if (setupComplete.value && pollInterval.value) {
-      clearInterval(pollInterval.value);
-      pollInterval.value = null;
+    if (setupComplete.value) {
+      stopPolling();
+    } else if (pollAttempts.value >= MAX_POLL_ATTEMPTS) {
+      stopPolling();
+      pollTimedOut.value = true;
     }
   }, 3000);
+}
+
+function retryPolling() {
+  loading.value = true;
+  pollTimedOut.value = false;
+  fetchStatus().then(() => {
+    if (!setupComplete.value) {
+      startPolling();
+    }
+  });
 }
 
 onMounted(async () => {
@@ -110,9 +135,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (pollInterval.value) {
-    clearInterval(pollInterval.value);
-  }
+  stopPolling();
 });
 
 function goToStep2() {
@@ -188,16 +211,33 @@ function dismiss() {
           <Rocket class="h-6 w-6 text-purple-400" />
           <CardTitle class="text-xl">Welcome to Overlabels!</CardTitle>
         </div>
-        <p v-if="loading" class="my-2 text-md text-violet-400">Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.</p>
+        <p v-if="pollTimedOut" class="my-2 text-md text-amber-400">Setup is taking longer than expected. You can retry or reload the page.</p>
+        <p v-else-if="loading" class="my-2 text-md text-violet-400">Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.</p>
         <p v-else class="my-2 text-md text-green-500">We've set up the essentials for you. Click "Create your secure token" to continue!</p>
       </CardHeader>
       <CardContent class="space-y-4">
-        <div v-if="loading" class="flex items-center justify-center gap-3 py-8">
+        <div v-if="pollTimedOut" class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <div class="flex gap-3">
+            <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-amber-300">Setup is taking longer than expected</p>
+              <p class="text-xs text-amber-300/80">
+                The background job may still be processing. Click retry to check again, or reload the page.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" class="gap-2" @click="retryPolling">
+            <Loader2 v-if="loading" class="h-3.5 w-3.5 animate-spin" />
+            Retry
+          </Button>
+        </div>
+
+        <div v-else-if="loading" class="flex items-center justify-center gap-3 py-8">
           <Loader2 class="h-5 w-5 animate-spin text-purple-400" />
           <span class="text-sm text-muted-foreground">Checking setup status...</span>
         </div>
 
-        <template v-else-if="status">
+        <template v-if="status && !loading">
           <!-- Starter Kit -->
           <div class="flex items-start gap-3">
             <CheckCircle v-if="status.kit_forked" class="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
@@ -378,7 +418,7 @@ function dismiss() {
                   <input
                     :value="overlay.url"
                     readonly
-                    class="h-[38px] min-w-0 flex-1 rounded-l-md border border-green-500/40 bg-green-950/20 px-3 py-2 font-mono text-xs text-green-300 select-all"
+                    class="h-9.5 min-w-0 flex-1 rounded-l-md border border-green-500/40 bg-green-950/20 px-3 py-2 font-mono text-xs text-green-300 select-all"
                     @focus="($event.target as HTMLInputElement).select()"
                   />
                   <button

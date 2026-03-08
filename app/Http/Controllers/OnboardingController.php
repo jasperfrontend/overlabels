@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\OnboardNewUser;
 use App\Models\EventTemplateMapping;
 use App\Models\Kit;
 use App\Models\OverlayAccessToken;
@@ -9,6 +10,7 @@ use App\Models\OverlayTemplate;
 use App\Models\TemplateTagJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class OnboardingController extends Controller
 {
@@ -20,6 +22,16 @@ class OnboardingController extends Controller
         $hasForkedKit = $starterKit && Kit::where('owner_id', $user->id)
             ->where('forked_from_id', $starterKit->id)
             ->exists();
+
+        // Auto-dispatch onboarding job for returning users who pre-date the wizard.
+        // Cache key prevents re-dispatching on every poll (TTL = 5 minutes).
+        if (! $hasForkedKit) {
+            $cacheKey = "onboarding:dispatched:{$user->id}";
+            if (! Cache::has($cacheKey)) {
+                OnboardNewUser::dispatch($user)->delay(now()->addSeconds(2));
+                Cache::put($cacheKey, true, now()->addMinutes(5));
+            }
+        }
 
         $alertMappings = EventTemplateMapping::where('user_id', $user->id)->get();
 
