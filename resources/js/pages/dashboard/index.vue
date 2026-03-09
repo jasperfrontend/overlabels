@@ -63,7 +63,12 @@ const greetings = [
   'Heya',
   'Hey',
   'Hello',
-  'Hi'
+  'Hi',
+  'Hey there',
+  'Hiya',
+  'Oh hey',
+  'Greetings',
+  'Ahoy'
 ];
 const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
 

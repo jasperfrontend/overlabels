@@ -28,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\TemplateDataMapperService::class, function ($app) {
             return new \App\Services\TemplateDataMapperService;
         });
+
+        // Register Telescope only in local development
+        if ($this->app->isLocal()) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(\App\Providers\TelescopeServiceProvider::class);
+        }
     }
 
     /**

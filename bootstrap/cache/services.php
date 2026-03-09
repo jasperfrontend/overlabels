@@ -41,8 +41,7 @@
     37 => 'Stevebauman\\Location\\LocationServiceProvider',
     38 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     39 => 'App\\Providers\\AppServiceProvider',
-    40 => 'App\\Providers\\TelescopeServiceProvider',
-    41 => 'SocialiteProviders\\Manager\\ServiceProvider',
+    40 => 'SocialiteProviders\\Manager\\ServiceProvider',
   ),
   'eager' => 
   array (
@@ -68,7 +67,6 @@
     19 => 'Stevebauman\\Location\\LocationServiceProvider',
     20 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
     21 => 'App\\Providers\\AppServiceProvider',
-    22 => 'App\\Providers\\TelescopeServiceProvider',
   ),
   'deferred' => 
   array (
