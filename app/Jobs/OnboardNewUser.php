@@ -10,21 +10,25 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Random\RandomException;
 
 class OnboardNewUser implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 2;
+    public int $tries = 2;
 
-    public $backoff = [30, 60];
+    public array $backoff = [30, 60];
 
-    public $timeout = 120;
+    public int $timeout = 120;
 
     public function __construct(
         public User $user
     ) {}
 
+    /**
+     * @throws RandomException
+     */
     public function handle(): void
     {
         Log::info('OnboardNewUser: Starting onboarding pipeline', [
@@ -54,6 +58,11 @@ class OnboardNewUser implements ShouldQueue
         ]);
     }
 
+    /**
+     * @property User $user
+     * @property string $webhook_secret
+     * @throws RandomException
+     */
     private function generateWebhookSecret(): void
     {
         // Skip if already generated (e.g., at signup time in OAuth callback)

@@ -16,6 +16,7 @@ class EventTemplateMapping extends Model
         'transition_out',
         'enabled',
         'settings',
+        'transition_type',
     ];
 
     protected $casts = [
