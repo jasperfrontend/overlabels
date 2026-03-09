@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 9th, 2026 - Fix: onboarding polling ignores auth errors
+
+- **Root cause:** `OnboardingWizard.vue` polling continued indefinitely when the server returned 401/403/419 (session expired or account deleted). The `fetchStatus()` function treated auth errors the same as other non-OK responses - returning early but leaving the `setInterval` running. Combined with Chrome's intensive background-tab throttling (3 s interval throttled to 60 s), this produced a persistent once-per-minute request to `/onboarding/status` that survived session invalidation and account deletion.
+- **Fix:** `fetchStatus()` now explicitly calls `stopPolling()` on 401, 403, or 419 responses, killing the interval immediately.
+
 ## March 8th, 2026 - Version check / deployment refresh prompt
 
 - **Pusher-based version notification.** Instead of polling, the frontend subscribes to a `app-updates` Pusher channel. When a `version.updated` event arrives, a blue banner appears prompting the user to refresh.

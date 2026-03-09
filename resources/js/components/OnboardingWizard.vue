@@ -70,16 +70,25 @@ const obsUrls = computed<{ slug: string; name: string; url: string }[]>(() => {
   }));
 });
 
-async function fetchStatus() {
+async function fetchStatus(): Promise<boolean> {
   try {
     const response = await fetch(route('onboarding.status'), {
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      // Stop polling entirely on auth errors - session is gone
+      if (response.status === 401 || response.status === 403 || response.status === 419) {
+        stopPolling();
+        loading.value = false;
+      }
+      return false;
+    }
     status.value = await response.json();
     loading.value = false;
+    return true;
   } catch {
     loading.value = false;
+    return false;
   }
 }
 
