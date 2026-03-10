@@ -99,7 +99,7 @@ function handleDelete(t: OverlayTemplate) {
       <Link
         :href="detailsHref(t)"
         class="flex flex-row justify-between p-4 transition-colors hover:bg-sidebar-accent"
-        :class="{ 'rounded-t-sm': templates.indexOf(t) === 0 }"
+        :class="{ 'rounded-t-sm': templates.indexOf(t) === 0, 'rounded-b-sm': templates.indexOf(t) === templates.length - 1 }"
       >
         <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" />
 

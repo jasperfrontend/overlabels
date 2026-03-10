@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 10th, 2026 - UI: Welcome page light mode polish + Twitch login button
+
+- **Light mode color contrast fixed across Welcome page.** All `-400` syntax highlighting colors in code blocks (sky, emerald, amber, zinc) were too pale on white backgrounds. Each now uses a darker variant for light mode with the original preserved for dark mode (e.g. `text-sky-600 dark:text-sky-400`). Inline `<code>` elements with forced dark backgrounds (`bg-zinc-900`) switched to mode-aware `bg-zinc-100 dark:bg-zinc-900`.
+- **Em dashes removed from all user-facing copy.** Title tag, code examples, and event data cleaned up per project style rules.
+- **Login with Twitch button redesigned.** Replaced the bare `<a>` tag with a proper Twitch-branded button using the official Twitch purple (`#9146FF`), the Glitch icon as inline SVG, and hover/active states.
+- **TemplateList last-item rounding.** Added `rounded-b-sm` to the last item in template lists, matching the existing `rounded-t-sm` on the first item.
+
 ## March 9th, 2026 - Fix: onboarding polling ignores auth errors
 
 - **Root cause:** `OnboardingWizard.vue` polling continued indefinitely when the server returned 401/403/419 (session expired or account deleted). The `fetchStatus()` function treated auth errors the same as other non-OK responses - returning early but leaving the `setInterval` running. Combined with Chrome's intensive background-tab throttling (3 s interval throttled to 60 s), this produced a persistent once-per-minute request to `/onboarding/status` that survived session invalidation and account deletion.

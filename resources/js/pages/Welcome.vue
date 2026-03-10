@@ -56,7 +56,7 @@ const twitchEvents = [
   { type: 'channel.raid', label: 'Incoming Raid', tag: 'event.viewers' },
   { type: 'channel.channel_points_custom_reward_redemption.add', label: 'Channel Points', tag: 'event.reward.title' },
   { type: 'stream.online', label: 'Stream Online', tag: 'event.type' },
-  { type: 'stream.offline', label: 'Stream Offline', tag: '—' },
+  { type: 'stream.offline', label: 'Stream Offline', tag: '' },
 ];
 
 const alertPipelineSteps = [
@@ -73,7 +73,7 @@ const alertPipelineSteps = [
 <template>
   <div class="min-h-screen bg-background text-foreground">
     <Head>
-      <title>Overlabels — Live Twitch overlays with HTML & CSS</title>
+      <title>Overlabels - Live Twitch overlays with HTML & CSS</title>
       <meta
         name="description"
         content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, and update your overlay instantly from your dashboard. Free and open source."
@@ -144,7 +144,7 @@ const alertPipelineSteps = [
             Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs, raids, and more. Update things instantly from your dashboard.
           </p>
           <p class="mb-14 max-w-2xl text-base text-muted-foreground">
-            No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage — <span class="text-sky-500">Overlabels keeps it live.</span>
+            No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage and <span class="text-sky-500">Overlabels keeps it live.</span>
           </p>
 
           <!-- Hero code blocks -->
@@ -153,57 +153,57 @@ const alertPipelineSteps = [
               <div class="flex items-center gap-2 border-b border-border bg-muted/50 px-4 py-2.5">
                 <span class="font-mono text-xs text-muted-foreground">overlay.html</span>
               </div>
-              <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
+              <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"stat-bar"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"stat-bar"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-400">[[[followers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-zinc-300">followers</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">followers</span
                 ><span class="text-zinc-500">&lt;/small&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
                 <div class="mt-2"></div>
-                <div><span class="text-sky-400">[[[if:followers_total &gt;= 1000]]]</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">[[[if:followers_total &gt;= 1000]]]</span></div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"milestone"</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"milestone"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
-                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-300">four digits. let's go.</span></div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-foreground">four digits. let's go.</span></div>
                 <div>&nbsp;&nbsp;<span class="text-zinc-500">&lt;/div&gt;</span></div>
-                <div><span class="text-sky-400">[[[endif]]]</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
               </div>
             </div>
 
-            <div class="overflow-hidden rounded-md border border-emerald-500/30">
-              <div class="flex items-center gap-2 border-b border-emerald-500/20 bg-emerald-950/30 px-4 py-2.5">
-                <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                <span class="font-mono text-xs text-emerald-400">live in OBS</span>
+            <div class="overflow-hidden rounded-md border bg-emerald-50 dark:bg-emerald-950 border-emerald-500/30">
+              <div class="flex items-center gap-2 border-b border-emerald-500/20 px-4 py-2.5">
+                <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
+                <span class="font-mono text-xs text-emerald-600 dark:text-emerald-400">live in OBS</span>
               </div>
-              <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
+              <div class="overflow-x-auto bg-emerald-50 dark:bg-emerald-950 p-5 font-mono text-sm leading-7">
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"stat-bar"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"stat-bar"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-emerald-300">1,342</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-emerald-600 dark:text-emerald-300">1,342</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-zinc-300">followers</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">followers</span
                 ><span class="text-zinc-500">&lt;/small&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
                 <div class="mt-2"></div>
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"milestone"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"milestone"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
-                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-300">four digits. let's go.</span></div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-foreground">four digits. let's go.</span></div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
               </div>
             </div>
@@ -270,22 +270,22 @@ const alertPipelineSteps = [
               <div class="border-b border-border bg-muted/50 px-4 py-2.5">
                 <span class="font-mono text-xs text-muted-foreground">Overlay example — subscriber bar</span>
               </div>
-              <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
+              <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"sub-bar"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"sub-bar"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-400">[[[subscribers_total]]]</span
-                ><span class="text-zinc-300"> subs</span><span class="text-zinc-500">&lt;/span&gt;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[subscribers_total]]]</span
+                ><span class="text-foreground"> subs</span><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-zinc-300">Latest: </span
-                ><span class="text-amber-400">[[[subscribers_latest_user_name]]]</span><span class="text-zinc-500">&lt;/span&gt;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-foreground">Latest: </span
+                ><span class="text-amber-700 dark:text-amber-400">[[[subscribers_latest_user_name]]]</span><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-400">[[[channel_game]]]</span
-                ><span class="text-zinc-300"> — </span><span class="text-amber-400">[[[channel_title]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[channel_game]]]</span
+                ><span class="text-foreground"> | </span><span class="text-amber-700 dark:text-amber-400">[[[channel_title]]]</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
@@ -302,19 +302,19 @@ const alertPipelineSteps = [
               <div class="border-b border-border bg-muted/50 px-4 py-2.5">
                 <span class="font-mono text-xs text-muted-foreground">overlay.css — live values can be used inside CSS</span>
               </div>
-              <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
-                <div><span class="text-sky-400">.follower-bar</span><span class="text-zinc-500"> &#123;</span></div>
+              <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
+                <div><span class="text-sky-600 dark:text-sky-400">.follower-bar</span><span class="text-zinc-500"> &#123;</span></div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-400">width</span><span class="text-zinc-500">: calc(</span
-                ><span class="text-amber-400">[[[followers_total]]]</span><span class="text-zinc-500"> / </span
-                ><span class="text-amber-400">[[[goals_latest_target]]]</span><span class="text-zinc-500"> * 100%);</span>
+                  &nbsp;&nbsp;<span class="text-zinc-600 dark:text-zinc-400">width</span><span class="text-zinc-500">: calc(</span
+                ><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span><span class="text-zinc-500"> / </span
+                ><span class="text-amber-700 dark:text-amber-400">[[[goals_latest_target]]]</span><span class="text-zinc-500"> * 100%);</span>
                 </div>
                 <div><span class="text-zinc-500">&#125;</span></div>
                 <div class="mt-3"></div>
-                <div><span class="text-sky-400">.stream-title::before</span><span class="text-zinc-500"> &#123;</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">.stream-title::before</span><span class="text-zinc-500"> &#123;</span></div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-400">content</span><span class="text-zinc-500">: </span><span class="text-emerald-400">"</span
-                ><span class="text-amber-400">[[[channel_title]]]</span><span class="text-emerald-400">"</span><span class="text-zinc-500">;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-600 dark:text-zinc-400">content</span><span class="text-zinc-500">: </span><span class="text-emerald-600 dark:text-emerald-400">"</span
+                ><span class="text-amber-700 dark:text-amber-400">[[[channel_title]]]</span><span class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">;</span>
                 </div>
                 <div><span class="text-zinc-500">&#125;</span></div>
               </div>
@@ -329,26 +329,26 @@ const alertPipelineSteps = [
               <div class="border-b border-border bg-muted/50 px-4 py-2.5">
                 <span class="font-mono text-xs text-muted-foreground">Alert template — channel.cheer</span>
               </div>
-              <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
+              <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"cheer-alert"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"cheer-alert"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;h1&gt;</span><span class="text-amber-400">[[[event.user_name]]]</span
-                ><span class="text-zinc-300"> cheered!</span><span class="text-zinc-500">&lt;/h1&gt;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;h1&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.user_name]]]</span
+                ><span class="text-foreground"> cheered!</span><span class="text-zinc-500">&lt;/h1&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-amber-400">[[[event.bits]]]</span
-                ><span class="text-zinc-300"> bits — total subs: </span><span class="text-amber-400">[[[subscribers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.bits]]]</span
+                ><span class="text-foreground"> bits, total subs:</span><span class="text-amber-700 dark:text-amber-400">[[[subscribers_total]]]</span
                 ><span class="text-zinc-500">&lt;/p&gt;</span>
                 </div>
-                <div>&nbsp;&nbsp;<span class="text-sky-400">[[[if:event.bits &gt;= 1000]]]</span></div>
+                <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[if:event.bits &gt;= 1000]]]</span></div>
                 <div>
-                  &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"whale"</span
-                ><span class="text-zinc-500">&gt;</span><span class="text-zinc-300">big cheer</span><span class="text-zinc-500">&lt;/div&gt;</span>
+                  &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"whale"</span
+                ><span class="text-zinc-500">&gt;</span><span class="text-foreground">big cheer</span><span class="text-zinc-500">&lt;/div&gt;</span>
                 </div>
-                <div>&nbsp;&nbsp;<span class="text-sky-400">[[[endif]]]</span></div>
+                <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
               </div>
             </div>
@@ -372,7 +372,7 @@ const alertPipelineSteps = [
             and every connected overlay re-renders that tag instantly — no page reload, no OBS interaction required.
           </p>
           <p class="mb-12 max-w-2xl text-muted-foreground">
-            Reference any control with <code class="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-400">[[[c:key]]]</code> — in HTML,
+            Reference any control with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">[[[c:key]]]</code> — in HTML,
             in CSS, and in conditional blocks.
             <Link href="/help/controls" class="ml-1 text-sky-500 hover:underline">Full controls reference →</Link>
           </p>
@@ -385,33 +385,33 @@ const alertPipelineSteps = [
                 <span class="font-mono text-sm font-semibold">{{ ctrl.type }}</span>
               </div>
               <p class="mb-3 text-sm text-muted-foreground">{{ ctrl.description }}</p>
-              <div class="overflow-x-auto rounded bg-zinc-950 px-3 py-1.5 font-mono text-xs text-amber-400">{{ ctrl.example }}</div>
+              <div class="overflow-x-auto rounded bg-accent px-3 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-400">{{ ctrl.example }}</div>
             </div>
           </div>
 
           <!-- Power combo -->
           <div class="overflow-hidden rounded-md border border-sky-500/20">
-            <div class="border-b border-sky-500/20 bg-sky-950/20 px-4 py-2.5">
-              <span class="font-mono text-xs text-sky-400">Power combo — boolean control + countdown timer + conditional class binding</span>
+            <div class="border-b border-sky-500/20 bg-sky-400/10 dark:bg-sky-950/20 px-4 py-2.5">
+              <span class="font-mono text-xs text-sky-600 dark:text-sky-400">Power combo — boolean control + countdown timer + conditional class binding</span>
             </div>
-            <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
+            <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
               <div>
                 <span class="text-xs text-zinc-600">// "show_timer" → boolean → "1" &nbsp;&nbsp; "round_timer" → timer → countdown, 300s base</span>
               </div>
               <div class="mt-2"></div>
-              <div><span class="text-sky-400">[[[if:c:show_timer]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[if:c:show_timer]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"timer </span
-              ><span class="text-sky-400">[[[if:c:round_timer &lt;= 10]]]</span><span class="text-emerald-400">danger</span
-              ><span class="text-sky-400">[[[endif]]]</span><span class="text-emerald-400">"</span><span class="text-zinc-500">&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"timer </span
+              ><span class="text-sky-600 dark:text-sky-400">[[[if:c:round_timer &lt;= 10]]]</span><span class="text-emerald-600 dark:text-emerald-400">danger</span
+              ><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span><span class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">&gt;</span>
               </div>
-              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-amber-400">[[[c:round_timer]]]</span></div>
+              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">[[[c:round_timer]]]</span></div>
               <div>&nbsp;&nbsp;<span class="text-zinc-500">&lt;/div&gt;</span></div>
-              <div><span class="text-sky-400">[[[endif]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
             </div>
           </div>
           <p class="mt-3 text-sm text-muted-foreground">
-            The timer ticks at 250ms resolution. The <code class="rounded bg-zinc-900 px-1 text-xs text-amber-400">danger</code> class applies
+            The timer ticks at 250ms resolution. The <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">danger</code> class applies
             automatically when the countdown reaches 10 seconds. Flip the boolean from the dashboard to show or hide the block — live.
           </p>
         </div>
@@ -434,14 +434,14 @@ const alertPipelineSteps = [
             <div>
               <h3 class="mb-4 text-xs font-semibold tracking-widest text-muted-foreground uppercase">Syntax</h3>
               <div class="overflow-hidden rounded-md border border-border">
-                <div class="bg-zinc-950 p-5 font-mono text-sm leading-7">
-                  <div><span class="text-sky-400">[[[if:variable operator value]]]</span></div>
+                <div class="bg-background p-5 font-mono text-sm leading-7">
+                  <div><span class="text-sky-600 dark:text-sky-400">[[[if:variable operator value]]]</span></div>
                   <div>&nbsp;&nbsp;<span class="text-zinc-500">...</span></div>
-                  <div><span class="text-sky-400">[[[elseif:variable operator value]]]</span></div>
+                  <div><span class="text-sky-600 dark:text-sky-400">[[[elseif:variable operator value]]]</span></div>
                   <div>&nbsp;&nbsp;<span class="text-zinc-500">...</span></div>
-                  <div><span class="text-sky-400">[[[else]]]</span></div>
+                  <div><span class="text-sky-600 dark:text-sky-400">[[[else]]]</span></div>
                   <div>&nbsp;&nbsp;<span class="text-zinc-500">...</span></div>
-                  <div><span class="text-sky-400">[[[endif]]]</span></div>
+                  <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
                 </div>
               </div>
             </div>
@@ -461,7 +461,7 @@ const alertPipelineSteps = [
                   :key="op"
                   class="flex items-center gap-4 bg-background px-4 py-2.5"
                 >
-                  <code class="w-8 shrink-0 font-mono text-sm text-amber-400">{{ op }}</code>
+                  <code class="w-8 shrink-0 font-mono text-sm text-amber-700 dark:text-amber-400">{{ op }}</code>
                   <span class="text-sm text-muted-foreground">{{ label }}</span>
                 </div>
               </div>
@@ -476,30 +476,30 @@ const alertPipelineSteps = [
             <div class="border-b border-border bg-muted/50 px-4 py-2.5">
               <span class="font-mono text-xs text-muted-foreground">Language-aware overlay + milestone block</span>
             </div>
-            <div class="overflow-x-auto bg-zinc-950 p-5 font-mono text-sm leading-7">
-              <div><span class="text-sky-400">[[[if:channel_language = en]]]</span></div>
+            <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
+              <div><span class="text-sky-600 dark:text-sky-400">[[[if:channel_language = en]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-zinc-300">Welcome to the stream</span
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-foreground">Welcome to the stream</span
               ><span class="text-zinc-500">&lt;/p&gt;</span>
               </div>
-              <div><span class="text-sky-400">[[[elseif:channel_language = es]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[elseif:channel_language = es]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-zinc-300">Bienvenidos al stream</span
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-foreground">Bienvenidos al stream</span
               ><span class="text-zinc-500">&lt;/p&gt;</span>
               </div>
-              <div><span class="text-sky-400">[[[else]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[else]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-zinc-300">Welcome</span
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-foreground">Welcome</span
               ><span class="text-zinc-500">&lt;/p&gt;</span>
               </div>
-              <div><span class="text-sky-400">[[[endif]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
               <div class="mt-3"></div>
-              <div><span class="text-sky-400">[[[if:followers_total &gt;= 10000]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[if:followers_total &gt;= 10000]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-400">"tenk-badge"</span
-              ><span class="text-zinc-500">&gt;</span><span class="text-zinc-300">10K club</span><span class="text-zinc-500">&lt;/div&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"tenk-badge"</span
+              ><span class="text-zinc-500">&gt;</span><span class="text-foreground">10K club</span><span class="text-zinc-500">&lt;/div&gt;</span>
               </div>
-              <div><span class="text-sky-400">[[[endif]]]</span></div>
+              <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
             </div>
           </div>
         </div>
@@ -523,8 +523,8 @@ const alertPipelineSteps = [
             <div v-for="evt in twitchEvents" :key="evt.type" class="rounded-md border border-border bg-background p-4">
               <div class="mb-1 text-sm font-semibold">{{ evt.label }}</div>
               <div class="mb-3 truncate font-mono text-xs text-muted-foreground">{{ evt.type }}</div>
-              <div v-if="evt.tag !== '—'" class="rounded bg-zinc-950 px-2.5 py-1.5 font-mono text-xs text-amber-400">[[[{{ evt.tag }}]]]</div>
-              <div v-else class="rounded bg-zinc-950 px-2.5 py-1.5 font-mono text-xs text-zinc-600">no payload</div>
+              <div v-if="evt.tag" class="rounded bg-accent px-2.5 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-300">[[[{{ evt.tag }}]]]</div>
+              <div v-else class="rounded bg-background px-2.5 py-1.5 font-mono text-xs text-zinc-600">no payload</div>
             </div>
           </div>
 
@@ -629,22 +629,22 @@ const alertPipelineSteps = [
                 <Code2 class="h-4 w-4 text-sky-500" /> Personalised testing page
               </h3>
               <p class="mb-4 text-sm text-muted-foreground">
-                The <code class="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-sky-400">/testing</code> page gives you ready-to-run
+                The <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-sky-600 dark:text-sky-400">/testing</code> page gives you ready-to-run
                 <a href="https://github.com/twitchdev/twitch-cli" target="_blank" rel="noopener" class="text-sky-500 hover:underline">Twitch CLI</a>
                 commands for every event type, pre-filled with your credentials.
               </p>
-              <div class="overflow-x-auto rounded-md bg-zinc-950 p-4 font-mono text-xs leading-6">
+              <div class="overflow-x-auto rounded-md bg-background p-4 font-mono text-xs leading-6">
                 <div><span class="text-zinc-500">$ twitch event trigger channel.follow \</span></div>
                 <div><span class="text-zinc-500">&nbsp;&nbsp;--transport=webhook \</span></div>
                 <div>
-                  <span class="text-zinc-500">&nbsp;&nbsp;-F </span><span class="text-emerald-400">https://overlabels.com/api/twitch/webhook</span
+                  <span class="text-zinc-500">&nbsp;&nbsp;-F </span><span class="text-emerald-600 dark:text-emerald-400">https://overlabels.com/api/twitch/webhook</span
                 ><span class="text-zinc-500"> \</span>
                 </div>
                 <div>
-                  <span class="text-zinc-500">&nbsp;&nbsp;-s </span><span class="text-amber-400">your_webhook_secret</span
+                  <span class="text-zinc-500">&nbsp;&nbsp;-s </span><span class="text-amber-700 dark:text-amber-300">your_webhook_secret</span
                 ><span class="text-zinc-500"> \</span>
                 </div>
-                <div><span class="text-zinc-500">&nbsp;&nbsp;--to-user </span><span class="text-amber-400">your_twitch_id</span></div>
+                <div><span class="text-zinc-500">&nbsp;&nbsp;--to-user </span><span class="text-amber-700 dark:text-amber-300">your_twitch_id</span></div>
               </div>
               <p class="mt-3 text-xs text-muted-foreground">Commands are blurred by default and revealed on hover. No secrets exposed in source.</p>
             </div>
