@@ -158,14 +158,6 @@ Templates use a custom tag system (e.g., `{{follower_count}}`) parsed by `Templa
 ### Database Changes
 Always create migrations for schema changes. Test rollback before committing. Use seeders for test data generation.
 
-## In-Progress Work
-
-- **Onboarding redesign**: Full plan written, awaiting implementation.
-  - Plan file at `C:\Users\jmstu\.claude\plans\mellow-wishing-snowflake.md`
-  - Automate signup (fork kit, generate tags, assign alerts, per-user webhook secret)
-  - Interactive wizard for token creation on first dashboard visit
-  - New `/testing` page with personalized Twitch CLI commands
-
 ## Versioning
 
 - Current version: `0.1.0`
@@ -181,56 +173,3 @@ Always create migrations for schema changes. Test rollback before committing. Us
 - NEVER use em dashes in user-facing copy or code. Use hyphens with spaces instead.
 - NEVER call "Fork" in frontend-facing UI. Always use "Copy" instead.
 
----
-
-# Onboarding Redesign Plan (In Progress)
-
-**Status:** Plan written and ready for implementation. User ran out of plan mode budget before approving.
-**Plan file:** `C:\Users\jmstu\.claude\plans\mellow-wishing-snowflake.md`
-
-## TL;DR
-Replace the passive "Welcome to Overlabels (MVP)" localStorage alert with:
-1. **Automated backend job** on signup: generates tags, forks starter kit (ID from config, default 1), auto-assigns alert templates to events via name-based matching, generates per-user webhook secret
-2. **Interactive wizard** on first dashboard visit: shows what was auto-provisioned, creates overlay access token (must be shown once), celebration dialog with link to testing page
-3. **Per-user webhook secrets**: new column on users table, used when creating EventSub subscriptions, backward-compatible fallback to global secret for existing users
-4. **Testing reference page** (`/testing`): personalized Twitch CLI commands with user's twitch_id and webhook_secret
-
-## Key Decisions (confirmed by user)
-- Starter kit (ID 1) already exists in production
-- Name-based matching for template-to-event mapping (keywords like "follow", "gift", "resub", etc.)
-- Per-user webhook secrets only for new users; existing users fall back to global secret
-- `stream.online` and `stream.offline` are skipped in auto-assignment
-
-## Files to Create (7)
-1. `database/migrations/..._add_onboarding_fields_to_users_table.php` (onboarded_at, webhook_secret)
-2. `app/Jobs/OnboardNewUser.php` (automated setup pipeline)
-3. `app/Listeners/OnboardNewUserListener.php` (listens to UserRegistered)
-4. `app/Http/Controllers/OnboardingController.php` (status/token/complete endpoints)
-5. `resources/js/components/OnboardingWizard.vue` (multi-step wizard)
-6. `resources/js/pages/testing/index.vue` (testing reference page)
-7. `tests/Feature/OnboardNewUserJobTest.php`
-
-## Files to Modify (9)
-1. `app/Models/User.php` - Add fields, casts, helpers (isOnboarded, hasAlertMappings)
-2. `config/app.php` - Add starter_kit_id
-3. `app/Providers/AppServiceProvider.php` - Register OnboardNewUserListener
-4. `app/Http/Controllers/TwitchEventSubController.php` - Per-user secret verification
-5. `app/Services/UserEventSubManager.php` - Per-user secret in subscriptions
-6. `app/Http/Controllers/DashboardController.php` - Pass needsOnboarding + twitchId
-7. `resources/js/pages/dashboard/index.vue` - Replace welcome alert with wizard
-8. `resources/js/components/AppSidebar.vue` - Add Testing Guide nav item
-9. `routes/web.php` - Add onboarding + testing routes
-
-## Implementation Order
-1. Migration + User model -> 2. OnboardNewUser job -> 3. Wire listener -> 4. Per-user webhook secret -> 5. Onboarding controller -> 6. Dashboard controller -> 7. Frontend wizard -> 8. Testing page
-
-## Name-Based Event Matching (specificity order, remove matched from pool)
-```
-'channel.subscription.gift'   => ['gift sub', 'gift']
-'channel.subscription.message' => ['resub', 'resubscri']
-'channel.cheer'               => ['cheer', 'bits']
-'channel.raid'                => ['raid']
-'channel.channel_points_custom_reward_redemption.add' => ['channel point', 'redempt', 'reward']
-'channel.follow'              => ['follow']
-'channel.subscribe'           => ['subscribe', 'sub alert', 'new sub', ' sub']
-```
