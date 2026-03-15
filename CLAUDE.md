@@ -1,6 +1,8 @@
-# CLAUDE.md
+# Claude Code Memory Export
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Exported on: 2026-03-15
+
+---
 
 ## Project Overview
 
@@ -10,10 +12,7 @@ This is a Laravel 12 + Vue 3 application for managing Twitch overlays. It uses I
 
 ### Development
 ```bash
-# Start full development environment (server + queue + vite)
-composer run dev
-
-# Run individual services
+composer run dev          # Full dev environment (server + queue + vite), aliased as `crd`
 php artisan serve         # Laravel server
 npm run dev              # Vite dev server
 php artisan queue:work   # Queue worker
@@ -21,10 +20,7 @@ php artisan queue:work   # Queue worker
 
 ### Testing & Quality
 ```bash
-# Run tests
 php artisan test         # PHP tests (Pest framework)
-
-# Code quality
 npm run lint             # ESLint with auto-fix
 npm run format           # Prettier formatting
 php artisan pint         # PHP code style fixes
@@ -37,38 +33,117 @@ php artisan migrate      # Run database migrations
 php artisan optimize     # Cache configuration
 ```
 
-## Architecture Overview
+## Environment
 
-This app is being built on a Windows 10 machine. Do NOT use linux commands for file manipulation and handling, but use the
-Windows equivalents.
+- Windows 10, PHP 8.4 via Herd (exe at `/c/Users/jmstu/.config/herd/bin/php84/php.exe`)
+- `php` is on PATH - use `php artisan ...` directly
+- `gh` is available as a GitHub CLI tool
+- PostgreSQL database
+- Repo: [jasperfrontend/overlabels](https://github.com/jasperfrontend/overlabels) on GitHub
+- Do NOT use Linux commands for file manipulation - use Windows equivalents
 
-- `php` is available on PATH — use `php artisan ...` directly.
-- `gh` is available as a GitHub CLI tool. (new since March 2nd, 2026).
-- `composer run dev` is aliased as `crd` but both commands work.
-- This project uses Postgres.
-- This project's repo lives on [jasperfrontend/overlabels](https://github.com/jasperfrontend/overlabels) on GitHub.
-- Always refer to this repo when user asks for things related to GitHub (issues, PRs, etc.).
+### Environment Variables
+
+Critical variables:
+- `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`: Required for Twitch integration
+- `APP_URL`: Must be correct for webhooks
+- `DB_CONNECTION`: sqlite (default) or pgsql
+- `TELESCOPE_ENABLED`: Enable debugging tools (dev only)
+
+## Architecture
 
 ### Core Systems
 
-**Twitch Integration**: The app integrates deeply with Twitch through OAuth and EventSub webhooks. User authentication is based on `twitch_id` (not email). The `TwitchApiService` handles all API interactions including token refresh.
+**Twitch Integration**: Deep integration through OAuth and EventSub webhooks. User authentication is based on `twitch_id` (not email). `TwitchApiService` handles all API interactions including token refresh.
 
-**Overlay System**: Templates are stored in `overlay_templates` table with a custom tag system that parses Twitch data dynamically. Access is controlled through tokens (`OverlayAccessToken`) or hash-based public links (`OverlayHash`).
+**Overlay System**: Templates stored in `overlay_templates` table with a custom tag system that parses Twitch data dynamically. Access controlled through tokens (`OverlayAccessToken`) or hash-based public links (`OverlayHash`). Render pipeline: `authenticate.blade.php` -> `overlay/app.js` (creates Echo/Pusher) -> `OverlayRenderer.vue`.
 
-**Frontend Stack**: Vue 3 components live in `/resources/js/`. Inertia.js eliminates the need for separate API endpoints for most operations. Pages are in `/Pages/`, reusable components in `/components/`, and UI primitives in `/components/ui/`.
+**Frontend Stack**: Vue 3 components in `/resources/js/`. Inertia.js eliminates separate API endpoints for most operations. Pages in `/Pages/`, reusable components in `/components/`, UI primitives in `/components/ui/`. Components follow Shadcn/Reka-UI/Vue patterns. Composables in `/composables/`, TypeScript types in `/types/`. Tailwind v4 with CSS layers.
 
-### Key Patterns
+**Route Organization**: Routes split across `/routes/`: `web.php` (main), `api.php` (public API), `auth.php` (authentication), `settings.php` (user settings), `admin.php` (admin panel - must load BEFORE the catch-all route).
 
-**Route Organization**: Routes are split across multiple files in `/routes/`: `web.php` (main app), `api.php` (public API), `auth.php` (authentication), `settings.php` (user settings).
-
-**Database**: Uses SQLite by default but supports PostgreSQL. Migrations follow Laravel conventions with proper rollback support. Models use factories for testing.
-
-**API Endpoints**: 
+**API Endpoints**:
 - Public overlay rendering: `/api/overlay/render` (rate-limited)
-- Twitch webhook: `/api/twitch/webhook` 
+- Twitch webhook: `/api/twitch/webhook`
+- External webhooks: `POST /api/webhooks/{service}/{webhook_token}` (no auth/CSRF)
 - Template operations require authentication through Inertia
 
-**Testing**: Feature tests in `/tests/Feature/`, unit tests in `/tests/Unit/`. Use Pest framework with Laravel-specific helpers.
+**Testing**: Feature tests in `/tests/Feature/`, unit tests in `/tests/Unit/`. Pest framework with Laravel-specific helpers. Tests use `RefreshDatabase`.
+
+### Key Architecture Notes
+
+- `useEventSub.ts` reuses `window.Echo` instead of creating a duplicate Pusher connection
+- `useOverlayHealth.ts` composable handles: retry with backoff, Pusher monitoring, periodic health checks, auto-reload
+- Banner styles live in the blade template (not in Vue) so they're available before Vue mounts
+- Overlay auth uses 64-char hex tokens in URL fragments (never sent to server)
+- Two Pusher channels: `twitch-events` (global) and `alerts.{user_twitch_id}` (per-user)
+- OBS browser sources can't show console errors - visual banners are the only way to communicate errors to streamers
+
+### Important Services
+
+- `TwitchApiService`: All Twitch API interactions
+- `TemplateParserService`: Template tag parsing and validation
+- `OverlayAccessService`: Access control for overlays
+- `AdminAuditService`: Append-only audit logging
+- `ExternalControlService`: External service control updates
+- `ExternalAlertService`: External service alert dispatch
+- Queue workers handle background tasks (EventSub processing)
+
+## Controls System (Implemented Feb 2026)
+
+- `overlay_controls` table: id, overlay_template_id (nullable!), user_id, key, label, type, value, config (json), sort_order, source, source_managed
+- `OverlayControl` model: `sanitizeValue()`, `resolveDisplayValue()`, `createForTemplate()`, `provisionServiceControl()`, `broadcastKey()`
+- Carbon `diffInSeconds` bug: use `$start->diffInSeconds($now)` not `$now->diffInSeconds($start)` (latter returns negative)
+- Template syntax: `[[[c:key]]]` or namespaced `[[[c:kofi:kofis_received]]]` - colon already in regex char class
+- Broadcast: `ControlValueUpdated` -> `alerts.{twitch_id}` channel, broadcastAs `control.updated`
+- Service-managed controls: `source_managed=true` -> `setValue()` and `update()` return 403
+- User-scoped controls: `overlay_template_id=null`, available in all user's overlays
+- Namespaced broadcast key: "kofi:kofis_received" -> stored in data as "c:kofi:kofis_received"
+- Empty `overlay_slug` in broadcast = user-scoped; OverlayRenderer applies to all overlays
+
+## External Integrations (Implemented Mar 2026)
+
+- Pipeline: ExternalWebhookController -> verifyRequest -> parsePayload -> normalizeEvent -> ExternalEvent (dedup on service+message_id) -> ExternalControlService.applyUpdates -> ExternalAlertService.dispatch
+- `ExternalServiceDriver` interface in `app/Contracts/` - getServiceKey, verifyRequest, parseEventType, normalizeEvent, getSupportedEventTypes, getAutoProvisionedControls, getControlUpdates
+- `ExternalServiceRegistry` maps service key -> driver class
+- `ExternalIntegration`: UUID webhook_token (routing key), encrypted credentials (Crypt::encryptString), settings (json), enabled, last_received_at
+  - Use `setCredentialsEncrypted(array)` / `getCredentialsDecrypted()` - NOT raw $fillable assignment
+  - In tests: pass pre-encrypted credentials directly to factory->create(['credentials' => Crypt::encryptString(...)])
+- `ExternalEvent` append-only model (UPDATED_AT = null), global dedup on (service, message_id)
+- `ControlValueUpdated::dispatch()` uses variadic `...$arguments` - use POSITIONAL args, not named args
+
+### Ko-fi Integration
+
+- Ko-fi driver: payload is form-encoded body with `data` JSON field - use `$request->input('data')` to get string
+  - In tests: use `$this->post(url, ['data' => json_encode($payload)])` NOT `postJson`
+- Ko-fi controls: NO auto-provision on connect - user explicitly adds from ControlFormModal on static templates
+- `ControlFormModal.vue` shows Ko-fi presets when `connectedServices` includes 'kofi' AND template.type === 'static'
+- `ExternalControlService::applyUpdates()` uses `->with('template')->get()` (not `->first()`); loops all matching controls
+- `OverlayControl` relationship is `template()` not `overlayTemplate()` - use `$control->template?->slug`
+- `renderAuthenticated()` uses `c:` + `broadcastKey()` for source_managed controls -> `c:kofi:kofis_received`
+- `connectedServices` prop threaded: OverlayTemplateController::show() -> show.vue -> ControlsManager.vue -> ControlFormModal.vue
+
+## Admin Panel (Implemented Feb 2026)
+
+- `role` varchar + `is_system_user` bool + `softDeletes` on `users` table
+- Ghost user: `twitch_id = 'GHOST_USER'`, `is_system_user = true`, seeded via `GhostUserSeeder`
+- `admin_audit_logs` table: append-only (`UPDATED_AT = null`)
+- Middleware: `EnsureAdminRole` (abort 404 for non-admins), `HandleImpersonation` (session swap)
+- Route middleware: `admin.role` only (no `auth.redirect`) - unauthenticated users also get 404
+- All admin controllers in `app/Http/Controllers/Admin/`
+- Vue pages in `resources/js/pages/admin/` (lowercase)
+- `isAdmin` + `impersonating` shared via `HandleInertiaRequests::share()`
+- In tests: use `OverlayTemplate::factory()->create(['fork_of_id' => null])` to avoid recursion
+- `tests/Pest.php` updated to `->in('Feature', 'Unit')` for Laravel TestCase in unit tests
+
+## Alert Targeting (Implemented Mar 2026)
+
+- `alert_template_static_overlays` pivot table: self-referential on overlay_templates, cascadeOnDelete, unique constraint
+- `AlertTriggered` event has `?array $targetOverlaySlugs = null` property (backward-compatible)
+- `broadcastWith()` includes `target_overlay_slugs` in the `alert` array
+- All broadcast points: TwitchEventSubController::renderEventAlert, ExternalAlertService::dispatch, ExternalEventController::replay
+- `OverlayRenderer.vue` early-exits in `handleAlertTriggered()`: if targetSlugs !== null and slug not in list, return
+- Semantic: empty pivot = null slugs = fires on ALL overlays (backward-compatible default)
 
 ## Development Workflow
 
@@ -80,26 +155,82 @@ Windows equivalents.
 ### Working with Templates
 Templates use a custom tag system (e.g., `{{follower_count}}`) parsed by `TemplateParserService`. Tags are validated against available Twitch data. The template editor uses CodeMirror with custom syntax highlighting.
 
-### Frontend Development
-- Components follow Shadcn/Reka-UI/Vue patterns in `/resources/js/components/ui/`
-- Use composables in `/resources/js/composables/` for shared logic
-- TypeScript types are in `/resources/js/types/`
-- Tailwind v4 with CSS layers for styling
-
 ### Database Changes
 Always create migrations for schema changes. Test rollback before committing. Use seeders for test data generation.
 
-## Important Services
+## In-Progress Work
 
-- `TwitchApiService`: All Twitch API interactions
-- `TemplateParserService`: Template tag parsing and validation  
-- `OverlayAccessService`: Access control for overlays
-- Queue workers handle background tasks (EventSub processing)
+- **Onboarding redesign**: Full plan written, awaiting implementation.
+  - Plan file at `C:\Users\jmstu\.claude\plans\mellow-wishing-snowflake.md`
+  - Automate signup (fork kit, generate tags, assign alerts, per-user webhook secret)
+  - Interactive wizard for token creation on first dashboard visit
+  - New `/testing` page with personalized Twitch CLI commands
 
-## Environment Variables
+## Versioning
 
-Critical variables:
-- `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`: Required for Twitch integration
-- `APP_URL`: Must be correct for webhooks
-- `DB_CONNECTION`: sqlite (default) or pgsql
-- `TELESCOPE_ENABLED`: Enable debugging tools (dev only)
+- Current version: `0.1.0`
+- Version is set in TWO places - bump both when asked:
+  - `package.json` -> `"version"` field
+  - `composer.json` -> `"version"` field
+- Uses semver: MAJOR.MINOR.PATCH
+
+## Workflow Preferences
+
+- At the end of every logical unit of work, prepare a commit: update CHANGELOG (docs/changelog/changelog-YYYY-MM.md - per-month files) first, then commit everything together - one commit. Do NOT push automatically. Ask the user for confirmation before pushing.
+- If unsure whether to commit first or apply changes first, commit first then apply
+- NEVER use em dashes in user-facing copy or code. Use hyphens with spaces instead.
+- NEVER call "Fork" in frontend-facing UI. Always use "Copy" instead.
+
+---
+
+# Onboarding Redesign Plan (In Progress)
+
+**Status:** Plan written and ready for implementation. User ran out of plan mode budget before approving.
+**Plan file:** `C:\Users\jmstu\.claude\plans\mellow-wishing-snowflake.md`
+
+## TL;DR
+Replace the passive "Welcome to Overlabels (MVP)" localStorage alert with:
+1. **Automated backend job** on signup: generates tags, forks starter kit (ID from config, default 1), auto-assigns alert templates to events via name-based matching, generates per-user webhook secret
+2. **Interactive wizard** on first dashboard visit: shows what was auto-provisioned, creates overlay access token (must be shown once), celebration dialog with link to testing page
+3. **Per-user webhook secrets**: new column on users table, used when creating EventSub subscriptions, backward-compatible fallback to global secret for existing users
+4. **Testing reference page** (`/testing`): personalized Twitch CLI commands with user's twitch_id and webhook_secret
+
+## Key Decisions (confirmed by user)
+- Starter kit (ID 1) already exists in production
+- Name-based matching for template-to-event mapping (keywords like "follow", "gift", "resub", etc.)
+- Per-user webhook secrets only for new users; existing users fall back to global secret
+- `stream.online` and `stream.offline` are skipped in auto-assignment
+
+## Files to Create (7)
+1. `database/migrations/..._add_onboarding_fields_to_users_table.php` (onboarded_at, webhook_secret)
+2. `app/Jobs/OnboardNewUser.php` (automated setup pipeline)
+3. `app/Listeners/OnboardNewUserListener.php` (listens to UserRegistered)
+4. `app/Http/Controllers/OnboardingController.php` (status/token/complete endpoints)
+5. `resources/js/components/OnboardingWizard.vue` (multi-step wizard)
+6. `resources/js/pages/testing/index.vue` (testing reference page)
+7. `tests/Feature/OnboardNewUserJobTest.php`
+
+## Files to Modify (9)
+1. `app/Models/User.php` - Add fields, casts, helpers (isOnboarded, hasAlertMappings)
+2. `config/app.php` - Add starter_kit_id
+3. `app/Providers/AppServiceProvider.php` - Register OnboardNewUserListener
+4. `app/Http/Controllers/TwitchEventSubController.php` - Per-user secret verification
+5. `app/Services/UserEventSubManager.php` - Per-user secret in subscriptions
+6. `app/Http/Controllers/DashboardController.php` - Pass needsOnboarding + twitchId
+7. `resources/js/pages/dashboard/index.vue` - Replace welcome alert with wizard
+8. `resources/js/components/AppSidebar.vue` - Add Testing Guide nav item
+9. `routes/web.php` - Add onboarding + testing routes
+
+## Implementation Order
+1. Migration + User model -> 2. OnboardNewUser job -> 3. Wire listener -> 4. Per-user webhook secret -> 5. Onboarding controller -> 6. Dashboard controller -> 7. Frontend wizard -> 8. Testing page
+
+## Name-Based Event Matching (specificity order, remove matched from pool)
+```
+'channel.subscription.gift'   => ['gift sub', 'gift']
+'channel.subscription.message' => ['resub', 'resubscri']
+'channel.cheer'               => ['cheer', 'bits']
+'channel.raid'                => ['raid']
+'channel.channel_points_custom_reward_redemption.add' => ['channel point', 'redempt', 'reward']
+'channel.follow'              => ['follow']
+'channel.subscribe'           => ['subscribe', 'sub alert', 'new sub', ' sub']
+```
