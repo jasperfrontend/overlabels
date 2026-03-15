@@ -103,7 +103,9 @@ const adminNavItems: NavItem[] = [
         </SidebarMenuItem>
       </SidebarMenu>
       <div class="px-3 pb-2 text-[10px] text-muted-foreground/50 group-data-[collapsible=icon]:hidden">
-        {{ commitHash }}
+        <a :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`" target="_blank" rel="noopener noreferrer" class="hover:text-muted-foreground transition-colors">
+          {{ commitHash }}
+        </a>
       </div>
     </SidebarFooter>
   </Sidebar>

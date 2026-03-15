@@ -1,5 +1,9 @@
 # CHANGELOG MARCH 2026
 
+## March 16th, 2026 - UI: Link commit hash to GitHub
+
+- Sidebar commit hash now links to the corresponding GitHub commit page, opening in a new tab.
+
 ## March 16th, 2026 - UI: Ko-fi settings "Why Ko-fi" placement + Vite chunk splitting
 
 - Replaced inline "Why Ko-fi?" link on Ko-fi settings page with a proper highlighted card using HeadingSmall + Button. Only shown when Ko-fi is not yet connected.
