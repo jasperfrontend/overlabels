@@ -1,5 +1,9 @@
 # CHANGELOG MARCH 2026
 
+## March 15th, 2026 - Fix: last ESLint error in Pagination.vue
+
+- **Moved `v-html` from `<Link>` component onto a `<span>` inside its slot.** The `vue/no-v-text-v-html-on-component` rule flags `v-html` on components because it overwrites slot content. Wrapping in a `<span>` preserves the HTML rendering and satisfies the linter. Zero lint errors remaining.
+
 ## March 15th, 2026 - OG meta tags + sidebar auth awareness + admin UX polish
 
 - **Per-page OG & Twitter meta tags on public pages.** `/help`, `/manifesto`, and `/help/controls` now have full `og:title`, `og:description`, `og:url`, `og:image`, `twitter:card`, `twitter:title`, `twitter:description`, and `twitter:image` tags for proper social sharing previews. Uses the same Cloudinary OG image as the site default.
