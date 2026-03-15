@@ -32,10 +32,10 @@ export default defineConfig({
         }),
     ],
     build: {
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
                 manualChunks: {
-                    // Separate CodeMirror into its own chunk for better loading
                     codemirror: [
                         'vue-codemirror',
                         'codemirror',
@@ -45,7 +45,9 @@ export default defineConfig({
                         '@codemirror/theme-one-dark',
                         '@codemirror/view',
                         '@codemirror/state'
-                    ]
+                    ],
+                    'lucide-icons': ['lucide-vue-next'],
+                    pusher: ['pusher-js', 'laravel-echo'],
                 }
             }
         }

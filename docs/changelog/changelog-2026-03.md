@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 16th, 2026 - UI: Ko-fi settings "Why Ko-fi" placement + Vite chunk splitting
+
+- Replaced inline "Why Ko-fi?" link on Ko-fi settings page with a proper highlighted card using HeadingSmall + Button. Only shown when Ko-fi is not yet connected.
+- Split Vite build chunks: isolated `lucide-vue-next` and `pusher-js`/`laravel-echo` into dedicated chunks. Raised `chunkSizeWarningLimit` to 1000kB to suppress unavoidable Lucide icon library warning.
+
 ## March 16th, 2026 - Feature: Free Resources page
 
 - Created `/resources` page with 38 curated free tools for building overlays.
