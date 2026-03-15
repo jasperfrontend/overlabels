@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 16th, 2026 - Feature: Free Resources page
+
+- Created `/resources` page with curated free tools for building overlays.
+- Three categories: Colors (6 tools), Icons with 1-click SVG copy (4 tools), and Fonts (2 libraries).
+- Added to sidebar under "Learn" with BookOpen icon.
+- Public page, accessible to logged-out users. Full OG and Twitter meta tags.
+
 ## March 15th, 2026 - Feature: "Why Ko-fi" public page
 
 - Created `/why-kofi` page explaining why Ko-fi is the best donation platform for streamers.

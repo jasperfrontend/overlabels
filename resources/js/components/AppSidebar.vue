@@ -7,6 +7,7 @@ import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import {
   Bell,
+  BookOpen,
   Brackets,
   FileText,
   HashIcon,
@@ -47,6 +48,7 @@ const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.inde
 const learnNavItems: NavItem[] = [
   { title: 'Conditional Tags', href: route('help'), icon: Brackets },
   { title: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
+  { title: 'Free Resources', href: route('resources'), icon: BookOpen },
   { title: 'Why Ko-fi', href: route('why-kofi'), icon: Heart },
   { title: 'Manifesto', href: route('manifesto'), icon: FileText },
 ];

@@ -54,6 +54,10 @@ Route::get('/why-kofi', function () {
     return Inertia::render('WhyKofi');
 })->name('why-kofi');
 
+Route::get('/resources', function () {
+    return Inertia::render('Resources');
+})->name('resources');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
