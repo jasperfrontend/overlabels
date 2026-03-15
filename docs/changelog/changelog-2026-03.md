@@ -3,7 +3,7 @@
 ## March 15th, 2026 - Feature: "Why Ko-fi" public page
 
 - Created `/why-kofi` page explaining why Ko-fi is the best donation platform for streamers.
-- Content includes fee comparison table (Ko-fi vs PayPal vs StreamElements), privacy and guest checkout advantages, Ko-fi pricing tiers, and why direct PayPal is problematic.
+- Content includes fee comparison table (Ko-fi vs PayPal vs StreamElements), privacy and guest checkout advantages, why direct PayPal is problematic, and a transparency section clarifying Overlabels never takes a cut.
 - Added route in `web.php` (public, no auth required - accessible to logged-out users).
 - Added "Why Ko-fi" entry to sidebar under "Learn" section with Heart icon.
 - Added "Why Ko-fi?" link on the Ko-fi integration settings page.

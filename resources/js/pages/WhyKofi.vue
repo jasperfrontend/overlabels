@@ -198,45 +198,6 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
         </section>
 
-        <!-- Ko-fi tiers -->
-        <section class="space-y-4">
-          <h2 class="text-2xl font-bold">Ko-fi pricing tiers</h2>
-          <div class="grid gap-4 sm:grid-cols-3">
-            <div class="rounded-lg border p-5 space-y-2">
-              <p class="text-lg font-bold">Free</p>
-              <p class="text-2xl font-extrabold text-green-600 dark:text-green-400">$0/mo</p>
-              <ul class="text-sm text-muted-foreground space-y-1">
-                <li>0% fee on donations</li>
-                <li>Donation page</li>
-                <li>Webhook support</li>
-                <li>PayPal + Stripe</li>
-              </ul>
-              <p class="text-xs text-muted-foreground pt-2">Everything you need for Overlabels integration.</p>
-            </div>
-            <div class="rounded-lg border p-5 space-y-2">
-              <p class="text-lg font-bold">Contributor</p>
-              <p class="text-2xl font-extrabold">Opt-in 5%</p>
-              <ul class="text-sm text-muted-foreground space-y-1">
-                <li>Everything in Free</li>
-                <li>You choose to support Ko-fi</li>
-                <li>5% on donations goes to Ko-fi</li>
-              </ul>
-              <p class="text-xs text-muted-foreground pt-2">Totally optional - you can turn this off any time.</p>
-            </div>
-            <div class="rounded-lg border border-violet-500/30 bg-violet-500/5 p-5 space-y-2">
-              <p class="text-lg font-bold">Gold</p>
-              <p class="text-2xl font-extrabold text-violet-500">$6/mo</p>
-              <ul class="text-sm text-muted-foreground space-y-1">
-                <li>0% on everything</li>
-                <li>Subscriptions + memberships</li>
-                <li>Shop + commissions</li>
-                <li>Custom page themes</li>
-              </ul>
-              <p class="text-xs text-muted-foreground pt-2">Worth it if you sell merch or run a membership.</p>
-            </div>
-          </div>
-        </section>
-
         <!-- CTA -->
         <section class="rounded-lg border bg-sidebar-accent p-6 text-center space-y-3">
           <p class="text-xl font-bold">Ready to connect Ko-fi to your overlays?</p>
@@ -246,6 +207,23 @@ const breadcrumbs: BreadcrumbItem[] = [
             then head to your
             <a href="/settings/integrations/kofi" class="text-violet-400 hover:underline font-medium">Ko-fi integration settings</a>
             to connect.
+          </p>
+        </section>
+
+        <!-- Overlabels transparency -->
+        <section class="rounded-lg border border-green-500/30 bg-green-500/5 p-6 space-y-3">
+          <h2 class="text-2xl font-bold text-center">Overlabels takes nothing</h2>
+          <p class="text-muted-foreground text-center">
+            When your viewers donate through Ko-fi, <strong class="text-foreground">100% of that money goes to you</strong>.
+            Overlabels never takes a cut, never skims a percentage, never charges a platform fee. Not now, not ever.
+          </p>
+          <p class="text-muted-foreground text-center">
+            Overlabels itself is <strong class="text-foreground">completely free to use</strong>. No subscription, no premium tier,
+            no paywall. We built this because streamers deserve tools that don't nickel-and-dime them.
+          </p>
+          <p class="text-sm text-muted-foreground text-center">
+            The only fees you'll ever see are payment processing fees charged by PayPal or Stripe - and those go to
+            PayPal and Stripe, not us. We literally never touch your money.
           </p>
         </section>
       </div>
