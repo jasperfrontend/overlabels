@@ -96,14 +96,14 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
           <option value="all">All records</option>
         </select>
         <template v-if="!showPruneConfirm">
-          <button class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground" @click="showPruneConfirm = true">Prune</button>
+          <button class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground cursor-pointer" @click="showPruneConfirm = true">Prune</button>
         </template>
         <template v-else>
           <span class="text-sm font-medium text-destructive">
             {{ prunePeriod === 'all' ? 'Delete ALL access log records?' : `Delete all entries older than ${prunePeriod} days?` }}
           </span>
-          <button class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90" @click="submitPrune">Yes, prune</button>
-          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">Cancel</button>
+          <button class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90 cursor-pointer" @click="submitPrune">Yes, prune</button>
+          <button class="rounded border px-3 py-1 text-sm hover:bg-muted cursor-pointer" @click="showPruneConfirm = false">Cancel</button>
         </template>
       </div>
 

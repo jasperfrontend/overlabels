@@ -84,10 +84,10 @@ function deleteCategory(cat: Category) {
                   <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                  <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline">
+                  <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline cursor-pointer">
                     {{ tag.is_active ? 'Deactivate' : 'Activate' }}
                   </button>
-                  <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline">Delete</button>
+                  <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline cursor-pointer">Delete</button>
                 </div>
               </div>
               <div class="mt-2 flex flex-wrap gap-1.5">

@@ -13,6 +13,7 @@ import {
   House,
   Layers,
   LayoutGrid,
+  LogIn,
   Radio,
   ScrollText,
   ShieldAlert,
@@ -26,6 +27,7 @@ import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';
 
 const page = usePage<AppPageProps>();
+const user = computed(() => page.props.auth.user);
 const isAdmin = computed(() => page.props.isAdmin);
 const commitHash = __COMMIT_HASH__;
 
@@ -68,7 +70,7 @@ const adminNavItems: NavItem[] = [
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton as-child>
-            <Link :href="route('dashboard.index')">
+            <Link :href="user ? route('dashboard.index') : '/'">
               <AppLogo />
             </Link>
           </SidebarMenuButton>
@@ -77,15 +79,25 @@ const adminNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain label="" :items="mainNavItems" />
-      <NavMain label="Alerts" :items="alertsNavItems" />
-      <NavMain label="Kits" :items="kitsNavItems" />
+      <NavMain v-if="user" label="" :items="mainNavItems" />
+      <NavMain v-if="user" label="Alerts" :items="alertsNavItems" />
+      <NavMain v-if="user" label="Kits" :items="kitsNavItems" />
       <NavMain label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
     </SidebarContent>
 
     <SidebarFooter>
-      <NavUser />
+      <NavUser v-if="user" />
+      <SidebarMenu v-else>
+        <SidebarMenuItem>
+          <SidebarMenuButton as-child>
+            <a href="/auth/redirect/twitch" class="flex items-center cursor-pointer">
+              <LogIn class="mr-2 h-4 w-4" />
+              Log in
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
       <div class="px-3 pb-2 text-[10px] text-muted-foreground/50 group-data-[collapsible=icon]:hidden">
         {{ commitHash }}
       </div>

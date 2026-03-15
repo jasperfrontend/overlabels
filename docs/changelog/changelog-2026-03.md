@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 15th, 2026 - OG meta tags + sidebar auth awareness + admin UX polish
+
+- **Per-page OG & Twitter meta tags on public pages.** `/help`, `/manifesto`, and `/help/controls` now have full `og:title`, `og:description`, `og:url`, `og:image`, `twitter:card`, `twitter:title`, `twitter:description`, and `twitter:image` tags for proper social sharing previews. Uses the same Cloudinary OG image as the site default.
+- **Sidebar auth awareness.** The sidebar now hides authenticated-only nav groups (Dashboard, My overlays, Alerts, Kits) for guest visitors. Only the "Learn" section remains visible. The footer shows a "Log in" button for guests and the usual user menu for logged-in users. The logo links to `/` for guests and `/dashboard` for authenticated users.
+- **Admin UX polish.** Added `cursor-pointer` to buttons across admin pages (logs, tags, users/show). Template names on the admin templates index are now clickable links to their detail pages.
+
 ## March 10th, 2026 - UI: Welcome page light mode polish + Twitch login button
 
 - **Light mode color contrast fixed across Welcome page.** All `-400` syntax highlighting colors in code blocks (sky, emerald, amber, zinc) were too pale on white backgrounds. Each now uses a darker variant for light mode with the original preserved for dark mode (e.g. `text-sky-600 dark:text-sky-400`). Inline `<code>` elements with forced dark backgrounds (`bg-zinc-900`) switched to mode-aware `bg-zinc-100 dark:bg-zinc-900`.

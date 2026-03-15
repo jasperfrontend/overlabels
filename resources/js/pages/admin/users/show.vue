@@ -233,7 +233,7 @@ function restore() {
                   <option value="user">user</option>
                   <option value="admin">admin</option>
                 </select>
-                <Button type="submit" size="sm" :disabled="roleForm.processing || user.id === currentUserId">Save</Button>
+                <Button type="submit" class="cursor-pointer" size="sm" :disabled="roleForm.processing || user.id === currentUserId">Save</Button>
                 <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot change your own role.</p>
                 <p v-if="roleForm.errors.role" class="text-xs text-destructive">{{ roleForm.errors.role }}</p>
               </form>
@@ -252,7 +252,7 @@ function restore() {
               <form @submit.prevent="submitKofiSeedValue" class="flex items-center gap-3">
                 <input type="number" v-model="kofiSeedValueForm.initial_count" min="0" max="9999999"
                   class="rounded border px-3 py-1.5 text-sm bg-background w-32" />
-                <Button type="submit" size="sm" :disabled="kofiSeedValueForm.processing">Save</Button>
+                <Button type="submit" class="cursor-pointer" size="sm" :disabled="kofiSeedValueForm.processing">Save</Button>
                 <p v-if="kofiSeedValueForm.errors.initial_count" class="text-xs text-destructive">{{ kofiSeedValueForm.errors.initial_count }}</p>
               </form>
             </CardContent>
@@ -271,7 +271,7 @@ function restore() {
                   </div>
                   <div class="text-muted-foreground">Banned on: {{ new Date(activeBan.created_at).toLocaleString() }}</div>
                 </div>
-                <Button variant="outline" size="sm" @click="unban">Remove Ban</Button>
+                <Button variant="outline" class="cursor-pointer" size="sm" @click="unban">Remove Ban</Button>
               </div>
               <div v-else class="space-y-3">
                 <p class="text-sm text-muted-foreground">Ban this user from accessing the application.</p>
@@ -280,7 +280,7 @@ function restore() {
                   <select v-model="banForm.duration" class="rounded border px-3 py-1.5 text-sm bg-background">
                     <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
                   </select>
-                  <Button type="submit" variant="destructive" size="sm" :disabled="banForm.processing || user.id === currentUserId">Ban User</Button>
+                  <Button type="submit" class="cursor-pointer" variant="destructive" size="sm" :disabled="banForm.processing || user.id === currentUserId">Ban User</Button>
                 </form>
                 <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot ban yourself.</p>
                 <p v-if="banForm.errors.user_id" class="text-xs text-destructive">{{ banForm.errors.user_id }}</p>
@@ -293,7 +293,7 @@ function restore() {
             <CardHeader><CardTitle>Impersonate</CardTitle></CardHeader>
             <CardContent>
               <p class="mb-3 text-sm text-muted-foreground">Log in as this user to debug issues. A banner will appear while impersonating.</p>
-              <Button variant="outline" size="sm" @click="router.post(route('admin.impersonate.start', user.id))">
+              <Button variant="outline" class="cursor-pointer" size="sm" @click="router.post(route('admin.impersonate.start', user.id))">
                 Login as {{ user.name }}
               </Button>
             </CardContent>
@@ -303,7 +303,7 @@ function restore() {
           <Card v-if="user.deleted_at">
             <CardHeader><CardTitle>Restore User</CardTitle></CardHeader>
             <CardContent>
-              <Button variant="outline" size="sm" @click="restore">Restore Account</Button>
+              <Button variant="outline" class="cursor-pointer" size="sm" @click="restore">Restore Account</Button>
             </CardContent>
           </Card>
 
@@ -334,13 +334,13 @@ function restore() {
                 </div>
               </label>
               <div v-if="!showDeleteConfirm">
-                <Button variant="destructive" size="sm" @click="showDeleteConfirm = true">Delete User</Button>
+                <Button variant="destructive" class="cursor-pointer" size="sm" @click="showDeleteConfirm = true">Delete User</Button>
               </div>
               <div v-else class="space-y-2">
                 <p class="text-sm font-medium text-destructive">Are you sure? This will delete the user (soft).</p>
                 <div class="flex gap-2">
-                  <Button variant="destructive" size="sm" @click="submitDelete">Yes, delete</Button>
-                  <Button variant="outline" size="sm" @click="showDeleteConfirm = false">Cancel</Button>
+                  <Button variant="destructive" class="cursor-pointer" size="sm" @click="submitDelete">Yes, delete</Button>
+                  <Button variant="outline" class="cursor-pointer" size="sm" @click="showDeleteConfirm = false">Cancel</Button>
                 </div>
               </div>
             </CardContent>

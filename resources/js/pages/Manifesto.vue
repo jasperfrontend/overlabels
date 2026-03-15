@@ -12,7 +12,35 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-  <Head title="The Overlabels Manifesto" />
+  <Head>
+    <title>The Overlabels Manifesto - Overlabels</title>
+    <meta
+      name="description"
+      content="Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://overlabels.com/manifesto" />
+    <meta property="og:site_name" content="Overlabels" />
+    <meta property="og:title" content="The Overlabels Manifesto - Overlabels" />
+    <meta
+      property="og:description"
+      content="Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it."
+    />
+    <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="The Overlabels Manifesto - Overlabels" />
+    <meta
+      name="twitter:description"
+      content="Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it."
+    />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
+  </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">

@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
@@ -113,7 +113,7 @@ watch([search, type, owner], () => {
           <tbody>
             <tr v-for="t in templates.data" :key="t.id" class="border-t">
               <td class="px-3 py-2">
-                <div class="font-medium">{{ t.name }}</div>
+                <div class="font-medium"><Link class="hover:underline" :href="route('admin.templates.show', t.id)">{{ t.name }}</Link></div>
                 <div class="text-xs text-muted-foreground font-mono">{{ t.slug }}</div>
               </td>
               <td class="px-3 py-2">
