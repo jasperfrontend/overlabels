@@ -138,8 +138,11 @@ function formatDate(iso: string | null): string {
                         description="Receive donation alerts and update overlay controls from Ko-fi."
                     />
 
-                    <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
-                    <Badge v-else variant="secondary">Not connected</Badge>
+                    <div class="flex items-center gap-2">
+                        <Link href="/why-kofi" class="text-sm text-violet-400 hover:underline">Why Ko-fi?</Link>
+                        <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
+                        <Badge v-else variant="secondary">Not connected</Badge>
+                    </div>
                 </div>
 
                 <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">

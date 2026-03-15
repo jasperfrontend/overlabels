@@ -1,5 +1,14 @@
 # CHANGELOG MARCH 2026
 
+## March 15th, 2026 - Feature: "Why Ko-fi" public page
+
+- Created `/why-kofi` page explaining why Ko-fi is the best donation platform for streamers.
+- Content includes fee comparison table (Ko-fi vs PayPal vs StreamElements), privacy and guest checkout advantages, Ko-fi pricing tiers, and why direct PayPal is problematic.
+- Added route in `web.php` (public, no auth required - accessible to logged-out users).
+- Added "Why Ko-fi" entry to sidebar under "Learn" section with Heart icon.
+- Added "Why Ko-fi?" link on the Ko-fi integration settings page.
+- Full OG and Twitter meta tags for social sharing.
+
 ## March 15th, 2026 - Fix: resolve 11 TypeScript errors across the frontend
 
 - **`create.vue`**: Fixed `v-model:html` to `v-model:body` after the TemplateCodeEditor prop rename.
