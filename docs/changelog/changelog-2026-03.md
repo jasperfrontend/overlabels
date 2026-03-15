@@ -2,8 +2,10 @@
 
 ## March 16th, 2026 - Feature: Free Resources page
 
-- Created `/resources` page with curated free tools for building overlays.
-- Three categories: Colors (6 tools), Icons with 1-click SVG copy (4 tools), and Fonts (2 libraries).
+- Created `/resources` page with 38 curated free tools for building overlays.
+- Eight categories: Colors (6), Gradients & Contrast (5), Icons (7), Fonts (4), Textures & Patterns (3), Animations (6), Sounds (3), CSS Tools (4).
+- All resources are genuinely free with no attribution required unless noted.
+- Includes LottieFiles (works natively in overlays), CC0 sound effects, CSS animation libraries, SVG generators, and more.
 - Added to sidebar under "Learn" with BookOpen icon.
 - Public page, accessible to logged-out users. Full OG and Twitter meta tags.
 
