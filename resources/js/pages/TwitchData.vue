@@ -14,7 +14,7 @@ const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const isRefreshing = ref(false);
 const connectionError = ref(false);
 const lastRefreshTime = ref(Date.now());
-const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
+const autoRefreshInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 const auth = computed(() => page.props.auth);
 const avatar = ref(auth.value.user?.avatar);
@@ -63,6 +63,10 @@ const confirmExpensiveApiCall = () => {
   }
 };
 
+const reauthenticate = () => {
+  window.location.href = '/auth/redirect/twitch';
+};
+
 const handleApiError = (error: any) => {
   console.error('API Error:', error);
   connectionError.value = true;
@@ -108,14 +112,7 @@ const checkTokenValidity = () => {
   if (Date.now() - lastRefreshTime.value > thirtyMinutes) {
     // Make a lightweight API call to check token
     router.reload({
-      preserveScroll: true,
-      preserveState: true,
       only: ['twitchData'],
-      onError: (errors) => {
-        if (errors?.status === 401) {
-          handleApiError(errors);
-        }
-      }
     });
   }
 };
@@ -173,7 +170,7 @@ watch (
           <p class="font-semibold">Connection Error</p>
           <p class="text-sm">Unable to connect to Twitch API. Your session may have expired.</p>
           <button
-            @click="() => window.location.href = '/auth/redirect/twitch'"
+            @click="reauthenticate"
             class="mt-2 rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
           >
             Re-authenticate with Twitch

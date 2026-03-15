@@ -56,7 +56,7 @@ interface Props {
     css: string;
     is_public: boolean;
     slug: string;
-    type: string;
+    type: 'static' | 'alert';
     screenshot_url: string | null;
     created_at: string;
     updated_at: string;

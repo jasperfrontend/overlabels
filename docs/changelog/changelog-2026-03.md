@@ -1,5 +1,16 @@
 # CHANGELOG MARCH 2026
 
+## March 15th, 2026 - Fix: resolve 11 TypeScript errors across the frontend
+
+- **`create.vue`**: Fixed `v-model:html` to `v-model:body` after the TemplateCodeEditor prop rename.
+- **`edit.vue`**: Narrowed `type: string` to `type: 'static' | 'alert'` in Props interface.
+- **`types/index.d.ts`**: Added missing `FlashMessage` interface definition (was used but never declared).
+- **`admin/events/index.vue` + `admin/logs/index.vue`**: Removed invalid `usePage` generic that didn't satisfy the `PageProps` constraint. Untyped `usePage()` inherits the merged PageProps which already includes `flash`.
+- **`useGiftBombDetector.ts`**: Replaced `object` return type with a properly typed interface, fixing `processEvent` and `processedEvent` errors in OverlayRenderer.
+- **`TwitchData.vue`**: Replaced `NodeJS.Timeout` with `ReturnType<typeof setInterval>`. Extracted `window.location.href` from template into a `reauthenticate()` function (Vue templates resolve `window` against the component instance). Removed invalid `preserveScroll` from `router.reload()` and dead `errors.status === 401` comparison (string vs number).
+- **`TooltipBase.vue`**: Typed `side` and `align` props as literal unions instead of generic `String`.
+- **`globals.d.ts`**: Changed `window.Echo` from `typeof Echo` (class) to `InstanceType<typeof Echo>` (instance), fixing `Echo.channel` errors.
+
 ## March 15th, 2026 - Fix: last ESLint error in Pagination.vue
 
 - **Moved `v-html` from `<Link>` component onto a `<span>` inside its slot.** The `vue/no-v-text-v-html-on-component` rule flags `v-html` on components because it overwrites slot content. Wrapping in a `<span>` preserves the HTML rendering and satisfies the linter. Zero lint errors remaining.

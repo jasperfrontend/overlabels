@@ -19,6 +19,11 @@ export interface NavItem {
     target?: string;
 }
 
+export interface FlashMessage {
+    message?: string;
+    type?: 'info' | 'success' | 'warning' | 'error';
+}
+
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
     quote: { message: string; author: string };

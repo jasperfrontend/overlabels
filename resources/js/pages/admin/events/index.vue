@@ -67,7 +67,7 @@ watch([eventType, processed], () => {
   debounce = setTimeout(applyFilters, 300);
 });
 
-const page = usePage<{ flash?: { message?: string } }>();
+const page = usePage();
 
 const prunePeriod = ref('90');
 const showPruneConfirm = ref(false);

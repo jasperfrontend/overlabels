@@ -30,7 +30,7 @@ const props = defineProps<{
   filters: { template_slug?: string; from?: string; to?: string };
 }>();
 
-const page = usePage<{ flash?: { message?: string } }>();
+const page = usePage();
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },

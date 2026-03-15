@@ -8,12 +8,12 @@ const props = defineProps({
   },
 
   align: {
-    type: [ String, Object, Array, Number, Function, Boolean],
+    type: String as () => 'start' | 'center' | 'end',
     required: false,
     default: 'center',
   },
   side: {
-    type: String,
+    type: String as () => 'top' | 'right' | 'bottom' | 'left',
     required: false,
     default: 'top',
   }

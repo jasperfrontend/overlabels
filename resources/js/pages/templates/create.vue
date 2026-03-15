@@ -262,7 +262,7 @@ watch(
           <TemplateCodeEditor
             v-if="mainTab === 'code'"
             v-model:head="form.head"
-            v-model:html="form.html"
+            v-model:body="form.html"
             v-model:css="form.css"
             :is-dark="isDark"
             @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
