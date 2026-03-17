@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import QRCode from 'qrcode';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -38,6 +39,17 @@ const form = useForm({
 
 const copied = ref(false);
 const resetting = ref(false);
+const qrDataUrl = ref<string | null>(null);
+
+onMounted(async () => {
+    if (props.integration.webhook_url) {
+        qrDataUrl.value = await QRCode.toDataURL(props.integration.webhook_url, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' },
+        });
+    }
+});
 
 function copyWebhookUrl() {
     if (!props.integration.webhook_url) return;
@@ -156,7 +168,7 @@ function formatDate(iso: string | null): string {
                         <Label>Your Webhook URL</Label>
                         <p class="text-muted-foreground text-sm">
                             Copy this and paste it as the URL in GPSLogger's
-                            <strong>Log to custom URL</strong> settings.
+                            <strong>Log to custom URL</strong> settings - or scan the QR code on your phone.
                         </p>
                         <div class="flex gap-2">
                             <Input
@@ -167,6 +179,10 @@ function formatDate(iso: string | null): string {
                             <Button type="button" variant="outline" @click="copyWebhookUrl">
                                 {{ copied ? 'Copied!' : 'Copy' }}
                             </Button>
+                        </div>
+                        <div v-if="qrDataUrl" class="pt-2">
+                            <img :src="qrDataUrl" alt="Webhook URL QR code" class="rounded-sm border border-border" width="200" height="200" />
+                            <p class="text-xs text-muted-foreground pt-1">Scan this with your phone to get the webhook URL.</p>
                         </div>
                     </div>
 

@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 17th, 2026 - UI: QR code for GPSLogger webhook URL
+
+- Added QR code on GPSLogger settings page so users can scan the webhook URL with their phone instead of typing it manually.
+- Uses the `qrcode` npm package for client-side generation.
+
 ## March 17th, 2026 - Feature: GPSLogger integration
 
 - Added GPSLogger for Android as an external data source, following the established driver pattern (Ko-fi reference).
