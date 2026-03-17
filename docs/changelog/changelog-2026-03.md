@@ -12,6 +12,7 @@
 - GPSLogger presets added to ControlFormModal alongside Twitch and Ko-fi presets.
 - Created `gps_pings` migration (stretch goal) for future route plotting.
 - 11 feature tests covering verification, control updates, distance accumulation, speed unit conversion, distance reset, and connect/disconnect flows.
+- Improved settings page copy with step-by-step setup instructions for both pre-connect and post-connect states, clearer token explanation, and link to GPSLogger on Play Store.
 
 ## March 16th, 2026 - UI: Link commit hash to GitHub
 

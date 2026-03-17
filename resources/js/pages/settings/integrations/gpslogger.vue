@@ -92,18 +92,41 @@ function formatDate(iso: string | null): string {
                 </div>
 
                 <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
-                    <p class="font-medium text-foreground">What to do next</p>
-                    <ol class="list-decimal pl-4 space-y-1">
-                        <li>Copy the webhook URL below and paste it into GPSLogger's custom URL logging settings.</li>
+                    <p class="font-medium text-foreground">Set up GPSLogger on your phone</p>
+                    <ol class="list-decimal pl-4 space-y-2">
                         <li>
-                            Add the header <code class="rounded bg-black/10 px-1 dark:bg-white/10">X-GPSLogger-Token</code>
-                            with the same token you entered here.
+                            Open GPSLogger on your Android device and go to
+                            <strong>Logging Details</strong> &rarr; <strong>Log to custom URL</strong>.
                         </li>
                         <li>
-                            Your overlays now have GPS controls:
+                            Set the <strong>URL</strong> to the webhook URL shown below (copy it with the button).
+                        </li>
+                        <li>
+                            Set <strong>HTTP Method</strong> to <strong>POST</strong> and
+                            <strong>HTTP Body</strong> to <strong>JSON</strong>.
+                        </li>
+                        <li>
+                            Under <strong>HTTP Headers</strong>, add a new header:<br />
+                            Name: <code class="rounded bg-black/10 px-1 dark:bg-white/10">X-GPSLogger-Token</code><br />
+                            Value: the same token you entered on this page.
+                        </li>
+                        <li>
+                            Start logging. Your overlays now have live GPS controls:
                             <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_speed]]]</code>,
-                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_distance]]]</code>, etc.
+                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_lat]]]</code>,
+                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_lng]]]</code>,
+                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_distance]]]</code>.
                         </li>
+                    </ol>
+                </div>
+
+                <div v-if="!integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
+                    <p class="font-medium text-foreground">How it works</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Choose a shared secret token below and hit <strong>Connect GPSLogger</strong>.</li>
+                        <li>Install <a href="https://play.google.com/store/apps/details?id=com.mendhak.gpslogger" target="_blank" rel="noopener" class="text-violet-400 hover:underline font-medium">GPSLogger</a> on your Android phone (free, open source).</li>
+                        <li>In the app, set up <strong>Log to custom URL</strong> with the webhook URL and token you chose here.</li>
+                        <li>Start logging - your overlay controls update live with speed, coordinates, and distance.</li>
                     </ol>
                 </div>
 
@@ -112,15 +135,15 @@ function formatDate(iso: string | null): string {
                     <div class="space-y-2">
                         <Label for="token">Shared Secret Token</Label>
                         <p class="text-muted-foreground text-sm">
-                            Choose a secret token. You will add this same token as the
-                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">X-GPSLogger-Token</code>
-                            header in GPSLogger's custom URL settings.
+                            Make up any password-like string (e.g. <code class="rounded bg-black/10 px-1 dark:bg-white/10">my-stream-gps-2026</code>).
+                            You will enter this same string in the GPSLogger app on your phone so
+                            Overlabels can verify the data is coming from you.
                         </p>
                         <Input
                             id="token"
                             v-model="form.token"
                             type="text"
-                            :placeholder="integration.has_token ? '(token saved - enter new to replace)' : 'Enter a shared secret token'"
+                            :placeholder="integration.has_token ? '(token saved - enter new to replace)' : 'e.g. my-stream-gps-2026'"
                             autocomplete="off"
                         />
                         <p v-if="form.errors.token" class="text-destructive text-sm">
@@ -132,7 +155,8 @@ function formatDate(iso: string | null): string {
                     <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
                         <Label>Your Webhook URL</Label>
                         <p class="text-muted-foreground text-sm">
-                            Paste this URL into GPSLogger's custom URL logging target.
+                            Copy this and paste it as the URL in GPSLogger's
+                            <strong>Log to custom URL</strong> settings.
                         </p>
                         <div class="flex gap-2">
                             <Input
@@ -150,7 +174,7 @@ function formatDate(iso: string | null): string {
                     <div class="space-y-2">
                         <Label for="speed_unit">Speed Unit</Label>
                         <p class="text-muted-foreground text-sm">
-                            GPSLogger sends speed in m/s. Choose your preferred display unit.
+                            How speed is displayed in your overlays.
                         </p>
                         <select
                             id="speed_unit"
