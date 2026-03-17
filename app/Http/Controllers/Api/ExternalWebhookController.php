@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\StatefulExternalServiceDriver;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
@@ -78,7 +79,7 @@ class ExternalWebhookController extends Controller
         // In test mode, append a unique suffix so the same payload can be fired
         // repeatedly without hitting the dedup constraint.
         $messageId = $integration->test_mode
-            ? $normalizedEvent->getMessageId() . '_test_' . microtime(true)
+            ? $normalizedEvent->getMessageId().'_test_'.microtime(true)
             : $normalizedEvent->getMessageId();
 
         try {
@@ -91,7 +92,7 @@ class ExternalWebhookController extends Controller
                 'normalized_payload' => $normalizedEvent->getTemplateTags(),
             ]);
         } catch (UniqueConstraintViolationException) {
-            Log::info("Duplicate external event ignored", [
+            Log::info('Duplicate external event ignored', [
                 'service' => $service,
                 'message_id' => $normalizedEvent->getMessageId(),
             ]);
@@ -101,6 +102,11 @@ class ExternalWebhookController extends Controller
 
         // 9. Update service-managed controls
         $controlUpdates = $driver->getControlUpdates($normalizedEvent);
+
+        if ($driver instanceof StatefulExternalServiceDriver) {
+            $driver->beforeControlUpdates($integration, $normalizedEvent, $controlUpdates);
+        }
+
         if (! empty($controlUpdates)) {
             $this->controlService->applyUpdates($user, $service, $controlUpdates);
             $storedEvent->update(['controls_updated' => true]);

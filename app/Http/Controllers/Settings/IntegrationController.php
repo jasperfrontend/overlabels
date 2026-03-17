@@ -39,6 +39,7 @@ class IntegrationController extends Controller
     {
         return match ($key) {
             'kofi' => 'Ko-fi',
+            'gpslogger' => 'GPSLogger',
             'throne' => 'Throne',
             'patreon' => 'Patreon',
             'fourthwall' => 'Fourthwall',

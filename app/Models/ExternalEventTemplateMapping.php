@@ -29,26 +29,26 @@ class ExternalEventTemplateMapping extends Model
      * Available transition types for enter animations (mirrored from EventTemplateMapping)
      */
     public const TRANSITION_IN_TYPES = [
-        'fade'         => 'Fade in',
-        'scale'        => 'Scale in',
+        'fade' => 'Fade in',
+        'scale' => 'Scale in',
         'slide-bottom' => 'Slide up from bottom',
-        'slide-top'    => 'Slide down from top',
-        'slide-left'   => 'Slide in from left',
-        'slide-right'  => 'Slide in from right',
-        'none'         => 'None (instant)',
+        'slide-top' => 'Slide down from top',
+        'slide-left' => 'Slide in from left',
+        'slide-right' => 'Slide in from right',
+        'none' => 'None (instant)',
     ];
 
     /**
      * Available transition types for exit animations (mirrored from EventTemplateMapping)
      */
     public const TRANSITION_OUT_TYPES = [
-        'fade'         => 'Fade out',
-        'scale'        => 'Scale out',
+        'fade' => 'Fade out',
+        'scale' => 'Scale out',
         'slide-bottom' => 'Slide down to bottom',
-        'slide-top'    => 'Slide up to top',
-        'slide-left'   => 'Slide out to left',
-        'slide-right'  => 'Slide out to right',
-        'none'         => 'None (instant)',
+        'slide-top' => 'Slide up to top',
+        'slide-left' => 'Slide out to left',
+        'slide-right' => 'Slide out to right',
+        'none' => 'None (instant)',
     ];
 
     /**
@@ -56,10 +56,13 @@ class ExternalEventTemplateMapping extends Model
      */
     public const SERVICE_EVENT_TYPES = [
         'kofi' => [
-            'donation'     => 'Ko-fi Donation',
+            'donation' => 'Ko-fi Donation',
             'subscription' => 'Ko-fi Subscription',
-            'shop_order'   => 'Ko-fi Shop Order',
-            'commission'   => 'Ko-fi Commission',
+            'shop_order' => 'Ko-fi Shop Order',
+            'commission' => 'Ko-fi Commission',
+        ],
+        'gpslogger' => [
+            'location_update' => 'GPS Location Update',
         ],
     ];
 

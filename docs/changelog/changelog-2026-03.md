@@ -1,5 +1,18 @@
 # CHANGELOG MARCH 2026
 
+## March 17th, 2026 - Feature: GPSLogger integration
+
+- Added GPSLogger for Android as an external data source, following the established driver pattern (Ko-fi reference).
+- New `StatefulExternalServiceDriver` interface with `beforeControlUpdates()` for stateful enrichment (distance accumulation) without polluting the base interface.
+- `GpsLoggerServiceDriver` verifies requests via `X-GPSLogger-Token` header, normalizes GPS payloads, converts speed from m/s to km/h or mph, and calculates distance using haversine formula.
+- Auto-provisions 4 controls on connect: `gps_speed`, `gps_lat`, `gps_lng`, `gps_distance`.
+- Distance state (`last_lat`/`last_lng`) stored in `ExternalIntegration.settings` JSON - no new table needed for core feature.
+- GPS jitter filtering: only accumulates distance for movements > 1 meter.
+- Settings page at `/settings/integrations/gpslogger` with token input, speed unit selector, webhook URL display, and reset distance button.
+- GPSLogger presets added to ControlFormModal alongside Twitch and Ko-fi presets.
+- Created `gps_pings` migration (stretch goal) for future route plotting.
+- 11 feature tests covering verification, control updates, distance accumulation, speed unit conversion, distance reset, and connect/disconnect flows.
+
 ## March 16th, 2026 - UI: Link commit hash to GitHub
 
 - Sidebar commit hash now links to the corresponding GitHub commit page, opening in a new tab.

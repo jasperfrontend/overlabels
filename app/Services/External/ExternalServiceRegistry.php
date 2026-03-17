@@ -3,6 +3,7 @@
 namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
+use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 
 class ExternalServiceRegistry
@@ -12,6 +13,7 @@ class ExternalServiceRegistry
      */
     private static array $drivers = [
         'kofi' => KofiServiceDriver::class,
+        'gpslogger' => GpsLoggerServiceDriver::class,
     ];
 
     /**
