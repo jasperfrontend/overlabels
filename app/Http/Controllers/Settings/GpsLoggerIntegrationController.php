@@ -32,15 +32,13 @@ class GpsLoggerIntegrationController extends Controller
             ? url("/api/webhooks/gpslogger/{$integration->webhook_token}")
             : null;
 
-        $settings = $integration->settings ?? [];
-
         return Inertia::render('settings/integrations/gpslogger', [
             'integration' => $integration ? [
                 'connected' => true,
                 'enabled' => $integration->enabled,
                 'webhook_url' => $webhookUrl,
                 'last_received_at' => $integration->last_received_at?->toIso8601String(),
-                'speed_unit' => $settings['speed_unit'] ?? 'kmh',
+                'speed_unit' => ($integration->settings ?? [])['speed_unit'] ?? 'kmh',
                 'has_token' => ! empty($integration->getCredentialsDecrypted()['token']),
             ] : [
                 'connected' => false,
