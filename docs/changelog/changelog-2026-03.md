@@ -1,5 +1,20 @@
 # CHANGELOG MARCH 2026
 
+## March 19th, 2026 - Feature: Computed controls
+
+- Added `computed` control type whose value is automatically derived from another control using a WHEN/THEN/ELSE rule.
+- New `ComputedControlService` handles evaluation, cascade propagation, cycle detection, and available-control queries.
+- Formula stored in `config.formula` JSON - no migration needed. Fields: `watch_key`, `watch_source`, `operator`, `compare_value`, `then_value`, `else_value`.
+- Cascade hooks added to all 4 control mutation points: `OverlayControlController::setValue()`, `OverlayControlController::setTimerValue()`, `ExternalControlService::applyUpdates()`, `StreamSessionService::handleEvent()` and `resetControls()`.
+- Cascade propagates through multiple levels of computed controls, with max depth of 5 and visited-set tracking to prevent infinite loops.
+- Cycle detection at save time via DFS - rejects circular dependencies with a 422.
+- `setValue()` returns 403 for computed controls (read-only, like source_managed).
+- Frontend: formula builder UI in `ControlFormModal` with watch-control dropdown, operator selector, compare/then/else inputs, and live formula preview.
+- Frontend: read-only computed display in `ControlPanel` with current value and "Auto-computed" label.
+- Frontend: `userScopedControls` prop threaded from controller through show/edit pages to `ControlsManager` and `ControlFormModal`.
+- Fork/import: computed controls with missing dependencies are skipped; imported computed controls are evaluated for initial values.
+- Unit tests for evaluate, cycle detection. Feature tests for creation, validation, setValue guard, cascade, and cross-service references.
+
 ## March 18th, 2026 - UX: GPSLogger QR code landing page
 
 - Added a GET route for the webhook URL so that scanning the QR code from a phone shows a landing page instead of a 404/error.

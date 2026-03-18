@@ -123,6 +123,14 @@ class OverlayTemplateController extends Controller
 
         $isLive = $canEdit && StreamSessionService::isLive(auth()->user());
 
+        $userScopedControls = $canEdit
+            ? \App\Models\OverlayControl::where('user_id', auth()->id())
+                ->whereNull('overlay_template_id')
+                ->where('source_managed', true)
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+
         return Inertia::render('templates/show', [
             'template' => $template,
             'canEdit' => $canEdit,
@@ -131,6 +139,7 @@ class OverlayTemplateController extends Controller
             'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
+            'userScopedControls' => $userScopedControls,
         ]);
     }
 
@@ -183,6 +192,12 @@ class OverlayTemplateController extends Controller
 
         $isLive = StreamSessionService::isLive(auth()->user());
 
+        $userScopedControls = \App\Models\OverlayControl::where('user_id', auth()->id())
+            ->whereNull('overlay_template_id')
+            ->where('source_managed', true)
+            ->orderBy('sort_order')
+            ->get();
+
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
@@ -191,6 +206,7 @@ class OverlayTemplateController extends Controller
             'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
+            'userScopedControls' => $userScopedControls,
         ]);
 
     }

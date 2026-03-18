@@ -46,6 +46,7 @@ const props = defineProps<{
   isLive?: boolean;
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
+  userScopedControls?: OverlayControl[];
 }>();
 
 const editorTabs = [
@@ -292,7 +293,7 @@ const forkTitle = computed(() => {
       <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6">
-          <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" @change="localControls = $event" />
+          <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
         </div>
 
         <!-- Control Panel tab -->

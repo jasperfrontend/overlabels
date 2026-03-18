@@ -29,7 +29,7 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean'];
+    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'computed'];
 
     const KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
@@ -39,7 +39,7 @@ class OverlayControl extends Model
     public static function sanitizeValue(string $type, mixed $raw): string
     {
         return match ($type) {
-            'text' => strip_tags((string) $raw),
+            'text', 'computed' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
             default => '', // timer, datetime: value derived from config
@@ -137,6 +137,39 @@ class OverlayControl extends Model
                 'source_managed' => true,
             ]
         );
+    }
+
+    /**
+     * Check if this control is a computed type.
+     */
+    public function isComputed(): bool
+    {
+        return $this->type === 'computed';
+    }
+
+    /**
+     * Get the broadcast key of the control this computed control watches.
+     * Returns null if not a computed control or formula is missing.
+     */
+    public function getDependencyBroadcastKey(): ?string
+    {
+        if (! $this->isComputed()) {
+            return null;
+        }
+
+        $formula = $this->config['formula'] ?? null;
+        if (! $formula) {
+            return null;
+        }
+
+        $watchKey = $formula['watch_key'] ?? null;
+        $watchSource = $formula['watch_source'] ?? null;
+
+        if (! $watchKey) {
+            return null;
+        }
+
+        return $watchSource ? "{$watchSource}:{$watchKey}" : $watchKey;
     }
 
     /**

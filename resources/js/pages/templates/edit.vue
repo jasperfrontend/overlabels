@@ -77,6 +77,7 @@ interface Props {
   isLive?: boolean;
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
+  userScopedControls?: OverlayControl[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -368,7 +369,7 @@ onMounted(() => {
 
           <!-- Controls Tab -->
           <div v-if="mainTab === 'controls'">
-            <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" @change="localControls = $event" />
+            <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
           </div>
 
           <!-- Values Tab -->

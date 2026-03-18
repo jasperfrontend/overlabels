@@ -6,6 +6,7 @@ use App\Contracts\ExternalServiceDriver;
 use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Services\ComputedControlService;
 use Illuminate\Support\Facades\Log;
 
 class ExternalControlService
@@ -97,6 +98,8 @@ class ExternalControlService
                     $newValue,
                     $user->twitch_id,
                 );
+
+                app(ComputedControlService::class)->cascade($user, $control, $overlaySlug);
             }
         }
     }

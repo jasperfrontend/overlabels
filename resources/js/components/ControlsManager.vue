@@ -12,6 +12,7 @@ const props = defineProps<{
   template: OverlayTemplate;
   initialControls: OverlayControl[];
   connectedServices?: string[];
+  userScopedControls?: OverlayControl[];
 }>();
 
 const emit = defineEmits<{
@@ -90,6 +91,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   timer: 'secondary',
   datetime: 'outline',
   boolean: 'default',
+  computed: 'secondary',
 };
 
 function configSummary(ctrl: OverlayControl): string[] {
@@ -105,6 +107,12 @@ function configSummary(ctrl: OverlayControl): string[] {
     const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
     parts.push(mode);
     if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
+  } else if (ctrl.type === 'computed') {
+    const f = cfg.formula;
+    if (f) {
+      const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
+      parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
+    }
   } else if (ctrl.type === 'datetime' && ctrl.value) {
     parts.push(`Initial: ${ctrl.value}`);
   }
@@ -122,6 +130,7 @@ function configSummary(ctrl: OverlayControl): string[] {
     :control="editingControl"
     :connected-services="connectedServices"
     :existing-controls="controls"
+    :user-scoped-controls="userScopedControls"
     @saved="onSaved"
   />
 

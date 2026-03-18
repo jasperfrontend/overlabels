@@ -144,6 +144,12 @@ function configSummary(ctrl: OverlayControl): string[] {
     const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
     parts.push(mode);
     if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
+  } else if (ctrl.type === 'computed') {
+    const f = cfg.formula;
+    if (f) {
+      const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
+      parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
+    }
   } else if (ctrl.type === 'datetime' && ctrl.value) {
     parts.push(`Initial: ${ctrl.value}`);
   }
@@ -300,6 +306,14 @@ async function toggleBoolean(ctrl: OverlayControl) {
           <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
             ctrl.value === '1' ? 'On' : 'Off'
           }}</span>
+        </div>
+
+        <!-- Computed control -->
+        <div v-else-if="ctrl.type === 'computed'" class="flex items-center gap-3">
+          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
+            {{ ctrl.value ?? '' }}
+          </div>
+          <span class="text-xs text-muted-foreground">Auto-computed</span>
         </div>
 
         <!-- Datetime control -->

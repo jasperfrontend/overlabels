@@ -50,6 +50,7 @@ const props = defineProps<{
   control?: OverlayControl | null;
   connectedServices?: string[];
   existingControls?: OverlayControl[];
+  userScopedControls?: OverlayControl[];
 }>();
 
 const emit = defineEmits<{
@@ -144,6 +145,55 @@ const form = ref({
   sort_order: 0,
 });
 
+// Computed control formula state
+const formula = ref({
+  watch_key: '',
+  watch_source: null as string | null,
+  operator: '>=' as string,
+  compare_value: '',
+  then_value: '',
+  else_value: '',
+});
+
+// Combined dropdown key for watch control: "source:key" or just "key"
+const formulaWatchRef = ref('');
+
+watch(formulaWatchRef, (val) => {
+  if (!val) {
+    formula.value.watch_key = '';
+    formula.value.watch_source = null;
+    return;
+  }
+  const parts = val.split(':');
+  if (parts.length === 2) {
+    formula.value.watch_source = parts[0];
+    formula.value.watch_key = parts[1];
+  } else {
+    formula.value.watch_source = null;
+    formula.value.watch_key = parts[0];
+  }
+});
+
+// Controls available as watch targets for computed controls
+const availableWatchControls = computed(() => {
+  const templateControls = (props.existingControls ?? []).filter(
+    (c) => !['timer', 'datetime'].includes(c.type) && c.id !== props.control?.id,
+  );
+  const userScoped = (props.userScopedControls ?? []).filter(
+    (c) => !['timer', 'datetime'].includes(c.type),
+  );
+  return [...templateControls, ...userScoped];
+});
+
+function watchControlRef(ctrl: OverlayControl): string {
+  return ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
+}
+
+function watchControlLabel(ctrl: OverlayControl): string {
+  const label = ctrl.label || ctrl.key;
+  return ctrl.source ? `${label} (${ctrl.source}:${ctrl.key})` : `${label} (${ctrl.key})`;
+}
+
 watch(() => props.open, (open) => {
   if (open) {
     errors.value = {};
@@ -169,6 +219,20 @@ watch(() => props.open, (open) => {
       };
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
+      // Populate formula state for computed controls
+      if (c.type === 'computed' && cfg.formula) {
+        formula.value = {
+          watch_key: cfg.formula.watch_key ?? '',
+          watch_source: cfg.formula.watch_source ?? null,
+          operator: cfg.formula.operator ?? '>=',
+          compare_value: cfg.formula.compare_value ?? '',
+          then_value: cfg.formula.then_value ?? '',
+          else_value: cfg.formula.else_value ?? '',
+        };
+        formulaWatchRef.value = cfg.formula.watch_source
+          ? `${cfg.formula.watch_source}:${cfg.formula.watch_key}`
+          : cfg.formula.watch_key ?? '';
+      }
     } else {
       form.value = {
         key: '',
@@ -180,6 +244,8 @@ watch(() => props.open, (open) => {
       };
       booleanValue.value = false;
       sortMode.value = 'after';
+      formula.value = { watch_key: '', watch_source: null, operator: '>=', compare_value: '', then_value: '', else_value: '' };
+      formulaWatchRef.value = '';
     }
   }
 });
@@ -205,6 +271,21 @@ function buildPayload() {
   }
 
   const t = form.value.type;
+
+  // Computed control: send formula config, no value
+  if (t === 'computed') {
+    payload.config = {
+      formula: {
+        watch_key: formula.value.watch_key,
+        watch_source: formula.value.watch_source || null,
+        operator: formula.value.operator,
+        compare_value: formula.value.compare_value,
+        then_value: formula.value.then_value,
+        else_value: formula.value.else_value,
+      },
+    };
+    return payload;
+  }
 
   if (t === 'number' || t === 'counter') {
     payload.config = {
@@ -359,12 +440,76 @@ async function save() {
               <option value="timer">Timer</option>
               <option value="datetime">Date/Time</option>
               <option value="boolean">Boolean (on/off switch)</option>
+              <option value="computed">Computed (auto-calculated)</option>
             </select>
             <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
           </div>
 
+          <!-- Computed formula builder -->
+          <div v-if="form.type === 'computed'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Formula</p>
+
+            <div class="space-y-1">
+              <Label for="formula-watch">Watch control</Label>
+              <select
+                id="formula-watch"
+                v-model="formulaWatchRef"
+                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              >
+                <option value="">-- Select a control --</option>
+                <option v-for="ctrl in availableWatchControls" :key="ctrl.id" :value="watchControlRef(ctrl)">
+                  {{ watchControlLabel(ctrl) }}
+                </option>
+              </select>
+              <p v-if="errors['config.formula.watch_key']" class="text-xs text-destructive">{{ errors['config.formula.watch_key'] }}</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <Label for="formula-op">Operator</Label>
+                <select
+                  id="formula-op"
+                  v-model="formula.operator"
+                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                >
+                  <option value="==">== (equals)</option>
+                  <option value="!=">!= (not equals)</option>
+                  <option value=">">&gt; (greater than)</option>
+                  <option value="<">&lt; (less than)</option>
+                  <option value=">=">&gt;= (greater or equal)</option>
+                  <option value="<=">&lt;= (less or equal)</option>
+                </select>
+              </div>
+              <div class="space-y-1">
+                <Label for="formula-compare">Compare value</Label>
+                <Input id="formula-compare" v-model="formula.compare_value" placeholder="e.g. 5" />
+                <p v-if="errors['config.formula.compare_value']" class="text-xs text-destructive">{{ errors['config.formula.compare_value'] }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <Label for="formula-then">Then value <span class="text-muted-foreground text-xs">(condition true)</span></Label>
+                <Input id="formula-then" v-model="formula.then_value" placeholder="e.g. 50" />
+                <p v-if="errors['config.formula.then_value']" class="text-xs text-destructive">{{ errors['config.formula.then_value'] }}</p>
+              </div>
+              <div class="space-y-1">
+                <Label for="formula-else">Else value <span class="text-muted-foreground text-xs">(condition false)</span></Label>
+                <Input id="formula-else" v-model="formula.else_value" placeholder="e.g. 10" />
+                <p v-if="errors['config.formula.else_value']" class="text-xs text-destructive">{{ errors['config.formula.else_value'] }}</p>
+              </div>
+            </div>
+
+            <p v-if="formulaWatchRef && formula.compare_value" class="text-xs text-muted-foreground">
+              WHEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formulaWatchRef }}</code>
+              {{ formula.operator }} {{ formula.compare_value }}
+              THEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.then_value || '(empty)' }}</code>
+              ELSE <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.else_value || '(empty)' }}</code>
+            </p>
+          </div>
+
           <!-- Value (text/number/counter/datetime) -->
-          <div v-if="form.type !== 'timer' && form.type !== 'boolean'" class="space-y-1">
+          <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed'" class="space-y-1">
             <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
             <Input
               id="ctrl-value"

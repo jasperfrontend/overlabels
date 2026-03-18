@@ -7,6 +7,7 @@ use App\Events\StreamStatusChanged;
 use App\Models\OverlayControl;
 use App\Models\StreamSession;
 use App\Models\User;
+use App\Services\ComputedControlService;
 use Illuminate\Support\Facades\Log;
 
 class StreamSessionService
@@ -122,6 +123,8 @@ class StreamSessionService
                 $newValue,
                 $user->twitch_id,
             );
+
+            app(ComputedControlService::class)->cascade($user, $control, $overlaySlug);
         }
 
         Log::info("Incremented twitch control {$controlKey} for user {$user->id}");
@@ -153,6 +156,8 @@ class StreamSessionService
                 $resetValue,
                 $user->twitch_id,
             );
+
+            app(ComputedControlService::class)->cascade($user, $control, $overlaySlug);
         }
 
         Log::info("Reset twitch controls for user {$user->id}", [
