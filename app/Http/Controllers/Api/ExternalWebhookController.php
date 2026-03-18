@@ -14,6 +14,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class ExternalWebhookController extends Controller
 {
@@ -21,6 +22,32 @@ class ExternalWebhookController extends Controller
         private readonly ExternalAlertService $alertService,
         private readonly ExternalControlService $controlService,
     ) {}
+
+    /**
+     * GET /api/webhooks/{service}/{webhook_token}
+     *
+     * Landing page shown when a user scans the QR code on their phone.
+     * Displays the webhook URL with a copy button so they can paste it
+     * into GPSLogger's "Log to custom URL" settings.
+     */
+    public function show(string $service, string $webhookToken): View
+    {
+        if (! ExternalServiceRegistry::has($service)) {
+            abort(404);
+        }
+
+        $integration = ExternalIntegration::where('webhook_token', $webhookToken)
+            ->where('service', $service)
+            ->exists();
+
+        if (! $integration) {
+            abort(404);
+        }
+
+        $webhookUrl = url("/api/webhooks/{$service}/{$webhookToken}");
+
+        return view('webhook-landing', ['webhookUrl' => $webhookUrl]);
+    }
 
     /**
      * POST /api/webhooks/{service}/{webhook_token}

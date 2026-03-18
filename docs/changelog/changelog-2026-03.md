@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 18th, 2026 - UX: GPSLogger QR code landing page
+
+- Added a GET route for the webhook URL so that scanning the QR code from a phone shows a landing page instead of a 404/error.
+- Landing page displays the webhook URL with a copy button, instructions to paste it into GPSLogger's "Log to custom URL" settings, and a warning not to share the unique URL.
+- Standalone blade template (no Inertia/Vue) so it works for unauthenticated mobile users.
+
 ## March 18th, 2026 - Fix: GPSLogger empty payload and webhook retries
 
 - Fixed root cause of empty GPS payloads: GPSLogger's HTTP Body field is a free-text template, not a format selector. Updated setup instructions with the correct body template using GPSLogger's native `lat=%LAT&lon=%LON&...` syntax.

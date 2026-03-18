@@ -59,6 +59,10 @@ Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
 
 // External service webhooks - no auth/CSRF, rate-limited
+Route::get('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
+    ->name('webhooks.external.show');
 Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'handle'])
     ->middleware(['throttle:60,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
