@@ -95,12 +95,12 @@ test('updates last_received_at on successful webhook', function () {
 // Deduplication
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('returns 409 for duplicate timestamp+serial', function () {
+test('returns 200 with duplicate status for duplicate timestamp+serial', function () {
     [, $integration] = makeGpsIntegration();
     $payload = gpsPayload(['timestamp' => 1234567890, 'serial' => '42']);
 
-    postGps($integration->webhook_token, $payload)->assertStatus(200);
-    postGps($integration->webhook_token, $payload)->assertStatus(409);
+    postGps($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'ok']);
+    postGps($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'duplicate']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

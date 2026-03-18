@@ -114,13 +114,16 @@ function formatDate(iso: string | null): string {
                             Set the <strong>URL</strong> to the webhook URL shown below (copy it with the button).
                         </li>
                         <li>
-                            Set <strong>HTTP Method</strong> to <strong>POST</strong> and
-                            <strong>HTTP Body</strong> to <strong>JSON</strong>.
+                            Set <strong>HTTP Method</strong> to <strong>POST</strong>.
                         </li>
                         <li>
-                            Under <strong>HTTP Headers</strong>, add a new header:<br />
-                            Name: <code class="rounded bg-black/10 px-1 dark:bg-white/10">X-GPSLogger-Token</code><br />
-                            Value: the same token you entered on this page.
+                            Set <strong>HTTP Body</strong> to the following (copy-paste it exactly):
+                            <code class="mt-1 block rounded bg-black/10 px-2 py-1 text-xs dark:bg-white/10 select-all break-all">lat=%LAT&amp;lon=%LON&amp;spd=%SPD&amp;alt=%ALT&amp;acc=%ACC&amp;timestamp=%TIMESTAMP&amp;ser=%SER</code>
+                        </li>
+                        <li>
+                            Under <strong>HTTP Headers</strong>, add:<br />
+                            <code class="rounded bg-black/10 px-1 dark:bg-white/10">X-GPSLogger-Token: <em>your token</em></code>
+                            (the same token you entered on this page).
                         </li>
                         <li>
                             Start logging. Your overlays now have live GPS controls:

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ExternalEvent extends Model
 {
     // Append-only — no updated_at
-    public const UPDATED_AT = null;
+    public const null UPDATED_AT = null;
 
     protected $fillable = [
         'user_id',

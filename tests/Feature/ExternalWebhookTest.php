@@ -113,12 +113,12 @@ test('updates last_received_at on successful webhook', function () {
 // Deduplication
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('returns 409 for duplicate message_id', function () {
+test('returns 200 with duplicate status for duplicate message_id', function () {
     [, $integration] = makeKofiIntegration();
     $payload = kofiPayload(['kofi_transaction_id' => 'dup-txn-001']);
 
-    postKofi($integration->webhook_token, $payload)->assertStatus(200);
-    postKofi($integration->webhook_token, $payload)->assertStatus(409);
+    postKofi($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'ok']);
+    postKofi($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'duplicate']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

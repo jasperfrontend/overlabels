@@ -97,7 +97,7 @@ class ExternalWebhookController extends Controller
                 'message_id' => $normalizedEvent->getMessageId(),
             ]);
 
-            return response()->json(['status' => 'duplicate'], 409);
+            return response()->json(['status' => 'duplicate'], 200);
         }
 
         // 9. Update service-managed controls
@@ -137,7 +137,29 @@ class ExternalWebhookController extends Controller
             }
         }
 
-        // Default: JSON body
-        return $request->json()->all() ?? [];
+        // Try JSON body first
+        $payload = $request->json()->all();
+        if (! empty($payload)) {
+            return $payload;
+        }
+
+        // Try form/query parameters (populated when Content-Type is set)
+        $all = $request->all();
+        if (! empty($all)) {
+            return $all;
+        }
+
+        // Fallback: parse raw body as query string (e.g. GPSLogger
+        // sends "lat=52.37&lon=4.90&..." without a Content-Type header,
+        // so PHP does not populate $_POST automatically)
+        $raw = $request->getContent();
+        if (! empty($raw) && str_contains($raw, '=')) {
+            parse_str($raw, $parsed);
+            if (! empty($parsed)) {
+                return $parsed;
+            }
+        }
+
+        return [];
     }
 }

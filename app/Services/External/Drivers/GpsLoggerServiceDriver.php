@@ -7,6 +7,7 @@ use App\Contracts\StatefulExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
+use Log;
 
 class GpsLoggerServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
 {
@@ -41,7 +42,7 @@ class GpsLoggerServiceDriver implements ExternalServiceDriver, StatefulExternalS
     {
         $lat = $payload['latitude'] ?? $payload['lat'] ?? null;
         $lng = $payload['longitude'] ?? $payload['lng'] ?? $payload['lon'] ?? null;
-        $speed = $payload['speed'] ?? null;
+        $speed = $payload['speed'] ?? $payload['spd'] ?? null;
         $altitude = $payload['altitude'] ?? $payload['alt'] ?? null;
         $accuracy = $payload['accuracy'] ?? $payload['acc'] ?? null;
         $timestamp = $payload['timestamp'] ?? $payload['time'] ?? null;
@@ -95,7 +96,7 @@ class GpsLoggerServiceDriver implements ExternalServiceDriver, StatefulExternalS
         $raw = $event->getRaw();
         $lat = $raw['latitude'] ?? $raw['lat'] ?? null;
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;
-        $speedMs = $raw['speed'] ?? null;
+        $speedMs = $raw['speed'] ?? $raw['spd'] ?? null;
 
         $updates = [];
 

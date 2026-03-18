@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 18th, 2026 - Fix: GPSLogger empty payload and webhook retries
+
+- Fixed root cause of empty GPS payloads: GPSLogger's HTTP Body field is a free-text template, not a format selector. Updated setup instructions with the correct body template using GPSLogger's native `lat=%LAT&lon=%LON&...` syntax.
+- Made `parsePayload` more robust: tries JSON body, then form/query params, then falls back to parsing raw body as query string (needed when GPSLogger doesn't set a Content-Type header).
+- Added `spd` as a fallback field name for speed in `normalizeEvent` and `getControlUpdates` (GPSLogger uses `%SPD` which maps to key `spd`, not `speed`).
+- Changed duplicate event response from 409 to 200 to prevent GPSLogger (and other clients) from treating dedup as an error and retrying.
+
 ## March 17th, 2026 - UI: QR code for GPSLogger webhook URL
 
 - Added QR code on GPSLogger settings page so users can scan the webhook URL with their phone instead of typing it manually.
