@@ -270,7 +270,7 @@ const cssTools = [
         <section class="rounded-lg border bg-sidebar-accent p-5 text-center">
           <p class="text-sm text-muted-foreground">
             Know a great free resource that should be on this list?
-            Let us know at <a href="mailto:admin@overlabels.com" class="text-violet-400 hover:underline">admin@overlabels.com</a>.
+            Let us know at <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
           </p>
         </section>
       </div>

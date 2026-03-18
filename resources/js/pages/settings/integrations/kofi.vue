@@ -289,7 +289,7 @@ function formatDate(iso: string | null): string {
                             </p>
                             <p class="text-muted-foreground text-sm">
                                 Need to correct it? Email
-                                <a href="mailto:admin@overlabels.com" class="text-violet-400 hover:underline">admin@overlabels.com</a>.
+                                <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
                             </p>
                         </template>
 

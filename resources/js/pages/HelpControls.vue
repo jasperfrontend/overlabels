@@ -462,7 +462,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Questions -->
         <h2 class="mb-6 text-2xl font-bold" id="help">If you need more help</h2>
         <p class="mb-6 text-foreground">
-          You can always reach out on <a href="mailto:admin@overlabels.com" class="text-violet-400 hover:underline">admin@overlabels.com</a>
+          You can always reach out on <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>
           or <a href="https://github.com/jasperfrontend/overlabels/issues" target="_blank" class="text-violet-400 hover:underline">open a new issue</a> on
           <a href="https://github.com/jasperfrontend/overlabels" target="_blank" class="text-violet-400 hover:underline">Github</a>.
         </p>
