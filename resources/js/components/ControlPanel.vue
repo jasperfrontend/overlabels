@@ -105,6 +105,15 @@ async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
     if (ctrl.type === 'timer') {
       startTimerTick(ctrl);
     }
+    // Apply cascaded computed control updates
+    if (data.cascaded?.length) {
+      for (const updated of data.cascaded) {
+        const target = props.controls.find((c) => c.id === updated.id);
+        if (target) {
+          Object.assign(target, updated);
+        }
+      }
+    }
     return data;
   } catch (err: any) {
     const msg = err.response?.data?.message ?? 'Failed to update control.';

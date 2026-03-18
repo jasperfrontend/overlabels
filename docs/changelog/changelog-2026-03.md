@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 19th, 2026 - Fix: Computed control values update live in Control Panel
+
+- `ComputedControlService::cascade()` now returns an array of updated computed controls.
+- `setValue` and `setTimerValue` responses include `cascaded` array with fresh models.
+- `ControlPanel.vue` applies cascaded updates immediately after any `postValue` call, so computed controls reflect changes without a page refresh.
+
 ## March 19th, 2026 - Feature: Computed controls
 
 - Added `computed` control type whose value is automatically derived from another control using a WHEN/THEN/ELSE rule.

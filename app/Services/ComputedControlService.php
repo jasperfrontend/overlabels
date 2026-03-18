@@ -62,12 +62,19 @@ class ComputedControlService
      * Cascade a control value change through dependent computed controls.
      * Called after any control value changes.
      */
-    public function cascade(User $user, OverlayControl $changedControl, string $overlaySlug): void
+    /**
+     * Cascade a control value change through dependent computed controls.
+     * Returns an array of updated computed controls (fresh models).
+     */
+    public function cascade(User $user, OverlayControl $changedControl, string $overlaySlug): array
     {
-        $this->doCascade($user, $changedControl, $overlaySlug, [], 0);
+        $updated = [];
+        $this->doCascade($user, $changedControl, $overlaySlug, [], 0, $updated);
+
+        return $updated;
     }
 
-    private function doCascade(User $user, OverlayControl $changedControl, string $overlaySlug, array $visited, int $depth): void
+    private function doCascade(User $user, OverlayControl $changedControl, string $overlaySlug, array $visited, int $depth, array &$updated): void
     {
         if ($depth >= self::MAX_DEPTH) {
             Log::warning('Computed control cascade max depth reached', [
@@ -111,7 +118,9 @@ class ComputedControlService
                 $user->twitch_id,
             );
 
-            $this->doCascade($user, $computed->fresh(), $computedSlug, $visited, $depth + 1);
+            $updated[] = $computed->fresh();
+
+            $this->doCascade($user, $computed->fresh(), $computedSlug, $visited, $depth + 1, $updated);
         }
     }
 

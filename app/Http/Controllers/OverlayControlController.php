@@ -323,9 +323,9 @@ class OverlayControlController extends Controller
 
         $this->broadcastUpdate($template, $control, $sanitized);
 
-        app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
+        $cascaded = app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
 
-        return response()->json(['control' => $control->fresh(), 'value' => $sanitized]);
+        return response()->json(['control' => $control->fresh(), 'value' => $sanitized, 'cascaded' => $cascaded]);
     }
 
     /**
@@ -388,9 +388,9 @@ class OverlayControlController extends Controller
 
         $this->broadcastUpdate($template, $control, $displayValue, $timerState);
 
-        app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
+        $cascaded = app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
 
-        return response()->json(['control' => $control, 'value' => $displayValue, 'timer_state' => $timerState]);
+        return response()->json(['control' => $control, 'value' => $displayValue, 'timer_state' => $timerState, 'cascaded' => $cascaded]);
     }
 
     /**
