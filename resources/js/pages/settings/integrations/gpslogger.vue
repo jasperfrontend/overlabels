@@ -152,7 +152,9 @@ function formatDate(iso: string | null): string {
                         <p class="text-muted-foreground text-sm">
                             Make up any password-like string (e.g. <code class="rounded bg-black/10 px-1 dark:bg-white/10">my-stream-gps-2026</code>).
                             You will enter this same string in the GPSLogger app on your phone so
-                            Overlabels can verify the data is coming from you.
+                            Overlabels can verify the data is coming from you. Do this first before proceeding with setup and save this token somewhere safe.<br>
+                            It's adviced to write a dash-separated, lowercase string like
+                          <code class="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">my-stream-gps-2026</code>.
                         </p>
                         <Input
                             id="token"
@@ -183,13 +185,10 @@ function formatDate(iso: string | null): string {
                                 {{ copied ? 'Copied!' : 'Copy' }}
                             </Button>
                         </div>
-                        <div v-if="qrDataUrl && integration.has_token" class="pt-2">
+                        <div v-if="qrDataUrl" class="pt-2">
                             <img :src="qrDataUrl" alt="Webhook URL QR code" class="rounded-sm border border-border" width="200" height="200" />
                             <p class="text-xs text-muted-foreground pt-1">Scan this with your phone to open the setup instructions.</p>
                         </div>
-                        <p v-else-if="!integration.has_token" class="text-xs text-muted-foreground pt-1">
-                            Save a Shared Secret Token first to see the QR code.
-                        </p>
                     </div>
 
                     <!-- Speed Unit -->
