@@ -53,16 +53,15 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Verified end-to-end: Ko-fi donation → Overlabels event → alert fires in OBS
 </details>
 
----
-
-## Milestone 4 — Full Responsive Dashboard
-> *The dashboard should work on any screen, top to bottom, left to right.*
+<details>
+<summary><strong>Milestone 4 — Full Responsive Dashboard</strong></summary>
 
 - Every page in the dashboard is usable on mobile and tablet
 - Sidebar navigation collapses correctly on small screens
 - Overlay editor is usable on a laptop without a second monitor
 - Tables degrade gracefully (priority columns, horizontal scroll where unavoidable)
-- No new features — this milestone is purely polish and layout
+- No new features — this milestone was purely polish and layout
+</details>
 
 ---
 
@@ -136,26 +135,5 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Fork counts, view counts, featured overlays
 - No gamification, no badges, no points. Just useful discovery.
 
----
-
-## Milestone 7 — Profit 💸
-> *lol*
-
----
-
-## Sidequests
-> *Optional features that don't belong to a specific milestone. Too good to forget, too niche to prioritise.*
-
-### Sidequest: YouTube Quota Dashboard
-YouTube's Live Chat API is polling-only (no webhooks, no websockets) and costs 5 quota units per call against a 10,000 unit/day limit — shared across the entire app unless users bring their own OAuth credentials. A "YouTube bot" is just an OAuth'd account hammering this same endpoint; there is no separate protocol.
-
-The idea:
-- Use the `stream.online` EventSub event to start a polling job and `stream.offline` to kill it
-- Users set their own poll interval (5s / 10s / 30s) with a live preview: "at this rate you get ~X hours of coverage today"
-- A dashboard widget shows remaining quota units, current burn rate, and estimated time until the midnight Pacific reset
-- Users with high coverage needs register their own YouTube OAuth app (like Twitch's client ID/secret) to get their own quota bucket
-
-Captures: superchats (with amount, currency, message), memberships (new + gifted).
-Notably: nobody surfaces API quota to users in a meaningful way — this would feel crafted.
 
 *Last updated: March 2026*
