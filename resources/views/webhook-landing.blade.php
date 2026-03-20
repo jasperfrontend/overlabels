@@ -170,9 +170,17 @@
                     </div>
                 </li>
                 <li>
-                    Under <strong>HTTP Headers</strong>, add:<br>
-                    <code>X-GPSLogger-Token: <em>your token</em></code>
-                    (the same token you entered on the settings page).
+                    Under <strong>HTTP Headers</strong>, add the following (replace <em>your token</em> with the token you entered on the settings page):
+                    <div class="copyable-group">
+                        <input
+                            type="text"
+                            class="copyable-input"
+                            id="http-header"
+                            value="X-GPSLogger-Token: your token"
+                            readonly
+                        >
+                        <button class="copy-btn" id="copy-header-btn" onclick="copyValue('http-header', 'copy-header-btn')">Copy</button>
+                    </div>
                 </li>
                 <li>
                     Start logging. Your overlays now have live GPS controls:
@@ -193,8 +201,7 @@
             </svg>
             <span>
                 This URL contains a unique key tied to your account.
-                Do not share it with anyone - anyone with this URL can send
-                location data to your overlays.
+                Do not share it with anyone.
             </span>
         </div>
     </div>
