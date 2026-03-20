@@ -25,7 +25,7 @@
             border: 1px solid #262626;
             border-radius: 1rem;
             padding: 2rem;
-            max-width: 28rem;
+            max-width: 34rem;
             width: 100%;
         }
         .logo {
@@ -41,17 +41,43 @@
             margin-bottom: 0.75rem;
             line-height: 1.4;
         }
-        .instructions {
-            font-size: 0.9375rem;
+        .steps {
+            font-size: 0.875rem;
             color: #a3a3a3;
-            line-height: 1.6;
+            line-height: 1.7;
             margin-bottom: 1.5rem;
         }
-        .url-group {
+        .steps ol {
+            padding-left: 1.25rem;
+        }
+        .steps li {
+            margin-bottom: 0.625rem;
+        }
+        .steps strong {
+            color: #e5e5e5;
+        }
+        .steps code {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 0.25rem;
+            padding: 0.125rem 0.375rem;
+            font-size: 0.8125rem;
+            font-family: ui-monospace, monospace;
+        }
+        .steps em {
+            font-style: italic;
+        }
+        .controls-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            margin-top: 0.375rem;
+        }
+        .copyable-group {
             position: relative;
-            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
         }
-        .url-input {
+        .copyable-input {
             width: 100%;
             background: #0a0a0a;
             border: 1px solid #404040;
@@ -63,7 +89,7 @@
             outline: none;
             text-overflow: ellipsis;
         }
-        .url-input:focus {
+        .copyable-input:focus {
             border-color: #a78bfa;
         }
         .copy-btn {
@@ -107,20 +133,57 @@
 <body>
     <div class="card">
         <div class="logo">Overlabels</div>
-        <h1>GPSLogger Setup</h1>
-        <p class="instructions">
-            Copy the URL below and paste it as the URL in GPSLogger's
-            <strong>Log to custom URL</strong> settings.
-        </p>
-        <div class="url-group">
-            <input
-                type="text"
-                class="url-input"
-                id="webhook-url"
-                value="{{ $webhookUrl }}"
-                readonly
-            >
-            <button class="copy-btn" id="copy-btn" onclick="copyUrl()">Copy</button>
+        <h1>Set up GPSLogger on your phone</h1>
+        <div class="steps">
+            <ol>
+                <li>
+                    Open GPSLogger on your Android device and go to
+                    <strong>Logging Details</strong> &rarr; <strong>Log to custom URL</strong>.
+                </li>
+                <li>
+                    Set the <strong>URL</strong> to the webhook URL below (copy it with the button):
+                    <div class="copyable-group">
+                        <input
+                            type="text"
+                            class="copyable-input"
+                            id="webhook-url"
+                            value="{{ $webhookUrl }}"
+                            readonly
+                        >
+                        <button class="copy-btn" id="copy-url-btn" onclick="copyValue('webhook-url', 'copy-url-btn')">Copy</button>
+                    </div>
+                </li>
+                <li>
+                    Set <strong>HTTP Method</strong> to <strong>POST</strong>.
+                </li>
+                <li>
+                    Set <strong>HTTP Body</strong> to the following (copy it with the button):
+                    <div class="copyable-group">
+                        <input
+                            type="text"
+                            class="copyable-input"
+                            id="http-body"
+                            value="lat=%LAT&amp;lon=%LON&amp;spd=%SPD&amp;alt=%ALT&amp;acc=%ACC&amp;timestamp=%TIMESTAMP&amp;ser=%SER"
+                            readonly
+                        >
+                        <button class="copy-btn" id="copy-body-btn" onclick="copyValue('http-body', 'copy-body-btn')">Copy</button>
+                    </div>
+                </li>
+                <li>
+                    Under <strong>HTTP Headers</strong>, add:<br>
+                    <code>X-GPSLogger-Token: <em>your token</em></code>
+                    (the same token you entered on the settings page).
+                </li>
+                <li>
+                    Start logging. Your overlays now have live GPS controls:
+                    <div class="controls-list">
+                        <code>[[[c:gpslogger:gps_speed]]]</code>
+                        <code>[[[c:gpslogger:gps_lat]]]</code>
+                        <code>[[[c:gpslogger:gps_lng]]]</code>
+                        <code>[[[c:gpslogger:gps_distance]]]</code>
+                    </div>
+                </li>
+            </ol>
         </div>
         <div class="warning">
             <svg class="warning-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -136,9 +199,9 @@
         </div>
     </div>
     <script>
-        function copyUrl() {
-            const input = document.getElementById('webhook-url');
-            const btn = document.getElementById('copy-btn');
+        function copyValue(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
 
             navigator.clipboard.writeText(input.value).then(function() {
                 btn.textContent = 'Copied!';
