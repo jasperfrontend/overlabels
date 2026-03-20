@@ -148,7 +148,7 @@ function formatDate(iso: string | null): string {
                 <form class="space-y-6" @submit.prevent="save">
                     <!-- Shared Secret Token -->
                     <div class="space-y-2">
-                        <Label for="token">Shared Secret Token</Label>
+                        <Label for="token">Shared Secret Token <span class="text-violet-400 dark:text-violet-300">(required)</span></Label>
                         <p class="text-muted-foreground text-sm">
                             Make up any password-like string (e.g. <code class="rounded bg-black/10 px-1 dark:bg-white/10">my-stream-gps-2026</code>).
                             You will enter this same string in the GPSLogger app on your phone so
@@ -168,13 +168,13 @@ function formatDate(iso: string | null): string {
 
                     <!-- Webhook URL (read-only) -->
                     <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
-                        <Label>Your Webhook URL</Label>
+                        <Label for="webhook-url">Your Webhook URL</Label>
                         <p class="text-muted-foreground text-sm">
-                            Copy this and paste it as the URL in GPSLogger's
-                            <strong>Log to custom URL</strong> settings - or scan the QR code on your phone.
+                            Scan the QR code below on the phone where you have GPSLogger installed to continue setup there.
                         </p>
                         <div class="flex gap-2">
                             <Input
+                                id="webhook-url"
                                 :model-value="integration.webhook_url ?? ''"
                                 readonly
                                 class="font-mono text-sm"
@@ -183,10 +183,13 @@ function formatDate(iso: string | null): string {
                                 {{ copied ? 'Copied!' : 'Copy' }}
                             </Button>
                         </div>
-                        <div v-if="qrDataUrl" class="pt-2">
+                        <div v-if="qrDataUrl && integration.has_token" class="pt-2">
                             <img :src="qrDataUrl" alt="Webhook URL QR code" class="rounded-sm border border-border" width="200" height="200" />
-                            <p class="text-xs text-muted-foreground pt-1">Scan this with your phone to get the webhook URL.</p>
+                            <p class="text-xs text-muted-foreground pt-1">Scan this with your phone to open the setup instructions.</p>
                         </div>
+                        <p v-else-if="!integration.has_token" class="text-xs text-muted-foreground pt-1">
+                            Save a Shared Secret Token first to see the QR code.
+                        </p>
                     </div>
 
                     <!-- Speed Unit -->

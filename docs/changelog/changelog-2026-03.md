@@ -21,6 +21,13 @@
 - Fork/import: computed controls with missing dependencies are skipped; imported computed controls are evaluated for initial values.
 - Unit tests for evaluate, cycle detection. Feature tests for creation, validation, setValue guard, cascade, and cross-service references.
 
+## March 20th, 2026 - UX: GPSLogger settings page polish
+
+- Linked the "Your Webhook URL" label to its input via `for`/`id`.
+- QR code is now hidden until the user has saved a Shared Secret Token, with a hint to save one first.
+- Added violet "(required)" badge to the Shared Secret Token label.
+- Updated QR code copy to direct users to scan and continue setup on their phone.
+
 ## March 20th, 2026 - UX: Full setup instructions on GPSLogger landing page
 
 - The GPSLogger webhook landing page (GET `/api/webhooks/gpslogger/{uuid}`) now shows the complete step-by-step setup instructions instead of just the webhook URL.
