@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - Infra: Dockerfile for StreamLabs listener service
+
+- Added `Dockerfile.streamlabs-listener` for deploying the Node.js listener as a separate Railway service.
+- Uses `node:20-alpine` base image since Railpack detects the repo as PHP and doesn't install Node.js.
+
 ## March 24th, 2026 - Feature: StreamLabs donation integration
 
 - Added StreamLabs as an external integration for donation alerts and controls.
