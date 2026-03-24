@@ -46,7 +46,9 @@ class OnboardNewUser implements ShouldQueue
         }
 
         $this->generateWebhookSecret();
-        $forkedKit = $this->forkStarterKit();
+
+        // Re-use an existing forked kit (from a previous failed attempt) instead of forking again
+        $forkedKit = $this->findExistingForkedKit() ?? $this->forkStarterKit();
         if ($forkedKit) {
             $this->autoAssignEventMappings($forkedKit);
         }
@@ -77,6 +79,28 @@ class OnboardNewUser implements ShouldQueue
         Log::info('OnboardNewUser: Generated webhook secret', [
             'user_id' => $this->user->id,
         ]);
+    }
+
+    private function findExistingForkedKit(): ?Kit
+    {
+        $starterKit = Kit::where('is_starter_kit', true)->first();
+
+        if (! $starterKit) {
+            return null;
+        }
+
+        $existing = Kit::where('owner_id', $this->user->id)
+            ->where('forked_from_id', $starterKit->id)
+            ->first();
+
+        if ($existing) {
+            Log::info('OnboardNewUser: Found existing forked kit, reusing', [
+                'user_id' => $this->user->id,
+                'kit_id' => $existing->id,
+            ]);
+        }
+
+        return $existing;
     }
 
     private function forkStarterKit(): ?Kit
@@ -141,7 +165,8 @@ class OnboardNewUser implements ShouldQueue
                         'template_id' => $matchedTemplate->id,
                         'enabled' => true,
                         'duration_ms' => 5000,
-                        'transition_type' => 'fade',
+                        'transition_in' => 'fade',
+                        'transition_out' => 'fade',
                     ]
                 );
 

@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 24th, 2026 - Fix: Onboarding job failing on stale transition_type column
+
+- `OnboardNewUser::autoAssignEventMappings()` referenced the dropped `transition_type` column instead of `transition_in`/`transition_out`, causing a DB error that prevented alert mappings from ever being created.
+- Without mappings, the job guard (`hasAlertMappings()`) never triggered, so retries and re-dispatches kept forking the starter kit without finishing.
+- Added `findExistingForkedKit()` to reuse an already-forked kit on retries instead of duplicating.
+- Removed stale `transition_type` from `EventTemplateMapping::$fillable`.
+
 ## March 19th, 2026 - Fix: Computed control values update live in Control Panel
 
 - `ComputedControlService::cascade()` now returns an array of updated computed controls.

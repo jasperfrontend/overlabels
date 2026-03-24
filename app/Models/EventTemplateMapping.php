@@ -16,7 +16,6 @@ class EventTemplateMapping extends Model
         'transition_out',
         'enabled',
         'settings',
-        'transition_type',
     ];
 
     protected $casts = [
@@ -28,7 +27,7 @@ class EventTemplateMapping extends Model
     /**
      * Available EventSub event types
      */
-    public const EVENT_TYPES = [
+    public const array EVENT_TYPES = [
         'channel.follow' => 'New Follower',
         'channel.subscribe' => 'New Subscription',
         'channel.subscription.gift' => 'Gift Subscription',
@@ -43,7 +42,7 @@ class EventTemplateMapping extends Model
     /**
      * Available transition types for enter animations
      */
-    public const TRANSITION_IN_TYPES = [
+    public const array TRANSITION_IN_TYPES = [
         'fade'         => 'Fade in',
         'scale'        => 'Scale in',
         'slide-bottom' => 'Slide up from bottom',
@@ -56,7 +55,7 @@ class EventTemplateMapping extends Model
     /**
      * Available transition types for exit animations
      */
-    public const TRANSITION_OUT_TYPES = [
+    public const array TRANSITION_OUT_TYPES = [
         'fade'         => 'Fade out',
         'scale'        => 'Scale out',
         'slide-bottom' => 'Slide down to bottom',
