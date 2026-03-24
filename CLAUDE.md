@@ -127,7 +127,8 @@ Critical variables:
 
 - OAuth-based: user clicks "Authenticate with StreamLabs" button, standard OAuth 2.0 Authorization Code flow
 - StreamLabs tokens never expire (per their docs) - no refresh logic needed
-- Scopes: `socket.token`, `donations.read`
+- API version: v1.0 (NOT v2.0 - their docs are misleading, dashboard confirms v1.0)
+- Scopes: `socket.token`, `donations.read`, `donations.create`
 - Only `donation` event type supported in v1
 - Uses Socket.IO (pull model) via server-side Node.js listener, NOT webhooks
 - `streamlabs-listener.mjs` bridges StreamLabs Socket.IO -> POST to `/api/webhooks/streamlabs/{webhook_token}`

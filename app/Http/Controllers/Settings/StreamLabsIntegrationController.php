@@ -62,10 +62,10 @@ class StreamLabsIntegrationController extends Controller
             'client_id' => config('services.streamlabs.client_id'),
             'redirect_uri' => url('/auth/callback/streamlabs'),
             'response_type' => 'code',
-            'scope' => 'socket.token donations.read',
+            'scope' => 'socket.token donations.read donations.create',
         ]);
 
-        return redirect("https://streamlabs.com/api/v2.0/authorize?{$params}");
+        return redirect("https://www.streamlabs.com/api/v1.0/authorize?{$params}");
     }
 
     /**
@@ -81,7 +81,7 @@ class StreamLabsIntegrationController extends Controller
         }
 
         // Exchange authorization code for access token
-        $tokenResponse = Http::post('https://streamlabs.com/api/v2.0/token', [
+        $tokenResponse = Http::post('https://streamlabs.com/api/v1.0/token', [
             'grant_type' => 'authorization_code',
             'client_id' => config('services.streamlabs.client_id'),
             'client_secret' => config('services.streamlabs.client_secret'),
@@ -109,7 +109,7 @@ class StreamLabsIntegrationController extends Controller
 
         // Fetch socket token for the Socket.IO listener
         $socketResponse = Http::withToken($accessToken)
-            ->get('https://streamlabs.com/api/v2.0/socket/token');
+            ->get('https://streamlabs.com/api/v1.0/socket/token');
 
         if (! $socketResponse->ok()) {
             Log::error('StreamLabs socket token fetch failed', [
