@@ -126,6 +126,14 @@ const alertPipelineSteps = [
       </div>
     </nav>
 
+    <!-- Closed Beta Banner -->
+    <div class="border-b border-purple-500/30 bg-purple-950/40 py-3 text-center">
+      <p class="text-sm text-purple-200">
+        <span class="mr-1.5 inline-block rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-purple-300">Closed Beta</span>
+        Overlabels is open to the first 100 Twitch streamers. Spots are limited while we polish the experience.
+      </p>
+    </div>
+
     <!-- Hero -->
     <section class="border-b border-border/50 py-24 sm:py-36">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
