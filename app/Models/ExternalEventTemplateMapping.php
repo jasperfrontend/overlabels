@@ -64,6 +64,9 @@ class ExternalEventTemplateMapping extends Model
         'gpslogger' => [
             'location_update' => 'GPS Location Update',
         ],
+        'streamlabs' => [
+            'donation' => 'StreamLabs Donation',
+        ],
     ];
 
     public function user(): BelongsTo

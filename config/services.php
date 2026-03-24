@@ -27,4 +27,10 @@ return [
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10),
     ],
 
+    'streamlabs' => [
+        'client_id' => env('STREAMLABS_CLIENT_ID'),
+        'client_secret' => env('STREAMLABS_CLIENT_SECRET'),
+        'listener_secret' => env('STREAMLABS_LISTENER_SECRET'),
+    ],
+
 ];

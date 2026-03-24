@@ -1,5 +1,18 @@
 # CHANGELOG MARCH 2026
 
+## March 24th, 2026 - Feature: StreamLabs donation integration
+
+- Added StreamLabs as an external integration for donation alerts and controls.
+- OAuth-based connection: users click "Authenticate with StreamLabs" and authorize their account.
+- Server-side Node.js listener (`streamlabs-listener.mjs`) bridges StreamLabs Socket.IO events to the existing webhook pipeline.
+- Internal API endpoint (`GET /api/internal/streamlabs/integrations`) provides active integrations to the listener.
+- `StreamLabsServiceDriver` implements the `ExternalServiceDriver` contract for donation events.
+- Auto-provisions 6 controls: donations_received, latest_donor_name, latest_donation_amount, latest_donation_message, latest_donation_currency, total_received.
+- Settings page with OAuth flow, test mode, starting donation count seed, and closed beta banner.
+- StreamLabs presets added to ControlFormModal for static overlay templates.
+- Added `socket.io-client` npm dependency for the Node.js listener.
+- Requires `STREAMLABS_CLIENT_ID`, `STREAMLABS_CLIENT_SECRET`, `STREAMLABS_LISTENER_SECRET` env vars.
+
 ## March 24th, 2026 - UX: Onboarding wizard shows correct state while job runs
 
 - Success message now only appears when all 4 setup steps are complete (was showing prematurely after initial fetch).

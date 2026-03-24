@@ -35,6 +35,15 @@ const GPS_PRESETS: ServicePreset[] = [
   { key: 'gps_distance', label: 'GPS Distance (km)', type: 'number' },
 ];
 
+const STREAMLABS_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Total Received (session)', type: 'number' },
+];
+
 const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
@@ -69,7 +78,7 @@ const servicePresetSource = ref<string | null>(null);
 
 const selectedServicePreset = computed(() => {
   if (!servicePresetKey.value) return null;
-  return [...TWITCH_PRESETS, ...KOFI_PRESETS, ...GPS_PRESETS].find((p) => p.key === servicePresetKey.value) ?? null;
+  return [...TWITCH_PRESETS, ...KOFI_PRESETS, ...GPS_PRESETS, ...STREAMLABS_PRESETS].find((p) => p.key === servicePresetKey.value) ?? null;
 });
 
 const showKofiPresets = computed(
@@ -86,6 +95,13 @@ const showGpsPresets = computed(
     (props.connectedServices ?? []).includes('gpslogger'),
 );
 
+const showStreamLabsPresets = computed(
+  () =>
+    !isEditing.value &&
+    props.template?.type === 'static' &&
+    (props.connectedServices ?? []).includes('streamlabs'),
+);
+
 const showTwitchPresets = computed(
   () =>
     !isEditing.value &&
@@ -96,13 +112,14 @@ watch(servicePresetKey, (key) => {
   const twitchPreset = TWITCH_PRESETS.find((p) => p.key === key);
   const kofiPreset = KOFI_PRESETS.find((p) => p.key === key);
   const gpsPreset = GPS_PRESETS.find((p) => p.key === key);
-  const preset = twitchPreset ?? kofiPreset ?? gpsPreset ?? null;
+  const streamLabsPreset = STREAMLABS_PRESETS.find((p) => p.key === key);
+  const preset = twitchPreset ?? kofiPreset ?? gpsPreset ?? streamLabsPreset ?? null;
 
   if (preset) {
     form.value.key = preset.key;
     form.value.label = preset.label;
     form.value.type = preset.type;
-    servicePresetSource.value = twitchPreset ? 'twitch' : gpsPreset ? 'gpslogger' : 'kofi';
+    servicePresetSource.value = twitchPreset ? 'twitch' : gpsPreset ? 'gpslogger' : streamLabsPreset ? 'streamlabs' : 'kofi';
   } else {
     form.value.key = '';
     form.value.label = '';
@@ -366,7 +383,7 @@ async function save() {
         <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
         <!-- Service Presets (Twitch / Ko-fi / GPSLogger) -->
-        <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+        <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
           <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
           <select
             v-model="servicePresetKey"
@@ -385,6 +402,11 @@ async function save() {
             </optgroup>
             <optgroup v-if="showGpsPresets" label="GPSLogger">
               <option v-for="preset in GPS_PRESETS" :key="preset.key" :value="preset.key">
+                {{ preset.label }} ({{ preset.type }})
+              </option>
+            </optgroup>
+            <optgroup v-if="showStreamLabsPresets" label="StreamLabs">
+              <option v-for="preset in STREAMLABS_PRESETS" :key="preset.key" :value="preset.key">
                 {{ preset.label }} ({{ preset.type }})
               </option>
             </optgroup>

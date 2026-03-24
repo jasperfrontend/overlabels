@@ -58,6 +58,36 @@ Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'get
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
 
+// Internal endpoint for StreamLabs Node.js listener to fetch active integrations
+Route::get('/internal/streamlabs/integrations', function () {
+    $secret = config('services.streamlabs.listener_secret');
+
+    if (empty($secret) || ! hash_equals($secret, (string) request()->header('X-Internal-Secret', ''))) {
+        abort(403);
+    }
+
+    $integrations = \App\Models\ExternalIntegration::where('service', 'streamlabs')
+        ->where('enabled', true)
+        ->get()
+        ->map(function ($integration) {
+            $credentials = $integration->getCredentialsDecrypted();
+
+            return [
+                'id' => $integration->id,
+                'user_id' => $integration->user_id,
+                'webhook_token' => $integration->webhook_token,
+                'socket_token' => $credentials['socket_token'] ?? null,
+                'listener_secret' => $credentials['listener_secret'] ?? null,
+            ];
+        })
+        ->filter(fn ($i) => $i['socket_token'] && $i['listener_secret'])
+        ->values();
+
+    return response()->json(['integrations' => $integrations]);
+})
+    ->middleware(['throttle:10,1'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
 // External service webhooks - no auth/CSRF, rate-limited
 Route::get('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'show'])
     ->middleware(['throttle:60,1'])

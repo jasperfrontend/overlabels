@@ -276,6 +276,11 @@ Route::get('/auth/callback/twitch', function () {
     }
 });
 
+// StreamLabs OAuth callback
+Route::get('/auth/callback/streamlabs', [App\Http\Controllers\Settings\StreamLabsIntegrationController::class, 'callback'])
+    ->middleware('auth.redirect')
+    ->name('auth.callback.streamlabs');
+
 Route::post('/logout', function () {
     Auth::logout();
 

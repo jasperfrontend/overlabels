@@ -123,6 +123,24 @@ Critical variables:
 - `renderAuthenticated()` uses `c:` + `broadcastKey()` for source_managed controls -> `c:kofi:kofis_received`
 - `connectedServices` prop threaded: OverlayTemplateController::show() -> show.vue -> ControlsManager.vue -> ControlFormModal.vue
 
+### StreamLabs Integration
+
+- OAuth-based: user clicks "Authenticate with StreamLabs" button, standard OAuth 2.0 Authorization Code flow
+- StreamLabs tokens never expire (per their docs) - no refresh logic needed
+- Scopes: `socket.token`, `donations.read`
+- Only `donation` event type supported in v1
+- Uses Socket.IO (pull model) via server-side Node.js listener, NOT webhooks
+- `streamlabs-listener.mjs` bridges StreamLabs Socket.IO -> POST to `/api/webhooks/streamlabs/{webhook_token}`
+- Listener fetches active integrations from `GET /api/internal/streamlabs/integrations` (authenticated by `STREAMLABS_LISTENER_SECRET`)
+- Verification: `X-Listener-Secret` header checked against per-integration `listener_secret` credential
+- Auto-provisions 6 controls: `donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`
+- Env vars: `STREAMLABS_CLIENT_ID`, `STREAMLABS_CLIENT_SECRET`, `STREAMLABS_LISTENER_SECRET`
+- OAuth callback: `GET /auth/callback/streamlabs` (in web.php with `auth.redirect` middleware)
+- Settings routes: under `settings/integrations/streamlabs` prefix
+- App approval: unapproved apps limited to 10 whitelisted users - closed beta banner shown on settings page
+- Template syntax: `[[[c:streamlabs:donations_received]]]`
+- In tests: use `postJson` with `X-Listener-Secret` header (NOT form-encoded like Ko-fi)
+
 ## Admin Panel (Implemented Feb 2026)
 
 - `role` varchar + `is_system_user` bool + `softDeletes` on `users` table
