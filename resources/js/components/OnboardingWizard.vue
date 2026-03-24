@@ -95,7 +95,10 @@ async function fetchStatus(): Promise<boolean> {
 const setupComplete = computed(() => {
   if (!status.value) return false;
   return (
-    status.value.kit_forked && status.value.alerts_mapped && (status.value.tags_status === 'completed' || status.value.tags_status === 'not_started')
+    status.value.kit_forked &&
+    status.value.alerts_mapped &&
+    (status.value.tags_status === 'completed' || status.value.tags_status === 'not_started') &&
+    status.value.has_webhook_secret
   );
 });
 
@@ -222,7 +225,8 @@ function dismiss() {
         </div>
         <p v-if="pollTimedOut" class="my-2 text-md text-amber-400">Setup is taking longer than expected. You can retry or reload the page.</p>
         <p v-else-if="loading" class="my-2 text-md text-violet-400">Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.</p>
-        <p v-else class="my-2 text-md text-green-500">We've set up the essentials for you. Click "Create your secure token" to continue!</p>
+        <p v-else-if="setupComplete" class="my-2 text-md text-green-500">We've set up the essentials for you. Click "Create your secure token" to continue!</p>
+        <p v-else class="my-2 text-md text-violet-400">Hang tight, we're still setting things up for you...</p>
       </CardHeader>
       <CardContent class="space-y-4">
         <div v-if="pollTimedOut" class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
@@ -304,8 +308,8 @@ function dismiss() {
           </div>
 
           <!-- Next button -->
-          <div class="pt-4">
-            <Button :disabled="!setupComplete && !status.token_created" class="gap-2" @click="goToStep2">
+          <div v-if="setupComplete || status.token_created" class="pt-4">
+            <Button class="gap-2" @click="goToStep2">
               Next: Create Your Secure Token
               <ArrowRight class="h-4 w-4" />
             </Button>

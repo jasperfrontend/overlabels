@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 24th, 2026 - UX: Onboarding wizard shows correct state while job runs
+
+- Success message now only appears when all 4 setup steps are complete (was showing prematurely after initial fetch).
+- Added `has_webhook_secret` to the `setupComplete` check so all 4 steps must be green.
+- "Next" button is now hidden while the job is running instead of showing as disabled.
+- Added comfort message ("Hang tight...") for the in-progress state.
+
 ## March 24th, 2026 - Fix: Onboarding job failing on stale transition_type column
 
 - `OnboardNewUser::autoAssignEventMappings()` referenced the dropped `transition_type` column instead of `transition_in`/`transition_out`, causing a DB error that prevented alert mappings from ever being created.
