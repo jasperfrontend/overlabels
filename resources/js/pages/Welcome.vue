@@ -108,11 +108,11 @@ const alertPipelineSteps = [
     <nav class="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
-          <div class="flex items-center gap-2.5">
+          <Link href="/" class="flex items-center gap-2.5">
             <img src="/favicon.png" alt="" class="h-8 w-8" />
             <span class="text-lg font-bold tracking-tight">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
-          </div>
+          </Link>
           <div class="flex items-center gap-6">
             <a href="#tags" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Tags</a>
             <a href="#controls" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Controls</a>
