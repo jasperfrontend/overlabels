@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Responsive navigation on homepage
+
+- Hamburger menu on mobile/tablet (below `lg` breakpoint) with dropdown panel for all section links, Help, and Why Overlabels.
+- Mobile menu closes on link tap. Login/Dashboard button and dark mode toggle remain visible in the top bar at all sizes.
+
 ## March 25th, 2026 - UX: Add section navigation to homepage
 
 - Added anchor links in the sticky nav for Tags, Controls, Conditionals, Events, Integrations, and Kits.

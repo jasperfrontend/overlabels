@@ -3,10 +3,11 @@ import LoginSocial from '@/components/LoginSocial.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Github, Zap, ToggleLeft, Timer, Hash, Type, Calendar, SlidersHorizontal, GitFork, Layers, Code2, Shield, Heart, DollarSign } from 'lucide-vue-next';
+import { ArrowRight, Github, Zap, ToggleLeft, Timer, Hash, Type, Calendar, SlidersHorizontal, GitFork, Layers, Code2, Shield, Heart, DollarSign, Menu, X } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const syntaxTab = ref('static');
+const mobileMenuOpen = ref(false);
 
 const controlTypes = [
   {
@@ -113,21 +114,54 @@ const alertPipelineSteps = [
             <span class="text-lg font-bold tracking-tight">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </Link>
-          <div class="flex items-center gap-6">
-            <a href="#tags" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Tags</a>
-            <a href="#controls" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Controls</a>
-            <a href="#conditionals" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Conditionals</a>
-            <a href="#events" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Events</a>
-            <a href="#integrations" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Integrations</a>
-            <a href="#kits" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Kits</a>
-            <Link href="/help" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">Help</Link>
-            <Link href="/manifesto" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">Why Overlabels</Link>
+          <div class="hidden items-center gap-6 lg:flex">
+            <a href="#tags" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Tags</a>
+            <a href="#controls" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Controls</a>
+            <a href="#conditionals" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Conditionals</a>
+            <a href="#events" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Events</a>
+            <a href="#integrations" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Integrations</a>
+            <a href="#kits" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Kits</a>
+            <Link href="/help" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Help</Link>
+            <Link href="/manifesto" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Why Overlabels</Link>
             <DarkModeToggle />
             <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
               Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
             </Link>
             <LoginSocial v-else />
           </div>
+          <div class="flex items-center gap-3 lg:hidden">
+            <DarkModeToggle />
+            <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
+              Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
+            </Link>
+            <LoginSocial v-else />
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground">
+              <X v-if="mobileMenuOpen" class="h-5 w-5" />
+              <Menu v-else class="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile menu -->
+      <div v-if="mobileMenuOpen" class="border-t border-border/50 bg-background/95 backdrop-blur-lg lg:hidden">
+        <div class="container mx-auto space-y-1 px-4 py-4 sm:px-6">
+          <a
+            v-for="item in [
+              { href: '#tags', label: 'Tags' },
+              { href: '#controls', label: 'Controls' },
+              { href: '#conditionals', label: 'Conditionals' },
+              { href: '#events', label: 'Events' },
+              { href: '#integrations', label: 'Integrations' },
+              { href: '#kits', label: 'Kits' },
+            ]"
+            :key="item.href"
+            :href="item.href"
+            class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            @click="mobileMenuOpen = false"
+          >{{ item.label }}</a>
+          <div class="my-2 border-t border-border/50"></div>
+          <Link href="/help" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Help</Link>
+          <Link href="/manifesto" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Why Overlabels</Link>
         </div>
       </div>
     </nav>
