@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Clock, Info, MoreVertical, RefreshCw } from 'lucide-vue-next';
+import { Clock, RefreshCw } from 'lucide-vue-next';
 
 
 interface UnifiedEvent {
@@ -47,23 +44,23 @@ function replay(event: UnifiedEvent) {
 }
 
 const twitchEventLabels: Record<string, string> = {
-  'channel.follow': 'Follow',
-  'channel.subscribe': 'Subscription',
-  'channel.subscription.gift': 'Gift Sub',
-  'channel.subscription.message': 'Resub',
-  'channel.cheer': 'Cheer',
-  'channel.raid': 'Raid',
-  'channel.channel_points_custom_reward_redemption.add': 'Redemption',
+  'channel.follow': 'Followed',
+  'channel.subscribe': 'Subscribed',
+  'channel.subscription.gift': 'Gifted Sub',
+  'channel.subscription.message': 'Resubbed',
+  'channel.cheer': 'Cheered',
+  'channel.raid': 'Raided',
+  'channel.channel_points_custom_reward_redemption.add': 'Redeemed',
   'stream.online': 'Stream Online',
   'stream.offline': 'Stream Offline',
 };
 
 const externalEventLabels: Record<string, Record<string, string>> = {
   kofi: {
-    donation: 'Ko-fi Donation',
-    subscription: 'Ko-fi Subscription',
-    shop_order: 'Ko-fi Shop Order',
-    commission: 'Ko-fi Commission',
+    donation: 'Donated through Ko-fi',
+    subscription: 'Subscribed through Ko-fi',
+    shop_order: 'Ordered something from the Ko-fi shop',
+    commission: 'Ordered a Commission through Ko-fi',
   },
 };
 
@@ -127,69 +124,51 @@ function relativeTime(iso: string): string {
   return rtf.format(Math.round(diff / week), 'week');
 }
 
-function badgeVariant(event: UnifiedEvent): 'default' | 'secondary' | 'outline' | 'destructive' {
-  if (event.source !== 'twitch') return 'secondary';
+function eventColor(event: UnifiedEvent): any {
   const type = event.event_type;
-  if (type.startsWith('channel.subscribe') || type === 'channel.subscription.gift' || type === 'channel.subscription.message') return 'default';
-  if (type === 'channel.cheer') return 'default';
-  if (type === 'channel.raid') return 'secondary';
-  if (type === 'stream.offline') return 'destructive';
-  return 'outline';
+  if (type === 'channel.subscribe') return 'bg-purple-500';
+  if (type === 'channel.subscription.gift') return 'bg-pink-500';
+  if (type === 'channel.subscription.message') return 'bg-indigo-500';
+  if (type === 'channel.raid') return 'bg-rose-500';
+  if (type === 'channel.cheer') return 'bg-amber-500';
+  if (type === 'stream.online') return 'bg-green-500';
+  if (type === 'stream.offline') return 'bg-red-500';
+  if (type === 'channel.channel_points_custom_reward_redemption.add') return 'bg-cyan-500';
+  if (type === 'channel.follow') return 'bg-green-500';
+  return 'bg-slate-500';
 }
+
 </script>
 
 <template>
-  <Table>
-    <TableHeader>
-      <TableRow class="hover:bg-transparent">
-        <TableHead class="w-30">Alert</TableHead>
-        <TableHead>From</TableHead>
-        <TableHead class="w-[48px]"><span class="sr-only">Actions</span></TableHead>
-      </TableRow>
-    </TableHeader>
+  <div class="flex flex-col gap-2">
+    <div
+      v-for="event in events"
+      :key="`${event.source}-${event.id}`"
+      class="group flex items-start justify-between gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
+    >
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div class="h-2 w-2 shrink-0 rounded-full" :class="eventColor(event)"></div>
+          <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
+          <span v-else class="italic text-muted-foreground/50">-</span>
+          <span class="text-muted-foreground">{{ label(event) }}</span>
+          <span v-if="details(event)">{{ details(event) }}</span>
+        </div>
+        <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
+          <Clock class="h-3 w-3" />
+          <span>{{ relativeTime(event.created_at) }}</span>
+        </div>
+      </div>
 
-    <TableBody>
-      <TableRow v-for="event in events" :key="`${event.source}-${event.id}`" class="group">
-        <TableCell class="opacity-20 transition-colors group-hover:opacity-100">
-          <Badge :variant="badgeVariant(event)">
-            {{ label(event) }}
-          </Badge>
-        </TableCell>
-
-        <TableCell>
-          <span v-if="who(event)" class="font-medium">{{ who(event) }}</span>
-          <span v-else class="text-muted-foreground/50 italic">-</span>
-        </TableCell>
-
-        <TableCell class="text-right opacity-20 transition-colors group-hover:opacity-100">
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                <MoreVertical class="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" class="w-52">
-              <DropdownMenuItem v-if="canReplay(event)" :disabled="replayingId === event.id" @click="replay(event)">
-                <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': replayingId === event.id }" />
-                Replay alert
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator v-if="canReplay(event) && (details(event) || true)" />
-
-              <DropdownMenuItem v-if="details(event)" disabled class="text-muted-foreground">
-                <Info class="mr-2 h-4 w-4" />
-                {{ details(event) }}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem disabled class="text-muted-foreground">
-                <Clock class="mr-2 h-4 w-4" />
-                {{ relativeTime(event.created_at) }}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
+      <button
+        v-if="canReplay(event)"
+        :disabled="replayingId === event.id"
+        class="shrink-0 rounded p-2 opacity-40 transition-opacity hover:opacity-100 group-hover:opacity-80"
+        @click="replay(event)"
+      >
+        <RefreshCw class="h-4 w-4 cursor-pointer" :class="{ 'animate-spin': replayingId === event.id }" />
+      </button>
+    </div>
+  </div>
 </template>

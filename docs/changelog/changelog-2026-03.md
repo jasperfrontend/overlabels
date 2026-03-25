@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Replace events table with responsive cards
+
+- Replaced the HTML table layout in EventsTable with a card-based list that stacks naturally on all screen sizes.
+- Each event card shows the color dot, who/label/details on the first line (wraps on narrow screens) and a small clock + relative time below.
+- Replay button stays right-aligned and fades in on hover.
+- Removed unused table, badge, and dropdown-menu imports.
+
 ## March 25th, 2026 - UX: Responsive navigation on homepage
 
 - Hamburger menu on mobile/tablet (below `lg` breakpoint) with dropdown panel for all section links, Help, and Why Overlabels.
