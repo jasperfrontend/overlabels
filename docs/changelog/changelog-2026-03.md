@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Celebrate Ko-fi and StreamLabs integrations on homepage
+
+- Added new section "05 - Integrations" with NEW badge, Ko-fi and StreamLabs cards, and shared alert template example.
+- Updated hero text and meta descriptions to mention donation tracking from Ko-fi and StreamLabs.
+- Renumbered Kits & Copying (06) and Zero to Overlay (07).
+- Replaced all "Fork" references with "Copy" on the homepage.
+
 ## March 25th, 2026 - UX: Add table of contents to help page
 
 - Added TOC with anchor links to the /help page matching the pattern from /help/controls.

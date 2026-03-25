@@ -3,7 +3,7 @@ import LoginSocial from '@/components/LoginSocial.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Github, Zap, ToggleLeft, Timer, Hash, Type, Calendar, SlidersHorizontal, GitFork, Layers, Code2, Shield } from 'lucide-vue-next';
+import { ArrowRight, Github, Zap, ToggleLeft, Timer, Hash, Type, Calendar, SlidersHorizontal, GitFork, Layers, Code2, Shield, Heart, DollarSign } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const syntaxTab = ref('static');
@@ -76,7 +76,7 @@ const alertPipelineSteps = [
       <title>Overlabels - Live Twitch overlays with HTML & CSS</title>
       <meta
         name="description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, and update your overlay instantly from your dashboard. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
       />
 
       <!-- Open Graph -->
@@ -86,7 +86,7 @@ const alertPipelineSteps = [
       <meta property="og:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
       <meta
         property="og:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, and update your overlay instantly from your dashboard. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
       />
       <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
       <meta property="og:image:width" content="1200" />
@@ -98,7 +98,7 @@ const alertPipelineSteps = [
       <meta name="twitter:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
       <meta
         name="twitter:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, and update your overlay instantly from your dashboard. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
       />
       <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
       <meta name="twitter:image:alt" content="Overlabels • build Twitch overlays with HTML, CSS, and live data" />
@@ -149,7 +149,7 @@ const alertPipelineSteps = [
           </h1>
 
           <p class="mb-4 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-            Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs, raids, and more. Update things instantly from your dashboard.
+            Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs, raids, and more. Connect Ko-fi and StreamLabs for live donation tracking. Update things instantly from your dashboard.
           </p>
           <p class="mb-14 max-w-2xl text-base text-muted-foreground">
             No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage and <span class="text-sky-500">Overlabels keeps it live.</span>
@@ -556,38 +556,126 @@ const alertPipelineSteps = [
       </div>
     </section>
 
-    <!-- 05 — Kits & Forking -->
+    <!-- 05 — Integrations -->
     <section class="border-b border-border/50 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
-          <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">05 — Kits &amp; Forking</Badge>
+          <div class="mb-4 flex items-center gap-3">
+            <Badge variant="outline" class="px-3 py-1 font-mono text-xs">05 — Integrations</Badge>
+            <Badge class="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">NEW</Badge>
+          </div>
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Donations. Tracked. Live.</h2>
+          <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
+            Connect your Ko-fi or StreamLabs account and Overlabels automatically tracks every donation in real time. Counters update, alerts fire, and your overlay stays current - all without touching a single line of code after setup.
+          </p>
+
+          <!-- Integration cards -->
+          <div class="mb-12 grid gap-6 sm:grid-cols-2">
+            <!-- Ko-fi -->
+            <div class="rounded-md border border-border bg-background p-6">
+              <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
+                  <Heart class="h-5 w-5 text-sky-500" />
+                </div>
+                <div>
+                  <h3 class="font-semibold">Ko-fi</h3>
+                  <p class="text-xs text-muted-foreground">Donations, subscriptions, shop orders</p>
+                </div>
+              </div>
+              <p class="mb-4 text-sm text-muted-foreground">
+                Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the same alert pipeline as Twitch events.
+              </p>
+              <div class="space-y-1.5 font-mono text-xs">
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:kofis_received]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:latest_kofi_supporter_name]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:total_received]]]</div>
+              </div>
+            </div>
+
+            <!-- StreamLabs -->
+            <div class="rounded-md border border-border bg-background p-6">
+              <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                  <DollarSign class="h-5 w-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 class="font-semibold">StreamLabs</h3>
+                  <p class="text-xs text-muted-foreground">Live donation tracking via OAuth</p>
+                </div>
+              </div>
+              <p class="mb-4 text-sm text-muted-foreground">
+                One click to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.
+              </p>
+              <div class="space-y-1.5 font-mono text-xs">
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:donations_received]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:latest_donor_name]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:total_received]]]</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shared alert template example -->
+          <div class="overflow-hidden rounded-md border border-border">
+            <div class="border-b border-border bg-muted/50 px-4 py-2.5">
+              <span class="font-mono text-xs text-muted-foreground">One alert template works for both services</span>
+            </div>
+            <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
+              <div>
+                <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"donation-alert"</span><span class="text-zinc-500">&gt;</span>
+              </div>
+              <div>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;h2&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.from_name]]]</span><span class="text-foreground"> donated </span><span class="text-amber-700 dark:text-amber-400">[[[event.formatted_amount]]]</span><span class="text-zinc-500">&lt;/h2&gt;</span>
+              </div>
+              <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[if:event.message]]]</span></div>
+              <div>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.message]]]</span><span class="text-zinc-500">&lt;/p&gt;</span>
+              </div>
+              <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
+              <div>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">via </span><span class="text-amber-700 dark:text-amber-400">[[[event.source]]]</span><span class="text-zinc-500">&lt;/small&gt;</span>
+              </div>
+              <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
+            </div>
+          </div>
+          <p class="mt-3 text-sm text-muted-foreground">
+            Ko-fi and StreamLabs expose the same normalized event tags. Write your donation alert once and it works for both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code> tells your overlay which platform it came from.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 — Kits & Copying -->
+    <section class="border-b border-border/50 bg-muted/20 py-24">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-5xl">
+          <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">06 — Kits &amp; Copying</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Good design compounds.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Any public template or kit can be forked. One click, one copy, fully yours to modify, extend, or break. An Overlay Kit is a collection of
-            templates — a static overlay, a follower alert, a subscription alert, a raid alert — designed as a cohesive visual system. Fork the kit,
+            Any public template or kit can be copied. One click, one copy, fully yours to modify, extend, or break. An Overlay Kit is a collection of
+            templates - a static overlay, a follower alert, a subscription alert, a raid alert - designed as a cohesive visual system. Copy the kit,
             get everything at once.
           </p>
 
           <div class="grid gap-6 sm:grid-cols-3">
             <div class="rounded-md border border-border bg-background p-6">
               <GitFork class="mb-4 h-8 w-8 text-sky-500" />
-              <h3 class="mb-2 font-semibold">Fork anything public</h3>
+              <h3 class="mb-2 font-semibold">Copy anything public</h3>
               <p class="text-sm text-muted-foreground">
-                Every public template is a starting point. Fork it, own it, ship it. The original is always untouched.
+                Every public template is a starting point. Copy it, own it, ship it. The original is always untouched.
               </p>
             </div>
             <div class="rounded-md border border-border bg-background p-6">
               <Layers class="mb-4 h-8 w-8 text-sky-500" />
               <h3 class="mb-2 font-semibold">Overlay Kits</h3>
               <p class="text-sm text-muted-foreground">
-                Collections of templates sharing a visual language. Fork the kit, get the whole system. No assembly required.
+                Collections of templates sharing a visual language. Copy the kit, get the whole system. No assembly required.
               </p>
             </div>
             <div class="rounded-md border border-border bg-background p-6">
               <Shield class="mb-4 h-8 w-8 text-sky-500" />
               <h3 class="mb-2 font-semibold">Controls carry over</h3>
               <p class="text-sm text-muted-foreground">
-                Forking a template with controls opens the Import Wizard. Pick which controls come with the fork.
+                Copying a template with controls opens the Import Wizard. Pick which controls come with the copy.
               </p>
             </div>
           </div>
@@ -595,14 +683,14 @@ const alertPipelineSteps = [
       </div>
     </section>
 
-    <!-- 06 — Zero to Overlay -->
-    <section class="border-b border-border/50 bg-muted/20 py-24">
+    <!-- 07 — Zero to Overlay -->
+    <section class="border-b border-border/50 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
-          <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">06 — Zero to Overlay</Badge>
+          <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">07 — Zero to Overlay</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">From signup to OBS in minutes.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            When you sign up, Overlabels runs an automated onboarding pipeline: generates your per-user webhook secret, forks the starter kit into
+            When you sign up, Overlabels runs an automated onboarding pipeline: generates your per-user webhook secret, copies the starter kit into
             your account, auto-assigns alert templates to event types, and generates your full personalised tag set from your live Twitch data. You
             arrive to a working overlay.
           </p>
@@ -619,7 +707,7 @@ const alertPipelineSteps = [
                 </li>
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">02</span>
-                  <span class="text-muted-foreground">Starter kit forked directly into your account</span>
+                  <span class="text-muted-foreground">Starter kit copied directly into your account</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">03</span>
