@@ -13,19 +13,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 <template>
   <Head>
-    <title>Conditional Tags Reference - Overlabels</title>
+    <title>Help - Overlabels</title>
     <meta
       name="description"
-      content="Complete reference for conditional template tags, event data, and Ko-fi integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi and StreamLabs integration tags in Overlabels overlays."
     />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://overlabels.com/help" />
     <meta property="og:site_name" content="Overlabels" />
-    <meta property="og:title" content="Conditional Tags Reference - Overlabels" />
+    <meta property="og:title" content="Help - Overlabels" />
     <meta
       property="og:description"
-      content="Complete reference for conditional template tags, event data, and Ko-fi integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi and StreamLabs integration tags in Overlabels overlays."
     />
     <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -33,10 +33,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Conditional Tags Reference - Overlabels" />
+    <meta name="twitter:title" content="Help - Overlabels" />
     <meta
       name="twitter:description"
-      content="Complete reference for conditional template tags, event data, and Ko-fi integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi and StreamLabs integration tags in Overlabels overlays."
     />
     <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
@@ -460,6 +460,112 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
         </div>
 
+        <!-- StreamLabs Integration Section -->
+        <div class="mb-12" id="streamlabs-events">
+          <h2 class="mb-6 text-2xl font-bold">StreamLabs Integration</h2>
+          <p class="mb-6 text-muted-foreground">
+            Connect your StreamLabs account to receive live donation data in your overlays. Once authenticated, Overlabels automatically tracks
+            donations and updates your controls in real time - no webhook URLs or manual setup needed.
+          </p>
+
+          <div class="space-y-8">
+            <!-- How it works -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">How It Works</h3>
+              <ol class="list-inside list-decimal space-y-2 text-muted-foreground">
+                <li>Go to <a href="/settings/integrations/streamlabs" class="text-violet-400 hover:underline">Settings &gt; Integrations &gt; StreamLabs</a> and click <strong>Authenticate with StreamLabs</strong>.</li>
+                <li>Authorize Overlabels in the StreamLabs popup.</li>
+                <li>Done. Overlabels listens for donations automatically and updates your overlay controls in real time.</li>
+              </ol>
+            </div>
+
+            <!-- Auto-provisioned Controls -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">
+                <span class="mr-2 inline-block h-4 w-4 rounded bg-emerald-500"></span>
+                Auto-provisioned Controls
+              </h3>
+              <p class="mb-4 text-muted-foreground">
+                When you connect StreamLabs, six controls are automatically created and kept up to date with every donation.
+                Use them in any overlay template with the <code>[[[c:streamlabs:key]]]</code> syntax.
+              </p>
+              <div class="space-y-2 font-mono text-sm">
+                <div><code>[[[c:streamlabs:donations_received]]]</code> - total number of donations received (counter)</div>
+                <div><code>[[[c:streamlabs:latest_donor_name]]]</code> - name of the most recent donor</div>
+                <div><code>[[[c:streamlabs:latest_donation_amount]]]</code> - amount of the most recent donation</div>
+                <div><code>[[[c:streamlabs:latest_donation_message]]]</code> - message from the most recent donor</div>
+                <div><code>[[[c:streamlabs:latest_donation_currency]]]</code> - currency of the most recent donation (e.g. USD)</div>
+                <div><code>[[[c:streamlabs:total_received]]]</code> - running total of all donation amounts (session)</div>
+              </div>
+            </div>
+
+            <!-- Alert template tags -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">
+                <span class="mr-2 inline-block h-4 w-4 rounded bg-emerald-500"></span>
+                StreamLabs Donation Event Tags
+              </h3>
+              <p class="mb-4 text-muted-foreground">
+                These tags are available in <strong>alert templates</strong> triggered by StreamLabs donations. Configure which alert fires on the
+                <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
+              </p>
+              <div class="space-y-2 font-mono text-sm">
+                <div><code>[[[event.from_name]]]</code> - name of the donor</div>
+                <div><code>[[[event.message]]]</code> - the donor's message</div>
+                <div><code>[[[event.amount]]]</code> - donation amount (e.g. <code>"5.00"</code>)</div>
+                <div><code>[[[event.currency]]]</code> - currency code (e.g. <code>"USD"</code>)</div>
+                <div><code>[[[event.formatted_amount]]]</code> - formatted amount (e.g. <code>"$5.00"</code>)</div>
+                <div><code>[[[event.type]]]</code> - always <code>"donation"</code></div>
+                <div><code>[[[event.source]]]</code> - always <code>"StreamLabs"</code> - useful for reusing alert templates across donation services</div>
+                <div><code>[[[event.transaction_id]]]</code> - unique event identifier</div>
+              </div>
+            </div>
+
+            <!-- Example alert -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">Example StreamLabs Alert Template</h3>
+              <div class="rounded bg-sidebar p-4 font-mono text-sm">
+                &lt;div class="donation"&gt;<br />
+                &nbsp;&nbsp;[[[event.from_name]]] donated [[[event.formatted_amount]]]!<br />
+                &nbsp;&nbsp;[[[if:event.message]]]<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;p class="message"&gt;[[[event.message]]]&lt;/p&gt;<br />
+                &nbsp;&nbsp;[[[endif]]]<br />
+                &lt;/div&gt;
+              </div>
+              <p class="mt-4 text-sm text-muted-foreground">
+                The same alert template works for both Ko-fi and StreamLabs donations since they share the same event tags (<code>event.from_name</code>, <code>event.amount</code>, <code>event.message</code>, etc.).
+              </p>
+            </div>
+
+            <!-- Features -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">Features</h3>
+              <div class="space-y-4 text-muted-foreground">
+                <div>
+                  <h4 class="font-semibold text-foreground">Test Mode</h4>
+                  <p>
+                    Toggle test mode on the StreamLabs settings page to experiment with donations without affecting your live counters. When you turn test
+                    mode off, the donation counter resets to your seed value.
+                  </p>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-foreground">Starting Donation Count</h4>
+                  <p>
+                    Already have donations from before connecting? Set a starting count so your <code>[[[c:streamlabs:donations_received]]]</code> control
+                    picks up where you left off.
+                  </p>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-foreground">Shared Alert Templates</h4>
+                  <p>
+                    StreamLabs and Ko-fi donation events expose the same core tags, so you can point both services at the same alert template.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tips Section -->
         <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
           <h2 class="mb-4 text-2xl font-bold">Tips & Best Practices</h2>
@@ -485,9 +591,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p>Apply different CSS classes within conditionals to create visual variety for different alert types.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Fork the Starter Kit</h4>
+              <h4 class="font-semibold text-foreground">Copy the Starter Kit</h4>
               <p>
-                <Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Fork the Overlabels Starter Kit</Link> to get a great
+                <Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Copy the Overlabels Starter Kit</Link> to get a great
                 set of defaults to work with.
               </p>
             </div>
