@@ -255,7 +255,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <Link
             v-for="template in filteredTemplates"
             :key="template.id"
-            :href="`/templates/${template.slug}`"
+            :href="`/templates/${template.id}`"
             class="group overflow-hidden rounded-lg border bg-card transition-all hover:border-violet-400 hover:shadow-lg dark:hover:border-violet-300"
           >
             <!-- Screenshot or placeholder -->
