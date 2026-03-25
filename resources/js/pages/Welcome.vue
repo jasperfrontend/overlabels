@@ -114,6 +114,12 @@ const alertPipelineSteps = [
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </div>
           <div class="flex items-center gap-6">
+            <a href="#tags" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Tags</a>
+            <a href="#controls" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Controls</a>
+            <a href="#conditionals" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Conditionals</a>
+            <a href="#events" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Events</a>
+            <a href="#integrations" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Integrations</a>
+            <a href="#kits" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground lg:block">Kits</a>
             <Link href="/help" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">Help</Link>
             <Link href="/manifesto" class="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">Why Overlabels</Link>
             <DarkModeToggle />
@@ -233,7 +239,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 01 — The Syntax -->
-    <section class="border-b border-border/50 py-24">
+    <section id="tags" class="scroll-mt-16 border-b border-border/50 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">01 — Tags</Badge>
@@ -370,7 +376,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 02 — Controls -->
-    <section class="border-b border-border/50 bg-muted/20 py-24">
+    <section id="controls" class="scroll-mt-16 border-b border-border/50 bg-muted/20 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">02 — Controls</Badge>
@@ -427,7 +433,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 03 — Conditionals -->
-    <section class="border-b border-border/50 py-24">
+    <section id="conditionals" class="scroll-mt-16 border-b border-border/50 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">03 — Conditional Rendering</Badge>
@@ -515,7 +521,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 04 — Events -->
-    <section class="border-b border-border/50 bg-muted/20 py-24">
+    <section id="events" class="scroll-mt-16 border-b border-border/50 bg-muted/20 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">04 — Event Alerts</Badge>
@@ -557,7 +563,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 05 — Integrations -->
-    <section class="border-b border-border/50 py-24">
+    <section id="integrations" class="scroll-mt-16 border-b border-border/50 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <div class="mb-4 flex items-center gap-3">
@@ -645,7 +651,7 @@ const alertPipelineSteps = [
     </section>
 
     <!-- 06 — Kits & Copying -->
-    <section class="border-b border-border/50 bg-muted/20 py-24">
+    <section id="kits" class="scroll-mt-16 border-b border-border/50 bg-muted/20 py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">06 — Kits &amp; Copying</Badge>

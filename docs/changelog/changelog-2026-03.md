@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Add section navigation to homepage
+
+- Added anchor links in the sticky nav for Tags, Controls, Conditionals, Events, Integrations, and Kits.
+- Added `scroll-mt-16` to all sections so they clear the sticky nav when scrolled to.
+- Section links hidden below `lg` breakpoint to keep mobile nav clean. Help and Why Overlabels remain visible from `sm`.
+
 ## March 25th, 2026 - UX: Celebrate Ko-fi and StreamLabs integrations on homepage
 
 - Added new section "05 - Integrations" with NEW badge, Ko-fi and StreamLabs cards, and shared alert template example.
