@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Clock, RefreshCw } from 'lucide-vue-next';
 
 
@@ -18,6 +19,17 @@ defineProps<{
 }>();
 
 const replayingId = ref<number | null>(null);
+const confirmingId = ref<number | null>(null);
+
+function openConfirm(event: UnifiedEvent) {
+  if (!canReplay(event) || replayingId.value === event.id) return;
+  confirmingId.value = event.id;
+}
+
+function confirmAndReplay(event: UnifiedEvent) {
+  confirmingId.value = null;
+  replay(event);
+}
 
 const nonReplayableTypes = ['stream.online', 'stream.offline'];
 
@@ -141,34 +153,51 @@ function eventColor(event: UnifiedEvent): any {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <div
+  <div class="flex flex-col gap-2 mt-4">
+    <Popover
       v-for="event in events"
       :key="`${event.source}-${event.id}`"
-      class="group flex items-start justify-between gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50"
+      :open="confirmingId === event.id"
+      @update:open="(open: boolean) => (confirmingId = open ? event.id : null)"
     >
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <div class="h-2 w-2 shrink-0 rounded-full" :class="eventColor(event)"></div>
-          <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-          <span v-else class="italic text-muted-foreground/50">-</span>
-          <span class="text-muted-foreground">{{ label(event) }}</span>
-          <span v-if="details(event)">{{ details(event) }}</span>
+      <PopoverTrigger as-child>
+        <div
+          :class="[
+            'group flex items-start justify-between gap-3 rounded-lg border p-3 transition-all',
+            canReplay(event) ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
+            replayingId === event.id ? 'opacity-60' : '',
+            confirmingId === event.id ? 'rounded-tl-none bg-background' : 'bg-card',
+          ]"
+          :role="canReplay(event) ? 'button' : undefined"
+          :tabindex="canReplay(event) ? 0 : undefined"
+          @click="openConfirm(event)"
+          @keydown.enter="openConfirm(event)"
+          @keydown.space.prevent="openConfirm(event)"
+        >
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <div class="h-2 w-2 shrink-0 rounded-full" :class="eventColor(event)"></div>
+              <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
+              <span v-else class="italic text-muted-foreground/50">-</span>
+              <span class="text-muted-foreground">{{ label(event) }}</span>
+              <span v-if="details(event)">{{ details(event) }}</span>
+            </div>
+            <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
+              <Clock class="h-3 w-3" />
+              <span>{{ relativeTime(event.created_at) }}</span>
+              <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
+            </div>
+          </div>
         </div>
-        <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
-          <Clock class="h-3 w-3" />
-          <span>{{ relativeTime(event.created_at) }}</span>
-        </div>
-      </div>
+      </PopoverTrigger>
 
-      <button
-        v-if="canReplay(event)"
-        :disabled="replayingId === event.id"
-        class="shrink-0 rounded p-2 opacity-40 transition-opacity hover:opacity-100 group-hover:opacity-80"
-        @click="replay(event)"
-      >
-        <RefreshCw class="h-4 w-4 cursor-pointer" :class="{ 'animate-spin': replayingId === event.id }" />
-      </button>
-    </div>
+      <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-background" side="top" :side-offset="-1" align="start">
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-muted-foreground">Replay event?</span>
+          <button class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
+          <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
+        </div>
+      </PopoverContent>
+    </Popover>
   </div>
 </template>

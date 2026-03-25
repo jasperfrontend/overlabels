@@ -3,6 +3,11 @@
 ## March 25th, 2026 - UX: Replace events table with responsive cards
 
 - Replaced the HTML table layout in EventsTable with a card-based list that stacks naturally on all screen sizes.
+- Whole card is tappable for replay - shows a small popover confirmation anchored to the top-left of the card.
+- Card top-left border radius flattens when popover is open to visually connect them.
+- Card background stays consistent with the popover while it's open, even when hovering away.
+- Uses project button classes (btn-primary, btn-chill) for the confirm/cancel actions.
+- Added shadcn Popover component.
 - Each event card shows the color dot, who/label/details on the first line (wraps on narrow screens) and a small clock + relative time below.
 - Replay button stays right-aligned and fades in on hover.
 - Removed unused table, badge, and dropdown-menu imports.
