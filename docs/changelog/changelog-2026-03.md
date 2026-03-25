@@ -1,5 +1,13 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Polish pass across dashboard, alerts builder, and kits
+
+- Unified help pages layout and alignments.
+- Event cards: tappable with popover replay confirmation, violet border accent, non-active cards fade when popover is open.
+- Recents page: refresh button with spinner and list fade instead of full page reload.
+- Alerts builder: inputs now use the same `input-border` style as the templates filter section.
+- Kit show page: replaced template table with a screenshot showcase grid, static overlays sorted first, quick type filter toggle.
+
 ## March 25th, 2026 - UX: Replace events table with responsive cards
 
 - Replaced the HTML table layout in EventsTable with a card-based list that stacks naturally on all screen sizes.

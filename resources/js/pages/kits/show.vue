@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon } from 'lucide-vue-next';
+import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import TemplateTable from '@/components/TemplateTable.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Kit {
   id: number;
@@ -61,6 +60,25 @@ const handleDelete = () => {
     });
   }
 };
+const typeFilter = ref<'all' | 'static' | 'alert'>('all');
+
+const hasMultipleTypes = computed(() => {
+  const templates = props.kit.templates ?? [];
+  const types = new Set(templates.map((t) => t.type));
+  return types.size > 1;
+});
+
+const filteredTemplates = computed(() => {
+  const templates = [...(props.kit.templates ?? [])];
+  // Static overlays first, then alerts
+  templates.sort((a, b) => (a.type === b.type ? 0 : a.type === 'static' ? -1 : 1));
+  if (typeFilter.value === 'all') return templates;
+  return templates.filter((t) => t.type === typeFilter.value);
+});
+
+const staticCount = computed(() => (props.kit.templates ?? []).filter((t) => t.type === 'static').length);
+const alertCount = computed(() => (props.kit.templates ?? []).filter((t) => t.type === 'alert').length);
+
 const totalTemplates = computed(() => {
   const templates = props.kit.templates ?? [];
 
@@ -201,14 +219,75 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <!-- Templates section -->
+      <!-- Templates showcase -->
       <div>
-        <h2 class="mb-4 text-xl font-semibold">{{ totalTemplates }}</h2>
-        <TemplateTable
-          v-if="kit.templates && kit.templates.length > 0"
-          :templates="kit.templates"
-          :current-user-id="auth?.user?.id"
-        />
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 class="text-xl font-semibold">{{ totalTemplates }}</h2>
+
+          <div v-if="hasMultipleTypes" class="flex gap-1">
+            <button
+              class="btn btn-xs"
+              :class="typeFilter === 'all' ? 'btn-secondary' : 'btn-chill'"
+              @click="typeFilter = 'all'"
+            >
+              All ({{ (kit.templates ?? []).length }})
+            </button>
+            <button
+              v-if="staticCount"
+              class="btn btn-xs"
+              :class="typeFilter === 'static' ? 'btn-secondary' : 'btn-chill'"
+              @click="typeFilter = 'static'"
+            >
+              Static ({{ staticCount }})
+            </button>
+            <button
+              v-if="alertCount"
+              class="btn btn-xs"
+              :class="typeFilter === 'alert' ? 'btn-secondary' : 'btn-chill'"
+              @click="typeFilter = 'alert'"
+            >
+              Alerts ({{ alertCount }})
+            </button>
+          </div>
+        </div>
+
+        <div v-if="filteredTemplates.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            v-for="template in filteredTemplates"
+            :key="template.id"
+            :href="`/templates/${template.slug}`"
+            class="group overflow-hidden rounded-lg border bg-card transition-all hover:border-violet-400 hover:shadow-lg dark:hover:border-violet-300"
+          >
+            <!-- Screenshot or placeholder -->
+            <div class="aspect-video w-full overflow-hidden bg-muted">
+              <img
+                v-if="template.screenshot_url"
+                :src="template.screenshot_url"
+                :alt="template.name"
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                <component :is="template.type === 'alert' ? Zap : Layers" class="h-10 w-10 text-primary/30" />
+              </div>
+            </div>
+
+            <!-- Info -->
+            <div class="p-4">
+              <div class="mb-1 flex items-center gap-2">
+                <h3 class="truncate font-semibold group-hover:text-violet-500 dark:group-hover:text-violet-300 transition-colors">{{ template.name }}</h3>
+                <Badge
+                  class="shrink-0 text-xs"
+                  :class="template.type === 'alert'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'"
+                >
+                  {{ template.type === 'alert' ? 'Alert' : 'Static' }}
+                </Badge>
+              </div>
+              <p v-if="template.description" class="line-clamp-2 text-sm text-muted-foreground">{{ template.description }}</p>
+            </div>
+          </Link>
+        </div>
 
         <EmptyState
           v-else
@@ -220,7 +299,6 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Link :href="`/kits/${kit.id}/edit`" class="btn btn-primary">Add Templates</Link>
           </template>
         </EmptyState>
-
       </div>
     </div>
   </AppLayout>

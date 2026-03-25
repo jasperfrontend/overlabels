@@ -46,7 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-8">
           <h1 class="mb-4 text-4xl font-bold">The Overlabels Manifesto</h1>
-          <p class="text-lg text-muted-foreground">Our principles for building a data engine, not a design engine.</p>
+          <p class="text-lg text-foreground">Our principles for building a data engine, not a design engine.</p>
         </div>
 
         <div class="space-y-8">

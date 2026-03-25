@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import TemplateTable from '@/components/TemplateTable.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, FileText, Radio } from 'lucide-vue-next';
+import { ExternalLink, FileText, Radio, RefreshCw } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 
@@ -39,6 +39,21 @@ watch(
   { immediate: true },
 );
 
+const refreshing = ref(false);
+
+function refresh() {
+  if (refreshing.value) return;
+  refreshing.value = true;
+  router.reload({
+    only: ['recentEvents', 'recentTemplates'],
+    onFinish: () => {
+      setTimeout(() => {
+        refreshing.value = false;
+      }, 600);
+    },
+  });
+}
+
 const breadcrumbs = [
   {
     title: 'Dashboard',
@@ -64,7 +79,10 @@ const breadcrumbs = [
           <div class="flex items-center gap-3">
             <Radio class="mr-2 h-6 w-6" />
             <Heading title="Recent stream activity" />
-            <Link :href="route('dashboard.recents')" class="text-sm bg-sidebar py-0.5 px-2 rounded-full text-muted-foreground hover:text-foreground">Refresh</Link>
+            <button class="btn btn-chill btn-xs gap-1.5" :disabled="refreshing" @click="refresh">
+              <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />
+              {{ refreshing ? 'Refreshing' : 'Refresh' }}
+            </button>
           </div>
           <a href="/dashboard/events" target="_blank" class="btn btn-primary self-start sm:self-auto">
             Embed view
@@ -72,16 +90,18 @@ const breadcrumbs = [
           </a>
         </div>
 
-        <EventsTable v-if="recentEvents.length > 0" :events="recentEvents" />
+        <div class="transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
+          <EventsTable v-if="recentEvents.length > 0" :events="recentEvents" />
 
-        <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
-          <CardHeader>
-            <CardTitle class="text-md">No Events Yet</CardTitle>
-            <CardDescription class="-mt-0.5 text-sm">
-              Stream events will appear here once your Twitch EventSub subscriptions are active.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+          <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
+            <CardHeader>
+              <CardTitle class="text-md">No Events Yet</CardTitle>
+              <CardDescription class="-mt-0.5 text-sm">
+                Stream events will appear here once your Twitch EventSub subscriptions are active.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </section>
 
       <!-- Recently Updated Templates -->

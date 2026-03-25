@@ -43,17 +43,17 @@ const breadcrumbs: BreadcrumbItem[] = [
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex flex-col items-center gap-8 px-4 py-10">
-      <div class="w-full max-w-3xl space-y-10">
-        <div class="text-center">
+    <div class="min-h-screen bg-background">
+      <div class="mx-auto max-w-4xl p-6">
+        <div class="text-left">
           <h1 class="text-4xl font-extrabold tracking-tight">Overlabels &hearts; Ko-fi</h1>
-          <p class="mt-3 text-lg text-muted-foreground">
+          <p class="mt-3 mb-6 text-lg text-foreground">
             Why we chose Ko-fi as our first external integration - and why we think you should use it too.
           </p>
         </div>
 
         <!-- The pitch -->
-        <section class="space-y-4">
+        <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Zero platform fees on tips</h2>
           <p class="text-muted-foreground">
             Ko-fi's free tier charges <strong class="text-foreground">0% platform fee</strong> on one-time donations.
@@ -65,7 +65,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- Fee comparison -->
-        <section class="space-y-4">
+        <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Fee comparison</h2>
           <div class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
@@ -118,7 +118,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- Why not PayPal directly -->
-        <section class="space-y-4">
+        <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Why not just PayPal directly?</h2>
           <div class="grid gap-3 sm:grid-cols-2">
             <div class="rounded-lg border p-4 space-y-1">
@@ -150,7 +150,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- Ko-fi advantages -->
-        <section class="space-y-4">
+        <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">What makes Ko-fi great for streamers</h2>
           <div class="space-y-3">
             <div class="flex gap-3 items-start">
@@ -199,7 +199,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- CTA -->
-        <section class="rounded-lg border bg-sidebar-accent p-6 text-center space-y-3">
+        <section class="rounded-lg border bg-sidebar-accent p-6 text-center space-y-3 mb-6">
           <p class="text-xl font-bold">Ready to connect Ko-fi to your overlays?</p>
           <p class="text-muted-foreground">
             Sign up at
@@ -212,16 +212,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Overlabels transparency -->
         <section class="rounded-lg border border-green-500/30 bg-green-500/5 p-6 space-y-3">
-          <h2 class="text-2xl font-bold text-center">Overlabels takes nothing</h2>
-          <p class="text-muted-foreground text-center">
+          <h2 class="text-2xl font-bold">Overlabels takes nothing</h2>
+          <p class="text-foreground">
             When your viewers donate through Ko-fi, <strong class="text-foreground">100% of that money goes to you</strong>.
             Overlabels never takes a cut, never skims a percentage, never charges a platform fee. Not now, not ever.
           </p>
-          <p class="text-muted-foreground text-center">
+          <p class="text-foreground">
             Overlabels itself is <strong class="text-foreground">completely free to use</strong>. No subscription, no premium tier,
             no paywall. We built this because streamers deserve tools that don't nickel-and-dime them.
           </p>
-          <p class="text-sm text-muted-foreground text-center">
+          <p class="text-sm text-foreground">
             The only fees you'll ever see are payment processing fees charged by PayPal or Stripe - and those go to
             PayPal and Stripe, not us. We literally never touch your money.
           </p>

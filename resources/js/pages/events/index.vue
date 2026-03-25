@@ -298,16 +298,15 @@ const serviceLabel: Record<string, string> = {
             class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
             @click.stop
           >
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
               <!-- Template Selection -->
-              <div>
-                <label class="mb-2 block text-sm font-medium text-foreground"> Alert Template </label>
+              <div class="flex flex-col gap-1">
+                <label>Alert Template</label>
                 <select
                   v-model="mapping.template_id"
-                  class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                  class="input-border h-[40px] w-full rounded-sm"
                   :class="{
                     'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.template_id,
-                    'border-input': mapping.template_id,
                   }"
                 >
                   <option :value="null">Select a template...</option>
@@ -315,12 +314,12 @@ const serviceLabel: Record<string, string> = {
                     {{ template.name }}
                   </option>
                 </select>
-                <p v-if="!mapping.template_id" class="mt-1 text-xs text-yellow-600">Select a template to show alerts</p>
+                <p v-if="!mapping.template_id" class="text-xs text-yellow-600">Select a template to show alerts</p>
               </div>
 
               <!-- Duration Input -->
-              <div>
-                <label class="mb-2 block text-sm font-medium text-foreground">Duration (seconds)</label>
+              <div class="flex flex-col gap-1">
+                <label>Duration (seconds)</label>
                 <div class="flex items-center gap-2">
                   <input
                     :value="mapping.duration_ms / 1000"
@@ -329,7 +328,7 @@ const serviceLabel: Record<string, string> = {
                     min="1"
                     max="30"
                     step="1"
-                    class="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    class="input-border h-[40px] w-24 rounded-sm"
                     placeholder="1-30"
                   />
                   <span class="text-sm text-muted-foreground">seconds</span>
@@ -337,11 +336,11 @@ const serviceLabel: Record<string, string> = {
               </div>
 
               <!-- Enter Animation -->
-              <div>
-                <label class="mb-2 block text-sm font-medium text-foreground">Enter Animation</label>
+              <div class="flex flex-col gap-1">
+                <label>Enter Animation</label>
                 <select
                   v-model="mapping.transition_in"
-                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                  class="input-border h-[40px] w-full rounded-sm"
                 >
                   <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
                     {{ label }}
@@ -350,11 +349,11 @@ const serviceLabel: Record<string, string> = {
               </div>
 
               <!-- Exit Animation -->
-              <div>
-                <label class="mb-2 block text-sm font-medium text-foreground">Exit Animation</label>
+              <div class="flex flex-col gap-1">
+                <label>Exit Animation</label>
                 <select
                   v-model="mapping.transition_out"
-                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                  class="input-border h-[40px] w-full rounded-sm"
                 >
                   <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
                     {{ label }}
@@ -451,16 +450,15 @@ const serviceLabel: Record<string, string> = {
                   class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
                   @click.stop
                 >
-                  <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+                  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <!-- Template Selection -->
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-foreground"> Alert Template </label>
+                    <div class="flex flex-col gap-1">
+                      <label>Alert Template</label>
                       <select
                         v-model="mapping.overlay_template_id"
-                        class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                        class="input-border h-[40px] w-full rounded-sm"
                         :class="{
                           'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.overlay_template_id,
-                          'border-input': mapping.overlay_template_id,
                         }"
                       >
                         <option :value="null">Select a template...</option>
@@ -468,12 +466,12 @@ const serviceLabel: Record<string, string> = {
                           {{ template.name }}
                         </option>
                       </select>
-                      <p v-if="!mapping.overlay_template_id" class="mt-1 text-xs text-yellow-600">Select a template to show alerts</p>
+                      <p v-if="!mapping.overlay_template_id" class="text-xs text-yellow-600">Select a template to show alerts</p>
                     </div>
 
                     <!-- Duration Input -->
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-foreground">Duration (seconds)</label>
+                    <div class="flex flex-col gap-1">
+                      <label>Duration (seconds)</label>
                       <div class="flex items-center gap-2">
                         <input
                           :value="mapping.duration_ms / 1000"
@@ -482,7 +480,7 @@ const serviceLabel: Record<string, string> = {
                           min="1"
                           max="30"
                           step="1"
-                          class="w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          class="input-border h-[40px] w-24 rounded-sm"
                           placeholder="1-30"
                         />
                         <span class="text-sm text-muted-foreground">seconds</span>
@@ -490,11 +488,11 @@ const serviceLabel: Record<string, string> = {
                     </div>
 
                     <!-- Enter Animation -->
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-foreground">Enter Animation</label>
+                    <div class="flex flex-col gap-1">
+                      <label>Enter Animation</label>
                       <select
                         v-model="mapping.transition_in"
-                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                        class="input-border h-[40px] w-full rounded-sm"
                       >
                         <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
                           {{ label }}
@@ -503,11 +501,11 @@ const serviceLabel: Record<string, string> = {
                     </div>
 
                     <!-- Exit Animation -->
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-foreground">Exit Animation</label>
+                    <div class="flex flex-col gap-1">
+                      <label>Exit Animation</label>
                       <select
                         v-model="mapping.transition_out"
-                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                        class="input-border h-[40px] w-full rounded-sm"
                       >
                         <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
                           {{ label }}
