@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - CI: Discord notifications for workflow runs
+
+- Added `discord-notify.yml` workflow that fires on completion of tests, linter, and deploy workflows.
+- Posts an embed to Discord with pass/fail status, commit, branch, actor, and a link to the run.
+- Uses `DISCORD_WEBHOOK` repository secret.
+
 ## March 25th, 2026 - UX: Polish pass across dashboard, alerts builder, and kits
 
 - Unified help pages layout and alignments.

@@ -1,0 +1,54 @@
+name: Discord Notifications
+
+on:
+  workflow_run:
+    workflows: [tests, linter, notify-deploy]
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          ACTOR: ${{ github.event.workflow_run.actor.login }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          REPO: ${{ github.repository }}
+          COMMIT_URL: ${{ github.event.workflow_run.head_repository.html_url }}/commit/${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$CONCLUSION" = "success" ]; then
+            COLOR=3066993   # green
+            EMOJI=":white_check_mark:"
+            STATUS="passed"
+          elif [ "$CONCLUSION" = "cancelled" ]; then
+            COLOR=16776960  # yellow
+            EMOJI=":warning:"
+            STATUS="cancelled"
+          else
+            COLOR=15158332  # red
+            EMOJI=":x:"
+            STATUS="failed"
+          fi
+
+          SHORT_SHA="${SHA::7}"
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "${EMOJI} ${WORKFLOW} ${STATUS}",
+              "description": "[\`${SHORT_SHA}\`](${COMMIT_URL}) on \`${BRANCH}\` by ${ACTOR}",
+              "color": ${COLOR},
+              "footer": { "text": "${REPO}" },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "url": "${RUN_URL}"
+            }]
+          }
+          EOF
+          )
+
+          curl -s -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK"
