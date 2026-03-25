@@ -50,6 +50,18 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="text-lg text-muted-foreground">See your <a href="/tags" class="text-violet-400 hover:underline">static Template Tags</a> you can use for your account level.</p>
         </div>
 
+        <!-- Table of Contents -->
+        <div class="mb-12">
+          <h2 class="mb-6 text-2xl font-bold" id="toc">Table of Contents</h2>
+          <ul class="space-y-2">
+            <li><a href="#conditionals" class="text-violet-400 hover:underline">Conditional Template Syntax</a></li>
+            <li><a href="#event-based-template-tags" class="text-violet-400 hover:underline">Event-based Template Tags</a></li>
+            <li><a href="#kofi-events" class="text-violet-400 hover:underline">Ko-fi Integration Events</a></li>
+            <li><a href="#streamlabs-events" class="text-violet-400 hover:underline">StreamLabs Integration</a></li>
+            <li><a href="#tips" class="text-violet-400 hover:underline">Tips &amp; Best Practices</a></li>
+          </ul>
+        </div>
+
         <!-- Conditional Syntax Section -->
         <div class="mb-12" id="conditionals">
           <h2 class="mb-6 text-2xl font-bold">Conditional Template Syntax</h2>
@@ -567,7 +579,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- Tips Section -->
-        <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="tips">
           <h2 class="mb-4 text-2xl font-bold">Tips & Best Practices</h2>
           <div class="space-y-4 text-muted-foreground">
             <div>

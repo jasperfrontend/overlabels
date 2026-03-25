@@ -1,5 +1,10 @@
 # CHANGELOG MARCH 2026
 
+## March 25th, 2026 - UX: Add table of contents to help page
+
+- Added TOC with anchor links to the /help page matching the pattern from /help/controls.
+- Sections: Conditional Template Syntax, Event-based Template Tags, Ko-fi Integration Events, StreamLabs Integration, Tips & Best Practices.
+
 ## March 25th, 2026 - Docs: Update help page with StreamLabs integration
 
 - Added StreamLabs integration section covering how to connect, auto-provisioned controls, alert event tags, and features (test mode, seed count, shared templates).
