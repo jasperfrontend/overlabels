@@ -81,7 +81,7 @@ const breadcrumbs = [
             <Heading title="Recent stream activity" />
             <button class="btn btn-chill btn-xs gap-1.5" :disabled="refreshing" @click="refresh">
               <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />
-              {{ refreshing ? 'Refreshing' : 'Refresh' }}
+              {{ refreshing ? 'Working' : 'Refresh' }}
             </button>
           </div>
           <a href="/dashboard/events" target="_blank" class="btn btn-primary self-start sm:self-auto">
