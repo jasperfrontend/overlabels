@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\OverlayHash;
 use App\Services\DefaultTemplateProviderService;
-use App\Services\OverlayTemplateParserService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use Carbon\Carbon;

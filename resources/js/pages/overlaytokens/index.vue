@@ -106,7 +106,7 @@ const formatDate = (date: string | null | undefined) =>
 </script>
 
 <template>
-  <Head title="Your Secure Tokens" />
+  <Head title="Overlay Access Tokens" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <div class="mb-6 flex items-center justify-between">
