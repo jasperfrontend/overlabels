@@ -200,5 +200,6 @@ function eventColor(event: UnifiedEvent): any {
         </div>
       </PopoverContent>
     </Popover>
+
   </div>
 </template>
