@@ -158,7 +158,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div>
                 <p class="font-semibold text-destructive">Chargeback risk on F&F</p>
                 <p class="text-sm">
-                  Friends & Family payments have zero seller protection. If someone disputes the dono, you lose.
+                  Friends & Family payments have zero seller protection. If someone disputes the donation transaction, you will always lose.
                 </p>
               </div>
             </div>
@@ -227,19 +227,24 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- Overlabels transparency -->
-        <section class="rounded-lg border border-green-500/30 bg-green-500/5 p-6 space-y-3">
-          <h2 class="text-2xl font-bold">Overlabels takes nothing</h2>
+        <section class="rounded-lg border border-violet-500/30 bg-violet-500/5 p-6 space-y-5">
+          <h2 class="text-2xl font-bold">Overlabels takes nothing. Ko-fi integration is 100% free</h2>
           <p class="text-foreground">
             When your viewers donate through Ko-fi, <strong class="text-foreground">100% of that money goes to you</strong>.
-            Overlabels never takes a cut, never skims a percentage, never charges a platform fee. Not now, not ever.
-          </p>
-          <p class="text-foreground">
-            Overlabels itself is <strong class="text-foreground">completely free to use</strong>. No subscription, no premium tier,
-            no paywall. We built this because streamers deserve tools that don't nickel-and-dime them.
+            Overlabels never takes a cut and never charges a platform fee.
           </p>
           <p class="text-sm text-foreground">
-            The only fees you'll ever see are payment processing fees charged by PayPal or Stripe - and those go to
-            PayPal and Stripe, not us. We literally never touch your money.
+            The only fees you'll ever see are payment processing fees charged by PayPal or Stripe, and those go directly to them, not us.
+            We never handle your money, and we have no access to your Ko-fi account or its settings.
+          </p>
+          <p class="text-sm text-foreground">
+            When a donation comes in, we save only three things: the donor's username, the amount, and their message (if they wrote one).
+            No email addresses, no transaction IDs. Just enough to show the alert, nothing more.
+          </p>
+          <p class="text-sm text-foreground">
+            So why is it free?<br>
+            Honestly, because it wasn't hard to build. Ko-fi's donation notifications are a single, lightweight webhook --
+            integrating it took about an hour. We're not gatekeeping a simple feature behind a subscription just because we can.
           </p>
         </section>
       </div>
