@@ -31,6 +31,7 @@ import type { AppPageProps } from '@/types';
 const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth.user);
 const isAdmin = computed(() => page.props.isAdmin);
+//@ts-ignore
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
