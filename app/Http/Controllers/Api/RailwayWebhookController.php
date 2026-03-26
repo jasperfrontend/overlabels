@@ -28,7 +28,7 @@ class RailwayWebhookController extends Controller
             'commit' => $commitHash ? substr($commitHash, 0, 7) : null,
         ]);
 
-        if ($type !== 'Deployment.deployed' || $status !== 'SUCCESS') {
+        if (! in_array($type, ['Deployment.deployed', 'Deployment.redeployed']) || $status !== 'SUCCESS') {
             return response()->json(['status' => 'ignored']);
         }
 
