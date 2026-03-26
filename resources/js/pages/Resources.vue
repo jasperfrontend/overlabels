@@ -109,7 +109,7 @@ const cssTools = [
       <div class="mx-auto max-w-4xl p-6">
         <div class="text-left">
           <h1 class="text-4xl font-extrabold tracking-tight">Free Resources</h1>
-          <p class="mt-3 mb-6 text-lg text-foreground">
+          <p class="mt-4 mb-6 text-lg text-foreground">
             Tools we love for building overlays. All free, no credit required unless noted.
           </p>
         </div>

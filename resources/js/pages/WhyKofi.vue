@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { EyeIcon, UserKey, Webhook, TriangleAlertIcon } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -47,13 +48,13 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <div class="text-left">
           <h1 class="text-4xl font-extrabold tracking-tight">Overlabels &hearts; Ko-fi</h1>
-          <p class="mt-3 mb-6 text-lg text-foreground">
+          <p class="mt-4 mb-6 text-lg text-foreground">
             Why we chose Ko-fi as our first external integration - and why we think you should use it too.
           </p>
         </div>
 
         <!-- The pitch -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-12">
           <h2 class="text-2xl font-bold">Zero platform fees on tips</h2>
           <p class="text-muted-foreground">
             Ko-fi's free tier charges <strong class="text-foreground">0% platform fee</strong> on one-time donations.
@@ -62,10 +63,17 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="text-muted-foreground">
             Compare that to other platforms that take 5-10% off the top before you even see the money.
           </p>
+          <p class="text-muted-foreground font-semibold">
+            Tip:
+            Ko-fi has a setting that may be turned on where you share 5% of your received tips with Ko-fi. You can disable that,
+            <a href="https://ko-fi.com/settings?tab=payment#advanced-options-container"
+               target="_blank" rel="noopener" class="text-violet-400 hover:underline font-medium">right here</a>. Do keep in mind you will lose
+            some platform functionality when you disable this.
+          </p>
         </section>
 
         <!-- Fee comparison -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-12">
           <h2 class="text-2xl font-bold">Fee comparison</h2>
           <div class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
@@ -85,12 +93,6 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <td class="px-4 py-3 font-semibold">~$4.56</td>
                 </tr>
                 <tr class="border-t">
-                  <td class="px-4 py-3 font-semibold">Ko-fi Gold ($6/mo)</td>
-                  <td class="px-4 py-3 text-green-600 dark:text-green-400 font-bold">0%</td>
-                  <td class="px-4 py-3 text-muted-foreground">~2.9% + $0.30</td>
-                  <td class="px-4 py-3 font-semibold">~$4.56</td>
-                </tr>
-                <tr class="border-t">
                   <td class="px-4 py-3 font-semibold">PayPal (Goods & Services)</td>
                   <td class="px-4 py-3 text-muted-foreground">0%</td>
                   <td class="px-4 py-3 text-muted-foreground">3.49% + $0.49</td>
@@ -102,55 +104,69 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <td class="px-4 py-3 text-muted-foreground">0% (domestic)</td>
                   <td class="px-4 py-3 font-semibold">$5.00</td>
                 </tr>
-                <tr class="border-t">
-                  <td class="px-4 py-3 font-semibold">StreamElements Tips</td>
-                  <td class="px-4 py-3 text-muted-foreground">0%</td>
-                  <td class="px-4 py-3 text-muted-foreground">~2.9% + $0.30</td>
-                  <td class="px-4 py-3 font-semibold">~$4.56</td>
-                </tr>
               </tbody>
             </table>
           </div>
           <p class="text-sm text-muted-foreground">
             PayPal Friends & Family looks free, but it has no buyer protection, no chargebacks defense, and your
-            donors need a PayPal account. International transfers also add fees.
+            donors need a PayPal account. Conversion rates and international transfers also add fees.
           </p>
         </section>
 
         <!-- Why not PayPal directly -->
-        <section class="space-y-4 mb-6">
-          <h2 class="text-2xl font-bold">Why not just PayPal directly?</h2>
+        <section class="space-y-4 mb-12">
+          <h2 class="text-2xl font-bold">Why not just use PayPal directly?</h2>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-lg border p-4 space-y-1">
-              <p class="font-semibold text-destructive">Exposes your real name and email</p>
-              <p class="text-sm text-muted-foreground">
-                PayPal shows your legal name to everyone who sends you money. Ko-fi keeps your identity private.
-              </p>
+            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+              <div>
+                <EyeIcon class="size-10 text-red-400" />
+              </div>
+              <div>
+                <p class="font-semibold text-destructive">Exposes your real name and email</p>
+                <p class="text-sm">
+                  PayPal shows your legal name to everyone who sends you money. Ko-fi keeps your identity private.
+                </p>
+              </div>
             </div>
-            <div class="rounded-lg border p-4 space-y-1">
-              <p class="font-semibold text-destructive">Donors need a PayPal account</p>
-              <p class="text-sm text-muted-foreground">
-                Not everyone has PayPal. Ko-fi supports guest checkout - your viewers can donate with just a card.
-              </p>
+            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+              <div>
+                <UserKey class="size-10 text-red-400" />
+              </div>
+              <div>
+                <p class="font-semibold text-destructive">No guest checkout</p>
+                <p class="text-sm">
+                  Not everyone has PayPal. Ko-fi supports guest checkout -your viewers can donate with a card.
+                </p>
+              </div>
             </div>
-            <div class="rounded-lg border p-4 space-y-1">
-              <p class="font-semibold text-destructive">No webhook API</p>
-              <p class="text-sm text-muted-foreground">
-                PayPal's IPN/webhook system is enterprise-grade complexity. Ko-fi gives you a simple webhook URL
-                that just works.
-              </p>
+            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+              <div>
+                <Webhook class="size-10 text-red-400" />
+              </div>
+              <div>
+                <p class="font-semibold text-destructive">No webhook API</p>
+                <p class="text-sm">
+                  PayPal's IPN/webhook system is enterprise-grade complexity. Ko-fi gives you a simple webhook URL
+                  that just works.
+                </p>
+              </div>
             </div>
-            <div class="rounded-lg border p-4 space-y-1">
-              <p class="font-semibold text-destructive">Chargeback risk on F&F</p>
-              <p class="text-sm text-muted-foreground">
-                Friends & Family payments have zero seller protection. If someone disputes the charge, you lose.
-              </p>
+            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+              <div>
+                <TriangleAlertIcon class="size-10 text-red-400" />
+              </div>
+              <div>
+                <p class="font-semibold text-destructive">Chargeback risk on F&F</p>
+                <p class="text-sm">
+                  Friends & Family payments have zero seller protection. If someone disputes the dono, you lose.
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
         <!-- Ko-fi advantages -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-12">
           <h2 class="text-2xl font-bold">What makes Ko-fi great for streamers</h2>
           <div class="space-y-3">
             <div class="flex gap-3 items-start">

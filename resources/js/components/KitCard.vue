@@ -59,11 +59,13 @@ const formatDate = (date: string) => {
   <Card class="group relative flex h-full pt-0 flex-col overflow-hidden bg-background">
     <!-- Thumbnail -->
     <div v-if="kit.thumbnail_url" class="aspect-video rounded-sm rounded-b-none w-full overflow-hidden bg-background">
-      <img
-        :src="kit.thumbnail_url"
-        :alt="kit.title"
-        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-      />
+      <Link :href="`/kits/${kit.id}`">
+        <img
+          :src="kit.thumbnail_url"
+          :alt="kit.title"
+          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      </Link>
     </div>
     <div v-else class="flex aspect-video w-full items-center justify-center">
       <Package class="h-12 w-12 text-primary/40" />
@@ -81,7 +83,7 @@ const formatDate = (date: string) => {
               {{ kit.title }}
             </Link>
           </CardTitle>
-          <div class="flex flex-shrink-0 items-center gap-2">
+          <div class="flex shrink-0 items-center gap-2">
             <div
               class="rounded-full p-1.5"
               :class="kit.is_public ? 'bg-green-500/10' : 'bg-violet-500/10'"
