@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ExternalWebhookController;
+use App\Http\Controllers\Api\RailwayWebhookController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
@@ -87,6 +88,12 @@ Route::get('/internal/streamlabs/integrations', function () {
 })
     ->middleware(['throttle:10,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
+// Railway deployment webhook - triggers version update broadcast
+Route::post('/webhooks/railway/{token}', [RailwayWebhookController::class, 'handle'])
+    ->middleware(['throttle:10,1'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
+    ->name('webhooks.railway');
 
 // External service webhooks - no auth/CSRF, rate-limited
 Route::get('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'show'])

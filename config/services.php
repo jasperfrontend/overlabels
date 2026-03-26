@@ -33,4 +33,8 @@ return [
         'listener_secret' => env('STREAMLABS_LISTENER_SECRET'),
     ],
 
+    'railway' => [
+        'webhook_secret' => env('RAILWAY_WEBHOOK_SECRET'),
+    ],
+
 ];

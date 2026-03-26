@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 26th, 2026 - Infra: Railway webhook for version update broadcast
+
+- Added `RailwayWebhookController` that receives Railway's `Deployment.deployed` webhook and triggers the Pusher `version.updated` event directly.
+- Replaces the GitHub Actions `deployment_status` trigger which depended on Railway's unreliable GitHub integration.
+- New env var: `RAILWAY_WEBHOOK_SECRET` (used as URL token for verification).
+
 ## March 25th, 2026 - CI: Discord notifications for workflow runs
 
 - Added `discord-notify.yml` workflow that fires on completion of tests, linter, and deploy workflows.
