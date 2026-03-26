@@ -55,62 +55,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- The pitch -->
         <section class="space-y-4 mb-12">
-          <h2 class="text-2xl font-bold">Zero platform fees on tips</h2>
+          <h2 class="text-2xl font-bold">Ko-fi is amazing because it's a proper platform</h2>
           <p class="text-muted-foreground">
-            Ko-fi's free tier charges <strong class="text-foreground">0% platform fee</strong> on one-time donations.
-            That means every cent your viewers send goes to you (minus payment processor fees, which everyone charges).
+            It has a donation page, supporter history, multiple payment methods, guest checkout, privacy, and most importantly a clean webhook that
+            lets Overlabels turn any of those events into alerts.
           </p>
           <p class="text-muted-foreground">
-            Compare that to other platforms that take 5-10% off the top before you even see the money.
+            PayPal is just a payment processor pretending to be a streamer tool.
           </p>
-          <p class="text-muted-foreground font-semibold">
-            Tip:
-            Ko-fi has a setting that may be turned on where you share 5% of your received tips with Ko-fi. You can disable that,
-            <a href="https://ko-fi.com/settings?tab=payment#advanced-options-container"
-               target="_blank" rel="noopener" class="text-violet-400 hover:underline font-medium">right here</a>. Do keep in mind you will lose
-            some platform functionality when you disable this.
-          </p>
-        </section>
 
-        <!-- Fee comparison -->
-        <section class="space-y-4 mb-12">
-          <h2 class="text-2xl font-bold">Fee comparison</h2>
-          <div class="overflow-x-auto rounded-lg border">
-            <table class="w-full text-sm">
-              <thead class="bg-muted text-left text-muted-foreground">
-                <tr>
-                  <th class="px-4 py-3">Platform</th>
-                  <th class="px-4 py-3">Platform fee</th>
-                  <th class="px-4 py-3">Payment processing</th>
-                  <th class="px-4 py-3">You receive (on $5 tip)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-t bg-green-500/5">
-                  <td class="px-4 py-3 font-semibold">Ko-fi (Free)</td>
-                  <td class="px-4 py-3 text-green-600 dark:text-green-400 font-bold">0%</td>
-                  <td class="px-4 py-3 text-muted-foreground">~2.9% + $0.30</td>
-                  <td class="px-4 py-3 font-semibold">~$4.56</td>
-                </tr>
-                <tr class="border-t">
-                  <td class="px-4 py-3 font-semibold">PayPal (Goods & Services)</td>
-                  <td class="px-4 py-3 text-muted-foreground">0%</td>
-                  <td class="px-4 py-3 text-muted-foreground">3.49% + $0.49</td>
-                  <td class="px-4 py-3 font-semibold">~$4.34</td>
-                </tr>
-                <tr class="border-t">
-                  <td class="px-4 py-3 font-semibold">PayPal (Friends & Family)</td>
-                  <td class="px-4 py-3 text-muted-foreground">0%</td>
-                  <td class="px-4 py-3 text-muted-foreground">0% (domestic)</td>
-                  <td class="px-4 py-3 font-semibold">$5.00</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="text-sm text-muted-foreground">
-            PayPal Friends & Family looks free, but it has no buyer protection, no chargebacks defense, and your
-            donors need a PayPal account. Conversion rates and international transfers also add fees.
-          </p>
         </section>
 
         <!-- Why not PayPal directly -->
@@ -187,7 +140,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-600 dark:text-green-400 text-sm font-bold">3</span>
               <div>
                 <p class="font-semibold">Instant payouts</p>
-                <p class="text-sm text-muted-foreground">No holding period, no waiting 21 days for your money. PayPal sends it to you immediately through Ko-fi.</p>
+                <p class="text-sm text-muted-foreground">No holding period, no waiting 21 days for your money. No platform holding period".</p>
               </div>
             </div>
             <div class="flex gap-3 items-start">
@@ -226,27 +179,6 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
         </section>
 
-        <!-- Overlabels transparency -->
-        <section class="rounded-lg border border-violet-500/30 bg-violet-500/5 p-6 space-y-5">
-          <h2 class="text-2xl font-bold">Overlabels takes nothing. Ko-fi integration is 100% free</h2>
-          <p class="text-foreground">
-            When your viewers donate through Ko-fi, <strong class="text-foreground">100% of that money goes to you</strong>.
-            Overlabels never takes a cut and never charges a platform fee.
-          </p>
-          <p class="text-sm text-foreground">
-            The only fees you'll ever see are payment processing fees charged by PayPal or Stripe, and those go directly to them, not us.
-            We never handle your money, and we have no access to your Ko-fi account or its settings.
-          </p>
-          <p class="text-sm text-foreground">
-            When a donation comes in, we save only three things: the donor's username, the amount, and their message (if they wrote one).
-            No email addresses, no transaction IDs. Just enough to show the alert, nothing more.
-          </p>
-          <p class="text-sm text-foreground">
-            So why is it free?<br>
-            Honestly, because it wasn't hard to build. Ko-fi's donation notifications are a single, lightweight webhook --
-            integrating it took about an hour. We're not gatekeeping a simple feature behind a subscription just because we can.
-          </p>
-        </section>
       </div>
     </div>
   </AppLayout>
