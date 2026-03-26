@@ -60,7 +60,7 @@ const breadcrumbs = [
     href: '/dashboard',
   },
   {
-    title: 'Activity',
+    title: 'Recent activity',
     href: '/dashboard/recents',
   },
 ];
