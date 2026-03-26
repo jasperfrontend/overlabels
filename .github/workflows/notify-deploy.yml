@@ -6,7 +6,7 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    if: github.event.deployment_status.state == 'success'
+    #if: github.event.deployment_status.state == 'success'
     steps:
       - name: Notify clients of new version
         env:

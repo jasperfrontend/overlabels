@@ -2,7 +2,7 @@ name: Discord Notifications
 
 on:
   workflow_run:
-    workflows: [tests, linter, notify-deploy]
+    workflows: [notify-deploy]
     types: [completed]
 
 jobs:
