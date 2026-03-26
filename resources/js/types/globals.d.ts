@@ -27,8 +27,6 @@ declare module 'vue' {
     }
 }
 
-declare const __COMMIT_HASH__: string;
-
 declare global {
     let route: typeof route;
 
