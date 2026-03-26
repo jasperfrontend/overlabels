@@ -137,8 +137,8 @@ function formatDate(iso: string | null): string {
                                 to add StreamLabs data controls (donation count, latest donor name, etc.) that update live.
                             </li>
                             <li>
-                                Make sure the StreamLabs listener is running:
-                                <code class="rounded bg-black/10 px-1 dark:bg-white/10">node streamlabs-listener.mjs</code>
+                                Enable test mode below, then visit <a href="https://streamlabs.com/dashboard#/alertbox/general/tipping" class="text-violet-400 hover:underline" target="_blank">the Streamlabs dashboard</a>
+                                to fire a few test events (Click Test > Streamlabs > Tipping).
                             </li>
                         </ol>
                     </div>
