@@ -21,4 +21,7 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize
 
+# Debug: verify pcntl is loaded and not disabled
+RUN php -m | grep pcntl && php -r "var_dump(function_exists('pcntl_signal'));" && php -i | grep disable_functions
+
 CMD ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
