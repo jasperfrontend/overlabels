@@ -6,6 +6,12 @@ RUN apt-get update \
     && docker-php-ext-install pcntl pdo pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
+# Ensure pcntl functions are not disabled
+RUN sed -i 's/disable_functions\s*=.*/disable_functions =/' /usr/local/etc/php/php.ini-production 2>/dev/null || true \
+    && sed -i 's/disable_functions\s*=.*/disable_functions =/' /usr/local/etc/php/php.ini-development 2>/dev/null || true \
+    && cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && echo "disable_functions =" >> /usr/local/etc/php/php.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
