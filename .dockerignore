@@ -1,0 +1,6 @@
+node_modules
+.env
+.git
+__history
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
