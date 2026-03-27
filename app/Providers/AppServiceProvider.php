@@ -30,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Register Telescope only in local development
-        if ($this->app->isLocal()) {
+        // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)
+        if ($this->app->isLocal() && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(\App\Providers\TelescopeServiceProvider::class);
         }
