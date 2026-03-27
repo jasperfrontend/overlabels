@@ -19,7 +19,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 COPY . .
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --no-scripts
 
 # Debug: verify pcntl is loaded and not disabled
 RUN php -m | grep pcntl && php -r "var_dump(function_exists('pcntl_signal'));" && php -i | grep disable_functions
