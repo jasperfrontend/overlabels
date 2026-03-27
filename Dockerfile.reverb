@@ -20,7 +20,8 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 COPY . .
 RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
-    && composer dump-autoload --optimize --no-scripts
+    && composer dump-autoload --optimize --no-scripts \
+    && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
 
 # Debug: verify pcntl is loaded and not disabled
 RUN php -m | grep pcntl && php -r "var_dump(function_exists('pcntl_signal'));" && php -i | grep disable_functions
