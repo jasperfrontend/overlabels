@@ -20,7 +20,7 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "mchev/banhammer": "^2.4",
-        "pusher/pusher-php-server": "^7.2",
+
         "socialiteproviders/twitch": "^5.4",
         "stevebauman/location": "^7.6",
         "tightenco/ziggy": "^2.4"
@@ -65,7 +65,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74,#86efac\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" \"php artisan reverb:start\" --names='server,queue,vite,reverb'"
         ],
         "dev:ssr": [
             "npm run build:ssr",

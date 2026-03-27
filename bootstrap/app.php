@@ -1,5 +1,13 @@
 <?php
 
+// Define POSIX signal constants when pcntl extension is unavailable (e.g. Railway containers).
+// Reverb requires these constants but only checks for Windows, not missing pcntl.
+if (! extension_loaded('pcntl')) {
+    defined('SIGINT') || define('SIGINT', 2);
+    defined('SIGTERM') || define('SIGTERM', 15);
+    defined('SIGTSTP') || define('SIGTSTP', 20);
+}
+
 use App\Http\Middleware\CheckBanned;
 use App\Http\Middleware\CheckLockdown;
 use App\Http\Middleware\EnsureAdminRole;

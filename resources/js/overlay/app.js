@@ -6,19 +6,21 @@ import Pusher from 'pusher-js';
 
 const pinia = createPinia();
 
-// Set up Echo for overlay
+// Set up Echo for overlay (Reverb uses the Pusher protocol under the hood)
 window.Pusher = Pusher;
 
 try {
   window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,
-    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-    forceTLS: true,
-    encrypted: true,
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
   });
 } catch (err) {
-  console.error('Failed to initialize Pusher/Echo:', err);
+  console.error('Failed to initialize Echo:', err);
   window.Echo = null;
 }
 

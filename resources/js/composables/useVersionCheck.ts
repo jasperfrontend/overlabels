@@ -6,12 +6,19 @@ let pusher: Pusher | null = null;
 let activeInstances = 0;
 
 function subscribe() {
-  const key = import.meta.env.VITE_PUSHER_APP_KEY;
-  const cluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+  const key = import.meta.env.VITE_REVERB_APP_KEY;
+  const host = import.meta.env.VITE_REVERB_HOST;
 
-  if (!key || !cluster) return;
+  if (!key || !host) return;
 
-  pusher = new Pusher(key, { cluster });
+  pusher = new Pusher(key, {
+    wsHost: host,
+    wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 80),
+    wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 443),
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
+    cluster: '',
+  });
   const channel = pusher.subscribe('app-updates');
 
   channel.bind('version.updated', () => {

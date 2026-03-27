@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use App\Events\VersionUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Pusher\Pusher;
 
 class RailwayWebhookController extends Controller
 {
@@ -32,21 +32,9 @@ class RailwayWebhookController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        $pusher = new Pusher(
-            config('broadcasting.connections.pusher.key'),
-            config('broadcasting.connections.pusher.secret'),
-            config('broadcasting.connections.pusher.app_id'),
-            [
-                'cluster' => config('broadcasting.connections.pusher.options.cluster'),
-                'useTLS' => true,
-            ]
-        );
+        broadcast(new VersionUpdated($commitHash));
 
-        $pusher->trigger('app-updates', 'version.updated', [
-            'sha' => $commitHash,
-        ]);
-
-        Log::info('Version update broadcast sent', ['sha' => substr($commitHash, 0, 7)]);
+        Log::info('Version update broadcast sent', ['sha' => $commitHash ? substr($commitHash, 0, 7) : null]);
 
         return response()->json(['status' => 'broadcast_sent']);
     }
