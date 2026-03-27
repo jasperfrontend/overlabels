@@ -26,4 +26,4 @@ RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
 # Debug: verify pcntl is loaded and not disabled
 RUN php -m | grep pcntl && php -r "var_dump(function_exists('pcntl_signal'));" && php -i | grep disable_functions
 
-CMD ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+CMD php artisan reverb:start --host=0.0.0.0 --port=${PORT:-8080}
