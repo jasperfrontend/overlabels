@@ -1,5 +1,12 @@
 # CHANGELOG MARCH 2026
 
+## March 30th, 2026 - UX: EventsTable popover and refresh fixes
+
+- Fixed Enter key immediately submitting the replay popover instead of just opening it (added `.prevent` modifier to match Space behavior).
+- Removed hover/active/pointer styles from the trigger row while its popover is open so clicking it doesn't look interactive.
+- "Yes" button now receives visible focus (`focus-visible` ring) when the popover opens via mouse click, not just keyboard.
+- Embed events view (`dashboard/events`) now uses the same partial reload + spinner + opacity fade as the recents page instead of a full page navigation.
+
 ## March 26th, 2026 - Infra: Railway webhook for version update broadcast
 
 - Added `RailwayWebhookController` that receives Railway's `Deployment.deployed` webhook and triggers the Pusher `version.updated` event directly.
