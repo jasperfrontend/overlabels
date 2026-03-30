@@ -164,7 +164,7 @@ function eventColor(event: UnifiedEvent): any {
         <div
           :class="[
             'group flex items-start justify-between gap-3 rounded-lg border p-3 transition-all',
-            canReplay(event) ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
             replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-card',
@@ -172,7 +172,7 @@ function eventColor(event: UnifiedEvent): any {
           :role="canReplay(event) ? 'button' : undefined"
           :tabindex="canReplay(event) ? 0 : undefined"
           @click="openConfirm(event)"
-          @keydown.enter="openConfirm(event)"
+          @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
           <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -195,7 +195,7 @@ function eventColor(event: UnifiedEvent): any {
       <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-background border-violet-400 dark:border-violet-300" side="top" :side-offset="-1" align="start">
         <div class="flex items-center gap-3">
           <span class="text-sm text-foreground">Replay event?</span>
-          <button class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
+          <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
           <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
         </div>
       </PopoverContent>
