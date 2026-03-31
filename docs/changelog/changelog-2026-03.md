@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 31st, 2026 - Fix: Service controls with shared keys can coexist
+
+- Fixed key uniqueness validation so controls from different services with the same key (e.g. Ko-fi `total_received` and StreamLabs `total_received`) can both be added to the same template.
+- Uniqueness is now scoped by `(template_id, key, source)` instead of just `(template_id, key)`.
+- Also fixed the same issue in template copy imports.
+
 ## March 31st, 2026 - Feature: Expression controls
 
 - Added new `expression` control type that lets users write formulas referencing other controls (e.g. `c.kofi.kofis_received + c.streamlabs.total_received`).

@@ -40,11 +40,19 @@ class OverlayControlController extends Controller
                 'string',
                 'max:50',
                 'regex:'.OverlayControl::KEY_PATTERN,
-                function ($attribute, $value, $fail) use ($template) {
-                    if (OverlayControl::where('overlay_template_id', $template->id)->where('key', $value)->exists()) {
-                        $fail("A control with key '{$value}' already exists for this template.");
+                function ($attribute, $value, $fail) use ($template, $request) {
+                    $source = $request->input('source');
+                    $query = OverlayControl::where('overlay_template_id', $template->id)->where('key', $value);
+                    if ($source) {
+                        $query->where('source', $source);
+                    } else {
+                        $query->whereNull('source');
                     }
-                    if (in_array($value, OverlayControl::RESERVED_KEYS, true)) {
+                    if ($query->exists()) {
+                        $label = $source ? "{$source}:{$value}" : $value;
+                        $fail("A control with key '{$label}' already exists for this template.");
+                    }
+                    if (! $source && in_array($value, OverlayControl::RESERVED_KEYS, true)) {
                         $fail("The key '{$value}' is reserved and cannot be used as a control key.");
                     }
                 },
@@ -536,8 +544,14 @@ class OverlayControlController extends Controller
                 continue;
             }
 
-            // Skip if key already exists
-            if (OverlayControl::where('overlay_template_id', $template->id)->where('key', $item['key'])->exists()) {
+            // Skip if key already exists (scoped by source for service controls)
+            $existsQuery = OverlayControl::where('overlay_template_id', $template->id)->where('key', $item['key']);
+            if (! empty($item['source'])) {
+                $existsQuery->where('source', $item['source']);
+            } else {
+                $existsQuery->whereNull('source');
+            }
+            if ($existsQuery->exists()) {
                 continue;
             }
 
