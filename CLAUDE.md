@@ -56,7 +56,7 @@ Critical variables:
 
 **Twitch Integration**: Deep integration through OAuth and EventSub webhooks. User authentication is based on `twitch_id` (not email). `TwitchApiService` handles all API interactions including token refresh.
 
-**Overlay System**: Templates stored in `overlay_templates` table with a custom tag system that parses Twitch data dynamically. Access controlled through tokens (`OverlayAccessToken`) or hash-based public links (`OverlayHash`). Render pipeline: `authenticate.blade.php` -> `overlay/app.js` (creates Echo/Pusher) -> `OverlayRenderer.vue`.
+**Overlay System**: Templates stored in `overlay_templates` table with a custom tag system that parses Twitch data dynamically. Access controlled through tokens (`OverlayAccessToken`) or hash-based public links (`OverlayHash`). Render pipeline: `authenticate.blade.php` -> `overlay/app.js` (creates Echo/Reverb) -> `OverlayRenderer.vue`.
 
 **Frontend Stack**: Vue 3 components in `/resources/js/`. Inertia.js eliminates separate API endpoints for most operations. Pages in `/Pages/`, reusable components in `/components/`, UI primitives in `/components/ui/`. Components follow Shadcn/Reka-UI/Vue patterns. Composables in `/composables/`, TypeScript types in `/types/`. Tailwind v4 with CSS layers.
 
@@ -72,11 +72,11 @@ Critical variables:
 
 ### Key Architecture Notes
 
-- `useEventSub.ts` reuses `window.Echo` instead of creating a duplicate Pusher connection
-- `useOverlayHealth.ts` composable handles: retry with backoff, Pusher monitoring, periodic health checks, auto-reload
+- `useEventSub.ts` reuses `window.Echo` instead of creating a duplicate connection
+- `useOverlayHealth.ts` composable handles: retry with backoff, WebSocket monitoring, periodic health checks, auto-reload
 - Banner styles live in the blade template (not in Vue) so they're available before Vue mounts
 - Overlay auth uses 64-char hex tokens in URL fragments (never sent to server)
-- Two Pusher channels: `twitch-events` (global) and `alerts.{user_twitch_id}` (per-user)
+- Two broadcast channels: `twitch-events` (global) and `alerts.{user_twitch_id}` (per-user)
 - OBS browser sources can't show console errors - visual banners are the only way to communicate errors to streamers
 
 ### Important Services

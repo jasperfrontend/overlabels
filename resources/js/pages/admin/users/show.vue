@@ -139,8 +139,7 @@ function restore() {
         <div>
           <h1 class="text-2xl font-bold">{{ user.name }}</h1>
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{{ user.email }}</span>
-            <span v-if="user.twitch_id">· {{ user.twitch_id }}</span>
+            <span v-if="user.twitch_id">{{ user.twitch_id }}</span>
             <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
             <Badge v-if="user.is_system_user" variant="outline">system</Badge>
             <Badge v-if="user.deleted_at" variant="destructive">deleted</Badge>

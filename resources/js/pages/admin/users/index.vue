@@ -134,7 +134,6 @@ watch([search, role, includeDeleted], () => {
             <tr v-for="user in users.data" :key="user.id" class="border-t" :class="{ 'opacity-50': user.deleted_at }">
               <td class="px-3 py-2">
                 <div class="font-medium"><a :href="route('admin.users.show', user.id)" class="hover:underline">{{ user.name }}</a></div>
-                <div class="text-xs text-muted-foreground">{{ user.email }}</div>
               </td>
               <td class="px-3 py-2 text-muted-foreground">{{ user.twitch_id ?? '—' }}</td>
               <td class="px-3 py-2">

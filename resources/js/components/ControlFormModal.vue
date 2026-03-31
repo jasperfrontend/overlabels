@@ -634,7 +634,7 @@ async function save() {
             <!-- Available variables (click to insert) -->
             <div v-if="availableWatchControls.length" class="space-y-1">
               <Label>Available controls <span class="text-xs text-muted-foreground">(click to insert)</span></Label>
-              <div class="flex flex-wrap gap-1.5">
+              <div class="flex max-h-50 flex-wrap gap-1.5 overflow-y-auto">
                 <button
                   v-for="ctrl in availableWatchControls"
                   :key="ctrl.id"
