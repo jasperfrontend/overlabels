@@ -239,6 +239,99 @@ class ComputedControlService
     }
 
     /**
+     * Detect if saving this expression would create a circular dependency.
+     * Handles expressions with multiple dependencies (unlike computed which has one).
+     */
+    public function detectExpressionCycle(OverlayControl $control, array $dependencies, ?int $templateId): bool
+    {
+        return $this->dfsDetectExpressionCycle(
+            $control->id,
+            $control->user_id,
+            $dependencies,
+            $templateId,
+            [],
+            0
+        );
+    }
+
+    private function dfsDetectExpressionCycle(int $originId, int $userId, array $dependencies, ?int $templateId, array $visited, int $depth): bool
+    {
+        if ($depth >= self::MAX_DEPTH) {
+            return false;
+        }
+
+        foreach ($dependencies as $dep) {
+            $colonIdx = strpos($dep, ':');
+            if ($colonIdx !== false) {
+                $depSource = substr($dep, 0, $colonIdx);
+                $depKey = substr($dep, $colonIdx + 1);
+            } else {
+                $depSource = null;
+                $depKey = $dep;
+            }
+
+            $query = OverlayControl::where('user_id', $userId)
+                ->where('key', $depKey);
+
+            if ($depSource) {
+                $query->where('source', $depSource);
+            } else {
+                $query->whereNull('source');
+            }
+
+            if ($templateId) {
+                $query->where(function ($q) use ($templateId) {
+                    $q->where('overlay_template_id', $templateId)
+                        ->orWhereNull('overlay_template_id');
+                });
+            } else {
+                $query->whereNull('overlay_template_id');
+            }
+
+            $watchedControls = $query->get();
+
+            foreach ($watchedControls as $watched) {
+                if ($watched->id === $originId) {
+                    return true;
+                }
+
+                if (in_array($watched->id, $visited)) {
+                    continue;
+                }
+
+                $visited[] = $watched->id;
+
+                // Follow dependency chains through computed controls
+                if ($watched->isComputed()) {
+                    $watchedFormula = $watched->config['formula'] ?? null;
+                    if ($watchedFormula) {
+                        $nextKey = $watchedFormula['watch_key'] ?? null;
+                        $nextSource = $watchedFormula['watch_source'] ?? null;
+                        if ($nextKey) {
+                            $nextDep = $nextSource ? "{$nextSource}:{$nextKey}" : $nextKey;
+                            if ($this->dfsDetectExpressionCycle($originId, $userId, [$nextDep], $watched->overlay_template_id ?? $templateId, $visited, $depth + 1)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                // Follow dependency chains through expression controls
+                if ($watched->isExpression()) {
+                    $watchedDeps = $watched->getExpressionDependencies();
+                    if (! empty($watchedDeps)) {
+                        if ($this->dfsDetectExpressionCycle($originId, $userId, $watchedDeps, $watched->overlay_template_id ?? $templateId, $visited, $depth + 1)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get controls available as dependencies for a computed control.
      * Excludes timers, datetimes, and optionally self.
      */

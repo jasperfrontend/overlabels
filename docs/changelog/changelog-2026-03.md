@@ -1,5 +1,18 @@
 # CHANGELOG MARCH 2026
 
+## March 31st, 2026 - Feature: Expression controls
+
+- Added new `expression` control type that lets users write formulas referencing other controls (e.g. `c.kofi.kofis_received + c.streamlabs.total_received`).
+- Expressions evaluate entirely on the frontend using jsep (a tiny AST parser) with a custom sandboxed evaluator - no eval, no backend computation.
+- Supports arithmetic (`+ - * / %`), comparisons (`== != > < >= <=`), logical (`&& || !`), ternary (`? :`), and parentheses.
+- Service-managed controls use dot-namespace syntax: `c.kofi.kofis_received`, `c.streamlabs.total_received`.
+- Vue's reactivity handles the cascade automatically - when a control value changes, dependent expressions re-evaluate.
+- ControlFormModal includes expression builder with formula input, click-to-insert variable picker, and live preview.
+- Backend validates expression config, extracts dependencies, and runs cycle detection for multi-dependency expressions.
+- Reserved key validation prevents namespace collisions between control keys and service source names.
+- Expression results are regular control values - reference them in templates with `[[[c:key]]]` like any other control.
+- Existing `computed` controls continue working unchanged (Phase 1 coexistence).
+
 ## March 31st, 2026 - Fix: ControlFormModal preset selection and TypeScript errors
 
 - Fixed service preset selection showing wrong help text when Ko-fi and StreamLabs presets share the same key (e.g. `latest_donor_name`). Option values now encode `source:key` so each preset is uniquely identified.

@@ -371,6 +371,7 @@ class OverlayTemplateController extends Controller
 
             $controlData = [];
             $timerStates = [];
+            $expressionControls = [];
             foreach ($controls as $control) {
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:kofis_received")
                 // matching the [[[c:kofi:kofis_received]]] template tag syntax.
@@ -386,6 +387,12 @@ class OverlayTemplateController extends Controller
                         'offset_seconds' => (int) ($cfg['offset_seconds'] ?? 0),
                         'running' => (bool) ($cfg['running'] ?? false),
                         'started_at' => $cfg['started_at'] ?? null,
+                    ];
+                }
+                if ($control->type === 'expression') {
+                    $expressionControls[] = [
+                        'key' => $control->broadcastKey(),
+                        'expression' => $control->config['expression'] ?? '',
                     ];
                 }
             }
@@ -413,6 +420,7 @@ class OverlayTemplateController extends Controller
                 ],
                 'data' => $finalData,
                 'timer_states' => $timerStates,
+                'expression_controls' => $expressionControls,
                 'stream_live' => StreamSessionService::isLive($user),
             ]);
 

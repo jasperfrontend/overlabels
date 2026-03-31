@@ -159,6 +159,8 @@ function configSummary(ctrl: OverlayControl): string[] {
       const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
       parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
     }
+  } else if (ctrl.type === 'expression') {
+    if (cfg.expression) parts.push(cfg.expression);
   } else if (ctrl.type === 'datetime' && ctrl.value) {
     parts.push(`Initial: ${ctrl.value}`);
   }
@@ -323,6 +325,14 @@ async function toggleBoolean(ctrl: OverlayControl) {
             {{ ctrl.value ?? '' }}
           </div>
           <span class="text-xs text-muted-foreground">Auto-computed</span>
+        </div>
+
+        <!-- Expression control (read-only, evaluated in overlay) -->
+        <div v-else-if="ctrl.type === 'expression'" class="flex items-center gap-3">
+          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
+            {{ ctrl.value ?? '' }}
+          </div>
+          <span class="text-xs text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</span>
         </div>
 
         <!-- Datetime control -->

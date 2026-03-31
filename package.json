@@ -44,6 +44,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
+        "jsep": "^1.4.0",
         "laravel-vite-plugin": "^1.0",
         "lodash": "^4.17.23",
         "lucide-vue-next": "^0.577.0",

@@ -35,6 +35,7 @@ import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
+import { useExpressionEngine } from '@/composables/useExpressionEngine';
 
 interface AlertData {
   head: string;
@@ -75,6 +76,7 @@ const giftBombDetector = useGiftBombDetector();
 const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
 const emoteParser = useEmoteParser();
+const expressionEngine = useExpressionEngine(data);
 
 // Stream live state — Twitch source controls are muted when offline
 const streamLive = ref(false);
@@ -334,6 +336,15 @@ onMounted(async () => {
       }
     }
 
+    // Register expression controls for frontend evaluation
+    if (Array.isArray(json.expression_controls)) {
+      for (const expr of json.expression_controls) {
+        if (expr.key && expr.expression) {
+          expressionEngine.registerExpression(expr.key, expr.expression);
+        }
+      }
+    }
+
     injectStyle(compiledCss.value);
     injectHead(head.value);
 
@@ -377,6 +388,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   health.destroy();
+  expressionEngine.destroy();
   for (const key of Object.keys(timerIntervals)) {
     stopTimerTick(key);
   }

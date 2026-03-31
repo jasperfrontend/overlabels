@@ -92,6 +92,7 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   datetime: 'outline',
   boolean: 'default',
   computed: 'secondary',
+  expression: 'default',
 };
 
 function configSummary(ctrl: OverlayControl): string[] {
@@ -113,6 +114,9 @@ function configSummary(ctrl: OverlayControl): string[] {
       const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
       parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
     }
+  } else if (ctrl.type === 'expression') {
+    const expr = cfg.expression;
+    if (expr) parts.push(expr);
   } else if (ctrl.type === 'datetime' && ctrl.value) {
     parts.push(`Initial: ${ctrl.value}`);
   }

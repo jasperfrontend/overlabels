@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import axios from 'axios';
+import jsep from 'jsep';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { buildContext, evaluate } from '@/composables/useExpressionEngine';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
 interface ServicePreset {
@@ -182,6 +184,50 @@ const form = ref({
   sort_order: 0,
 });
 
+// Expression control state
+const expressionText = ref('');
+const expressionError = ref('');
+const expressionPreview = ref('');
+
+// Validate and preview expression in real-time
+watch(expressionText, (text) => {
+  expressionError.value = '';
+  expressionPreview.value = '';
+  if (!text.trim()) return;
+
+  if (text.length > 500) {
+    expressionError.value = 'Expression must be 500 characters or less.';
+    return;
+  }
+
+  try {
+    const ast = jsep(text);
+
+    // Build context from available controls for preview
+    const mockData: Record<string, unknown> = {};
+    for (const ctrl of availableWatchControls.value) {
+      const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
+      mockData[key] = ctrl.value ?? '';
+    }
+
+    const ctx = buildContext(mockData);
+    const result = evaluate(ast, ctx);
+    expressionPreview.value = result === null || result === undefined ? '' : String(result);
+  } catch {
+    expressionError.value = 'Invalid expression syntax.';
+  }
+});
+
+/** Build a dot-notation reference for inserting into expression */
+function expressionRef(ctrl: OverlayControl): string {
+  return ctrl.source ? `c.${ctrl.source}.${ctrl.key}` : `c.${ctrl.key}`;
+}
+
+function insertVariable(ctrl: OverlayControl) {
+  const ref = expressionRef(ctrl);
+  expressionText.value = expressionText.value ? `${expressionText.value} ${ref}` : ref;
+}
+
 // Computed control formula state
 const formula = ref({
   watch_key: '',
@@ -256,6 +302,8 @@ watch(() => props.open, (open) => {
       };
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
+      // Populate expression state
+      expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
       // Populate formula state for computed controls
       if (c.type === 'computed' && cfg.formula) {
         formula.value = {
@@ -283,6 +331,7 @@ watch(() => props.open, (open) => {
       sortMode.value = 'after';
       formula.value = { watch_key: '', watch_source: null, operator: '>=', compare_value: '', then_value: '', else_value: '' };
       formulaWatchRef.value = '';
+      expressionText.value = '';
     }
   }
 });
@@ -308,6 +357,14 @@ function buildPayload() {
   }
 
   const t = form.value.type;
+
+  // Expression control: send expression config, no value
+  if (t === 'expression') {
+    payload.config = {
+      expression: expressionText.value,
+    };
+    return payload;
+  }
 
   // Computed control: send formula config, no value
   if (t === 'computed') {
@@ -483,6 +540,7 @@ async function save() {
               <option value="datetime">Date/Time</option>
               <option value="boolean">Boolean (on/off switch)</option>
               <option value="computed">Computed (auto-calculated)</option>
+              <option value="expression">Expression (formula)</option>
             </select>
             <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
           </div>
@@ -550,8 +608,56 @@ async function save() {
             </p>
           </div>
 
+          <!-- Expression builder -->
+          <div v-if="form.type === 'expression'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Expression</p>
+
+            <div class="space-y-1">
+              <Label for="expression-text">Formula</Label>
+              <textarea
+                id="expression-text"
+                v-model="expressionText"
+                rows="2"
+                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
+                :class="{ 'border-destructive': expressionError }"
+                placeholder="e.g. c.kofi.kofis_received + c.streamlabs.total_received"
+              />
+              <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
+              <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
+              <p class="text-xs text-muted-foreground">
+                Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.key</code> to reference controls, or
+                <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.source.key</code> for service controls.
+                Supports <code class="rounded bg-black/10 px-1 dark:bg-white/10">+ - * / == != &gt; &lt; &gt;= &lt;= &amp;&amp; || ? :</code>
+              </p>
+            </div>
+
+            <!-- Available variables (click to insert) -->
+            <div v-if="availableWatchControls.length" class="space-y-1">
+              <Label>Available controls <span class="text-xs text-muted-foreground">(click to insert)</span></Label>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="ctrl in availableWatchControls"
+                  :key="ctrl.id"
+                  type="button"
+                  class="rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition"
+                  @click="insertVariable(ctrl)"
+                >
+                  {{ expressionRef(ctrl) }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Live preview -->
+            <div v-if="expressionText.trim() && !expressionError" class="space-y-1">
+              <Label>Preview</Label>
+              <div class="rounded-sm bg-black/5 dark:bg-white/5 px-3 py-1.5 font-mono text-sm">
+                {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
+              </div>
+            </div>
+          </div>
+
           <!-- Value (text/number/counter/datetime) -->
-          <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed'" class="space-y-1">
+          <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed' && form.type !== 'expression'" class="space-y-1">
             <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
             <Input
               id="ctrl-value"

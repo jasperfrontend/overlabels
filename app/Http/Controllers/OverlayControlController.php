@@ -44,6 +44,9 @@ class OverlayControlController extends Controller
                     if (OverlayControl::where('overlay_template_id', $template->id)->where('key', $value)->exists()) {
                         $fail("A control with key '{$value}' already exists for this template.");
                     }
+                    if (in_array($value, OverlayControl::RESERVED_KEYS, true)) {
+                        $fail("The key '{$value}' is reserved and cannot be used as a control key.");
+                    }
                 },
             ],
             'label' => 'nullable|string|max:100',
@@ -145,6 +148,65 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control->fresh()], 201);
         }
 
+        // Expression control: validate expression string, extract dependencies, check cycles
+        if ($validated['type'] === 'expression') {
+            $request->validate([
+                'config.expression' => 'required|string|max:500',
+            ]);
+
+            $expression = $request->input('config.expression');
+            $dependencies = OverlayControl::extractExpressionDependencies($expression);
+
+            if (empty($dependencies)) {
+                abort(422, 'Expression must reference at least one control (e.g. c.my_control).');
+            }
+
+            // Validate all referenced controls exist in scope
+            $computedService = app(ComputedControlService::class);
+            $available = $computedService->getAvailableControls(auth()->user(), $template->id);
+
+            foreach ($dependencies as $dep) {
+                $colonIdx = strpos($dep, ':');
+                if ($colonIdx !== false) {
+                    $depSource = substr($dep, 0, $colonIdx);
+                    $depKey = substr($dep, $colonIdx + 1);
+                } else {
+                    $depSource = null;
+                    $depKey = $dep;
+                }
+
+                $found = $available->first(function ($c) use ($depKey, $depSource) {
+                    return $c->key === $depKey && ($c->source ?: null) === $depSource;
+                });
+
+                if (! $found) {
+                    $label = $depSource ? "{$depSource}:{$depKey}" : $depKey;
+                    abort(422, "Referenced control '{$label}' not found in scope.");
+                }
+            }
+
+            // Create the control first (needed for cycle detection)
+            $control = OverlayControl::createForTemplate($template, auth()->user(), [
+                'key' => $validated['key'],
+                'label' => $validated['label'] ?? null,
+                'type' => 'expression',
+                'value' => null,
+                'config' => [
+                    'expression' => $expression,
+                    'dependencies' => $dependencies,
+                ],
+                'sort_order' => $validated['sort_order'] ?? 0,
+            ]);
+
+            // Cycle detection for expressions
+            if ($computedService->detectExpressionCycle($control, $dependencies, $template->id)) {
+                $control->delete();
+                abort(422, 'This expression would create a circular dependency.');
+            }
+
+            return response()->json(['control' => $control], 201);
+        }
+
         $control = OverlayControl::createForTemplate($template, auth()->user(), $validated);
 
         return response()->json(['control' => $control], 201);
@@ -227,7 +289,59 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control->fresh()]);
         }
 
-        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime', 'computed'])) {
+        // Handle expression control updates
+        if ($control->isExpression() && isset($validated['config']['expression'])) {
+            $request->validate([
+                'config.expression' => 'required|string|max:500',
+            ]);
+
+            $expression = $request->input('config.expression');
+            $dependencies = OverlayControl::extractExpressionDependencies($expression);
+
+            if (empty($dependencies)) {
+                abort(422, 'Expression must reference at least one control (e.g. c.my_control).');
+            }
+
+            $computedService = app(ComputedControlService::class);
+            $available = $computedService->getAvailableControls(auth()->user(), $template->id, $control->id);
+
+            foreach ($dependencies as $dep) {
+                $colonIdx = strpos($dep, ':');
+                if ($colonIdx !== false) {
+                    $depSource = substr($dep, 0, $colonIdx);
+                    $depKey = substr($dep, $colonIdx + 1);
+                } else {
+                    $depSource = null;
+                    $depKey = $dep;
+                }
+
+                $found = $available->first(function ($c) use ($depKey, $depSource) {
+                    return $c->key === $depKey && ($c->source ?: null) === $depSource;
+                });
+
+                if (! $found) {
+                    $label = $depSource ? "{$depSource}:{$depKey}" : $depKey;
+                    abort(422, "Referenced control '{$label}' not found in scope.");
+                }
+            }
+
+            if ($computedService->detectExpressionCycle($control, $dependencies, $template->id)) {
+                abort(422, 'This expression would create a circular dependency.');
+            }
+
+            $control->update([
+                'label' => $validated['label'] ?? $control->label,
+                'config' => [
+                    'expression' => $expression,
+                    'dependencies' => $dependencies,
+                ],
+                'sort_order' => $validated['sort_order'] ?? $control->sort_order,
+            ]);
+
+            return response()->json(['control' => $control->fresh()]);
+        }
+
+        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime', 'computed', 'expression'])) {
             $validated['value'] = OverlayControl::sanitizeValue($control->type, $validated['value'] ?? '');
         } else {
             unset($validated['value']);
@@ -266,6 +380,10 @@ class OverlayControlController extends Controller
 
         if ($control->isComputed()) {
             abort(403, 'Computed controls cannot be edited manually. Their value is derived automatically.');
+        }
+
+        if ($control->isExpression()) {
+            abort(403, 'Expression controls cannot be edited manually. Their value is derived from the expression.');
         }
 
         if ($control->type === 'timer') {

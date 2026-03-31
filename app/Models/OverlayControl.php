@@ -29,7 +29,10 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'computed'];
+    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'computed', 'expression'];
+
+    /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
+    const RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger'];
 
     const KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
@@ -39,7 +42,7 @@ class OverlayControl extends Model
     public static function sanitizeValue(string $type, mixed $raw): string
     {
         return match ($type) {
-            'text', 'computed' => strip_tags((string) $raw),
+            'text', 'computed', 'expression' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
             default => '', // timer, datetime: value derived from config
@@ -148,6 +151,14 @@ class OverlayControl extends Model
     }
 
     /**
+     * Check if this control is an expression type.
+     */
+    public function isExpression(): bool
+    {
+        return $this->type === 'expression';
+    }
+
+    /**
      * Get the broadcast key of the control this computed control watches.
      * Returns null if not a computed control or formula is missing.
      */
@@ -170,6 +181,46 @@ class OverlayControl extends Model
         }
 
         return $watchSource ? "{$watchSource}:{$watchKey}" : $watchKey;
+    }
+
+    /**
+     * Get all dependency broadcast keys for an expression control.
+     * Returns empty array if not an expression or has no dependencies.
+     */
+    public function getExpressionDependencies(): array
+    {
+        if (! $this->isExpression()) {
+            return [];
+        }
+
+        return $this->config['dependencies'] ?? [];
+    }
+
+    /**
+     * Extract control references from an expression string.
+     * Parses "c.key" and "c.source.sub_key" patterns, returning broadcast keys.
+     *
+     * Examples:
+     *   "c.deaths + 1" => ["deaths"]
+     *   "c.kofi.kofis_received + c.streamlabs.total_received" => ["kofi:kofis_received", "streamlabs:total_received"]
+     */
+    public static function extractExpressionDependencies(string $expression): array
+    {
+        // Match c.identifier or c.identifier.identifier patterns
+        preg_match_all('/\bc\.([a-z][a-z0-9_]*)(?:\.([a-z][a-z0-9_]*))?/', $expression, $matches, PREG_SET_ORDER);
+
+        $deps = [];
+        foreach ($matches as $match) {
+            if (! empty($match[2])) {
+                // c.source.key -> "source:key"
+                $deps[] = $match[1] . ':' . $match[2];
+            } else {
+                // c.key -> "key"
+                $deps[] = $match[1];
+            }
+        }
+
+        return array_values(array_unique($deps));
     }
 
     /**
