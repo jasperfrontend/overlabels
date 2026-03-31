@@ -21,11 +21,11 @@ interface ServicePreset {
 
 const KOFI_PRESETS: ServicePreset[] = [
   { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'Total Received (session)', type: 'number' },
+  { key: 'latest_donor_name', label: 'Ko-fi Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Ko-fi Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Ko-fi Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Ko-fi Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Ko-fi Total Received (session)', type: 'number' },
 ];
 
 const GPS_PRESETS: ServicePreset[] = [
@@ -37,11 +37,11 @@ const GPS_PRESETS: ServicePreset[] = [
 
 const STREAMLABS_PRESETS: ServicePreset[] = [
   { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'Total Received (session)', type: 'number' },
+  { key: 'latest_donor_name', label: 'StreamLabs Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'StreamLabs Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'StreamLabs Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'StreamLabs Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
 ];
 
 const TWITCH_PRESETS: ServicePreset[] = [
@@ -77,8 +77,14 @@ const servicePresetKey = ref('');
 const servicePresetSource = ref<string | null>(null);
 
 const selectedServicePreset = computed(() => {
-  if (!servicePresetKey.value) return null;
-  return [...TWITCH_PRESETS, ...KOFI_PRESETS, ...GPS_PRESETS, ...STREAMLABS_PRESETS].find((p) => p.key === servicePresetKey.value) ?? null;
+  if (!servicePresetKey.value || !servicePresetSource.value) return null;
+  const presets = servicePresetSource.value === 'twitch' ? TWITCH_PRESETS
+    : servicePresetSource.value === 'kofi' ? KOFI_PRESETS
+    : servicePresetSource.value === 'gpslogger' ? GPS_PRESETS
+    : servicePresetSource.value === 'streamlabs' ? STREAMLABS_PRESETS
+    : [];
+  const key = servicePresetKey.value.substring(servicePresetKey.value.indexOf(':') + 1);
+  return presets.find((p) => p.key === key) ?? null;
 });
 
 const showKofiPresets = computed(
@@ -108,18 +114,32 @@ const showTwitchPresets = computed(
     props.template?.type === 'static',
 );
 
-watch(servicePresetKey, (key) => {
-  const twitchPreset = TWITCH_PRESETS.find((p) => p.key === key);
-  const kofiPreset = KOFI_PRESETS.find((p) => p.key === key);
-  const gpsPreset = GPS_PRESETS.find((p) => p.key === key);
-  const streamLabsPreset = STREAMLABS_PRESETS.find((p) => p.key === key);
-  const preset = twitchPreset ?? kofiPreset ?? gpsPreset ?? streamLabsPreset ?? null;
+watch(servicePresetKey, (combinedKey) => {
+  if (!combinedKey) {
+    form.value.key = '';
+    form.value.label = '';
+    form.value.type = 'text';
+    servicePresetSource.value = null;
+    errors.value = {};
+    return;
+  }
+
+  const separatorIndex = combinedKey.indexOf(':');
+  const source = combinedKey.substring(0, separatorIndex);
+  const key = combinedKey.substring(separatorIndex + 1);
+
+  const presets = source === 'twitch' ? TWITCH_PRESETS
+    : source === 'kofi' ? KOFI_PRESETS
+    : source === 'gpslogger' ? GPS_PRESETS
+    : source === 'streamlabs' ? STREAMLABS_PRESETS
+    : [];
+  const preset = presets.find((p) => p.key === key) ?? null;
 
   if (preset) {
     form.value.key = preset.key;
     form.value.label = preset.label;
     form.value.type = preset.type;
-    servicePresetSource.value = twitchPreset ? 'twitch' : gpsPreset ? 'gpslogger' : streamLabsPreset ? 'streamlabs' : 'kofi';
+    servicePresetSource.value = source;
   } else {
     form.value.key = '';
     form.value.label = '';
@@ -152,9 +172,9 @@ const form = ref({
   type: 'text' as OverlayControl['type'],
   value: '',
   config: {
-    min: null as number | null,
-    max: null as number | null,
-    step: 1 as number | null,
+    min: undefined as number | undefined,
+    max: undefined as number | undefined,
+    step: 1 as number | undefined,
     reset_value: 0 as number,
     mode: 'countup' as 'countup' | 'countdown',
     base_seconds: 0 as number,
@@ -225,8 +245,8 @@ watch(() => props.open, (open) => {
         type: c.type,
         value: c.value ?? '',
         config: {
-          min: cfg.min ?? null,
-          max: cfg.max ?? null,
+          min: cfg.min ?? undefined,
+          max: cfg.max ?? undefined,
           step: cfg.step ?? 1,
           reset_value: cfg.reset_value ?? 0,
           mode: cfg.mode ?? 'countup',
@@ -256,7 +276,7 @@ watch(() => props.open, (open) => {
         label: '',
         type: 'text',
         value: '',
-        config: { min: null, max: null, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0 },
+        config: { min: undefined, max: undefined, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0 },
         sort_order: 0,
       };
       booleanValue.value = false;
@@ -306,9 +326,9 @@ function buildPayload() {
 
   if (t === 'number' || t === 'counter') {
     payload.config = {
-      min: form.value.config.min,
-      max: form.value.config.max,
-      step: form.value.config.step,
+      min: form.value.config.min ?? null,
+      max: form.value.config.max ?? null,
+      step: form.value.config.step ?? null,
       reset_value: form.value.config.reset_value,
     };
   } else if (t === 'timer') {
@@ -391,22 +411,22 @@ async function save() {
           >
             <option value="">— Select a preset control —</option>
             <optgroup v-if="showTwitchPresets" label="Twitch — Per-Stream Counters">
-              <option v-for="preset in TWITCH_PRESETS" :key="preset.key" :value="preset.key">
+              <option v-for="preset in TWITCH_PRESETS" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
                 {{ preset.label }} ({{ preset.type }})
               </option>
             </optgroup>
             <optgroup v-if="showKofiPresets" label="Ko-fi">
-              <option v-for="preset in KOFI_PRESETS" :key="preset.key" :value="preset.key">
+              <option v-for="preset in KOFI_PRESETS" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
                 {{ preset.label }} ({{ preset.type }})
               </option>
             </optgroup>
             <optgroup v-if="showGpsPresets" label="GPSLogger">
-              <option v-for="preset in GPS_PRESETS" :key="preset.key" :value="preset.key">
+              <option v-for="preset in GPS_PRESETS" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
                 {{ preset.label }} ({{ preset.type }})
               </option>
             </optgroup>
             <optgroup v-if="showStreamLabsPresets" label="StreamLabs">
-              <option v-for="preset in STREAMLABS_PRESETS" :key="preset.key" :value="preset.key">
+              <option v-for="preset in STREAMLABS_PRESETS" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
                 {{ preset.label }} ({{ preset.type }})
               </option>
             </optgroup>

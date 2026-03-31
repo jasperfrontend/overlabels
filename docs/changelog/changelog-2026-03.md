@@ -1,5 +1,11 @@
 # CHANGELOG MARCH 2026
 
+## March 31st, 2026 - Fix: ControlFormModal preset selection and TypeScript errors
+
+- Fixed service preset selection showing wrong help text when Ko-fi and StreamLabs presets share the same key (e.g. `latest_donor_name`). Option values now encode `source:key` so each preset is uniquely identified.
+- Prefixed Ko-fi and StreamLabs preset labels to disambiguate them in the dropdown (e.g. "Ko-fi Latest Donor Name" vs "StreamLabs Latest Donor Name").
+- Fixed 3 TypeScript errors where `number | null` config fields (`min`, `max`, `step`) were incompatible with the Input component's `modelValue` type.
+
 ## March 30th, 2026 - UX: EventsTable popover and refresh fixes
 
 - Fixed Enter key immediately submitting the replay popover instead of just opening it (added `.prevent` modifier to match Space behavior).
