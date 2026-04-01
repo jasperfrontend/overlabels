@@ -3,16 +3,10 @@ import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Clock, RefreshCw } from 'lucide-vue-next';
+import { useEventColors } from '@/composables/useEventColors';
+import type { UnifiedEvent } from '@/composables/useEventColors';
 
-
-interface UnifiedEvent {
-  id: number;
-  source: string;
-  event_type: string;
-  created_at: string;
-  event_data?: Record<string, unknown> | null;
-  normalized_payload?: Record<string, unknown> | null;
-}
+const { eventDotClass, eventHoverBorderClass } = useEventColors();
 
 defineProps<{
   events: UnifiedEvent[];
@@ -142,28 +136,6 @@ function relativeTime(iso: string): string {
   return rtf.format(Math.round(diff / week), 'week');
 }
 
-function eventColor(event: UnifiedEvent): any {
-  const type = event.event_type;
-  const source = event.source;
-  if (type === 'channel.subscribe') return 'bg-purple-500';
-  if (type === 'channel.subscription.gift') return 'bg-pink-500';
-  if (type === 'channel.subscription.message') return 'bg-indigo-500';
-  if (type === 'channel.raid') return 'bg-rose-500';
-  if (type === 'channel.cheer') return 'bg-amber-500';
-  if (type === 'stream.online') return 'bg-green-500';
-  if (type === 'stream.offline') return 'bg-red-500';
-  if (type === 'channel.channel_points_custom_reward_redemption.add') return 'bg-cyan-500';
-  if (type === 'channel.follow') return 'bg-green-500';
-  if (type === 'donation' && source === 'kofi' ) return 'bg-[#ff5a16]';
-  if (type === 'subscription' && source === 'kofi') return 'bg-[#ff5a16]';
-  if (type === 'shop_order' && source === 'kofi') return 'bg-[#ff5a16]';
-  if (type === 'commission' && source === 'kofi') return 'bg-[#ff5a16]';
-  if (type === 'donation' && source === 'streamlabs') return 'bg-[#80f5d2]';
-  if (type === 'subscription' && source === 'streamlabs') return 'bg-[#80f5d2]';
-  if (type === 'shop_order' && source === 'streamlabs') return 'bg-[#80f5d2]';
-  if (type === 'commission' && source === 'streamlabs') return 'bg-[#80f5d2]';
-  return 'bg-slate-500';
-}
 
 </script>
 
@@ -178,11 +150,13 @@ function eventColor(event: UnifiedEvent): any {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-3 rounded-lg border p-3 transition-all',
+            'group flex items-start justify-between gap-3 rounded-lg border p-3 transition-all ease-in-out',
+            eventHoverBorderClass(event),
             canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-sidebar-accent active:bg-accent/70' : '',
             replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-card',
+
           ]"
           :role="canReplay(event) ? 'button' : undefined"
           :tabindex="canReplay(event) ? 0 : undefined"
@@ -192,7 +166,7 @@ function eventColor(event: UnifiedEvent): any {
         >
           <div class="flex min-w-0 flex-1 flex-col gap-1" :id="label(event)">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <div class="h-2 w-2 shrink-0 rounded-full" :class="eventColor(event)"></div>
+              <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <span v-else class="italic text-muted-foreground/50">-</span>
               <span class="text-muted-foreground">{{ label(event) }}</span>
