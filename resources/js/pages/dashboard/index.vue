@@ -13,6 +13,7 @@ import UserIconPicker from '@/components/UserIconPicker.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -102,7 +103,7 @@ const breadcrumbs = [
         <div class="mb-4 flex flex-col gap-3 pb-2 sm:flex-row sm:items-center">
           <div class="text-lg font-semibold text-foreground flex items-center gap-2">
             <UserIconPicker :user-icon="props.userIcon" />
-            <Heading v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
+            <HeadingSmall v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
             <Heading v-else :title="randomGreeting" />
           </div>
           <div class="sm:ml-auto flex items-center gap-2 text-sm text-muted-foreground">

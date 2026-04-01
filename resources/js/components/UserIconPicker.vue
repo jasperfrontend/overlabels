@@ -66,11 +66,11 @@ function onKeydown(e: KeyboardEvent) {
     <template v-if="!editing">
       <button
         type="button"
-        class="rounded p-0.5 text-foreground transition-colors hover:text-violet-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+        class="rounded p-0.5 pt-0 text-foreground transition-colors hover:text-violet-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
         title="Click to change your icon"
         @click="startEditing"
       >
-        <component :is="iconComponent" class="size-6" />
+        <component :is="iconComponent" class="size-5" />
       </button>
     </template>
     <template v-else>

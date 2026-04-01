@@ -7,7 +7,7 @@ import { Clock, RefreshCw } from 'lucide-vue-next';
 
 interface UnifiedEvent {
   id: number;
-  source: string; // 'twitch' | 'kofi' | etc.
+  source: string;
   event_type: string;
   created_at: string;
   event_data?: Record<string, unknown> | null;
@@ -74,6 +74,12 @@ const externalEventLabels: Record<string, Record<string, string>> = {
     shop_order: 'Ordered something from the Ko-fi shop',
     commission: 'Ordered a Commission through Ko-fi',
   },
+  streamlabs: {
+    donation: 'Donated through Streamlabs',
+    subscription: 'Subscribed through Streamlabs',
+    shop_order: 'Ordered something from the Streamlabs shop',
+    commission: 'Ordered a Commission through Streamlabs',
+  }
 };
 
 function label(event: UnifiedEvent): string {
@@ -147,6 +153,14 @@ function eventColor(event: UnifiedEvent): any {
   if (type === 'stream.offline') return 'bg-red-500';
   if (type === 'channel.channel_points_custom_reward_redemption.add') return 'bg-cyan-500';
   if (type === 'channel.follow') return 'bg-green-500';
+  if (type === 'kofi.donation') return 'bg-orange-500';
+  if (type === 'kofi.subscription') return 'bg-orange-500';
+  if (type === 'kofi.shop_order') return 'bg-orange-500';
+  if (type === 'kofi.commission') return 'bg-orange-500';
+  if (type === 'streamlabs.donation') return 'bg-teal-500';
+  if (type === 'streamlabs.subscription') return 'bg-teal-500';
+  if (type === 'streamlabs.shop_order') return 'bg-teal-500';
+  if (type === 'streamlabs.commission') return 'bg-teal-500';
   return 'bg-slate-500';
 }
 
@@ -164,7 +178,7 @@ function eventColor(event: UnifiedEvent): any {
         <div
           :class="[
             'group flex items-start justify-between gap-3 rounded-lg border p-3 transition-all',
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-sidebar-accent active:bg-accent/70' : '',
             replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-card',
