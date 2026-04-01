@@ -197,7 +197,6 @@ function eventColor(event: UnifiedEvent): any {
               <span v-else class="italic text-muted-foreground/50">-</span>
               <span class="text-muted-foreground">{{ label(event) }}</span>
               <span v-if="details(event)">{{ details(event) }}</span>
-              <pre class="ml-3 text-violet-400 dark:text-violet-300">{{ event.event_type }}</pre>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
               <Clock class="h-3 w-3" />
