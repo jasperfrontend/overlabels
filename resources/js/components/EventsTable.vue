@@ -144,6 +144,7 @@ function relativeTime(iso: string): string {
 
 function eventColor(event: UnifiedEvent): any {
   const type = event.event_type;
+  const source = event.source;
   if (type === 'channel.subscribe') return 'bg-purple-500';
   if (type === 'channel.subscription.gift') return 'bg-pink-500';
   if (type === 'channel.subscription.message') return 'bg-indigo-500';
@@ -153,14 +154,14 @@ function eventColor(event: UnifiedEvent): any {
   if (type === 'stream.offline') return 'bg-red-500';
   if (type === 'channel.channel_points_custom_reward_redemption.add') return 'bg-cyan-500';
   if (type === 'channel.follow') return 'bg-green-500';
-  if (type === 'kofi.donation') return 'bg-orange-500';
-  if (type === 'kofi.subscription') return 'bg-orange-500';
-  if (type === 'kofi.shop_order') return 'bg-orange-500';
-  if (type === 'kofi.commission') return 'bg-orange-500';
-  if (type === 'streamlabs.donation') return 'bg-teal-500';
-  if (type === 'streamlabs.subscription') return 'bg-teal-500';
-  if (type === 'streamlabs.shop_order') return 'bg-teal-500';
-  if (type === 'streamlabs.commission') return 'bg-teal-500';
+  if (type === 'donation' && source === 'kofi' ) return 'bg-orange-500';
+  if (type === 'subscription' && source === 'kofi') return 'bg-orange-500';
+  if (type === 'shop_order' && source === 'kofi') return 'bg-orange-500';
+  if (type === 'commission' && source === 'kofi') return 'bg-orange-500';
+  if (type === 'donation' && source === 'streamlabs') return 'bg-teal-500';
+  if (type === 'subscription' && source === 'streamlabs') return 'bg-teal-500';
+  if (type === 'shop_order' && source === 'streamlabs') return 'bg-teal-500';
+  if (type === 'commission' && source === 'streamlabs') return 'bg-teal-500';
   return 'bg-slate-500';
 }
 
