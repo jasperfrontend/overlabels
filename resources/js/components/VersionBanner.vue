@@ -18,7 +18,7 @@ const { hasNewVersion, refresh } = useVersionCheck();
       @click="refresh"
     >
       <RefreshCw class="size-3" />
-      Refresh
+      Click to load latest version
     </button>
   </div>
 </template>

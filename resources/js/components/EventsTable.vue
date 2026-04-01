@@ -189,13 +189,14 @@ function eventColor(event: UnifiedEvent): any {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <div class="flex min-w-0 flex-1 flex-col gap-1" :id="label(event)">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventColor(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <span v-else class="italic text-muted-foreground/50">-</span>
               <span class="text-muted-foreground">{{ label(event) }}</span>
               <span v-if="details(event)">{{ details(event) }}</span>
+              <pre class="ml-3 text-violet-400 dark:text-violet-300">{{ event.event_type }}</pre>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
               <Clock class="h-3 w-3" />
