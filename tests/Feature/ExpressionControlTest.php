@@ -299,3 +299,18 @@ test('extractExpressionDependencies handles mixed references', function () {
     expect($deps)->toContain('goal');
     expect($deps)->toHaveCount(3);
 });
+
+test('extractExpressionDependencies resolves _at references to base controls', function () {
+    $deps = OverlayControl::extractExpressionDependencies(
+        'c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at ? c.streamlabs.latest_donor_name : c.kofi.latest_donor_name'
+    );
+    expect($deps)->toContain('streamlabs:latest_donor_name');
+    expect($deps)->toContain('kofi:latest_donor_name');
+    expect($deps)->toHaveCount(2);
+});
+
+test('extractExpressionDependencies resolves template-scoped _at references', function () {
+    $deps = OverlayControl::extractExpressionDependencies('c.deaths_at > 1000 ? c.deaths : 0');
+    expect($deps)->toContain('deaths');
+    expect($deps)->toHaveCount(1);
+});

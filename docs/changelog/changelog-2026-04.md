@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - Fix: Expression validation recognizes _at companion values
+
+- Expression dependency extraction now strips `_at` suffixes to resolve to the base control, since `_at` values are virtual companions that don't exist as database rows.
+- Fixes 422 error when saving expressions referencing `c.streamlabs.latest_donor_name_at` or similar `_at` values.
+
 ## April 1st, 2026 - Feature: Control _at timestamps
 
 - Every control now has a companion `_at` value containing the Unix timestamp of its last update.

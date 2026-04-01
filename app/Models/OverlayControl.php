@@ -212,11 +212,15 @@ class OverlayControl extends Model
         $deps = [];
         foreach ($matches as $match) {
             if (! empty($match[2])) {
-                // c.source.key -> "source:key"
-                $deps[] = $match[1] . ':' . $match[2];
+                $key = $match[2];
+                // Strip _at suffix — these are virtual companion values, not real controls.
+                // The base control is the actual dependency.
+                $key = preg_replace('/_at$/', '', $key);
+                $deps[] = $match[1] . ':' . $key;
             } else {
-                // c.key -> "key"
-                $deps[] = $match[1];
+                $key = $match[1];
+                $key = preg_replace('/_at$/', '', $key);
+                $deps[] = $key;
             }
         }
 
