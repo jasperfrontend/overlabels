@@ -379,6 +379,10 @@ class OverlayTemplateController extends Controller
                     ? 'c:'.$control->broadcastKey()
                     : 'c:'.$control->key;
                 $controlData[$dataKey] = $control->resolveDisplayValue();
+                // Inject companion _at timestamp (Unix epoch seconds)
+                $controlData[$dataKey.'_at'] = $control->updated_at
+                    ? (string) $control->updated_at->timestamp
+                    : (string) $control->created_at->timestamp;
                 if ($control->type === 'timer') {
                     $cfg = $control->config ?? [];
                     $timerStates[$control->key] = [

@@ -66,6 +66,7 @@ class ControlValueUpdated implements ShouldBroadcast
             'type' => $this->type,
             'value' => $this->value,
             'timer_state' => $this->timerState,
+            'updated_at' => now()->timestamp,
         ];
     }
 

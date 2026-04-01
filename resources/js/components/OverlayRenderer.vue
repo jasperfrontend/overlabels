@@ -446,14 +446,20 @@ function handleControlUpdated(event: any) {
   if (!isUserScoped && event.overlay_slug !== props.slug) return;
   if (!data.value || typeof data.value !== 'object') return;
 
+  // Store companion _at timestamp (Unix epoch seconds) for every control update
+  const atKey = `c:${event.key}_at`;
+  const timestamp = event.updated_at ? String(event.updated_at) : String(Math.floor(Date.now() / 1000));
+
   if (event.type === 'timer' && event.timer_state) {
     // For timers, start/update the local tick interval using the broadcast state
     startTimerTick(event.key, event.timer_state);
+    data.value = { ...data.value, [atKey]: timestamp };
   } else {
     // event.key may be namespaced (e.g. "kofi:kofis_received") — store as "c:kofi:kofis_received"
     data.value = {
       ...data.value,
       [`c:${event.key}`]: event.value,
+      [atKey]: timestamp,
     };
   }
 }
