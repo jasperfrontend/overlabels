@@ -1,5 +1,9 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - Fix: StreamLabs listener Dockerfile Node version
+
+- Bumped `Dockerfile.streamlabs-listener` from `node:20-alpine` to `node:22-alpine` to match the `engines` constraint in `package.json`.
+
 ## April 1st, 2026 - Refactor: Split ControlFormModal into smaller components
 
 - Extracted `ExpressionBuilder.vue` - expression formula panel (textarea, variable buttons, live preview).
