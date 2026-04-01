@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - Fix: Event color classes missing in production
+
+- Replaced dynamic Tailwind class construction (`bg-${color}`) with full literal class strings so Tailwind's scanner includes them in the production build.
+- Simplified external event color lookup to match on source instead of repeating per event type.
+
 ## April 1st, 2026 - Refactor: Extract event color composable
 
 - Moved event color logic and `UnifiedEvent` interface from `EventsTable.vue` into `useEventColors` composable for reuse.
