@@ -117,6 +117,7 @@ export interface OverlayTemplate {
     avatar?: string;
   };
   event_mappings?: { event_type: string }[];
+  external_event_mappings?: { service: string; event_type: string }[];
   created_at: string;
   updated_at: string;
 }

@@ -28,26 +28,51 @@ const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
 
 const DEFAULT_STYLE = { dot: 'bg-slate-500', border: 'hover:border-l-slate-500' };
 
-function resolveStyle(event: UnifiedEvent) {
-  // Twitch events match on event_type alone
-  const byType = EVENT_STYLES[event.event_type];
+export const EVENT_TYPE_LABELS: Record<string, string> = {
+  'channel.follow': 'Follow',
+  'channel.subscribe': 'Subscribe',
+  'channel.subscription.gift': 'Gift Sub',
+  'channel.subscription.message': 'Re-sub',
+  'channel.cheer': 'Cheer',
+  'channel.raid': 'Raid',
+  'channel.channel_points_custom_reward_redemption.add': 'Points',
+  'stream.online': 'Online',
+  'stream.offline': 'Offline',
+  'donation': 'Donation',
+  'subscription': 'Subscription',
+  'shop_order': 'Shop Order',
+  'commission': 'Commission',
+  'location_update': 'Location Update',
+};
+
+function resolveStyleByType(eventType: string, source?: string) {
+  const byType = EVENT_STYLES[eventType];
   if (byType) return byType;
 
-  // External events match on source
-  const bySource = SOURCE_STYLES[event.source];
-  if (bySource) return bySource;
+  if (source) {
+    const bySource = SOURCE_STYLES[source];
+    if (bySource) return bySource;
+  }
 
   return DEFAULT_STYLE;
 }
 
 export function useEventColors() {
   function eventDotClass(event: UnifiedEvent): string {
-    return resolveStyle(event).dot;
+    return resolveStyleByType(event.event_type, event.source).dot;
   }
 
   function eventHoverBorderClass(event: UnifiedEvent): string {
-    return resolveStyle(event).border;
+    return resolveStyleByType(event.event_type, event.source).border;
   }
 
-  return { eventDotClass, eventHoverBorderClass };
+  function eventTypeDotClass(eventType: string, source?: string): string {
+    return resolveStyleByType(eventType, source).dot;
+  }
+
+  function eventTypeHoverBorderClass(eventType: string, source?: string): string {
+    return resolveStyleByType(eventType, source).border;
+  }
+
+  return { eventDotClass, eventHoverBorderClass, eventTypeDotClass, eventTypeHoverBorderClass };
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
@@ -28,6 +28,7 @@ import {
   TargetIcon,
   ImageIcon,
 } from 'lucide-vue-next';
+import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { VisuallyHidden } from 'reka-ui';
 const showPreview = ref(false);
@@ -96,7 +97,7 @@ function saveTargeting() {
     },
   );
 }
-const showCode = ref(false);
+const showCode = ref(true);
 const showOBSHelp = ref(false);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
@@ -132,9 +133,6 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-const forkTitle = computed(() => {
-  return 'This Overlay has been copied from ' + props.template?.owner.name + "'s template" + ' "' + props.template?.fork_parent.name + '"';
-});
 </script>
 
 <template>
@@ -165,13 +163,6 @@ const forkTitle = computed(() => {
             </span>
           </div>
           <p v-if="template?.description" class="mt-1 text-sm text-muted-foreground">{{ template?.description }}</p>
-          <div v-if="template?.fork_parent" class="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-            <SplitIcon class="h-3 w-3 shrink-0" />
-            <span>Forked from</span>
-            <Link :href="route('templates.show', template?.fork_parent)" class="text-foreground/60 transition-colors hover:text-foreground hover:underline" :title="forkTitle">
-              {{ template?.fork_parent.name }}
-            </Link>
-          </div>
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
@@ -387,14 +378,16 @@ const forkTitle = computed(() => {
             </div>
           </div>
 
-          <!-- Template Tags Used -->
-          <div v-if="props.template?.template_tags && props.template.template_tags.length > 0" class="mt-8 mb-0">
-            <h3 class="mb-4">Template Tags Used</h3>
-            <div class="flex flex-wrap gap-2">
-              <code v-for="tag in props.template.template_tags" :key="tag" class="btn btn-chill btn-xs btn-dead">
-                {{ tag }}
-              </code>
-            </div>
+          <!-- Meta + Template Tags -->
+          <div class="mt-8">
+            <TemplateMeta
+              :created-at="template?.created_at"
+              :updated-at="template?.updated_at"
+              :view-count="template?.view_count"
+              :fork-count="template?.fork_count"
+              :template-tags="template?.template_tags"
+              :fork-parent="template?.fork_parent"
+            />
           </div>
         </div>
       </div>

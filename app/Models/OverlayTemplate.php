@@ -201,6 +201,11 @@ class OverlayTemplate extends Model
         return $this->hasMany(EventTemplateMapping::class, 'template_id');
     }
 
+    public function externalEventMappings(): HasMany
+    {
+        return $this->hasMany(ExternalEventTemplateMapping::class, 'overlay_template_id');
+    }
+
     public function controls(): HasMany
     {
         return $this->hasMany(OverlayControl::class, 'overlay_template_id');

@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - UI: Redesign TemplateTable + shared TemplateMeta component
+
+- Replaced the heavy dual table+card layout in `TemplateTable.vue` with a clean card-based list matching the `EventsTable` pattern.
+- Removed Owner, Views, Forks, Updated columns from the main view - dates and owner moved to kebab dropdown.
+- Only shows a "Private" pill when the template is not public; removed type and public badges.
+- Event dots now use the `useEventColors` composable with support for both Twitch and external (Ko-fi, StreamLabs) event mappings.
+- Added `externalEventMappings` relationship on `OverlayTemplate` model and eager-loaded it in the index controller.
+- Extended `useEventColors` composable with `eventTypeDotClass(eventType, source?)`, `eventTypeHoverBorderClass(eventType, source?)`, and exported `EVENT_TYPE_LABELS`.
+- Created shared `TemplateMeta.vue` component (meta grid + template tags card) used by both show and edit pages.
+- On `/templates/show`: source code expanded by default, "Forked from" moved into meta grid as "Copied from".
+- Renamed "Forks" to "Copies" across meta displays.
+
 ## April 1st, 2026 - Fix: Event color classes missing in production
 
 - Replaced dynamic Tailwind class construction (`bg-${color}`) with full literal class strings so Tailwind's scanner includes them in the production build.

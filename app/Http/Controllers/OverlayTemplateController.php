@@ -68,6 +68,9 @@ class OverlayTemplateController extends Controller
             ->with(['eventMappings' => function ($query) use ($request) {
                 $query->where('user_id', $request->user()->id);
             }])
+            ->with(['externalEventMappings' => function ($query) use ($request) {
+                $query->where('user_id', $request->user()->id);
+            }])
             ->withCount('forks')
             ->withExists('kits')
             ->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))

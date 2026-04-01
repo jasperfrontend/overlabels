@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, ChevronRight, LinkIcon, Trash2 } from 'lucide-vue-next';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ExternalLinkIcon, PencilIcon, MoreVertical, ChevronRight, LinkIcon, Trash2, GitFork, Eye } from 'lucide-vue-next';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useEventColors, EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import type { OverlayTemplate } from '@/types';
 
 const props = defineProps<{
@@ -13,35 +13,18 @@ const props = defineProps<{
   currentUserId?: number;
 }>();
 
-const eventTypeColors: Record<string, string> = {
-  'channel.follow': 'bg-green-500',
-  'channel.subscribe': 'bg-purple-500',
-  'channel.subscription.gift': 'bg-pink-500',
-  'channel.subscription.message': 'bg-indigo-500',
-  'channel.cheer': 'bg-yellow-500',
-  'channel.raid': 'bg-red-500',
-  'channel.channel_points_custom_reward_redemption.add': 'bg-cyan-500',
-  'stream.online': 'bg-green-400',
-  'stream.offline': 'bg-red-400',
-};
+const { eventTypeDotClass, eventTypeHoverBorderClass } = useEventColors();
 
-const eventTypeLabels: Record<string, string> = {
-  'channel.follow': 'Follow',
-  'channel.subscribe': 'Subscribe',
-  'channel.subscription.gift': 'Gift Sub',
-  'channel.subscription.message': 'Re-sub',
-  'channel.cheer': 'Cheer',
-  'channel.raid': 'Raid',
-  'channel.channel_points_custom_reward_redemption.add': 'Points',
-  'stream.online': 'Online',
-  'stream.offline': 'Offline',
-};
+/** Returns { eventType, source? } from the first Twitch or external mapping. */
+function firstEvent(t: OverlayTemplate): { eventType: string; source?: string } | null {
+  const twitch = t.event_mappings?.[0];
+  if (twitch) return { eventType: twitch.event_type };
 
-function firstEventMapping(t: OverlayTemplate) {
-  return t.event_mappings?.[0] ?? null;
+  const ext = t.external_event_mappings?.[0];
+  if (ext) return { eventType: ext.event_type, source: ext.service };
+
+  return null;
 }
-
-// --- helpers ---
 
 function detailsHref(t: OverlayTemplate) {
   return `/templates/${t.id}`;
@@ -63,31 +46,6 @@ function formatDateShort(iso: string) {
     month: 'short',
     day: '2-digit',
   }).format(new Date(iso));
-}
-
-function formatDateFull(iso: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(new Date(iso));
-}
-
-function relativeTime(iso: string) {
-  const diff = new Date(iso).getTime() - Date.now();
-  const abs = Math.abs(diff);
-  const minute = 60_000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  const week = 7 * day;
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-  if (abs < hour) return rtf.format(Math.round(diff / minute), 'minute');
-  if (abs < day) return rtf.format(Math.round(diff / hour), 'hour');
-  if (abs < week) return rtf.format(Math.round(diff / day), 'day');
-  return rtf.format(Math.round(diff / week), 'week');
-}
-
-function compact(n: number) {
-  return new Intl.NumberFormat(undefined, { notation: 'compact' }).format(n);
 }
 
 async function copyLink(path: string) {
@@ -117,265 +75,131 @@ function handleDelete(t: OverlayTemplate) {
     });
   }
 }
+
+function eventLabel(ev: { eventType: string; source?: string }): string {
+  if (ev.source) {
+    const serviceTypes = {
+      kofi: { donation: 'Ko-fi Donation', subscription: 'Ko-fi Subscription', shop_order: 'Ko-fi Shop Order', commission: 'Ko-fi Commission' },
+      streamlabs: { donation: 'StreamLabs Donation' },
+      gpslogger: { location_update: 'GPS Location Update' },
+    } as Record<string, Record<string, string>>;
+    return serviceTypes[ev.source]?.[ev.eventType] ?? `${ev.source}: ${ev.eventType}`;
+  }
+  return EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType;
+}
 </script>
 
 <template>
-  <!-- ── Card view (< xl) ── -->
-  <div class="xl:hidden space-y-2">
-    <div v-for="t in templates" :key="`card-${t.id}`" class="rounded-md border bg-card p-3">
-      <!-- Name row + actions -->
-      <div class="flex items-start justify-between gap-2">
-        <Link :href="detailsHref(t)" class="font-medium leading-snug hover:text-accent-foreground/80">
-          {{ t.name }}
-        </Link>
+  <div class="flex flex-col gap-2">
+    <div
+      v-for="t in templates"
+      :key="t.id"
+      :class="[
+        'group flex items-start justify-between gap-3 rounded-lg border bg-card p-3 transition-all ease-in-out cursor-pointer',
+        showEvent && firstEvent(t)
+          ? eventTypeHoverBorderClass(firstEvent(t)!.eventType, firstEvent(t)!.source)
+          : 'hover:border-l-slate-500',
+      ]"
+      role="button"
+      tabindex="0"
+      @click="router.visit(detailsHref(t))"
+      @keydown.enter.prevent="router.visit(detailsHref(t))"
+      @keydown.space.prevent="router.visit(detailsHref(t))"
+    >
+      <!-- Left side -->
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div
+            v-if="showEvent && firstEvent(t)"
+            class="h-2 w-2 shrink-0 rounded-full"
+            :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)"
+          ></div>
+          <span class="font-medium">{{ t.name }}</span>
+          <Badge v-if="!t.is_public" variant="destructive" class="text-xs">Private</Badge>
+        </div>
 
-        <div class="flex shrink-0 items-center gap-1">
-          <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
-            <PencilIcon class="h-3.5 w-3.5" />
-          </a>
-          <a v-else class="btn btn-sm btn-primary" :href="detailsHref(t)" :title="`View ${t.name}`">
-            <ChevronRight class="h-3.5 w-3.5" />
-          </a>
+        <div
+          v-if="showEvent && firstEvent(t)"
+          class="text-xs text-muted-foreground/60"
+          :class="firstEvent(t) ? 'pl-4' : ''"
+        >
+          {{ eventLabel(firstEvent(t)!) }}
+        </div>
+      </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                <MoreVertical class="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-52">
-              <DropdownMenuItem as-child>
-                <Link :href="detailsHref(t)"><Eye class="mr-2 h-4 w-4" />View details</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="isOwn(t)" as-child>
-                <Link :href="editHref(t)"><PencilIcon class="mr-2 h-4 w-4" />Edit</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="canDelete(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
-                <Trash2 class="mr-2 h-4 w-4" />Delete
-              </DropdownMenuItem>
-              <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-muted-foreground text-xs">
-                Part of a kit - cannot delete
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
-                <GitFork class="mr-2 h-4 w-4" />Copy template
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="copyLink(detailsHref(t))">
-                <LinkIcon class="mr-2 h-4 w-4" />Copy link
-              </DropdownMenuItem>
+      <!-- Right side: actions -->
+      <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100" @click.stop @keydown.stop>
+        <a
+          v-if="isOwn(t)"
+          class="btn btn-sm btn-primary"
+          :href="editHref(t)"
+          :title="`Edit ${t.name}`"
+        >
+          <PencilIcon class="h-3.5 w-3.5" />
+        </a>
+        <a
+          v-else
+          class="btn btn-sm btn-primary"
+          :href="detailsHref(t)"
+          :title="`View ${t.name}`"
+        >
+          <ChevronRight class="h-3.5 w-3.5" />
+        </a>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button class="btn btn-sm btn-secondary px-2" title="More actions">
+              <MoreVertical class="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-52">
+            <DropdownMenuItem as-child>
+              <Link :href="detailsHref(t)"><Eye class="mr-2 h-4 w-4" />View details</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="isOwn(t)" as-child>
+              <Link :href="editHref(t)"><PencilIcon class="mr-2 h-4 w-4" />Edit</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="t.is_public" as-child>
+              <a :href="previewHref(t)" target="_blank"><ExternalLinkIcon class="mr-2 h-4 w-4" />Preview</a>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem v-if="canDelete(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
+              <Trash2 class="mr-2 h-4 w-4" />Delete
+            </DropdownMenuItem>
+            <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-muted-foreground text-xs">
+              Part of a kit - cannot delete
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
+              <GitFork class="mr-2 h-4 w-4" />Copy template
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="copyLink(detailsHref(t))">
+              <LinkIcon class="mr-2 h-4 w-4" />Copy link
+            </DropdownMenuItem>
+
+            <template v-if="showOwner && t.owner">
               <DropdownMenuSeparator />
               <DropdownMenuItem class="text-muted-foreground">
-                <div class="flex w-full flex-col gap-1 text-xs">
-                  <div>Created: {{ formatDateShort(t.created_at) }}</div>
-                  <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
+                <div class="flex items-center gap-2 text-xs">
+                  <img v-if="t.owner.avatar" :src="t.owner.avatar" :alt="t.owner.name" class="h-4 w-4 rounded-full" />
+                  {{ t.owner.name }}
                 </div>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+            </template>
 
-      <!-- Badges row -->
-      <div class="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge variant="secondary" class="capitalize">{{ t.type }}</Badge>
-        <Badge :variant="t.is_public ? 'outline' : 'destructive'">{{ t.is_public ? 'Public' : 'Private' }}</Badge>
+            <DropdownMenuSeparator />
 
-        <div v-if="showEvent && firstEventMapping(t)" class="flex items-center gap-1.5">
-          <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
-          <span class="text-xs text-muted-foreground">{{ eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type }}</span>
-        </div>
-
-        <span v-if="showOwner && t.owner" class="text-xs text-muted-foreground">{{ t.owner.name }}</span>
-      </div>
-
-      <!-- Stats row -->
-      <div class="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
-        <span class="flex items-center gap-1" :title="`${t.view_count} views`">
-          <Eye class="h-3 w-3" />{{ compact(t.view_count) }}
-        </span>
-        <span class="flex items-center gap-1" :title="`${t.fork_count} forks`">
-          <GitFork class="h-3 w-3" />{{ compact(t.fork_count) }}
-        </span>
-        <span class="flex items-center gap-1" :title="formatDateFull(t.updated_at)">
-          <Clock class="h-3 w-3" />{{ relativeTime(t.updated_at) }}
-        </span>
-        <a v-if="t.is_public" :href="previewHref(t)" target="_blank" class="flex items-center gap-1 hover:text-foreground" title="Preview">
-          <ExternalLinkIcon class="h-3 w-3" />Preview
-        </a>
+            <DropdownMenuItem class="text-muted-foreground">
+              <div class="flex w-full flex-col gap-1 text-xs">
+                <div>Created: {{ formatDateShort(t.created_at) }}</div>
+                <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
-  </div>
-
-  <!-- ── Table view (≥ xl) ── -->
-  <div class="hidden xl:block">
-    <Table>
-      <TableHeader>
-        <TableRow class="hover:bg-transparent">
-          <TableHead>Name</TableHead>
-          <TableHead class="hidden lg:table-cell">Description</TableHead>
-          <TableHead class="w-[90px]">Type</TableHead>
-          <TableHead v-if="showEvent" class="w-[110px]">Event</TableHead>
-          <TableHead class="w-[90px]">Visibility</TableHead>
-          <TableHead v-if="showOwner" class="hidden md:table-cell">Owner</TableHead>
-          <TableHead class="hidden w-[70px] text-right md:table-cell">Views</TableHead>
-          <TableHead class="hidden w-[70px] text-right md:table-cell">Forks</TableHead>
-          <TableHead class="hidden w-[130px] md:table-cell">Updated</TableHead>
-          <TableHead class="w-[120px] text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-
-      <TableBody>
-        <TableRow v-for="t in templates" :key="t.id" class="group">
-          <!-- Name -->
-          <TableCell class="cursor-pointer font-medium" @click="router.visit(detailsHref(t))">
-            <Link :href="detailsHref(t)" class="transition-colors hover:text-accent-foreground/80">
-              {{ t.name }}
-            </Link>
-          </TableCell>
-
-          <!-- Description -->
-          <TableCell class="hidden max-w-[280px] lg:table-cell">
-            <span
-              v-if="t.description"
-              class="line-clamp-1 text-muted-foreground opacity-20 transition-opacity group-hover:opacity-100"
-              :title="t.description"
-            >
-              {{ t.description }}
-            </span>
-            <span v-else class="text-muted-foreground/50 italic opacity-20 transition-opacity group-hover:opacity-100">None</span>
-          </TableCell>
-
-          <!-- Type -->
-          <TableCell>
-            <Badge variant="secondary" class="capitalize opacity-20 group-hover:opacity-100">{{ t.type }}</Badge>
-          </TableCell>
-
-          <!-- Event -->
-          <TableCell v-if="showEvent">
-            <div v-if="firstEventMapping(t)" class="flex items-center gap-1.5 opacity-20 group-hover:opacity-100">
-              <span :class="eventTypeColors[firstEventMapping(t)!.event_type]" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
-              <span class="text-sm text-muted-foreground">{{
-                eventTypeLabels[firstEventMapping(t)!.event_type] ?? firstEventMapping(t)!.event_type
-              }}</span>
-            </div>
-            <span v-else class="text-muted-foreground/50 opacity-20 group-hover:opacity-100">—</span>
-          </TableCell>
-
-          <!-- Visibility -->
-          <TableCell>
-            <Badge :variant="t.is_public ? 'outline' : 'destructive'" class="opacity-20 group-hover:opacity-100">
-              {{ t.is_public ? 'Public' : 'Private' }}
-            </Badge>
-          </TableCell>
-
-          <!-- Owner -->
-          <TableCell v-if="showOwner" class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-            <div v-if="t.owner" class="flex items-center gap-2">
-              <img v-if="t.owner.avatar" :src="t.owner.avatar" :alt="t.owner.name" class="h-5 w-5 rounded-full" />
-              <span class="truncate text-sm">{{ t.owner.name }}</span>
-            </div>
-          </TableCell>
-
-          <!-- Views -->
-          <TableCell class="hidden text-right tabular-nums opacity-20 group-hover:opacity-100 md:table-cell">
-            <div class="flex items-center justify-end gap-1 text-muted-foreground" :title="`${t.view_count} views`">
-              <Eye class="h-3.5 w-3.5" />
-              <span>{{ compact(t.view_count) }}</span>
-            </div>
-          </TableCell>
-
-          <!-- Forks -->
-          <TableCell class="hidden text-right tabular-nums md:table-cell">
-            <div class="flex items-center justify-end gap-1 text-muted-foreground opacity-20 group-hover:opacity-100" :title="`${t.fork_count} forks`">
-              <GitFork class="h-3.5 w-3.5" />
-              <span>{{ compact(t.fork_count) }}</span>
-            </div>
-          </TableCell>
-
-          <!-- Updated -->
-          <TableCell class="hidden opacity-20 group-hover:opacity-100 md:table-cell">
-            <div class="flex items-center gap-1 text-xs text-muted-foreground" :title="formatDateFull(t.updated_at)">
-              <Clock class="h-3.5 w-3.5 shrink-0" />
-              <span class="truncate">{{ relativeTime(t.updated_at) }}</span>
-            </div>
-          </TableCell>
-
-          <!-- Actions -->
-          <TableCell class="text-right opacity-20 group-hover:opacity-100">
-            <div class="flex items-center justify-end gap-1">
-              <!-- Primary action -->
-              <a v-if="isOwn(t)" class="btn btn-sm btn-primary" :href="editHref(t)" :title="`Edit ${t.name}`">
-                <PencilIcon class="h-3.5 w-3.5" />
-              </a>
-              <a v-else class="btn btn-sm btn-primary" :href="detailsHref(t)" :title="`View details of ${t.name}`">
-                <ChevronRight class="h-3.5 w-3.5" />
-              </a>
-
-              <!-- Preview -->
-              <a v-if="t.is_public" class="btn btn-sm btn-secondary px-2" :href="previewHref(t)" target="_blank" :title="`Preview ${t.name}`">
-                <ExternalLinkIcon class="h-3.5 w-3.5" />
-              </a>
-              <button v-else class="btn btn-sm btn-secondary px-2 opacity-50" disabled :title="`Private template: preview from Edit screen`">
-                <ExternalLinkIcon class="h-3.5 w-3.5" />
-              </button>
-
-              <!-- Kebab menu -->
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <button class="btn btn-sm btn-secondary px-2" title="More actions">
-                    <MoreVertical class="h-3.5 w-3.5" />
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" class="w-52">
-                  <DropdownMenuItem as-child>
-                    <Link :href="detailsHref(t)">
-                      <Eye class="mr-2 h-4 w-4" />
-                      View details
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem v-if="isOwn(t)" as-child>
-                    <Link :href="editHref(t)">
-                      <PencilIcon class="mr-2 h-4 w-4" />
-                      Edit
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem v-if="canDelete(t)" class="text-destructive focus:text-destructive" @click="handleDelete(t)">
-                    <Trash2 class="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                  <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-muted-foreground text-xs">
-                    Part of a kit - cannot delete
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem v-if="!isOwn(t) && t.is_public" @click="handleFork(t)">
-                    <GitFork class="mr-2 h-4 w-4" />
-                    Copy template
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem @click="copyLink(detailsHref(t))">
-                    <LinkIcon class="mr-2 h-4 w-4" />
-                    Copy link
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem class="text-muted-foreground">
-                    <div class="flex w-full flex-col gap-1 text-xs">
-                      <div>Created: {{ formatDateShort(t.created_at) }}</div>
-                      <div>Updated: {{ formatDateShort(t.updated_at) }}</div>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
   </div>
 </template>

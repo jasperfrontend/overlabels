@@ -12,6 +12,7 @@ import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
+import TemplateMeta from '@/components/TemplateMeta.vue';
 import {
   Brackets,
   Code,
@@ -333,33 +334,13 @@ onMounted(() => {
               </label>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 rounded-sm bg-background p-4 text-sm">
-              <div>
-                <span class="text-muted-foreground">Created:</span>
-                <span class="ml-2">{{ new Date(template?.created_at).toLocaleDateString() }}</span>
-              </div>
-              <div>
-                <span class="text-muted-foreground">Last updated:</span>
-                <span class="ml-2">{{ new Date(template?.updated_at).toLocaleDateString() }}</span>
-              </div>
-              <div>
-                <span class="text-muted-foreground">Views:</span>
-                <span class="ml-2">{{ template?.view_count }}</span>
-              </div>
-              <div>
-                <span class="text-muted-foreground">Forks:</span>
-                <span class="ml-2">{{ template?.fork_count }}</span>
-              </div>
-            </div>
-
-            <div v-if="template?.template_tags && template.template_tags.length > 0" class="rounded-sm bg-background p-4 text-sm">
-              <p class="mb-2 text-muted-foreground">Template Tags Used</p>
-              <div class="flex flex-wrap gap-1">
-                <code v-for="tag in template.template_tags" :key="tag.display_tag" class="btn btn-chill btn-xs btn-dead">
-                  {{ tag }}
-                </code>
-              </div>
-            </div>
+            <TemplateMeta
+              :created-at="template?.created_at"
+              :updated-at="template?.updated_at"
+              :view-count="template?.view_count"
+              :fork-count="template?.fork_count"
+              :template-tags="template?.template_tags"
+            />
           </div>
 
           <!-- Tags Tab -->
