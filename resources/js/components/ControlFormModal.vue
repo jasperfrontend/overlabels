@@ -451,7 +451,7 @@ async function save() {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent :class="form.type === 'expression' ? 'max-w-4xl' : 'max-w-lg'">
+    <DialogContent :class="form.type === 'expression' ? 'max-w-225' : 'max-w-lg'">
       <DialogHeader>
         <DialogTitle>{{ isEditing ? 'Edit Control' : 'Add Control' }}</DialogTitle>
       </DialogHeader>
