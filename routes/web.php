@@ -70,10 +70,6 @@ Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.events');
 
-Route::get('/4', [DashboardController::class, 'recentEvents'])
-    ->middleware(['auth.redirect'])
-    ->name('dashboard.events');
-
 Route::get('/login', [PageController::class, 'notAuthorized'])
     ->middleware(['guest'])
     ->name('login');

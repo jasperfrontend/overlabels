@@ -93,11 +93,7 @@ const parentWithoutHttpsWithSlash = currentParentURL.replace(/^https?:\/\//, '')
     <div class="w-full max-w-md rounded-xl bg-base-100 p-5 shadow-xl bg-background">
       <div class="flex items-start justify-between gap-3">
         <p class="text-sm font-medium leading-6">
-          Your recent events. click an event and tap Yes to replay the event in your overlay(s)<br>
-          Short link to this page:
-          <a :href="`${currentParentURL}/4`" target="_blank" class="text-violet-400 hover:underline">
-            {{ parentWithoutHttpsWithSlash }}/4
-          </a>
+          Your recent events. click an event and tap Yes to replay the event in your overlay(s)
         </p>
 
         <button class="text-lg leading-none text-base-content/60 hover:text-base-content" type="button" @click="showInfo = false">
