@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - UI: Two-column layout for expression controls in ControlFormModal
+
+- Expression controls now use a wider two-column layout on desktop (max-w-4xl) so the formula editor has its own dedicated column alongside the standard form fields.
+- Non-expression types keep the existing single-column narrow layout (max-w-lg).
+- On mobile, the layout collapses to a single stacked column.
+- Fixes Cancel/Save buttons being pushed off-screen when editing expression controls.
+
 ## April 1st, 2026 - Fix: Expression validation recognizes _at companion values
 
 - Expression dependency extraction now strips `_at` suffixes to resolve to the base control, since `_at` values are virtual companions that don't exist as database rows.

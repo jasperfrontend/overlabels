@@ -451,300 +451,303 @@ async function save() {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="max-w-lg">
+    <DialogContent :class="form.type === 'expression' ? 'max-w-4xl' : 'max-w-lg'">
       <DialogHeader>
         <DialogTitle>{{ isEditing ? 'Edit Control' : 'Add Control' }}</DialogTitle>
       </DialogHeader>
 
-      <div class="space-y-4 py-2">
-        <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
+      <div :class="form.type === 'expression' ? 'grid grid-cols-1 gap-6 py-2 md:grid-cols-2' : 'space-y-4 py-2'">
+        <!-- Left column (or single column for non-expression types) -->
+        <div class="space-y-4">
+          <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
-        <!-- Service Presets (Twitch / Ko-fi / GPSLogger) -->
-        <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-          <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
-          <select
-            v-model="servicePresetKey"
-            class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-          >
-            <option value="">— Select a preset control —</option>
-            <optgroup v-if="showTwitchPresets" label="Twitch — Per-Stream Counters">
-              <option v-for="preset in TWITCH_PRESETS" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
-                {{ preset.label }} ({{ preset.type }})
-              </option>
-            </optgroup>
-            <optgroup v-if="showKofiPresets" label="Ko-fi">
-              <option v-for="preset in KOFI_PRESETS" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
-                {{ preset.label }} ({{ preset.type }})
-              </option>
-            </optgroup>
-            <optgroup v-if="showGpsPresets" label="GPSLogger">
-              <option v-for="preset in GPS_PRESETS" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
-                {{ preset.label }} ({{ preset.type }})
-              </option>
-            </optgroup>
-            <optgroup v-if="showStreamLabsPresets" label="StreamLabs">
-              <option v-for="preset in STREAMLABS_PRESETS" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
-                {{ preset.label }} ({{ preset.type }})
-              </option>
-            </optgroup>
-          </select>
-          <p v-if="selectedServicePreset && servicePresetSource" class="text-xs text-muted-foreground">
-            Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:{{ servicePresetSource }}:{{ selectedServicePreset.key }}]]]</code>
-            in your template. Value is managed automatically{{ servicePresetSource === 'twitch' ? ' — resets when you go live' : '' }}.
-          </p>
-        </div>
-
-        <!-- Only show manual fields if no service preset selected -->
-        <template v-if="!selectedServicePreset">
-          <!-- Key (immutable after creation) -->
-          <div class="space-y-1">
-            <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
-            <Input
-              id="ctrl-key"
-              v-model="form.key"
-              :disabled="isEditing"
-              placeholder="e.g. deaths"
-              :class="{ 'border-destructive': errors.key }"
-            />
-            <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
-            <p v-else class="text-xs text-muted-foreground">Lowercase letters, numbers, underscores only. Cannot be changed after creation.</p>
-          </div>
-        </template>
-
-        <!-- Label (always shown) -->
-        <div class="space-y-1">
-          <Label for="ctrl-label">Label <span class="text-muted-foreground text-xs">(optional display name)</span></Label>
-          <Input
-            id="ctrl-label"
-            v-model="form.label"
-            :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
-            :class="{ 'border-destructive': errors.label }"
-          />
-          <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
-        </div>
-
-        <!-- Only show type/value/config if no Ko-fi preset selected -->
-        <template v-if="!selectedServicePreset">
-          <!-- Type -->
-          <div v-if="!isEditing" class="space-y-1">
-            <Label for="ctrl-type">Type</Label>
+          <!-- Service Presets (Twitch / Ko-fi / GPSLogger) -->
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <select
-              id="ctrl-type"
-              v-model="form.type"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              v-model="servicePresetKey"
+              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
             >
-              <option value="text">Text</option>
-              <option value="number">Number</option>
-              <option value="counter">Counter</option>
-              <option value="timer">Timer</option>
-              <option value="datetime">Date/Time</option>
-              <option value="boolean">Boolean (on/off switch)</option>
-              <option value="computed">Computed (auto-calculated)</option>
-              <option value="expression">Expression (formula)</option>
-            </select>
-            <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
-          </div>
-
-          <!-- Computed formula builder -->
-          <div v-if="form.type === 'computed'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Formula</p>
-
-            <div class="space-y-1">
-              <Label for="formula-watch">Watch control</Label>
-              <select
-                id="formula-watch"
-                v-model="formulaWatchRef"
-                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-              >
-                <option value="">-- Select a control --</option>
-                <option v-for="ctrl in availableWatchControls" :key="ctrl.id" :value="watchControlRef(ctrl)">
-                  {{ watchControlLabel(ctrl) }}
+              <option value="">- Select a preset control -</option>
+              <optgroup v-if="showTwitchPresets" label="Twitch - Per-Stream Counters">
+                <option v-for="preset in TWITCH_PRESETS" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
+                  {{ preset.label }} ({{ preset.type }})
                 </option>
-              </select>
-              <p v-if="errors['config.formula.watch_key']" class="text-xs text-destructive">{{ errors['config.formula.watch_key'] }}</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <Label for="formula-op">Operator</Label>
-                <select
-                  id="formula-op"
-                  v-model="formula.operator"
-                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-                >
-                  <option value="==">== (equals)</option>
-                  <option value="!=">!= (not equals)</option>
-                  <option value=">">&gt; (greater than)</option>
-                  <option value="<">&lt; (less than)</option>
-                  <option value=">=">&gt;= (greater or equal)</option>
-                  <option value="<=">&lt;= (less or equal)</option>
-                </select>
-              </div>
-              <div class="space-y-1">
-                <Label for="formula-compare">Compare value</Label>
-                <Input id="formula-compare" v-model="formula.compare_value" placeholder="e.g. 5" />
-                <p v-if="errors['config.formula.compare_value']" class="text-xs text-destructive">{{ errors['config.formula.compare_value'] }}</p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <Label for="formula-then">Then value <span class="text-muted-foreground text-xs">(condition true)</span></Label>
-                <Input id="formula-then" v-model="formula.then_value" placeholder="e.g. 50" />
-                <p v-if="errors['config.formula.then_value']" class="text-xs text-destructive">{{ errors['config.formula.then_value'] }}</p>
-              </div>
-              <div class="space-y-1">
-                <Label for="formula-else">Else value <span class="text-muted-foreground text-xs">(condition false)</span></Label>
-                <Input id="formula-else" v-model="formula.else_value" placeholder="e.g. 10" />
-                <p v-if="errors['config.formula.else_value']" class="text-xs text-destructive">{{ errors['config.formula.else_value'] }}</p>
-              </div>
-            </div>
-
-            <p v-if="formulaWatchRef && formula.compare_value" class="text-xs text-muted-foreground">
-              WHEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formulaWatchRef }}</code>
-              {{ formula.operator }} {{ formula.compare_value }}
-              THEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.then_value || '(empty)' }}</code>
-              ELSE <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.else_value || '(empty)' }}</code>
+              </optgroup>
+              <optgroup v-if="showKofiPresets" label="Ko-fi">
+                <option v-for="preset in KOFI_PRESETS" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
+                  {{ preset.label }} ({{ preset.type }})
+                </option>
+              </optgroup>
+              <optgroup v-if="showGpsPresets" label="GPSLogger">
+                <option v-for="preset in GPS_PRESETS" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
+                  {{ preset.label }} ({{ preset.type }})
+                </option>
+              </optgroup>
+              <optgroup v-if="showStreamLabsPresets" label="StreamLabs">
+                <option v-for="preset in STREAMLABS_PRESETS" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
+                  {{ preset.label }} ({{ preset.type }})
+                </option>
+              </optgroup>
+            </select>
+            <p v-if="selectedServicePreset && servicePresetSource" class="text-xs text-muted-foreground">
+              Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:{{ servicePresetSource }}:{{ selectedServicePreset.key }}]]]</code>
+              in your template. Value is managed automatically{{ servicePresetSource === 'twitch' ? ' - resets when you go live' : '' }}.
             </p>
           </div>
 
-          <!-- Expression builder -->
-          <div v-if="form.type === 'expression'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Expression</p>
-
+          <!-- Only show manual fields if no service preset selected -->
+          <template v-if="!selectedServicePreset">
+            <!-- Key (immutable after creation) -->
             <div class="space-y-1">
-              <Label for="expression-text">Formula</Label>
-              <textarea
-                id="expression-text"
-                v-model="expressionText"
-                rows="2"
-                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
-                :class="{ 'border-destructive': expressionError }"
-                placeholder="e.g. c.kofi.kofis_received + c.streamlabs.total_received"
+              <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
+              <Input
+                id="ctrl-key"
+                v-model="form.key"
+                :disabled="isEditing"
+                placeholder="e.g. deaths"
+                :class="{ 'border-destructive': errors.key }"
               />
-              <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
-              <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
-              <p class="text-xs text-muted-foreground">
-                Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.key</code> to reference controls, or
-                <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.source.key</code> for service controls.
-                Supports <code class="rounded bg-black/10 px-1 dark:bg-white/10">+ - * / == != &gt; &lt; &gt;= &lt;= &amp;&amp; || ? :</code>
+              <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
+              <p v-else class="text-xs text-muted-foreground">Lowercase letters, numbers, underscores only. Cannot be changed after creation.</p>
+            </div>
+          </template>
+
+          <!-- Label (always shown) -->
+          <div class="space-y-1">
+            <Label for="ctrl-label">Label <span class="text-muted-foreground text-xs">(optional display name)</span></Label>
+            <Input
+              id="ctrl-label"
+              v-model="form.label"
+              :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
+              :class="{ 'border-destructive': errors.label }"
+            />
+            <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
+          </div>
+
+          <!-- Only show type/value/config if no Ko-fi preset selected -->
+          <template v-if="!selectedServicePreset">
+            <!-- Type -->
+            <div v-if="!isEditing" class="space-y-1">
+              <Label for="ctrl-type">Type</Label>
+              <select
+                id="ctrl-type"
+                v-model="form.type"
+                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+              >
+                <option value="text">Text</option>
+                <option value="number">Number</option>
+                <option value="counter">Counter</option>
+                <option value="timer">Timer</option>
+                <option value="datetime">Date/Time</option>
+                <option value="boolean">Boolean (on/off switch)</option>
+                <option value="computed">Computed (auto-calculated)</option>
+                <option value="expression">Expression (formula)</option>
+              </select>
+              <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
+            </div>
+
+            <!-- Computed formula builder -->
+            <div v-if="form.type === 'computed'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+              <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Formula</p>
+
+              <div class="space-y-1">
+                <Label for="formula-watch">Watch control</Label>
+                <select
+                  id="formula-watch"
+                  v-model="formulaWatchRef"
+                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                >
+                  <option value="">-- Select a control --</option>
+                  <option v-for="ctrl in availableWatchControls" :key="ctrl.id" :value="watchControlRef(ctrl)">
+                    {{ watchControlLabel(ctrl) }}
+                  </option>
+                </select>
+                <p v-if="errors['config.formula.watch_key']" class="text-xs text-destructive">{{ errors['config.formula.watch_key'] }}</p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <Label for="formula-op">Operator</Label>
+                  <select
+                    id="formula-op"
+                    v-model="formula.operator"
+                    class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                  >
+                    <option value="==">== (equals)</option>
+                    <option value="!=">!= (not equals)</option>
+                    <option value=">">&gt; (greater than)</option>
+                    <option value="<">&lt; (less than)</option>
+                    <option value=">=">&gt;= (greater or equal)</option>
+                    <option value="<=">&lt;= (less or equal)</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <Label for="formula-compare">Compare value</Label>
+                  <Input id="formula-compare" v-model="formula.compare_value" placeholder="e.g. 5" />
+                  <p v-if="errors['config.formula.compare_value']" class="text-xs text-destructive">{{ errors['config.formula.compare_value'] }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <Label for="formula-then">Then value <span class="text-muted-foreground text-xs">(condition true)</span></Label>
+                  <Input id="formula-then" v-model="formula.then_value" placeholder="e.g. 50" />
+                  <p v-if="errors['config.formula.then_value']" class="text-xs text-destructive">{{ errors['config.formula.then_value'] }}</p>
+                </div>
+                <div class="space-y-1">
+                  <Label for="formula-else">Else value <span class="text-muted-foreground text-xs">(condition false)</span></Label>
+                  <Input id="formula-else" v-model="formula.else_value" placeholder="e.g. 10" />
+                  <p v-if="errors['config.formula.else_value']" class="text-xs text-destructive">{{ errors['config.formula.else_value'] }}</p>
+                </div>
+              </div>
+
+              <p v-if="formulaWatchRef && formula.compare_value" class="text-xs text-muted-foreground">
+                WHEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formulaWatchRef }}</code>
+                {{ formula.operator }} {{ formula.compare_value }}
+                THEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.then_value || '(empty)' }}</code>
+                ELSE <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.else_value || '(empty)' }}</code>
               </p>
             </div>
 
-            <!-- Available variables (click to insert) -->
-            <div v-if="availableWatchControls.length" class="space-y-1">
-              <Label>Available controls <span class="text-xs text-muted-foreground">(click to insert)</span></Label>
-              <div class="flex max-h-50 flex-wrap gap-1.5 overflow-y-auto">
-                <button
-                  v-for="ctrl in availableWatchControls"
-                  :key="ctrl.id"
-                  type="button"
-                  class="rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition"
-                  @click="insertVariable(ctrl)"
-                >
-                  {{ expressionRef(ctrl) }}
-                </button>
+            <!-- Value (text/number/counter/datetime) -->
+            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed' && form.type !== 'expression'" class="space-y-1">
+              <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="ctrl-value"
+                v-model="form.value"
+                :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
+                placeholder="Leave blank to start empty"
+              />
+              <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+            </div>
+
+            <!-- Value (boolean) -->
+            <div v-if="form.type === 'boolean'" class="space-y-1">
+              <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
+              <div class="flex items-center gap-3 pt-1">
+                <Switch v-model:checked="booleanValue" />
+                <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
+              </div>
+              <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+            </div>
+
+            <!-- Number/Counter config -->
+            <div v-if="form.type === 'number' || form.type === 'counter'" class="space-y-3 rounded-sm border border-sidebar p-3">
+              <p class="text-sm font-medium">Numeric settings</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <Label for="ctrl-min">Min</Label>
+                  <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
+                </div>
+                <div class="space-y-1">
+                  <Label for="ctrl-max">Max</Label>
+                  <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
+                </div>
+                <div class="space-y-1">
+                  <Label for="ctrl-step">Step</Label>
+                  <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
+                </div>
+                <div class="space-y-1">
+                  <Label for="ctrl-reset">Reset value</Label>
+                  <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
+                </div>
               </div>
             </div>
 
-            <!-- Live preview -->
-            <div v-if="expressionText.trim() && !expressionError" class="space-y-1">
-              <Label>Preview</Label>
-              <div class="rounded-sm bg-black/5 dark:bg-white/5 px-3 py-1.5 font-mono text-sm">
-                {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
+            <!-- Timer config -->
+            <div v-if="form.type === 'timer'" class="space-y-3 rounded-sm border border-sidebar p-3">
+              <p class="text-sm font-medium">Timer settings</p>
+              <div class="space-y-2">
+                <Label>Mode</Label>
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="form.config.mode" value="countup" />
+                    <span class="text-sm">Count up</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="form.config.mode" value="countdown" />
+                    <span class="text-sm">Count down</span>
+                  </label>
+                </div>
+              </div>
+              <div v-if="form.config.mode === 'countdown'" class="space-y-1">
+                <Label for="ctrl-base">Base duration (seconds)</Label>
+                <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
               </div>
             </div>
-          </div>
+          </template>
 
-          <!-- Value (text/number/counter/datetime) -->
-          <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed' && form.type !== 'expression'" class="space-y-1">
-            <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
+          <!-- Sort order -->
+          <div class="space-y-1">
+            <Label for="ctrl-sort">Position</Label>
+            <select
+              id="ctrl-sort"
+              v-model="sortMode"
+              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+            >
+              <option value="after">After existing (last)</option>
+              <option value="before">Before existing (first)</option>
+              <option value="manual">Enter sort order manually</option>
+            </select>
             <Input
-              id="ctrl-value"
-              v-model="form.value"
-              :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
-              placeholder="Leave blank to start empty"
+              v-if="sortMode === 'manual'"
+              v-model.number="form.sort_order"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="mt-1.5"
             />
-            <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+            <p v-if="errors.sort_order" class="text-xs text-destructive">{{ errors.sort_order }}</p>
+          </div>
+        </div>
+
+        <!-- Right column: Expression builder (only when type is expression) -->
+        <div v-if="form.type === 'expression' && !selectedServicePreset" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+          <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Expression</p>
+
+          <div class="space-y-1">
+            <Label for="expression-text">Formula</Label>
+            <textarea
+              id="expression-text"
+              v-model="expressionText"
+              rows="3"
+              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
+              :class="{ 'border-destructive': expressionError }"
+              placeholder="e.g. c.kofi.kofis_received + c.streamlabs.total_received"
+            />
+            <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
+            <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
+            <p class="text-xs text-muted-foreground">
+              Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.key</code> to reference controls, or
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.source.key</code> for service controls.
+              Supports <code class="rounded bg-black/10 px-1 dark:bg-white/10">+ - * / == != &gt; &lt; &gt;= &lt;= &amp;&amp; || ? :</code>
+            </p>
           </div>
 
-          <!-- Value (boolean) -->
-          <div v-if="form.type === 'boolean'" class="space-y-1">
-            <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
-            <div class="flex items-center gap-3 pt-1">
-              <Switch v-model:checked="booleanValue" />
-              <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
-            </div>
-            <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
-          </div>
-
-          <!-- Number/Counter config -->
-          <div v-if="form.type === 'number' || form.type === 'counter'" class="space-y-3 rounded-sm border border-sidebar p-3">
-            <p class="text-sm font-medium">Numeric settings</p>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <Label for="ctrl-min">Min</Label>
-                <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
-              </div>
-              <div class="space-y-1">
-                <Label for="ctrl-max">Max</Label>
-                <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
-              </div>
-              <div class="space-y-1">
-                <Label for="ctrl-step">Step</Label>
-                <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
-              </div>
-              <div class="space-y-1">
-                <Label for="ctrl-reset">Reset value</Label>
-                <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
-              </div>
+          <!-- Available variables (click to insert) -->
+          <div v-if="availableWatchControls.length" class="space-y-1">
+            <Label>Available controls <span class="text-xs text-muted-foreground">(click to insert)</span></Label>
+            <div class="flex max-h-50 flex-wrap gap-1.5 overflow-y-auto">
+              <button
+                v-for="ctrl in availableWatchControls"
+                :key="ctrl.id"
+                type="button"
+                class="rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition"
+                @click="insertVariable(ctrl)"
+              >
+                {{ expressionRef(ctrl) }}
+              </button>
             </div>
           </div>
 
-          <!-- Timer config -->
-          <div v-if="form.type === 'timer'" class="space-y-3 rounded-sm border border-sidebar p-3">
-            <p class="text-sm font-medium">Timer settings</p>
-            <div class="space-y-2">
-              <Label>Mode</Label>
-              <div class="flex gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="form.config.mode" value="countup" />
-                  <span class="text-sm">Count up</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="form.config.mode" value="countdown" />
-                  <span class="text-sm">Count down</span>
-                </label>
-              </div>
-            </div>
-            <div v-if="form.config.mode === 'countdown'" class="space-y-1">
-              <Label for="ctrl-base">Base duration (seconds)</Label>
-              <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
+          <!-- Live preview -->
+          <div v-if="expressionText.trim() && !expressionError" class="space-y-1">
+            <Label>Preview</Label>
+            <div class="rounded-sm bg-black/5 dark:bg-white/5 px-3 py-1.5 font-mono text-sm">
+              {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
             </div>
           </div>
-        </template>
-
-        <!-- Sort order -->
-        <div class="space-y-1">
-          <Label for="ctrl-sort">Position</Label>
-          <select
-            id="ctrl-sort"
-            v-model="sortMode"
-            class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-          >
-            <option value="after">After existing (last)</option>
-            <option value="before">Before existing (first)</option>
-            <option value="manual">Enter sort order manually</option>
-          </select>
-          <Input
-            v-if="sortMode === 'manual'"
-            v-model.number="form.sort_order"
-            type="number"
-            min="0"
-            placeholder="0"
-            class="mt-1.5"
-          />
-          <p v-if="errors.sort_order" class="text-xs text-destructive">{{ errors.sort_order }}</p>
         </div>
       </div>
 
