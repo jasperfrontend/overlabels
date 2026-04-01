@@ -24,7 +24,7 @@
             background: #171717;
             border: 1px solid #262626;
             border-radius: 1rem;
-            padding: 2rem;
+            padding: 1rem;
             max-width: 34rem;
             width: 100%;
         }

@@ -32,6 +32,10 @@ class ExternalWebhookController extends Controller
      */
     public function show(string $service, string $webhookToken): View
     {
+        if ($service !== 'gpslogger') {
+            abort(404);
+        }
+
         if (! ExternalServiceRegistry::has($service)) {
             abort(404);
         }

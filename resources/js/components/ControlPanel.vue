@@ -140,34 +140,6 @@ async function timerAction(ctrl: OverlayControl, action: 'start' | 'stop' | 'res
 
 const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
 
-function configSummary(ctrl: OverlayControl): string[] {
-  const cfg = ctrl.config ?? {};
-  const parts: string[] = [];
-
-  if (ctrl.type === 'number' || ctrl.type === 'counter') {
-    if (cfg.min != null) parts.push(`Min: ${cfg.min}`);
-    if (cfg.max != null) parts.push(`Max: ${cfg.max}`);
-    if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
-    if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
-  } else if (ctrl.type === 'timer') {
-    const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
-    parts.push(mode);
-    if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
-  } else if (ctrl.type === 'computed') {
-    const f = cfg.formula;
-    if (f) {
-      const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
-      parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
-    }
-  } else if (ctrl.type === 'expression') {
-    if (cfg.expression) parts.push(cfg.expression);
-  } else if (ctrl.type === 'datetime' && ctrl.value) {
-    parts.push(`Initial: ${ctrl.value}`);
-  }
-
-  return parts;
-}
-
 async function toggleBoolean(ctrl: OverlayControl) {
   const newValue = ctrl.value === '1' ? '0' : '1';
   await postValue(ctrl, { value: newValue });
@@ -205,9 +177,6 @@ async function toggleBoolean(ctrl: OverlayControl) {
               <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
               <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
             </div>
-          </div>
-          <div v-if="configSummary(ctrl).length" class="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground/70">
-            <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="whitespace-nowrap">{{ part }}</span>
           </div>
         </div>
 
@@ -329,9 +298,6 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
         <!-- Expression control (read-only, evaluated in overlay) -->
         <div v-else-if="ctrl.type === 'expression'" class="flex items-center gap-3">
-          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
-            {{ ctrl.value ?? '' }}
-          </div>
           <span class="text-xs text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</span>
         </div>
 

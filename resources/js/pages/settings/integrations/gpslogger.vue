@@ -103,7 +103,7 @@ function formatDate(iso: string | null): string {
                     <Badge v-else variant="secondary">Not connected</Badge>
                 </div>
 
-                <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+                <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent text-sm text-muted-foreground">
                     <p class="font-medium text-foreground">Set up GPSLogger on your phone</p>
                     <ol class="list-decimal pl-4 space-y-2">
                         <li>
