@@ -11,7 +11,7 @@
     @apply hover:border-gray-500 dark:hover:border-gray-400;
     @apply hover:bg-gray-500/10 dark:hover:bg-gray-500/20;
     @apply active:bg-gray-500/20;
-    @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-800;
+    @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-600;
   }
 
   .btn-white {

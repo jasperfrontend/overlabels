@@ -23,6 +23,7 @@ defineProps<{
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+const showInfo = ref(false);
 
 watch(
   () => page.props.flash?.message,
@@ -49,6 +50,9 @@ function refresh() {
     },
   });
 }
+
+const currentParentURL = window.location.origin;
+const parentWithoutHttpsWithSlash = currentParentURL.replace(/^https?:\/\//, '').replace(/\/$/, '');
 </script>
 
 <template>
@@ -58,11 +62,19 @@ function refresh() {
   </Head>
 
   <div class="mx-auto max-w-3xl px-2 py-2">
-    <div class="mb-2 flex items-center justify-between gap-2">
-      <h1 class="text-sm font-medium">Stream Events</h1>
+    <div class="mb-2 flex items-center gap-2">
       <button class="btn btn-chill btn-xs gap-1.5" :disabled="refreshing" @click="refresh">
         <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />
         {{ refreshing ? 'Working' : 'Refresh' }}
+      </button>
+
+      <button
+        class="ml-auto grid h-7 w-7 cursor-pointer place-items-center rounded-full border border-violet-400/40 text-violet-400 transition hover:bg-violet-400/10"
+        type="button"
+        aria-label="Show info"
+        @click="showInfo = true"
+      >
+        ?
       </button>
     </div>
 
@@ -71,8 +83,27 @@ function refresh() {
 
       <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active." />
     </div>
-    <div class="text-sm text-muted-foreground pt-2">
-      Short link to this page: <a href="https://bit.ly/ol-embed" target="_blank" class="text-violet-400 hover:underline">bit.ly/ol-embed</a>
+  </div>
+
+  <div
+    v-if="showInfo"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+    @click.self="showInfo = false"
+  >
+    <div class="w-full max-w-md rounded-xl bg-base-100 p-5 shadow-xl bg-background">
+      <div class="flex items-start justify-between gap-3">
+        <p class="text-sm font-medium leading-6">
+          Your recent events. click an event and tap Yes to replay the event in your overlay(s)<br>
+          Short link to this page:
+          <a :href="`${currentParentURL}/4`" target="_blank" class="text-violet-400 hover:underline">
+            {{ parentWithoutHttpsWithSlash }}/4
+          </a>
+        </p>
+
+        <button class="text-lg leading-none text-base-content/60 hover:text-base-content" type="button" @click="showInfo = false">
+          ×
+        </button>
+      </div>
     </div>
   </div>
 

@@ -193,10 +193,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div v-for="ctrl in controls" :key="ctrl.id" :class="['border border-border bg-background p-3 pt-2 pb-4', isTwitchOffline(ctrl) && 'opacity-50']">
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div v-for="ctrl in controls" :key="ctrl.id" :class="['rounded-md bg-background p-6', isTwitchOffline(ctrl) && 'opacity-50']">
         <div class="mb-2">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between mb-4">
             <div>
               <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
               <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
@@ -224,12 +224,12 @@ async function toggleBoolean(ctrl: OverlayControl) {
             />
             <button
               type="submit"
-              class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+              class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
               :disabled="saving[ctrl.id]"
               @click="saveTextValue(ctrl)"
             >
               <SaveIcon class="h-3.5 w-3.5" />
-              <span class="ml-1">Save</span>
+
             </button>
           </form>
         </div>
