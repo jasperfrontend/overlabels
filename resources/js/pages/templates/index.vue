@@ -79,7 +79,7 @@ const pageTitle = computed(() => {
         </Link>
       </div>
 
-      <!-- Filters Section -->i got
+      <!-- Filters Section -->
       <div class="mb-4 rounded-sm border border-sidebar bg-sidebar-accent p-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4 lg:grid-cols-6">
           <!-- Search -->

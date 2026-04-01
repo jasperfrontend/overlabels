@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - Fix: Reverb broadcasting CA verification for local TLS
+
+- Added configurable CA bundle path for Reverb's Guzzle client via `REVERB_CA_BUNDLE` env var.
+- Fixes curl error 56 (connection reset) when Herd auto-starts Reverb in secure/TLS mode but the broadcasting client can't verify the self-signed certificate.
+
 ## April 1st, 2026 - UI: Two-column layout for expression controls in ControlFormModal
 
 - Expression controls now use a wider two-column layout on desktop (max-w-4xl) so the formula editor has its own dedicated column alongside the standard form fields.
