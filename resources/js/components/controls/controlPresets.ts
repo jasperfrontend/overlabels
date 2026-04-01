@@ -1,0 +1,51 @@
+import type { OverlayControl } from '@/types';
+
+export interface ServicePreset {
+  key: string;
+  label: string;
+  type: OverlayControl['type'];
+}
+
+export const KOFI_PRESETS: ServicePreset[] = [
+  { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Ko-fi Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Ko-fi Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Ko-fi Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Ko-fi Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Ko-fi Total Received (session)', type: 'number' },
+];
+
+export const GPS_PRESETS: ServicePreset[] = [
+  { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
+  { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
+  { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
+  { key: 'gps_distance', label: 'GPS Distance (km)', type: 'number' },
+];
+
+export const STREAMLABS_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'StreamLabs Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'StreamLabs Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'StreamLabs Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'StreamLabs Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
+];
+
+export const TWITCH_PRESETS: ServicePreset[] = [
+  { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
+  { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
+  { key: 'gift_subs_this_stream', label: 'Gift Subs This Stream', type: 'counter' },
+  { key: 'resubs_this_stream', label: 'Resubs This Stream', type: 'counter' },
+  { key: 'raids_this_stream', label: 'Raids This Stream', type: 'counter' },
+  { key: 'redemptions_this_stream', label: 'Redemptions This Stream', type: 'counter' },
+];
+
+export function getPresetsForSource(source: string): ServicePreset[] {
+  switch (source) {
+    case 'twitch': return TWITCH_PRESETS;
+    case 'kofi': return KOFI_PRESETS;
+    case 'gpslogger': return GPS_PRESETS;
+    case 'streamlabs': return STREAMLABS_PRESETS;
+    default: return [];
+  }
+}

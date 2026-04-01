@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 1st, 2026 - Refactor: Split ControlFormModal into smaller components
+
+- Extracted `ExpressionBuilder.vue` - expression formula panel (textarea, variable buttons, live preview).
+- Extracted `ComputedFormulaBuilder.vue` - computed formula builder (watch control, operator, compare/then/else).
+- Extracted `controlPresets.ts` - service preset constants and `getPresetsForSource()` helper.
+- `ControlFormModal.vue` reduced from 783 to 530 lines with no behavior changes.
+
 ## April 1st, 2026 - Fix: Reverb broadcasting CA verification for local TLS
 
 - Added configurable CA bundle path for Reverb's Guzzle client via `REVERB_CA_BUNDLE` env var.

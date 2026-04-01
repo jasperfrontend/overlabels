@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import axios from 'axios';
-import jsep from 'jsep';
 import {
   Dialog,
   DialogContent,
@@ -12,48 +11,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { buildContext, evaluate } from '@/composables/useExpressionEngine';
+import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
+import ComputedFormulaBuilder from '@/components/controls/ComputedFormulaBuilder.vue';
+import type { FormulaState } from '@/components/controls/ComputedFormulaBuilder.vue';
+import {
+  KOFI_PRESETS,
+  GPS_PRESETS,
+  STREAMLABS_PRESETS,
+  TWITCH_PRESETS,
+  getPresetsForSource,
+} from '@/components/controls/controlPresets';
 import type { OverlayControl, OverlayTemplate } from '@/types';
-
-interface ServicePreset {
-  key: string;
-  label: string;
-  type: OverlayControl['type'];
-}
-
-const KOFI_PRESETS: ServicePreset[] = [
-  { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'Ko-fi Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'Ko-fi Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'Ko-fi Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'Ko-fi Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'Ko-fi Total Received (session)', type: 'number' },
-];
-
-const GPS_PRESETS: ServicePreset[] = [
-  { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
-  { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
-  { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
-  { key: 'gps_distance', label: 'GPS Distance (km)', type: 'number' },
-];
-
-const STREAMLABS_PRESETS: ServicePreset[] = [
-  { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'StreamLabs Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'StreamLabs Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'StreamLabs Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'StreamLabs Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
-];
-
-const TWITCH_PRESETS: ServicePreset[] = [
-  { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
-  { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
-  { key: 'gift_subs_this_stream', label: 'Gift Subs This Stream', type: 'counter' },
-  { key: 'resubs_this_stream', label: 'Resubs This Stream', type: 'counter' },
-  { key: 'raids_this_stream', label: 'Raids This Stream', type: 'counter' },
-  { key: 'redemptions_this_stream', label: 'Redemptions This Stream', type: 'counter' },
-];
 
 const props = defineProps<{
   open: boolean;
@@ -74,46 +42,28 @@ const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
 
-// Service preset — driven by a single select value
+// Service preset selection
 const servicePresetKey = ref('');
 const servicePresetSource = ref<string | null>(null);
 
 const selectedServicePreset = computed(() => {
   if (!servicePresetKey.value || !servicePresetSource.value) return null;
-  const presets = servicePresetSource.value === 'twitch' ? TWITCH_PRESETS
-    : servicePresetSource.value === 'kofi' ? KOFI_PRESETS
-    : servicePresetSource.value === 'gpslogger' ? GPS_PRESETS
-    : servicePresetSource.value === 'streamlabs' ? STREAMLABS_PRESETS
-    : [];
+  const presets = getPresetsForSource(servicePresetSource.value);
   const key = servicePresetKey.value.substring(servicePresetKey.value.indexOf(':') + 1);
   return presets.find((p) => p.key === key) ?? null;
 });
 
 const showKofiPresets = computed(
-  () =>
-    !isEditing.value &&
-    props.template?.type === 'static' &&
-    (props.connectedServices ?? []).includes('kofi'),
+  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('kofi'),
 );
-
 const showGpsPresets = computed(
-  () =>
-    !isEditing.value &&
-    props.template?.type === 'static' &&
-    (props.connectedServices ?? []).includes('gpslogger'),
+  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
 );
-
 const showStreamLabsPresets = computed(
-  () =>
-    !isEditing.value &&
-    props.template?.type === 'static' &&
-    (props.connectedServices ?? []).includes('streamlabs'),
+  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
 );
-
 const showTwitchPresets = computed(
-  () =>
-    !isEditing.value &&
-    props.template?.type === 'static',
+  () => !isEditing.value && props.template?.type === 'static',
 );
 
 watch(servicePresetKey, (combinedKey) => {
@@ -129,13 +79,7 @@ watch(servicePresetKey, (combinedKey) => {
   const separatorIndex = combinedKey.indexOf(':');
   const source = combinedKey.substring(0, separatorIndex);
   const key = combinedKey.substring(separatorIndex + 1);
-
-  const presets = source === 'twitch' ? TWITCH_PRESETS
-    : source === 'kofi' ? KOFI_PRESETS
-    : source === 'gpslogger' ? GPS_PRESETS
-    : source === 'streamlabs' ? STREAMLABS_PRESETS
-    : [];
-  const preset = presets.find((p) => p.key === key) ?? null;
+  const preset = getPresetsForSource(source).find((p) => p.key === key) ?? null;
 
   if (preset) {
     form.value.key = preset.key;
@@ -151,7 +95,7 @@ watch(servicePresetKey, (combinedKey) => {
   errors.value = {};
 });
 
-// Sort order mode
+// Sort order
 type SortMode = 'before' | 'after' | 'manual';
 const sortMode = ref<SortMode>('after');
 
@@ -186,78 +130,18 @@ const form = ref({
 
 // Expression control state
 const expressionText = ref('');
-const expressionError = ref('');
-const expressionPreview = ref('');
 
-// Validate and preview expression in real-time
-watch(expressionText, (text) => {
-  expressionError.value = '';
-  expressionPreview.value = '';
-  if (!text.trim()) return;
-
-  if (text.length > 500) {
-    expressionError.value = 'Expression must be 500 characters or less.';
-    return;
-  }
-
-  try {
-    const ast = jsep(text);
-
-    // Build context from available controls for preview
-    const mockData: Record<string, unknown> = {};
-    for (const ctrl of availableWatchControls.value) {
-      const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
-      mockData[key] = ctrl.value ?? '';
-    }
-
-    const ctx = buildContext(mockData);
-    const result = evaluate(ast, ctx);
-    expressionPreview.value = result === null || result === undefined ? '' : String(result);
-  } catch {
-    expressionError.value = 'Invalid expression syntax.';
-  }
-});
-
-/** Build a dot-notation reference for inserting into expression */
-function expressionRef(ctrl: OverlayControl): string {
-  return ctrl.source ? `c.${ctrl.source}.${ctrl.key}` : `c.${ctrl.key}`;
-}
-
-function insertVariable(ctrl: OverlayControl) {
-  const ref = expressionRef(ctrl);
-  expressionText.value = expressionText.value ? `${expressionText.value} ${ref}` : ref;
-}
-
-// Computed control formula state
-const formula = ref({
+// Computed formula state
+const formula = ref<FormulaState>({
   watch_key: '',
-  watch_source: null as string | null,
-  operator: '>=' as string,
+  watch_source: null,
+  operator: '>=',
   compare_value: '',
   then_value: '',
   else_value: '',
 });
 
-// Combined dropdown key for watch control: "source:key" or just "key"
-const formulaWatchRef = ref('');
-
-watch(formulaWatchRef, (val) => {
-  if (!val) {
-    formula.value.watch_key = '';
-    formula.value.watch_source = null;
-    return;
-  }
-  const parts = val.split(':');
-  if (parts.length === 2) {
-    formula.value.watch_source = parts[0];
-    formula.value.watch_key = parts[1];
-  } else {
-    formula.value.watch_source = null;
-    formula.value.watch_key = parts[0];
-  }
-});
-
-// Controls available as watch targets for computed controls
+// Controls available as watch targets for computed/expression controls
 const availableWatchControls = computed(() => {
   const templateControls = (props.existingControls ?? []).filter(
     (c) => !['timer', 'datetime'].includes(c.type) && c.id !== props.control?.id,
@@ -267,15 +151,6 @@ const availableWatchControls = computed(() => {
   );
   return [...templateControls, ...userScoped];
 });
-
-function watchControlRef(ctrl: OverlayControl): string {
-  return ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
-}
-
-function watchControlLabel(ctrl: OverlayControl): string {
-  const label = ctrl.label || ctrl.key;
-  return ctrl.source ? `${label} (${ctrl.source}:${ctrl.key})` : `${label} (${ctrl.key})`;
-}
 
 watch(() => props.open, (open) => {
   if (open) {
@@ -302,9 +177,7 @@ watch(() => props.open, (open) => {
       };
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
-      // Populate expression state
       expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
-      // Populate formula state for computed controls
       if (c.type === 'computed' && cfg.formula) {
         formula.value = {
           watch_key: cfg.formula.watch_key ?? '',
@@ -314,9 +187,6 @@ watch(() => props.open, (open) => {
           then_value: cfg.formula.then_value ?? '',
           else_value: cfg.formula.else_value ?? '',
         };
-        formulaWatchRef.value = cfg.formula.watch_source
-          ? `${cfg.formula.watch_source}:${cfg.formula.watch_key}`
-          : cfg.formula.watch_key ?? '';
       }
     } else {
       form.value = {
@@ -330,7 +200,6 @@ watch(() => props.open, (open) => {
       booleanValue.value = false;
       sortMode.value = 'after';
       formula.value = { watch_key: '', watch_source: null, operator: '>=', compare_value: '', then_value: '', else_value: '' };
-      formulaWatchRef.value = '';
       expressionText.value = '';
     }
   }
@@ -345,28 +214,20 @@ function buildPayload() {
   if (!isEditing.value) {
     payload.key = form.value.key;
     payload.type = form.value.type;
-
     if (servicePresetSource.value) {
       payload.source = servicePresetSource.value;
     }
   }
 
-  // Service preset: don't send config/value (service handles it)
-  if (selectedServicePreset.value) {
-    return payload;
-  }
+  if (selectedServicePreset.value) return payload;
 
   const t = form.value.type;
 
-  // Expression control: send expression config, no value
   if (t === 'expression') {
-    payload.config = {
-      expression: expressionText.value,
-    };
+    payload.config = { expression: expressionText.value };
     return payload;
   }
 
-  // Computed control: send formula config, no value
   if (t === 'computed') {
     payload.config = {
       formula: {
@@ -430,7 +291,7 @@ async function save() {
       );
     }
 
-    emit('saved', isEditing.value ? response.data.control : response.data.control);
+    emit('saved', response.data.control);
     emit('update:open', false);
   } catch (err: any) {
     if (err.response?.status === 422) {
@@ -451,7 +312,7 @@ async function save() {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent :class="form.type === 'expression' ? 'max-w-225' : 'max-w-lg'">
+    <DialogContent :class="form.type === 'expression' ? 'max-w-300' : 'max-w-lg'">
       <DialogHeader>
         <DialogTitle>{{ isEditing ? 'Edit Control' : 'Add Control' }}</DialogTitle>
       </DialogHeader>
@@ -461,7 +322,7 @@ async function save() {
         <div class="space-y-4">
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
-          <!-- Service Presets (Twitch / Ko-fi / GPSLogger) -->
+          <!-- Service Presets -->
           <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <select
@@ -506,6 +367,7 @@ async function save() {
                 v-model="form.key"
                 :disabled="isEditing"
                 placeholder="e.g. deaths"
+                class="mt-1"
                 :class="{ 'border-destructive': errors.key }"
               />
               <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
@@ -520,12 +382,13 @@ async function save() {
               id="ctrl-label"
               v-model="form.label"
               :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
+              class="mt-1"
               :class="{ 'border-destructive': errors.label }"
             />
             <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
           </div>
 
-          <!-- Only show type/value/config if no Ko-fi preset selected -->
+          <!-- Only show type/value/config if no service preset selected -->
           <template v-if="!selectedServicePreset">
             <!-- Type -->
             <div v-if="!isEditing" class="space-y-1">
@@ -533,7 +396,7 @@ async function save() {
               <select
                 id="ctrl-type"
                 v-model="form.type"
-                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
               >
                 <option value="text">Text</option>
                 <option value="number">Number</option>
@@ -548,67 +411,12 @@ async function save() {
             </div>
 
             <!-- Computed formula builder -->
-            <div v-if="form.type === 'computed'" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-              <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Formula</p>
-
-              <div class="space-y-1">
-                <Label for="formula-watch">Watch control</Label>
-                <select
-                  id="formula-watch"
-                  v-model="formulaWatchRef"
-                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-                >
-                  <option value="">-- Select a control --</option>
-                  <option v-for="ctrl in availableWatchControls" :key="ctrl.id" :value="watchControlRef(ctrl)">
-                    {{ watchControlLabel(ctrl) }}
-                  </option>
-                </select>
-                <p v-if="errors['config.formula.watch_key']" class="text-xs text-destructive">{{ errors['config.formula.watch_key'] }}</p>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                  <Label for="formula-op">Operator</Label>
-                  <select
-                    id="formula-op"
-                    v-model="formula.operator"
-                    class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
-                  >
-                    <option value="==">== (equals)</option>
-                    <option value="!=">!= (not equals)</option>
-                    <option value=">">&gt; (greater than)</option>
-                    <option value="<">&lt; (less than)</option>
-                    <option value=">=">&gt;= (greater or equal)</option>
-                    <option value="<=">&lt;= (less or equal)</option>
-                  </select>
-                </div>
-                <div class="space-y-1">
-                  <Label for="formula-compare">Compare value</Label>
-                  <Input id="formula-compare" v-model="formula.compare_value" placeholder="e.g. 5" />
-                  <p v-if="errors['config.formula.compare_value']" class="text-xs text-destructive">{{ errors['config.formula.compare_value'] }}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                  <Label for="formula-then">Then value <span class="text-muted-foreground text-xs">(condition true)</span></Label>
-                  <Input id="formula-then" v-model="formula.then_value" placeholder="e.g. 50" />
-                  <p v-if="errors['config.formula.then_value']" class="text-xs text-destructive">{{ errors['config.formula.then_value'] }}</p>
-                </div>
-                <div class="space-y-1">
-                  <Label for="formula-else">Else value <span class="text-muted-foreground text-xs">(condition false)</span></Label>
-                  <Input id="formula-else" v-model="formula.else_value" placeholder="e.g. 10" />
-                  <p v-if="errors['config.formula.else_value']" class="text-xs text-destructive">{{ errors['config.formula.else_value'] }}</p>
-                </div>
-              </div>
-
-              <p v-if="formulaWatchRef && formula.compare_value" class="text-xs text-muted-foreground">
-                WHEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formulaWatchRef }}</code>
-                {{ formula.operator }} {{ formula.compare_value }}
-                THEN <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.then_value || '(empty)' }}</code>
-                ELSE <code class="rounded bg-black/10 px-1 dark:bg-white/10">{{ formula.else_value || '(empty)' }}</code>
-              </p>
-            </div>
+            <ComputedFormulaBuilder
+              v-if="form.type === 'computed'"
+              v-model="formula"
+              :available-controls="availableWatchControls"
+              :errors="errors"
+            />
 
             <!-- Value (text/number/counter/datetime) -->
             <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed' && form.type !== 'expression'" class="space-y-1">
@@ -684,7 +492,7 @@ async function save() {
             <select
               id="ctrl-sort"
               v-model="sortMode"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
             >
               <option value="after">After existing (last)</option>
               <option value="before">Before existing (first)</option>
@@ -703,52 +511,12 @@ async function save() {
         </div>
 
         <!-- Right column: Expression builder (only when type is expression) -->
-        <div v-if="form.type === 'expression' && !selectedServicePreset" class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-          <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Expression</p>
-
-          <div class="space-y-1">
-            <Label for="expression-text">Formula</Label>
-            <textarea
-              id="expression-text"
-              v-model="expressionText"
-              rows="3"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
-              :class="{ 'border-destructive': expressionError }"
-              placeholder="e.g. c.kofi.kofis_received + c.streamlabs.total_received"
-            />
-            <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
-            <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
-            <p class="text-xs text-muted-foreground">
-              Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.key</code> to reference controls, or
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.source.key</code> for service controls.
-              Supports <code class="rounded bg-black/10 px-1 dark:bg-white/10">+ - * / == != &gt; &lt; &gt;= &lt;= &amp;&amp; || ? :</code>
-            </p>
-          </div>
-
-          <!-- Available variables (click to insert) -->
-          <div v-if="availableWatchControls.length" class="space-y-1">
-            <Label>Available controls <span class="text-xs text-muted-foreground">(click to insert)</span></Label>
-            <div class="flex max-h-50 flex-wrap gap-1.5 overflow-y-auto">
-              <button
-                v-for="ctrl in availableWatchControls"
-                :key="ctrl.id"
-                type="button"
-                class="rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition"
-                @click="insertVariable(ctrl)"
-              >
-                {{ expressionRef(ctrl) }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Live preview -->
-          <div v-if="expressionText.trim() && !expressionError" class="space-y-1">
-            <Label>Preview</Label>
-            <div class="rounded-sm bg-black/5 dark:bg-white/5 px-3 py-1.5 font-mono text-sm">
-              {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
-            </div>
-          </div>
-        </div>
+        <ExpressionBuilder
+          v-if="form.type === 'expression' && !selectedServicePreset"
+          v-model="expressionText"
+          :available-controls="availableWatchControls"
+          :errors="errors"
+        />
       </div>
 
       <DialogFooter>
