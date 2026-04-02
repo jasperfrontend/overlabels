@@ -56,3 +56,16 @@
 - Enables cross-service comparisons like: `c.streamlabs.latest_donor_at > c.kofi.latest_donor_at ? c.streamlabs.latest_donor_name : c.kofi.latest_donor_name`.
 - Injected at initial overlay load from the control's `updated_at` and on every real-time broadcast.
 - No database schema changes - timestamps are virtual companion values derived from existing data.
+
+## April 2nd, 2026 - Feature: Timer "Count to date/time" mode
+
+- Added `countto` as a third Timer mode alongside `countup` and `countdown`.
+- User picks a target date/time via a `datetime-local` picker; the timer counts down the remaining seconds until that moment.
+- Stored entirely in the Timer's own config (`target_datetime`) - no dependency on other controls.
+- `countto` timers always tick (no start/stop needed); the ControlPanel shows the target datetime instead of play/pause/reset buttons.
+- Output is raw seconds, same as other timer modes - will benefit from the pipe/formatter system (Milestone 5d) when that ships.
+
+## April 2nd, 2026 - Docs: Added Milestone 5d (Output Formatting)
+
+- Added Milestone 5d to the roadmap: a pipe/formatter system for template tags (`[[[c:key|format]]]`).
+- Covers duration, date, and number formatters that work for all control types.

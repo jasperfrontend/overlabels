@@ -92,6 +92,12 @@ function computeTimerSeconds(state: any): number {
   const running = Boolean(state.running ?? false);
   const startedAt = state.started_at ? new Date(state.started_at).getTime() : null;
 
+  if (mode === 'countto') {
+    const target = state.target_datetime ? new Date(state.target_datetime).getTime() : null;
+    if (!target) return 0;
+    return Math.max(0, Math.floor((target - Date.now()) / 1000));
+  }
+
   let elapsed = offset;
   if (running && startedAt) {
     elapsed = offset + Math.floor((Date.now() - startedAt) / 1000);
@@ -109,7 +115,7 @@ function startTimerTick(key: string, state: any) {
     data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(state)) };
   }
 
-  if (!state.running) return;
+  if (!state.running && state.mode !== 'countto') return;
 
   timerIntervals[key] = window.setInterval(() => {
     if (!data.value) return;

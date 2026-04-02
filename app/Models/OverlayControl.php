@@ -72,6 +72,17 @@ class OverlayControl extends Model
         $running = (bool) ($config['running'] ?? false);
         $startedAt = $config['started_at'] ?? null;
 
+        if ($mode === 'countto') {
+            $targetDatetime = $config['target_datetime'] ?? null;
+            if (! $targetDatetime) {
+                return '0';
+            }
+            $target = \Carbon\Carbon::parse($targetDatetime);
+            $remaining = (int) now()->diffInSeconds($target, false);
+
+            return (string) max(0, $remaining);
+        }
+
         $elapsed = $offsetSeconds;
 
         if ($running && $startedAt) {

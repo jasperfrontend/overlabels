@@ -59,6 +59,12 @@ function computeTimerDisplay(ctrl: OverlayControl): string {
   const running = Boolean(cfg.running ?? false);
   const startedAt = cfg.started_at ? new Date(cfg.started_at).getTime() : null;
 
+  if (mode === 'countto') {
+    const target = cfg.target_datetime ? new Date(cfg.target_datetime).getTime() : null;
+    if (!target) return '0:00';
+    return formatSeconds(Math.max(0, Math.floor((target - Date.now()) / 1000)));
+  }
+
   let elapsed = offset;
   if (running && startedAt) {
     elapsed = offset + Math.floor((Date.now() - startedAt) / 1000);
@@ -72,7 +78,8 @@ function startTimerTick(ctrl: OverlayControl) {
   stopTimerTick(ctrl.id);
   timerDisplays.value[ctrl.id] = computeTimerDisplay(ctrl);
   const cfg = ctrl.config ?? {};
-  if (!cfg.running) return;
+  const isCountto = cfg.mode === 'countto';
+  if (!cfg.running && !isCountto) return;
 
   timerIntervals.value[ctrl.id] = window.setInterval(() => {
     timerDisplays.value[ctrl.id] = computeTimerDisplay(ctrl);
@@ -249,7 +256,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
           <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
             {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
           </div>
-          <div class="flex gap-1.5">
+          <template v-if="ctrl.config?.mode === 'countto'">
+            <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? new Date(ctrl.config.target_datetime).toLocaleString() : 'no target set' }}</span>
+          </template>
+          <div v-else class="flex gap-1.5">
             <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
               <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
               <PlayIcon v-else class="h-3.5 w-3.5" />

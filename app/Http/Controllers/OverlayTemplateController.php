@@ -394,6 +394,7 @@ class OverlayTemplateController extends Controller
                         'offset_seconds' => (int) ($cfg['offset_seconds'] ?? 0),
                         'running' => (bool) ($cfg['running'] ?? false),
                         'started_at' => $cfg['started_at'] ?? null,
+                        'target_datetime' => $cfg['target_datetime'] ?? null,
                     ];
                 }
                 if ($control->type === 'expression') {

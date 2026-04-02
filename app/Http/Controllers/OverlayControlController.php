@@ -510,6 +510,7 @@ class OverlayControlController extends Controller
             'offset_seconds' => (int) ($config['offset_seconds'] ?? 0),
             'running' => (bool) ($config['running'] ?? false),
             'started_at' => $config['started_at'] ?? null,
+            'target_datetime' => $config['target_datetime'] ?? null,
         ];
 
         $this->broadcastUpdate($template, $control, $displayValue, $timerState);

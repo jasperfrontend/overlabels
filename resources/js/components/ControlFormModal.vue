@@ -122,8 +122,9 @@ const form = ref({
     max: undefined as number | undefined,
     step: 1 as number | undefined,
     reset_value: 0 as number,
-    mode: 'countup' as 'countup' | 'countdown',
+    mode: 'countup' as 'countup' | 'countdown' | 'countto',
     base_seconds: 0 as number,
+    target_datetime: '' as string,
   },
   sort_order: 0,
 });
@@ -172,6 +173,7 @@ watch(() => props.open, (open) => {
           reset_value: cfg.reset_value ?? 0,
           mode: cfg.mode ?? 'countup',
           base_seconds: cfg.base_seconds ?? 0,
+          target_datetime: cfg.target_datetime ?? '',
         },
         sort_order: c.sort_order,
       };
@@ -194,7 +196,7 @@ watch(() => props.open, (open) => {
         label: '',
         type: 'text',
         value: '',
-        config: { min: undefined, max: undefined, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0 },
+        config: { min: undefined, max: undefined, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0, target_datetime: '' },
         sort_order: 0,
       };
       booleanValue.value = false;
@@ -252,7 +254,8 @@ function buildPayload() {
   } else if (t === 'timer') {
     payload.config = {
       mode: form.value.config.mode,
-      base_seconds: form.value.config.base_seconds,
+      base_seconds: form.value.config.mode === 'countdown' ? form.value.config.base_seconds : 0,
+      target_datetime: form.value.config.mode === 'countto' ? form.value.config.target_datetime : null,
       offset_seconds: 0,
       running: false,
       started_at: null,
@@ -468,7 +471,7 @@ async function save() {
               <p class="text-sm font-medium">Timer settings</p>
               <div class="space-y-2">
                 <Label>Mode</Label>
-                <div class="flex gap-4">
+                <div class="flex flex-wrap gap-4">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input type="radio" v-model="form.config.mode" value="countup" />
                     <span class="text-sm">Count up</span>
@@ -477,11 +480,25 @@ async function save() {
                     <input type="radio" v-model="form.config.mode" value="countdown" />
                     <span class="text-sm">Count down</span>
                   </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" v-model="form.config.mode" value="countto" />
+                    <span class="text-sm">Count to date/time</span>
+                  </label>
                 </div>
               </div>
               <div v-if="form.config.mode === 'countdown'" class="space-y-1">
                 <Label for="ctrl-base">Base duration (seconds)</Label>
                 <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
+              </div>
+              <div v-if="form.config.mode === 'countto'" class="space-y-1">
+                <Label for="ctrl-target">Target date/time</Label>
+                <input
+                  id="ctrl-target"
+                  v-model="form.config.target_datetime"
+                  type="datetime-local"
+                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+                <p class="text-xs text-muted-foreground">The timer will count down the seconds remaining until this date and time.</p>
               </div>
             </div>
           </template>

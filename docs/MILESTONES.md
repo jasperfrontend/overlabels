@@ -125,6 +125,22 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Broadcaster/mod-only by default, configurable per command
 - Changes fire the same `ControlValueUpdated` broadcast the overlay already listens to
 
+## Milestone 5d — Output Formatting (Pipe System)
+> *Control values are raw: seconds, ISO strings, bare numbers. Templates need a way to say*
+> *"display this value as HH:MM:SS" or "format this datetime as dd-MM-yyyy" without the user*
+> *writing JavaScript in their overlay HTML.*
+
+- Pipe syntax in template tags: `[[[c:my_timer|duration]]]`, `[[[c:my_datetime|date:dd-MM-yyyy]]]`
+- Built-in formatters:
+  - `duration` — seconds to `HH:MM:SS` (or custom pattern like `mm:ss`)
+  - `date` — ISO datetime to formatted date string
+  - `number` — decimal precision, thousands separators
+- Works for all control types, not just timers
+- `TemplateParserService` updated to recognise and validate pipe syntax
+- Overlay renderer applies formatters at render time (client-side)
+- Tag generator UI updated to let users pick a formatter and preview output
+- Thorough documentation - this changes how users think about template tags
+
 ---
 
 ## Milestone 6 — Community (Rebuilt Properly)
@@ -136,4 +152,4 @@ Completed milestones are kept here as a record of intent vs. reality.
 - No gamification, no badges, no points. Just useful discovery.
 
 
-*Last updated: March 2026*
+*Last updated: April 2026*
