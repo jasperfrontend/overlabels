@@ -91,7 +91,6 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   timer: 'secondary',
   datetime: 'outline',
   boolean: 'default',
-  computed: 'secondary',
   expression: 'default',
 };
 
@@ -105,15 +104,10 @@ function configSummary(ctrl: OverlayControl): string[] {
     if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
     if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
   } else if (ctrl.type === 'timer') {
-    const mode = cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
+    const mode = cfg.mode === 'countto' ? 'Count to' : cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
     parts.push(mode);
     if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
-  } else if (ctrl.type === 'computed') {
-    const f = cfg.formula;
-    if (f) {
-      const src = f.watch_source ? `${f.watch_source}:${f.watch_key}` : f.watch_key;
-      parts.push(`WHEN ${src} ${f.operator} ${f.compare_value} THEN ${f.then_value} ELSE ${f.else_value}`);
-    }
+    if (cfg.mode === 'countto' && cfg.target_datetime) parts.push(new Date(cfg.target_datetime).toLocaleString());
   } else if (ctrl.type === 'expression') {
     const expr = cfg.expression;
     if (expr) parts.push(expr);

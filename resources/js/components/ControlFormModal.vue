@@ -12,8 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
-import ComputedFormulaBuilder from '@/components/controls/ComputedFormulaBuilder.vue';
-import type { FormulaState } from '@/components/controls/ComputedFormulaBuilder.vue';
 import {
   KOFI_PRESETS,
   GPS_PRESETS,
@@ -132,16 +130,6 @@ const form = ref({
 // Expression control state
 const expressionText = ref('');
 
-// Computed formula state
-const formula = ref<FormulaState>({
-  watch_key: '',
-  watch_source: null,
-  operator: '>=',
-  compare_value: '',
-  then_value: '',
-  else_value: '',
-});
-
 // Controls available as watch targets for computed/expression controls
 const availableWatchControls = computed(() => {
   const templateControls = (props.existingControls ?? []).filter(
@@ -180,16 +168,6 @@ watch(() => props.open, (open) => {
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
       expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
-      if (c.type === 'computed' && cfg.formula) {
-        formula.value = {
-          watch_key: cfg.formula.watch_key ?? '',
-          watch_source: cfg.formula.watch_source ?? null,
-          operator: cfg.formula.operator ?? '>=',
-          compare_value: cfg.formula.compare_value ?? '',
-          then_value: cfg.formula.then_value ?? '',
-          else_value: cfg.formula.else_value ?? '',
-        };
-      }
     } else {
       form.value = {
         key: '',
@@ -201,7 +179,6 @@ watch(() => props.open, (open) => {
       };
       booleanValue.value = false;
       sortMode.value = 'after';
-      formula.value = { watch_key: '', watch_source: null, operator: '>=', compare_value: '', then_value: '', else_value: '' };
       expressionText.value = '';
     }
   }
@@ -227,20 +204,6 @@ function buildPayload() {
 
   if (t === 'expression') {
     payload.config = { expression: expressionText.value };
-    return payload;
-  }
-
-  if (t === 'computed') {
-    payload.config = {
-      formula: {
-        watch_key: formula.value.watch_key,
-        watch_source: formula.value.watch_source || null,
-        operator: formula.value.operator,
-        compare_value: formula.value.compare_value,
-        then_value: formula.value.then_value,
-        else_value: formula.value.else_value,
-      },
-    };
     return payload;
   }
 
@@ -407,22 +370,13 @@ async function save() {
                 <option value="timer">Timer</option>
                 <option value="datetime">Date/Time</option>
                 <option value="boolean">Boolean (on/off switch)</option>
-                <option value="computed">Computed (auto-calculated)</option>
                 <option value="expression">Expression (formula)</option>
               </select>
               <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
             </div>
 
-            <!-- Computed formula builder -->
-            <ComputedFormulaBuilder
-              v-if="form.type === 'computed'"
-              v-model="formula"
-              :available-controls="availableWatchControls"
-              :errors="errors"
-            />
-
             <!-- Value (text/number/counter/datetime) -->
-            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'computed' && form.type !== 'expression'" class="space-y-1">
+            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'expression'" class="space-y-1">
               <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 id="ctrl-value"

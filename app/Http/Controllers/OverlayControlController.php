@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
-use App\Services\ComputedControlService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\StreamSessionService;
 use Carbon\Carbon;
@@ -99,63 +98,6 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control], 201);
         }
 
-        // Computed control: validate formula and set initial value
-        if ($validated['type'] === 'computed') {
-            $request->validate([
-                'config.formula.watch_key' => 'required|string|max:50',
-                'config.formula.watch_source' => 'nullable|string|max:50',
-                'config.formula.operator' => 'required|in:==,!=,>,<,>=,<=',
-                'config.formula.compare_value' => 'required|string|max:200',
-                'config.formula.then_value' => 'required|string|max:1000',
-                'config.formula.else_value' => 'required|string|max:1000',
-            ]);
-
-            $formula = $request->input('config.formula');
-            $computedService = app(ComputedControlService::class);
-
-            // Validate that the watched control exists in scope
-            $available = $computedService->getAvailableControls(auth()->user(), $template->id);
-            $watchSource = $formula['watch_source'] ?: null;
-            $exists = $available->first(function ($c) use ($formula, $watchSource) {
-                return $c->key === $formula['watch_key'] && ($c->source ?: null) === $watchSource;
-            });
-
-            if (! $exists) {
-                abort(422, "Watched control '{$formula['watch_key']}' not found in scope.");
-            }
-
-            // Create the control first (needed for cycle detection with an ID)
-            $control = OverlayControl::createForTemplate($template, auth()->user(), [
-                'key' => $validated['key'],
-                'label' => $validated['label'] ?? null,
-                'type' => 'computed',
-                'value' => null,
-                'config' => ['formula' => $formula],
-                'sort_order' => $validated['sort_order'] ?? 0,
-            ]);
-
-            // Cycle detection
-            if ($computedService->detectCycle($control, $formula, $template->id)) {
-                $control->delete();
-                abort(422, 'This formula would create a circular dependency.');
-            }
-
-            // Evaluate initial value
-            $initialValue = $computedService->evaluate($control, $exists->value);
-            $control->update(['value' => $initialValue]);
-
-            // Broadcast initial value
-            ControlValueUpdated::dispatch(
-                $template->slug,
-                $control->broadcastKey(),
-                $control->type,
-                $initialValue,
-                auth()->user()->twitch_id,
-            );
-
-            return response()->json(['control' => $control->fresh()], 201);
-        }
-
         // Expression control: validate expression string, extract dependencies, check cycles
         if ($validated['type'] === 'expression') {
             $request->validate([
@@ -170,8 +112,7 @@ class OverlayControlController extends Controller
             }
 
             // Validate all referenced controls exist in scope
-            $computedService = app(ComputedControlService::class);
-            $available = $computedService->getAvailableControls(auth()->user(), $template->id);
+            $available = OverlayControl::getAvailableControls(auth()->user(), $template->id);
 
             foreach ($dependencies as $dep) {
                 $colonIdx = strpos($dep, ':');
@@ -207,7 +148,7 @@ class OverlayControlController extends Controller
             ]);
 
             // Cycle detection for expressions
-            if ($computedService->detectExpressionCycle($control, $dependencies, $template->id)) {
+            if (OverlayControl::detectExpressionCycle($control, $dependencies, $template->id)) {
                 $control->delete();
                 abort(422, 'This expression would create a circular dependency.');
             }
@@ -244,59 +185,6 @@ class OverlayControlController extends Controller
             'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        // Handle computed control formula updates
-        if ($control->isComputed() && isset($validated['config']['formula'])) {
-            $request->validate([
-                'config.formula.watch_key' => 'required|string|max:50',
-                'config.formula.watch_source' => 'nullable|string|max:50',
-                'config.formula.operator' => 'required|in:==,!=,>,<,>=,<=',
-                'config.formula.compare_value' => 'required|string|max:200',
-                'config.formula.then_value' => 'required|string|max:1000',
-                'config.formula.else_value' => 'required|string|max:1000',
-            ]);
-
-            $formula = $request->input('config.formula');
-            $computedService = app(ComputedControlService::class);
-
-            // Validate watched control exists
-            $available = $computedService->getAvailableControls(auth()->user(), $template->id, $control->id);
-            $watchSource = $formula['watch_source'] ?: null;
-            $exists = $available->first(function ($c) use ($formula, $watchSource) {
-                return $c->key === $formula['watch_key'] && ($c->source ?: null) === $watchSource;
-            });
-
-            if (! $exists) {
-                abort(422, "Watched control '{$formula['watch_key']}' not found in scope.");
-            }
-
-            // Cycle detection
-            if ($computedService->detectCycle($control, $formula, $template->id)) {
-                abort(422, 'This formula would create a circular dependency.');
-            }
-
-            $control->update([
-                'label' => $validated['label'] ?? $control->label,
-                'config' => ['formula' => $formula],
-                'sort_order' => $validated['sort_order'] ?? $control->sort_order,
-            ]);
-
-            // Re-evaluate
-            $newValue = $computedService->evaluate($control, $exists->value);
-            if ($newValue !== ($control->value ?? '')) {
-                $control->update(['value' => $newValue]);
-
-                ControlValueUpdated::dispatch(
-                    $template->slug,
-                    $control->broadcastKey(),
-                    $control->type,
-                    $newValue,
-                    auth()->user()->twitch_id,
-                );
-            }
-
-            return response()->json(['control' => $control->fresh()]);
-        }
-
         // Handle expression control updates
         if ($control->isExpression() && isset($validated['config']['expression'])) {
             $request->validate([
@@ -310,8 +198,7 @@ class OverlayControlController extends Controller
                 abort(422, 'Expression must reference at least one control (e.g. c.my_control).');
             }
 
-            $computedService = app(ComputedControlService::class);
-            $available = $computedService->getAvailableControls(auth()->user(), $template->id, $control->id);
+            $available = OverlayControl::getAvailableControls(auth()->user(), $template->id, $control->id);
 
             foreach ($dependencies as $dep) {
                 $colonIdx = strpos($dep, ':');
@@ -333,7 +220,7 @@ class OverlayControlController extends Controller
                 }
             }
 
-            if ($computedService->detectExpressionCycle($control, $dependencies, $template->id)) {
+            if (OverlayControl::detectExpressionCycle($control, $dependencies, $template->id)) {
                 abort(422, 'This expression would create a circular dependency.');
             }
 
@@ -349,7 +236,7 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control->fresh()]);
         }
 
-        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime', 'computed', 'expression'])) {
+        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime', 'expression'])) {
             $validated['value'] = OverlayControl::sanitizeValue($control->type, $validated['value'] ?? '');
         } else {
             unset($validated['value']);
@@ -384,10 +271,6 @@ class OverlayControlController extends Controller
         if ($control->source_managed) {
             $source = ucfirst($control->source ?? 'an external service');
             abort(403, "This control is managed by {$source} and cannot be edited manually.");
-        }
-
-        if ($control->isComputed()) {
-            abort(403, 'Computed controls cannot be edited manually. Their value is derived automatically.');
         }
 
         if ($control->isExpression()) {
@@ -449,9 +332,7 @@ class OverlayControlController extends Controller
 
         $this->broadcastUpdate($template, $control, $sanitized);
 
-        $cascaded = app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
-
-        return response()->json(['control' => $control->fresh(), 'value' => $sanitized, 'cascaded' => $cascaded]);
+        return response()->json(['control' => $control->fresh(), 'value' => $sanitized]);
     }
 
     /**
@@ -515,9 +396,7 @@ class OverlayControlController extends Controller
 
         $this->broadcastUpdate($template, $control, $displayValue, $timerState);
 
-        $cascaded = app(ComputedControlService::class)->cascade(auth()->user(), $control, $template->slug);
-
-        return response()->json(['control' => $control, 'value' => $displayValue, 'timer_state' => $timerState, 'cascaded' => $cascaded]);
+        return response()->json(['control' => $control, 'value' => $displayValue, 'timer_state' => $timerState]);
     }
 
     /**
@@ -556,25 +435,6 @@ class OverlayControlController extends Controller
                 continue;
             }
 
-            // For computed controls, validate that the dependency exists on the target
-            if ($item['type'] === 'computed') {
-                $formula = $item['config']['formula'] ?? null;
-                if (! $formula || empty($formula['watch_key'])) {
-                    continue; // Skip computed controls without a valid formula
-                }
-
-                $computedService = app(ComputedControlService::class);
-                $available = $computedService->getAvailableControls($user, $template->id);
-                $watchSource = ($formula['watch_source'] ?? null) ?: null;
-                $depExists = $available->first(function ($c) use ($formula, $watchSource) {
-                    return $c->key === $formula['watch_key'] && ($c->source ?: null) === $watchSource;
-                });
-
-                if (! $depExists) {
-                    continue; // Skip - dependency not available on target template
-                }
-            }
-
             $control = OverlayControl::createForTemplate($template, $user, [
                 'key' => $item['key'],
                 'label' => $item['label'] ?? null,
@@ -585,24 +445,6 @@ class OverlayControlController extends Controller
             ]);
 
             $created[] = $control;
-        }
-
-        // Evaluate any imported computed controls to set initial values
-        $computedService = app(ComputedControlService::class);
-        foreach ($created as $control) {
-            if ($control->type === 'computed') {
-                $formula = $control->config['formula'] ?? null;
-                if (! $formula) {
-                    continue;
-                }
-                $watchSource = ($formula['watch_source'] ?? null) ?: null;
-                $available = $computedService->getAvailableControls($user, $template->id, $control->id);
-                $dep = $available->first(function ($c) use ($formula, $watchSource) {
-                    return $c->key === $formula['watch_key'] && ($c->source ?: null) === $watchSource;
-                });
-                $initialValue = $computedService->evaluate($control, $dep?->value);
-                $control->update(['value' => $initialValue]);
-            }
         }
 
         return response()->json(['created' => $created, 'count' => count($created)]);

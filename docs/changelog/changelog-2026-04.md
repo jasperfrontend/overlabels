@@ -57,6 +57,14 @@
 - Injected at initial overlay load from the control's `updated_at` and on every real-time broadcast.
 - No database schema changes - timestamps are virtual companion values derived from existing data.
 
+## April 2nd, 2026 - Removed: Computed control type
+
+- Removed the `computed` control type entirely. Everything it did (simple if/else logic) is better handled by Expression controls, which evaluate client-side with zero latency.
+- Deleted `ComputedControlService`, `ComputedFormulaBuilder.vue`, and all computed-related tests.
+- Removed cascade logic from `OverlayControlController`, `StreamSessionService`, and `ExternalControlService` - computed controls were the only consumer.
+- Moved `getAvailableControls()` and `detectExpressionCycle()` to static methods on `OverlayControl` model (still needed for expression validation).
+- Also improved `ControlsManager` config summary to show "Count to" mode and target datetime for timer controls.
+
 ## April 2nd, 2026 - Feature: Timer "Count to date/time" mode
 
 - Added `countto` as a third Timer mode alongside `countup` and `countdown`.

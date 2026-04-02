@@ -112,15 +112,6 @@ async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
     if (ctrl.type === 'timer') {
       startTimerTick(ctrl);
     }
-    // Apply cascaded computed control updates
-    if (data.cascaded?.length) {
-      for (const updated of data.cascaded) {
-        const target = props.controls.find((c) => c.id === updated.id);
-        if (target) {
-          Object.assign(target, updated);
-        }
-      }
-    }
     return data;
   } catch (err: any) {
     const msg = err.response?.data?.message ?? 'Failed to update control.';
@@ -296,14 +287,6 @@ async function toggleBoolean(ctrl: OverlayControl) {
           <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
             ctrl.value === '1' ? 'On' : 'Off'
           }}</span>
-        </div>
-
-        <!-- Computed control -->
-        <div v-else-if="ctrl.type === 'computed'" class="flex items-center gap-3">
-          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
-            {{ ctrl.value ?? '' }}
-          </div>
-          <span class="text-xs text-muted-foreground">Auto-computed</span>
         </div>
 
         <!-- Expression control (read-only, evaluated in overlay) -->

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 class OverlayControl extends Model
 {
@@ -29,7 +30,7 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'computed', 'expression'];
+    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
     const RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger'];
@@ -42,7 +43,7 @@ class OverlayControl extends Model
     public static function sanitizeValue(string $type, mixed $raw): string
     {
         return match ($type) {
-            'text', 'computed', 'expression' => strip_tags((string) $raw),
+            'text', 'expression' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
             default => '', // timer, datetime: value derived from config
@@ -154,44 +155,11 @@ class OverlayControl extends Model
     }
 
     /**
-     * Check if this control is a computed type.
-     */
-    public function isComputed(): bool
-    {
-        return $this->type === 'computed';
-    }
-
-    /**
      * Check if this control is an expression type.
      */
     public function isExpression(): bool
     {
         return $this->type === 'expression';
-    }
-
-    /**
-     * Get the broadcast key of the control this computed control watches.
-     * Returns null if not a computed control or formula is missing.
-     */
-    public function getDependencyBroadcastKey(): ?string
-    {
-        if (! $this->isComputed()) {
-            return null;
-        }
-
-        $formula = $this->config['formula'] ?? null;
-        if (! $formula) {
-            return null;
-        }
-
-        $watchKey = $formula['watch_key'] ?? null;
-        $watchSource = $formula['watch_source'] ?? null;
-
-        if (! $watchKey) {
-            return null;
-        }
-
-        return $watchSource ? "{$watchSource}:{$watchKey}" : $watchKey;
     }
 
     /**
@@ -236,6 +204,101 @@ class OverlayControl extends Model
         }
 
         return array_values(array_unique($deps));
+    }
+
+    /**
+     * Get controls available as dependencies for expression controls.
+     * Excludes timers and datetimes.
+     */
+    public static function getAvailableControls(User $user, ?int $templateId, ?int $excludeId = null): Collection
+    {
+        $query = static::where('user_id', $user->id)
+            ->whereNotIn('type', ['timer', 'datetime']);
+
+        if ($templateId) {
+            $query->where(function ($q) use ($templateId) {
+                $q->where('overlay_template_id', $templateId)
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('overlay_template_id')
+                            ->where('source_managed', true);
+                    });
+            });
+        } else {
+            $query->whereNull('overlay_template_id');
+        }
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->orderBy('sort_order')->get();
+    }
+
+    /**
+     * Detect if saving this expression would create a circular dependency.
+     */
+    public static function detectExpressionCycle(self $control, array $dependencies, ?int $templateId): bool
+    {
+        return static::dfsDetectExpressionCycle(
+            $control->id,
+            $control->user_id,
+            $dependencies,
+            $templateId,
+            [],
+            0
+        );
+    }
+
+    private static function dfsDetectExpressionCycle(int $originId, int $userId, array $dependencies, ?int $templateId, array $visited, int $depth): bool
+    {
+        if ($depth >= 5) {
+            return false;
+        }
+
+        foreach ($dependencies as $dep) {
+            $colonIdx = strpos($dep, ':');
+            if ($colonIdx !== false) {
+                $depSource = substr($dep, 0, $colonIdx);
+                $depKey = substr($dep, $colonIdx + 1);
+            } else {
+                $depSource = null;
+                $depKey = $dep;
+            }
+
+            $query = static::where('user_id', $userId)->where('key', $depKey);
+            if ($depSource) {
+                $query->where('source', $depSource);
+            } else {
+                $query->whereNull('source');
+            }
+            if ($templateId) {
+                $query->where(function ($q) use ($templateId) {
+                    $q->where('overlay_template_id', $templateId)
+                        ->orWhereNull('overlay_template_id');
+                });
+            } else {
+                $query->whereNull('overlay_template_id');
+            }
+
+            foreach ($query->get() as $watched) {
+                if ($watched->id === $originId) {
+                    return true;
+                }
+                if (in_array($watched->id, $visited)) {
+                    continue;
+                }
+                $visited[] = $watched->id;
+
+                if ($watched->isExpression()) {
+                    $watchedDeps = $watched->getExpressionDependencies();
+                    if (! empty($watchedDeps) && static::dfsDetectExpressionCycle($originId, $userId, $watchedDeps, $watched->overlay_template_id ?? $templateId, $visited, $depth + 1)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
