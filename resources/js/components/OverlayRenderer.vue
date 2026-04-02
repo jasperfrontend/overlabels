@@ -456,7 +456,11 @@ function handleControlUpdated(event: any) {
   const atKey = `c:${event.key}_at`;
   const timestamp = event.updated_at ? String(event.updated_at) : String(Math.floor(Date.now() / 1000));
 
-  if (event.type === 'timer' && event.timer_state) {
+  if (event.type === 'expression' && event.expression) {
+    // Re-register the expression with the updated formula
+    expressionEngine.registerExpression(event.key, event.expression);
+    data.value = { ...data.value, [atKey]: timestamp };
+  } else if (event.type === 'timer' && event.timer_state) {
     // For timers, start/update the local tick interval using the broadcast state
     startTimerTick(event.key, event.timer_state);
     data.value = { ...data.value, [atKey]: timestamp };

@@ -233,6 +233,17 @@ class OverlayControlController extends Controller
                 'sort_order' => $validated['sort_order'] ?? $control->sort_order,
             ]);
 
+            // Broadcast so the overlay re-registers the expression with the new formula
+            ControlValueUpdated::dispatch(
+                $template->slug,
+                $control->broadcastKey(),
+                $control->type,
+                $control->value ?? '',
+                auth()->user()->twitch_id,
+                null,
+                $expression,
+            );
+
             return response()->json(['control' => $control->fresh()]);
         }
 

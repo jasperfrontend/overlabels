@@ -57,6 +57,13 @@
 - Injected at initial overlay load from the control's `updated_at` and on every real-time broadcast.
 - No database schema changes - timestamps are virtual companion values derived from existing data.
 
+## April 3rd, 2026 - Fix: Expression formula edits not updating overlay in real-time
+
+- Editing an Expression control's formula saved to the database but never broadcast a change to the overlay, requiring a hard refresh to pick up the new expression.
+- `ControlValueUpdated` event now accepts an optional `expression` parameter, included in the broadcast payload.
+- `OverlayControlController` broadcasts the updated expression after saving.
+- `OverlayRenderer` re-registers the expression via `expressionEngine.registerExpression()` when it receives a `control.updated` event with a new expression, triggering immediate re-evaluation.
+
 ## April 2nd, 2026 - Removed: Computed control type
 
 - Removed the `computed` control type entirely. Everything it did (simple if/else logic) is better handled by Expression controls, which evaluate client-side with zero latency.
