@@ -78,7 +78,7 @@ async function copyLink(path: string, id: number) {
 }
 
 function handleFork(t: OverlayTemplate) {
-  if (confirm('Are you sure you want to fork this template to your own account?')) {
+  if (confirm('Are you sure you want to copy this template to your own account?')) {
     router.post(`/templates/${t.id}/fork`);
   }
 }
@@ -94,14 +94,14 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <div class="my-4 w-auto rounded-sm border bg-background">
+  <div class="my-6 w-auto rounded-sm border border-sidebar bg-background/50">
     <div v-for="t in templates" :key="t.id" class="group text-sm">
       <Link
         :href="detailsHref(t)"
-        class="flex flex-row justify-between p-4 transition-colors hover:bg-sidebar-accent"
+        class="flex flex-row justify-between p-4 hover:bg-sidebar-accent"
         :class="{ 'rounded-t-sm': templates.indexOf(t) === 0, 'rounded-b-sm': templates.indexOf(t) === templates.length - 1 }"
       >
-        <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" />
+        <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" description-class="text-xs" />
 
         <!-- Actions -->
         <div class="self-center text-right" :class="copiedId === t.id ? 'opacity-100' : 'opacity-20 group-hover:opacity-100'">

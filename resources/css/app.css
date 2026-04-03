@@ -116,7 +116,7 @@
 }
 
 .dark {
-    --background: hsl(0 0% 8%);
+    --background: hsl(270 16% 6%);
     --foreground: hsl(0 0% 98%);
     --card: hsl(0 0% 3.9%);
     --card-foreground: hsl(0 0% 98%);
@@ -140,11 +140,11 @@
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(240, 3%, 15%);
+    --sidebar-background: hsl(264 47.3% 14.4%);
     --sidebar-foreground: hsl(0 0% 95.9%);
     --sidebar-primary: hsl(360, 100%, 100%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0, 0%, 13%);
+    --sidebar-accent: hsl(264 47.3% 14.4%);
     --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
     --sidebar-border: hsl(245, 18%, 14%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);

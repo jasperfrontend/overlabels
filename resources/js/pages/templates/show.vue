@@ -263,7 +263,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </Dialog>
 
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">
+      <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card p-0 pb-0">
         <div class="flex border-b border-violet-600 dark:border-violet-400">
           <button
             v-for="(tab, index) in mainTabs"
@@ -281,7 +281,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
+      <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-card p-4">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6">
           <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />

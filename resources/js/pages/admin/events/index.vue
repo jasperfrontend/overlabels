@@ -108,11 +108,11 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
-        <select v-model="eventType" class="rounded border px-3 py-1.5 text-sm bg-background">
+        <select v-model="eventType" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
           <option value="">All event types</option>
           <option v-for="et in eventTypes" :key="et" :value="et">{{ et }}</option>
         </select>
-        <select v-if="source === 'twitch'" v-model="processed" class="rounded border px-3 py-1.5 text-sm bg-background">
+        <select v-if="source === 'twitch'" v-model="processed" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
           <option value="">All</option>
           <option value="true">Processed</option>
           <option value="false">Pending</option>
@@ -163,9 +163,9 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
         </div>
 
         <!-- Table (≥ lg) -->
-        <div class="hidden lg:block overflow-x-auto rounded border">
+        <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
           <table class="w-full text-sm">
-            <thead class="bg-muted text-left text-muted-foreground">
+            <thead class="bg-card text-left text-muted-foreground">
               <tr>
                 <th class="px-3 py-2">Type</th>
                 <th class="px-3 py-2">User</th>
@@ -175,7 +175,7 @@ watch([prunePeriod, () => props.source], () => { showPruneConfirm.value = false;
               </tr>
             </thead>
             <tbody>
-              <tr v-for="event in (events.data as TwitchEvent[])" :key="event.id" class="border-t">
+              <tr v-for="event in (events.data as TwitchEvent[])" :key="event.id" class="border-t border-sidebar">
                 <td class="px-3 py-2 font-mono text-xs">{{ event.event_type }}</td>
                 <td class="px-3 py-2">
                   <a v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>

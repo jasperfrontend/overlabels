@@ -282,7 +282,7 @@ onMounted(() => {
 
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
-        <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
+        <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card">
           <div class="flex border-b border-violet-600 dark:border-violet-400">
             <button
               v-for="(tab, index) in mainTabs"
@@ -302,7 +302,7 @@ onMounted(() => {
         </div>
 
         <!-- Content box -->
-        <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
+        <div class="rounded-b-sm border border-t-0 border-sidebar bg-card p-4">
           <!-- Code Tab -->
           <TemplateCodeEditor
             v-show="mainTab === 'code'"

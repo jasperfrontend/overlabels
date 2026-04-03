@@ -124,9 +124,9 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Template</th>
               <th class="px-3 py-2">Token / User</th>
@@ -135,7 +135,7 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
             </tr>
           </thead>
           <tbody>
-            <tr v-for="log in logs.data" :key="log.id" class="border-t">
+            <tr v-for="log in logs.data" :key="log.id" class="border-t border-sidebar">
               <td class="px-3 py-2 font-mono text-xs">{{ log.template_slug ?? '—' }}</td>
               <td class="px-3 py-2 text-xs">
                 <span v-if="log.token">{{ log.token.name }} ({{ log.token.user?.name ?? 'unknown' }})</span>

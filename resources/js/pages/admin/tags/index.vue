@@ -102,9 +102,9 @@ function deleteCategory(cat: Category) {
           </div>
 
           <!-- Table (≥ lg) -->
-          <div class="hidden lg:block overflow-x-auto rounded border">
+          <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
             <table class="w-full text-sm">
-              <thead class="bg-muted text-left text-muted-foreground">
+              <thead class="bg-card text-left text-muted-foreground">
                 <tr>
                   <th class="px-3 py-2">Tag</th>
                   <th class="px-3 py-2">Category</th>
@@ -115,7 +115,7 @@ function deleteCategory(cat: Category) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="tag in tags.data" :key="tag.id" class="border-t">
+                <tr v-for="tag in tags.data" :key="tag.id" class="border-t border-sidebar">
                   <td class="px-3 py-2">
                     <div class="font-mono text-xs">{{ tag.tag_name }}</div>
                     <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>

@@ -76,7 +76,7 @@ watch([search, role, includeDeleted], () => {
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
         <Input v-model="search" placeholder="Search name, email, twitch_id…" class="w-64" />
-        <select v-model="role" class="rounded border px-3 py-1.5 text-sm bg-background">
+        <select v-model="role" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
           <option value="">All roles</option>
           <option value="user">user</option>
           <option value="admin">admin</option>
@@ -92,7 +92,7 @@ watch([search, role, includeDeleted], () => {
         <EmptyState v-if="users.data.length === 0" message="No users found." />
         <div
           v-for="user in users.data" :key="`card-${user.id}`"
-          class="rounded border p-3 text-sm"
+          class="rounded border border-sidebar p-3 text-sm"
           :class="{ 'opacity-50': user.deleted_at }"
         >
           <div class="flex items-start justify-between gap-2">
@@ -117,9 +117,9 @@ watch([search, role, includeDeleted], () => {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Name</th>
               <th class="px-3 py-2">Twitch ID</th>
@@ -131,7 +131,7 @@ watch([search, role, includeDeleted], () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users.data" :key="user.id" class="border-t" :class="{ 'opacity-50': user.deleted_at }">
+            <tr v-for="user in users.data" :key="user.id" class="border-t border-sidebar" :class="{ 'opacity-50': user.deleted_at }">
               <td class="px-3 py-2">
                 <div class="font-medium"><a :href="route('admin.users.show', user.id)" class="hover:underline">{{ user.name }}</a></div>
               </td>
@@ -159,7 +159,7 @@ watch([search, role, includeDeleted], () => {
           <a
             v-if="link.url"
             :href="link.url"
-            class="rounded border px-3 py-1 text-sm"
+            class="rounded border border-sidebar px-3 py-1 text-sm"
             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
             v-html="link.label"
           />

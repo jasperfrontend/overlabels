@@ -13,7 +13,7 @@ defineOptions({
 
 const props = withDefaults(defineProps<SidebarProps>(), {
   side: 'left',
-  variant: 'sidebar',
+  variant: 'floating',
   collapsible: 'offcanvas',
 })
 
@@ -60,7 +60,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     :data-variant="variant"
     :data-side="side"
   >
-    <!-- This is what handles the sidebar gap on desktop  -->
+
     <div
       :class="cn(
         'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
@@ -87,7 +87,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     >
       <div
         data-sidebar="sidebar"
-        class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+        class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col rounded-xl group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
       >
         <slot />
       </div>

@@ -71,7 +71,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
           <textarea
             v-show="codeTab === 'head'"
             v-model="headValue"
-            class="font-mono absolute inset-0 resize-none bg-background p-4 text-sm text-foreground outline-none"
+            class="font-mono absolute inset-0 resize-none bg-card p-4 text-sm text-foreground outline-none"
             placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
           />
           <Codemirror

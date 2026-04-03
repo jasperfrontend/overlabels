@@ -75,9 +75,9 @@ function setStarter(kit: Kit) {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Title</th>
               <th class="px-3 py-2">Owner</th>
@@ -91,7 +91,7 @@ function setStarter(kit: Kit) {
             <tr
               v-for="kit in kits"
               :key="kit.id"
-              class="border-t"
+              class="border-t border-sidebar"
               :class="kit.is_starter_kit ? 'bg-yellow-500/5' : ''"
             >
               <td class="px-3 py-2 font-medium">

@@ -78,9 +78,9 @@ function deleteToken(id: number) {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Name / Prefix</th>
               <th class="px-3 py-2">Owner</th>
@@ -91,7 +91,7 @@ function deleteToken(id: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="token in tokens.data" :key="token.id" class="border-t">
+            <tr v-for="token in tokens.data" :key="token.id" class="border-t border-sidebar">
               <td class="px-3 py-2">
                 <div class="font-medium">{{ token.name }}</div>
                 <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>

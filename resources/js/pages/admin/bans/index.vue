@@ -204,9 +204,9 @@ const durations = [
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Type</th>
               <th class="px-3 py-2">Target</th>
@@ -218,7 +218,7 @@ const durations = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="ban in bans.data" :key="ban.id" class="border-t">
+            <tr v-for="ban in bans.data" :key="ban.id" class="border-t border-sidebar">
               <td class="px-3 py-2">
                 <Badge :variant="ban.bannable_type ? 'default' : 'secondary'">{{ banType(ban) }}</Badge>
               </td>

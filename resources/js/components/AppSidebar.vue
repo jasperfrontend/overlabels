@@ -1,27 +1,25 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import {
+  Activity,
   Bell,
-  BookOpen,
   Brackets,
   FileText,
   HashIcon,
-  Heart,
   House,
   Layers,
   LayoutGrid,
   LogIn,
+  Megaphone,
   Radio,
   ScrollText,
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
-  SlidersHorizontal,
   Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -31,28 +29,20 @@ import type { AppPageProps } from '@/types';
 const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth.user);
 const isAdmin = computed(() => page.props.isAdmin);
-//@ts-ignore
+//@ts-ignore on runtime __COMMIT_HASH__ is replaced by the actual commit hash through Vite
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
-  { title: 'My activity', href: route('dashboard.recents'), icon: Users },
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
 ];
 const alertsNavItems: NavItem[] = [
   { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
-  { title: 'Alerts builder', href: route('events.index'), icon: Radio }
+  { title: 'Recent alerts', href: route('dashboard.recents'), icon: Activity },
+  { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 
 const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.index'), icon: LayoutGrid }];
-
-const learnNavItems: NavItem[] = [
-  { title: 'Conditional Tags', href: route('help'), icon: Brackets },
-  { title: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
-  { title: 'Free Resources', href: route('resources'), icon: BookOpen },
-  { title: 'Why Ko-fi', href: route('why-kofi'), icon: Heart },
-  { title: 'Manifesto', href: route('manifesto'), icon: FileText },
-];
 
 const adminNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck },
@@ -87,13 +77,11 @@ const adminNavItems: NavItem[] = [
       <NavMain v-if="user" label="" :items="mainNavItems" />
       <NavMain v-if="user" label="Alerts" :items="alertsNavItems" />
       <NavMain v-if="user" label="Kits" :items="kitsNavItems" />
-      <NavMain label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
     </SidebarContent>
 
     <SidebarFooter>
-      <NavUser v-if="user" />
-      <SidebarMenu v-else>
+      <SidebarMenu v-if="!user">
         <SidebarMenuItem>
           <SidebarMenuButton as-child>
             <a href="/auth/redirect/twitch" class="flex items-center cursor-pointer">

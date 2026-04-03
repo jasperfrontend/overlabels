@@ -83,9 +83,9 @@ watch([action, from, to], () => {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">Admin</th>
               <th class="px-3 py-2">Action</th>
@@ -95,7 +95,7 @@ watch([action, from, to], () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="log in logs.data" :key="log.id" class="border-t">
+            <tr v-for="log in logs.data" :key="log.id" class="border-t border-sidebar">
               <td class="px-3 py-2 font-medium">{{ log.admin?.name ?? 'Unknown' }}</td>
               <td class="px-3 py-2 font-mono text-xs">{{ log.action }}</td>
               <td class="px-3 py-2 text-xs text-muted-foreground">

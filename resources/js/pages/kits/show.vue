@@ -135,12 +135,12 @@ const breadcrumbs: BreadcrumbItem[] = [
       </Link>
 
       <!-- Kit header -->
-      <div class="mb-8 overflow-hidden rounded-lg bg-card lg:max-w-[55%]">
+      <div class="mb-8 overflow-hidden rounded-lg bg-card border border-sidebar lg:max-w-[55%]">
         <!-- Thumbnail -->
-        <div v-if="kit.thumbnail_url" class="aspect-[16/9] w-full overflow-hidden bg-muted lg:aspect-[16/9]">
+        <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted lg:aspect-video">
           <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
         </div>
-        <div v-else class="flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 lg:aspect-[21/9]">
+        <div v-else class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
           <Package class="h-16 w-16 text-primary/40" />
         </div>
 
@@ -256,7 +256,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             v-for="template in filteredTemplates"
             :key="template.id"
             :href="`/templates/${template.id}`"
-            class="group overflow-hidden rounded-lg border bg-card transition-all hover:border-violet-400 hover:shadow-lg dark:hover:border-violet-300"
+            class="group overflow-hidden rounded-lg border border-sidebar bg-card transition-all hover:border-violet-400 hover:shadow-lg dark:hover:border-violet-300"
           >
             <!-- Screenshot or placeholder -->
             <div class="aspect-video w-full overflow-hidden bg-muted">
@@ -264,9 +264,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                 v-if="template.screenshot_url"
                 :src="template.screenshot_url"
                 :alt="template.name"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                class="h-full w-full object-cover transition-transform duration-300"
               />
-              <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+              <div v-else class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
                 <component :is="template.type === 'alert' ? Zap : Layers" class="h-10 w-10 text-primary/30" />
               </div>
             </div>

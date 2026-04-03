@@ -48,9 +48,9 @@ function getTierStyle(tier: string) {
   }
 }
 const confirmExpensiveApiCall = () => {
-  if (confirm('This will make an expensive API call to refresh all your Twitch data. Are you sure you want to continue?')) {
+  if (confirm('ATTENTION:\nThis refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.')) {
     isRefreshing.value = true;
-    router.visit(route('twitchdata.refresh.all'), {
+    router.post(route('twitchdata.refresh.all'), {}, {
       preserveScroll: true,
       onFinish: () => {
         isRefreshing.value = false;

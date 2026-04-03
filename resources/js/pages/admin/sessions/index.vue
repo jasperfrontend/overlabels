@@ -164,13 +164,13 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
         </h3>
         <div class="flex flex-wrap gap-3">
           <Input v-model="banForm.comment" placeholder="Reason (optional)" class="w-64" />
-          <select v-model="banForm.duration" class="rounded border px-3 py-1.5 text-sm bg-background">
+          <select v-model="banForm.duration" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
             <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
           </select>
           <button @click="submitBan" :disabled="banForm.processing" class="rounded bg-destructive px-3 py-1.5 text-destructive-foreground text-sm hover:bg-destructive/90 disabled:opacity-50">
             Confirm Ban
           </button>
-          <button @click="closeBanForm" class="rounded border px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
+          <button @click="closeBanForm" class="rounded border border-sidebar px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
         </div>
         <div v-if="banForm.errors.ban_user || banForm.errors.ban_ip || banForm.errors.session_id" class="text-sm text-destructive">
           {{ banForm.errors.ban_user || banForm.errors.ban_ip || banForm.errors.session_id }}
@@ -206,9 +206,9 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border">
+      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
-          <thead class="bg-muted text-left text-muted-foreground">
+          <thead class="bg-card text-left text-muted-foreground">
             <tr>
               <th class="px-3 py-2">User</th>
               <th class="px-3 py-2">IP Address</th>
@@ -219,7 +219,7 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="session in sessions.data" :key="session.id" class="border-t">
+            <tr v-for="session in sessions.data" :key="session.id" class="border-t border-sidebar">
               <td class="px-3 py-2">
                 <div v-if="session.user">
                   <a :href="route('admin.users.show', session.user.id)" class="hover:underline">{{ session.user.name }}</a>

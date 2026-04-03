@@ -92,7 +92,7 @@ const breadcrumbs = [
     <meta name="description" content="Dashboard for Overlabels - My Twitch overlay hub" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <div class="flex h-full flex-1 flex-col gap-4">
       <!-- Onboarding Wizard -->
       <section v-if="props.needsOnboarding" class="mb-6">
         <OnboardingWizard :twitch-id="twitchId" />
@@ -100,7 +100,7 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
-        <div class="mb-4 flex flex-col gap-3 pb-2 sm:flex-row sm:items-center">
+        <div class="mb-4 flex flex-col gap-4 p-4 sm:flex-row sm:items-center dark:bg-card/50">
           <div class="text-lg font-semibold text-foreground flex items-center gap-2">
             <UserIconPicker :user-icon="props.userIcon" />
             <HeadingSmall v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
@@ -122,7 +122,7 @@ const breadcrumbs = [
 
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
 
-        <section v-if="props.userStaticTemplates.length > 0" class="flex-1">
+        <section v-if="props.userStaticTemplates.length > 0" class="flex-1 p-4">
           <DashboardSectionHeader
             title="My overlays"
             :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' })"
@@ -133,7 +133,7 @@ const breadcrumbs = [
           <TemplateList :templates="props.userStaticTemplates" :current-user-id="userId" />
         </section>
 
-        <section v-if="props.userAlertTemplates.length > 0" class="flex-1">
+        <section v-if="props.userAlertTemplates.length > 0" class="flex-1 p-4">
           <DashboardSectionHeader
             title="My alerts"
             :view-href="route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' })"
@@ -144,7 +144,7 @@ const breadcrumbs = [
           <TemplateList :templates="props.userAlertTemplates" :current-user-id="userId" />
         </section>
 
-        <section class="flex-1">
+        <section class="flex-1 p-4">
           <DashboardSectionHeader
             title="Recent stream activity"
             :view-href="route('dashboard.recents')"

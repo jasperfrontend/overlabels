@@ -95,7 +95,7 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
       v-for="t in templates"
       :key="t.id"
       :class="[
-        'group flex items-start justify-between gap-3 rounded-lg border bg-card p-3 transition-all ease-in-out cursor-pointer',
+        'group flex items-start justify-between gap-3 rounded-lg border border-sidebar bg-background hover:bg-sidebar-accent p-3 transition-all ease-in-out cursor-pointer',
         showEvent && firstEvent(t)
           ? eventTypeHoverBorderClass(firstEvent(t)!.eventType, firstEvent(t)!.source)
           : 'hover:border-l-slate-500',
