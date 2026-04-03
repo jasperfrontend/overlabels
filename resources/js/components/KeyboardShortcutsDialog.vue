@@ -36,8 +36,7 @@ const emit = defineEmits<{ close: [] }>();
           <kbd class="rounded bg-sidebar px-2 py-1 font-mono text-xs">{{ shortcut.keys }}</kbd>
         </div>
         <p class="mt-4 text-xs text-muted-foreground">
-          Press <kbd class="rounded bg-sidebar px-1">Ctrl+K</kbd> to toggle this dialog.<br /><br />
-          Shortcuts don't work when focused inside the code editor — click outside first.
+          Press <kbd class="rounded bg-sidebar px-1">Ctrl+K</kbd> to toggle this dialog.
         </p>
       </div>
     </div>

@@ -78,6 +78,39 @@
 - Added Milestone 5d to the roadmap: a pipe/formatter system for template tags (`[[[c:key|format]]]`).
 - Covers duration, date, and number formatters that work for all control types.
 
+## April 3rd, 2026 - Feature: Command palette and keyboard shortcuts overhaul
+
+- Added a command palette (Ctrl+Space) with fuzzy search over all navigable routes, grouped by section (Navigation, Settings, Learn, Tools, Admin). Admin routes only shown to admins.
+- Consolidated keyboard shortcuts into a single system: rewrote `useKeyboardShortcuts` composable with per-component scoped ownership (shortcuts auto-cleanup on unmount), a shared global listener, and reactive `getAllShortcuts()` for the shortcuts dialog.
+- Deleted duplicate `lib/keyboardShortcuts.ts` singleton (was imported by nothing).
+- Moved sidebar toggle (Ctrl+B) from a standalone `useEventListener` into the composable.
+- Made Ctrl+K shortcuts dialog global (available on every page, not just template editor). Page-specific shortcuts (Ctrl+S, Ctrl+P) still register on their pages and appear context-dependently.
+- Ctrl+modifier shortcuts now fire even when focused in inputs/textareas (so Ctrl+S works inside the code editor).
+- Added keyboard shortcut hints in the sidebar below navigation.
+
+## April 3rd, 2026 - Feature: Profile dropdown in header
+
+- Replaced the static avatar/name link in the header with a dropdown menu triggered by an Avatar component.
+- Moved Learn items, Settings, Sensitive Data, and Log out from the sidebar into the profile dropdown.
+- Removed `NavUser` from the sidebar footer; sidebar is now cleaner with just core navigation.
+
+## April 3rd, 2026 - UI: Theming and visual fixes
+
+- Changed dark mode background from neutral gray to a purple-tinted dark (`hsl(270 16% 6%)`).
+- Added CSS custom properties for page gradient (`--gradient-spot-1/2/3`, `--gradient-base`) so gradient colors are theme-swappable.
+- Added `bg-popover text-popover-foreground shadow-md` to tooltip content (was invisible with no background).
+- Fixed collapsed sidebar menu items (My overlays, Alerts builder, Overlay kits) being unclickable by adding `pointer-events-none` to hidden group labels.
+
+## April 3rd, 2026 - Fix: Welcome page mobile and light mode issues
+
+- Moved the Login with Twitch button to its own full-width row below the header on mobile (was cramped and overlapping).
+- Favicon now swaps between `favicon-light.svg` (light mode) and `favicon.png` (dark mode).
+- Closed Beta banner now has proper light mode colors (solid purple-100 background, purple-800 text) instead of translucent dark-only colors.
+
+## April 3rd, 2026 - Fix: twitchdata.refresh.all returning 404
+
+- Changed `router.visit()` (GET) to `router.post()` to match the `Route::post()` definition.
+
 ## April 3rd, 2026 - Fix: Expression formula edits not updating overlay in real-time
 
 - Editing an Expression control's formula saved to the database but never broadcast a change to the overlay, requiring a hard refresh to pick up the new expression.

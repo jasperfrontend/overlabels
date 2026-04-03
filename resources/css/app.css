@@ -113,6 +113,10 @@
     --sidebar-border: hsl(0 0% 91%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(0 0% 98%);
+    --gradient-spot-1: transparent;
+    --gradient-spot-2: transparent;
+    --gradient-spot-3: transparent;
+    --gradient-base: hsl(0 0% 100%);
 }
 
 .dark {
@@ -149,6 +153,10 @@
     --sidebar-border: hsl(245, 18%, 14%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
+    --gradient-spot-1: #1d0b30;
+    --gradient-spot-2: #33113e;
+    --gradient-spot-3: #2c074b;
+    --gradient-base: #1d0b30;
 }
 
 html {scroll-behavior: smooth;}
@@ -159,6 +167,13 @@ html {scroll-behavior: smooth;}
     }
     body {
         @apply bg-background text-foreground;
+    }
+    .bg-page-gradient {
+        background:
+            radial-gradient(at 11% 50%, var(--gradient-spot-1) 0px, transparent 65%),
+            radial-gradient(at 50% 70%, var(--gradient-spot-2) 0px, transparent 65%),
+            radial-gradient(at 91% 28%, var(--gradient-spot-3) 0px, transparent 65%),
+            var(--gradient-base);
     }
 
     /* Range slider styles */

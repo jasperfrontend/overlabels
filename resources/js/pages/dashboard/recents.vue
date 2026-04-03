@@ -77,7 +77,7 @@ const breadcrumbs = [
       <section class="space-y-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
-            <Radio class="mr-2 h-6 w-6" />
+            <Radio class="mr-1 h-6 w-6" />
             <Heading title="Recent alerts and stream events" />
             <button class="btn btn-chill btn-xs gap-1.5" :disabled="refreshing" @click="refresh">
               <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />

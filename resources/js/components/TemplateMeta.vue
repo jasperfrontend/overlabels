@@ -2,12 +2,18 @@
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
+interface TemplateTag {
+  display_tag: string;
+  description: string;
+  category?: string;
+}
+
 const props = defineProps<{
   createdAt: string;
   updatedAt: string;
   viewCount: number;
   forkCount: number;
-  templateTags?: string[] | null;
+  templateTags?: TemplateTag[] | null;
   forkParent?: { id: number; slug: string; name: string } | null;
 }>();
 
@@ -47,7 +53,7 @@ const forkTitle = computed(() => {
     <div v-if="templateTags && templateTags.length > 0" class="rounded-sm bg-background p-4 text-sm">
       <p class="mb-2 text-muted-foreground">Template Tags Used</p>
       <div class="flex flex-wrap gap-1">
-        <code v-for="tag in templateTags" :key="tag" class="btn btn-chill btn-xs btn-dead">
+        <code v-for="tag in templateTags" class="btn btn-chill btn-xs btn-dead">
           {{ tag }}
         </code>
       </div>

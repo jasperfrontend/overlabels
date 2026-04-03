@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils'
-import { useEventListener, useMediaQuery, useVModel } from '@vueuse/core'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
+import { useMediaQuery, useVModel } from '@vueuse/core'
 import { TooltipProvider } from 'reka-ui'
-import { computed, type HTMLAttributes, type Ref, ref } from 'vue'
-import { provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from './utils'
+import { computed, type HTMLAttributes, onMounted, type Ref, ref } from 'vue'
+import { provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from './utils'
 
 const props = withDefaults(defineProps<{
   defaultOpen?: boolean
@@ -42,11 +43,10 @@ function toggleSidebar() {
   return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
 }
 
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault()
-    toggleSidebar()
-  }
+const { register } = useKeyboardShortcuts()
+
+onMounted(() => {
+  register('toggle-sidebar', 'ctrl+b', () => toggleSidebar(), { description: 'Toggle sidebar' })
 })
 
 // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -71,9 +71,8 @@ provideSidebarContext({
       :style="{
         '--sidebar-width': SIDEBAR_WIDTH,
         '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-        'background': 'radial-gradient(at 11% 50%, #1d0b30 0px, transparent 65%), radial-gradient(at 50% 69.9498997320811%, #33113e 0px, transparent 65%), radial-gradient(at 91% 28%, #2c074b 0px, transparent 65%), #1d0b30'
       }"
-      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
+      :class="cn('group/sidebar-wrapper bg-page-gradient has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
       v-bind="$attrs"
     >
       <slot />

@@ -200,7 +200,6 @@ watch(
 );
 
 const { register } = useKeyboardShortcuts();
-const showKeyboardShortcuts = ref(false);
 
 onMounted(() => {
   register('save-template', 'ctrl+s', () => submitForm(), { description: 'Save overlay' });
@@ -214,14 +213,6 @@ onMounted(() => {
       );
     },
     { description: 'Preview in new tab' },
-  );
-  register(
-    'toggle-shortcuts',
-    'ctrl+k',
-    () => {
-      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
-    },
-    { description: 'Show keyboard shortcuts' },
   );
 });
 
@@ -310,7 +301,6 @@ onMounted(() => {
             v-model:body="form.html"
             v-model:css="form.css"
             :is-dark="isDark"
-            @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
           />
 
           <!-- Meta Tab -->

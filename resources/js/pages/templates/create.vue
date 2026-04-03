@@ -8,7 +8,6 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
-import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
@@ -41,8 +40,7 @@ const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const showToast = ref(false);
 
-const showKeyboardShortcuts = ref(false);
-const { register, getAllShortcuts } = useKeyboardShortcuts();
+const { register } = useKeyboardShortcuts();
 
 const submitForm = () => {
   const { sanitized, removed } = stripScriptsFromFields({
@@ -94,17 +92,7 @@ const previewTemplate = (): void => {
 onMounted(() => {
   register('save-overlay', 'ctrl+s', () => submitForm(), { description: 'Create overlay' });
   register('preview-overlay', 'ctrl+p', () => previewTemplate(), { description: 'Preview overlay' });
-  register(
-    'toggle-shortcuts',
-    'ctrl+k',
-    () => {
-      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
-    },
-    { description: 'Show keyboard shortcuts' },
-  );
 });
-
-const keyboardShortcutsList = computed(() => getAllShortcuts());
 
 watch(
   () => document.documentElement.classList.contains('dark'),
@@ -265,7 +253,6 @@ watch(
             v-model:body="form.html"
             v-model:css="form.css"
             :is-dark="isDark"
-            @toggle-shortcuts="showKeyboardShortcuts = !showKeyboardShortcuts"
           />
 
           <!-- Tags Tab -->
@@ -303,8 +290,6 @@ watch(
         <p class="mt-4 text-sm text-muted-foreground">Tags are shown with sample data in preview.</p>
       </div>
     </Modal>
-
-    <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>

@@ -110,7 +110,7 @@ const alertPipelineSteps = [
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
           <Link href="/" class="flex items-center gap-2.5">
-            <img src="/favicon.png" alt="" class="h-8 w-8" />
+            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt="" class="hidden h-8 w-8 dark:block" />
             <span class="text-lg font-bold tracking-tight">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </Link>
@@ -131,15 +131,17 @@ const alertPipelineSteps = [
           </div>
           <div class="flex items-center gap-3 lg:hidden">
             <DarkModeToggle />
-            <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
-              Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
-            </Link>
-            <LoginSocial v-else />
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground">
               <X v-if="mobileMenuOpen" class="h-5 w-5" />
               <Menu v-else class="h-5 w-5" />
             </button>
           </div>
+        </div>
+        <div class="container mx-auto px-4 pb-3 sm:px-6 lg:hidden">
+          <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm flex w-full justify-center">
+            Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
+          </Link>
+          <LoginSocial v-else class="flex! w-full justify-center" />
         </div>
       </div>
       <!-- Mobile menu -->
@@ -167,9 +169,9 @@ const alertPipelineSteps = [
     </nav>
 
     <!-- Closed Beta Banner -->
-    <div class="border-b border-purple-500/30 bg-purple-950/40 py-3 text-center">
-      <p class="text-sm text-purple-200">
-        <span class="mr-1.5 inline-block rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-purple-300">Closed Beta</span>
+    <div class="border-b border-purple-300 bg-purple-100 dark:border-purple-500/30 dark:bg-purple-950/40 py-3 text-center">
+      <p class="text-sm text-purple-800 dark:text-purple-200">
+        <span class="mr-1.5 inline-block rounded-full bg-purple-200 dark:bg-purple-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300">Closed Beta</span>
         Overlabels is open to the first 100 Twitch streamers. Spots are limited while we polish the experience.
       </p>
     </div>
@@ -820,7 +822,7 @@ const alertPipelineSteps = [
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div class="flex items-center gap-2.5">
-            <img src="/favicon.png" alt="" class="h-8 w-8" />
+            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt="" class="hidden h-8 w-8 dark:block" />
             <span class="font-semibold">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </div>

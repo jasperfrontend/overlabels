@@ -152,7 +152,7 @@ const breadcrumbs = [
           />
           <EventsTable v-if="props.userRecentEvents.length > 0" :events="props.userRecentEvents" />
 
-          <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active and you have received 1 or more stream events." />
+          <EmptyState v-else message="No events yet. Events will appear here once you have received one or more stream events." />
         </section>
 
         </div>

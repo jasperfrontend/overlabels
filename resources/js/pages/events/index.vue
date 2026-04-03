@@ -182,7 +182,7 @@ const serviceLabel: Record<string, string> = {
 <template>
   <Head title="Event alerts builder" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-4">
+    <div class="py-3 px-4">
       <!-- Header Section -->
       <div class="mb-4 mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
@@ -246,7 +246,7 @@ const serviceLabel: Record<string, string> = {
           <div
             class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
             :class="{
-              'bg-background rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
+              'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-background': !mapping.enabled || expandedEvent !== mapping.event_type,
             }"
             @click="toggleEvent(mapping.event_type)"
@@ -396,8 +396,8 @@ const serviceLabel: Record<string, string> = {
                 <div
                   class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
                   :class="{
-                    'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
-                    'bg-sidebar-accent': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping),
+                    'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
+                    'bg-background': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping)
                   }"
                   @click="toggleExternalEvent(externalEventKey(mapping))"
                 >
@@ -405,7 +405,7 @@ const serviceLabel: Record<string, string> = {
                   <label class="relative inline-flex cursor-pointer items-center" @click.stop>
                     <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
                     <span
-                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-700 dark:after:bg-gray-100"
+                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-violet-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-700 dark:after:bg-gray-100"
                     ></span>
                   </label>
 

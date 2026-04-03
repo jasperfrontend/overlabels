@@ -101,11 +101,22 @@ function formatDate(iso: string | null): string {
 
                     <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
                     <Badge v-else variant="secondary">Not connected</Badge>
-                </div>
 
-                <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent text-sm text-muted-foreground">
+
+
+                </div>
+                <div class="flex items-center gap-2 bg-amber-500/10 border border-amber-300/50 p-4 rounded-sm">
+                  <HeadingSmall
+                    title="Download the correct app"
+                    description="You need the app from gpslogger.app, NOT the app called GPS Logger on the Play Store."
+                    class="text-amber-400"
+                  />
+                  <a href="https://gpslogger.app/" target="_blank" class="btn btn-chill">Download</a>
+                </div>
+                <div v-if="integration.connected" class="rounded-sm border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md">
                     <p class="font-medium text-foreground">Set up GPSLogger on your phone</p>
-                    <ol class="list-decimal pl-4 space-y-2">
+                    <p class="font-medium text-sm text-amber-400">(TIP: scan the QR code below and read these instructions on your phone)</p>
+                    <ol class="list-decimal pl-4 space-y-4">
                         <li>
                             Open GPSLogger on your Android device and go to
                             <strong>Logging Details</strong> &rarr; <strong>Log to custom URL</strong>.
@@ -149,7 +160,7 @@ function formatDate(iso: string | null): string {
                     <!-- Shared Secret Token -->
                     <div class="space-y-2">
                         <Label for="token">Shared Secret Token <span class="text-violet-400 dark:text-violet-300">(required)</span></Label>
-                        <p class="text-muted-foreground text-sm">
+                        <p class="text-muted-foreground text-sm my-4">
                             Make up any password-like string (e.g. <code class="rounded bg-black/10 px-1 dark:bg-white/10">my-stream-gps-2026</code>).
                             You will enter this same string in the GPSLogger app on your phone so
                             Overlabels can verify the data is coming from you. Do this first before proceeding with setup and save this token somewhere safe.<br>
@@ -171,7 +182,7 @@ function formatDate(iso: string | null): string {
                     <!-- Webhook URL (read-only) -->
                     <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
                         <Label for="webhook-url">Your Webhook URL</Label>
-                        <p class="text-muted-foreground text-sm">
+                        <p class="text-muted-foreground text-sm my-4">
                             Scan the QR code below on the phone where you have GPSLogger installed to continue setup there.
                         </p>
                         <div class="flex gap-2">

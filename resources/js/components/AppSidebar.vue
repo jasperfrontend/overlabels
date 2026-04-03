@@ -35,10 +35,10 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
+  { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
 ];
 const alertsNavItems: NavItem[] = [
-  { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
-  { title: 'Recent alerts', href: route('dashboard.recents'), icon: Activity },
+  { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
   { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 
@@ -78,6 +78,11 @@ const adminNavItems: NavItem[] = [
       <NavMain v-if="user" label="Alerts" :items="alertsNavItems" />
       <NavMain v-if="user" label="Kits" :items="kitsNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
+      <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
+        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
+        <div class="h-0 mt-1" />
+        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">Space</kbd> go to
+      </div>
     </SidebarContent>
 
     <SidebarFooter>
