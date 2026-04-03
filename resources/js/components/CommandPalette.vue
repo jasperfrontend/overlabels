@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
@@ -47,7 +47,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'dashboard', label: 'Dashboard', section: 'Navigation', href: route('dashboard.index'), icon: House, keywords: ['home', 'start'] },
     { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
     { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
-    { id: 'recents', label: 'Recent alerts', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
+    { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
     { id: 'alerts-builder', label: 'Alerts builder', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
@@ -216,7 +216,7 @@ onMounted(() => {
             {{ group.section }}
           </div>
           <button
-            v-for="(item, i) in group.items"
+            v-for="(item) in group.items"
             :key="item.id"
             :data-palette-selected="flatFiltered.indexOf(item) === selectedIndex"
             class="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm cursor-pointer transition-colors"

@@ -327,7 +327,7 @@ onMounted(async () => {
 
     // Start loading emotes for this broadcaster's channel
     if (userId.value) {
-      emoteParser.initialize(userId.value).catch(() => {
+      emoteParser.initialize(Number(userId.value)).catch(() => {
         console.warn('[OverlayRenderer] Emote parser failed to initialize');
       });
     }
