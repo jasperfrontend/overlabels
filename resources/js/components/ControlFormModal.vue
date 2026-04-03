@@ -127,6 +127,40 @@ const form = ref({
   sort_order: 0,
 });
 
+// Auto-derive key from label
+const keyManuallyEdited = ref(false);
+const keyWarning = ref('');
+
+function slugifyLabel(label: string): string {
+  return label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s_]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function validateKey(key: string): string {
+  if (!key) return '';
+  if (/\s/.test(key)) return 'Keys cannot contain spaces. Use underscores instead.';
+  if (/[A-Z]/.test(key)) return 'Keys must be lowercase.';
+  if (/^_|_$/.test(key)) return 'Keys cannot start or end with an underscore.';
+  if (/^[0-9]/.test(key)) return 'Keys cannot start with a number.';
+  if (!/^[a-z0-9_]+$/.test(key)) return 'Only lowercase letters, numbers and underscores allowed.';
+  return '';
+}
+
+watch(() => form.value.label, (label) => {
+  if (!selectedServicePreset.value && !isEditing.value && !keyManuallyEdited.value) {
+    form.value.key = slugifyLabel(label);
+  }
+});
+
+watch(() => form.value.key, (key) => {
+  keyWarning.value = validateKey(key);
+});
+
 // Expression control state
 const expressionText = ref('');
 
@@ -144,6 +178,8 @@ const availableWatchControls = computed(() => {
 watch(() => props.open, (open) => {
   if (open) {
     errors.value = {};
+    keyManuallyEdited.value = false;
+    keyWarning.value = '';
     servicePresetKey.value = '';
     servicePresetSource.value = null;
     if (props.control) {
@@ -323,27 +359,9 @@ async function save() {
             </p>
           </div>
 
-          <!-- Only show manual fields if no service preset selected -->
-          <template v-if="!selectedServicePreset">
-            <!-- Key (immutable after creation) -->
-            <div class="space-y-1">
-              <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(used in template as <code>[[[c:key]]]</code>)</span></Label>
-              <Input
-                id="ctrl-key"
-                v-model="form.key"
-                :disabled="isEditing"
-                placeholder="e.g. deaths"
-                class="mt-1"
-                :class="{ 'border-destructive': errors.key }"
-              />
-              <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
-              <p v-else class="text-xs text-muted-foreground">Lowercase letters, numbers, underscores only. Cannot be changed after creation.</p>
-            </div>
-          </template>
-
           <!-- Label (always shown) -->
-          <div class="space-y-1">
-            <Label for="ctrl-label">Label <span class="text-muted-foreground text-xs">(optional display name)</span></Label>
+          <div class="space-y-2">
+            <Label for="ctrl-label">Give your control a name <span class="text-muted-foreground text-xs">(be descriptive)</span></Label>
             <Input
               id="ctrl-label"
               v-model="form.label"
@@ -354,10 +372,34 @@ async function save() {
             <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
           </div>
 
+          <!-- Only show manual fields if no service preset selected -->
+          <template v-if="!selectedServicePreset">
+            <!-- Key (immutable after creation) -->
+            <div class="space-y-2">
+              <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(auto-generated from name)</span></Label>
+              <Input
+                id="ctrl-key"
+                v-model="form.key"
+                :disabled="isEditing"
+                placeholder="e.g. death_counter"
+                class="mt-1"
+                :class="{ 'border-destructive': errors.key, 'border-amber-500': !errors.key && keyWarning }"
+                @input="keyManuallyEdited = true"
+              />
+              <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
+              <p v-else-if="keyWarning" class="text-xs text-amber-500">{{ keyWarning }}</p>
+              <p v-if="form.key && !errors.key && !keyWarning" class="text-xs text-muted-foreground">
+                Template tag: <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:{{ form.key }}]]]</code>
+              </p>
+              <p v-if="!isEditing && !form.key" class="text-xs text-muted-foreground">Cannot be changed after creation.</p>
+            </div>
+          </template>
+
+
           <!-- Only show type/value/config if no service preset selected -->
           <template v-if="!selectedServicePreset">
             <!-- Type -->
-            <div v-if="!isEditing" class="space-y-1">
+            <div v-if="!isEditing" class="space-y-2">
               <Label for="ctrl-type">Type</Label>
               <select
                 id="ctrl-type"
@@ -376,7 +418,7 @@ async function save() {
             </div>
 
             <!-- Value (text/number/counter/datetime) -->
-            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'expression'" class="space-y-1">
+            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'expression'" class="space-y-2">
               <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 id="ctrl-value"
@@ -388,7 +430,7 @@ async function save() {
             </div>
 
             <!-- Value (boolean) -->
-            <div v-if="form.type === 'boolean'" class="space-y-1">
+            <div v-if="form.type === 'boolean'" class="space-y-2">
               <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
               <div class="flex items-center gap-3 pt-1">
                 <Switch v-model:checked="booleanValue" />
@@ -401,19 +443,19 @@ async function save() {
             <div v-if="form.type === 'number' || form.type === 'counter'" class="space-y-3 rounded-sm border border-sidebar p-3">
               <p class="text-sm font-medium">Numeric settings</p>
               <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
+                <div class="space-y-2">
                   <Label for="ctrl-min">Min</Label>
                   <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-2">
                   <Label for="ctrl-max">Max</Label>
                   <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-2">
                   <Label for="ctrl-step">Step</Label>
                   <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-2">
                   <Label for="ctrl-reset">Reset value</Label>
                   <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
                 </div>
@@ -440,11 +482,11 @@ async function save() {
                   </label>
                 </div>
               </div>
-              <div v-if="form.config.mode === 'countdown'" class="space-y-1">
+              <div v-if="form.config.mode === 'countdown'" class="space-y-2">
                 <Label for="ctrl-base">Base duration (seconds)</Label>
                 <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
               </div>
-              <div v-if="form.config.mode === 'countto'" class="space-y-1">
+              <div v-if="form.config.mode === 'countto'" class="space-y-2">
                 <Label for="ctrl-target">Target date/time</Label>
                 <input
                   id="ctrl-target"
@@ -458,7 +500,7 @@ async function save() {
           </template>
 
           <!-- Sort order -->
-          <div class="space-y-1">
+          <div class="space-y-2">
             <Label for="ctrl-sort">Position</Label>
             <select
               id="ctrl-sort"

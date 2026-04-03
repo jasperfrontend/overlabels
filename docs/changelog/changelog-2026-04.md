@@ -78,6 +78,14 @@
 - Added Milestone 5d to the roadmap: a pipe/formatter system for template tags (`[[[c:key|format]]]`).
 - Covers duration, date, and number formatters that work for all control types.
 
+## April 3rd, 2026 - UX: Auto-generate control key from label
+
+- Control key field now auto-derives from the label as the user types (e.g. "Death Counter" becomes `death_counter`).
+- Users can manually override the key; auto-derive stops once the key field is edited directly.
+- Live validation warnings (amber) for invalid key patterns: spaces, uppercase, leading/trailing underscores, starting with a number.
+- Shows a live template tag preview (`[[[c:death_counter]]]`) as the key forms.
+- Service preset controls skip auto-derive (unchanged behavior).
+
 ## April 3rd, 2026 - Feature: Command palette and keyboard shortcuts overhaul
 
 - Added a command palette (Ctrl+Space) with fuzzy search over all navigable routes, grouped by section (Navigation, Settings, Learn, Tools, Admin). Admin routes only shown to admins.
