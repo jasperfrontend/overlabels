@@ -1,19 +1,33 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
-import { ChevronDown, ChevronUp, FileCode2, Code, Palette } from 'lucide-vue-next';
-
-const props = defineProps<{
-  isDark: boolean;
-}>();
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette } from 'lucide-vue-next';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
+
+// Detect dark mode reactively via MutationObserver on <html> class
+const isDark = ref(document.documentElement.classList.contains('dark'));
+let observer: MutationObserver | null = null;
+
+onMounted(() => {
+  observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark');
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('keydown', onEscape);
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+  window.removeEventListener('keydown', onEscape);
+});
 
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2, color: 'text-pink-500 dark:text-pink-400' },
@@ -25,6 +39,21 @@ type CodeTab = (typeof editorTabs)[number]['key'];
 
 const codeTab = ref<CodeTab>('body');
 const isExpanded = ref(false);
+const isFullscreen = ref(false);
+
+const { register } = useKeyboardShortcuts();
+
+function onEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isFullscreen.value) {
+    isFullscreen.value = false;
+  }
+}
+
+onMounted(() => {
+  register('fullscreen-editor', 'ctrl+shift+f', () => {
+    isFullscreen.value = !isFullscreen.value;
+  }, { description: 'Distraction-free editor' });
+});
 
 const baseTheme = EditorView.theme({
   '&': { height: '100%', fontSize: '14px' },
@@ -33,13 +62,20 @@ const baseTheme = EditorView.theme({
   '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
 });
 
-const htmlExtensions = computed(() => [html(), baseTheme, ...(props.isDark ? [oneDark] : [])]);
-const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneDark] : [])]);
+// Key changes when dark mode toggles, forcing CodeMirror instances to remount with new extensions
+const editorKey = computed(() => (isDark.value ? 'dark' : 'light'));
+const headExtensions = computed(() => [html(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const htmlExtensions = computed(() => [html(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
 </script>
 
 <template>
   <div>
-    <div class="overflow-hidden rounded-sm border border-border" :style="{ height: isExpanded ? '800px' : '500px' }">
+    <div
+      class="overflow-hidden border border-border"
+      :class="isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-sm'"
+      :style="isFullscreen ? undefined : { height: isExpanded ? '800px' : '500px' }"
+    >
       <div class="flex h-full">
         <!-- Vertical file tabs -->
         <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
@@ -58,24 +94,34 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
             <component :is="tab.icon" :class="tab.color" class="size-3.5" />
             {{ tab.label }}
           </button>
-          <div class="mt-auto px-3 py-2">
-            <p class="text-xs uppercase text-sidebar-foreground/30">{{ codeTab }}</p>
-            <p v-if="codeTab === 'head'" class="text-[10px] leading-tight text-sidebar-foreground/20">
-              &lt;link&gt; tags only.<br />No scripts.
-            </p>
+          <div class="mt-auto">
+            <button
+              type="button"
+              @click="isFullscreen = !isFullscreen"
+              class="flex w-full cursor-pointer items-center gap-1.5 px-5 py-3 text-xs text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground"
+            >
+              <Minimize v-if="isFullscreen" class="size-3.5" />
+              <Maximize v-else class="size-3.5" />
+              {{ isFullscreen ? 'Exit' : 'Focus' }}
+            </button>
           </div>
         </div>
 
         <!-- Editor panel -->
         <div class="relative flex-1 bg-background">
-          <textarea
+          <Codemirror
             v-show="codeTab === 'head'"
+            :key="'head-' + editorKey"
             v-model="headValue"
-            class="font-mono absolute inset-0 resize-none bg-card p-4 text-sm text-foreground outline-none"
+            class="absolute inset-0"
+            :indent-with-tab="true"
+            :tab-size="2"
+            :extensions="headExtensions"
             placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
           />
           <Codemirror
             v-show="codeTab === 'body'"
+            :key="'body-' + editorKey"
             v-model="htmlValue"
             class="absolute inset-0"
             :autofocus="true"
@@ -86,6 +132,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
           />
           <Codemirror
             v-show="codeTab === 'css'"
+            :key="'css-' + editorKey"
             v-model="cssValue"
             class="absolute inset-0"
             :indent-with-tab="true"
@@ -95,10 +142,15 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
           />
         </div>
       </div>
+
+      <!-- Fullscreen hint bar -->
+      <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground/50">
+        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit
+      </div>
     </div>
 
-    <!-- Expand / shortcuts row -->
-    <div class="mt-3 flex justify-between">
+    <!-- Expand / shortcuts row (hidden in fullscreen) -->
+    <div v-if="!isFullscreen" class="mt-3 flex justify-between">
       <button
         type="button"
         @click="isExpanded = !isExpanded"
@@ -108,7 +160,6 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(props.isDark ? [oneD
         <ChevronDown v-else class="h-4 w-4" />
         {{ isExpanded ? 'Collapse editor' : 'Expand editor' }}
       </button>
-
     </div>
   </div>
 </template>

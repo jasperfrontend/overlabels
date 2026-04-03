@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm, Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -24,7 +24,6 @@ const form = useForm({
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
 
-const isDark = ref(document.documentElement.classList.contains('dark'));
 const showPreview = ref(false);
 const previewHtml = ref('');
 
@@ -94,12 +93,6 @@ onMounted(() => {
   register('preview-overlay', 'ctrl+p', () => previewTemplate(), { description: 'Preview overlay' });
 });
 
-watch(
-  () => document.documentElement.classList.contains('dark'),
-  (newDark) => {
-    isDark.value = newDark;
-  },
-);
 </script>
 
 <template>
@@ -252,7 +245,6 @@ watch(
             v-model:head="form.head"
             v-model:body="form.html"
             v-model:css="form.css"
-            :is-dark="isDark"
           />
 
           <!-- Tags Tab -->

@@ -87,7 +87,6 @@ const props = withDefaults(defineProps<Props>(), {
   template: Object,
 });
 
-const isDark = ref(document.documentElement.classList.contains('dark'));
 const { triggerLinkWarning } = useLinkWarning();
 
 const {
@@ -192,12 +191,6 @@ const submitForm = () => {
   });
 };
 
-watch(
-  () => document.documentElement.classList.contains('dark'),
-  (newDark) => {
-    isDark.value = newDark;
-  },
-);
 
 const { register } = useKeyboardShortcuts();
 
@@ -300,7 +293,6 @@ onMounted(() => {
             v-model:head="form.head"
             v-model:body="form.html"
             v-model:css="form.css"
-            :is-dark="isDark"
           />
 
           <!-- Meta Tab -->

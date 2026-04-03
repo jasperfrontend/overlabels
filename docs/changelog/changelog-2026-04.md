@@ -78,6 +78,12 @@
 - Added Milestone 5d to the roadmap: a pipe/formatter system for template tags (`[[[c:key|format]]]`).
 - Covers duration, date, and number formatters that work for all control types.
 
+## April 4th, 2026 - Feature: Distraction-free code editor and HEAD CodeMirror upgrade
+
+- Added distraction-free fullscreen mode (Ctrl+Shift+F or "Focus" button in sidebar). Editor takes over the full viewport with just tabs and code. Exit with Escape or the same shortcut.
+- HEAD tab now uses CodeMirror with HTML syntax highlighting instead of a plain textarea.
+- Dark/light mode switching now updates CodeMirror instantly without page refresh, using a MutationObserver on the HTML class. Removed the broken `isDark` prop - the editor handles it internally.
+
 ## April 3rd, 2026 - UX: Auto-generate control key from label
 
 - Control key field now auto-derives from the label as the user types (e.g. "Death Counter" becomes `death_counter`).
