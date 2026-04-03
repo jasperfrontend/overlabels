@@ -58,7 +58,7 @@ onMounted(() => {
 const baseTheme = EditorView.theme({
   '&': { height: '100%', fontSize: '14px' },
   '.cm-scroller': { overflow: 'auto' },
-  '.cm-content': { padding: '0' },
+  '.cm-content': { padding: '5px 5px 3rem' },
   '.cm-focused .cm-cursor': { borderLeftColor: '#3b82f6' },
 });
 
@@ -99,6 +99,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
               type="button"
               @click="isFullscreen = !isFullscreen"
               class="flex w-full cursor-pointer items-center gap-1.5 px-5 py-3 text-xs text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground"
+              :title="isFullscreen ? 'Exit distraction-free editor mode' : 'Enter distraction-free editor mode'"
             >
               <Minimize v-if="isFullscreen" class="size-3.5" />
               <Maximize v-else class="size-3.5" />
@@ -140,12 +141,11 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
             :extensions="cssExtensions"
             placeholder="Enter your CSS styles here…"
           />
+          <!-- Fullscreen hint bar -->
+          <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground/50">
+            <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit
+          </div>
         </div>
-      </div>
-
-      <!-- Fullscreen hint bar -->
-      <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground/50">
-        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit
       </div>
     </div>
 
