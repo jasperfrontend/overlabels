@@ -58,6 +58,16 @@ function insertVariable(ctrl: OverlayControl) {
   const ref = expressionRef(ctrl);
   expressionText.value = expressionText.value ? `${expressionText.value} ${ref}` : ref;
 }
+
+function insertExample() {
+  const example = `c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at
+    ? c.streamlabs.latest_donor_name
+    : c.kofi.latest_donor_name`;
+
+  expressionText.value = expressionText.value
+    ? `${expressionText.value}\n${example}`
+    : example;
+}
 </script>
 
 <template>
@@ -90,13 +100,25 @@ function insertVariable(ctrl: OverlayControl) {
         rows="3"
         class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
         :class="{ 'border-destructive': expressionError }"
-        placeholder="e.g. c.kofi.kofis_received + c.streamlabs.total_received"
+        placeholder="c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at
+    ? c.streamlabs.latest_donor_name
+    : c.kofi.latest_donor_name"
       />
       <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
       <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
       <p class="text-xs text-muted-foreground mb-4">
         Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.key</code> to reference controls,
         <code class="rounded bg-black/10 px-1 dark:bg-white/10">c.service.key</code> for service controls.
+        You can add <code class="rounded bg-black/10 px-1 dark:bg-white/10">_at</code> to any control to get when it was last updated.
+        The placeholder text shows the last user who donated through either Ko-fi or Streamlabs.
+        <button
+          type="button"
+          class="ml-1 underline text-violet-300 hover:text-violet-400 cursor-pointer"
+          @click="insertExample"
+          title="Insert the placeholder code as an example"
+        >
+          insert example
+        </button>
       </p>
     </div>
 
