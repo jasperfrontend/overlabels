@@ -127,18 +127,41 @@ Completed milestones are kept here as a record of intent vs. reality.
 
 ## Milestone 5d — Output Formatting (Pipe System)
 > *Control values are raw: seconds, ISO strings, bare numbers. Templates need a way to say*
-> *"display this value as HH:MM:SS" or "format this datetime as dd-MM-yyyy" without the user*
+> *"display this value as HH:MM:SS" or "format this as currency" without the user*
 > *writing JavaScript in their overlay HTML.*
 
-- Pipe syntax in template tags: `[[[c:my_timer|duration]]]`, `[[[c:my_datetime|date:dd-MM-yyyy]]]`
-- Built-in formatters:
-  - `duration` — seconds to `HH:MM:SS` (or custom pattern like `mm:ss`)
-  - `date` — ISO datetime to formatted date string
-  - `number` — decimal precision, thousands separators
-- Works for all control types, not just timers
+### Pipe syntax
+- `[[[c:my_timer|duration]]]`, `[[[c:amount|currency]]]`, `[[[c:score|round]]]`
+- Pipes are functions with optional format-string arguments: `[[[c:timer|duration:hh:mm:ss]]]`
+- Pipes work on any control type, not just timers
+- Self-documenting in the template - no indirection, no named format lookups
+
+### Global defaults (user settings)
+- Locale / region setting that drives default formatting behavior (number separators, currency symbol placement, date order)
+- Sensible out-of-the-box defaults so most users never need to configure anything
+- Global settings are respected by all built-in formatters unless explicitly overridden via format string
+
+### Built-in formatters
+- `|round` - no decimals (for expression results like `c.xmastimer / 3600`)
+- `|round:N` - N decimal places
+- `|duration` - smart human-readable output based on magnitude (auto-selects days/hours/minutes/seconds)
+- `|duration:hh:mm:ss` - explicit duration format pattern
+- `|duration:mm:ss`, `|duration:dd:hh`, etc. - flexible patterns for any time range
+- `|currency` - format as currency using global locale setting
+- `|currency:EUR` - explicit currency override
+- `|date` - format datetime using global date format
+- `|date:dd-MM-yyyy` - explicit date format pattern
+- `|uppercase`, `|lowercase` - text transforms
+- `|number` - thousands separators and decimal precision per global locale
+
+### Timer formatting
+- Timers need the most flexibility: someone counting down 20 years wants different output than someone timing a 3-minute round
+- The format string covers the full range: `|duration` (auto), `|duration:ss` (raw), `|duration:mm:ss`, `|duration:hh:mm:ss`, `|duration:dd:hh:mm:ss`
+- No format = raw seconds (backward-compatible)
+
+### Implementation
 - `TemplateParserService` updated to recognise and validate pipe syntax
 - Overlay renderer applies formatters at render time (client-side)
-- Tag generator UI updated to let users pick a formatter and preview output
 - Thorough documentation - this changes how users think about template tags
 
 ---
