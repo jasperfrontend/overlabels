@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Docs: Formatting Pipes help page and currency locale fix
+
+- Created `/help/formatting` page with full documentation for all 8 pipe formatters, example tables with locale comparisons, quick reference, and tips.
+- Added "Formatting Pipes" to the Learn submenu in the user menu and the command palette.
+- Cross-linked from the Help page intro and the Controls page timer description.
+- Fixed currency preview in Appearance settings showing USD for all locales - now maps each locale to its typical currency (EUR for Dutch, GBP for British, etc.).
+- Fixed `|currency` pipe without explicit code defaulting to USD regardless of user locale - now uses locale-aware default via `LOCALE_CURRENCY_MAP`.
+
 ## April 5th, 2026 - Feature: Pipe formatting system for template tags (Milestone 5d)
 
 - Added pipe syntax for template tags: `[[[c:timer|duration:hh:mm:ss]]]`, `[[[c:amount|currency:EUR]]]`, `[[[c:score|round]]]`.

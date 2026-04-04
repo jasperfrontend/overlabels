@@ -6,6 +6,7 @@ import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { type BreadcrumbItem } from '@/types';
 import type { AppPageProps } from '@/types';
+import { getDefaultCurrency } from '@/utils/formatters';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -45,7 +46,7 @@ function exampleNumber(): string {
     try { return new Intl.NumberFormat(locale.value).format(1234567.89); } catch { return '1,234,567.89'; }
 }
 function exampleCurrency(): string {
-    try { return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'USD' }).format(42.5); } catch { return '$42.50'; }
+    try { return new Intl.NumberFormat(locale.value, { style: 'currency', currency: getDefaultCurrency(locale.value) }).format(42.5); } catch { return '$42.50'; }
 }
 function exampleDate(): string {
     try { return new Intl.DateTimeFormat(locale.value, { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date()); } catch { return 'Apr 5, 2026'; }

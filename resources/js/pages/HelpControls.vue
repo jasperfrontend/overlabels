@@ -102,7 +102,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
                 <div class="flex gap-4">
                   <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">timer</div>
-                  <div class="text-foreground">A stopwatch or countdown. Start, stop, and reset from the Control Panel. The overlay reads elapsed time in real time.</div>
+                  <div class="text-foreground">A stopwatch or countdown. Start, stop, and reset from the Control Panel. The overlay reads elapsed time in real time. Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|duration:hh:mm:ss</code> to display it as a clock.</div>
                 </div>
                 <div class="flex gap-4">
                   <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">datetime</div>

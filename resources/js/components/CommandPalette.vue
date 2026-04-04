@@ -16,6 +16,7 @@ import {
   Layers,
   LayoutGrid,
   Megaphone,
+  Pipette,
   Search,
   Settings,
   Shield,
@@ -57,6 +58,7 @@ const items = computed<PaletteItem[]>(() => {
 
     { id: 'help-tags', label: 'Conditional Tags', section: 'Learn', href: route('help'), icon: Brackets, keywords: ['syntax', 'documentation', 'docs'] },
     { id: 'help-controls', label: 'Controls', section: 'Learn', href: route('help.controls'), icon: SlidersHorizontal, keywords: ['documentation', 'docs'] },
+    { id: 'help-formatting', label: 'Formatting Pipes', section: 'Learn', href: route('help.formatting'), icon: Pipette, keywords: ['duration', 'currency', 'number', 'date', 'pipe', 'format'] },
     { id: 'resources', label: 'Free Resources', section: 'Learn', href: route('resources'), icon: BookOpen, keywords: ['links', 'tools'] },
     { id: 'why-kofi', label: 'Why Ko-fi', section: 'Learn', href: route('why-kofi'), icon: Heart, keywords: ['donate', 'support'] },
     { id: 'manifesto', label: 'Manifesto', section: 'Learn', href: route('manifesto'), icon: FileText, keywords: ['about', 'philosophy'] },

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { BookOpen, Brackets, Code, Coffee, FileText, Grid2x2Check, Heart, LogOut, Shield, ShieldAlert, SlidersHorizontal, SunMoon, Terminal } from 'lucide-vue-next';
+import { BookOpen, Brackets, Code, Coffee, FileText, Grid2x2Check, Heart, LogOut, Pipette, Shield, ShieldAlert, SlidersHorizontal, SunMoon, Terminal } from 'lucide-vue-next';
 
 const settingsItems = [
   { label: 'Theme Settings', href: route('settings.appearance'), icon: SunMoon },
@@ -19,6 +19,7 @@ const settingsItems = [
 const learnItems = [
   { label: 'Conditional Tags', href: route('help'), icon: Brackets },
   { label: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
+  { label: 'Formatting Pipes', href: route('help.formatting'), icon: Pipette },
   { label: 'Free Resources', href: route('resources'), icon: BookOpen },
   { label: 'Why Ko-fi', href: route('why-kofi'), icon: Heart },
   { label: 'Manifesto', href: route('manifesto'), icon: FileText },

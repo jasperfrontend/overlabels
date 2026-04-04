@@ -50,6 +50,10 @@ Route::get('/help/controls', function () {
     return Inertia::render('HelpControls');
 })->name('help.controls');
 
+Route::get('/help/formatting', function () {
+    return Inertia::render('HelpFormatting');
+})->name('help.formatting');
+
 Route::get('/why-kofi', function () {
     return Inertia::render('WhyKofi');
 })->name('why-kofi');

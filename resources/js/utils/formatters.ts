@@ -19,7 +19,27 @@
  */
 
 const DEFAULT_LOCALE = 'en-US';
-const DEFAULT_CURRENCY = 'USD';
+
+/**
+ * Map supported locales to their typical currency.
+ * Used when |currency pipe has no explicit currency code argument.
+ */
+const LOCALE_CURRENCY_MAP: Record<string, string> = {
+  'en-US': 'USD',
+  'en-GB': 'GBP',
+  'nl-NL': 'EUR',
+  'nl-BE': 'EUR',
+  'de-DE': 'EUR',
+  'fr-FR': 'EUR',
+  'es-ES': 'EUR',
+  'pt-BR': 'BRL',
+  'ja-JP': 'JPY',
+  'ko-KR': 'KRW',
+};
+
+export function getDefaultCurrency(locale: string): string {
+  return LOCALE_CURRENCY_MAP[locale] || 'USD';
+}
 
 /**
  * Parse a pipe expression into formatter name and arguments.
@@ -169,7 +189,7 @@ function pad(n: number): string {
 function formatCurrency(value: string, args?: string, locale?: string): string {
   const num = Number(value);
   if (isNaN(num)) return value;
-  const currency = args || DEFAULT_CURRENCY;
+  const currency = args || getDefaultCurrency(locale || DEFAULT_LOCALE);
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
