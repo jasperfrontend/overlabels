@@ -2,11 +2,10 @@
 import { ref, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
-import TemplateTable from '@/components/TemplateTable.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, FileText, Radio, RefreshCw } from 'lucide-vue-next';
+import { ExternalLink, Radio, RefreshCw } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 
@@ -103,25 +102,6 @@ const breadcrumbs = [
           </Card>
         </div>
       </section>
-
-      <!-- Recently Updated Templates -->
-      <section class="space-y-4">
-        <div class="flex items-center gap-3">
-          <FileText class="mr-2 h-6 w-6" />
-          <Heading title="Recently Updated Templates" />
-        </div>
-
-        <TemplateTable v-if="recentTemplates.length > 0" :templates="recentTemplates" :show-owner="false" />
-
-        <Card v-else class="-mt-0.5 border border-sidebar bg-sidebar-accent">
-          <CardHeader>
-            <CardTitle class="text-md">No Templates Yet</CardTitle>
-            <CardDescription class="-mt-0.5 text-sm"> Create your first template to get started! </CardDescription>
-          </CardHeader>
-        </Card>
-      </section>
-
-      <div class="h-px w-full bg-muted-foreground/10" />
     </div>
 
     <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
