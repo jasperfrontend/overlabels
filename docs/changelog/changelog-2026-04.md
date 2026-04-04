@@ -1,5 +1,19 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Docs: Major README update
+
+- Rewrote intro to drop "DSL" jargon, matching the new GitHub repo description.
+- Added Expression controls section with formula syntax and reactive evaluation.
+- Added External Integrations section covering Ko-fi and StreamLabs, including control namespaces, auto-provisioned controls, and the shared webhook pipeline.
+- Added Alert Targeting section explaining per-overlay alert routing.
+- Added Control Timestamps (`_at` companion values) section.
+- Updated Timer section with the new "Count to" datetime mode.
+- Replaced all Pusher references with Reverb (self-hosted WebSocket).
+- Added Overlay Health subsection (reconnection, backoff, error banners).
+- Renamed "Forking" to "Copying" throughout to match UI terminology.
+- Updated Tech Stack table and Self-Hosting env vars.
+- Updated self-hosting clone URL to `jasperfrontend/overlabels`.
+
 ## April 4th, 2026 - UX: Contextual breadcrumbs for template show/edit pages
 
 - Breadcrumbs on show and edit pages now reflect the filtered list you navigated from (e.g. "My static overlays" or "My event alerts") instead of always showing "My overlays".
