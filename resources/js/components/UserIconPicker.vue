@@ -7,9 +7,9 @@
  *
  * Saving PATCHes /settings/icon and stays on the current page.
  */
-import * as LucideIcons from 'lucide-vue-next';
+import { HeartCrack } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
-import { computed, nextTick, ref, watch } from 'vue';
+import { defineAsyncComponent, h, nextTick, ref, shallowRef, watch } from 'vue';
 import type { Component } from 'vue';
 import { Button } from '@/components/ui/button';
 
@@ -20,16 +20,31 @@ function toPascalCase(str: string): string {
   return str.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
 }
 
+// kebab-case as used by lucide file names (PascalCase -> kebab-case)
+function toKebabCase(str: string): string {
+  return str.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-]/g, '');
+}
+
 const localIcon = ref(props.userIcon || 'smile');
 watch(() => props.userIcon, v => { localIcon.value = v || 'smile'; });
 
-const iconComponent = computed((): Component => {
-  const key = toPascalCase(localIcon.value || 'smile');
-  const candidate = (LucideIcons as unknown as Record<string, Component | undefined>)[key];
-  // Icons in lucide-vue-next are functions (functional components), not objects.
-  // Use nullish coalescing so any truthy export (function or object) is accepted.
-  return candidate ?? LucideIcons.HeartCrack;
-});
+const iconComponent = shallowRef<Component>(HeartCrack);
+
+function loadIcon(name: string) {
+  const kebab = toKebabCase(name || 'smile');
+  const pascal = toPascalCase(name || 'smile');
+  iconComponent.value = defineAsyncComponent({
+    loader: () =>
+      import(`lucide-vue-next/dist/esm/icons/${kebab}.js`)
+        .then(mod => mod[pascal] || mod.default || HeartCrack)
+        .catch(() => HeartCrack),
+    loadingComponent: { render: () => h('span') },
+    errorComponent: HeartCrack,
+  });
+}
+
+loadIcon(localIcon.value);
+watch(localIcon, loadIcon);
 
 const editing = ref(false);
 const inputRef = ref<HTMLInputElement | null>(null);

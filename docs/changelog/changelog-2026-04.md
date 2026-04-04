@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 4th, 2026 - Perf: Tree-shake Lucide icons (976 KB -> 82 KB)
+
+- Deleted unused `Icon.vue` which imported `* as icons from 'lucide-vue-next'`, pulling in all ~1,500 icons.
+- Rewrote `UserIconPicker.vue` to lazy-load individual icon files via `defineAsyncComponent` + dynamic `import()` instead of importing the entire library.
+- Removed the `lucide-icons` manual chunk from `vite.config.mts` since tree-shaking now works correctly.
+- Net bundle reduction: ~894 KB raw / ~161 KB gzipped.
+
 ## April 1st, 2026 - UI: Redesign TemplateTable + shared TemplateMeta component
 
 - Replaced the heavy dual table+card layout in `TemplateTable.vue` with a clean card-based list matching the `EventsTable` pattern.

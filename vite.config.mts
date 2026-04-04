@@ -46,7 +46,6 @@ export default defineConfig({
                         '@codemirror/view',
                         '@codemirror/state'
                     ],
-                    'lucide-icons': ['lucide-vue-next'],
                     websocket: ['pusher-js', 'laravel-echo'],
                 }
             }
