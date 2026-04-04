@@ -150,9 +150,9 @@ function relativeTime(iso: string): string {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-4 rounded-sm border border-sidebar p-4 transition-all ease-in-out bg-background',
+            'group flex items-start justify-between gap-4 rounded-sm border border-sidebar p-2 transition-all ease-in-out bg-sidebar-accent',
             eventHoverBorderClass(event),
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-sidebar-accent active:bg-accent/70' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
             replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-background',
@@ -164,7 +164,7 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex min-w-0 flex-1 flex-col gap-1" :id="label(event)">
+          <div class="flex min-w-0 flex-1 gap-1" :id="label(event)">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
@@ -181,7 +181,7 @@ function relativeTime(iso: string): string {
         </div>
       </PopoverTrigger>
 
-      <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-background border-violet-400 dark:border-violet-300" side="top" :side-offset="-1" align="start">
+      <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-sidebar-accent border-violet-400 dark:border-violet-300" side="top" :side-offset="-1" align="start">
         <div class="flex items-center gap-3">
           <span class="text-sm text-foreground">Replay event?</span>
           <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
