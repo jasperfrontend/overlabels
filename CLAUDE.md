@@ -101,6 +101,18 @@ Critical variables:
 - Namespaced broadcast key: "kofi:kofis_received" -> stored in data as "c:kofi:kofis_received"
 - Empty `overlay_slug` in broadcast = user-scoped; OverlayRenderer applies to all overlays
 
+## Pipe Formatting System (Implemented Apr 2026)
+
+- Syntax: `[[[tag_name|formatter]]]` or `[[[tag_name|formatter:args]]]`
+- Built-in formatters: `round`, `duration`, `currency`, `date`, `number`, `uppercase`, `lowercase`
+- Duration patterns: `hh:mm:ss`, `mm:ss`, `dd:hh:mm:ss` etc. - units overflow into the largest present unit
+- Formatter utility: `resources/js/utils/formatters.ts` - pure functions, zero dependencies, uses native `Intl` APIs
+- `OverlayRenderer.vue` uses `TAG_REGEX` for single-pass replacement: matches tag + optional pipe, resolves value, applies formatter
+- `TAG_REGEX`: `/\[\[\[([\w.:]+)(?:\|([\w.:\-]+))?]]]/g` - group 1 = tag key, group 2 = pipe expression
+- PHP `extractTemplateTags()` strips pipe expressions to extract clean tag names for the allowlist
+- Global locale stored on `users.locale` (default `en-US`), passed via API response as `json.locale`
+- Settings UI: Appearance page has locale picker with live number/currency/date preview
+
 ## External Integrations (Implemented Mar 2026)
 
 - Pipeline: ExternalWebhookController -> verifyRequest -> parsePayload -> normalizeEvent -> ExternalEvent (dedup on service+message_id) -> ExternalControlService.applyUpdates -> ExternalAlertService.dispatch

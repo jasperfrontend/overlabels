@@ -36,6 +36,7 @@ import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
+import { applyFormatter } from '@/utils/formatters';
 
 interface AlertData {
   head: string;
@@ -68,6 +69,7 @@ const head = ref<string | null>(null);
 const rawHtml = ref<string>('');
 const css = ref<string>('');
 const data = ref<Record<string, any> | undefined>(undefined);
+const userLocale = ref<string>('en-US');
 const error = ref('');
 const templateTags = ref<string[]>([]);
 const eventStore = useEventsStore();
@@ -141,31 +143,21 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Pre-build regex maps only for tags that have valid string/number values
-const tagRegexMap = computed(() => {
-  const m = new Map<string, RegExp>();
+// Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
+// Pipe args allow word chars, dots, colons, and hyphens (for date patterns like dd-MM-yyyy)
+const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\-]+))?]]]/g;
 
-  const sourceData = data.value && typeof data.value === 'object' ? data.value : {};
-
-  // Ensure templateTags is always an array before iterating
-  const tags = Array.isArray(templateTags.value) ? templateTags.value : [];
-
-  // Only log critical info
-  if (tags.length == null) {
-    console.warn('[OverlayRenderer] No template tags received from server!');
-  }
-
-  for (const key of tags) {
+function replaceTagsWithFormatting(source: string, sourceData: Record<string, any>): string {
+  return source.replace(TAG_REGEX, (_match, key: string, pipe: string | undefined) => {
     const val = sourceData[key];
-
-    // Skip keys with undefined/null or object values
-    if (val === undefined || val === null) continue;
-    if (typeof val === 'object') continue;
-
-    m.set(key, new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g'));
-  }
-  return m;
-});
+    if (val === undefined || val === null || typeof val === 'object') return '';
+    const strVal = String(val);
+    if (pipe) {
+      return applyFormatter(strVal, pipe, userLocale.value);
+    }
+    return strVal;
+  });
+}
 
 function parseSource(source: string | null | undefined): string {
   if (!source) return '';
@@ -173,15 +165,10 @@ function parseSource(source: string | null | undefined): string {
 
   if (data.value && typeof data.value === 'object') {
     result = processTemplate(result, data.value);
+    result = replaceTagsWithFormatting(result, data.value);
   }
 
-  for (const [key, regex] of tagRegexMap.value.entries()) {
-    if (data.value && typeof data.value === 'object' && key in data.value && data.value[key] !== undefined && data.value[key] !== null) {
-      result = result.replace(regex, String(data.value[key]));
-    }
-  }
-
-  return result.replace(/\[\[\[[\w.:]+]]]/g, '');
+  return result;
 }
 
 const compiledHtml = computed(() => parseSource(rawHtml.value));
@@ -225,33 +212,12 @@ const compiledAlertHtml = computed(() => {
   const alertData = currentAlert.value.data;
 
   if (!alertData || typeof alertData !== 'object') {
-    // If no data, replace all template tags with empty string to avoid showing raw tags
-    html = html.replace(/\[\[\[[\w.:]+]]]/g, '');
-    return html;
+    return replaceTagsWithFormatting(html, {});
   }
 
-  // First process conditional logic
+  // First process conditional logic, then replace tags with formatting
   html = processTemplate(html, alertData);
-
-  // Create a map of all tags to process - both static and dynamic
-  const allTags = new Map<string, any>();
-
-  // Add all data from the merged data (includes both static and dynamic)
-  for (const [key, value] of Object.entries(alertData)) {
-    if (value !== undefined && value !== null && typeof value !== 'object') {
-      allTags.set(key, value);
-    }
-  }
-
-  // Replace all known tags with their values
-  for (const [key, value] of allTags.entries()) {
-    const regex = new RegExp(`\\[\\[\\[${escapeRegExp(key)}]]]`, 'g');
-    html = html.replace(regex, String(value));
-  }
-
-  // Finally, replace any remaining template tags with empty string
-  // This handles tags that don't have data yet (like event.total before it arrives)
-  html = html.replace(/\[\[\[[\w.:]+]]]/g, '');
+  html = replaceTagsWithFormatting(html, alertData);
 
   return html;
 });
@@ -331,6 +297,9 @@ onMounted(async () => {
         console.warn('[OverlayRenderer] Emote parser failed to initialize');
       });
     }
+
+    // Initialize user locale for pipe formatters
+    userLocale.value = json.locale ?? 'en-US';
 
     // Initialize stream live state
     streamLive.value = json.stream_live ?? false;

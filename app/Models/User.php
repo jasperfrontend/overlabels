@@ -104,6 +104,7 @@ class User extends Authenticatable
         'onboarded_at',
         'webhook_secret',
         'role',
+        'locale',
         'is_system_user',
     ];
 

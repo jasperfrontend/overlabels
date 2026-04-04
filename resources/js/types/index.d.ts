@@ -80,6 +80,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     role: 'user' | 'admin';
+    locale?: string;
     is_system_user: boolean;
     deleted_at: string | null;
 }

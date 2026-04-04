@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'icon',
                     'onboarded_at',
                     'role',
+                    'locale',
                 ]) : null,
             ],
             'ziggy' => [

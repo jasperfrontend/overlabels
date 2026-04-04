@@ -22,7 +22,6 @@ import {
   FileCode2Icon,
   CodeIcon,
   PaletteIcon,
-  ChevronDownIcon,
   CopyIcon,
   InfoIcon,
   TargetIcon,

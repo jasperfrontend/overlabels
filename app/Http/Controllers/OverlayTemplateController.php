@@ -430,6 +430,7 @@ class OverlayTemplateController extends Controller
                 'timer_states' => $timerStates,
                 'expression_controls' => $expressionControls,
                 'stream_live' => StreamSessionService::isLive($user),
+                'locale' => $user->locale ?? 'en-US',
             ]);
 
         } catch (Exception $e) {

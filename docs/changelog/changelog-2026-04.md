@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Feature: Pipe formatting system for template tags (Milestone 5d)
+
+- Added pipe syntax for template tags: `[[[c:timer|duration:hh:mm:ss]]]`, `[[[c:amount|currency:EUR]]]`, `[[[c:score|round]]]`.
+- Built-in formatters: `|round`, `|duration`, `|currency`, `|date`, `|number`, `|uppercase`, `|lowercase`. All accept optional format-string arguments.
+- Duration formatter supports auto-format (smart unit selection) and explicit patterns (`hh:mm:ss`, `mm:ss`, `dd:hh:mm:ss`, etc.).
+- Currency, date, and number formatters use native `Intl` APIs - zero external dependencies.
+- Added global locale setting (user settings > Appearance) with live preview of number, currency, and date formatting.
+- Overlay renderer uses a single-pass regex replacement that resolves tags and applies formatters in one step.
+- PHP `extractTemplateTags()` updated to recognize pipe syntax and correctly strip formatters when extracting tag names.
+- Migration adds `locale` column to users table (default: `en-US`).
+- Locale is shared via Inertia and passed to the overlay renderer API response.
+
 ## April 5th, 2026 - Docs: Major README update
 
 - Rewrote intro to drop "DSL" jargon, matching the new GitHub repo description.

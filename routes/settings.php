@@ -12,6 +12,13 @@ Route::middleware('auth.redirect')->group(function () {
         return inertia('settings/Appearance');
     })->name('settings.appearance');
 
+    Route::patch('/settings/locale', function (Request $request) {
+        $request->validate(['locale' => 'required|string|max:10']);
+        $request->user()->update(['locale' => $request->locale]);
+
+        return back();
+    })->name('settings.locale');
+
     // External Integrations
     Route::prefix('settings/integrations')->name('settings.integrations.')->group(function () {
         Route::get('/', [IntegrationController::class, 'index'])->name('index');
