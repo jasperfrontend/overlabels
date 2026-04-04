@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
+import { Search, Copy, Info, ChevronRight } from 'lucide-vue-next';
 import RekaToast from '@/components/RekaToast.vue';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Configure axios to include CSRF token and credentials
@@ -19,14 +24,16 @@ const toastMessage = ref('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 const showToast = ref(false);
 
-const showDescription = ref(false);
 const showUserTagInfo = ref(false);
+const searchQuery = ref('');
 
 interface TemplateTag {
   display_tag: string;
   description: string;
   category?: string;
+  data_type?: string;
 }
+
 interface CategoryTag {
   category?: {
     display_name: string;
@@ -36,11 +43,13 @@ interface CategoryTag {
     display_tag: string;
     description: string;
     sample_data?: string;
+    data_type?: string;
   }>;
   active_template_tags?: Array<{
     display_tag: string;
     description: string;
     sample_data: string;
+    data_type?: string;
   }>;
 }
 
@@ -51,6 +60,9 @@ interface TagsResponse {
 // Tag selection modal state
 const tagList = ref<TemplateTag[]>([]);
 const categoryTags = ref<Record<string, CategoryTag>>({});
+
+// Categories to exclude - array data that doesn't render in templates
+const HIDDEN_CATEGORIES = ['Other'];
 
 // Cache configuration
 const CACHE_KEY = 'template_tags_cache';
@@ -76,7 +88,6 @@ function getCachedTags(): CachedData | null {
     const data: CachedData = JSON.parse(cached);
     const now = Date.now();
 
-    // Check if cache is expired
     if (now - data.timestamp > CACHE_DURATION) {
       localStorage.removeItem(CACHE_KEY);
       return null;
@@ -101,18 +112,21 @@ function setCachedTags(tags: Record<string, CategoryTag>): void {
     localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
   } catch (error) {
     console.error('Error setting cache:', error);
-    // If localStorage is full or unavailable, continue without caching
   }
 }
 
 function processTags(tags: Record<string, CategoryTag>): void {
-  // Store the categorized tags for the modal
   categoryTags.value = tags;
 
-  // Flatten the tags for a simple list if needed
   const flattenedTags: TemplateTag[] = [];
   Object.entries(tags).forEach(([category, categoryData]) => {
-    // Check for active_template_tags first, then fall back to tags
+    const displayName = categoryData.category?.display_name || category;
+
+    // Skip hidden categories
+    if (HIDDEN_CATEGORIES.includes(displayName)) {
+      return;
+    }
+
     const tagsArray = categoryData.active_template_tags || categoryData.tags;
 
     if (tagsArray && Array.isArray(tagsArray)) {
@@ -120,7 +134,8 @@ function processTags(tags: Record<string, CategoryTag>): void {
         flattenedTags.push({
           display_tag: tag.display_tag,
           description: tag.description,
-          category: categoryData.category?.display_name || category,
+          category: displayName,
+          data_type: tag.data_type,
         });
       });
     }
@@ -130,7 +145,6 @@ function processTags(tags: Record<string, CategoryTag>): void {
 }
 
 function useGetTemplateTags(): void {
-  // Check cache first
   const cached = getCachedTags();
 
   if (cached) {
@@ -138,16 +152,11 @@ function useGetTemplateTags(): void {
     return;
   }
 
-  // Fetch available tags from the API
   axios
     .get<TagsResponse>(route('tags.api.all'))
     .then((response) => {
       const tags = response.data.tags;
-
-      // Cache the response
       setCachedTags(tags);
-
-      // Process the tags
       processTags(tags);
     })
     .catch(() => {
@@ -155,19 +164,51 @@ function useGetTemplateTags(): void {
     });
 }
 
-// Group tags by category
-const groupedTags = computed(() => {
+// Group tags by category, filtered by search
+const filteredGroupedTags = computed(() => {
   const groups: Record<string, TemplateTag[]> = {};
+  const query = searchQuery.value.toLowerCase().trim();
+
   tagList.value.forEach((tag) => {
     if (tag.category) {
+      // Apply search filter
+      if (query) {
+        const matchesTag = tag.display_tag.toLowerCase().includes(query);
+        const matchesDescription = tag.description.toLowerCase().includes(query);
+        const matchesCategory = tag.category.toLowerCase().includes(query);
+        if (!matchesTag && !matchesDescription && !matchesCategory) {
+          return;
+        }
+      }
+
       if (!groups[tag.category]) {
         groups[tag.category] = [];
       }
       groups[tag.category].push(tag);
     }
   });
+
   return groups;
 });
+
+const totalVisibleTags = computed(() => {
+  return Object.values(filteredGroupedTags.value).reduce((sum, tags) => sum + tags.length, 0);
+});
+
+const categoryCount = computed(() => {
+  return Object.keys(filteredGroupedTags.value).length;
+});
+
+// Track which categories are expanded (all open by default)
+const expandedCategories = ref<Record<string, boolean>>({});
+
+function isCategoryExpanded(category: string): boolean {
+  return expandedCategories.value[category]; // default open
+}
+
+function toggleCategory(category: string): void {
+  expandedCategories.value[category] = !isCategoryExpanded(category);
+}
 
 const copyTag = async (tagName: string) => {
   try {
@@ -185,9 +226,10 @@ const copyTag = async (tagName: string) => {
 
 const copyAllTags = async () => {
   try {
-    const allTags = tagList.value.map((tag) => tag.display_tag).join(' ');
+    const visibleTags = Object.values(filteredGroupedTags.value).flat();
+    const allTags = visibleTags.map((tag) => tag.display_tag).join(' ');
     await navigator.clipboard.writeText(allTags);
-    toastMessage.value = `Copied ${tagList.value.length} tags to clipboard`;
+    toastMessage.value = `Copied ${visibleTags.length} tags to clipboard`;
     toastType.value = 'success';
     showToast.value = true;
   } catch (error) {
@@ -206,100 +248,129 @@ onMounted(() => {
 <template>
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-  <!-- Conditional Syntax Section -->
-  <div class="mb-4 gap-2">
-    <p class="text-sm text-muted-foreground">
-      Template Tags are the bread and butter of Overlabels. These tags represent real Twitch data and you can easily use them in your HTML
-      <strong>and</strong> CSS templates to create interactive overlays for your Twitch stream. This simple and easy to understand template syntax has
-      been created to just work and mostly stay out of your way. Click a tag below to copy it to your clipboard.
-    </p>
-
-    <p class="pt-4 text-sm text-muted-foreground">
+  <!-- Header section -->
+  <div class="mb-5 space-y-3">
+    <p class="text-sm leading-relaxed text-muted-foreground">
+      Tags represent live Twitch data you can use in your HTML and CSS templates. Click any tag to copy it to your clipboard, then paste it into your template code.
       Visit
-      <a class="text-violet-400 hover:text-violet-800 dark:hover:text-violet-300" :href="route('help')" target="_blank">Help</a>
-      to learn more about <strong>Dynamic & Conditional Template Syntax</strong>.
+      <a class="font-medium text-violet-400 underline decoration-violet-400/30 underline-offset-2 hover:text-violet-300 hover:decoration-violet-300/50" :href="route('help')" target="_blank">Help</a>
+      to learn about dynamic and conditional template syntax.
     </p>
-  </div>
 
-  <div class="mb-4 flex gap-4">
+    <!-- user_* info callout -->
     <button
       @click.prevent="showUserTagInfo = true"
-      class="cursor-pointer border border-dotted bg-background px-5 py-2 text-orange-500 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+      class="flex w-full cursor-pointer items-center gap-2.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-left text-sm text-amber-400 transition-colors hover:border-amber-500/50 hover:bg-amber-500/10"
     >
-      IMPORTANT INFO ABOUT <code>user_*</code> TAGS
+      <Info :size="16" class="shrink-0" />
+      <span><code class="rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-300">user_*</code> tags show the last viewer who triggered an event - not your channel data.</span>
     </button>
+  </div>
+
+  <!-- Search and actions bar -->
+  <div class="mb-4 flex items-center gap-3">
+    <div class="relative flex-1">
+      <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        v-model="searchQuery"
+        placeholder="Filter tags..."
+        class="h-8 pl-8 text-sm"
+      />
+    </div>
     <button
       @click.prevent="copyAllTags"
-      class="cursor-pointer border border-violet-600 bg-violet-500 px-5 py-2 text-white hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700"
+      class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 text-xs font-medium text-violet-400 transition-colors hover:border-violet-500/50 hover:bg-violet-500/20"
     >
-      Copy All Tags
+      <Copy :size="13" />
+      Copy all
     </button>
   </div>
-  <!-- Regular Template Tags -->
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <div class="rounded-sm border border-sidebar bg-background p-4" v-for="(tags, category) in groupedTags" :key="category">
-      <h2 class="mb-2 text-lg font-bold">{{ category }}</h2>
 
-      <ul class="mb-4">
-        <li v-for="tag in tags" :key="tag.display_tag">
-          <button
-            @click.prevent="copyTag(tag.display_tag)"
-            class="mb-1 cursor-pointer rounded border border-card-foreground/20 bg-sidebar px-1 py-0.5 text-sm hover:border-violet-300/40 hover:bg-violet-400 hover:text-background"
-            :title="`Click to copy ${tag.display_tag}`"
-          >
-            {{ tag.display_tag }}
-          </button>
-          <div v-if="showDescription" class="mb-1 text-xs text-muted-foreground">
-            <span class="text-xs text-violet-500 dark:text-violet-400">{{ tag.description }}</span>
+  <!-- Tag count -->
+  <p v-if="tagList.length > 0" class="mb-3 text-xs text-muted-foreground">
+    <template v-if="searchQuery">
+      {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ categoryCount }} categor{{ categoryCount !== 1 ? 'ies' : 'y' }}
+    </template>
+    <template v-else>
+      {{ tagList.length }} tags across {{ Object.keys(filteredGroupedTags).length }} categories
+    </template>
+  </p>
+
+  <!-- Categories with tags -->
+  <TooltipProvider :delay-duration="150">
+    <div v-if="Object.keys(filteredGroupedTags).length > 0" class="space-y-1.5">
+      <Collapsible
+        v-for="(tags, category) in filteredGroupedTags"
+        :key="category"
+        :open="isCategoryExpanded(String(category))"
+        @update:open="toggleCategory(String(category))"
+      >
+        <CollapsibleTrigger class="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/50">
+          <ChevronRight
+            :size="14"
+            class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
+          />
+          <span class="text-sm font-medium">{{ category }}</span>
+          <Badge variant="secondary" class="ml-auto text-[10px] tabular-nums">{{ tags.length }}</Badge>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div class="flex flex-wrap gap-1.5 px-2 pt-1.5 pb-2.5">
+            <Tooltip v-for="tag in tags" :key="tag.display_tag">
+              <TooltipTrigger as-child>
+                <button
+                  @click.prevent="copyTag(tag.display_tag)"
+                  class="cursor-pointer rounded border border-border/60 bg-card px-2 py-0.5 font-mono text-xs text-muted-foreground transition-all hover:border-violet-400/50 hover:bg-violet-500/10 hover:text-violet-300"
+                  :title="`Click to copy ${tag.display_tag}`"
+                >
+                  {{ tag.display_tag }}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" :side-offset="6" class="max-w-64">
+                <p>{{ tag.description }}</p>
+                <p class="mt-0.5 text-[10px] text-muted-foreground">Click to copy</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </li>
-      </ul>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
-  </div>
-  <div
-    v-if="tagList.length > 0"
-    :class="{ 'text-violet-500 dark:text-violet-400': showDescription, 'text-accent-foreground': !showDescription }"
-    class="flex items-center space-x-2 rounded text-accent-foreground/80"
-  >
-    <input type="checkbox" id="show-description" v-model="showDescription" class="mr-2 accent-violet-500" />
-    <label for="show-description" class="cursor-pointer rounded p-1 text-sm select-none" :class="{ 'text-accent-foreground': showDescription }">
-      Descriptions</label
-    >
-  </div>
-  <div v-else>
-    <p class="text-sm text-muted-foreground">No tags available</p>
-  </div>
 
+    <div v-else-if="searchQuery" class="py-8 text-center">
+      <p class="text-sm text-muted-foreground">No tags match "{{ searchQuery }}"</p>
+    </div>
+
+    <div v-else>
+      <p class="text-sm text-muted-foreground">No tags available</p>
+    </div>
+  </TooltipProvider>
+
+  <!-- user_* info dialog -->
   <Dialog v-model:open="showUserTagInfo">
     <DialogContent class="max-w-lg">
       <DialogHeader>
-        <div class="flex items-center space-x-2">
-          <DialogTitle>[[[user_*]]] Tags</DialogTitle>
-          <button
-            @click.prevent="showUserTagInfo = false"
-            class="ml-auto h-[26px] w-[26px] cursor-pointer rounded-full text-xl font-bold text-muted-foreground hover:bg-accent hover:text-muted-foreground"
-          >
-            &times;
-          </button>
-        </div>
+        <DialogTitle><code>user_*</code> Tags</DialogTitle>
       </DialogHeader>
-      <DialogDescription class="text-sm text-muted-foreground">
+      <DialogDescription as="div" class="space-y-3 text-sm text-muted-foreground">
         <p>
-          <code>[[[user_*]]]</code> represents the most recent user who <strong>triggered an event</strong> on your stream.
-          <span class="text-orange-500 dark:text-orange-400">This is not your channel data.</span>
+          <code class="rounded bg-muted px-1 py-0.5 text-xs">user_*</code> represents the most recent user who <strong class="text-foreground">triggered an event</strong> on your stream.
+          <span class="font-medium text-amber-400">This is not your channel data.</span>
         </p>
-        <h2 class="mt-4 mb-2 text-lg"><strong>For example:</strong></h2>
-        <ul class="mb-4 list-disc pl-5">
-          <li>Subscription → the subscriber's details</li>
-          <li>Gift sub / cheer / follow → that user's details</li>
-          <li>Default → your user account details</li>
-        </ul>
-        These tags are ideal when you want a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.<br /><br />
+        <div>
+          <p class="mb-1.5 font-medium text-foreground">For example:</p>
+          <ul class="list-disc space-y-0.5 pl-5">
+            <li>Subscription - the subscriber's details</li>
+            <li>Gift sub / cheer / follow - that user's details</li>
+            <li>Default - your user account details</li>
+          </ul>
+        </div>
+        <p>
+          These tags are ideal for a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.
+        </p>
         <div
-          class="relative rounded border border-orange-400 bg-orange-100 p-4 text-orange-700 dark:border-orange-500 dark:bg-orange-200 dark:text-orange-800"
+          class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-400"
         >
-          Do not use this tag to show your channel username. Use <strong>Channel Information</strong> tags if you want to show your channel info.<br /><br />
-          Currently your avatar is not in your channel data. In future updates this may happen if people want this.
+          Do not use this tag for your channel username. Use <strong>Channel Information</strong> tags for your own channel info.
         </div>
       </DialogDescription>
     </DialogContent>

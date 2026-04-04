@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
 import debounce from 'lodash/debounce';
-import { PlusIcon, Building } from 'lucide-vue-next';
+import { PlusIcon, Layers, Bell } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
@@ -73,7 +73,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Header -->
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
-          <Building class="mr-2 size-6" />
+          <Bell v-if="filters.type === 'alert'" class="mr-2 size-6" />
+          <Layers v-else  class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary self-start sm:self-auto">

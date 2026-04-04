@@ -33,16 +33,18 @@ const isAdmin = computed(() => page.props.isAdmin);
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
-  { title: 'Dashboard', href: route('dashboard.index'), icon: House },
+  // { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
   { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
+  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid }
 ];
 const alertsNavItems: NavItem[] = [
   { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
   { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 
-const kitsNavItems: NavItem[] = [{ title: 'Overlay kits', href: route('kits.index'), icon: LayoutGrid }];
+const kitsNavItems: NavItem[] = [
+];
 
 const adminNavItems: NavItem[] = [
   { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck },
@@ -74,9 +76,9 @@ const adminNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain v-if="user" label="" :items="mainNavItems" />
-      <NavMain v-if="user" label="Alerts" :items="alertsNavItems" />
-      <NavMain v-if="user" label="Kits" :items="kitsNavItems" />
+      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
+      <NavMain v-if="user && alertsNavItems.length > 0" label="Alerts" :items="alertsNavItems" />
+      <NavMain v-if="user && kitsNavItems.length > 0" label="Kits" :items="kitsNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
         <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
