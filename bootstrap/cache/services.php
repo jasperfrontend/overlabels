@@ -24,12 +24,12 @@
     20 => 'Illuminate\\Translation\\TranslationServiceProvider',
     21 => 'Illuminate\\Validation\\ValidationServiceProvider',
     22 => 'Illuminate\\View\\ViewServiceProvider',
-    23 => 'Inertia\\ServiceProvider',
-    24 => 'Laravel\\Reverb\\ApplicationManagerServiceProvider',
-    25 => 'Laravel\\Reverb\\ReverbServiceProvider',
-    26 => 'Laravel\\Sail\\SailServiceProvider',
-    27 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    28 => 'Laravel\\Sentinel\\SentinelServiceProvider',
+    23 => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
+    24 => 'Inertia\\ServiceProvider',
+    25 => 'Laravel\\Reverb\\ApplicationManagerServiceProvider',
+    26 => 'Laravel\\Reverb\\ReverbServiceProvider',
+    27 => 'Laravel\\Sail\\SailServiceProvider',
+    28 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     29 => 'Laravel\\Socialite\\SocialiteServiceProvider',
     30 => 'Laravel\\Tinker\\TinkerServiceProvider',
     31 => 'Mchev\\Banhammer\\BanhammerServiceProvider',
@@ -58,15 +58,14 @@
     10 => 'Inertia\\ServiceProvider',
     11 => 'Laravel\\Reverb\\ReverbServiceProvider',
     12 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    13 => 'Laravel\\Sentinel\\SentinelServiceProvider',
-    14 => 'Mchev\\Banhammer\\BanhammerServiceProvider',
-    15 => 'Carbon\\Laravel\\ServiceProvider',
-    16 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    17 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    18 => 'Pest\\Laravel\\PestServiceProvider',
-    19 => 'Stevebauman\\Location\\LocationServiceProvider',
-    20 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    21 => 'App\\Providers\\AppServiceProvider',
+    13 => 'Mchev\\Banhammer\\BanhammerServiceProvider',
+    14 => 'Carbon\\Laravel\\ServiceProvider',
+    15 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    16 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    17 => 'Pest\\Laravel\\PestServiceProvider',
+    18 => 'Stevebauman\\Location\\LocationServiceProvider',
+    19 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    20 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (
@@ -224,6 +223,10 @@
     'validator' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'validation.presence' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'Illuminate\\Contracts\\Validation\\UncompromisedVerifier' => 'Illuminate\\Validation\\ValidationServiceProvider',
+    'Barryvdh\\LaravelIdeHelper\\Console\\GeneratorCommand' => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
+    'Barryvdh\\LaravelIdeHelper\\Console\\ModelsCommand' => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
+    'Barryvdh\\LaravelIdeHelper\\Console\\MetaCommand' => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
+    'Barryvdh\\LaravelIdeHelper\\Console\\EloquentCommand' => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
     'Laravel\\Reverb\\ApplicationManager' => 'Laravel\\Reverb\\ApplicationManagerServiceProvider',
     'Laravel\\Reverb\\Contracts\\ApplicationProvider' => 'Laravel\\Reverb\\ApplicationManagerServiceProvider',
     'Laravel\\Sail\\Console\\InstallCommand' => 'Laravel\\Sail\\SailServiceProvider',
@@ -270,6 +273,9 @@
     array (
     ),
     'Illuminate\\Validation\\ValidationServiceProvider' => 
+    array (
+    ),
+    'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider' => 
     array (
     ),
     'Laravel\\Reverb\\ApplicationManagerServiceProvider' => 

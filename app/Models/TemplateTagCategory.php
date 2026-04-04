@@ -7,6 +7,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $display_name
+ * @property string|null $description
+ * @property bool $is_group
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $user_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TemplateTag> $activeTemplateTags
+ * @property-read int|null $active_template_tags_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TemplateTag> $templateTags
+ * @property-read int|null $template_tags_count
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereDisplayName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereIsGroup($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereUserId($value)
+ * @mixin \Eloquent
+ */
 class TemplateTagCategory extends Model
 {
     use HasFactory;

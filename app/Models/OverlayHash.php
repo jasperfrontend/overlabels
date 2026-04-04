@@ -12,6 +12,43 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Log;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $hash_key
+ * @property string $overlay_name
+ * @property string|null $description
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $last_accessed_at
+ * @property int $access_count
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property array<array-key, mixed>|null $allowed_ips
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $slug
+ * @property-read \App\Models\User|null $user
+ * @method static \Database\Factories\OverlayHashFactory factory($count = null, $state = [])
+ * @method static Builder<static>|OverlayHash forUser(int $userId)
+ * @method static Builder<static>|OverlayHash newModelQuery()
+ * @method static Builder<static>|OverlayHash newQuery()
+ * @method static Builder<static>|OverlayHash query()
+ * @method static Builder<static>|OverlayHash whereAccessCount($value)
+ * @method static Builder<static>|OverlayHash whereAllowedIps($value)
+ * @method static Builder<static>|OverlayHash whereCreatedAt($value)
+ * @method static Builder<static>|OverlayHash whereDescription($value)
+ * @method static Builder<static>|OverlayHash whereExpiresAt($value)
+ * @method static Builder<static>|OverlayHash whereHashKey($value)
+ * @method static Builder<static>|OverlayHash whereId($value)
+ * @method static Builder<static>|OverlayHash whereIsActive($value)
+ * @method static Builder<static>|OverlayHash whereLastAccessedAt($value)
+ * @method static Builder<static>|OverlayHash whereMetadata($value)
+ * @method static Builder<static>|OverlayHash whereOverlayName($value)
+ * @method static Builder<static>|OverlayHash whereSlug($value)
+ * @method static Builder<static>|OverlayHash whereUpdatedAt($value)
+ * @method static Builder<static>|OverlayHash whereUserId($value)
+ * @mixin \Eloquent
+ */
 class OverlayHash extends Model
 {
     use HasFactory;

@@ -5,6 +5,37 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $event_type
+ * @property int|null $template_id
+ * @property int $duration_ms
+ * @property bool $enabled
+ * @property array<array-key, mixed>|null $settings
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $transition_in
+ * @property string $transition_out
+ * @property-read string $event_type_display
+ * @property-read \App\Models\OverlayTemplate|null $template
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereDurationMs($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereEventType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereSettings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereTransitionIn($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereTransitionOut($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTemplateMapping whereUserId($value)
+ * @mixin \Eloquent
+ */
 class EventTemplateMapping extends Model
 {
     protected $fillable = [

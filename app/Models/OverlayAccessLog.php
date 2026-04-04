@@ -5,6 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $token_id
+ * @property string|null $template_slug
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon $accessed_at
+ * @property-read \App\Models\OverlayAccessToken $token
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereAccessedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereTemplateSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereTokenId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessLog whereUserAgent($value)
+ * @mixin \Eloquent
+ */
 class OverlayAccessLog extends Model
 {
     public $timestamps = false;

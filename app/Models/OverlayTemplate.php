@@ -10,6 +10,69 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $slug
+ * @property int $owner_id
+ * @property string $name
+ * @property string|null $description
+ * @property string $html
+ * @property string|null $css
+ * @property string|null $js
+ * @property bool $is_public
+ * @property int $version
+ * @property int|null $fork_of_id
+ * @property array<array-key, mixed>|null $template_tags
+ * @property array<array-key, mixed>|null $metadata
+ * @property int $view_count
+ * @property int $fork_count
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $type
+ * @property string|null $head
+ * @property string|null $screenshot_url
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayControl> $controls
+ * @property-read int|null $controls_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventTemplateMapping> $eventMappings
+ * @property-read int|null $event_mappings_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ExternalEventTemplateMapping> $externalEventMappings
+ * @property-read int|null $external_event_mappings_count
+ * @property-read OverlayTemplate|null $forkParent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, OverlayTemplate> $forks
+ * @property-read int|null $forks_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Kit> $kits
+ * @property-read int|null $kits_count
+ * @property-read \App\Models\User|null $owner
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, OverlayTemplate> $targetStaticOverlays
+ * @property-read int|null $target_static_overlays_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate alert()
+ * @method static \Database\Factories\OverlayTemplateFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate static()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereCss($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereForkCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereForkOfId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereHead($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereHtml($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereIsPublic($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereJs($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereOwnerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereScreenshotUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereTemplateTags($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayTemplate whereViewCount($value)
+ * @mixin \Eloquent
+ */
 class OverlayTemplate extends Model
 {
     // Transient properties set after fork() for the fork wizard

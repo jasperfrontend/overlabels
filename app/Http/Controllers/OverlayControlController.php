@@ -10,13 +10,14 @@ use App\Services\StreamSessionService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class OverlayControlController extends Controller
 {
     /**
      * List controls for a template.
      */
-    public function index(Request $request, OverlayTemplate $template): JsonResponse
+    public function index(OverlayTemplate $template): JsonResponse
     {
         abort_if($template->owner_id !== auth()->id(), 403);
 
@@ -41,18 +42,18 @@ class OverlayControlController extends Controller
                 'regex:'.OverlayControl::KEY_PATTERN,
                 function ($attribute, $value, $fail) use ($template, $request) {
                     $source = $request->input('source');
-                    $query = OverlayControl::where('overlay_template_id', $template->id)->where('key', $value);
+                    $query = OverlayControl::query()->where('overlay_template_id', $template->id)->where('key', $value);
                     if ($source) {
                         $query->where('source', $source);
                     } else {
                         $query->whereNull('source');
                     }
                     if ($query->exists()) {
-                        $label = $source ? "{$source}:{$value}" : $value;
-                        $fail("A control with key '{$label}' already exists for this template.");
+                        $label = $source ? "$source:$value" : $value;
+                        $fail("A control with key '$label' already exists for this template.");
                     }
                     if (! $source && in_array($value, OverlayControl::RESERVED_KEYS, true)) {
-                        $fail("The key '{$value}' is reserved and cannot be used as a control key.");
+                        $fail("The key '$value' is reserved and cannot be used as a control key.");
                     }
                 },
             ],
@@ -75,12 +76,12 @@ class OverlayControlController extends Controller
                 $driver = ExternalServiceRegistry::driver($source);
                 $provisionedDefs = collect($driver->getAutoProvisionedControls())->keyBy('key');
             } else {
-                abort(422, "Unknown service: {$source}");
+                abort(422, "Unknown service: $source");
             }
 
             $def = $provisionedDefs->get($validated['key']);
 
-            abort_unless($def !== null, 422, "Invalid key '{$validated['key']}' for service '{$source}'");
+            abort_unless($def !== null, 422, "Invalid key '{$validated['key']}' for service '$source'");
 
             $control = OverlayControl::create([
                 'overlay_template_id' => $template->id,
@@ -114,25 +115,7 @@ class OverlayControlController extends Controller
             // Validate all referenced controls exist in scope
             $available = OverlayControl::getAvailableControls(auth()->user(), $template->id);
 
-            foreach ($dependencies as $dep) {
-                $colonIdx = strpos($dep, ':');
-                if ($colonIdx !== false) {
-                    $depSource = substr($dep, 0, $colonIdx);
-                    $depKey = substr($dep, $colonIdx + 1);
-                } else {
-                    $depSource = null;
-                    $depKey = $dep;
-                }
-
-                $found = $available->first(function ($c) use ($depKey, $depSource) {
-                    return $c->key === $depKey && ($c->source ?: null) === $depSource;
-                });
-
-                if (! $found) {
-                    $label = $depSource ? "{$depSource}:{$depKey}" : $depKey;
-                    abort(422, "Referenced control '{$label}' not found in scope.");
-                }
-            }
+            $this->dependencies($dependencies, $available);
 
             // Create the control first (needed for cycle detection)
             $control = OverlayControl::createForTemplate($template, auth()->user(), [
@@ -171,7 +154,7 @@ class OverlayControlController extends Controller
 
         if ($control->source_managed) {
             $source = ucfirst($control->source ?? 'an external service');
-            abort(403, "This control is managed by {$source} and cannot be edited manually.");
+            abort(403, "This control is managed by $source and cannot be edited manually.");
         }
 
         $validated = $request->validate([
@@ -200,25 +183,7 @@ class OverlayControlController extends Controller
 
             $available = OverlayControl::getAvailableControls(auth()->user(), $template->id, $control->id);
 
-            foreach ($dependencies as $dep) {
-                $colonIdx = strpos($dep, ':');
-                if ($colonIdx !== false) {
-                    $depSource = substr($dep, 0, $colonIdx);
-                    $depKey = substr($dep, $colonIdx + 1);
-                } else {
-                    $depSource = null;
-                    $depKey = $dep;
-                }
-
-                $found = $available->first(function ($c) use ($depKey, $depSource) {
-                    return $c->key === $depKey && ($c->source ?: null) === $depSource;
-                });
-
-                if (! $found) {
-                    $label = $depSource ? "{$depSource}:{$depKey}" : $depKey;
-                    abort(422, "Referenced control '{$label}' not found in scope.");
-                }
-            }
+            $this->dependencies($dependencies, $available);
 
             if (OverlayControl::detectExpressionCycle($control, $dependencies, $template->id)) {
                 abort(422, 'This expression would create a circular dependency.');
@@ -281,7 +246,7 @@ class OverlayControlController extends Controller
 
         if ($control->source_managed) {
             $source = ucfirst($control->source ?? 'an external service');
-            abort(403, "This control is managed by {$source} and cannot be edited manually.");
+            abort(403, "This control is managed by $source and cannot be edited manually.");
         }
 
         if ($control->isExpression()) {
@@ -436,7 +401,7 @@ class OverlayControlController extends Controller
             }
 
             // Skip if key already exists (scoped by source for service controls)
-            $existsQuery = OverlayControl::where('overlay_template_id', $template->id)->where('key', $item['key']);
+            $existsQuery = OverlayControl::query()->where('overlay_template_id', $template->id)->where('key', $item['key']);
             if (! empty($item['source'])) {
                 $existsQuery->where('source', $item['source']);
             } else {
@@ -476,5 +441,33 @@ class OverlayControlController extends Controller
             $user->twitch_id,
             $timerState
         );
+    }
+
+    /**
+     * @param array $dependencies
+     * @param Collection $available
+     * @return void
+     */
+    public function dependencies(array $dependencies, Collection $available): void
+    {
+        foreach ($dependencies as $dep) {
+            $colonIdx = strpos($dep, ':');
+            if ($colonIdx !== false) {
+                $depSource = substr($dep, 0, $colonIdx);
+                $depKey = substr($dep, $colonIdx + 1);
+            } else {
+                $depSource = null;
+                $depKey = $dep;
+            }
+
+            $found = $available->first(function ($c) use ($depKey, $depSource) {
+                return $c->key === $depKey && ($c->source ?: null) === $depSource;
+            });
+
+            if (!$found) {
+                $label = $depSource ? "$depSource:$depKey" : $depKey;
+                abort(422, "Referenced control '$label' not found in scope.");
+            }
+        }
     }
 }

@@ -8,6 +8,41 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
+/**
+ * @property int $id
+ * @property int|null $overlay_template_id
+ * @property int $user_id
+ * @property string $key
+ * @property string|null $label
+ * @property string $type
+ * @property string|null $value
+ * @property array<array-key, mixed>|null $config
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $source
+ * @property bool $source_managed
+ * @property-read \App\Models\OverlayTemplate|null $template
+ * @property-read \App\Models\User|null $user
+ * @method static \Database\Factories\OverlayControlFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereLabel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereOverlayTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSource($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSourceManaged($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereValue($value)
+ * @mixin \Eloquent
+ */
 class OverlayControl extends Model
 {
     use HasFactory;

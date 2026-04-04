@@ -12,12 +12,42 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * @property int|mixed $owner_id
+ * @property int $id
+ * @property int $owner_id
  * @property string $title
- * @property string $description
+ * @property string|null $description
+ * @property string|null $thumbnail
  * @property bool $is_public
- * @property string|mixed $thumbnail
- * @property mixed $templates
+ * @property int|null $forked_from_id
+ * @property int $fork_count
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property bool $is_starter_kit
+ * @property-read Kit|null $forkedFrom
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Kit> $forks
+ * @property-read int|null $forks_count
+ * @property-read string|null $thumbnail_url
+ * @property-read \App\Models\User|null $owner
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayTemplate> $templates
+ * @property-read int|null $templates_count
+ * @method static \Database\Factories\KitFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit ownedBy($userId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit public()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereForkCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereForkedFromId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereIsPublic($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereIsStarterKit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereOwnerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereThumbnail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Kit extends Model
 {

@@ -9,6 +9,44 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use Random\RandomException;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $name
+ * @property string $token_hash
+ * @property string $token_prefix
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property int $access_count
+ * @property \Illuminate\Support\Carbon|null $last_used_at
+ * @property array<array-key, mixed>|null $allowed_ips
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $abilities
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayAccessLog> $accessLogs
+ * @property-read int|null $access_logs_count
+ * @property-read \App\Models\User|null $user
+ * @method static \Database\Factories\OverlayAccessTokenFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAbilities($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAccessCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAllowedIps($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereLastUsedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereTokenHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereTokenPrefix($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereUserId($value)
+ * @mixin \Eloquent
+ */
 class OverlayAccessToken extends Model
 {
     use HasFactory;

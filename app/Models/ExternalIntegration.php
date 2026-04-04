@@ -10,6 +10,40 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $service
+ * @property string $webhook_token
+ * @property string|null $credentials
+ * @property array<array-key, mixed>|null $settings
+ * @property bool $enabled
+ * @property \Illuminate\Support\Carbon|null $last_received_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property bool $test_mode
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ExternalEvent> $events
+ * @property-read int|null $events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ExternalEventTemplateMapping> $mappings
+ * @property-read int|null $mappings_count
+ * @property-read \App\Models\User|null $user
+ * @method static \Database\Factories\ExternalIntegrationFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereCredentials($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereLastReceivedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereService($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereSettings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereTestMode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalIntegration whereWebhookToken($value)
+ * @mixin \Eloquent
+ */
 class ExternalIntegration extends Model
 {
     use HasFactory;

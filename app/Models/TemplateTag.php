@@ -9,6 +9,53 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 
+/**
+ * @property int $id
+ * @property int $category_id
+ * @property string $tag_name
+ * @property string $display_tag
+ * @property string $json_path
+ * @property string $data_type
+ * @property string $display_name
+ * @property string|null $description
+ * @property array<array-key, mixed>|null $sample_data
+ * @property array<array-key, mixed>|null $formatting_options
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $tag_type
+ * @property string $version
+ * @property bool $is_editable
+ * @property string|null $original_tag_name
+ * @property int|null $user_id
+ * @property-read \App\Models\TemplateTagCategory $category
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag custom()
+ * @method static \Database\Factories\TemplateTagFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag standard()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereCategoryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereDataType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereDisplayName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereDisplayTag($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereFormattingOptions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereIsEditable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereJsonPath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereOriginalTagName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereSampleData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereTagName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereTagType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTag whereVersion($value)
+ * @mixin \Eloquent
+ */
 class TemplateTag extends Model
 {
     use HasFactory;

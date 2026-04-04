@@ -5,6 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon $started_at
+ * @property \Illuminate\Support\Carbon|null $ended_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereEndedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereStartedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StreamSession whereUserId($value)
+ * @mixin \Eloquent
+ */
 class StreamSession extends Model
 {
     protected $fillable = [

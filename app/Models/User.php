@@ -10,6 +10,76 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Mchev\Banhammer\Traits\Bannable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $twitch_id
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property string|null $password
+ * @property string|null $remember_token
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $avatar
+ * @property string|null $access_token
+ * @property string|null $refresh_token
+ * @property \Illuminate\Support\Carbon|null $token_expires_at
+ * @property array<array-key, mixed>|null $twitch_data
+ * @property \Illuminate\Support\Carbon|null $eventsub_connected_at
+ * @property bool $eventsub_auto_connect
+ * @property \Illuminate\Support\Carbon|null $onboarded_at
+ * @property string|null $webhook_secret
+ * @property string $role
+ * @property bool $is_system_user
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property string|null $icon
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AdminAuditLog> $adminAuditLogs
+ * @property-read int|null $admin_audit_logs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Mchev\Banhammer\Models\Ban> $bans
+ * @property-read int|null $bans_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\UserEventsubSubscription> $eventsubSubscriptions
+ * @property-read int|null $eventsub_subscriptions_count
+ * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayAccessToken> $overlayAccessTokens
+ * @property-read int|null $overlay_access_tokens_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayTemplate> $overlayTemplates
+ * @property-read int|null $overlay_templates_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User banned(bool $banned = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User bannedByType(string $className)
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User notBanned()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAccessToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBansMeta(string $key, $value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventsubAutoConnect($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventsubConnectedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIcon($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsSystemUser($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOnboardedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRefreshToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRole($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTokenExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwitchData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwitchId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereWebhookSecret($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
+ * @mixin \Eloquent
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

@@ -6,6 +6,31 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $event_type
+ * @property array<array-key, mixed> $event_data
+ * @property \Illuminate\Support\Carbon $twitch_timestamp
+ * @property bool $processed
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $user_id
+ * @property-read \App\Models\User|null $user
+ * @method static Builder<static>|TwitchEvent newModelQuery()
+ * @method static Builder<static>|TwitchEvent newQuery()
+ * @method static Builder<static>|TwitchEvent ofType(string $type)
+ * @method static Builder<static>|TwitchEvent query()
+ * @method static Builder<static>|TwitchEvent unprocessed()
+ * @method static Builder<static>|TwitchEvent whereCreatedAt($value)
+ * @method static Builder<static>|TwitchEvent whereEventData($value)
+ * @method static Builder<static>|TwitchEvent whereEventType($value)
+ * @method static Builder<static>|TwitchEvent whereId($value)
+ * @method static Builder<static>|TwitchEvent whereProcessed($value)
+ * @method static Builder<static>|TwitchEvent whereTwitchTimestamp($value)
+ * @method static Builder<static>|TwitchEvent whereUpdatedAt($value)
+ * @method static Builder<static>|TwitchEvent whereUserId($value)
+ * @mixin \Eloquent
+ */
 class TwitchEvent extends Model
 {
     /**
