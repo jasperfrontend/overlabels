@@ -126,14 +126,24 @@ const copyToClipboard = (url: string, shownValue: string) => {
   showToast.value = true;
 };
 
+function getListContext(): { title: string; href: string } {
+  try {
+    const stored = sessionStorage.getItem('templates_list_context');
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return { title: 'My overlays', href: route('templates.index') };
+}
+
+const listContext = getListContext();
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'My overlays',
-    href: route('templates.index'),
+    title: listContext.title,
+    href: listContext.href,
   },
   {
     title: props.template?.name || 'Template',
-    href: '/templates/*',
+    href: `/templates/${props.template?.id}`,
   },
 ];
 
@@ -285,19 +295,19 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-card p-4">
+      <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-card">
         <!-- Controls Manager tab -->
-        <div v-if="canEdit && mainTab === 'controls'" class="mb-6">
+        <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
           <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
         </div>
 
         <!-- Control Panel tab -->
-        <div v-if="canEdit && mainTab === 'panel'" class="mb-6">
+        <div v-if="canEdit && mainTab === 'panel'" class="mb-6 p-4">
           <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
         </div>
 
         <!-- Screenshot tab -->
-        <div v-if="mainTab === 'screenshot'" class="mb-6">
+        <div v-if="mainTab === 'screenshot'" class="mb-6 p-4">
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
@@ -339,22 +349,22 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
-          <button
-            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"
-            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"
-            @click="showCode = !showCode"
-          >
-            <CodeIcon class="h-4 w-4 shrink-0" />
-            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>
-            <ChevronDownIcon
-              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"
-              :class="{ 'rotate-180': showCode }"
-            />
-          </button>
+<!--          <button-->
+<!--            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"-->
+<!--            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"-->
+<!--            @click="showCode = !showCode"-->
+<!--          >-->
+<!--            <CodeIcon class="h-4 w-4 shrink-0" />-->
+<!--            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>-->
+<!--            <ChevronDownIcon-->
+<!--              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"-->
+<!--              :class="{ 'rotate-180': showCode }"-->
+<!--            />-->
+<!--          </button>-->
 
-          <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-border border-b-border">
+          <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-sidebar border-b-sidebar">
             <!-- File tabs sidebar -->
-            <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
+            <div class="flex flex-col border-r border-sidebar bg-sidebar text-sidebar-foreground">
               <button
                 v-for="tab in editorTabs"
                 :key="tab.key"

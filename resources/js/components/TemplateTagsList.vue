@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
-import { Search, Copy, Info, ChevronRight } from 'lucide-vue-next';
+import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import RekaToast from '@/components/RekaToast.vue';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -199,15 +199,49 @@ const categoryCount = computed(() => {
   return Object.keys(filteredGroupedTags.value).length;
 });
 
-// Track which categories are expanded (all open by default)
-const expandedCategories = ref<Record<string, boolean>>({});
+// Track which categories are expanded, persisted to localStorage
+const EXPANDED_KEY = 'template_tags_expanded';
+
+function loadExpandedState(): Record<string, boolean> {
+  try {
+    const stored = localStorage.getItem(EXPANDED_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function saveExpandedState(): void {
+  try {
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expandedCategories.value));
+  } catch {
+    // ignore
+  }
+}
+
+const expandedCategories = ref<Record<string, boolean>>(loadExpandedState());
 
 function isCategoryExpanded(category: string): boolean {
-  return expandedCategories.value[category]; // default open
+  // Default to open if never toggled
+  return expandedCategories.value[category] ?? true;
 }
 
 function toggleCategory(category: string): void {
   expandedCategories.value[category] = !isCategoryExpanded(category);
+  saveExpandedState();
+}
+
+const allExpanded = computed(() => {
+  return Object.keys(filteredGroupedTags.value).every((cat) => isCategoryExpanded(cat));
+});
+
+function toggleAll(): void {
+  const newState = !allExpanded.value;
+  Object.keys(filteredGroupedTags.value).forEach((cat) => {
+    expandedCategories.value[cat] = newState;
+  });
+  saveExpandedState();
 }
 
 const copyTag = async (tagName: string) => {
@@ -263,7 +297,7 @@ onMounted(() => {
       class="flex w-full cursor-pointer items-center gap-2.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-left text-sm text-amber-400 transition-colors hover:border-amber-500/50 hover:bg-amber-500/10"
     >
       <Info :size="16" class="shrink-0" />
-      <span><code class="rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-300">user_*</code> tags show the last viewer who triggered an event - not your channel data.</span>
+      <span><code class="rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-300">user_*</code> tags show the last viewer who triggered an event - not your channel data. <strong>Click to read more!</strong></span>
     </button>
   </div>
 
@@ -286,15 +320,24 @@ onMounted(() => {
     </button>
   </div>
 
-  <!-- Tag count -->
-  <p v-if="tagList.length > 0" class="mb-3 text-xs text-muted-foreground">
-    <template v-if="searchQuery">
+  <!-- Tag count and collapse/expand toggle -->
+  <div v-if="tagList.length > 0" class="mb-3 flex items-center text-xs text-muted-foreground">
+    <span v-if="searchQuery">
       {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ categoryCount }} categor{{ categoryCount !== 1 ? 'ies' : 'y' }}
-    </template>
-    <template v-else>
+    </span>
+    <span v-else>
       {{ tagList.length }} tags across {{ Object.keys(filteredGroupedTags).length }} categories
-    </template>
-  </p>
+    </span>
+    <button
+      v-if="categoryCount > 0"
+      class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      @click.prevent="toggleAll"
+    >
+      <ChevronsDownUp v-if="allExpanded" :size="13" />
+      <ChevronsUpDown v-else :size="13" />
+      {{ allExpanded ? 'Collapse all' : 'Expand all' }}
+    </button>
+  </div>
 
   <!-- Categories with tags -->
   <TooltipProvider :delay-duration="150">

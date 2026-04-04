@@ -92,10 +92,20 @@ const form = useForm({
   is_public: props?.template?.is_public,
 });
 
+function getListContext(): { title: string; href: string } {
+  try {
+    const stored = sessionStorage.getItem('templates_list_context');
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return { title: 'My overlays', href: route('templates.index') };
+}
+
+const listContext = getListContext();
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'My overlays',
-    href: route('templates.index'),
+    title: listContext.title,
+    href: listContext.href,
   },
   {
     title: props.template?.name || 'Template',

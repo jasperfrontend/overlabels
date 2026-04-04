@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -57,8 +57,19 @@ const pageTitle = computed(() => {
 });
 const pageTitleString = pageTitle.value
 
-const breadcrumbs: BreadcrumbItem[] = [
+// Persist filter context so show/edit pages can build accurate breadcrumbs
+watchEffect(() => {
+  const params = new URLSearchParams();
+  Object.entries(filters.value).forEach(([key, val]) => {
+    if (val) params.set(key, String(val));
+  });
+  sessionStorage.setItem('templates_list_context', JSON.stringify({
+    title: pageTitle.value,
+    href: `${route('templates.index')}?${params.toString()}`,
+  }));
+});
 
+const breadcrumbs: BreadcrumbItem[] = [
   {
     title: pageTitleString,
     href: '/templates',
@@ -74,7 +85,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <Bell v-if="filters.type === 'alert'" class="mr-2 size-6" />
-          <Layers v-else  class="mr-2 size-6" />
+          <Layers v-else class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
         <Link :href="route('templates.create')" class="btn btn-primary self-start sm:self-auto">

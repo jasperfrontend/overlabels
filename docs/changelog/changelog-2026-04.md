@@ -1,5 +1,22 @@
 # CHANGELOG APRIL 2026
 
+## April 4th, 2026 - UX: Contextual breadcrumbs for template show/edit pages
+
+- Breadcrumbs on show and edit pages now reflect the filtered list you navigated from (e.g. "My static overlays" or "My event alerts") instead of always showing "My overlays".
+- Clicking the breadcrumb navigates back to the exact filtered route, preserving filter, type, sort, and direction.
+- Filter context is persisted to `sessionStorage` from `index.vue` and read by `show.vue` / `edit.vue`. Falls back to "My overlays" on direct navigation.
+
+## April 4th, 2026 - UI: Redesign TemplateTagsList component
+
+- Replaced the grid-of-boxes layout with collapsible category sections and horizontal flow-wrapped tag badges - all tags visible at once without excessive scrolling.
+- Added a search/filter input that matches against tag names, descriptions, and category names.
+- Removed the "Other" category entirely (contained only array-type data and generic count tags that don't render in templates).
+- Replaced the all-caps orange "IMPORTANT INFO" button with a subtle full-width amber callout banner explaining `user_*` tag behavior.
+- Tag descriptions now appear on hover via tooltips instead of a global checkbox toggle.
+- Category expand/collapse state is persisted to `localStorage` - survives tab switches and page navigation.
+- Added "Collapse all" / "Expand all" toggle with chevron icons, reactively derived from per-category state.
+- Cleaned up the info dialog copy (hyphens instead of em dashes, consistent amber theming).
+
 ## April 4th, 2026 - Remove: User dashboard icon, greeting, and per-section limit
 
 - Removed the per-user icon feature: deleted `UserIconPicker.vue`, the `PATCH /settings/icon` route, the icon picker from Appearance settings, and the `icon` column from the `users` table (migration included).
