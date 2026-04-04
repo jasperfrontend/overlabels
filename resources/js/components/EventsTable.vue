@@ -150,7 +150,7 @@ function relativeTime(iso: string): string {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-4 rounded-sm border border-sidebar p-2 transition-all ease-in-out bg-sidebar-accent',
+            'group flex items-start justify-between gap-4 rounded-sm border border-violet-300/30 p-2 transition-all ease-in-out bg-sidebar-accent',
             eventHoverBorderClass(event),
             canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-violet-400/20 dark:active:bg-violet-600/30 transition-all duration-100' : '',
             replayingId === event.id ? 'opacity-60' : '',

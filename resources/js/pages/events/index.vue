@@ -244,7 +244,7 @@ const serviceLabel: Record<string, string> = {
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
-            class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
+            class="flex cursor-pointer items-center gap-4 rounded-sm border border-violet-300/30 hover:bg-sidebar p-4"
             :class="{
               'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-background': !mapping.enabled || expandedEvent !== mapping.event_type,
@@ -269,7 +269,7 @@ const serviceLabel: Record<string, string> = {
                 <span
                   class="peer hidden sm:inline font-mono text-sm border border-dashed p-0.5 px-2
                   rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200  truncate max-w-56"
-                  :class="mapping.enabled && expandedEvent === mapping.event_type ? 'border-card' : 'border-sidebar'"
+                  :class="mapping.enabled && expandedEvent === mapping.event_type ? 'border-card' : 'border-violet-300/30'"
                 >
                   {{ mapping.event_type }}
                 </span>
@@ -302,7 +302,7 @@ const serviceLabel: Record<string, string> = {
           <!-- Configuration Panel -->
           <div
             v-if="mapping.enabled && expandedEvent === mapping.event_type"
-            class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
+            class="mb-2 border bg-sidebar border-t-0 border-violet-300/30 rounded-b-sm p-4"
             @click.stop
           >
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -401,7 +401,7 @@ const serviceLabel: Record<string, string> = {
               >
                 <!-- Event Row -->
                 <div
-                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
+                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-violet-300/30 hover:bg-sidebar p-4"
                   :class="{
                     'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
                     'bg-background': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping)
@@ -454,7 +454,7 @@ const serviceLabel: Record<string, string> = {
                 <!-- Configuration Panel -->
                 <div
                   v-if="mapping.enabled && expandedExternalEvent === externalEventKey(mapping)"
-                  class="mb-2 border bg-sidebar border-t-0 border-sidebar rounded-b-sm p-4"
+                  class="mb-2 border bg-sidebar border-t-0 border-violet-300/30 rounded-b-sm p-4"
                   @click.stop
                 >
                   <div class="grid grid-cols-1 gap-4 md:grid-cols-4">

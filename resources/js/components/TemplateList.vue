@@ -94,7 +94,7 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <div class="my-6 w-auto rounded-sm border border-sidebar bg-background">
+  <div class="my-6 w-auto rounded-sm border border-violet-300/30 bg-background">
     <div v-for="t in templates" :key="t.id" class="group text-sm">
       <Link
         :href="detailsHref(t)"
