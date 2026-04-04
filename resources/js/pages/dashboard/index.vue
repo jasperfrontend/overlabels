@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, watch } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import TemplateList from '@/components/TemplateList.vue';
@@ -9,11 +9,8 @@ import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from 'lucide-vue-next'
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import UserIconPicker from '@/components/UserIconPicker.vue';
 import type { AppPageProps, OverlayTemplate } from '@/types';
-import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -40,43 +37,13 @@ interface UnifiedEvent {
 }
 
 const props = defineProps<{
-  userName: string;
-  userIcon: string;
   userId: number;
   userAlertTemplates: OverlayTemplate[];
   userStaticTemplates: OverlayTemplate[];
   userRecentEvents: UnifiedEvent[];
   needsOnboarding: boolean;
   twitchId: string;
-  templateLimit: number;
 }>();
-
-const LIMIT_OPTIONS = [
-  { value: 5, label: '5' },
-  { value: 10, label: '10' },
-  { value: 20, label: '20' },
-  { value: 0, label: 'All' },
-];
-
-const greetings = [
-  'Hey there',
-  'Howdy',
-  'Heya',
-  'Hey',
-  'Hello',
-  'Hi',
-  'Hey there',
-  'Hiya',
-  'Oh hey',
-  'Greetings',
-  'Ahoy'
-];
-const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-
-function changeLimit(e: Event) {
-  const value = parseInt((e.target as HTMLSelectElement).value, 10);
-  router.get(route('dashboard.index'), { limit: value }, { preserveScroll: true, replace: true });
-}
 
 const breadcrumbs = [
   {
@@ -100,26 +67,6 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
-        <div class="mb-4 flex flex-col gap-4 p-4 sm:flex-row sm:items-center dark:bg-card/50">
-          <div class="text-lg font-semibold text-foreground flex items-center gap-2">
-            <UserIconPicker :user-icon="props.userIcon" />
-            <HeadingSmall v-if="props.userName" :title="`${randomGreeting}, ${props.userName}!`" />
-            <Heading v-else :title="randomGreeting" />
-          </div>
-          <div class="sm:ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-            <label for="template-limit">Show</label>
-            <select
-              id="template-limit"
-              :value="props.templateLimit"
-              class="rounded border border-input bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              @change="changeLimit"
-            >
-              <option v-for="opt in LIMIT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-            <span>per section</span>
-          </div>
-        </div>
-
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
 
         <section v-if="props.userStaticTemplates.length > 0" class="flex-1 p-4">

@@ -8,18 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.redirect')->group(function () {
-    Route::get('/settings/appearance', function (Request $request) {
-        return inertia('settings/Appearance', [
-            'userIcon' => $request->user()->icon ?? 'smile',
-        ]);
+    Route::get('/settings/appearance', function () {
+        return inertia('settings/Appearance');
     })->name('settings.appearance');
-
-    Route::patch('/settings/icon', function (Request $request) {
-        $request->validate(['icon' => ['nullable', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/']]);
-        $request->user()->update(['icon' => $request->input('icon') ?: null]);
-
-        return back();
-    })->name('settings.icon');
 
     // External Integrations
     Route::prefix('settings/integrations')->name('settings.integrations.')->group(function () {

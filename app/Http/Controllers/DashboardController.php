@@ -13,43 +13,32 @@ class DashboardController extends Controller
 {
     public function index(Request $request): Response
     {
-        // $request->user() grabs the currently authenticated user
         $user = $request->user();
 
-        $limit = in_array($request->integer('limit', 5), [5, 10, 20, 0])
-            ? $request->integer('limit', 5)
-            : 5;
-
-        // Get user's latest alert templates
         $userAlertTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->alert()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->when($limit > 0, fn ($q) => $q->limit($limit))
+            ->limit(5)
             ->get();
 
-        // Get user's latest static templates
         $userStaticTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->static()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->when($limit > 0, fn ($q) => $q->limit($limit))
+            ->limit(5)
             ->get();
 
-        // Get community templates (public templates from other users)
         $communityTemplates = OverlayTemplate::where('owner_id', '!=', $user->id)
             ->where('is_public', true)
             ->with('owner:id,name,avatar')
             ->latest()
-            ->when($limit > 0, fn ($q) => $q->limit($limit))
+            ->limit(5)
             ->get();
 
-        // Get user's most recent events (Twitch + external, merged)
-        $userRecentEvents = $this->mergeRecentEvents($user->id, $limit > 0 ? $limit : 30);
+        $userRecentEvents = $this->mergeRecentEvents($user->id, 5);
 
         return Inertia::render('dashboard/index', [
-            'userName' => $user->name,
-            'userIcon' => $user->icon ?? 'smile',
             'userId' => $user->id,
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
@@ -57,7 +46,6 @@ class DashboardController extends Controller
             'userRecentEvents' => $userRecentEvents,
             'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
-            'templateLimit' => $limit,
         ]);
     }
 

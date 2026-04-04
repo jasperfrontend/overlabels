@@ -32,7 +32,6 @@ use Mchev\Banhammer\Traits\Bannable;
  * @property string $role
  * @property bool $is_system_user
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property string|null $icon
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AdminAuditLog> $adminAuditLogs
  * @property-read int|null $admin_audit_logs_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Mchev\Banhammer\Models\Ban> $bans
@@ -62,7 +61,6 @@ use Mchev\Banhammer\Traits\Bannable;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventsubAutoConnect($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventsubConnectedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIcon($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsSystemUser($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
@@ -92,7 +90,6 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'icon',
         'email',
         'password',
         'twitch_id',

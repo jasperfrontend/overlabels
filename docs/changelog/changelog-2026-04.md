@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 4th, 2026 - Remove: User dashboard icon, greeting, and per-section limit
+
+- Removed the per-user icon feature: deleted `UserIconPicker.vue`, the `PATCH /settings/icon` route, the icon picker from Appearance settings, and the `icon` column from the `users` table (migration included).
+- Removed the random greeting bar from the dashboard (greeting text, icon, and "Show X per section" dropdown).
+- Dashboard now shows 5 items per section with no user override.
+- Deleted unused `Icon.vue` (was already unreferenced).
+
 ## April 4th, 2026 - Perf: Tree-shake Lucide icons (976 KB -> 82 KB)
 
 - Deleted unused `Icon.vue` which imported `* as icons from 'lucide-vue-next'`, pulling in all ~1,500 icons.
