@@ -152,7 +152,7 @@ function relativeTime(iso: string): string {
           :class="[
             'group flex items-start justify-between gap-4 rounded-sm border border-sidebar p-2 transition-all ease-in-out bg-sidebar-accent',
             eventHoverBorderClass(event),
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-accent/70' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-violet-400/20 dark:active:bg-violet-600/30 transition-all duration-100' : '',
             replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-background',

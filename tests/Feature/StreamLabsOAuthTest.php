@@ -31,9 +31,9 @@ test('redirect sends user to StreamLabs authorize URL', function () {
 
     $response->assertRedirect();
     $location = $response->headers->get('Location');
-    expect($location)->toStartWith('https://streamlabs.com/api/v2.0/authorize');
-    expect($location)->toContain('response_type=code');
-    expect($location)->toContain('scope=socket.token+donations.read');
+    expect($location)->toStartWith('https://www.streamlabs.com/api/v1.0/authorize')
+        ->and($location)->toContain('response_type=code')
+        ->and($location)->toContain('scope=socket.token+donations.read');
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -51,11 +51,11 @@ test('callback with valid code creates integration and provisions controls', fun
     $user = authenticatedUser();
 
     Http::fake([
-        'streamlabs.com/api/v2.0/token' => Http::response([
+        'streamlabs.com/api/v1.0/token' => Http::response([
             'access_token' => 'test-access-token',
             'token_type' => 'Bearer',
         ]),
-        'streamlabs.com/api/v2.0/socket/token' => Http::response([
+        'streamlabs.com/api/v1.0/socket/token' => Http::response([
             'socket_token' => 'test-socket-token',
         ]),
     ]);
@@ -68,13 +68,14 @@ test('callback with valid code creates integration and provisions controls', fun
         ->where('service', 'streamlabs')
         ->first();
 
-    expect($integration)->not()->toBeNull();
-    expect($integration->enabled)->toBeTrue();
+    expect($integration)->not()->toBeNull()
+        ->and($integration->enabled)->toBeTrue();
 
     $credentials = $integration->getCredentialsDecrypted();
-    expect($credentials['access_token'])->toBe('test-access-token');
-    expect($credentials['socket_token'])->toBe('test-socket-token');
-    expect($credentials['listener_secret'])->toBeString()->toHaveLength(64); // bin2hex(32 bytes)
+    expect($credentials['access_token'])->toBe('test-access-token')
+        ->and($credentials['socket_token'])->toBe('test-socket-token')
+        ->and($credentials['listener_secret'])->toBeString()->toHaveLength(64);
+    // bin2hex(32 bytes)
 
     // Verify controls were provisioned
     $controls = OverlayControl::where('user_id', $user->id)

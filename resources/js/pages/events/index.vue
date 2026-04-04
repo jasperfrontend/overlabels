@@ -246,7 +246,7 @@ const serviceLabel: Record<string, string> = {
           <div
             class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar hover:bg-sidebar p-4"
             :class="{
-              'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
+              'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-background': !mapping.enabled || expandedEvent !== mapping.event_type,
             }"
             @click="toggleEvent(mapping.event_type)"
@@ -255,7 +255,10 @@ const serviceLabel: Record<string, string> = {
             <label class="relative inline-flex cursor-pointer items-center" @click.stop>
               <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
               <span
-                class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-violet-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-800 dark:after:bg-gray-100"
+                class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none
+                after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white
+                after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600
+                dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
               ></span>
             </label>
 
@@ -263,7 +266,11 @@ const serviceLabel: Record<string, string> = {
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h3 class="font-medium text-foreground">{{ eventTypes[mapping.event_type] }}</h3>
-                <span class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-56">
+                <span
+                  class="peer hidden sm:inline font-mono text-sm border border-dashed p-0.5 px-2
+                  rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200  truncate max-w-56"
+                  :class="mapping.enabled && expandedEvent === mapping.event_type ? 'border-card' : 'border-sidebar'"
+                >
                   {{ mapping.event_type }}
                 </span>
               </div>
@@ -405,7 +412,7 @@ const serviceLabel: Record<string, string> = {
                   <label class="relative inline-flex cursor-pointer items-center" @click.stop>
                     <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
                     <span
-                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-violet-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-700 dark:after:bg-gray-100"
+                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-700 dark:after:bg-gray-100"
                     ></span>
                   </label>
 

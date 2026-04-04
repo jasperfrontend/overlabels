@@ -72,13 +72,13 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
 <template>
   <div>
     <div
-      class="overflow-hidden border border-border"
-      :class="isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-sm'"
+      class="overflow-hidden"
+      :class="isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'rounded-none'"
       :style="isFullscreen ? undefined : { height: isExpanded ? '800px' : '500px' }"
     >
       <div class="flex h-full">
         <!-- Vertical file tabs -->
-        <div class="flex flex-col border-r border-border bg-sidebar text-sidebar-foreground">
+        <div class="flex flex-col bg-sidebar text-sidebar-foreground">
           <button
             v-for="tab in editorTabs"
             :key="tab.key"
@@ -142,7 +142,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
             placeholder="Enter your CSS styles here…"
           />
           <!-- Fullscreen hint bar -->
-          <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground/50">
+          <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground">
             <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit
           </div>
         </div>
@@ -150,11 +150,11 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
     </div>
 
     <!-- Expand / shortcuts row (hidden in fullscreen) -->
-    <div v-if="!isFullscreen" class="mt-3 flex justify-between">
+    <div v-if="!isFullscreen" class="flex justify-between">
       <button
         type="button"
         @click="isExpanded = !isExpanded"
-        class="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-accent-foreground"
+        class="flex cursor-pointer items-center gap-1 p-2 text-sm text-muted-foreground hover:text-accent-foreground"
       >
         <ChevronUp v-if="isExpanded" class="h-4 w-4" />
         <ChevronDown v-else class="h-4 w-4" />

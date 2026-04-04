@@ -94,11 +94,11 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <div class="my-6 w-auto rounded-sm border border-sidebar bg-background hover:border-violet-400/20 transition-all duration-100">
+  <div class="my-6 w-auto rounded-sm border border-sidebar bg-background">
     <div v-for="t in templates" :key="t.id" class="group text-sm">
       <Link
         :href="detailsHref(t)"
-        class="flex flex-row justify-between p-4 bg-sidebar-accent hover:bg-background active:bg-violet-400/20 dark:active:bg-violet-600/30 transition-all duration-100"
+        class="flex flex-row justify-between p-4 overlabels-background"
         :class="{ 'rounded-t-sm': templates.indexOf(t) === 0, 'rounded-b-sm': templates.indexOf(t) === templates.length - 1 }"
       >
         <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" description-class="text-xs" />

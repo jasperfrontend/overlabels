@@ -128,7 +128,11 @@ const copyToClipboard = (url: string, shownValue: string) => {
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: `Viewing: ${props.template?.name}`,
+    title: 'My overlays',
+    href: route('templates.index'),
+  },
+  {
+    title: props.template?.name || 'Template',
     href: '/templates/*',
   },
 ];

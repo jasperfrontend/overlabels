@@ -1,0 +1,7 @@
+@layer components {
+  .overlabels-background {
+    @apply bg-sidebar-accent transition-all duration-100 ease-in-out;
+    @apply hover:bg-background;
+    @apply active:bg-violet-400/20 dark:active:bg-violet-600/30;
+  }
+}

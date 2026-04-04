@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm, Link, router } from '@inertiajs/vue3';
+import type { OverlayControl } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { BreadcrumbItem } from '@/types';
-import type { OverlayControl } from '@/types';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
@@ -13,21 +13,7 @@ import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
-import {
-  Brackets,
-  Code,
-  InfoIcon,
-  RefreshCcwDot,
-  Save,
-  ExternalLink,
-  Split,
-  Trash,
-  MoreVertical,
-  SlidersHorizontal,
-  SquarePenIcon,
-  Target,
-  ImageIcon,
-} from 'lucide-vue-next';
+import {Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, MoreVertical, SlidersHorizontal, SquarePenIcon, Target, ImageIcon} from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -82,8 +68,6 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  existingTemplate: () => ({ head: '', html: '', css: '' }),
-  availableTags: () => [],
   template: Object,
 });
 
@@ -110,7 +94,15 @@ const form = useForm({
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-    title: 'Editing: ' + props.template.name,
+    title: 'My overlays',
+    href: route('templates.index'),
+  },
+  {
+    title: props.template?.name || 'Template',
+    href: `/templates/${props.template?.id}`,
+  },
+  {
+    title: 'Edit',
     href: route('templates.edit', props.template),
   },
 ];
@@ -286,7 +278,9 @@ onMounted(() => {
         </div>
 
         <!-- Content box -->
-        <div class="rounded-b-sm border border-t-0 border-sidebar bg-card p-4">
+        <div
+          class="rounded-b-sm border border-t-0 border-sidebar bg-card h-full overflow-auto pb-10"
+        >
           <!-- Code Tab -->
           <TemplateCodeEditor
             v-show="mainTab === 'code'"
@@ -296,7 +290,7 @@ onMounted(() => {
           />
 
           <!-- Meta Tab -->
-          <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-4">
+          <div v-if="mainTab === 'meta'" class="max-w-5xl p-4 space-y-4">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Title *</label>
               <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
@@ -326,22 +320,22 @@ onMounted(() => {
           </div>
 
           <!-- Tags Tab -->
-          <div v-if="mainTab === 'tags'">
+          <div v-if="mainTab === 'tags'" class="p-4">
             <TemplateTagsList />
           </div>
 
           <!-- Controls Tab -->
-          <div v-if="mainTab === 'controls'">
+          <div v-if="mainTab === 'controls'" class="p-4">
             <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
           </div>
 
           <!-- Values Tab -->
-          <div v-if="mainTab === 'panel'">
+          <div v-if="mainTab === 'panel'" class="p-4">
             <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
           </div>
 
           <!-- Screenshot Tab -->
-          <div v-if="mainTab === 'screenshot'">
+          <div v-if="mainTab === 'screenshot'" class="p-4">
             <TemplateScreenshot
               :screenshot-url="template.screenshot_url"
               :template-id="template.id"
@@ -353,7 +347,7 @@ onMounted(() => {
           </div>
 
           <!-- Targeting Tab (alert templates only) -->
-          <div v-if="mainTab === 'targeting'" class="max-w-2xl">
+          <div v-if="mainTab === 'targeting'" class="max-w-2xl p-4">
             <AlertTargetOverlaySelector
               v-model="localTargetOverlayIds"
               :static-overlays="staticOverlays ?? []"

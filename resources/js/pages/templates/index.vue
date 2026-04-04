@@ -38,12 +38,6 @@ const debounceSearch = debounce(() => {
 const page = usePage<AppPageProps>();
 const currentUserId = computed(() => page.props.auth.user.id);
 
-const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Overlabels Overlay Editor',
-    href: '/templates',
-  },
-];
 
 const pageTitle = computed(() => {
   const ownerMap: Record<string, string> = {
@@ -61,6 +55,15 @@ const pageTitle = computed(() => {
 
   return `${owner} ${type}`;
 });
+const pageTitleString = pageTitle.value
+
+const breadcrumbs: BreadcrumbItem[] = [
+
+  {
+    title: pageTitleString,
+    href: '/templates',
+  },
+];
 </script>
 
 <template>
