@@ -78,6 +78,11 @@
 - Added Milestone 5d to the roadmap: a pipe/formatter system for template tags (`[[[c:key|format]]]`).
 - Covers duration, date, and number formatters that work for all control types.
 
+## April 4th, 2026 - Fix: Expressions can now reference timer/datetime controls
+
+- Removed the `timer`/`datetime` type filter from `OverlayControl::getAvailableControls()` and the frontend `availableWatchControls` computed. Expressions like `c.count_to / 3600` now validate and evaluate correctly.
+- Fixed 422 errors from `abort()` being silently swallowed in the ControlFormModal - these now display as a visible error message in the modal instead of only appearing in the browser console.
+
 ## April 4th, 2026 - Feature: Distraction-free code editor and HEAD CodeMirror upgrade
 
 - Added distraction-free fullscreen mode (Ctrl+Shift+F or "Focus" button in sidebar). Editor takes over the full viewport with just tabs and code. Exit with Escape or the same shortcut.

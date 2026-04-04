@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,12 +31,12 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression'];
+    const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
-    const RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger'];
+    const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger'];
 
-    const KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
+    const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
     /**
      * Sanitize a raw value for a given control type.
@@ -78,8 +79,8 @@ class OverlayControl extends Model
             if (! $targetDatetime) {
                 return '0';
             }
-            $target = \Carbon\Carbon::parse($targetDatetime);
-            $remaining = (int) now()->diffInSeconds($target, false);
+            $target = Carbon::parse($targetDatetime);
+            $remaining = (int) now()->diffInSeconds($target);
 
             return (string) max(0, $remaining);
         }
@@ -87,7 +88,7 @@ class OverlayControl extends Model
         $elapsed = $offsetSeconds;
 
         if ($running && $startedAt) {
-            $startTime = \Carbon\Carbon::parse($startedAt);
+            $startTime = Carbon::parse($startedAt);
             $elapsed = $offsetSeconds + (int) $startTime->diffInSeconds(now());
         }
 
@@ -106,7 +107,7 @@ class OverlayControl extends Model
     public function broadcastKey(): string
     {
         if ($this->source) {
-            return "{$this->source}:{$this->key}";
+            return "$this->source:$this->key";
         }
 
         return $this->key;
@@ -208,12 +209,10 @@ class OverlayControl extends Model
 
     /**
      * Get controls available as dependencies for expression controls.
-     * Excludes timers and datetimes.
      */
     public static function getAvailableControls(User $user, ?int $templateId, ?int $excludeId = null): Collection
     {
-        $query = static::where('user_id', $user->id)
-            ->whereNotIn('type', ['timer', 'datetime']);
+        $query = static::where('user_id', $user->id);
 
         if ($templateId) {
             $query->where(function ($q) use ($templateId) {

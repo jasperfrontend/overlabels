@@ -164,14 +164,12 @@ watch(() => form.value.key, (key) => {
 // Expression control state
 const expressionText = ref('');
 
-// Controls available as watch targets for computed/expression controls
+// Controls available as watch targets for expression controls
 const availableWatchControls = computed(() => {
   const templateControls = (props.existingControls ?? []).filter(
-    (c) => !['timer', 'datetime'].includes(c.type) && c.id !== props.control?.id,
+    (c) => c.id !== props.control?.id,
   );
-  const userScoped = (props.userScopedControls ?? []).filter(
-    (c) => !['timer', 'datetime'].includes(c.type),
-  );
+  const userScoped = (props.userScopedControls ?? []);
   return [...templateControls, ...userScoped];
 });
 
@@ -301,6 +299,10 @@ async function save() {
       const flat: Record<string, string> = {};
       for (const [k, v] of Object.entries(errs)) {
         flat[k] = Array.isArray(v) ? (v as string[])[0] : (v as string);
+      }
+      // abort(422, message) returns message without errors object
+      if (Object.keys(flat).length === 0 && err.response.data.message) {
+        flat.general = err.response.data.message;
       }
       errors.value = flat;
     } else {
