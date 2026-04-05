@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Debounce Railway deploy webhooks
+
+- Railway fires one webhook per service (4 total), causing 4 "new version" banners per deploy.
+- Added `BroadcastVersionUpdate` job with a 5-minute cache-based debounce so only the last webhook in a burst actually broadcasts.
+
 ## April 5th, 2026 - Reorganize help pages under /help/* and add logged-out sidebar menu
 
 - Moved all help/learn pages under `/help/*`: conditionals, controls, formatting, resources, why-kofi, manifesto.

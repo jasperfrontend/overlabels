@@ -3,13 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\BroadcastVersionUpdate;
 use Illuminate\Http\JsonResponse;
-use App\Events\VersionUpdated;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class RailwayWebhookController extends Controller
 {
+    /**
+     * Debounce window in seconds. Railway fires one webhook per service,
+     * so with 4 services we get 4 near-simultaneous hits. We wait this
+     * long after the last hit before actually broadcasting.
+     */
+    private const DEBOUNCE_SECONDS = 300;
+
     public function handle(Request $request, string $token): JsonResponse
     {
         $expectedToken = config('services.railway.webhook_secret');
@@ -32,10 +40,19 @@ class RailwayWebhookController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        broadcast(new VersionUpdated($commitHash));
+        // Each webhook resets the debounce timer. Only the last job to
+        // run will see its nonce still in cache and actually broadcast.
+        $nonce = bin2hex(random_bytes(8));
+        Cache::put('railway:deploy:nonce', $nonce, self::DEBOUNCE_SECONDS + 10);
 
-        Log::info('Version update broadcast sent', ['sha' => $commitHash ? substr($commitHash, 0, 7) : null]);
+        BroadcastVersionUpdate::dispatch($commitHash, $nonce)
+            ->delay(now()->addSeconds(self::DEBOUNCE_SECONDS));
 
-        return response()->json(['status' => 'broadcast_sent']);
+        Log::info('Railway deploy debounced', [
+            'sha' => $commitHash ? substr($commitHash, 0, 7) : null,
+            'nonce' => $nonce,
+        ]);
+
+        return response()->json(['status' => 'debounced']);
     }
 }
