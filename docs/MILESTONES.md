@@ -98,6 +98,19 @@ Completed milestones are kept here as a record of intent vs. reality.
 - **Hash-based overlay URLs** (`/overlay/{hash}`) — the hash is a client-side decryption key, never parsed or validated on the backend. The alternative — backend-rendered templates gated behind a session — would couple the rendering pipeline to auth state, add server overhead on every overlay frame, and break OBS browser sources entirely (no session support). Frontend stays dumb, backend stays detached. A leaked hash gives read access to static overlay content; it grants no write access and no ability to mutate state, which still requires a valid auth session. Streamers are warned. This is the right trade-off.
 - OBS browser sources cannot hold auth sessions — URL-fragment token delivery is the only viable mechanism for read-only overlay access and that is fine
 
+<details>
+<summary><strong>Milestone 5d — Output Formatting (Pipe System)</strong></summary>
+
+- Pipe syntax for template tags: `[[[tag|formatter]]]` or `[[[tag|formatter:args]]]`
+- 8 built-in formatters: `round`, `number`, `currency`, `duration`, `date`, `uppercase`, `lowercase`
+- Duration patterns with overflow: `hh:mm:ss`, `mm:ss`, `dd:hh:mm:ss` etc.
+- Global locale setting (Settings > Appearance) drives default formatting for numbers, currencies, and dates
+- Locale-to-currency mapping so `|currency` without args uses EUR for Dutch, GBP for British, etc.
+- Pure client-side implementation using native `Intl` APIs - zero dependencies
+- Full documentation at `/help/formatting` with example tables, locale comparisons, and quick reference
+- PHP `extractTemplateTags()` updated to strip pipe expressions for the tag allowlist
+</details>
+
 ---
 
 ## Milestone 5a — Twitch Bot: Foundation
@@ -124,47 +137,6 @@ Completed milestones are kept here as a record of intent vs. reality.
 - `!reset <key>` — reset to default
 - Broadcaster/mod-only by default, configurable per command
 - Changes fire the same `ControlValueUpdated` broadcast the overlay already listens to
-
-## Milestone 5d — Output Formatting (Pipe System)
-> *Control values are raw: seconds, ISO strings, bare numbers. Templates need a way to say*
-> *"display this value as HH:MM:SS" or "format this as currency" without the user*
-> *writing JavaScript in their overlay HTML.*
-
-### Pipe syntax
-- `[[[c:my_timer|duration]]]`, `[[[c:amount|currency]]]`, `[[[c:score|round]]]`
-- Pipes are functions with optional format-string arguments: `[[[c:timer|duration:hh:mm:ss]]]`
-- Pipes work on any control type, not just timers
-- Self-documenting in the template - no indirection, no named format lookups
-
-### Global defaults (user settings)
-- Locale / region setting that drives default formatting behavior (number separators, currency symbol placement, date order)
-- Sensible out-of-the-box defaults so most users never need to configure anything
-- Global settings are respected by all built-in formatters unless explicitly overridden via format string
-
-### Built-in formatters
-- `|round` - no decimals (for expression results like `c.xmastimer / 3600`)
-- `|round:N` - N decimal places
-- `|duration` - smart human-readable output based on magnitude (auto-selects days/hours/minutes/seconds)
-- `|duration:hh:mm:ss` - explicit duration format pattern
-- `|duration:mm:ss`, `|duration:dd:hh`, etc. - flexible patterns for any time range
-- `|currency` - format as currency using global locale setting
-- `|currency:EUR` - explicit currency override
-- `|date` - format datetime using global date format
-- `|date:dd-MM-yyyy` - explicit date format pattern
-- `|uppercase`, `|lowercase` - text transforms
-- `|number` - thousands separators and decimal precision per global locale
-
-### Timer formatting
-- Timers need the most flexibility: someone counting down 20 years wants different output than someone timing a 3-minute round
-- The format string covers the full range: `|duration` (auto), `|duration:ss` (raw), `|duration:mm:ss`, `|duration:hh:mm:ss`, `|duration:dd:hh:mm:ss`
-- No format = raw seconds (backward-compatible)
-
-### Implementation
-- `TemplateParserService` updated to recognise and validate pipe syntax
-- Overlay renderer applies formatters at render time (client-side)
-- Thorough documentation - this changes how users think about template tags
-
----
 
 ## Milestone 6 — Community (Rebuilt Properly)
 > *The original community feature was removed because it was bad. This time, do it right.*
