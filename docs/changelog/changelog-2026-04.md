@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Fix: Inertia link clicks while unauthenticated now redirect to login
+
+- Fixed unauthenticated Inertia navigation (clicking links) returning a raw JSON 401 instead of redirecting to the login page.
+- `RedirectIfUnauthenticated` middleware now uses `Inertia::location()` for Inertia requests, triggering a full-page visit to `/login?redirect_to=...` instead of breaking with "All Inertia requests must receive a valid Inertia response".
+
 ## April 5th, 2026 - Docs: Formatting Pipes help page and currency locale fix
 
 - Created `/help/formatting` page with full documentation for all 8 pipe formatters, example tables with locale comparisons, quick reference, and tips.

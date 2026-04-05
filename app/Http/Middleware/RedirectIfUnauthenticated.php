@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\URL;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 class RedirectIfUnauthenticated
@@ -18,14 +18,20 @@ class RedirectIfUnauthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if (! Auth::check()) {
-            // Non-navigational requests (fetch, XHR, Inertia) get a 401 — not a redirect.
-            // Redirecting them into the login flow stores their URL as session('url.intended')
-            // which then poisons redirect()->intended() after OAuth, landing the user on a JSON endpoint.
-            if ($request->expectsJson() || $request->header('X-Inertia')) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
+            $loginUrl = route('login').'?redirect_to='.urlencode($request->fullUrl());
+
+            // Inertia XHR requests: use Inertia::location() to trigger a full-page
+            // visit to the login URL. This avoids the session('url.intended') poisoning
+            // that a normal redirect would cause, while still redirecting the user
+            // instead of returning a raw JSON 401.
+            if ($request->header('X-Inertia')) {
+                return Inertia::location($loginUrl);
             }
 
-            $loginUrl = route('login').'?redirect_to='.urlencode($request->fullUrl());
+            // Non-Inertia XHR / fetch requests get a plain 401.
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
 
             return redirect($loginUrl);
         }
