@@ -97,7 +97,39 @@ class OverlayControl extends Model
             return $this->resolveTimerDisplayValue();
         }
 
+        if ($this->isRandom()) {
+            return $this->resolveRandomValue();
+        }
+
         return $this->value ?? '';
+    }
+
+    /**
+     * Check if this control is a random-mode number/counter.
+     */
+    public function isRandom(): bool
+    {
+        if (! in_array($this->type, ['number', 'counter'])) {
+            return false;
+        }
+
+        return (bool) ($this->config['random'] ?? false);
+    }
+
+    /**
+     * Generate a random integer between the configured min and max.
+     */
+    private function resolveRandomValue(): string
+    {
+        $config = $this->config ?? [];
+        $min = (int) ($config['min'] ?? 0);
+        $max = (int) ($config['max'] ?? 100);
+
+        if ($min > $max) {
+            [$min, $max] = [$max, $min];
+        }
+
+        return (string) random_int($min, $max);
     }
 
     private function resolveTimerDisplayValue(): string

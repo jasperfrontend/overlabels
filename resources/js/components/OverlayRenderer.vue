@@ -87,6 +87,41 @@ const streamLive = ref(false);
 const timerStates = ref<Record<string, any>>({});
 const timerIntervals: Record<string, number> = {};
 
+// Random control state — keyed by control key (not c:key)
+const randomConfigs = ref<Record<string, { min: number; max: number }>>({});
+const randomIntervals: Record<string, number> = {};
+
+function randomInt(min: number, max: number): number {
+  if (min > max) [min, max] = [max, min];
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function startRandomTick(key: string, config: { min: number; max: number; interval?: number }) {
+  stopRandomTick(key);
+  randomConfigs.value[key] = config;
+
+  // Write an initial random value immediately
+  if (data.value) {
+    data.value = { ...data.value, [`c:${key}`]: String(randomInt(config.min, config.max)) };
+  }
+
+  const interval = Math.max(100, config.interval ?? 1000);
+  randomIntervals[key] = window.setInterval(() => {
+    if (!data.value) return;
+    const cfg = randomConfigs.value[key];
+    if (!cfg) return;
+    data.value = { ...data.value, [`c:${key}`]: String(randomInt(cfg.min, cfg.max)) };
+  }, interval);
+}
+
+function stopRandomTick(key: string) {
+  if (randomIntervals[key]) {
+    clearInterval(randomIntervals[key]);
+    delete randomIntervals[key];
+  }
+  delete randomConfigs.value[key];
+}
+
 function computeTimerSeconds(state: any): number {
   const mode = state.mode ?? 'countup';
   const base = Number(state.base_seconds ?? 0);
@@ -311,6 +346,13 @@ onMounted(async () => {
       }
     }
 
+    // Start local ticking for any random-mode controls
+    if (Array.isArray(json.random_controls)) {
+      for (const rc of json.random_controls) {
+        startRandomTick(rc.key, { min: rc.min, max: rc.max });
+      }
+    }
+
     // Register expression controls for frontend evaluation
     if (Array.isArray(json.expression_controls)) {
       for (const expr of json.expression_controls) {
@@ -366,6 +408,9 @@ onUnmounted(() => {
   expressionEngine.destroy();
   for (const key of Object.keys(timerIntervals)) {
     stopTimerTick(key);
+  }
+  for (const key of Object.keys(randomIntervals)) {
+    stopRandomTick(key);
   }
 });
 
@@ -433,7 +478,15 @@ function handleControlUpdated(event: any) {
     // For timers, start/update the local tick interval using the broadcast state
     startTimerTick(event.key, event.timer_state);
     data.value = { ...data.value, [atKey]: timestamp };
+  } else if (event.random_state) {
+    // For random controls, start/update the random tick interval
+    startRandomTick(event.key, event.random_state);
+    data.value = { ...data.value, [atKey]: timestamp };
   } else {
+    // If this key was previously random, stop its interval
+    if (randomIntervals[event.key]) {
+      stopRandomTick(event.key);
+    }
     // event.key may be namespaced (e.g. "kofi:kofis_received") — store as "c:kofi:kofis_received"
     data.value = {
       ...data.value,

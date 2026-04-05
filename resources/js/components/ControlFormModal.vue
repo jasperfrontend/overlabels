@@ -120,6 +120,8 @@ const form = ref({
     max: undefined as number | undefined,
     step: 1 as number | undefined,
     reset_value: 0 as number,
+    random: false as boolean,
+    random_interval: 1000 as number,
     mode: 'countup' as 'countup' | 'countdown' | 'countto',
     base_seconds: 0 as number,
     target_datetime: '' as string,
@@ -193,6 +195,8 @@ watch(() => props.open, (open) => {
           max: cfg.max ?? undefined,
           step: cfg.step ?? 1,
           reset_value: cfg.reset_value ?? 0,
+          random: cfg.random ?? false,
+          random_interval: cfg.random_interval ?? 1000,
           mode: cfg.mode ?? 'countup',
           base_seconds: cfg.base_seconds ?? 0,
           target_datetime: cfg.target_datetime ?? '',
@@ -208,7 +212,7 @@ watch(() => props.open, (open) => {
         label: '',
         type: 'text',
         value: '',
-        config: { min: undefined, max: undefined, step: 1, reset_value: 0, mode: 'countup', base_seconds: 0, target_datetime: '' },
+        config: { min: undefined, max: undefined, step: 1, reset_value: 0, random: false, random_interval: 1000, mode: 'countup', base_seconds: 0, target_datetime: '' },
         sort_order: 0,
       };
       booleanValue.value = false;
@@ -247,6 +251,8 @@ function buildPayload() {
       max: form.value.config.max ?? null,
       step: form.value.config.step ?? null,
       reset_value: form.value.config.reset_value,
+      random: form.value.config.random || false,
+      random_interval: form.value.config.random ? (form.value.config.random_interval || 1000) : null,
     };
   } else if (t === 'timer') {
     payload.config = {
@@ -461,6 +467,22 @@ async function save() {
                   <Label for="ctrl-reset">Reset value</Label>
                   <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
                 </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  id="ctrl-random"
+                  type="checkbox"
+                  v-model="form.config.random"
+                  class="size-4 rounded border-input"
+                />
+                <Label for="ctrl-random" class="cursor-pointer">Random mode</Label>
+              </div>
+              <div v-if="form.config.random" class="space-y-2">
+                <Label for="ctrl-random-interval">Update interval (ms)</Label>
+                <Input id="ctrl-random-interval" v-model.number="form.config.random_interval" type="number" min="100" step="100" placeholder="1000" />
+                <p class="text-xs text-muted-foreground">
+                  How often to generate a new random value. Default: 1000ms (1 second).
+                </p>
               </div>
             </div>
 

@@ -220,6 +220,17 @@ class OverlayControlController extends Controller
 
         $control->update($validated);
 
+        // Broadcast random state so the overlay starts/stops the random interval
+        if ($control->isRandom()) {
+            $cfg = $control->config ?? [];
+            $randomState = [
+                'min' => (int) ($cfg['min'] ?? 0),
+                'max' => (int) ($cfg['max'] ?? 100),
+                'interval' => max(100, (int) ($cfg['random_interval'] ?? 1000)),
+            ];
+            $this->broadcastUpdate($template, $control, $control->resolveDisplayValue(), null, $randomState);
+        }
+
         return response()->json(['control' => $control->fresh()]);
     }
 
@@ -429,7 +440,7 @@ class OverlayControlController extends Controller
     /**
      * Dispatch the ControlValueUpdated broadcast event.
      */
-    private function broadcastUpdate(OverlayTemplate $template, OverlayControl $control, string $value, ?array $timerState = null): void
+    private function broadcastUpdate(OverlayTemplate $template, OverlayControl $control, string $value, ?array $timerState = null, ?array $randomState = null): void
     {
         $user = auth()->user();
 
@@ -439,7 +450,9 @@ class OverlayControlController extends Controller
             $control->type,
             $value,
             $user->twitch_id,
-            $timerState
+            $timerState,
+            null,
+            $randomState
         );
     }
 

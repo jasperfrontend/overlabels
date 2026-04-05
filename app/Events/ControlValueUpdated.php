@@ -24,6 +24,8 @@ class ControlValueUpdated implements ShouldBroadcast
 
     public ?string $expression;
 
+    public ?array $randomState;
+
     public string $broadcasterId;
 
     /**
@@ -36,7 +38,8 @@ class ControlValueUpdated implements ShouldBroadcast
         string $value,
         string $broadcasterId,
         ?array $timerState = null,
-        ?string $expression = null
+        ?string $expression = null,
+        ?array $randomState = null
     ) {
         $this->overlaySlug = $overlaySlug;
         $this->key = $key;
@@ -45,6 +48,7 @@ class ControlValueUpdated implements ShouldBroadcast
         $this->broadcasterId = $broadcasterId;
         $this->timerState = $timerState;
         $this->expression = $expression;
+        $this->randomState = $randomState;
     }
 
     /**
@@ -71,6 +75,7 @@ class ControlValueUpdated implements ShouldBroadcast
             'value' => $this->value,
             'timer_state' => $this->timerState,
             'expression' => $this->expression,
+            'random_state' => $this->randomState,
             'updated_at' => now()->timestamp,
         ];
     }

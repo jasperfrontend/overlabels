@@ -375,6 +375,7 @@ class OverlayTemplateController extends Controller
             $controlData = [];
             $timerStates = [];
             $expressionControls = [];
+            $randomControls = [];
             foreach ($controls as $control) {
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:kofis_received")
                 // matching the [[[c:kofi:kofis_received]]] template tag syntax.
@@ -403,6 +404,17 @@ class OverlayTemplateController extends Controller
                         'expression' => $control->config['expression'] ?? '',
                     ];
                 }
+                if ($control->isRandom()) {
+                    $cfg = $control->config ?? [];
+                    $randomControls[] = [
+                        'key' => $control->source_managed
+                            ? $control->broadcastKey()
+                            : $control->key,
+                        'min' => (int) ($cfg['min'] ?? 0),
+                        'max' => (int) ($cfg['max'] ?? 100),
+                        'interval' => max(100, (int) ($cfg['random_interval'] ?? 1000)),
+                    ];
+                }
             }
 
             // Build final data: Twitch data + controls + Twitch ID
@@ -429,6 +441,7 @@ class OverlayTemplateController extends Controller
                 'data' => $finalData,
                 'timer_states' => $timerStates,
                 'expression_controls' => $expressionControls,
+                'random_controls' => $randomControls,
                 'stream_live' => StreamSessionService::isLive($user),
                 'locale' => $user->locale ?? 'en-US',
             ]);

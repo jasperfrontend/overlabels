@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Feature: Random mode for number controls
+
+- Number and counter controls can now be set to "random mode" via a checkbox in the control config.
+- When enabled, the control generates a random integer between min and max on a configurable interval (default 1000ms, minimum 100ms).
+- Works with template tags (`[[[c:my_random]]]`), expressions (`c.my_random + 10`), and the comparison engine.
+- Random state is broadcast via WebSocket so the overlay picks up config changes (min/max/interval) in real-time.
+- Follows the existing timer pattern: backend resolves an initial random value, frontend runs a periodic interval.
+- Enables creative use cases like slot machines, whack-a-mole, and randomized choices.
+
 ## April 5th, 2026 - Debounce Railway deploy webhooks
 
 - Railway fires one webhook per service (4 total), causing 4 "new version" banners per deploy.
