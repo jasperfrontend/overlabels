@@ -5,8 +5,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
+    title: 'Help',
+    href: '/help',
+  },
+  {
     title: 'Free Resources',
-    href: '/resources',
+    href: '/help/resources',
   },
 ];
 
@@ -82,7 +86,7 @@ const cssTools = [
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://overlabels.com/resources" />
+    <meta property="og:url" content="https://overlabels.com/help/resources" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="Free Resources - Overlabels" />
     <meta

@@ -7,19 +7,23 @@ import { Link } from '@inertiajs/vue3';
 import {
   Activity,
   Bell,
+  BookOpen,
   Brackets,
   FileText,
   HashIcon,
+  Heart,
   House,
   Layers,
   LayoutGrid,
   LogIn,
   Megaphone,
+  Pipette,
   Radio,
   ScrollText,
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
+  SlidersHorizontal,
   Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -44,6 +48,16 @@ const alertsNavItems: NavItem[] = [
 ];
 
 const kitsNavItems: NavItem[] = [
+];
+
+const helpNavItems: NavItem[] = [
+  { title: 'Help', href: '/help', icon: BookOpen },
+  { title: 'Conditional Tags', href: '/help/conditionals', icon: Brackets },
+  { title: 'Controls', href: '/help/controls', icon: SlidersHorizontal },
+  { title: 'Formatting Pipes', href: '/help/formatting', icon: Pipette },
+  { title: 'Free Resources', href: '/help/resources', icon: BookOpen },
+  { title: 'Why Ko-fi', href: '/help/why-kofi', icon: Heart },
+  { title: 'Manifesto', href: '/help/manifesto', icon: FileText },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -80,6 +94,7 @@ const adminNavItems: NavItem[] = [
       <NavMain v-if="user && alertsNavItems.length > 0" label="Alerts" :items="alertsNavItems" />
       <NavMain v-if="user && kitsNavItems.length > 0" label="Kits" :items="kitsNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
+      <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
         <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
         <div class="h-0 mt-1" />

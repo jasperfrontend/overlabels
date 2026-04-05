@@ -39,28 +39,32 @@ Route::get('/terms', function () {
 })->name('terms');
 
 Route::get('/help', function () {
-    return Inertia::render('Help');
+    return Inertia::render('help/Index');
 })->name('help');
 
-Route::get('/manifesto', function () {
-    return Inertia::render('Manifesto');
-})->name('manifesto');
+Route::get('/help/conditionals', function () {
+    return Inertia::render('help/Conditionals');
+})->name('help.conditionals');
 
 Route::get('/help/controls', function () {
-    return Inertia::render('HelpControls');
+    return Inertia::render('help/Controls');
 })->name('help.controls');
 
 Route::get('/help/formatting', function () {
-    return Inertia::render('HelpFormatting');
+    return Inertia::render('help/Formatting');
 })->name('help.formatting');
 
-Route::get('/why-kofi', function () {
-    return Inertia::render('WhyKofi');
-})->name('why-kofi');
+Route::get('/help/resources', function () {
+    return Inertia::render('help/Resources');
+})->name('help.resources');
 
-Route::get('/resources', function () {
-    return Inertia::render('Resources');
-})->name('resources');
+Route::get('/help/why-kofi', function () {
+    return Inertia::render('help/WhyKofi');
+})->name('help.why-kofi');
+
+Route::get('/help/manifesto', function () {
+    return Inertia::render('help/Manifesto');
+})->name('help.manifesto');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])

@@ -9,21 +9,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { BookOpen, Brackets, Code, Coffee, FileText, Grid2x2Check, Heart, LogOut, Pipette, Shield, ShieldAlert, SlidersHorizontal, SunMoon, Terminal } from 'lucide-vue-next';
+import { BookOpen, Code, Coffee, Grid2x2Check, LogOut, Shield, ShieldAlert, SunMoon, Terminal } from 'lucide-vue-next';
 
 const settingsItems = [
   { label: 'Theme Settings', href: route('settings.appearance'), icon: SunMoon },
   { label: 'Integrations', href: route('settings.integrations.index'), icon: Coffee },
 ]
-
-const learnItems = [
-  { label: 'Conditional Tags', href: route('help'), icon: Brackets },
-  { label: 'Controls', href: route('help.controls'), icon: SlidersHorizontal },
-  { label: 'Formatting Pipes', href: route('help.formatting'), icon: Pipette },
-  { label: 'Free Resources', href: route('resources'), icon: BookOpen },
-  { label: 'Why Ko-fi', href: route('why-kofi'), icon: Heart },
-  { label: 'Manifesto', href: route('manifesto'), icon: FileText },
-];
 
 const debugItems = [
   { label: 'Token Generator', href: route('tokens.index'), icon: Shield },
@@ -65,22 +56,13 @@ const handleLogout = () => {
 
   <DropdownMenuSeparator />
 
-  <!-- Learn -->
   <DropdownMenuGroup>
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+    <DropdownMenuItem as-child>
+      <Link href="/help" class="flex items-center w-full cursor-pointer">
         <BookOpen class="mr-2 h-4 w-4" />
         Learn
-      </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent class="min-w-48">
-        <DropdownMenuItem v-for="item in learnItems" :key="item.label" as-child>
-          <Link :href="item.href" class="flex items-center w-full cursor-pointer">
-            <component :is="item.icon" class="mr-2 h-4 w-4" />
-            {{ item.label }}
-          </Link>
-        </DropdownMenuItem>
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
+      </Link>
+    </DropdownMenuItem>
   </DropdownMenuGroup>
 
   <DropdownMenuSeparator />

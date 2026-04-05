@@ -5,6 +5,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
+    title: 'Help',
+    href: '/help',
+  },
+  {
     title: 'Formatting',
     href: '/help/formatting',
   },
@@ -646,7 +650,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Footer -->
         <h2 class="mb-6 text-2xl font-bold" id="help">More help</h2>
         <p class="mb-6 text-foreground">
-          See the <Link href="/help" class="text-violet-400 hover:underline">Conditional Tags</Link> and
+          See the <Link href="/help/conditionals" class="text-violet-400 hover:underline">Conditional Tags</Link> and
           <Link href="/help/controls" class="text-violet-400 hover:underline">Controls</Link> guides for more on
           how template tags and controls work. If you are stuck,
           <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>

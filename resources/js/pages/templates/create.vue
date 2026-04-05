@@ -219,7 +219,7 @@ onMounted(() => {
               <strong class="text-accent-foreground/70">Event Alert tips:</strong>
               <ul class="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
                 <li>
-                  Visit the <a class="text-violet-400 hover:underline" href="/help#event-based-template-tags" target="_blank">Help docs</a> for all
+                  Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-based-template-tags" target="_blank">Help docs</a> for all
                   event-based tags.
                 </li>
                 <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.</li>

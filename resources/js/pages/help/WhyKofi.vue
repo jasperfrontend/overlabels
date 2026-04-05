@@ -6,8 +6,12 @@ import { EyeIcon, UserKey, Webhook, TriangleAlertIcon } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
+    title: 'Help',
+    href: '/help',
+  },
+  {
     title: 'Why Ko-fi',
-    href: '/why-kofi',
+    href: '/help/why-kofi',
   },
 ];
 </script>
@@ -21,7 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://overlabels.com/why-kofi" />
+    <meta property="og:url" content="https://overlabels.com/help/why-kofi" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="Why Ko-fi - Overlabels" />
     <meta

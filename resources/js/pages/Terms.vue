@@ -27,7 +27,7 @@ const effectiveDate = 'January 13, 2025';
                     </Link>
                     <div class="flex items-center gap-6">
                         <Link href="/help" class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
-                        <Link href="/manifesto" class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Manifesto</Link>
+                        <Link href="/help/manifesto" class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Manifesto</Link>
                         <DarkModeToggle />
                         <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
                             Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />

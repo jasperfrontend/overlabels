@@ -8,6 +8,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     title: 'Help',
     href: '/help',
   },
+  {
+    title: 'Conditional Tags',
+    href: '/help/conditionals',
+  },
 ];
 </script>
 
@@ -20,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://overlabels.com/help" />
+    <meta property="og:url" content="https://overlabels.com/help/conditionals" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="Help - Overlabels" />
     <meta

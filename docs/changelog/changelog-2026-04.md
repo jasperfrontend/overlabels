@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 5th, 2026 - Reorganize help pages under /help/* and add logged-out sidebar menu
+
+- Moved all help/learn pages under `/help/*`: conditionals, controls, formatting, resources, why-kofi, manifesto.
+- Created `/help` landing page linking to all sub-pages.
+- Added "Learn" nav section in sidebar for logged-out users.
+- Replaced user menu "Learn" submenu with a single link to `/help`.
+- Updated all internal links and breadcrumbs across the app.
+
 ## April 5th, 2026 - Fix: Inertia link clicks while unauthenticated now redirect to login
 
 - Fixed unauthenticated Inertia navigation (clicking links) returning a raw JSON 401 instead of redirecting to the login page.

@@ -56,12 +56,12 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'appearance', label: 'Theme Settings', section: 'Settings', href: route('settings.appearance'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme'] },
     { id: 'integrations', label: 'Integrations', section: 'Settings', href: route('settings.integrations.index'), icon: Coffee, keywords: ['kofi', 'streamlabs', 'connect'] },
 
-    { id: 'help-tags', label: 'Conditional Tags', section: 'Learn', href: route('help'), icon: Brackets, keywords: ['syntax', 'documentation', 'docs'] },
+    { id: 'help-tags', label: 'Conditional Tags', section: 'Learn', href: route('help.conditionals'), icon: Brackets, keywords: ['syntax', 'documentation', 'docs'] },
     { id: 'help-controls', label: 'Controls', section: 'Learn', href: route('help.controls'), icon: SlidersHorizontal, keywords: ['documentation', 'docs'] },
     { id: 'help-formatting', label: 'Formatting Pipes', section: 'Learn', href: route('help.formatting'), icon: Pipette, keywords: ['duration', 'currency', 'number', 'date', 'pipe', 'format'] },
-    { id: 'resources', label: 'Free Resources', section: 'Learn', href: route('resources'), icon: BookOpen, keywords: ['links', 'tools'] },
-    { id: 'why-kofi', label: 'Why Ko-fi', section: 'Learn', href: route('why-kofi'), icon: Heart, keywords: ['donate', 'support'] },
-    { id: 'manifesto', label: 'Manifesto', section: 'Learn', href: route('manifesto'), icon: FileText, keywords: ['about', 'philosophy'] },
+    { id: 'help-resources', label: 'Free Resources', section: 'Learn', href: route('help.resources'), icon: BookOpen, keywords: ['links', 'tools'] },
+    { id: 'help-why-kofi', label: 'Why Ko-fi', section: 'Learn', href: route('help.why-kofi'), icon: Heart, keywords: ['donate', 'support'] },
+    { id: 'help-manifesto', label: 'Manifesto', section: 'Learn', href: route('help.manifesto'), icon: FileText, keywords: ['about', 'philosophy'] },
 
     { id: 'tokens', label: 'Token Generator', section: 'Tools', href: route('tokens.index'), icon: Shield, keywords: ['access', 'auth'] },
     { id: 'twitchdata', label: 'Your Twitch Data', section: 'Tools', href: route('twitchdata'), icon: Terminal, keywords: ['api', 'debug', 'refresh'] },

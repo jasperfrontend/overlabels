@@ -5,6 +5,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 const breadcrumbs: BreadcrumbItem[] = [
   {
+    title: 'Help',
+    href: '/help',
+  },
+  {
     title: 'Controls',
     href: '/help/controls',
   },
@@ -230,7 +234,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
               <p class="text-sm text-foreground">
                 String comparison, numeric comparison, boolean truthiness&hellip; All operators work the same way as with Twitch data tags.
-                See the <Link class="text-violet-400 underline hover:no-underline" href="/help">Syntax Help</Link> page for the full comparison reference.
+                See the <Link class="text-violet-400 underline hover:no-underline" href="/help/conditionals">Syntax Help</Link> page for the full comparison reference.
               </p>
             </div>
 

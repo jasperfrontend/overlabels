@@ -122,7 +122,7 @@ const alertPipelineSteps = [
             <a href="#integrations" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Integrations</a>
             <a href="#kits" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Kits</a>
             <Link href="/help" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Help</Link>
-            <Link href="/manifesto" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Why Overlabels</Link>
+            <Link href="/help/manifesto" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Why Overlabels</Link>
             <DarkModeToggle />
             <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
               Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
@@ -163,7 +163,7 @@ const alertPipelineSteps = [
           >{{ item.label }}</a>
           <div class="my-2 border-t border-border/50"></div>
           <Link href="/help" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Help</Link>
-          <Link href="/manifesto" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Why Overlabels</Link>
+          <Link href="/help/manifesto" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Why Overlabels</Link>
         </div>
       </div>
     </nav>
@@ -266,7 +266,7 @@ const alertPipelineSteps = [
             <Link v-else :href="route('dashboard.index')">
               <button class="btn btn-primary">Go to dashboard <ArrowRight class="ml-2 h-4 w-4" /></button>
             </Link>
-            <Link href="/manifesto">
+            <Link href="/help/manifesto">
               <button class="btn btn-secondary">Read the manifesto</button>
             </Link>
           </div>
@@ -343,7 +343,7 @@ const alertPipelineSteps = [
             </div>
             <p class="text-sm text-muted-foreground">
               Tags cover your channel, followers, subs, goals, and more.
-              <Link href="/help" class="text-sky-500 hover:underline">Browse all template tags →</Link>
+              <Link href="/help/conditionals" class="text-sky-500 hover:underline">Browse all template tags →</Link>
             </p>
           </div>
 
@@ -477,7 +477,7 @@ const alertPipelineSteps = [
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
             Any tag — Twitch data, control value, or event payload — can drive a conditional block. Evaluated client-side in the overlay with no
             server round-trips and no <code class="rounded bg-muted px-1.5 text-sm">eval()</code>. Nesting supported up to 10 levels deep.
-            <Link href="/help" class="ml-1 text-sky-500 hover:underline">Full syntax reference →</Link>
+            <Link href="/help/conditionals" class="ml-1 text-sky-500 hover:underline">Full syntax reference →</Link>
           </p>
 
           <div class="mb-10 grid gap-8 lg:grid-cols-2">
@@ -829,7 +829,7 @@ const alertPipelineSteps = [
           <div class="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
             <Link href="/help" class="transition-colors hover:text-foreground">Help</Link>
             <Link href="/help/controls" class="transition-colors hover:text-foreground">Controls</Link>
-            <Link href="/manifesto" class="transition-colors hover:text-foreground">Why Overlabels</Link>
+            <Link href="/help/manifesto" class="transition-colors hover:text-foreground">Why Overlabels</Link>
             <Link href="/terms" class="transition-colors hover:text-foreground">Terms</Link>
             <Link href="/privacy" class="transition-colors hover:text-foreground">Privacy</Link>
             <a

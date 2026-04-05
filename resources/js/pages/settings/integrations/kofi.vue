@@ -148,7 +148,7 @@ function formatDate(iso: string | null): string {
                         description="Learn why Ko-fi is the best way to receive donations as a streamer - and why Overlabels chose it as our first integration."
                     />
                     <Button variant="outline" size="sm" as-child>
-                        <Link href="/why-kofi">Read more</Link>
+                        <Link href="/help/why-kofi">Read more</Link>
                     </Button>
                 </div>
 

@@ -5,8 +5,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
+    title: 'Help',
+    href: '/help',
+  },
+  {
     title: 'Manifesto',
-    href: '/manifesto',
+    href: '/help/manifesto',
   },
 ];
 </script>
@@ -20,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://overlabels.com/manifesto" />
+    <meta property="og:url" content="https://overlabels.com/help/manifesto" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="The Overlabels Manifesto - Overlabels" />
     <meta
