@@ -269,7 +269,7 @@ onMounted(() => {
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
         <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card">
-          <div class="flex border-b border-violet-600 dark:border-violet-400">
+          <div class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
               v-for="(tab, index) in mainTabs"
               :key="tab.key"

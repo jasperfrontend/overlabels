@@ -277,13 +277,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Main Tabs (owner only) -->
       <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card p-0 pb-0">
-        <div class="flex border-b border-violet-600 dark:border-violet-400">
+        <div class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
             v-for="(tab, index) in mainTabs"
             :key="tab.key"
             @click="mainTab = tab.key"
             :class="[
-              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+              'flex cursor-pointer items-center gap-1.5 px-3 py-2 lg:px-5 lg:py-2.5 text-sm font-medium transition-colors hover:bg-background',
               index === 0 && 'rounded-tl-sm',
               mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
             ]"
@@ -338,7 +338,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </Dialog>
 
         <!-- Targeting tab (alert templates, owner only) -->
-        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 max-w-2xl">
+        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 lg:max-w-3xl p-4">
           <AlertTargetOverlaySelector
             v-model="localTargetOverlayIds"
             :static-overlays="staticOverlays ?? []"
@@ -376,7 +376,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 ]"
               >
                 <component :is="tab.icon" :class="tab.color" class="size-3.5" />
-                {{ tab.label }}
+                <span>{{ tab.label }}</span>
               </button>
             </div>
             <!-- Code panel -->

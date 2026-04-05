@@ -36,8 +36,8 @@ function toggle(id: number) {
       <div
         v-for="overlay in staticOverlays"
         :key="overlay.id"
-        class="flex cursor-pointer items-center space-x-3 rounded-lg border p-3 transition-colors hover:bg-background"
-        :class="{ 'border-primary bg-primary/5': modelValue.includes(overlay.id) }"
+        class="flex cursor-pointer items-center space-x-3 rounded-lg input-border p-3 transition-colors hover:bg-background"
+        :class="{ 'border-green-400 bg-green-400/5  hover:bg-green-400/10': modelValue.includes(overlay.id) }"
         @click="!disabled && toggle(overlay.id)"
       >
         <input
@@ -45,7 +45,7 @@ function toggle(id: number) {
           :id="`target-overlay-${overlay.id}`"
           :checked="modelValue.includes(overlay.id)"
           :disabled="disabled"
-          class="pointer-events-none hidden"
+          class="pointer-events-none"
           @click.prevent
         />
         <div class="flex flex-1 cursor-pointer items-center justify-between">
