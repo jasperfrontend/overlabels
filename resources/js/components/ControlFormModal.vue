@@ -64,6 +64,18 @@ const showTwitchPresets = computed(
   () => !isEditing.value && props.template?.type === 'static',
 );
 
+// Filter out presets that already exist as controls on this template
+function isPresetAlreadyAdded(source: string, key: string): boolean {
+  return (props.existingControls ?? []).some(
+    (c) => c.source === source && c.key === key,
+  );
+}
+
+const availableTwitchPresets = computed(() => TWITCH_PRESETS.filter((p) => !isPresetAlreadyAdded('twitch', p.key)));
+const availableKofiPresets = computed(() => KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key)));
+const availableGpsPresets = computed(() => GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key)));
+const availableStreamLabsPresets = computed(() => STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key)));
+
 watch(servicePresetKey, (combinedKey) => {
   if (!combinedKey) {
     form.value.key = '';
@@ -310,6 +322,10 @@ async function save() {
       if (Object.keys(flat).length === 0 && err.response.data.message) {
         flat.general = err.response.data.message;
       }
+      // Surface key errors as general when the key field is hidden (preset mode)
+      if (flat.key && selectedServicePreset.value) {
+        flat.general = flat.key;
+      }
       errors.value = flat;
     } else {
       errors.value = { general: err.response?.data?.message || 'An error occurred. Please try again.' };
@@ -340,23 +356,23 @@ async function save() {
               class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
             >
               <option value="">- Select a preset control -</option>
-              <optgroup v-if="showTwitchPresets" label="Twitch - Per-Stream Counters">
-                <option v-for="preset in TWITCH_PRESETS" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
+              <optgroup v-if="showTwitchPresets && availableTwitchPresets.length" label="Twitch - Per-Stream Counters">
+                <option v-for="preset in availableTwitchPresets" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>
-              <optgroup v-if="showKofiPresets" label="Ko-fi">
-                <option v-for="preset in KOFI_PRESETS" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
+              <optgroup v-if="showKofiPresets && availableKofiPresets.length" label="Ko-fi">
+                <option v-for="preset in availableKofiPresets" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>
-              <optgroup v-if="showGpsPresets" label="GPSLogger">
-                <option v-for="preset in GPS_PRESETS" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
+              <optgroup v-if="showGpsPresets && availableGpsPresets.length" label="GPSLogger">
+                <option v-for="preset in availableGpsPresets" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>
-              <optgroup v-if="showStreamLabsPresets" label="StreamLabs">
-                <option v-for="preset in STREAMLABS_PRESETS" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
+              <optgroup v-if="showStreamLabsPresets && availableStreamLabsPresets.length" label="StreamLabs">
+                <option v-for="preset in availableStreamLabsPresets" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>

@@ -169,7 +169,7 @@ function configSummary(ctrl: OverlayControl): string[] {
       <TableBody>
         <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group">
           <TableCell class="text-sm font-mono w-10 text-center">{{ctrl.sort_order}}</TableCell>
-          <TableCell class="font-mono text-sm font-medium">{{ ctrl.key }}</TableCell>
+          <TableCell class="font-mono text-sm font-medium">{{ snippetKey(ctrl) }}</TableCell>
           <TableCell class="text-muted-foreground">{{ ctrl.label || '—' }}</TableCell>
           <TableCell>
             <Badge :variant="typeBadgeVariant[ctrl.type] ?? 'outline'" class="capitalize">

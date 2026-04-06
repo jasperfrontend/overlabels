@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Fix: Control preset duplicates and key display
+
+- Fixed being able to add a service preset control that already exists on the template. The preset dropdown now filters out already-added presets per source.
+- Fixed validation errors being invisible when adding duplicate presets - the key error was hidden behind `v-if="!selectedServicePreset"`. Now surfaced as a general error.
+- Fixed the Key column in ControlsManager showing bare keys (`total_received`) instead of namespaced keys (`kofi:total_received`) for service-managed controls.
+
 ## April 6th, 2026 - Tribute: wilko_dj - first live follower notification
 
 - Changed the Welcome page alert example from a cheer event to a follow event, with an HTML comment tribute: `<!-- First ever: wilko_dj -->`.
