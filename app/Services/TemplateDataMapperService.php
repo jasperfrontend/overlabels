@@ -207,8 +207,8 @@ class TemplateDataMapperService
 
             // User information
             'user_id' => '123456789',
-            'user_login' => 'streamername',
-            'user_name' => 'StreamerName',
+            'user_login' => 'wilko_dj',
+            'user_name' => 'wilko_dj',
             'user_type' => '',
             'user_broadcaster_type' => 'partner',
             'user_description' => 'Welcome to my awesome stream!',
@@ -220,8 +220,8 @@ class TemplateDataMapperService
 
             // Channel information
             'channel_id' => '123456789',
-            'channel_login' => 'streamer',
-            'channel_name' => 'StreamerName',
+            'channel_login' => 'wilko_dj',
+            'channel_name' => 'wilko_dj',
             'channel_language' => 'en',
             'channel_game_id' => '509658',
             'channel_game' => 'Just Chatting',

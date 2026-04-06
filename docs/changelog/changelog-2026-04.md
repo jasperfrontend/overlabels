@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Chore: Wire up sample data and fix preview modal on create page
+
+- Replaced the hardcoded 70-line sample data object in `create.vue` with the canonical `TemplateDataMapperService::getSampleTemplateData()` passed as an Inertia prop.
+- Updated sample data to use `wilko_dj` for user/channel name fields.
+- Replaced the broken custom Modal component with Shadcn Dialog for the preview modal - now properly closes on ESC and click-outside.
+- Added a Close button and ESC hint to the preview footer.
+
 ## April 6th, 2026 - UI: Show control values and config summary in ControlsManager table
 
 - The Settings column now shows the current value for text, boolean, and other controls that have no type-specific config.

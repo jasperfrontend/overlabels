@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useForm, Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import Modal from '@/components/Modal.vue';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
@@ -11,6 +11,10 @@ import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
+
+const props = defineProps<{
+  sampleData: Record<string, string>;
+}>();
 
 const form = useForm({
   name: '',
@@ -61,78 +65,9 @@ const submitForm = () => {
 };
 
 const previewTemplate = (): void => {
-  const sampleData: Record<string, string> = {
-    user_id: '123456789',
-    user_login: 'wilko_dj',
-    user_name: 'wilko_dj',
-    user_type: 'affiliate',
-    user_broadcaster_type: 'affiliate',
-    user_description: 'I am a Twitch streamer!',
-    user_avatar: 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-70x70.png', // profile picture of /twitch
-    user_offline_banner: 'https://static-cdn.jtvnw.net/jtv_user_pictures/3f5f72bf-ae59-4470-8f8a-730d9ef87500-channel_offline_image-1920x1080.png', // offline banner of /twitch
-    user_follower_count: '1234',
-    user_view_count: '45678',
-    user_email: 'test@example.com',
-    user_created: '2023-01-01T00:00:00Z',
-    channel_game_id: '123456789',
-    channel_game: 'Just Chatting',
-    channel_id: '123456789',
-    channel_login: 'wilko_dj',
-    channel_name: 'wilko_dj',
-    channel_title: 'Creating Overlabels overlays!',
-    channel_language: 'en',
-    channel_subscription_count: '123',
-    channel_delay: '5000',
-    channel_tags_0: 'tag1',
-    channel_tags_1: 'tag2',
-    channel_tags_2: 'tag3',
-    channel_tags_3: 'tag4',
-    channel_tags_4: 'tag5',
-    channel_tags_5: 'tag6',
-    channel_tags_6: 'tag7',
-    channel_tags_7: 'tag8',
-    channel_tags_8: 'tag9',
-    channel_tags_9: 'tag10',
-    channel_is_branded: 'false',
-    channel_followers: 'Twitch, wilko_dj, and 123 others',
-    channel_followers_count: '1234',
-    stream_title: 'Creating Overlabels overlays!',
-    followers_total: '1234',
-    followers_latest_user_id: '123456789',
-    followers_latest_user_login: 'twitchUser123',
-    followers_latest_user_name: 'twitchUser123',
-    followers_latest_date: '2023-01-01T00:00:00Z',
-    followed_channels: '1234',
-    followed_channels_count: '1234',
-    followed_total: '1234',
-    followed_latest_id: '123456789',
-    followed_latest_login: 'twitchuser123',
-    followed_latest_name: 'twitchUser123',
-    followed_latest_date: '2023-01-01T00:00:00Z',
-    subscribers_latest_broadcaster_id: '123456789',
-    subscribers_latest_broadcaster_login: 'twitchuser123',
-    subscribers_latest_broadcaster_name: 'twitchUser123',
-    subscribers_latest_gifter_id: '123456789',
-    subscribers_latest_gifter_login: 'subgifter123',
-    subscribers_latest_gifter_name: 'subGifter123',
-    subscribers_latest_is_gift: 'false',
-    subscribers_latest_plan_name: 'Tier 1 subscriber',
-    subscribers_latest_tier: '1000',
-    subscribers_latest_user_id: '123456789',
-    subscribers_latest_user_login: 'twitchUser123',
-    subscribers_latest_user_name: 'twitchUser123',
-    subscribers_points: '1234',
-    subscribers_total: '1234',
-    subscribers_pagination_cursor: '123456789',
-    subscribers_channels: '1234',
-    subscribers_channels_count: '1234',
-    subscribers_channels_pagination_cursor: '123456789',
-    subscribers_channels_latest_id: '123456789',
-  };
-
   let htmlContent = form.html;
   let cssContent = form.css;
-  Object.entries(sampleData).forEach(([tag, value]) => {
+  Object.entries(props.sampleData).forEach(([tag, value]) => {
     const tagPattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
     htmlContent = htmlContent.replace(tagPattern, value);
     cssContent = cssContent.replace(tagPattern, value);
@@ -320,26 +255,20 @@ onMounted(() => {
     </div>
 
     <!-- Preview Modal -->
-    <Modal :show="showPreview" @close="showPreview = false" max-width="4xl">
-      <div class="p-6">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-foreground">Overlay Preview</h3>
-          <button @click="showPreview = false" class="rounded-full p-1 hover:bg-sidebar-accent">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" style="fill: currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
+    <Dialog :open="showPreview" @update:open="showPreview = $event">
+      <DialogContent class="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Overlay Preview</DialogTitle>
+        </DialogHeader>
         <div class="rounded-sm border border-border bg-muted" style="height: 400px">
           <iframe v-if="previewHtml" :srcdoc="previewHtml" class="h-full w-full border-0" sandbox="allow-scripts" />
         </div>
-        <p class="mt-4 text-sm text-muted-foreground">Tags are shown with sample data in preview.</p>
-      </div>
-    </Modal>
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-muted-foreground">Tags are shown with sample data in preview. Press <kbd class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">ESC</kbd> to close this preview.</p>
+          <button class="btn btn-cancel" @click="showPreview = false">Close</button>
+        </div>
+      </DialogContent>
+    </Dialog>
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>

@@ -10,7 +10,7 @@ interface ModalProps {
 const props = defineProps<ModalProps>();
 
 // Set default values for optional props
-const closeable = props.closeable;
+const closeable = props.closeable ?? true;
 
 const emit = defineEmits(['close']);
 
@@ -23,7 +23,7 @@ watch(() => props.show, (newValue) => {
 });
 
 const close = () => {
-  if (props.closeable) {
+  if (closeable) {
     emit('close');
   }
 };
@@ -61,7 +61,7 @@ const maxWidthClass = computed(() => {
     <div v-if="props.show" class="fixed inset-0 bg-black/50 backdrop-blur bg-opacity-50 z-40"></div>
 
     <transition leave-active-class="duration-200">
-      <div v-show="props.show" class="fixed inset-0 max-w-[600px] m-auto overflow-y-auto px-4 py-6 sm:px-0 z-50 flex items-center justify-center">
+      <div v-show="props.show" class="fixed inset-0 max-w-[600px] m-auto overflow-y-auto px-4 py-6 sm:px-0 z-50 flex items-center justify-center" @click.self="close">
 
         <transition
           enter-active-class="ease-out duration-300"

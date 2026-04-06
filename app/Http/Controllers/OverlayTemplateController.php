@@ -85,9 +85,11 @@ class OverlayTemplateController extends Controller
     /**
      * Show the form for creating a new template
      */
-    public function create()
+    public function create(TemplateDataMapperService $templateDataMapper)
     {
-        return Inertia::render('templates/create');
+        return Inertia::render('templates/create', [
+            'sampleData' => $templateDataMapper->getSampleTemplateData(),
+        ]);
     }
 
     /**
