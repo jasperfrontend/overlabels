@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Fix: Pipe arguments with spaces break tag rendering
+
+- Template tags with spaces in pipe arguments (e.g. `[[[c:datetime_thing|date:dd-MM-yyyy HH:mm]]]`) were not rendering at all - the raw tag text was output in the overlay.
+- Fixed both the frontend TAG_REGEX in `OverlayRenderer.vue` and the PHP `extractTemplateTags()` regex in `OverlayTemplate.php` to allow spaces in the pipe argument character class.
+
 ## April 7th, 2026 - Feature: Date formatter now includes time and named presets
 
 - Default `|date` output now includes time (e.g. "Apr 5, 2026, 7:00 PM") instead of date only.

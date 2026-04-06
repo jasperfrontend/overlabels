@@ -185,7 +185,7 @@ function escapeRegExp(string: string) {
 
 // Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
 // Pipe args allow word chars, dots, colons, and hyphens (for date patterns like dd-MM-yyyy)
-const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\-]+))?]]]/g;
+const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\- ]+))?]]]/g;
 
 function replaceTagsWithFormatting(source: string, sourceData: Record<string, any>): string {
   return source.replace(TAG_REGEX, (_match, key: string, pipe: string | undefined) => {

@@ -108,7 +108,8 @@ Critical variables:
 - Duration patterns: `hh:mm:ss`, `mm:ss`, `dd:hh:mm:ss` etc. - units overflow into the largest present unit
 - Formatter utility: `resources/js/utils/formatters.ts` - pure functions, zero dependencies, uses native `Intl` APIs
 - `OverlayRenderer.vue` uses `TAG_REGEX` for single-pass replacement: matches tag + optional pipe, resolves value, applies formatter
-- `TAG_REGEX`: `/\[\[\[([\w.:]+)(?:\|([\w.:\-]+))?]]]/g` - group 1 = tag key, group 2 = pipe expression
+- `TAG_REGEX`: `/\[\[\[([\w.:]+)(?:\|([\w.:\- ]+))?]]]/g` - group 1 = tag key, group 2 = pipe expression
+- PHP `extractTemplateTags()` regex: `/\[\[\[(...)\(?:\|[a-zA-Z0-9_.:% -]+)?]]]/` - pipe char class includes space for patterns like `date:dd-MM-yyyy HH:mm`
 - PHP `extractTemplateTags()` strips pipe expressions to extract clean tag names for the allowlist
 - Global locale stored on `users.locale` (default `en-US`), passed via API response as `json.locale`
 - Settings UI: Appearance page has locale picker with live number/currency/date preview

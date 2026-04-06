@@ -53,6 +53,16 @@ test('extractTemplateTags deduplicates tags with different formatters', function
     expect(array_count_values($tags)['c:score'])->toBe(1);
 });
 
+test('extractTemplateTags handles pipe args with spaces', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<span>[[[c:datetime_thing|date:dd-MM-yyyy HH:mm]]]</span>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)->toContain('c:datetime_thing');
+});
+
 test('extractTemplateTags handles mixed plain and piped tags', function () {
     $template = new OverlayTemplate;
     $template->html = '<div>[[[followers_total]]] [[[c:amount|currency:EUR]]] [[[channel_title]]]</div>';
