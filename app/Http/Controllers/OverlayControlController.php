@@ -212,7 +212,7 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control->fresh()]);
         }
 
-        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'datetime', 'expression'])) {
+        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'expression'])) {
             $validated['value'] = OverlayControl::sanitizeValue($control->type, $validated['value'] ?? '');
         } else {
             unset($validated['value']);

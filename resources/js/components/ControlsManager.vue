@@ -108,7 +108,7 @@ function configSummary(ctrl: OverlayControl): string[] {
     const expr = cfg.expression;
     if (expr) parts.push(expr);
   } else if (ctrl.type === 'datetime' && ctrl.value) {
-    parts.push(`Initial: ${ctrl.value}`);
+    parts.push(new Date(ctrl.value).toLocaleString());
   } else if (ctrl.value) {
     parts.push(ctrl.value);
   }

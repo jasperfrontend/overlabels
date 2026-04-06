@@ -86,7 +86,8 @@ class OverlayControl extends Model
             'text', 'expression' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
-            default => '', // timer, datetime: value derived from config
+            'datetime' => strip_tags((string) $raw),
+            default => '', // timer: value derived from config
         };
     }
 

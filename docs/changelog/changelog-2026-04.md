@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Fix: Datetime control values now persist
+
+- Datetime control values were silently dropped on every save due to three separate blocks:
+  - Frontend `buildPayload()` excluded datetime from the value payload.
+  - Backend `update()` unset the value for datetime controls.
+  - `sanitizeValue()` returned empty string for the datetime type (fell through to the timer default).
+- Added explicit `datetime` case in `sanitizeValue()` that preserves the value via `strip_tags()`.
+- Replaced Shadcn Input with native `<input type="datetime-local">` for datetime controls to avoid reactivity issues.
+
 ## April 6th, 2026 - Chore: Wire up sample data and fix preview modal on create page
 
 - Replaced the hardcoded 70-line sample data object in `create.vue` with the canonical `TemplateDataMapperService::getSampleTemplateData()` passed as an Inertia prop.

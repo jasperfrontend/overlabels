@@ -279,7 +279,7 @@ function buildPayload() {
     payload.config = null;
   }
 
-  if (t !== 'timer' && t !== 'datetime') {
+  if (t !== 'timer') {
     if (t === 'boolean') {
       payload.value = booleanValue.value ? '1' : '0';
     } else {
@@ -441,14 +441,26 @@ async function save() {
               <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
             </div>
 
-            <!-- Value (text/number/counter/datetime) -->
-            <div v-if="form.type !== 'timer' && form.type !== 'boolean' && form.type !== 'expression'" class="space-y-2">
+            <!-- Value (text/number/counter) -->
+            <div v-if="['text', 'number', 'counter'].includes(form.type)" class="space-y-2">
               <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 id="ctrl-value"
                 v-model="form.value"
-                :type="form.type === 'number' || form.type === 'counter' ? 'number' : form.type === 'datetime' ? 'datetime-local' : 'text'"
+                :type="form.type === 'number' || form.type === 'counter' ? 'number' : 'text'"
                 placeholder="Leave blank to start empty"
+              />
+              <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+            </div>
+
+            <!-- Value (datetime) -->
+            <div v-if="form.type === 'datetime'" class="space-y-2">
+              <Label for="ctrl-value-dt">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
+              <input
+                id="ctrl-value-dt"
+                v-model="form.value"
+                type="datetime-local"
+                class="input-border w-full"
               />
               <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
             </div>
