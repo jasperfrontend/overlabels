@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Docs: Expanded Controls help page with per-type sections
+
+- Restructured the Control Types overview into clickable links to detailed per-type sections.
+- Added detailed sections for all 7 control types: Text, Number, Counter, Timer, Boolean, Datetime, and Expression.
+- Each section includes usage examples, code snippets, and type-specific features (random mode, timer modes, expression syntax).
+- Documented the new Timer `:running` companion value with conditional examples.
+- Added Boolean and Expression to the Control Panel "How each type works" section.
+- Updated TOC with nested type links.
+
 ## April 6th, 2026 - Feature: Timer :running state in overlay conditionals
 
 - Timer controls now expose a `:running` virtual value in the overlay data, accessible as `[[[c:my_timer:running]]]` (outputs `1` or `0`) and in conditionals: `[[[if:c:my_timer:running]]]`.

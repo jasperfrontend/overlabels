@@ -63,6 +63,18 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold" id="toc">Table of Contents</h2>
           <ul class="space-y-2">
             <li><a href="#what" class="text-violet-400 hover:underline">What are Controls?</a></li>
+            <li>
+              <a href="#types" class="text-violet-400 hover:underline">Control Types in Detail</a>
+              <ul class="ml-4 mt-1 space-y-1">
+                <li><a href="#type-text" class="text-violet-400/70 hover:underline text-sm">Text</a></li>
+                <li><a href="#type-number" class="text-violet-400/70 hover:underline text-sm">Number</a></li>
+                <li><a href="#type-counter" class="text-violet-400/70 hover:underline text-sm">Counter</a></li>
+                <li><a href="#type-timer" class="text-violet-400/70 hover:underline text-sm">Timer</a></li>
+                <li><a href="#type-boolean" class="text-violet-400/70 hover:underline text-sm">Boolean</a></li>
+                <li><a href="#type-datetime" class="text-violet-400/70 hover:underline text-sm">Datetime</a></li>
+                <li><a href="#type-expression" class="text-violet-400/70 hover:underline text-sm">Expression</a></li>
+              </ul>
+            </li>
             <li><a href="#managing-controls" class="text-violet-400 hover:underline">Managing Controls</a></li>
             <li><a href="#using-controls" class="text-violet-400 hover:underline">Using Controls in Overlays</a></li>
             <li><a href="#panel" class="text-violet-400 hover:underline">The Control Panel</a></li>
@@ -91,27 +103,250 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Control types -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Control Types</h3>
+              <p class="mb-4 text-sm text-muted-foreground">Click a type to jump to its detailed section.</p>
               <div class="space-y-4">
-                <div class="flex gap-4">
-                  <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">text</div>
-                  <div class="text-foreground">Free-form text. Displayed as-is in your overlay. HTML is stripped for safety.</div>
+                <a href="#type-text" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">text</div>
+                  <div class="text-foreground">Free-form text. Displayed as-is in your overlay.</div>
+                </a>
+                <a href="#type-number" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">number</div>
+                  <div class="text-foreground">A numeric value with optional min, max, and step.</div>
+                </a>
+                <a href="#type-counter" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">counter</div>
+                  <div class="text-foreground">A whole-number counter with +/- /Reset buttons. Great for deaths, wins, donations.</div>
+                </a>
+                <a href="#type-timer" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">timer</div>
+                  <div class="text-foreground">A stopwatch, countdown, or count-to-date. Ticks in real time on the overlay.</div>
+                </a>
+                <a href="#type-boolean" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">boolean</div>
+                  <div class="text-foreground">An on/off toggle. Outputs <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> or <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code>.</div>
+                </a>
+                <a href="#type-datetime" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">datetime</div>
+                  <div class="text-foreground">A fixed date and time value.</div>
+                </a>
+                <a href="#type-expression" class="flex gap-4 group">
+                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">expression</div>
+                  <div class="text-foreground">A formula that derives its value from other controls. Evaluated live on the overlay.</div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Control Types in Detail -->
+        <div class="mb-12">
+          <h2 class="mb-6 text-2xl font-bold" id="types">Control Types in Detail</h2>
+
+          <div class="space-y-6">
+            <!-- Text -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-text">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">text</span> Text</h3>
+              <p class="mb-4 text-foreground">
+                Free-form text displayed as-is in your overlay. HTML is stripped for safety, so you can't accidentally inject markup through a Control Panel update.
+              </p>
+              <p class="mb-4 text-foreground">
+                Text controls are the most versatile type. Use them for player names, status messages, song titles, or anything that doesn't need numeric logic.
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;div class="now-playing"&gt;<br />
+                &nbsp;&nbsp;Now playing: &lt;span&gt;[[[c:song_title]]]&lt;/span&gt;<br />
+                &lt;/div&gt;
+              </div>
+              <p class="mt-4 text-sm text-muted-foreground">
+                Text controls also work well for storing URLs (image sources, links, etc.) that you want to swap out without editing overlay code.
+              </p>
+            </div>
+
+            <!-- Number -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-number">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">number</span> Number</h3>
+              <p class="mb-4 text-foreground">
+                A numeric value with optional <strong>min</strong>, <strong>max</strong>, and <strong>step</strong> constraints. Saved and displayed as a plain number.
+                You type the value directly in the Control Panel.
+              </p>
+              <p class="mb-4 text-foreground">
+                Numbers are great for goal amounts, percentages, scores, or any value where you want to set it to a specific number rather than increment/decrement.
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;div class="goal"&gt;<br />
+                &nbsp;&nbsp;&lt;progress value="[[[c:goal_current]]]" max="[[[c:goal_target]]]"&gt;&lt;/progress&gt;<br />
+                &nbsp;&nbsp;[[[c:goal_current]]] / [[[c:goal_target]]]<br />
+                &lt;/div&gt;
+              </div>
+              <div class="mt-4 rounded border border-violet-400/20 bg-violet-400/5 p-3">
+                <p class="text-sm text-foreground"><strong>Random mode:</strong> Number controls can be set to "random mode" in the config. When enabled, the overlay generates a random integer between min and max on a configurable interval. Useful for slot machines, randomized choices, or whack-a-mole style games.</p>
+              </div>
+            </div>
+
+            <!-- Counter -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-counter">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">counter</span> Counter</h3>
+              <p class="mb-4 text-foreground">
+                A whole-number counter with <strong>+</strong>, <strong>-</strong>, and <strong>Reset</strong> buttons in the Control Panel.
+                Each press fires immediately - no save button needed. Counters are the fastest way to track things that change during a stream.
+              </p>
+              <p class="mb-4 text-foreground">
+                Configure a <strong>step</strong> size (default 1), <strong>min/max</strong> bounds, and a <strong>reset value</strong> (default 0).
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;div class="deaths"&gt;<br />
+                &nbsp;&nbsp;Deaths: &lt;span class="big"&gt;[[[c:deaths]]]&lt;/span&gt;<br />
+                &lt;/div&gt;<br /><br />
+                &lt;!-- Combine with conditionals for reactive messaging --&gt;<br />
+                [[[if:c:deaths >= 10]]]<br />
+                &nbsp;&nbsp;&lt;div class="tilt"&gt;Maybe take a break?&lt;/div&gt;<br />
+                [[[endif]]]
+              </div>
+              <div class="mt-4 rounded border border-violet-400/20 bg-violet-400/5 p-3">
+                <p class="text-sm text-foreground"><strong>Random mode:</strong> Like Number controls, Counters also support random mode for generating random values on an interval.</p>
+              </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-timer">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">timer</span> Timer</h3>
+              <p class="mb-4 text-foreground">
+                A live-ticking timer that runs on the overlay in real time. Control it from the Control Panel with Start, Stop, and Reset buttons. Timer controls support three modes:
+              </p>
+              <div class="mb-4 space-y-2">
+                <div class="flex gap-3">
+                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count up</span>
+                  <span class="text-foreground">Counts upward from zero. A classic stopwatch.</span>
                 </div>
-                <div class="flex gap-4">
-                  <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">number</div>
-                  <div class="text-foreground">A numeric value with optional min, max, and step. Saved and displayed as a plain number.</div>
+                <div class="flex gap-3">
+                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Countdown</span>
+                  <span class="text-foreground">Counts down from a base duration you set (in seconds). Stops at zero.</span>
                 </div>
-                <div class="flex gap-4">
-                  <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">counter</div>
-                  <div class="text-foreground">A whole-number counter with <strong>+</strong> / <strong>−</strong> / Reset buttons in the Control Panel. Great for deaths, wins, donations.</div>
+                <div class="flex gap-3">
+                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count to</span>
+                  <span class="text-foreground">Counts down to a specific date and time. Always ticking - no start/stop needed.</span>
                 </div>
-                <div class="flex gap-4">
-                  <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">timer</div>
-                  <div class="text-foreground">A stopwatch or countdown. Start, stop, and reset from the Control Panel. The overlay reads elapsed time in real time. Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|duration:hh:mm:ss</code> to display it as a clock.</div>
+              </div>
+              <p class="mb-4 text-foreground">
+                The raw output is <strong>seconds</strong>. Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> to display it as a clock:
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Shows "02:34:15" --&gt;<br />
+                &lt;span&gt;[[[c:stream_timer|duration:hh:mm:ss]]]&lt;/span&gt;<br /><br />
+                &lt;!-- Shows "4:15" (minutes and seconds only) --&gt;<br />
+                &lt;span&gt;[[[c:round_timer|duration:mm:ss]]]&lt;/span&gt;<br /><br />
+                &lt;!-- Auto-format picks the smartest display --&gt;<br />
+                &lt;span&gt;[[[c:stream_timer|duration]]]&lt;/span&gt;
+              </div>
+
+              <!-- :running -->
+              <div class="mt-6 rounded border border-violet-400/20 bg-violet-400/5 p-4">
+                <h4 class="mb-3 text-lg font-semibold text-violet-400">Detecting if a timer is running</h4>
+                <p class="mb-3 text-foreground">
+                  Every timer exposes a companion <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:running</code> value that outputs
+                  <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> when the timer is active or
+                  <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code> when it is stopped.
+                  "Count to" timers are always considered running since they tick continuously.
+                </p>
+                <p class="mb-3 text-foreground">
+                  Use it as a tag or in conditionals to show or hide content based on timer state:
+                </p>
+                <div class="mb-3 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                  &lt;!-- Show a pulsing dot when the timer is live --&gt;<br />
+                  [[[if:c:stream_timer:running]]]<br />
+                  &nbsp;&nbsp;&lt;span class="pulse-dot"&gt;&lt;/span&gt; LIVE<br />
+                  [[[else]]]<br />
+                  &nbsp;&nbsp;&lt;span class="gray"&gt;PAUSED&lt;/span&gt;<br />
+                  [[[endif]]]
                 </div>
-                <div class="flex gap-4">
-                  <div class="mt-0.5 flex h-6 w-16 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold">datetime</div>
-                  <div class="text-foreground">A fixed date and time value. Useful for "stream starts at" countdowns or logging purposes.</div>
+                <div class="mb-3 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                  &lt;!-- Only show the timer block while it's running --&gt;<br />
+                  [[[if:c:round_timer:running]]]<br />
+                  &nbsp;&nbsp;&lt;div class="timer-block"&gt;<br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;&lt;span&gt;[[[c:round_timer|duration:mm:ss]]]&lt;/span&gt;<br />
+                  &nbsp;&nbsp;&lt;/div&gt;<br />
+                  [[[endif]]]
                 </div>
+                <p class="text-sm text-muted-foreground">
+                  The <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:running</code> value updates instantly when you press Start or Stop in the Control Panel.
+                </p>
+              </div>
+            </div>
+
+            <!-- Boolean -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-boolean">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">boolean</span> Boolean</h3>
+              <p class="mb-4 text-foreground">
+                An on/off toggle switch. Stores <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> (on) or
+                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code> (off). In the Control Panel, it shows as a simple toggle you can flip instantly.
+              </p>
+              <p class="mb-4 text-foreground">
+                Booleans are ideal for conditionally showing or hiding entire sections of your overlay without touching the code.
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Toggle a sponsor banner on/off --&gt;<br />
+                [[[if:c:show_sponsor]]]<br />
+                &nbsp;&nbsp;&lt;div class="sponsor-banner"&gt;<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;img src="[[[c:sponsor_logo]]]" /&gt;<br />
+                &nbsp;&nbsp;&lt;/div&gt;<br />
+                [[[endif]]]<br /><br />
+                &lt;!-- Toggle between two layouts --&gt;<br />
+                [[[if:c:compact_mode]]]<br />
+                &nbsp;&nbsp;&lt;div class="layout-compact"&gt;...&lt;/div&gt;<br />
+                [[[else]]]<br />
+                &nbsp;&nbsp;&lt;div class="layout-full"&gt;...&lt;/div&gt;<br />
+                [[[endif]]]
+              </div>
+            </div>
+
+            <!-- Datetime -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-datetime">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">datetime</span> Datetime</h3>
+              <p class="mb-4 text-foreground">
+                A fixed date and time value, set from a datetime picker in the Control Panel. Useful for "next stream starts at" displays, event countdowns, or logging purposes.
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;div class="schedule"&gt;<br />
+                &nbsp;&nbsp;Next stream: &lt;span&gt;[[[c:next_stream|date:short]]]&lt;/span&gt;<br />
+                &lt;/div&gt;
+              </div>
+              <p class="mt-4 text-sm text-muted-foreground">
+                Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> like
+                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">|date:short</code> or
+                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">|date:long</code> to format the output.
+                If you need a live countdown to a date, use a Timer in "count to" mode instead.
+              </p>
+            </div>
+
+            <!-- Expression -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-expression">
+              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">expression</span> Expression</h3>
+              <p class="mb-4 text-foreground">
+                A formula that derives its value from other controls. Expressions are evaluated live on the overlay with zero latency - no server round-trip needed.
+                You cannot edit an expression's value directly; it's always computed from its formula.
+              </p>
+              <p class="mb-4 text-foreground">
+                Reference other controls using <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.key</code> syntax inside the formula.
+                For service-managed controls, use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.kofi.total_received</code> (dots instead of colons).
+              </p>
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Simple math --&gt;<br />
+                Expression: <span class="text-violet-400">c.wins / (c.wins + c.losses) * 100</span><br /><br />
+                &lt;div&gt;Win rate: [[[c:win_rate|round]]]%&lt;/div&gt;
+              </div>
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Ternary / if-else logic --&gt;<br />
+                Expression: <span class="text-violet-400">c.deaths > 10 ? "tilted" : "focused"</span><br /><br />
+                &lt;div class="status"&gt;Mood: [[[c:mood]]]&lt;/div&gt;
+              </div>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Cross-service comparison --&gt;<br />
+                Expression: <span class="text-violet-400">c.streamlabs.total_received + c.kofi.total_received</span><br /><br />
+                &lt;div&gt;Total donations: $[[[c:total_donations|round]]]&lt;/div&gt;
+              </div>
+              <div class="mt-4 space-y-2 text-sm text-muted-foreground">
+                <p>Expressions support standard math operators (<code class="rounded bg-background px-1 py-0.5 font-mono text-xs">+ - * / %</code>), comparisons, ternary operators, and parentheses.</p>
+                <p>Circular dependencies (A depends on B, B depends on A) are detected and blocked when you save.</p>
               </div>
             </div>
           </div>
@@ -135,9 +370,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="space-y-3 text-foreground">
                 <div><strong class="text-foreground">Key</strong>  A lowercase slug used in template tags, e.g. <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">deaths</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">goal_amount</code>. Must start with a letter and contain only lowercase letters, digits, and underscores. The key is permanent and cannot be changed after creation.</div>
                 <div><strong class="text-foreground">Label</strong>  An optional human-readable name displayed in the Control Panel, e.g. "Death Counter". If omitted, the key is used.</div>
-                <div><strong class="text-foreground">Type</strong>  One of: text, number, counter, timer, datetime.</div>
+                <div><strong class="text-foreground">Type</strong>  One of: text, number, counter, timer, boolean, datetime, expression.</div>
                 <div><strong class="text-foreground">Sort order</strong>  Controls the display order in the Control Panel. Lower numbers appear first.</div>
-                <div><strong class="text-foreground">Type-specific config</strong>  Number and counter controls accept min, max, step, and reset value. Timer controls accept a mode (count-up or countdown) and a base duration.</div>
+                <div><strong class="text-foreground">Type-specific config</strong>  Number and counter controls accept min, max, step, and reset value. Timer controls accept a mode (count up, countdown, or count to date/time). Expression controls require a formula. See <a href="#types" class="text-violet-400 hover:underline">Control Types in Detail</a> for the full breakdown.</div>
               </div>
             </div>
 
@@ -307,9 +542,16 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <div class="mb-1 font-semibold">Timer</div>
                   <p class="text-foreground">
-                    <strong>Start</strong> begins counting (count-up or countdown, depending on your config). The display ticks
-                    every half-second in the Control Panel and in the overlay simultaneously.
+                    <strong>Start</strong> begins counting (count up or countdown, depending on your config). The display ticks
+                    in the Control Panel and in the overlay simultaneously.
                     <strong>Stop</strong> pauses at the current time. <strong>Reset</strong> returns to zero (or the base duration for countdowns).
+                    "Count to" timers show the target datetime and tick automatically - no start/stop needed.
+                  </p>
+                </div>
+                <div>
+                  <div class="mb-1 font-semibold">Boolean</div>
+                  <p class="text-foreground">
+                    A single toggle switch. Flip it on or off - the value updates immediately. Pairs well with conditionals to show/hide overlay sections.
                   </p>
                 </div>
                 <div>
@@ -317,6 +559,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <p class="text-foreground">
                     Pick a date and time from the datetime picker and click <strong>Save</strong>.
                     Useful for "Next stream: [[[c:next_stream]]]" display text.
+                  </p>
+                </div>
+                <div>
+                  <div class="mb-1 font-semibold">Expression</div>
+                  <p class="text-foreground">
+                    Expressions have no input in the Control Panel - their value is always derived from the formula.
+                    The panel shows the current expression and its live-evaluated result.
                   </p>
                 </div>
               </div>
