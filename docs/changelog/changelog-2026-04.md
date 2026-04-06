@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Feature: Timer :running state in overlay conditionals
+
+- Timer controls now expose a `:running` virtual value in the overlay data, accessible as `[[[c:my_timer:running]]]` (outputs `1` or `0`) and in conditionals: `[[[if:c:my_timer:running]]]`.
+- `countto` timers are always considered running since they tick continuously.
+- No backend changes needed - the running state is injected into the data object alongside the timer seconds in `OverlayRenderer.vue`.
+
 ## April 6th, 2026 - Fix: Control preset duplicates and key display
 
 - Fixed being able to add a service preset control that already exists on the template. The preset dropdown now filters out already-added presets per source.

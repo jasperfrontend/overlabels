@@ -147,16 +147,18 @@ function startTimerTick(key: string, state: any) {
   stopTimerTick(key);
   timerStates.value[key] = state;
 
+  const runningVal = (state.running || state.mode === 'countto') ? '1' : '0';
+
   // Write the current value immediately
   if (data.value) {
-    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(state)) };
+    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(state)), [`c:${key}:running`]: runningVal };
   }
 
   if (!state.running && state.mode !== 'countto') return;
 
   timerIntervals[key] = window.setInterval(() => {
     if (!data.value) return;
-    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(timerStates.value[key])) };
+    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(timerStates.value[key])), [`c:${key}:running`]: runningVal };
   }, 250);
 }
 
@@ -164,6 +166,9 @@ function stopTimerTick(key: string) {
   if (timerIntervals[key]) {
     clearInterval(timerIntervals[key]);
     delete timerIntervals[key];
+  }
+  if (data.value) {
+    data.value = { ...data.value, [`c:${key}:running`]: '0' };
   }
 }
 
