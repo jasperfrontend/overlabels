@@ -17,7 +17,7 @@ class RailwayWebhookController extends Controller
      * so with 4 services we get 4 near-simultaneous hits. We wait this
      * long after the last hit before actually broadcasting.
      */
-    private const int DEBOUNCE_SECONDS = 300;
+    private const int DEBOUNCE_SECONDS = 30;
 
     /**
      * @throws RandomException
