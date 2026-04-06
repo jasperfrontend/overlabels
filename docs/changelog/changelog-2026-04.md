@@ -15,10 +15,11 @@
 - Follows the existing timer pattern: backend resolves an initial random value, frontend runs a periodic interval.
 - Enables creative use cases like slot machines, whack-a-mole, and randomized choices.
 
-## April 5th, 2026 - Debounce Railway deploy webhooks
+## April 5th, 2026 - Revert: Remove Railway webhook debounce
 
-- Railway fires one webhook per service (4 total), causing 4 "new version" banners per deploy.
-- Added `BroadcastVersionUpdate` job with a 5-minute cache-based debounce so only the last webhook in a burst actually broadcasts.
+- Removed the `BroadcastVersionUpdate` debounce job and cache nonce logic.
+- Railway webhook now broadcasts `VersionUpdated` immediately on receipt.
+- The debounce delayed broadcasting by 30 seconds, which coincided with Reverb restarting during deploys - the broadcast fired into a Reverb instance with no connected clients.
 
 ## April 5th, 2026 - Reorganize help pages under /help/* and add logged-out sidebar menu
 
