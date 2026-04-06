@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - UI: Timer running indicators and light mode contrast
+
+- Timer cards in ControlPanel now show a green/red gradient background and ring border indicating running/stopped state, with a colored dot next to the timer display. Countto timers are excluded (always running).
+- ControlPanel cards get `bg-accent/70` in light mode for visibility against the white page background; dark mode keeps `bg-background`.
+- ControlsManager table rows now use zebra striping (`odd:bg-accent/50`) for better readability in light mode.
+- Added `backup-*.sql` to `.gitignore`.
+
 ## April 7th, 2026 - Fix: Pipe arguments with spaces break tag rendering
 
 - Template tags with spaces in pipe arguments (e.g. `[[[c:datetime_thing|date:dd-MM-yyyy HH:mm]]]`) were not rendering at all - the raw tag text was output in the overlay.

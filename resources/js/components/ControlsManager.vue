@@ -166,7 +166,7 @@ function configSummary(ctrl: OverlayControl): string[] {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group">
+        <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group odd:bg-accent/50">
           <TableCell class="text-sm font-mono w-10 text-center">{{ctrl.sort_order}}</TableCell>
           <TableCell class="font-mono text-sm font-medium">
             <span v-if="isSourceManaged(ctrl)" class="text-xs text-violet-400">*</span>

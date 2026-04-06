@@ -164,7 +164,12 @@ async function toggleBoolean(ctrl: OverlayControl) {
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      <div v-for="ctrl in controls" :key="ctrl.id" :class="['rounded-md bg-background p-6', isTwitchOffline(ctrl) && 'opacity-50']">
+      <div v-for="ctrl in controls" :key="ctrl.id" :class="[
+        'rounded-md bg-accent/70 dark:bg-background p-6 transition-all duration-500',
+        isTwitchOffline(ctrl) && 'opacity-50',
+        ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-gradient-to-br from-green-500/15 to-background ring-1 ring-green-500/35',
+        ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-gradient-to-br from-red-500/15 to-background ring-1 ring-red-500/30',
+      ]">
         <div class="mb-2">
           <div class="flex items-center justify-between mb-4">
             <div>
@@ -244,6 +249,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
         <!-- Timer control -->
         <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
           <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
+            <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
+            <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
             {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
           </div>
           <template v-if="ctrl.config?.mode === 'countto'">
