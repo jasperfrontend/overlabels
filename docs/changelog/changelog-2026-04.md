@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Feature: Date formatter now includes time and named presets
+
+- Default `|date` output now includes time (e.g. "Apr 5, 2026, 7:00 PM") instead of date only.
+- Added named presets: `|date:short` (compact), `|date:long` (full weekday), `|date:date` (date only), `|date:time` (time only).
+- Custom token patterns still work as before (`|date:dd-MM-yyyy HH:mm`).
+- Updated Formatting help page with examples for all presets and updated quick reference.
+
 ## April 6th, 2026 - Fix: Datetime control values now persist
 
 - Datetime control values were silently dropped on every save due to three separate blocks:

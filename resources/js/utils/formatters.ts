@@ -10,8 +10,12 @@
  *   |duration:FMT — explicit pattern (hh:mm:ss, mm:ss, dd:hh:mm:ss, etc.)
  *   |currency     — locale-aware currency (uses global locale + default currency)
  *   |currency:EUR — explicit currency code
- *   |date         — locale-aware date
- *   |date:FMT     — explicit date format (dd-MM-yyyy, etc.)
+ *   |date         — locale-aware date + time
+ *   |date:short   — compact date + time (e.g. "Apr 5, 7:00 PM")
+ *   |date:long    — full date + time (e.g. "Saturday, April 5, 2026, 7:00 PM")
+ *   |date:date    — date only (e.g. "Apr 5, 2026")
+ *   |date:time    — time only (e.g. "7:00:00 PM")
+ *   |date:FMT     — custom pattern (dd-MM-yyyy HH:mm, etc.)
  *   |number       — locale-aware number with thousands separators
  *   |number:N     — locale-aware number with N decimal places
  *   |uppercase    — text transform
@@ -204,8 +208,9 @@ function formatCurrency(value: string, args?: string, locale?: string): string {
 /**
  * Format a date/datetime string.
  *
- * Without args: locale-aware default (e.g. "Apr 5, 2026")
- * With args: simple format pattern using dd, MM, yyyy, HH, mm, ss tokens.
+ * Without args: locale-aware date + time (e.g. "Apr 5, 2026, 7:00 PM")
+ * Named presets: short, long, date, time
+ * Custom pattern: dd, MM, yyyy, HH, mm, ss tokens
  */
 function formatDate(value: string, args?: string, locale?: string): string {
   const date = new Date(value);
@@ -216,7 +221,21 @@ function formatDate(value: string, args?: string, locale?: string): string {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
     }).format(date);
+  }
+
+  // Named presets
+  const presets: Record<string, Intl.DateTimeFormatOptions> = {
+    short: { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+    long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+    date: { year: 'numeric', month: 'short', day: 'numeric' },
+    time: { hour: 'numeric', minute: '2-digit', second: '2-digit' },
+  };
+
+  if (presets[args]) {
+    return new Intl.DateTimeFormat(locale, presets[args]).format(date);
   }
 
   // Simple token replacement for explicit patterns

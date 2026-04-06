@@ -381,8 +381,8 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
-                Formats a date or datetime string. Without arguments, uses your locale's default short date format.
-                Pass a pattern to control the exact output.
+                Formats a date or datetime string. Without arguments, shows a locale-aware date and time.
+                Use a named preset or a custom pattern to control the exact output.
               </p>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -396,16 +396,36 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <tbody class="font-mono">
                     <tr class="border-b border-sidebar/50">
                       <td class="py-2 pr-4">[[[c:event_date|date]]]</td>
+                      <td class="py-2 pr-4">Apr 5, 2026, 7:00 PM</td>
+                      <td class="py-2">5 apr 2026, 19:00</td>
+                    </tr>
+                    <tr class="border-b border-sidebar/50">
+                      <td class="py-2 pr-4">[[[c:event_date|date:short]]]</td>
+                      <td class="py-2 pr-4">Apr 5, 7:00 PM</td>
+                      <td class="py-2">5 apr, 19:00</td>
+                    </tr>
+                    <tr class="border-b border-sidebar/50">
+                      <td class="py-2 pr-4">[[[c:event_date|date:long]]]</td>
+                      <td class="py-2 pr-4">Saturday, April 5, 2026, 7:00 PM</td>
+                      <td class="py-2">zaterdag 5 april 2026, 19:00</td>
+                    </tr>
+                    <tr class="border-b border-sidebar/50">
+                      <td class="py-2 pr-4">[[[c:event_date|date:date]]]</td>
                       <td class="py-2 pr-4">Apr 5, 2026</td>
                       <td class="py-2">5 apr 2026</td>
+                    </tr>
+                    <tr class="border-b border-sidebar/50">
+                      <td class="py-2 pr-4">[[[c:event_date|date:time]]]</td>
+                      <td class="py-2 pr-4">7:00:00 PM</td>
+                      <td class="py-2">19:00:00</td>
                     </tr>
                     <tr class="border-b border-sidebar/50">
                       <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy]]]</td>
                       <td class="py-2 pr-4" colspan="2">05-04-2026</td>
                     </tr>
                     <tr>
-                      <td class="py-2 pr-4">[[[c:event_date|date:yyyy/MM/dd]]]</td>
-                      <td class="py-2 pr-4" colspan="2">2026/04/05</td>
+                      <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy HH:mm]]]</td>
+                      <td class="py-2 pr-4" colspan="2">05-04-2026 19:00</td>
                     </tr>
                   </tbody>
                 </table>
@@ -628,8 +648,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                   </tr>
                   <tr class="border-b border-sidebar/50">
                     <td class="py-2 pr-4 font-mono">|date</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">pattern (dd-MM-yyyy, etc.)</td>
-                    <td class="py-2">Locale-aware date formatting</td>
+                    <td class="py-2 pr-4 font-mono text-muted-foreground">short, long, date, time, or pattern</td>
+                    <td class="py-2">Locale-aware date + time formatting</td>
                   </tr>
                   <tr class="border-b border-sidebar/50">
                     <td class="py-2 pr-4 font-mono">|uppercase</td>
