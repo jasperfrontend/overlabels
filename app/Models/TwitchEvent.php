@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property string $event_type
  * @property array<array-key, mixed> $event_data
- * @property \Illuminate\Support\Carbon $twitch_timestamp
+ * @property Carbon $twitch_timestamp
  * @property bool $processed
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property int|null $user_id
- * @property-read \App\Models\User|null $user
+ * @property-read User|null $user
  * @method static Builder<static>|TwitchEvent newModelQuery()
  * @method static Builder<static>|TwitchEvent newQuery()
  * @method static Builder<static>|TwitchEvent ofType(string $type)
@@ -29,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static Builder<static>|TwitchEvent whereTwitchTimestamp($value)
  * @method static Builder<static>|TwitchEvent whereUpdatedAt($value)
  * @method static Builder<static>|TwitchEvent whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class TwitchEvent extends Model
 {
@@ -60,8 +62,7 @@ class TwitchEvent extends Model
     /**
      * Scope a query to only include unprocessed events.
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @return BelongsTo
      */
     public function user(): BelongsTo
     {

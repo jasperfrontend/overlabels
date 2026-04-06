@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\UserTemplateFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,25 +19,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $css_content
  * @property array<array-key, mixed>|null $used_tags
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read mixed $used_template_tags
- * @property-read \App\Models\User|null $user
- * @method static \Database\Factories\UserTemplateFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereCssContent($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereHtmlContent($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereStatus($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereUsedTags($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserTemplate whereUserId($value)
- * @mixin \Eloquent
+ * @property-read User|null $user
+ * @method static UserTemplateFactory factory($count = null, $state = [])
+ * @method static Builder<static>|UserTemplate newModelQuery()
+ * @method static Builder<static>|UserTemplate newQuery()
+ * @method static Builder<static>|UserTemplate query()
+ * @method static Builder<static>|UserTemplate whereCreatedAt($value)
+ * @method static Builder<static>|UserTemplate whereCssContent($value)
+ * @method static Builder<static>|UserTemplate whereDescription($value)
+ * @method static Builder<static>|UserTemplate whereHtmlContent($value)
+ * @method static Builder<static>|UserTemplate whereId($value)
+ * @method static Builder<static>|UserTemplate whereName($value)
+ * @method static Builder<static>|UserTemplate whereStatus($value)
+ * @method static Builder<static>|UserTemplate whereUpdatedAt($value)
+ * @method static Builder<static>|UserTemplate whereUsedTags($value)
+ * @method static Builder<static>|UserTemplate whereUserId($value)
+ * @mixin Eloquent
  */
 class UserTemplate extends Model
 {
@@ -81,7 +85,7 @@ class UserTemplate extends Model
         $html = $this->html_content;
 
         // Find all [[[tag]]] patterns in the HTML
-        preg_match_all('/\[\[\[([^\]]+)\]\]\]/', $html, $matches);
+        preg_match_all('/\[\[\[([^]]+)]]]/', $html, $matches);
 
         foreach ($matches[1] as $tagName) {
             $tag = TemplateTag::where('tag_name', $tagName)->first();

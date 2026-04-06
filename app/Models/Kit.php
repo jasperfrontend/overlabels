@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use Database\Factories\KitFactory;
+use Eloquent;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -20,34 +25,34 @@ use Illuminate\Support\Str;
  * @property bool $is_public
  * @property int|null $forked_from_id
  * @property int $fork_count
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property bool $is_starter_kit
  * @property-read Kit|null $forkedFrom
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Kit> $forks
+ * @property-read Collection<int, Kit> $forks
  * @property-read int|null $forks_count
  * @property-read string|null $thumbnail_url
- * @property-read \App\Models\User|null $owner
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayTemplate> $templates
+ * @property-read User|null $owner
+ * @property-read Collection<int, OverlayTemplate> $templates
  * @property-read int|null $templates_count
- * @method static \Database\Factories\KitFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit ownedBy($userId)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit public()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereForkCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereForkedFromId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereIsPublic($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereIsStarterKit($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereOwnerId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereThumbnail($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Kit whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static KitFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Kit newModelQuery()
+ * @method static Builder<static>|Kit newQuery()
+ * @method static Builder<static>|Kit ownedBy($userId)
+ * @method static Builder<static>|Kit public()
+ * @method static Builder<static>|Kit query()
+ * @method static Builder<static>|Kit whereCreatedAt($value)
+ * @method static Builder<static>|Kit whereDescription($value)
+ * @method static Builder<static>|Kit whereForkCount($value)
+ * @method static Builder<static>|Kit whereForkedFromId($value)
+ * @method static Builder<static>|Kit whereId($value)
+ * @method static Builder<static>|Kit whereIsPublic($value)
+ * @method static Builder<static>|Kit whereIsStarterKit($value)
+ * @method static Builder<static>|Kit whereOwnerId($value)
+ * @method static Builder<static>|Kit whereThumbnail($value)
+ * @method static Builder<static>|Kit whereTitle($value)
+ * @method static Builder<static>|Kit whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class Kit extends Model
 {
@@ -153,7 +158,7 @@ class Kit extends Model
             // Copy non-service-managed controls to the forked template.
             // The OverlayTemplate::fork() method only stashes controls in a
             // transient property for the interactive fork wizard — it never
-            // persists them, so kit forks (e.g. onboarding) would lose them.
+            // persists them, so kit forks (for example when onboarding) would lose them.
             $template->controls()
                 ->whereNull('source')
                 ->orderBy('sort_order')

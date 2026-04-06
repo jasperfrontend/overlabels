@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,27 +18,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $status
  * @property array<array-key, mixed> $condition
  * @property string $callback_url
- * @property \Illuminate\Support\Carbon|null $twitch_created_at
- * @property \Illuminate\Support\Carbon|null $last_verified_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User|null $user
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereCallbackUrl($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereCondition($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereEventType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereLastVerifiedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereStatus($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereTwitchCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereTwitchSubscriptionId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereUserId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UserEventsubSubscription whereVersion($value)
- * @mixin \Eloquent
+ * @property Carbon|null $twitch_created_at
+ * @property Carbon|null $last_verified_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User|null $user
+ * @method static Builder<static>|UserEventsubSubscription newModelQuery()
+ * @method static Builder<static>|UserEventsubSubscription newQuery()
+ * @method static Builder<static>|UserEventsubSubscription query()
+ * @method static Builder<static>|UserEventsubSubscription whereCallbackUrl($value)
+ * @method static Builder<static>|UserEventsubSubscription whereCondition($value)
+ * @method static Builder<static>|UserEventsubSubscription whereCreatedAt($value)
+ * @method static Builder<static>|UserEventsubSubscription whereEventType($value)
+ * @method static Builder<static>|UserEventsubSubscription whereId($value)
+ * @method static Builder<static>|UserEventsubSubscription whereLastVerifiedAt($value)
+ * @method static Builder<static>|UserEventsubSubscription whereStatus($value)
+ * @method static Builder<static>|UserEventsubSubscription whereTwitchCreatedAt($value)
+ * @method static Builder<static>|UserEventsubSubscription whereTwitchSubscriptionId($value)
+ * @method static Builder<static>|UserEventsubSubscription whereUpdatedAt($value)
+ * @method static Builder<static>|UserEventsubSubscription whereUserId($value)
+ * @method static Builder<static>|UserEventsubSubscription whereVersion($value)
+ * @mixin Eloquent
  */
 class UserEventsubSubscription extends Model
 {

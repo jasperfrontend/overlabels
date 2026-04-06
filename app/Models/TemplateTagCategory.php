@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -14,27 +18,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $description
  * @property bool $is_group
  * @property int $sort_order
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property int|null $user_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TemplateTag> $activeTemplateTags
+ * @property-read Collection<int, TemplateTag> $activeTemplateTags
  * @property-read int|null $active_template_tags_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TemplateTag> $templateTags
+ * @property-read Collection<int, TemplateTag> $templateTags
  * @property-read int|null $template_tags_count
- * @property-read \App\Models\User|null $user
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereDisplayName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereIsGroup($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereSortOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TemplateTagCategory whereUserId($value)
- * @mixin \Eloquent
+ * @property-read User|null $user
+ * @method static Builder<static>|TemplateTagCategory newModelQuery()
+ * @method static Builder<static>|TemplateTagCategory newQuery()
+ * @method static Builder<static>|TemplateTagCategory query()
+ * @method static Builder<static>|TemplateTagCategory whereCreatedAt($value)
+ * @method static Builder<static>|TemplateTagCategory whereDescription($value)
+ * @method static Builder<static>|TemplateTagCategory whereDisplayName($value)
+ * @method static Builder<static>|TemplateTagCategory whereId($value)
+ * @method static Builder<static>|TemplateTagCategory whereIsGroup($value)
+ * @method static Builder<static>|TemplateTagCategory whereName($value)
+ * @method static Builder<static>|TemplateTagCategory whereSortOrder($value)
+ * @method static Builder<static>|TemplateTagCategory whereUpdatedAt($value)
+ * @method static Builder<static>|TemplateTagCategory whereUserId($value)
+ * @mixin Eloquent
  */
 class TemplateTagCategory extends Model
 {

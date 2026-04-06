@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\OverlayControlFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
+use Random\RandomException;
 
 /**
  * @property int $id
@@ -22,26 +26,26 @@ use Illuminate\Support\Collection;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string|null $source
  * @property bool $source_managed
- * @property-read \App\Models\OverlayTemplate|null $template
- * @property-read \App\Models\User|null $user
- * @method static \Database\Factories\OverlayControlFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereConfig($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereKey($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereLabel($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereOverlayTemplateId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSortOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSource($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereSourceManaged($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereUserId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayControl whereValue($value)
- * @mixin \Eloquent
+ * @property-read OverlayTemplate|null $template
+ * @property-read User|null $user
+ * @method static OverlayControlFactory factory($count = null, $state = [])
+ * @method static Builder<static>|OverlayControl newModelQuery()
+ * @method static Builder<static>|OverlayControl newQuery()
+ * @method static Builder<static>|OverlayControl query()
+ * @method static Builder<static>|OverlayControl whereConfig($value)
+ * @method static Builder<static>|OverlayControl whereCreatedAt($value)
+ * @method static Builder<static>|OverlayControl whereId($value)
+ * @method static Builder<static>|OverlayControl whereKey($value)
+ * @method static Builder<static>|OverlayControl whereLabel($value)
+ * @method static Builder<static>|OverlayControl whereOverlayTemplateId($value)
+ * @method static Builder<static>|OverlayControl whereSortOrder($value)
+ * @method static Builder<static>|OverlayControl whereSource($value)
+ * @method static Builder<static>|OverlayControl whereSourceManaged($value)
+ * @method static Builder<static>|OverlayControl whereType($value)
+ * @method static Builder<static>|OverlayControl whereUpdatedAt($value)
+ * @method static Builder<static>|OverlayControl whereUserId($value)
+ * @method static Builder<static>|OverlayControl whereValue($value)
+ * @mixin Eloquent
  */
 class OverlayControl extends Model
 {
@@ -90,6 +94,7 @@ class OverlayControl extends Model
      * Resolve the display value for this control.
      * For timer: compute elapsed seconds from config state.
      * For all others: return stored value.
+     * @throws RandomException
      */
     public function resolveDisplayValue(): string
     {
@@ -118,6 +123,7 @@ class OverlayControl extends Model
 
     /**
      * Generate a random integer between the configured min and max.
+     * @throws RandomException
      */
     private function resolveRandomValue(): string
     {
@@ -347,6 +353,7 @@ class OverlayControl extends Model
             }
 
             foreach ($query->get() as $watched) {
+                /** @var OverlayControl $watched */
                 if ($watched->id === $originId) {
                     return true;
                 }

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,22 +18,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array<array-key, mixed>|null $normalized_payload
  * @property bool $controls_updated
  * @property bool $alert_dispatched
- * @property \Illuminate\Support\Carbon $created_at
- * @property-read \App\Models\User|null $user
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereAlertDispatched($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereControlsUpdated($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereEventType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereMessageId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereNormalizedPayload($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereRawPayload($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereService($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEvent whereUserId($value)
- * @mixin \Eloquent
+ * @property Carbon $created_at
+ * @property-read User|null $user
+ * @method static Builder<static>|ExternalEvent newModelQuery()
+ * @method static Builder<static>|ExternalEvent newQuery()
+ * @method static Builder<static>|ExternalEvent query()
+ * @method static Builder<static>|ExternalEvent whereAlertDispatched($value)
+ * @method static Builder<static>|ExternalEvent whereControlsUpdated($value)
+ * @method static Builder<static>|ExternalEvent whereCreatedAt($value)
+ * @method static Builder<static>|ExternalEvent whereEventType($value)
+ * @method static Builder<static>|ExternalEvent whereId($value)
+ * @method static Builder<static>|ExternalEvent whereMessageId($value)
+ * @method static Builder<static>|ExternalEvent whereNormalizedPayload($value)
+ * @method static Builder<static>|ExternalEvent whereRawPayload($value)
+ * @method static Builder<static>|ExternalEvent whereService($value)
+ * @method static Builder<static>|ExternalEvent whereUserId($value)
+ * @mixin Eloquent
  */
 class ExternalEvent extends Model
 {

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -12,30 +15,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $event_type
  * @property int|null $overlay_template_id
  * @property bool $enabled
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property int $duration_ms
  * @property string $transition_in
  * @property string $transition_out
  * @property array<array-key, mixed>|null $settings
- * @property-read \App\Models\OverlayTemplate|null $template
- * @property-read \App\Models\User|null $user
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereDurationMs($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereEventType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereOverlayTemplateId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereService($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereSettings($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereTransitionIn($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereTransitionOut($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|ExternalEventTemplateMapping whereUserId($value)
- * @mixin \Eloquent
+ * @property-read OverlayTemplate|null $template
+ * @property-read User|null $user
+ * @method static Builder<static>|ExternalEventTemplateMapping newModelQuery()
+ * @method static Builder<static>|ExternalEventTemplateMapping newQuery()
+ * @method static Builder<static>|ExternalEventTemplateMapping query()
+ * @method static Builder<static>|ExternalEventTemplateMapping whereCreatedAt($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereDurationMs($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereEnabled($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereEventType($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereId($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereOverlayTemplateId($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereService($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereSettings($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereTransitionIn($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereTransitionOut($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereUpdatedAt($value)
+ * @method static Builder<static>|ExternalEventTemplateMapping whereUserId($value)
+ * @mixin Eloquent
  */
 class ExternalEventTemplateMapping extends Model
 {
@@ -60,7 +63,7 @@ class ExternalEventTemplateMapping extends Model
     /**
      * Available transition types for enter animations (mirrored from EventTemplateMapping)
      */
-    public const TRANSITION_IN_TYPES = [
+    public const array TRANSITION_IN_TYPES = [
         'fade' => 'Fade in',
         'scale' => 'Scale in',
         'slide-bottom' => 'Slide up from bottom',
@@ -73,7 +76,7 @@ class ExternalEventTemplateMapping extends Model
     /**
      * Available transition types for exit animations (mirrored from EventTemplateMapping)
      */
-    public const TRANSITION_OUT_TYPES = [
+    public const array TRANSITION_OUT_TYPES = [
         'fade' => 'Fade out',
         'scale' => 'Scale out',
         'slide-bottom' => 'Slide down to bottom',
@@ -86,7 +89,7 @@ class ExternalEventTemplateMapping extends Model
     /**
      * Event types per service (service key => [event_type => display label])
      */
-    public const SERVICE_EVENT_TYPES = [
+    public const array SERVICE_EVENT_TYPES = [
         'kofi' => [
             'donation' => 'Ko-fi Donation',
             'subscription' => 'Ko-fi Subscription',

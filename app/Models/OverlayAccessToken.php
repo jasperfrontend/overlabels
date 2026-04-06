@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\OverlayAccessTokenFactory;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Random\RandomException;
 
@@ -16,36 +21,36 @@ use Random\RandomException;
  * @property string $token_hash
  * @property string $token_prefix
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property Carbon|null $expires_at
  * @property int $access_count
- * @property \Illuminate\Support\Carbon|null $last_used_at
+ * @property Carbon|null $last_used_at
  * @property array<array-key, mixed>|null $allowed_ips
  * @property array<array-key, mixed>|null $metadata
  * @property string|null $abilities
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OverlayAccessLog> $accessLogs
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, OverlayAccessLog> $accessLogs
  * @property-read int|null $access_logs_count
- * @property-read \App\Models\User|null $user
- * @method static \Database\Factories\OverlayAccessTokenFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAbilities($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAccessCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereAllowedIps($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereExpiresAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereIsActive($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereLastUsedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereMetadata($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereTokenHash($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereTokenPrefix($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|OverlayAccessToken whereUserId($value)
- * @mixin \Eloquent
+ * @property-read User|null $user
+ * @method static OverlayAccessTokenFactory factory($count = null, $state = [])
+ * @method static Builder<static>|OverlayAccessToken newModelQuery()
+ * @method static Builder<static>|OverlayAccessToken newQuery()
+ * @method static Builder<static>|OverlayAccessToken query()
+ * @method static Builder<static>|OverlayAccessToken whereAbilities($value)
+ * @method static Builder<static>|OverlayAccessToken whereAccessCount($value)
+ * @method static Builder<static>|OverlayAccessToken whereAllowedIps($value)
+ * @method static Builder<static>|OverlayAccessToken whereCreatedAt($value)
+ * @method static Builder<static>|OverlayAccessToken whereExpiresAt($value)
+ * @method static Builder<static>|OverlayAccessToken whereId($value)
+ * @method static Builder<static>|OverlayAccessToken whereIsActive($value)
+ * @method static Builder<static>|OverlayAccessToken whereLastUsedAt($value)
+ * @method static Builder<static>|OverlayAccessToken whereMetadata($value)
+ * @method static Builder<static>|OverlayAccessToken whereName($value)
+ * @method static Builder<static>|OverlayAccessToken whereTokenHash($value)
+ * @method static Builder<static>|OverlayAccessToken whereTokenPrefix($value)
+ * @method static Builder<static>|OverlayAccessToken whereUpdatedAt($value)
+ * @method static Builder<static>|OverlayAccessToken whereUserId($value)
+ * @mixin Eloquent
  */
 class OverlayAccessToken extends Model
 {

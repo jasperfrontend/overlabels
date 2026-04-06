@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Services\FunSlugGenerationService;
 use Carbon\Carbon;
+use Database\Factories\OverlayHashFactory;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,8 +29,8 @@ use Log;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string $slug
- * @property-read \App\Models\User|null $user
- * @method static \Database\Factories\OverlayHashFactory factory($count = null, $state = [])
+ * @property-read User|null $user
+ * @method static OverlayHashFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayHash forUser(int $userId)
  * @method static Builder<static>|OverlayHash newModelQuery()
  * @method static Builder<static>|OverlayHash newQuery()
@@ -47,7 +49,7 @@ use Log;
  * @method static Builder<static>|OverlayHash whereSlug($value)
  * @method static Builder<static>|OverlayHash whereUpdatedAt($value)
  * @method static Builder<static>|OverlayHash whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class OverlayHash extends Model
 {
