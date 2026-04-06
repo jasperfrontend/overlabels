@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - UI: Show control values and config summary in ControlsManager table
+
+- The Settings column now shows the current value for text, boolean, and other controls that have no type-specific config.
+- Long values are truncated with `max-w-48` and hoverable via a `title` attribute to see the full value.
+- Source-managed controls show "Managed by source" alongside any other config info.
+
 ## April 6th, 2026 - Fix: Undo and cursor-aware inserts in ExpressionBuilder
 
 - Fixed Ctrl+Z not working in the expression formula textarea. The computed get/set round-tripped every keystroke through the parent prop, causing Vue to programmatically reset the textarea value and wipe the browser's undo stack. Replaced with a local ref and sync watchers.
