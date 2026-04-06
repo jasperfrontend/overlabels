@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - UI: Redesign ExpressionBuilder panel
+
+- Moved syntax reference and usage help into a dedicated Help dialog (accessed via a Help button), decluttering the main panel.
+- Added a filter input for the Available Controls list so you can quickly find controls.
+- Controls are now grouped by source (Your controls, Twitch, Ko-fi, StreamLabs, etc.) with sticky headers.
+- Each control button shows its label as a subtitle for easier identification.
+- Better contrast: buttons use solid backgrounds instead of dashed muted borders, with violet highlight on hover.
+- Help dialog includes organized sections for syntax, operators, 4 examples (with "insert this" for the cross-service example), and string tips.
+
 ## April 6th, 2026 - Docs: Expanded Controls help page with per-type sections
 
 - Restructured the Control Types overview into clickable links to detailed per-type sections.
