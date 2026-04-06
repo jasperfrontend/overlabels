@@ -139,8 +139,8 @@ function configSummary(ctrl: OverlayControl): string[] {
       <button
         type="button"
         class="btn btn-primary btn-sm"
-        :disabled="controls.length >= 20"
-        :title="controls.length >= 20 ? 'Maximum 20 controls per template' : undefined"
+        :disabled="controls.length >= 50"
+        :title="controls.length >= 50 ? 'Maximum 50 controls per template' : undefined"
         @click="openAdd"
       >
         <PlusIcon class="mr-1.5 h-3.5 w-3.5" />
