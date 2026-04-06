@@ -377,29 +377,25 @@ const alertPipelineSteps = [
           <div v-show="syntaxTab === 'events'">
             <div class="mb-4 overflow-hidden rounded-md border border-border">
               <div class="border-b border-border bg-muted/50 px-4 py-2.5">
-                <span class="font-mono text-xs text-muted-foreground">Alert template — channel.cheer</span>
+                <span class="font-mono text-xs text-muted-foreground">Alert template — channel.follow</span>
               </div>
               <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
                 <div>
-                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"cheer-alert"</span
+                  <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"follow-alert"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
                   &nbsp;&nbsp;<span class="text-zinc-500">&lt;h1&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.user_name]]]</span
-                ><span class="text-foreground"> cheered!</span><span class="text-zinc-500">&lt;/h1&gt;</span>
+                ><span class="text-foreground"> just followed!</span><span class="text-zinc-500">&lt;/h1&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.bits]]]</span
-                ><span class="text-foreground"> bits, total subs:</span><span class="text-amber-700 dark:text-amber-400">[[[subscribers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-foreground">Follower #</span><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
                 ><span class="text-zinc-500">&lt;/p&gt;</span>
                 </div>
-                <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[if:event.bits &gt;= 1000]]]</span></div>
-                <div>
-                  &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"whale"</span
-                ><span class="text-zinc-500">&gt;</span><span class="text-foreground">big cheer</span><span class="text-zinc-500">&lt;/div&gt;</span>
-                </div>
-                <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
+                <div class="mt-2 text-xs text-muted-foreground/60">
+                  <span class="text-zinc-500">&lt;!--</span> First ever: wilko_dj <span class="text-zinc-500">--&gt;</span>
+                </div>
               </div>
             </div>
             <p class="text-sm text-muted-foreground">
@@ -844,6 +840,9 @@ const alertPipelineSteps = [
         </div>
         <div class="border-t border-border/50 pt-8 text-center text-xs text-muted-foreground">
           Made by JasperDiscovers for the Twitch streaming community. Forever free, forever open.<br />
+          First live notification ever received: a follow from
+          <a href="https://twitch.tv/wilko_dj" target="_blank" rel="noopener" class="font-semibold text-foreground hover:text-sky-500">wilko_dj</a>.
+          Thanks for making it real.<br />
           FAQ: Will you support Kick.com? No.
         </div>
       </div>

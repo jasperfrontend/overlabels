@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Tribute: wilko_dj - first live follower notification
+
+- Changed the Welcome page alert example from a cheer event to a follow event, with an HTML comment tribute: `<!-- First ever: wilko_dj -->`.
+- Added a dedication line in the Welcome page footer linking to wilko_dj's Twitch profile.
+- Replaced the `SampleStreamer` placeholder in the template create preview with `wilko_dj`.
+
 ## April 5th, 2026 - Feature: Random mode for number controls
 
 - Number and counter controls can now be set to "random mode" via a checkbox in the control config.

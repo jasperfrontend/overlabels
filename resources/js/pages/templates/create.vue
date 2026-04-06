@@ -62,7 +62,7 @@ const submitForm = () => {
 
 const previewTemplate = (): void => {
   const sampleData: Record<string, string> = {
-    user_name: 'SampleStreamer',
+    user_name: 'wilko_dj',
     user_follower_count: '1,234',
     user_view_count: '45,678',
     stream_title: 'Playing an awesome game!',
