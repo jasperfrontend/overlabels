@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 6th, 2026 - Fix: Undo and cursor-aware inserts in ExpressionBuilder
+
+- Fixed Ctrl+Z not working in the expression formula textarea. The computed get/set round-tripped every keystroke through the parent prop, causing Vue to programmatically reset the textarea value and wipe the browser's undo stack. Replaced with a local ref and sync watchers.
+- Clicking a control button now inserts at the cursor position instead of appending to the end.
+- Programmatic inserts use `execCommand('insertText')` so they are also undoable with Ctrl+Z.
+
 ## April 6th, 2026 - UI: Redesign ExpressionBuilder panel
 
 - Moved syntax reference and usage help into a dedicated Help dialog (accessed via a Help button), decluttering the main panel.

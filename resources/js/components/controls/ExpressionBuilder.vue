@@ -22,9 +22,18 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
 }>();
 
-const expressionText = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
+// Local ref avoids the prop round-trip that kills the browser's undo stack.
+// With a computed get/set, every keystroke emits to parent → parent updates
+// prop → Vue programmatically sets textarea.value → undo history is wiped.
+const expressionText = ref(props.modelValue);
+const textareaEl = ref<HTMLTextAreaElement | null>(null);
+
+watch(() => props.modelValue, (val) => {
+  if (val !== expressionText.value) expressionText.value = val;
+});
+
+watch(expressionText, (val) => {
+  emit('update:modelValue', val);
 });
 
 const expressionError = ref('');
@@ -59,13 +68,46 @@ watch(expressionText, (text) => {
   }
 });
 
+// Track cursor position so inserts land where the user last had focus
+const lastCursor = ref<number | null>(null);
+
+function saveCursor(e: Event) {
+  const el = e.target as HTMLTextAreaElement;
+  lastCursor.value = el.selectionStart;
+}
+
+function insertAtCursor(snippet: string) {
+  const el = textareaEl.value;
+  if (!el) {
+    // Fallback: no textarea ref yet, just append
+    expressionText.value = expressionText.value ? `${expressionText.value} ${snippet}` : snippet;
+    return;
+  }
+
+  const text = expressionText.value;
+  const pos = lastCursor.value ?? text.length;
+
+  // Build the snippet with smart spacing
+  const before = text.slice(0, pos);
+  const after = text.slice(pos);
+  const needsSpaceBefore = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+  const needsSpaceAfter = after.length > 0 && !after.startsWith(' ') && !after.startsWith('\n');
+  const insertion = (needsSpaceBefore ? ' ' : '') + snippet + (needsSpaceAfter ? ' ' : '');
+
+  // Use execCommand so the browser tracks this as an undoable action
+  el.focus();
+  el.setSelectionRange(pos, pos);
+  document.execCommand('insertText', false, insertion);
+
+  lastCursor.value = pos + insertion.length;
+}
+
 function expressionRef(ctrl: OverlayControl): string {
   return ctrl.source ? `c.${ctrl.source}.${ctrl.key}` : `c.${ctrl.key}`;
 }
 
 function insertVariable(ctrl: OverlayControl) {
-  const ref = expressionRef(ctrl);
-  expressionText.value = expressionText.value ? `${expressionText.value} ${ref}` : ref;
+  insertAtCursor(expressionRef(ctrl));
 }
 
 function insertExample() {
@@ -73,9 +115,7 @@ function insertExample() {
     ? c.streamlabs.latest_donor_name
     : c.kofi.latest_donor_name`;
 
-  expressionText.value = expressionText.value
-    ? `${expressionText.value}\n${example}`
-    : example;
+  insertAtCursor(example);
 }
 
 // Group controls by source for visual clarity
@@ -137,11 +177,13 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
       <Label for="expression-text">Formula</Label>
       <textarea
         id="expression-text"
+        ref="textareaEl"
         v-model="expressionText"
         rows="3"
         class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
         :class="{ 'border-destructive': expressionError }"
         placeholder="e.g. c.wins / (c.wins + c.losses) * 100"
+        @blur="saveCursor"
       />
       <p v-if="expressionError" class="text-xs text-destructive">{{ expressionError }}</p>
       <p v-if="errors['config.expression']" class="text-xs text-destructive">{{ errors['config.expression'] }}</p>
