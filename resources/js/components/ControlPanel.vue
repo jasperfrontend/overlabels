@@ -180,7 +180,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
         <!-- Text control -->
         <div v-if="ctrl.type === 'text'">
-          <form @submit.prevent="saveTextValue(ctrl)" class="flex gap-0">
+          <form @submit.prevent="saveTextValue(ctrl)" class="flex group gap-0">
             <input
               type="text"
               :value="getLocalValue(ctrl)"
@@ -191,7 +191,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             />
             <button
               type="submit"
-              class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0"
+              class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
               :disabled="saving[ctrl.id]"
               @click="saveTextValue(ctrl)"
             >
@@ -213,7 +213,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             :step="ctrl.config?.step ?? 1"
             class="peer input-border flex-1"
           />
-          <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border p-2 px-4 text-sm peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+          <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
             <SaveIcon class="h-3.5 w-3.5" />
           </button>
         </div>
@@ -294,16 +294,15 @@ async function toggleBoolean(ctrl: OverlayControl) {
         </div>
 
         <!-- Datetime control -->
-        <div v-else-if="ctrl.type === 'datetime'" class="flex gap-2">
+        <div v-else-if="ctrl.type === 'datetime'" class="flex gap-0">
           <input
             :value="getLocalValue(ctrl)"
             @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
             type="datetime-local"
-            class="flex-1 rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none"
+            class="peer input-border flex-1"
           />
-          <button class="btn btn-primary btn-sm" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+          <button class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
             <SaveIcon class="h-3.5 w-3.5" />
-            <span class="ml-1">Save</span>
           </button>
         </div>
       </div>

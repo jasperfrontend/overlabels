@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import axios from 'axios';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -93,6 +93,8 @@ const typeBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   boolean: 'default',
   expression: 'default',
 };
+
+const controlsCounter = computed(() => controls.value.length);
 
 function configSummary(ctrl: OverlayControl): string[] {
   const cfg = ctrl.config ?? {};
@@ -204,5 +206,9 @@ function configSummary(ctrl: OverlayControl): string[] {
         </TableRow>
       </TableBody>
     </Table>
+    <div class="flex items-center justify-between text-xs text-muted-foreground">
+      {{ controlsCounter }}/50 Controls in use
+    </div>
+
   </div>
 </template>
