@@ -108,10 +108,10 @@ function skip() {
       <Table>
         <TableHeader>
           <TableRow class="hover:bg-transparent">
-            <TableHead class="w-[90px]">Action</TableHead>
+            <TableHead class="w-22.5">Action</TableHead>
             <TableHead>Key</TableHead>
             <TableHead>Label</TableHead>
-            <TableHead class="w-[90px]">Type</TableHead>
+            <TableHead class="w-22.5">Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
