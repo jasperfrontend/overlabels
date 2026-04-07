@@ -13,37 +13,38 @@ import { Separator } from '@/components/ui/separator';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
-    connected: boolean;
-    enabled: boolean;
-    test_mode: boolean;
-    webhook_url: string | null;
-    last_received_at: string | null;
-    settings: { enabled_events?: string[] };
-    has_token: boolean;
-    kofis_seed_set: boolean;
-    kofis_seed_value: number | null;
+  connected: boolean;
+  enabled: boolean;
+  test_mode: boolean;
+  webhook_url: string | null;
+  last_received_at: string | null;
+  settings: { enabled_events?: string[] };
+  has_token: boolean;
+  kofis_seed_set: boolean;
+  kofis_seed_value: number | null;
 }
 
 const props = defineProps<{
-    integration: IntegrationData;
+  integration: IntegrationData;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Integrations', href: '/settings/integrations' },
-    { title: 'Ko-fi', href: '/settings/integrations/kofi' },
+  { title: 'Settings', href: '/settings' },
+  { title: 'Integrations', href: '/settings/integrations' },
+  { title: 'Ko-fi', href: '/settings/integrations/kofi' },
 ];
 
 const EVENT_TYPES = [
-    { value: 'donation', label: 'Donations' },
-    { value: 'subscription', label: 'Subscriptions' },
-    { value: 'shop_order', label: 'Shop Orders' },
-    { value: 'commission', label: 'Commissions' },
+  { value: 'donation', label: 'Donations' },
+  { value: 'subscription', label: 'Subscriptions' },
+  { value: 'shop_order', label: 'Shop Orders' },
+  { value: 'commission', label: 'Commissions' },
 ];
 
 const form = useForm({
-    verification_token: '',
-    enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
-    enabled: props.integration.connected ? props.integration.enabled : true,
+  verification_token: '',
+  enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
+  enabled: props.integration.connected ? props.integration.enabled : true,
 });
 
 // Test mode is independent of the main form — toggled instantly via its own endpoint
@@ -58,71 +59,71 @@ const kofisSeedSet = ref(props.integration.kofis_seed_set);
 const kofisSeedValue = ref(props.integration.kofis_seed_value);
 
 async function setSeedCount() {
-    if (seedCount.value === null || seedCount.value < 0) return;
-    seedLoading.value = true;
-    seedError.value = null;
-    try {
-        const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
-            initial_count: seedCount.value,
-        });
-        kofisSeedSet.value = data.kofis_seed_set;
-        kofisSeedValue.value = data.kofis_seed_value;
-    } catch (e: any) {
-        seedError.value = e.response?.data?.error ?? 'Something went wrong.';
-    } finally {
-        seedLoading.value = false;
-    }
+  if (seedCount.value === null || seedCount.value < 0) return;
+  seedLoading.value = true;
+  seedError.value = null;
+  try {
+    const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
+      initial_count: seedCount.value,
+    });
+    kofisSeedSet.value = data.kofis_seed_set;
+    kofisSeedValue.value = data.kofis_seed_value;
+  } catch (e: any) {
+    seedError.value = e.response?.data?.error ?? 'Something went wrong.';
+  } finally {
+    seedLoading.value = false;
+  }
 }
 
 const copied = ref(false);
 
 function copyWebhookUrl() {
-    if (!props.integration.webhook_url) return;
-    navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
-        copied.value = true;
-        setTimeout(() => (copied.value = false), 2000);
-    });
+  if (!props.integration.webhook_url) return;
+  navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  });
 }
 
 function toggleEvent(eventType: string) {
-    const idx = form.enabled_events.indexOf(eventType);
-    if (idx >= 0) {
-        form.enabled_events.splice(idx, 1);
-    } else {
-        form.enabled_events.push(eventType);
-    }
+  const idx = form.enabled_events.indexOf(eventType);
+  if (idx >= 0) {
+    form.enabled_events.splice(idx, 1);
+  } else {
+    form.enabled_events.push(eventType);
+  }
 }
 
 function save() {
-    form.post('/settings/integrations/kofi', {
-        preserveScroll: true,
-    });
+  form.post('/settings/integrations/kofi', {
+    preserveScroll: true,
+  });
 }
 
 async function toggleTestMode() {
-    testModeLoading.value = true;
-    try {
-        const { data } = await axios.patch('/settings/integrations/kofi/test-mode', {
-            test_mode: testMode.value,
-        });
-        testMode.value = data.test_mode;
-    } catch {
-        // revert on failure
-        testMode.value = !testMode.value;
-    } finally {
-        testModeLoading.value = false;
-    }
+  testModeLoading.value = true;
+  try {
+    const { data } = await axios.patch('/settings/integrations/kofi/test-mode', {
+      test_mode: testMode.value,
+    });
+    testMode.value = data.test_mode;
+  } catch {
+    // revert on failure
+    testMode.value = !testMode.value;
+  } finally {
+    testModeLoading.value = false;
+  }
 }
 
 function disconnect() {
-    if (confirm('Disconnect Ko-fi? This will remove all Ko-fi controls from your overlays.')) {
-        useForm({}).delete('/settings/integrations/kofi');
-    }
+  if (confirm('Disconnect Ko-fi? This will remove all Ko-fi controls from your overlays.')) {
+    useForm({}).delete('/settings/integrations/kofi');
+  }
 }
 
 function formatDate(iso: string | null): string {
-    if (!iso) return 'Never';
-    return new Date(iso).toLocaleString();
+  if (!iso) return 'Never';
+  return new Date(iso).toLocaleString();
 }
 </script>
 

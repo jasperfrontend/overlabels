@@ -21,10 +21,14 @@ const props = defineProps<{
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    {
-        title: 'Integrations',
-        href: '/settings/integrations',
-    },
+  {
+    title: 'Settings',
+    href: '/settings',
+  },
+  {
+      title: 'Integrations',
+      href: '/settings/integrations',
+  },
 ];
 
 function formatDate(iso: string | null): string {

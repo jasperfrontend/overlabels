@@ -12,22 +12,23 @@ import { Separator } from '@/components/ui/separator';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
-    connected: boolean;
-    enabled: boolean;
-    test_mode: boolean;
-    last_received_at: string | null;
-    settings: Record<string, any>;
-    donations_seed_set: boolean;
-    donations_seed_value: number | null;
+  connected: boolean;
+  enabled: boolean;
+  test_mode: boolean;
+  last_received_at: string | null;
+  settings: Record<string, any>;
+  donations_seed_set: boolean;
+  donations_seed_value: number | null;
 }
 
 const props = defineProps<{
-    integration: IntegrationData;
+  integration: IntegrationData;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Integrations', href: '/settings/integrations' },
-    { title: 'StreamLabs', href: '/settings/integrations/streamlabs' },
+  { title: 'Settings', href: '/settings' },
+  { title: 'Integrations', href: '/settings/integrations' },
+  { title: 'StreamLabs', href: '/settings/integrations/streamlabs' },
 ];
 
 // Test mode is independent — toggled instantly via its own endpoint
@@ -42,46 +43,46 @@ const donationsSeedSet = ref(props.integration.donations_seed_set);
 const donationsSeedValue = ref(props.integration.donations_seed_value);
 
 async function setSeedCount() {
-    if (seedCount.value === null || seedCount.value < 0) return;
-    seedLoading.value = true;
-    seedError.value = null;
-    try {
-        const { data } = await axios.post('/settings/integrations/streamlabs/seed-count', {
-            initial_count: seedCount.value,
-        });
-        donationsSeedSet.value = data.donations_seed_set;
-        donationsSeedValue.value = data.donations_seed_value;
-    } catch (e: any) {
-        seedError.value = e.response?.data?.error ?? 'Something went wrong.';
-    } finally {
-        seedLoading.value = false;
-    }
+  if (seedCount.value === null || seedCount.value < 0) return;
+  seedLoading.value = true;
+  seedError.value = null;
+  try {
+    const { data } = await axios.post('/settings/integrations/streamlabs/seed-count', {
+      initial_count: seedCount.value,
+    });
+    donationsSeedSet.value = data.donations_seed_set;
+    donationsSeedValue.value = data.donations_seed_value;
+  } catch (e: any) {
+    seedError.value = e.response?.data?.error ?? 'Something went wrong.';
+  } finally {
+    seedLoading.value = false;
+  }
 }
 
 async function toggleTestMode() {
-    testModeLoading.value = true;
-    try {
-        const { data } = await axios.patch('/settings/integrations/streamlabs/test-mode', {
-            test_mode: testMode.value,
-        });
-        testMode.value = data.test_mode;
-    } catch {
-        // revert on failure
-        testMode.value = !testMode.value;
-    } finally {
-        testModeLoading.value = false;
-    }
+  testModeLoading.value = true;
+  try {
+    const { data } = await axios.patch('/settings/integrations/streamlabs/test-mode', {
+      test_mode: testMode.value,
+    });
+    testMode.value = data.test_mode;
+  } catch {
+    // revert on failure
+    testMode.value = !testMode.value;
+  } finally {
+    testModeLoading.value = false;
+  }
 }
 
 function disconnect() {
-    if (confirm('Disconnect StreamLabs? This will remove all StreamLabs-managed controls from your overlays.')) {
-        useForm({}).delete('/settings/integrations/streamlabs');
-    }
+  if (confirm('Disconnect StreamLabs? This will remove all StreamLabs-managed controls from your overlays.')) {
+    useForm({}).delete('/settings/integrations/streamlabs');
+  }
 }
 
 function formatDate(iso: string | null): string {
-    if (!iso) return 'Never';
-    return new Date(iso).toLocaleString();
+  if (!iso) return 'Never';
+  return new Date(iso).toLocaleString();
 }
 </script>
 

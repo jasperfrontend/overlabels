@@ -14,27 +14,28 @@ import { Separator } from '@/components/ui/separator';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
-    connected: boolean;
-    enabled: boolean;
-    webhook_url: string | null;
-    last_received_at: string | null;
-    speed_unit: string;
-    has_token: boolean;
+  connected: boolean;
+  enabled: boolean;
+  webhook_url: string | null;
+  last_received_at: string | null;
+  speed_unit: string;
+  has_token: boolean;
 }
 
 const props = defineProps<{
-    integration: IntegrationData;
+  integration: IntegrationData;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Integrations', href: '/settings/integrations' },
-    { title: 'GPSLogger', href: '/settings/integrations/gpslogger' },
+  { title: 'Settings', href: '/settings' },
+  { title: 'Integrations', href: '/settings/integrations' },
+  { title: 'GPSLogger', href: '/settings/integrations/gpslogger' },
 ];
 
 const form = useForm({
-    token: '',
-    speed_unit: props.integration.speed_unit ?? 'kmh',
-    enabled: props.integration.connected ? props.integration.enabled : true,
+  token: '',
+  speed_unit: props.integration.speed_unit ?? 'kmh',
+  enabled: props.integration.connected ? props.integration.enabled : true,
 });
 
 const copied = ref(false);
@@ -42,48 +43,48 @@ const resetting = ref(false);
 const qrDataUrl = ref<string | null>(null);
 
 onMounted(async () => {
-    if (props.integration.webhook_url) {
-        qrDataUrl.value = await QRCode.toDataURL(props.integration.webhook_url, {
-            width: 200,
-            margin: 2,
-            color: { dark: '#000000', light: '#ffffff' },
-        });
-    }
+  if (props.integration.webhook_url) {
+    qrDataUrl.value = await QRCode.toDataURL(props.integration.webhook_url, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+  }
 });
 
 function copyWebhookUrl() {
-    if (!props.integration.webhook_url) return;
-    navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
-        copied.value = true;
-        setTimeout(() => (copied.value = false), 2000);
-    });
+  if (!props.integration.webhook_url) return;
+  navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  });
 }
 
 function save() {
-    form.post('/settings/integrations/gpslogger', {
-        preserveScroll: true,
-    });
+  form.post('/settings/integrations/gpslogger', {
+    preserveScroll: true,
+  });
 }
 
 async function resetDistance() {
-    if (!confirm('Reset distance to 0? This cannot be undone.')) return;
-    resetting.value = true;
-    try {
-        await axios.post('/settings/integrations/gpslogger/reset-distance');
-    } finally {
-        resetting.value = false;
-    }
+  if (!confirm('Reset distance to 0? This cannot be undone.')) return;
+  resetting.value = true;
+  try {
+    await axios.post('/settings/integrations/gpslogger/reset-distance');
+  } finally {
+    resetting.value = false;
+  }
 }
 
 function disconnect() {
-    if (confirm('Disconnect GPSLogger? This will remove all GPS controls from your overlays.')) {
-        useForm({}).delete('/settings/integrations/gpslogger');
-    }
+  if (confirm('Disconnect GPSLogger? This will remove all GPS controls from your overlays.')) {
+    useForm({}).delete('/settings/integrations/gpslogger');
+  }
 }
 
 function formatDate(iso: string | null): string {
-    if (!iso) return 'Never';
-    return new Date(iso).toLocaleString();
+  if (!iso) return 'Never';
+  return new Date(iso).toLocaleString();
 }
 </script>
 
