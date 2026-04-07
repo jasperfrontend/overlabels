@@ -104,46 +104,46 @@ function skip() {
       </DialogHeader>
 
       <p v-if="importError" class="text-sm text-destructive">{{ importError }}</p>
-
-      <Table>
-        <TableHeader>
-          <TableRow class="hover:bg-transparent">
-            <TableHead class="w-22.5">Action</TableHead>
-            <TableHead>Key</TableHead>
-            <TableHead>Label</TableHead>
-            <TableHead class="w-22.5">Type</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow v-for="(row, idx) in rows" :key="idx" class="h-100 overflow-scroll">
-            <TableCell>
-              <div class="flex gap-3">
-                <label class="flex items-center gap-1 cursor-pointer text-sm">
-                  <input type="radio" :value="'create'" v-model="row.action" />
-                  Create
-                </label>
-                <label class="flex items-center gap-1 cursor-pointer text-sm text-muted-foreground">
-                  <input type="radio" :value="'skip'" v-model="row.action" />
-                  Skip
-                </label>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Input
-                v-model="row.key"
-                :disabled="row.action === 'skip'"
-                class="h-7 text-sm font-mono"
-                placeholder="key"
-              />
-            </TableCell>
-            <TableCell class="text-muted-foreground text-sm">{{ row.label || '—' }}</TableCell>
-            <TableCell>
-              <Badge variant="secondary" class="capitalize text-xs">{{ row.type }}</Badge>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-
+      <div class=" h-100 overflow-scroll">
+        <Table>
+          <TableHeader>
+            <TableRow class="hover:bg-transparent">
+              <TableHead class="w-22.5">Action</TableHead>
+              <TableHead>Key</TableHead>
+              <TableHead>Label</TableHead>
+              <TableHead class="w-22.5">Type</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody class="divide-y">
+            <TableRow v-for="(row, idx) in rows" :key="idx">
+              <TableCell>
+                <div class="flex gap-3">
+                  <label class="flex items-center gap-1 cursor-pointer text-sm">
+                    <input type="radio" :value="'create'" v-model="row.action" />
+                    Create
+                  </label>
+                  <label class="flex items-center gap-1 cursor-pointer text-sm text-muted-foreground">
+                    <input type="radio" :value="'skip'" v-model="row.action" />
+                    Skip
+                  </label>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Input
+                  v-model="row.key"
+                  :disabled="row.action === 'skip'"
+                  class="h-7 text-sm font-mono"
+                  placeholder="key"
+                />
+              </TableCell>
+              <TableCell class="text-muted-foreground text-sm">{{ row.label || '—' }}</TableCell>
+              <TableCell>
+                <Badge variant="secondary" class="capitalize text-xs">{{ row.type }}</Badge>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
       <DialogFooter class="gap-2">
         <button class="btn btn-cancel" @click="skip">
           Skip all, take me to the fork
