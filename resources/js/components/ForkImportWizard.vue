@@ -115,7 +115,7 @@ function skip() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-for="(row, idx) in rows" :key="idx">
+          <TableRow v-for="(row, idx) in rows" :key="idx" class="h-100 overflow-scroll">
             <TableCell>
               <div class="flex gap-3">
                 <label class="flex items-center gap-1 cursor-pointer text-sm">

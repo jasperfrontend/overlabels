@@ -62,7 +62,7 @@ function formatDate(iso: string | null): string {
                 </Badge>
                 <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">Not connected</Badge>
                 <Badge v-if="service.connected && service.test_mode" variant="default"
-                       class="bg-yellow-400 hover:bg-yellow-400">Testmode enabled
+                       class="bg-yellow-400 hover:bg-yellow-400">Test mode enabled
                 </Badge>
               </div>
               <p v-if="service.connected" class="text-muted-foreground text-sm">

@@ -177,12 +177,13 @@ function formatDate(iso: string | null): string {
             <p class="text-muted-foreground text-sm">
               Find this in Ko-fi → My Page → API → Verification Token.
             </p>
-            <Input
+            <input
               id="verification_token"
               v-model="form.verification_token"
               type="text"
               :placeholder="integration.has_token ? '(token saved — enter new to replace)' : 'Paste your verification token'"
               autocomplete="off"
+              class="input-border w-full rounded-sm"
             />
             <p v-if="form.errors.verification_token" class="text-destructive text-sm">
               {{ form.errors.verification_token }}
@@ -190,20 +191,20 @@ function formatDate(iso: string | null): string {
           </div>
 
           <!-- Webhook URL (read-only) -->
-          <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
+          <div v-if="integration.connected && integration.webhook_url" class="group space-y-2">
             <Label>Your Webhook URL</Label>
             <p class="text-muted-foreground text-sm">
               Paste this URL into Ko-fi → My Page → API → Webhook URL.
             </p>
-            <div class="flex gap-2">
-              <Input
-                :model-value="integration.webhook_url ?? ''"
+            <div class="flex">
+              <input
+                :value="integration.webhook_url ?? ''"
                 readonly
-                class="font-mono text-sm"
+                class="peer font-mono text-sm input-border w-full mr-0"
               />
-              <Button type="button" variant="outline" @click="copyWebhookUrl">
+              <button type="button" class="btn btn-sm rounded-none bg-background rounded-r-sm border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" @click="copyWebhookUrl">
                 {{ copied ? 'Copied!' : 'Copy' }}
-              </Button>
+              </button>
             </div>
           </div>
 
