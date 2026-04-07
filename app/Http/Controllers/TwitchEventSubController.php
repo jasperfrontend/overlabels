@@ -254,27 +254,14 @@ class TwitchEventSubController extends Controller
 
                 $challenge = $data['challenge'];
 
-                try {
-                    // Ultra-simple response - bypass Laravel response system
-                    http_response_code(200);
-                    header('Content-Type: text/plain');
-                    header('Content-Length: '.strlen($challenge));
-                    echo $challenge;
+                Log::info('Responding to EventSub challenge', [
+                    'challenge_length' => strlen($challenge),
+                    'subscription_type' => $data['subscription']['type'] ?? 'unknown',
+                ]);
 
-                    exit(); // Important: exit immediately to prevent Laravel from adding anything
-
-                } catch (Exception $e) {
-                    Log::error('Step 6: Failed to send challenge response', [
-                        'error' => $e->getMessage(),
-                        'challenge' => $challenge,
-                    ]);
-
-                    // Fallback to Laravel response
-                    return response($challenge, 200, [
-                        'Content-Type' => 'text/plain',
-                        'Content-Length' => strlen($challenge),
-                    ]);
-                }
+                return response($challenge, 200)
+                    ->header('Content-Type', 'text/plain')
+                    ->header('Content-Length', strlen($challenge));
             }
 
             // Step 7: Handle other message types

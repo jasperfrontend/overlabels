@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Fix: EventSub webhook challenge response
+
+- Replaced the `exit()` hack in the webhook challenge handler with a proper Laravel `response()`.
+- The `exit()` call was killing the PHP process before the challenge response could be properly flushed through Railway's reverse proxy, causing all EventSub subscriptions to get stuck at `webhook_callback_verification_pending`.
+- This fixes EventSub subscription creation for all users.
+
 ## April 7th, 2026 - UI: EventSub connection management on Integrations settings page
 
 - Added a Twitch EventSub card to the Settings > Integrations page showing subscription count, active count, and connected-since date.
