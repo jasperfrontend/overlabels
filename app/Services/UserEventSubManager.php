@@ -87,90 +87,87 @@ class UserEventSubManager
             'webhook_url' => $webhookUrl,
         ]);
 
-        DB::beginTransaction();
+        foreach (self::SUPPORTED_EVENTS as $eventType => $config) {
+            // Check if subscription already exists
+            $existing = UserEventsubSubscription::where('user_id', $user->id)
+                ->where('event_type', $eventType)
+                ->where('status', 'enabled')
+                ->first();
 
-        try {
-            foreach (self::SUPPORTED_EVENTS as $eventType => $config) {
-                // Check if subscription already exists
-                $existing = UserEventsubSubscription::where('user_id', $user->id)
-                    ->where('event_type', $eventType)
-                    ->where('status', 'enabled')
-                    ->first();
+            if ($existing) {
+                $results['existing'][] = $eventType;
 
-                if ($existing) {
-                    $results['existing'][] = $eventType;
-
-                    continue;
-                }
-
-                // Build condition based on event type
-                $condition = $this->buildCondition($eventType, $user->twitch_id);
-
-                // Create subscription with Twitch
-                $payload = [
-                    'type' => $eventType,
-                    'version' => $config['version'],
-                    'condition' => $condition,
-                    'transport' => [
-                        'method' => 'webhook',
-                        'callback' => $webhookUrl,
-                        'secret' => $user->webhook_secret ?? config('app.twitch_webhook_secret'),
-                    ],
-                ];
-
-                $response = $this->eventSubService->createSubscription($appToken, $payload);
-
-                if ($response && ! isset($response['error'])) {
-                    // Store in database
-                    $subscription = UserEventsubSubscription::create([
-                        'user_id' => $user->id,
-                        'twitch_subscription_id' => $response['data'][0]['id'] ?? uniqid(),
-                        'event_type' => $eventType,
-                        'version' => $config['version'],
-                        'status' => $response['data'][0]['status'] ?? 'pending',
-                        'condition' => $condition,
-                        'callback_url' => $webhookUrl,
-                        'twitch_created_at' => isset($response['data'][0]['created_at'])
-                            ? new DateTime($response['data'][0]['created_at'])
-                            : now(),
-                        'last_verified_at' => now(),
-                    ]);
-
-                    $results['created'][] = $eventType;
-
-                    Log::info('Created EventSub subscription', [
-                        'user_id' => $user->id,
-                        'event_type' => $eventType,
-                        'subscription_id' => $subscription->twitch_subscription_id,
-                    ]);
-                } else {
-                    $results['failed'][$eventType] = $response['message'] ?? 'Unknown error';
-
-                    Log::warning('Failed to create EventSub subscription', [
-                        'user_id' => $user->id,
-                        'event_type' => $eventType,
-                        'error' => $response['message'] ?? 'Unknown error',
-                    ]);
-                }
+                continue;
             }
 
-            DB::commit();
+            // Build condition based on event type
+            $condition = $this->buildCondition($eventType, $user->twitch_id);
 
-            // Update user's eventsub connection status
-            $user->update([
-                'eventsub_connected_at' => now(),
-            ]);
+            // Create subscription with Twitch
+            $payload = [
+                'type' => $eventType,
+                'version' => $config['version'],
+                'condition' => $condition,
+                'transport' => [
+                    'method' => 'webhook',
+                    'callback' => $webhookUrl,
+                    'secret' => $user->webhook_secret ?? config('app.twitch_webhook_secret'),
+                ],
+            ];
 
-        } catch (Exception $e) {
-            DB::rollback();
+            try {
+                $response = $this->eventSubService->createSubscription($appToken, $payload);
+            } catch (Exception $e) {
+                $results['failed'][$eventType] = $e->getMessage();
 
-            Log::error('Failed to setup user EventSub subscriptions', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
+                Log::warning('Failed to create EventSub subscription', [
+                    'user_id' => $user->id,
+                    'event_type' => $eventType,
+                    'error' => $e->getMessage(),
+                ]);
 
-            throw $e;
+                continue;
+            }
+
+            if ($response && ! isset($response['error'])) {
+                // Store in database immediately (no transaction) so the challenge
+                // handler can find and update it before we finish the loop
+                $subscription = UserEventsubSubscription::create([
+                    'user_id' => $user->id,
+                    'twitch_subscription_id' => $response['data'][0]['id'] ?? uniqid(),
+                    'event_type' => $eventType,
+                    'version' => $config['version'],
+                    'status' => $response['data'][0]['status'] ?? 'pending',
+                    'condition' => $condition,
+                    'callback_url' => $webhookUrl,
+                    'twitch_created_at' => isset($response['data'][0]['created_at'])
+                        ? new DateTime($response['data'][0]['created_at'])
+                        : now(),
+                    'last_verified_at' => now(),
+                ]);
+
+                $results['created'][] = $eventType;
+
+                Log::info('Created EventSub subscription', [
+                    'user_id' => $user->id,
+                    'event_type' => $eventType,
+                    'subscription_id' => $subscription->twitch_subscription_id,
+                ]);
+            } else {
+                $results['failed'][$eventType] = $response['message'] ?? 'Unknown error';
+
+                Log::warning('Failed to create EventSub subscription', [
+                    'user_id' => $user->id,
+                    'event_type' => $eventType,
+                    'error' => $response['message'] ?? 'Unknown error',
+                ]);
+            }
         }
+
+        // Update user's eventsub connection status
+        $user->update([
+            'eventsub_connected_at' => now(),
+        ]);
 
         return $results;
     }
