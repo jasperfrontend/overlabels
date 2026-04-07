@@ -4,6 +4,8 @@
 
 - Replaced the `exit()` hack in the webhook challenge handler with a proper Laravel `response()`.
 - The `exit()` call was killing the PHP process before the challenge response could be properly flushed through Railway's reverse proxy, causing all EventSub subscriptions to get stuck at `webhook_callback_verification_pending`.
+- Challenge handler now marks the local subscription record as `enabled` immediately after responding, so the UI reflects the correct status without waiting for a health check or manual refresh.
+- Connect/Reconnect button now always force-recreates subscriptions, cleaning up stale/pending ones first.
 - This fixes EventSub subscription creation for all users.
 
 ## April 7th, 2026 - UI: EventSub connection management on Integrations settings page

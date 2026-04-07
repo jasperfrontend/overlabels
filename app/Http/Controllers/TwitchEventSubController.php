@@ -7,6 +7,7 @@ use App\Events\TwitchEventReceived;
 use App\Models\EventTemplateMapping;
 use App\Models\TwitchEvent;
 use App\Models\User;
+use App\Models\UserEventsubSubscription;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
 use App\Services\StreamStateMachineService;
@@ -253,10 +254,19 @@ class TwitchEventSubController extends Controller
                 Cache::put('webhook_challenge_received', true, 300);
 
                 $challenge = $data['challenge'];
+                $subscriptionId = $data['subscription']['id'] ?? null;
+
+                // Mark the subscription as enabled in our DB - if we respond correctly,
+                // Twitch will enable it on their side too
+                if ($subscriptionId) {
+                    UserEventsubSubscription::where('twitch_subscription_id', $subscriptionId)
+                        ->update(['status' => 'enabled', 'last_verified_at' => now()]);
+                }
 
                 Log::info('Responding to EventSub challenge', [
                     'challenge_length' => strlen($challenge),
                     'subscription_type' => $data['subscription']['type'] ?? 'unknown',
+                    'subscription_id' => $subscriptionId,
                 ]);
 
                 return response($challenge, 200)
