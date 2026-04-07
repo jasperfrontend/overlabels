@@ -566,9 +566,9 @@ const alertPipelineSteps = [
 
           <!-- Events grid -->
           <div class="mb-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div v-for="evt in twitchEvents" :key="evt.type" class="rounded-md border border-border bg-background p-4">
+            <div v-for="evt in twitchEvents" :key="evt.type" class="rounded-md border border-border bg-background p-4 w-[100%]">
               <div class="mb-1 text-sm font-semibold">{{ evt.label }}</div>
-              <div class="mb-3 truncate font-mono text-xs text-muted-foreground">{{ evt.type }}</div>
+              <div class="mb-3 max-w-full overflow-x-hidden font-mono text-xs text-muted-foreground">{{ evt.type }}</div>
               <div v-if="evt.tag" class="rounded bg-accent px-2.5 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-300">[[[{{ evt.tag }}]]]</div>
               <div v-else class="rounded bg-background px-2.5 py-1.5 font-mono text-xs text-zinc-600">no payload</div>
             </div>
