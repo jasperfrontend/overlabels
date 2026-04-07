@@ -1,72 +1,82 @@
 <?php
 
+use App\Jobs\VerifyStreamState;
+use App\Models\ExternalEvent;
+use App\Models\OverlayAccessLog;
+use App\Models\StreamState;
+use App\Models\TwitchEvent;
+use App\Models\User;
+use App\Services\LockdownService;
 use Illuminate\Foundation\Inspiring;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
+use Mchev\Banhammer\IP;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
 Artisan::command('lockdown:engage {reason? : Optional reason for the lockdown}', function (string $reason = '') {
-    $lockdown = app(\App\Services\LockdownService::class);
+    $lockdown = app(LockdownService::class);
     if ($lockdown->isActive()) {
         $this->error('System is already in lockdown.');
 
         return;
     }
-    $ghost = \App\Models\User::where('is_system_user', true)->first();
+    $ghost = User::where('is_system_user', true)->first();
     if (! $ghost) {
         $this->error('No system user found. Cannot engage lockdown via CLI.');
 
         return;
     }
-    $request = \Illuminate\Http\Request::capture();
+    $request = Request::capture();
     $lockdown->activate($ghost, $request, $reason);
     $this->info('Lockdown engaged. All overlays are now offline.');
 })->purpose('Engage system lockdown mode (emergency kill switch)');
 
 Artisan::command('lockdown:release', function () {
-    $lockdown = app(\App\Services\LockdownService::class);
+    $lockdown = app(LockdownService::class);
     if (! $lockdown->isActive()) {
         $this->error('System is not in lockdown.');
 
         return;
     }
-    $ghost = \App\Models\User::where('is_system_user', true)->first();
+    $ghost = User::where('is_system_user', true)->first();
     if (! $ghost) {
         $this->error('No system user found. Cannot release lockdown via CLI.');
 
         return;
     }
-    $request = \Illuminate\Http\Request::capture();
+    $request = Request::capture();
     $lockdown->deactivate($ghost, $request);
     $this->info('Lockdown lifted. Access tokens restored.');
 })->purpose('Release system lockdown mode');
 
 Artisan::command('ban:ip {ip : The IP address to ban} {comment? : Optional reason}', function (string $ip, ?string $comment = null) {
-    if (\Mchev\Banhammer\IP::isBanned($ip)) {
+    if (IP::isBanned($ip)) {
         $this->error("IP {$ip} is already banned.");
 
         return;
     }
-    \Mchev\Banhammer\IP::ban($ip, $comment ? ['comment' => $comment] : []);
-    \Illuminate\Support\Facades\DB::table('sessions')->where('ip_address', $ip)->delete();
+    IP::ban($ip, $comment ? ['comment' => $comment] : []);
+    DB::table('sessions')->where('ip_address', $ip)->delete();
     $this->info("IP {$ip} has been banned and sessions invalidated.");
 })->purpose('Ban an IP address');
 
 Artisan::command('ban:unip {ip : The IP address to unban}', function (string $ip) {
-    if (! \Mchev\Banhammer\IP::isBanned($ip)) {
+    if (! IP::isBanned($ip)) {
         $this->error("IP {$ip} is not banned.");
 
         return;
     }
-    \Mchev\Banhammer\IP::unban($ip);
+    IP::unban($ip);
     $this->info("IP {$ip} has been unbanned.");
 })->purpose('Unban an IP address');
 
 Artisan::command('ban:user {twitch_id : The Twitch ID of the user to ban} {comment? : Optional reason}', function (string $twitch_id, ?string $comment = null) {
-    $user = \App\Models\User::where('twitch_id', $twitch_id)->first();
+    $user = User::where('twitch_id', $twitch_id)->first();
     if (! $user) {
         $this->error("No user found with Twitch ID {$twitch_id}.");
 
@@ -83,7 +93,7 @@ Artisan::command('ban:user {twitch_id : The Twitch ID of the user to ban} {comme
         return;
     }
     $user->ban(['comment' => $comment ?? 'Banned via CLI']);
-    \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
+    DB::table('sessions')->where('user_id', $user->id)->delete();
     $this->info("User {$user->name} (Twitch: {$twitch_id}) has been banned.");
 })->purpose('Ban a user by Twitch ID');
 
@@ -116,14 +126,32 @@ Schedule::command('telescope:prune --hours=48')
     ->daily();
 
 // Auto-prune high-volume log/event tables weekly (keeps last 90 days)
-Schedule::call(fn () => \App\Models\OverlayAccessLog::where('accessed_at', '<', now()->subDays(90))->delete())
+Schedule::call(fn () => OverlayAccessLog::where('accessed_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:access-logs')->withoutOverlapping();
 
-Schedule::call(fn () => \App\Models\TwitchEvent::where('created_at', '<', now()->subDays(90))->delete())
+Schedule::call(fn () => TwitchEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:twitch-events')->withoutOverlapping();
 
-Schedule::call(fn () => \App\Models\ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
+Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:external-events')->withoutOverlapping();
+
+// Stream state safety net - catches stuck states if verification chain breaks
+Schedule::call(function () {
+    $stuckStates = StreamState::whereIn('state', ['starting', 'live', 'ending'])
+        ->where(function ($query) {
+            $query->where('last_verified_at', '<', now()->subMinutes(5))
+                ->orWhereNull('last_verified_at');
+        })
+        ->with('user')
+        ->get();
+
+    foreach ($stuckStates as $state) {
+        if ($state->user) {
+            VerifyStreamState::dispatch($state->user)
+                ->delay(now()->addSeconds(rand(1, 30)));
+        }
+    }
+})->everyFiveMinutes()->name('stream-state:safety-net')->withoutOverlapping();
 
 // Cleanup old logs - runs daily
 Schedule::command('log:clear')

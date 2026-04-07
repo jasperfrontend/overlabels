@@ -1,5 +1,26 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Feature: Stream state machine with confidence-based verification
+
+- Implemented a deterministic state machine (offline -> starting -> live -> ending) that confidently determines whether a user is currently streaming.
+- EventSub `stream.online` and `stream.offline` events now only trigger state transitions, not define truth. The Twitch Helix API (`GET helix/streams`) is the authoritative source.
+- Confidence score (0.0-1.0) builds in 0.25 increments through Helix verification. Transitions to "live" or "offline" require confidence >= 0.75.
+- `VerifyStreamState` queue job polls Helix every 10-60 seconds depending on state: 10s during starting/ending, 60s heartbeat during live.
+- 120-second grace period in "ending" state handles OBS crashes and connection drops - if the stream comes back, the session is stitched (reused) instead of creating a new one.
+- Session stitching: if a stream goes offline and comes back within 5 minutes, the existing session is reopened rather than creating a new session.
+- Retroactive repair: session `started_at` is corrected to match Twitch Helix's `started_at` for accuracy.
+- New `stream_states` table as the single source of truth for stream status per user.
+- Added `stream_session_id` FK to `twitch_events` and `external_events` tables for future event grouping (query all events that happened during a stream session).
+- Added `helix_stream_id` to `stream_sessions` table to store the Twitch stream ID.
+- `StreamSessionService::isLive()` and `handleEvent()` now check confidence-based state instead of raw session existence.
+- Per-stream controls (follows, subs, raids, etc.) only increment when confidence >= 0.75 and state is "live".
+- `StreamStatusChanged` broadcast now includes `state`, `confidence`, and `startedAt` fields (backward-compatible - existing overlay listeners unaffected).
+- Cached app access token in `TwitchEventSubService` (50-minute cache) to avoid redundant token requests during verification loops.
+- Safety-net scheduler runs every 5 minutes to catch stuck states (if verification job chain breaks).
+- Minimal frontend: green dot on user avatar when live, pulsing orange dot when transitioning, uptime tooltip.
+- New `useStreamState` composable for reactive stream state in the frontend.
+- Edge cases handled: missed offline events (heartbeat catches them), offline without prior online, OBS crash, quick restarts, overlapping sessions, Twitch API downtime.
+
 ## April 7th, 2026 - Fix: Test mode toggle now resets all service controls
 
 - Disabling test mode for Ko-fi and StreamLabs now resets all source-managed controls to their defaults, not just the donation counter.

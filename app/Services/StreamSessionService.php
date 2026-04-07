@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Events\ControlValueUpdated;
-use App\Events\StreamStatusChanged;
 use App\Models\OverlayControl;
 use App\Models\StreamSession;
+use App\Models\StreamState;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -36,7 +36,8 @@ class StreamSessionService
     ];
 
     /**
-     * Handle stream.online: open a session, reset controls, broadcast live status.
+     * Open a new stream session, reset controls.
+     * Broadcasting is handled by StreamStateMachineService.
      */
     public function openSession(User $user): StreamSession
     {
@@ -52,8 +53,6 @@ class StreamSessionService
 
         $this->resetControls($user);
 
-        StreamStatusChanged::dispatch($user->twitch_id, true);
-
         Log::info("Stream session opened for user {$user->id}", [
             'session_id' => $session->id,
         ]);
@@ -62,15 +61,14 @@ class StreamSessionService
     }
 
     /**
-     * Handle stream.offline: close the session, broadcast offline status.
+     * Close the active stream session.
+     * Broadcasting is handled by StreamStateMachineService.
      */
     public function closeSession(User $user): void
     {
         $closed = StreamSession::where('user_id', $user->id)
             ->whereNull('ended_at')
             ->update(['ended_at' => now()]);
-
-        StreamStatusChanged::dispatch($user->twitch_id, false);
 
         Log::info("Stream session closed for user {$user->id}", [
             'sessions_closed' => $closed,
@@ -88,8 +86,9 @@ class StreamSessionService
             return;
         }
 
-        // Only increment if user has an active stream session
-        if (! StreamSession::activeFor($user)) {
+        // Only increment if user is confidently live
+        $state = StreamState::forUser($user);
+        if (! $state->isConfidentlyLive()) {
             return;
         }
 
@@ -123,7 +122,6 @@ class StreamSessionService
                 $user->twitch_id,
             );
 
-
         }
 
         Log::info("Incremented twitch control {$controlKey} for user {$user->id}");
@@ -156,7 +154,6 @@ class StreamSessionService
                 $user->twitch_id,
             );
 
-
         }
 
         Log::info("Reset twitch controls for user {$user->id}", [
@@ -165,12 +162,10 @@ class StreamSessionService
     }
 
     /**
-     * Check if a user is currently live.
+     * Check if a user is currently live (uses confidence-based state machine).
      */
     public static function isLive(User $user): bool
     {
-        return StreamSession::where('user_id', $user->id)
-            ->whereNull('ended_at')
-            ->exists();
+        return StreamState::forUser($user)->isConfidentlyLive();
     }
 }

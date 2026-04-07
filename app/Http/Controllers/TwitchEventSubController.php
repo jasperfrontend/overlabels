@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Models\EventTemplateMapping;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
+use App\Services\StreamStateMachineService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
@@ -28,16 +30,20 @@ class TwitchEventSubController extends Controller
 
     private StreamSessionService $streamSessionService;
 
+    private StreamStateMachineService $streamStateMachine;
+
     public function __construct(
         TwitchEventSubService $eventSubService,
         TwitchApiService $twitchService,
         TemplateDataMapperService $mapper,
-        StreamSessionService $streamSessionService
+        StreamSessionService $streamSessionService,
+        StreamStateMachineService $streamStateMachine
     ) {
         $this->eventSubService = $eventSubService;
         $this->twitchService = $twitchService;
         $this->mapper = $mapper;
         $this->streamSessionService = $streamSessionService;
+        $this->streamStateMachine = $streamStateMachine;
     }
 
     /**
@@ -570,9 +576,9 @@ class TwitchEventSubController extends Controller
             // Stream session lifecycle and per-stream controls
             if ($user) {
                 if ($eventType === 'stream.online') {
-                    $this->streamSessionService->openSession($user);
+                    $this->streamStateMachine->handleEventSubOnline($user, $event);
                 } elseif ($eventType === 'stream.offline') {
-                    $this->streamSessionService->closeSession($user);
+                    $this->streamStateMachine->handleEventSubOffline($user, $event);
                 } else {
                     $this->streamSessionService->handleEvent($user, $eventType);
                 }
@@ -660,7 +666,7 @@ class TwitchEventSubController extends Controller
                 : null;
 
             // Broadcast alert data to overlay
-            broadcast(new \App\Events\AlertTriggered(
+            broadcast(new AlertTriggered(
                 $mapping->template->html,
                 $mapping->template->css,
                 $templateData,
@@ -689,6 +695,7 @@ class TwitchEventSubController extends Controller
 
     /**
      * Replay a historical event as an alert
+     *
      * @throws RandomException
      */
     public function replay(Request $request, TwitchEvent $twitchEvent)
@@ -717,6 +724,7 @@ class TwitchEventSubController extends Controller
         $this->renderEventAlert($user, $mapping, $reconstructedData);
         $randomString = str_pad(random_int(1, 999999), 4, '0', STR_PAD_LEFT);
         $message = "Replayed alert {$twitchEvent->event_type} (ID: {$twitchEvent->id}-{$randomString})";
+
         return back()->with('message', $message)->with('type', 'success');
     }
 

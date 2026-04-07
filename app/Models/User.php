@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
@@ -51,6 +52,7 @@ use Mchev\Banhammer\Traits\Bannable;
  * @property-read int|null $overlay_access_tokens_count
  * @property-read Collection<int, OverlayTemplate> $overlayTemplates
  * @property-read int|null $overlay_templates_count
+ *
  * @method static Builder<static>|User banned(bool $banned = true)
  * @method static Builder<static>|User bannedByType(string $className)
  * @method static UserFactory factory($count = null, $state = [])
@@ -83,6 +85,7 @@ use Mchev\Banhammer\Traits\Bannable;
  * @method static Builder<static>|User whereWebhookSecret($value)
  * @method static Builder<static>|User withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|User withoutTrashed()
+ *
  * @mixin Eloquent
  */
 class User extends Authenticatable
@@ -186,6 +189,16 @@ class User extends Authenticatable
     public function adminAuditLogs(): HasMany
     {
         return $this->hasMany(AdminAuditLog::class, 'admin_id');
+    }
+
+    public function streamState(): HasOne
+    {
+        return $this->hasOne(StreamState::class);
+    }
+
+    public function streamSessions(): HasMany
+    {
+        return $this->hasMany(StreamSession::class);
     }
 
     public function isEventSubConnected(): bool

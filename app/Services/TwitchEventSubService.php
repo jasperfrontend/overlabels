@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,35 +22,37 @@ class TwitchEventSubService
     }
 
     /**
-     * Get an app access token for EventSub subscriptions that require it
-     * Made public so the controller can use it for status checks
+     * Get an app access token for EventSub subscriptions that require it.
+     * Cached for 50 minutes to avoid redundant token requests during verification loops.
      */
     public function getAppAccessToken(): ?string
     {
-        try {
-            $response = Http::post('https://id.twitch.tv/oauth2/token', [
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'grant_type' => 'client_credentials',
-            ]);
+        return Cache::remember('twitch_app_access_token', now()->addMinutes(50), function () {
+            try {
+                $response = Http::post('https://id.twitch.tv/oauth2/token', [
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'grant_type' => 'client_credentials',
+                ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
+                if ($response->successful()) {
+                    $data = $response->json();
 
-                return $data['access_token'];
+                    return $data['access_token'];
+                }
+
+                Log::error('Failed to get app access token', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+
+                return null;
+            } catch (Exception $e) {
+                Log::error('Exception getting app access token: '.$e->getMessage());
+
+                return null;
             }
-
-            Log::error('Failed to get app access token', [
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-
-            return null;
-        } catch (Exception $e) {
-            Log::error('Exception getting app access token: '.$e->getMessage());
-
-            return null;
-        }
+        });
     }
 
     /**

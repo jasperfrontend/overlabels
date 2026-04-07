@@ -6,6 +6,8 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -16,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $user
+ *
  * @method static Builder<static>|StreamSession newModelQuery()
  * @method static Builder<static>|StreamSession newQuery()
  * @method static Builder<static>|StreamSession query()
@@ -25,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|StreamSession whereStartedAt($value)
  * @method static Builder<static>|StreamSession whereUpdatedAt($value)
  * @method static Builder<static>|StreamSession whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class StreamSession extends Model
@@ -33,6 +37,7 @@ class StreamSession extends Model
         'user_id',
         'started_at',
         'ended_at',
+        'helix_stream_id',
     ];
 
     protected $casts = [
@@ -56,5 +61,20 @@ class StreamSession extends Model
             ->whereNull('ended_at')
             ->latest('started_at')
             ->first();
+    }
+
+    public function streamState(): HasOne
+    {
+        return $this->hasOne(StreamState::class, 'current_session_id');
+    }
+
+    public function twitchEvents(): HasMany
+    {
+        return $this->hasMany(TwitchEvent::class, 'stream_session_id');
+    }
+
+    public function externalEvents(): HasMany
+    {
+        return $this->hasMany(ExternalEvent::class, 'stream_session_id');
     }
 }

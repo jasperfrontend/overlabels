@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property bool $alert_dispatched
  * @property Carbon $created_at
  * @property-read User|null $user
+ *
  * @method static Builder<static>|ExternalEvent newModelQuery()
  * @method static Builder<static>|ExternalEvent newQuery()
  * @method static Builder<static>|ExternalEvent query()
@@ -33,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ExternalEvent whereRawPayload($value)
  * @method static Builder<static>|ExternalEvent whereService($value)
  * @method static Builder<static>|ExternalEvent whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class ExternalEvent extends Model
@@ -49,6 +51,7 @@ class ExternalEvent extends Model
         'normalized_payload',
         'controls_updated',
         'alert_dispatched',
+        'stream_session_id',
     ];
 
     protected $casts = [
@@ -58,9 +61,13 @@ class ExternalEvent extends Model
         'alert_dispatched' => 'boolean',
     ];
 
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function streamSession(): BelongsTo
+    {
+        return $this->belongsTo(StreamSession::class);
     }
 }

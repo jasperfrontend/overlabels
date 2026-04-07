@@ -24,6 +24,12 @@ export interface FlashMessage {
     type?: 'info' | 'success' | 'warning' | 'error';
 }
 
+export interface StreamState {
+    state: 'offline' | 'starting' | 'live' | 'ending';
+    confidence: number;
+    startedAt: string | null;
+}
+
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
     quote: { message: string; author: string };
@@ -34,6 +40,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     isAdmin: boolean;
     impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
     lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
+    streamState: StreamState | null;
 };
 
 

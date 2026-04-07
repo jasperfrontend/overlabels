@@ -321,6 +321,45 @@ class TwitchApiService
     }
 
     /**
+     * Check if a user is currently streaming via Helix GET /streams.
+     * Returns null on API failure (indeterminate), or an array with is_live and stream data.
+     *
+     * @throws ConnectionException
+     */
+    public function getStreamStatus(string $accessToken, string $userId): ?array
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'streams',
+            ['user_id' => $userId],
+            'get stream status'
+        );
+
+        if ($response === null) {
+            return null;
+        }
+
+        $data = $response['data'] ?? [];
+
+        if (empty($data)) {
+            return ['is_live' => false, 'stream' => null];
+        }
+
+        $stream = $data[0];
+
+        return [
+            'is_live' => true,
+            'stream' => [
+                'id' => $stream['id'],
+                'started_at' => $stream['started_at'],
+                'game_name' => $stream['game_name'] ?? null,
+                'title' => $stream['title'] ?? null,
+                'viewer_count' => $stream['viewer_count'] ?? 0,
+            ],
+        ];
+    }
+
+    /**
      * Fetch Twitch global + channel emotes using an app access token.
      * Returns an array of ['code' => string, 'url' => string] entries.
      * No user credentials required — app token (client credentials) is sufficient.

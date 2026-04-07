@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property int|null $user_id
  * @property-read User|null $user
+ *
  * @method static Builder<static>|TwitchEvent newModelQuery()
  * @method static Builder<static>|TwitchEvent newQuery()
  * @method static Builder<static>|TwitchEvent ofType(string $type)
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|TwitchEvent whereTwitchTimestamp($value)
  * @method static Builder<static>|TwitchEvent whereUpdatedAt($value)
  * @method static Builder<static>|TwitchEvent whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class TwitchEvent extends Model
@@ -46,6 +48,7 @@ class TwitchEvent extends Model
         'event_data',
         'twitch_timestamp',
         'processed',
+        'stream_session_id',
     ];
 
     /**
@@ -61,12 +64,15 @@ class TwitchEvent extends Model
 
     /**
      * Scope a query to only include unprocessed events.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function streamSession(): BelongsTo
+    {
+        return $this->belongsTo(StreamSession::class);
     }
 
     public function scopeUnprocessed(Builder $query): Builder

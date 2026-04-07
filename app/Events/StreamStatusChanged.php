@@ -16,10 +16,24 @@ class StreamStatusChanged implements ShouldBroadcast
 
     public bool $live;
 
-    public function __construct(string $broadcasterId, bool $live)
-    {
+    public ?string $state;
+
+    public ?float $confidence;
+
+    public ?string $startedAt;
+
+    public function __construct(
+        string $broadcasterId,
+        bool $live,
+        ?string $state = null,
+        ?float $confidence = null,
+        ?string $startedAt = null
+    ) {
         $this->broadcasterId = $broadcasterId;
         $this->live = $live;
+        $this->state = $state;
+        $this->confidence = $confidence;
+        $this->startedAt = $startedAt;
     }
 
     public function broadcastOn(): array
@@ -33,6 +47,9 @@ class StreamStatusChanged implements ShouldBroadcast
     {
         return [
             'live' => $this->live,
+            'state' => $this->state,
+            'confidence' => $this->confidence,
+            'startedAt' => $this->startedAt,
         ];
     }
 

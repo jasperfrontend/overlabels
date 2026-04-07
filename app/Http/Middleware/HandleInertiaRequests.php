@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\StreamState;
 use App\Models\User;
 use App\Services\LockdownService;
 use Illuminate\Http\Request;
@@ -66,6 +67,25 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
             'lockdown' => fn () => app(LockdownService::class)->getStatus(),
+            'streamState' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) {
+                    return null;
+                }
+
+                $state = StreamState::where('user_id', $user->id)->with('currentSession')->first();
+                if (! $state) {
+                    return ['state' => 'offline', 'confidence' => 0, 'startedAt' => null];
+                }
+
+                return [
+                    'state' => $state->state,
+                    'confidence' => $state->confidence,
+                    'startedAt' => $state->isConfidentlyLive() && $state->currentSession
+                        ? $state->currentSession->started_at->toISOString()
+                        : null,
+                ];
+            },
             'impersonating' => function () use ($request) {
                 $targetId = $request->session()->get('impersonating_user_id');
                 if (! $targetId) {

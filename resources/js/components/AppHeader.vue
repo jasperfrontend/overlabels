@@ -10,10 +10,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
+import { useStreamState } from '@/composables/useStreamState';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
+
+const { isLive, isTransitioning, uptime } = useStreamState();
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
@@ -160,6 +163,7 @@ const rightNavItems: NavItem[] = [
                                 variant="ghost"
                                 size="icon"
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                                :title="isLive ? 'Live for ' + uptime : isTransitioning ? 'Stream transitioning...' : ''"
                             >
                                 <Avatar class="size-8 overflow-hidden rounded-full">
                                     <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
@@ -167,6 +171,14 @@ const rightNavItems: NavItem[] = [
                                         {{ getInitials(auth.user?.name) }}
                                     </AvatarFallback>
                                 </Avatar>
+                                <span
+                                    v-if="isLive"
+                                    class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-green-500 ring-2 ring-background"
+                                />
+                                <span
+                                    v-else-if="isTransitioning"
+                                    class="absolute -top-0.5 -right-0.5 size-3 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
+                                />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">

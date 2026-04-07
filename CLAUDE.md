@@ -81,13 +81,33 @@ Critical variables:
 
 ### Important Services
 
-- `TwitchApiService`: All Twitch API interactions
+- `TwitchApiService`: All Twitch API interactions (including `getStreamStatus()` for Helix stream checks)
+- `StreamStateMachineService`: Deterministic stream state machine with confidence-based Helix verification
+- `StreamSessionService`: Stream session lifecycle (open/close sessions, reset controls, per-stream counters)
 - `TemplateParserService`: Template tag parsing and validation
 - `OverlayAccessService`: Access control for overlays
 - `AdminAuditService`: Append-only audit logging
 - `ExternalControlService`: External service control updates
 - `ExternalAlertService`: External service alert dispatch
 - Queue workers handle background tasks (EventSub processing)
+
+## Stream State Machine (Implemented Apr 2026)
+
+- Deterministic state machine: `offline` -> `starting` -> `live` -> `ending` -> `offline`
+- `stream_states` table: user_id (unique), state, confidence (float 0-1), last_event_at, last_verified_at, helix_stream_id, current_session_id (FK), grace_period_until
+- EventSub events only trigger transitions (set state to starting/ending with confidence 0.25). Helix API (`GET helix/streams`) is the source of truth.
+- `StreamStateMachineService`: core service with `handleEventSubOnline()`, `handleEventSubOffline()`, `verify()`, `transitionToLive()`, `transitionToOffline()`
+- `VerifyStreamState` job: polls Helix, updates confidence (+/- 0.25), evaluates transitions. Self-dispatches with delays (10s for starting/ending, 60s heartbeat for live).
+- Confidence threshold: 0.75 required for live/offline transitions. `StreamState::isConfidentlyLive()` checks both state and confidence.
+- Grace period: 120 seconds in `ending` state before finalizing. Handles OBS crashes - if Helix shows stream is back, reverts to `live`.
+- Session stitching: if stream goes offline and comes back within 5 minutes, existing session is reopened (ended_at cleared) instead of creating new.
+- Retroactive repair: session `started_at` corrected to match Helix `started_at`.
+- Event grouping: `stream_session_id` FK on `twitch_events` and `external_events`. Stamped via `stampEventsWithSession()` on live transition.
+- `StreamSessionService::isLive()` and `handleEvent()` now use confidence-based check instead of raw session existence.
+- Broadcasting handled by state machine (removed from `openSession`/`closeSession`). `StreamStatusChanged` includes state, confidence, startedAt.
+- Safety-net scheduler: every 5 minutes, re-dispatches VerifyStreamState for stuck states (last_verified_at > 5 min ago).
+- App access token cached for 50 minutes in `TwitchEventSubService::getAppAccessToken()`.
+- Frontend: `useStreamState` composable, green/orange dot on avatar in `AppHeader.vue`, uptime counter.
 
 ## Controls System (Implemented Feb 2026)
 
