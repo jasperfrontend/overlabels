@@ -58,8 +58,8 @@ class UserEventSubController extends Controller
         $user = $request->user();
 
         try {
-            // Dispatch job to setup subscriptions
-            SetupUserEventSubSubscriptions::dispatch($user, false);
+            // Dispatch job to setup subscriptions (force recreate to clean up stale/pending ones)
+            SetupUserEventSubSubscriptions::dispatch($user, true);
 
             return response()->json([
                 'success' => true,
