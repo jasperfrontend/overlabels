@@ -112,19 +112,23 @@ class KofiIntegrationController extends Controller
 
         $integration->update(['test_mode' => $validated['test_mode']]);
 
-        // When test mode is turned OFF, reset kofis_received controls to seed value (or 0)
+        // When test mode is turned OFF, reset all service-managed controls to defaults
         if (! $validated['test_mode']) {
             $settings = $integration->settings ?? [];
-            $resetValue = (string) ($settings['kofis_seed_value'] ?? 0);
+            $seedValue = (string) ($settings['kofis_seed_value'] ?? 0);
 
             $controls = OverlayControl::where('user_id', $user->id)
                 ->where('source', 'kofi')
-                ->where('key', 'kofis_received')
                 ->where('source_managed', true)
                 ->with('template')
                 ->get();
 
             foreach ($controls as $control) {
+                $resetValue = match ($control->key) {
+                    'kofis_received' => $seedValue,
+                    default => in_array($control->type, ['counter', 'number']) ? '0' : '',
+                };
+
                 $control->update(['value' => $resetValue]);
 
                 $overlaySlug = $control->overlay_template_id

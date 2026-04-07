@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Fix: Test mode toggle now resets all service controls
+
+- Disabling test mode for Ko-fi and StreamLabs now resets all source-managed controls to their defaults, not just the donation counter.
+- Resets `total_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, and `latest_donation_currency` alongside the count key.
+- Counter/number controls reset to '0' (or the seed value for the count key), text controls reset to empty.
+
 ## April 7th, 2026 - Fix: Timer controls not working in expressions
 
 - Timer controls (and their `:running` companion) caused expression evaluation to silently fail, producing no output on the overlay.
