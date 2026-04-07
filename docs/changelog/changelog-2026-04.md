@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - UI: EventSub connection management on Integrations settings page
+
+- Added a Twitch EventSub card to the Settings > Integrations page showing subscription count, active count, and connected-since date.
+- Connect/Reconnect button dispatches the `SetupUserEventSubSubscriptions` job to create or recreate all EventSub subscriptions.
+- Refresh button verifies existing subscriptions with Twitch and renews any that have failed.
+- Shows a yellow warning when `eventsub_connected_at` is set but no active subscriptions exist (e.g. after user deletion and re-registration).
+
 ## April 7th, 2026 - Feature: Stream state machine with confidence-based verification
 
 - Implemented a deterministic state machine (offline -> starting -> live -> ending) that confidently determines whether a user is currently streaming.

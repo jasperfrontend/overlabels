@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
+use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,8 +32,17 @@ class IntegrationController extends Controller
             ];
         }, ExternalServiceRegistry::services());
 
+        $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
+        $activeCount = $subscriptions->where('status', 'enabled')->count();
+
         return Inertia::render('settings/integrations/index', [
             'services' => array_values($services),
+            'eventsub' => [
+                'connected' => $user->eventsub_connected_at !== null,
+                'connected_at' => $user->eventsub_connected_at?->toIso8601String(),
+                'subscription_count' => $subscriptions->count(),
+                'active_count' => $activeCount,
+            ],
         ]);
     }
 
