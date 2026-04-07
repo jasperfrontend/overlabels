@@ -3,15 +3,16 @@ import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Help',
-    href: '/help',
+    href: '/help'
   },
   {
     title: 'Controls',
-    href: '/help/controls',
-  },
+    href: '/help/controls'
+  }
 ];
 </script>
 
@@ -31,7 +32,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       property="og:description"
       content="Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream."
     />
-    <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta property="og:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
@@ -42,7 +44,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       name="twitter:description"
       content="Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream."
     />
-    <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta name="twitter:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
@@ -52,10 +55,12 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h1 class="mb-4 text-4xl font-bold">Controls</h1>
           <p class="text-lg text-foreground mb-4">
             Controls are mutable, overlay-scoped values you can update live during a stream. No code, no deployment.
-            Use them to display death counts, donation goals, timers, custom text, or anything that changes while you play.
+            Use them to display death counts, donation goals, timers, custom text, or anything that changes while you
+            play.
           </p>
           <p class="text-lg text-foreground">
-            You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly powerful.
+            You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly
+            powerful.
           </p>
         </div>
 
@@ -90,12 +95,16 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
-                A Control is a named value that lives on your overlay or alert template. You define its key, type, and optional label, and then
-                reference it in your overlay HTML with the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> syntax.
-                During your stream, you update its value from the <strong>Control Panel</strong> and the change appears in OBS within a few seconds.
+                A Control is a named value that lives on your overlay or alert template. You define its key, type, and
+                optional label, and then
+                reference it in your overlay HTML with the <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> syntax.
+                During your stream, you update its value from the <strong>Control Panel</strong> and the change appears
+                in OBS within a few seconds.
               </p>
               <p class="text-foreground">
-                Controls are <strong>overlay-scoped</strong>: each overlay has its own set. They are never shared between overlays unless
+                Controls are <strong>overlay-scoped</strong>: each overlay has its own set. They are never shared
+                between overlays unless
                 you explicitly import them when copying.
               </p>
             </div>
@@ -106,32 +115,62 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-sm text-muted-foreground">Click a type to jump to its detailed section.</p>
               <div class="space-y-4">
                 <a href="#type-text" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">text</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    text
+                  </div>
                   <div class="text-foreground">Free-form text. Displayed as-is in your overlay.</div>
                 </a>
                 <a href="#type-number" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">number</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    number
+                  </div>
                   <div class="text-foreground">A numeric value with optional min, max, and step.</div>
                 </a>
                 <a href="#type-counter" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">counter</div>
-                  <div class="text-foreground">A whole-number counter with +/- /Reset buttons. Great for deaths, wins, donations.</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    counter
+                  </div>
+                  <div class="text-foreground">A whole-number counter with +/- /Reset buttons. Great for deaths, wins,
+                    donations.
+                  </div>
                 </a>
                 <a href="#type-timer" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">timer</div>
-                  <div class="text-foreground">A stopwatch, countdown, or count-to-date. Ticks in real time on the overlay.</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    timer
+                  </div>
+                  <div class="text-foreground">A stopwatch, countdown, or count-to-date. Ticks in real time on the
+                    overlay.
+                  </div>
                 </a>
                 <a href="#type-boolean" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">boolean</div>
-                  <div class="text-foreground">An on/off toggle. Outputs <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> or <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code>.</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    boolean
+                  </div>
+                  <div class="text-foreground">An on/off toggle. Outputs <code
+                    class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> or <code
+                    class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code>.
+                  </div>
                 </a>
                 <a href="#type-datetime" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">datetime</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    datetime
+                  </div>
                   <div class="text-foreground">A fixed date and time value.</div>
                 </a>
                 <a href="#type-expression" class="flex gap-4 group">
-                  <div class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">expression</div>
-                  <div class="text-foreground">A formula that derives its value from other controls. Evaluated live on the overlay.</div>
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    expression
+                  </div>
+                  <div class="text-foreground">A formula that derives its value from other controls. Evaluated live on
+                    the overlay.
+                  </div>
                 </a>
               </div>
             </div>
@@ -145,12 +184,15 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <!-- Text -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-text">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">text</span> Text</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">text</span> Text</h3>
               <p class="mb-4 text-foreground">
-                Free-form text displayed as-is in your overlay. HTML is stripped for safety, so you can't accidentally inject markup through a Control Panel update.
+                Free-form text displayed as-is in your overlay. HTML is stripped for safety, so you can't accidentally
+                inject markup through a Control Panel update.
               </p>
               <p class="mb-4 text-foreground">
-                Text controls are the most versatile type. Use them for player names, status messages, song titles, or anything that doesn't need numeric logic.
+                Text controls are the most versatile type. Use them for player names, status messages, song titles, or
+                anything that doesn't need numeric logic.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;div class="now-playing"&gt;<br />
@@ -158,40 +200,51 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;/div&gt;
               </div>
               <p class="mt-4 text-sm text-muted-foreground">
-                Text controls also work well for storing URLs (image sources, links, etc.) that you want to swap out without editing overlay code.
+                Text controls also work well for storing URLs (image sources, links, etc.) that you want to swap out
+                without editing overlay code.
               </p>
             </div>
 
             <!-- Number -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-number">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">number</span> Number</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">number</span> Number</h3>
               <p class="mb-4 text-foreground">
-                A numeric value with optional <strong>min</strong>, <strong>max</strong>, and <strong>step</strong> constraints. Saved and displayed as a plain number.
+                A numeric value with optional <strong>min</strong>, <strong>max</strong>, and <strong>step</strong>
+                constraints. Saved and displayed as a plain number.
                 You type the value directly in the Control Panel.
               </p>
               <p class="mb-4 text-foreground">
-                Numbers are great for goal amounts, percentages, scores, or any value where you want to set it to a specific number rather than increment/decrement.
+                Numbers are great for goal amounts, percentages, scores, or any value where you want to set it to a
+                specific number rather than increment/decrement.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;div class="goal"&gt;<br />
-                &nbsp;&nbsp;&lt;progress value="[[[c:goal_current]]]" max="[[[c:goal_target]]]"&gt;&lt;/progress&gt;<br />
+                &nbsp;&nbsp;&lt;progress value="[[[c:goal_current]]]"
+                max="[[[c:goal_target]]]"&gt;&lt;/progress&gt;<br />
                 &nbsp;&nbsp;[[[c:goal_current]]] / [[[c:goal_target]]]<br />
                 &lt;/div&gt;
               </div>
               <div class="mt-4 rounded border border-violet-400/20 bg-violet-400/5 p-3">
-                <p class="text-sm text-foreground"><strong>Random mode:</strong> Number controls can be set to "random mode" in the config. When enabled, the overlay generates a random integer between min and max on a configurable interval. Useful for slot machines, randomized choices, or whack-a-mole style games.</p>
+                <p class="text-sm text-foreground"><strong>Random mode:</strong> Number controls can be set to "random
+                  mode" in the config. When enabled, the overlay generates a random integer between min and max on a
+                  configurable interval. Useful for slot machines, randomized choices, or whack-a-mole style games.</p>
               </div>
             </div>
 
             <!-- Counter -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-counter">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">counter</span> Counter</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">counter</span> Counter</h3>
               <p class="mb-4 text-foreground">
-                A whole-number counter with <strong>+</strong>, <strong>-</strong>, and <strong>Reset</strong> buttons in the Control Panel.
-                Each press fires immediately - no save button needed. Counters are the fastest way to track things that change during a stream.
+                A whole-number counter with <strong>+</strong>, <strong>-</strong>, and <strong>Reset</strong> buttons
+                in the Control Panel.
+                Each press fires immediately - no save button needed. Counters are the fastest way to track things that
+                change during a stream.
               </p>
               <p class="mb-4 text-foreground">
-                Configure a <strong>step</strong> size (default 1), <strong>min/max</strong> bounds, and a <strong>reset value</strong> (default 0).
+                Configure a <strong>step</strong> size (default 1), <strong>min/max</strong> bounds, and a <strong>reset
+                value</strong> (default 0).
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;div class="deaths"&gt;<br />
@@ -203,32 +256,41 @@ const breadcrumbs: BreadcrumbItem[] = [
                 [[[endif]]]
               </div>
               <div class="mt-4 rounded border border-violet-400/20 bg-violet-400/5 p-3">
-                <p class="text-sm text-foreground"><strong>Random mode:</strong> Like Number controls, Counters also support random mode for generating random values on an interval.</p>
+                <p class="text-sm text-foreground"><strong>Random mode:</strong> Like Number controls, Counters also
+                  support random mode for generating random values on an interval.</p>
               </div>
             </div>
 
             <!-- Timer -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-timer">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">timer</span> Timer</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">timer</span> Timer</h3>
               <p class="mb-4 text-foreground">
-                A live-ticking timer that runs on the overlay in real time. Control it from the Control Panel with Start, Stop, and Reset buttons. Timer controls support three modes:
+                A live-ticking timer that runs on the overlay in real time. Control it from the Control Panel with
+                Start, Stop, and Reset buttons. Timer controls support three modes:
               </p>
               <div class="mb-4 space-y-2">
                 <div class="flex gap-3">
-                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count up</span>
+                  <span
+                    class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count up</span>
                   <span class="text-foreground">Counts upward from zero. A classic stopwatch.</span>
                 </div>
                 <div class="flex gap-3">
-                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Countdown</span>
-                  <span class="text-foreground">Counts down from a base duration you set (in seconds). Stops at zero.</span>
+                  <span
+                    class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Countdown</span>
+                  <span
+                    class="text-foreground">Counts down from a base duration you set (in seconds). Stops at zero.</span>
                 </div>
                 <div class="flex gap-3">
-                  <span class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count to</span>
+                  <span
+                    class="mt-0.5 inline-flex h-5 w-24 shrink-0 items-center justify-center rounded bg-background text-xs font-semibold">Count to</span>
                   <span class="text-foreground">Counts down to a specific date and time. Always ticking - no start/stop needed.</span>
                 </div>
               </div>
               <p class="mb-4 text-foreground">
-                The raw output is <strong>seconds</strong>. Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> to display it as a clock:
+                The raw output is <strong>seconds</strong>. Use
+                <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link>
+                to display it as a clock:
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Shows "02:34:15" --&gt;<br />
@@ -243,7 +305,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="mt-6 rounded border border-violet-400/20 bg-violet-400/5 p-4">
                 <h4 class="mb-3 text-lg font-semibold text-violet-400">Detecting if a timer is running</h4>
                 <p class="mb-3 text-foreground">
-                  Every timer exposes a companion <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:running</code> value that outputs
+                  Every timer exposes a companion <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:running</code>
+                  value that outputs
                   <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> when the timer is active or
                   <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code> when it is stopped.
                   "Count to" timers are always considered running since they tick continuously.
@@ -268,20 +331,25 @@ const breadcrumbs: BreadcrumbItem[] = [
                   [[[endif]]]
                 </div>
                 <p class="text-sm text-muted-foreground">
-                  The <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:running</code> value updates instantly when you press Start or Stop in the Control Panel.
+                  The <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:running</code> value updates
+                  instantly when you press Start or Stop in the Control Panel.
                 </p>
               </div>
             </div>
 
             <!-- Boolean -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-boolean">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">boolean</span> Boolean</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">boolean</span> Boolean</h3>
               <p class="mb-4 text-foreground">
-                An on/off toggle switch. Stores <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> (on) or
-                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code> (off). In the Control Panel, it shows as a simple toggle you can flip instantly.
+                An on/off toggle switch. Stores <code
+                class="rounded bg-background px-1 py-0.5 font-mono text-xs">1</code> (on) or
+                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">0</code> (off). In the Control Panel,
+                it shows as a simple toggle you can flip instantly.
               </p>
               <p class="mb-4 text-foreground">
-                Booleans are ideal for conditionally showing or hiding entire sections of your overlay without touching the code.
+                Booleans are ideal for conditionally showing or hiding entire sections of your overlay without touching
+                the code.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Toggle a sponsor banner on/off --&gt;<br />
@@ -301,9 +369,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <!-- Datetime -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-datetime">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">datetime</span> Datetime</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">datetime</span> Datetime</h3>
               <p class="mb-4 text-foreground">
-                A fixed date and time value, set from a datetime picker in the Control Panel. Useful for "next stream starts at" displays, event countdowns, or logging purposes.
+                A fixed date and time value, set from a datetime picker in the Control Panel. Useful for "next stream
+                starts at" displays, event countdowns, or logging purposes.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;div class="schedule"&gt;<br />
@@ -311,23 +381,31 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;/div&gt;
               </div>
               <p class="mt-4 text-sm text-muted-foreground">
-                Use <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> like
+                Use
+                <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link>
+                like
                 <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">|date:short</code> or
-                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">|date:long</code> to format the output.
+                <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">|date:long</code> to format the
+                output.
                 If you need a live countdown to a date, use a Timer in "count to" mode instead.
               </p>
             </div>
 
             <!-- Expression -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-expression">
-              <h3 class="mb-4 text-xl font-semibold"><span class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">expression</span> Expression</h3>
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">expression</span> Expression
+              </h3>
               <p class="mb-4 text-foreground">
-                A formula that derives its value from other controls. Expressions are evaluated live on the overlay with zero latency - no server round-trip needed.
+                A formula that derives its value from other controls. Expressions are evaluated live on the overlay with
+                zero latency - no server round-trip needed.
                 You cannot edit an expression's value directly; it's always computed from its formula.
               </p>
               <p class="mb-4 text-foreground">
-                Reference other controls using <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.key</code> syntax inside the formula.
-                For service-managed controls, use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.kofi.total_received</code> (dots instead of colons).
+                Reference other controls using <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.key</code> syntax inside the formula.
+                For service-managed controls, use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.kofi.total_received</code>
+                (dots instead of colons).
               </p>
               <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Simple math --&gt;<br />
@@ -341,11 +419,14 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Cross-service comparison --&gt;<br />
-                Expression: <span class="text-violet-400">c.streamlabs.total_received + c.kofi.total_received</span><br /><br />
+                Expression: <span
+                class="text-violet-400">c.streamlabs.total_received + c.kofi.total_received</span><br /><br />
                 &lt;div&gt;Total donations: $[[[c:total_donations|round]]]&lt;/div&gt;
               </div>
               <div class="mt-4 space-y-2 text-sm text-muted-foreground">
-                <p>Expressions support standard math operators (<code class="rounded bg-background px-1 py-0.5 font-mono text-xs">+ - * / %</code>), comparisons, ternary operators, and parentheses.</p>
+                <p>Expressions support standard math operators (<code
+                  class="rounded bg-background px-1 py-0.5 font-mono text-xs">+ - * / %</code>), comparisons, ternary
+                  operators, and parentheses.</p>
                 <p>Circular dependencies (A depends on B, B depends on A) are detected and blocked when you save.</p>
               </div>
             </div>
@@ -356,54 +437,83 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12">
           <h2 class="mb-6 text-2xl font-bold" id="managing-controls">Managing Controls</h2>
           <p class="mb-6 text-foreground">
-            Controls live on the <strong>Controls</strong> tab of your overlay's detail page. You must be the overlay owner to manage them.
+            Controls live on the <strong>Controls</strong> tab of your overlay's detail page. You must be the overlay
+            owner to manage them.
           </p>
 
           <div class="space-y-6">
             <!-- Create -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold"><Plus class="size-5" /></span>
+                <span
+                  class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold"><Plus
+                  class="size-5" /></span>
                 Creating a Control
               </h3>
-              <p class="mb-4 mt-3 text-foreground">Click <strong>Add control</strong> in the Controls tab to open the creation modal.</p>
+              <p class="mb-4 mt-3 text-foreground">Click <strong>Add control</strong> in the Controls tab to open the
+                creation modal.</p>
               <div class="space-y-3 text-foreground">
-                <div><strong class="text-foreground">Key</strong>  A lowercase slug used in template tags, e.g. <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">deaths</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">goal_amount</code>. Must start with a letter and contain only lowercase letters, digits, and underscores. The key is permanent and cannot be changed after creation.</div>
-                <div><strong class="text-foreground">Label</strong>  An optional human-readable name displayed in the Control Panel, e.g. "Death Counter". If omitted, the key is used.</div>
-                <div><strong class="text-foreground">Type</strong>  One of: text, number, counter, timer, boolean, datetime, expression.</div>
-                <div><strong class="text-foreground">Sort order</strong>  Controls the display order in the Control Panel. Lower numbers appear first.</div>
-                <div><strong class="text-foreground">Type-specific config</strong>  Number and counter controls accept min, max, step, and reset value. Timer controls accept a mode (count up, countdown, or count to date/time). Expression controls require a formula. See <a href="#types" class="text-violet-400 hover:underline">Control Types in Detail</a> for the full breakdown.</div>
+                <div><strong class="text-foreground">Key</strong> A lowercase slug used in template tags, e.g. <code
+                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">deaths</code>, <code
+                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">goal_amount</code>. Must start with a
+                  letter and contain only lowercase letters, digits, and underscores. The key is permanent and cannot be
+                  changed after creation.
+                </div>
+                <div><strong class="text-foreground">Label</strong> An optional human-readable name displayed in the
+                  Control Panel, e.g. "Death Counter". If omitted, the key is used.
+                </div>
+                <div><strong class="text-foreground">Type</strong> One of: text, number, counter, timer, boolean,
+                  datetime, expression.
+                </div>
+                <div><strong class="text-foreground">Sort order</strong> Controls the display order in the Control
+                  Panel. Lower numbers appear first.
+                </div>
+                <div><strong class="text-foreground">Type-specific config</strong> Number and counter controls accept
+                  min, max, step, and reset value. Timer controls accept a mode (count up, countdown, or count to
+                  date/time). Expression controls require a formula. See <a href="#types"
+                                                                            class="text-violet-400 hover:underline">Control
+                    Types in Detail</a> for the full breakdown.
+                </div>
               </div>
             </div>
 
             <!-- Edit -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold"><Pencil class="size-4" /></span>
+                <span
+                  class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold"><Pencil
+                  class="size-4" /></span>
                 Editing a Control
               </h3>
               <p class="mt-3 text-foreground">
-                Click the pencil icon on any control row in the Controls tab. You can update the label, sort order, and type-specific configuration.
-                The <strong>key</strong> and <strong>type</strong> cannot be changed after creation to protect references already used in your overlay HTML.
+                Click the pencil icon on any control row in the Controls tab. You can update the label, sort order, and
+                type-specific configuration.
+                The <strong>key</strong> and <strong>type</strong> cannot be changed after creation to protect
+                references already used in your overlay HTML.
               </p>
             </div>
 
             <!-- Delete -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold"><Trash class="size-4" /></span>
+                <span
+                  class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold"><Trash
+                  class="size-4" /></span>
                 Deleting a Control
               </h3>
               <p class="mt-3 text-foreground">
-                Click the trash icon on a control row and confirm the prompt. Deletion is permanent. Any <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> references
-                left in your overlay will render as blank after deletion  no errors, just empty space.
+                Click the trash icon on a control row and confirm the prompt. Deletion is permanent. Any <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:key]]]</code> references
+                left in your overlay will render as blank after deletion no errors, just empty space.
               </p>
             </div>
 
             <!-- Snippet copy -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-1 text-xl font-semibold">
-                <span class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold"><Trash class="size-4" /></span>
+                <span
+                  class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold"><Trash
+                  class="size-4" /></span>
                 Copying the Snippet
               </h3>
               <p class="mt-3 text-foreground">
@@ -428,7 +538,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Displaying a Value</h3>
               <p class="mb-4 text-foreground">
-                Place the tag wherever you want the value to appear. At render time the overlay substitutes the current value.
+                Place the tag wherever you want the value to appear. At render time the overlay substitutes the current
+                value.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;div class="deaths-counter"&gt;<br />
@@ -444,7 +555,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Conditionals with Control Values</h3>
               <p class="mb-4 text-foreground">
-                Control values participate fully in the conditional engine. Use them exactly as you would any other template variable.
+                Control values participate fully in the conditional engine. Use them exactly as you would any other
+                template variable.
               </p>
 
               <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
@@ -468,8 +580,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
 
               <p class="text-sm text-foreground">
-                String comparison, numeric comparison, boolean truthiness&hellip; All operators work the same way as with Twitch data tags.
-                See the <Link class="text-violet-400 underline hover:no-underline" href="/help/conditionals">Syntax Help</Link> page for the full comparison reference.
+                String comparison, numeric comparison, boolean truthiness&hellip; All operators work the same way as
+                with Twitch data tags.
+                See the
+                <Link class="text-violet-400 underline hover:no-underline" href="/help/conditionals">Syntax Help</Link>
+                page for the full comparison reference.
               </p>
             </div>
 
@@ -477,7 +592,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Controls in CSS</h3>
               <p class="mb-4 text-foreground">
-                Just like Twitch data tags, control tags can appear inside <code>&lt;style&gt;</code> blocks, which opens up dynamic styling.
+                Just like Twitch data tags, control tags can appear inside <code>&lt;style&gt;</code> blocks, which
+                opens up dynamic styling.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;style&gt;<br />
@@ -496,14 +612,16 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Controls in Alerts</h3>
               <p class="mb-4 text-foreground">
-                Alerts also support control tags. This lets an alert read the current state of your overlay to decide what to display.
+                Alerts also support control tags. This lets an alert read the current state of your overlay to decide
+                what to display.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Alert for a sub that mentions the current death count --&gt;<br />
                 &lt;div class="sub-alert"&gt;<br />
                 &nbsp;&nbsp;[[[event.user_name]]] just subscribed!<br />
                 &nbsp;&nbsp;[[[if:c:deaths > 0]]]<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&lt;span class="subtle"&gt;(and yes, [[[c:deaths]]] deaths so far)&lt;/span&gt;<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;span class="subtle"&gt;(and yes, [[[c:deaths]]] deaths so
+                far)&lt;/span&gt;<br />
                 &nbsp;&nbsp;[[[endif]]]<br />
                 &lt;/div&gt;
               </div>
@@ -527,7 +645,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <div class="mb-1 font-semibold">Text &amp; Number</div>
                   <p class="text-foreground">
-                    Type a new value into the input field and click <strong>Save</strong>. The overlay updates immediately.
+                    Type a new value into the input field and click <strong>Save</strong>. The overlay updates
+                    immediately.
                     Number controls respect the min, max, and step you configured.
                   </p>
                 </div>
@@ -542,16 +661,19 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <div class="mb-1 font-semibold">Timer</div>
                   <p class="text-foreground">
-                    <strong>Start</strong> begins counting (count up or countdown, depending on your config). The display ticks
+                    <strong>Start</strong> begins counting (count up or countdown, depending on your config). The
+                    display ticks
                     in the Control Panel and in the overlay simultaneously.
-                    <strong>Stop</strong> pauses at the current time. <strong>Reset</strong> returns to zero (or the base duration for countdowns).
+                    <strong>Stop</strong> pauses at the current time. <strong>Reset</strong> returns to zero (or the
+                    base duration for countdowns).
                     "Count to" timers show the target datetime and tick automatically - no start/stop needed.
                   </p>
                 </div>
                 <div>
                   <div class="mb-1 font-semibold">Boolean</div>
                   <p class="text-foreground">
-                    A single toggle switch. Flip it on or off - the value updates immediately. Pairs well with conditionals to show/hide overlay sections.
+                    A single toggle switch. Flip it on or off - the value updates immediately. Pairs well with
+                    conditionals to show/hide overlay sections.
                   </p>
                 </div>
                 <div>
@@ -575,7 +697,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="mb-4 text-xl font-semibold">Real-time updates</h3>
               <p class="text-foreground">
                 Every Control Panel action broadcasts the new value over your live channel. Any open overlay that
-                references the changed control re-renders that value in real time  typically in under a second.
+                references the changed control re-renders that value in real time typically in under a second.
                 No refresh required in OBS.
               </p>
             </div>
@@ -584,7 +706,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="mb-4 text-xl font-semibold">Access</h3>
               <p class="text-foreground">
                 The Control Panel is available only to the overlay owner and requires a logged-in session.
-                Your viewers or collaborators cannot accidentally change your values  there is no public endpoint for mutations.
+                Your viewers or collaborators cannot accidentally change your values there is no public endpoint for
+                mutations.
               </p>
             </div>
           </div>
@@ -606,11 +729,13 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
               <div class="space-y-3">
                 <div class="flex gap-3">
-                  <span class="mt-0.5 inline-flex h-5 w-14 shrink-0 items-center justify-center rounded bg-green-600 text-xs font-semibold text-white">Create</span>
+                  <span
+                    class="mt-0.5 inline-flex h-5 w-14 shrink-0 items-center justify-center rounded bg-green-600 text-xs font-semibold text-white">Create</span>
                   <span class="text-foreground">Recreate this control in your copy with the same type and config. You can edit the key before confirming if you want to rename it.</span>
                 </div>
                 <div class="flex gap-3">
-                  <span class="mt-0.5 inline-flex h-5 w-14 shrink-0 items-center justify-center rounded bg-red-400 text-xs font-semibold text-foreground">Skip</span>
+                  <span
+                    class="mt-0.5 inline-flex h-5 w-14 shrink-0 items-center justify-center rounded bg-red-400 text-xs font-semibold text-foreground">Skip</span>
                   <span class="text-foreground">Leave this control out of your copy. Any overlay tags referencing it will render blank until you add a matching control yourself.</span>
                 </div>
               </div>
@@ -619,17 +744,26 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">What gets copied</h3>
               <div class="space-y-3 text-foreground">
-                <div><strong class="text-foreground">Copied:</strong> key, label, type, configuration (min/max/mode/base duration, etc.), and sort order.</div>
-                <div><strong class="text-foreground">Also copied:</strong> the current value. Although this may bring in some stale data when you copy the overlay to your account, it does allow for sharing fully pre-configured overlay templates.</div>
-                <div><strong class="text-foreground">New IDs:</strong> Each created control gets a brand-new database ID. Changes you make to your copy's controls never affect the original template.</div>
+                <div><strong class="text-foreground">Copied:</strong> key, label, type, configuration (min/max/mode/base
+                  duration, etc.), and sort order.
+                </div>
+                <div><strong class="text-foreground">Also copied:</strong> the current value. Although this may bring in
+                  some stale data when you copy the overlay to your account, it does allow for sharing fully
+                  pre-configured overlay templates.
+                </div>
+                <div><strong class="text-foreground">New IDs:</strong> Each created control gets a brand-new database
+                  ID. Changes you make to your copy's controls never affect the original template.
+                </div>
               </div>
             </div>
 
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Skipping the wizard</h3>
               <p class="text-foreground">
-                Clicking <strong>Skip all, take me to the copy</strong> skips import entirely and takes you straight to your new overlay.
-                Your copy will have zero controls at that point. You can always add controls manually from the Controls tab later,
+                Clicking <strong>Skip all, take me to the copy</strong> skips import entirely and takes you straight to
+                your new overlay.
+                Your copy will have zero controls at that point. You can always add controls manually from the Controls
+                tab later,
                 as long as you give them the same keys that your overlay HTML references.
               </p>
             </div>
@@ -648,18 +782,27 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="text-foreground text-xl mb-4">Choose descriptive keys</h3>
               <p>
                 Keys are effectively permanent, so name them like Future You is tired and mildly annoyed.
-                Use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">boss_deaths</code> instead of <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">d</code>.
+                Use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">boss_deaths</code> instead of
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">d</code>.
               </p>
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">Use sort order on purpose</h3>
               <p>
-                The Control Panel displays controls by sort order. Put the values you touch most during a stream at the top using sort orders like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">0</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">1</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">2</code>, and so on. That way the important stuff stays within easy reach when things get hectic.
+                The Control Panel displays controls by sort order. Put the values you touch most during a stream at the
+                top using sort orders like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">0</code>,
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">1</code>, <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">2</code>, and so on. That way the
+                important stuff stays within easy reach when things get hectic.
               </p>
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">Use counters for values that change often</h3>
-              <p class="mb-2">If you are tracking something numeric that changes during the stream, use a counter instead of a text control. Hitting <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">+</code> or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-</code> is much faster and safer under pressure than manually typing a new number every time.</p>
+              <p class="mb-2">If you are tracking something numeric that changes during the stream, use a counter
+                instead of a text control. Hitting <code
+                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">+</code> or <code
+                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-</code> is much faster and safer under
+                pressure than manually typing a new number every time.</p>
               <p class="mb-2 text-foreground font-medium">Good examples:</p>
               <ul class="list-disc pl-5">
                 <li>in-game deaths</li>
@@ -670,7 +813,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div>
               <h3 class="text-foreground text-xl mb-4">Controls are more powerful with conditionals</h3>
               <p class="mb-2">
-                A Control does not have to be shown as raw text. You can use it inside <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[if:c:deaths >= 10]]]</code>
+                A Control does not have to be shown as raw text. You can use it inside <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[if:c:deaths >= 10]]]</code>
                 logic to change content, styling, or full layout states.
               </p>
               <p class="mb-2 text-foreground font-medium">Example:</p>
@@ -684,7 +828,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">Values are sanitized</h3>
-              <p>HTML is stripped from text values before storage. You can't accidentally inject markup through a Control Panel update.</p>
+              <p>HTML is stripped from text values before storage. You can't accidentally inject markup through a
+                Control Panel update.</p>
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">URLs and asset links work well in Controls</h3>
@@ -697,16 +842,20 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <li>profile links</li>
                 <li>external media links</li>
               </ul>
-              <p class="mb-2 text-foreground font-medium">That lets you define a value once and reuse it throughout your overlay without hardcoding the same URL in multiple places.</p>
+              <p class="mb-2 text-foreground font-medium">That lets you define a value once and reuse it throughout your
+                overlay without hardcoding the same URL in multiple places.</p>
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">Controls can also be used in alerts</h3>
               <p class="mb-2">
                 Controls created on a static overlay can also parse inside alerts rendered on that same static overlay.
-                So if your underlying static overlay has a <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:myname]]]</code> Control, your alerts can use that value too.
+                So if your underlying static overlay has a <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:myname]]]</code> Control, your alerts
+                can use that value too.
               </p>
               <p class="mb-2 text-foreground font-medium">
-                The important rule is scope: the Control must exist on the static overlay that the alert is rendered through.
+                The important rule is scope: the Control must exist on the static overlay that the alert is rendered
+                through.
                 If it does not exist there, it will not parse.
               </p>
             </div>
@@ -716,8 +865,10 @@ const breadcrumbs: BreadcrumbItem[] = [
         <h2 class="mb-6 text-2xl font-bold" id="help">If you need more help</h2>
         <p class="mb-6 text-foreground">
           You can always reach out on <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>
-          or <a href="https://github.com/jasperfrontend/overlabels/issues" target="_blank" class="text-violet-400 hover:underline">open a new issue</a> on
-          <a href="https://github.com/jasperfrontend/overlabels" target="_blank" class="text-violet-400 hover:underline">Github</a>.
+          or <a href="https://github.com/jasperfrontend/overlabels/issues" target="_blank"
+                class="text-violet-400 hover:underline">open a new issue</a> on
+          <a href="https://github.com/jasperfrontend/overlabels" target="_blank"
+             class="text-violet-400 hover:underline">Github</a>.
         </p>
 
       </div>

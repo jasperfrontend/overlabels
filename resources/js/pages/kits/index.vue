@@ -48,9 +48,9 @@ interface Props {
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Overlay kits',
-    href: route('kits.index'),
+    href: route('kits.index')
   }
-]
+];
 
 defineProps<Props>();
 </script>
@@ -117,7 +117,8 @@ defineProps<Props>();
       <!-- Public kits from other users -->
       <template v-if="recentPublicKits && recentPublicKits.length > 0">
         <Heading title="Public kits" />
-        <p class="text-sm text-muted-foreground mb-3">Kits shared by the community. Copy any kit to use it in your own overlays.</p>
+        <p class="text-sm text-muted-foreground mb-3">Kits shared by the community. Copy any kit to use it in your own
+          overlays.</p>
         <div class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
           <KitCard
             v-for="kit in recentPublicKits"

@@ -23,7 +23,7 @@ const form = useForm({
   html: '',
   css: '',
   type: 'static',
-  is_public: true,
+  is_public: true
 });
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
@@ -34,7 +34,7 @@ const previewHtml = ref('');
 const mainTabs = [
   { key: 'meta', label: 'Meta', icon: InfoIcon },
   { key: 'code', label: 'Code', icon: Code },
-  { key: 'tags', label: 'Tags', icon: Brackets },
+  { key: 'tags', label: 'Tags', icon: Brackets }
 ] as const;
 
 const mainTab = ref<'meta' | 'code' | 'tags'>('meta');
@@ -51,7 +51,7 @@ const submitForm = () => {
     description: form.description,
     head: form.head,
     html: form.html,
-    css: form.css,
+    css: form.css
   });
   Object.assign(form, sanitized);
 
@@ -94,9 +94,12 @@ onMounted(() => {
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
-        <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags." description-class="text-sm text-muted-foreground" />
+        <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags."
+                 description-class="text-sm text-muted-foreground" />
         <div class="flex shrink-0 items-center gap-2">
-          <button type="button" @click="previewTemplate" class="btn btn-cancel">Preview <ExternalLink class="ml-2 h-4 w-4" /></button>
+          <button type="button" @click="previewTemplate" class="btn btn-cancel">Preview
+            <ExternalLink class="ml-2 h-4 w-4" />
+          </button>
           <button @click="submitForm" :disabled="form.processing" class="btn btn-primary">
             <Save class="mr-2 h-4 w-4" />
             Create Overlay
@@ -145,7 +148,8 @@ onMounted(() => {
             </div>
 
             <div>
-              <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
+              <label for="description"
+                     class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
               <textarea
                 id="description"
                 v-model="form.description"
@@ -177,7 +181,8 @@ onMounted(() => {
                         <Layout class="h-4 w-4" />
                         <span class="text-sm font-medium">Static Overlay</span>
                       </div>
-                      <p class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower count, stream title, etc.)</p>
+                      <p class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower
+                        count, stream title, etc.)</p>
                     </div>
                   </div>
                 </label>
@@ -199,7 +204,8 @@ onMounted(() => {
                         <Zap class="h-4 w-4" />
                         <span class="text-sm font-medium">Event Alert</span>
                       </div>
-                      <p class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower, subscription, raid, etc.)</p>
+                      <p class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower,
+                        subscription, raid, etc.)</p>
                     </div>
                   </div>
                 </label>
@@ -212,10 +218,12 @@ onMounted(() => {
               <strong class="text-accent-foreground/70">Event Alert tips:</strong>
               <ul class="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
                 <li>
-                  Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-based-template-tags" target="_blank">Help docs</a> for all
+                  Visit the <a class="text-violet-400 hover:underline"
+                               href="/help/conditionals#event-based-template-tags" target="_blank">Help docs</a> for all
                   event-based tags.
                 </li>
-                <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.</li>
+                <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.
+                </li>
                 <li>Keep alert overlays simple — they display briefly on screen.</li>
               </ul>
             </div>
@@ -264,7 +272,8 @@ onMounted(() => {
           <iframe v-if="previewHtml" :srcdoc="previewHtml" class="h-full w-full border-0" sandbox="allow-scripts" />
         </div>
         <div class="flex items-center justify-between">
-          <p class="text-sm text-muted-foreground">Tags are shown with sample data in preview. Press <kbd class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">ESC</kbd> to close this preview.</p>
+          <p class="text-sm text-muted-foreground">Tags are shown with sample data in preview. Press <kbd
+            class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">ESC</kbd> to close this preview.</p>
           <button class="btn btn-cancel" @click="showPreview = false">Close</button>
         </div>
       </DialogContent>

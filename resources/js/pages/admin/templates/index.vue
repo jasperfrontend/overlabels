@@ -26,7 +26,7 @@ const props = defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Templates', href: route('admin.templates.index') },
+  { title: 'Templates', href: route('admin.templates.index') }
 ];
 
 const search = ref(props.filters.search ?? '');
@@ -39,7 +39,7 @@ function applyFilters() {
   router.get(route('admin.templates.index'), {
     search: search.value || undefined,
     type: type.value || undefined,
-    owner: owner.value || undefined,
+    owner: owner.value || undefined
   }, { preserveState: true, replace: true });
 }
 
@@ -78,7 +78,8 @@ watch([search, type, owner], () => {
               <div class="font-medium">{{ t.name }}</div>
               <div class="font-mono text-xs text-muted-foreground">{{ t.slug }}</div>
             </div>
-            <a :href="route('admin.templates.show', t.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+            <a :href="route('admin.templates.show', t.id)"
+               class="shrink-0 text-primary text-xs hover:underline">View</a>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             <Badge variant="outline">{{ t.type }}</Badge>
@@ -99,37 +100,44 @@ watch([search, type, owner], () => {
       <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Name</th>
-              <th class="px-3 py-2">Owner</th>
-              <th class="px-3 py-2">Type</th>
-              <th class="px-3 py-2">Public</th>
-              <th class="px-3 py-2">Forks</th>
-              <th class="px-3 py-2">Views</th>
-              <th class="px-3 py-2">Created</th>
-              <th class="px-3 py-2"></th>
-            </tr>
+          <tr>
+            <th class="px-3 py-2">Name</th>
+            <th class="px-3 py-2">Owner</th>
+            <th class="px-3 py-2">Type</th>
+            <th class="px-3 py-2">Public</th>
+            <th class="px-3 py-2">Forks</th>
+            <th class="px-3 py-2">Views</th>
+            <th class="px-3 py-2">Created</th>
+            <th class="px-3 py-2"></th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="t in templates.data" :key="t.id" class="border-t border-sidebar">
-              <td class="px-3 py-2">
-                <div class="font-medium"><Link class="hover:underline" :href="route('admin.templates.show', t.id)">{{ t.name }}</Link></div>
-                <div class="text-xs text-muted-foreground font-mono">{{ t.slug }}</div>
-              </td>
-              <td class="px-3 py-2">
-                <a v-if="t.owner" :href="route('admin.users.show', t.owner.id)" class="hover:underline">{{ t.owner.name }}</a>
-                <span v-else class="text-muted-foreground">—</span>
-              </td>
-              <td class="px-3 py-2"><Badge variant="outline">{{ t.type }}</Badge></td>
-              <td class="px-3 py-2"><Badge :variant="t.is_public ? 'default' : 'secondary'">{{ t.is_public ? 'public' : 'private' }}</Badge></td>
-              <td class="px-3 py-2">{{ t.fork_count }}</td>
-              <td class="px-3 py-2">{{ t.view_count }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ t.created_at }}</td>
-              <td class="px-3 py-2">
-                <a :href="route('admin.templates.show', t.id)" class="text-primary text-xs hover:underline">View</a>
-              </td>
-            </tr>
-            <EmptyState v-if="templates.data.length === 0" :colspan="8" message="No templates found." />
+          <tr v-for="t in templates.data" :key="t.id" class="border-t border-sidebar">
+            <td class="px-3 py-2">
+              <div class="font-medium">
+                <Link class="hover:underline" :href="route('admin.templates.show', t.id)">{{ t.name }}</Link>
+              </div>
+              <div class="text-xs text-muted-foreground font-mono">{{ t.slug }}</div>
+            </td>
+            <td class="px-3 py-2">
+              <a v-if="t.owner" :href="route('admin.users.show', t.owner.id)" class="hover:underline">{{ t.owner.name
+                }}</a>
+              <span v-else class="text-muted-foreground">—</span>
+            </td>
+            <td class="px-3 py-2">
+              <Badge variant="outline">{{ t.type }}</Badge>
+            </td>
+            <td class="px-3 py-2">
+              <Badge :variant="t.is_public ? 'default' : 'secondary'">{{ t.is_public ? 'public' : 'private' }}</Badge>
+            </td>
+            <td class="px-3 py-2">{{ t.fork_count }}</td>
+            <td class="px-3 py-2">{{ t.view_count }}</td>
+            <td class="px-3 py-2 text-xs text-muted-foreground">{{ t.created_at }}</td>
+            <td class="px-3 py-2">
+              <a :href="route('admin.templates.show', t.id)" class="text-primary text-xs hover:underline">View</a>
+            </td>
+          </tr>
+          <EmptyState v-if="templates.data.length === 0" :colspan="8" message="No templates found." />
           </tbody>
         </table>
       </div>
@@ -137,7 +145,7 @@ watch([search, type, owner], () => {
       <div class="flex gap-1">
         <template v-for="link in templates.links" :key="link.label">
           <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm"
-            :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
           <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
         </template>
       </div>

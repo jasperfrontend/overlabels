@@ -3,7 +3,25 @@ import LoginSocial from '@/components/LoginSocial.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Github, Zap, ToggleLeft, Timer, Hash, Type, Calendar, SlidersHorizontal, GitFork, Layers, Code2, Shield, Heart, DollarSign, Menu, X } from 'lucide-vue-next';
+import {
+  ArrowRight,
+  Github,
+  Zap,
+  ToggleLeft,
+  Timer,
+  Hash,
+  Type,
+  Calendar,
+  SlidersHorizontal,
+  GitFork,
+  Layers,
+  Code2,
+  Shield,
+  Heart,
+  DollarSign,
+  Menu,
+  X
+} from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const syntaxTab = ref('static');
@@ -14,38 +32,38 @@ const controlTypes = [
     type: 'text',
     icon: Type,
     description: 'Strings up to 1000 chars. HTML stripped on save.',
-    example: '[[[c:myname]]] → JasperDiscovers',
+    example: '[[[c:myname]]] → JasperDiscovers'
   },
   {
     type: 'number',
     icon: Hash,
     description: 'Numeric values. Safely coerced, defaults to 0.',
-    example: '[[[c:goal_target]]] → 500',
+    example: '[[[c:goal_target]]] → 500'
   },
   {
     type: 'counter',
     icon: SlidersHorizontal,
     description: 'Integer counter. Increment or decrement from the dashboard.',
-    example: '[[[c:kill_count]]] → 14',
+    example: '[[[c:kill_count]]] → 14'
   },
   {
     type: 'timer',
     icon: Timer,
     description: 'Countup or countdown at 250ms resolution. State broadcast over WebSocket.',
-    example: '[[[c:round_timer]]] → 4:32',
+    example: '[[[c:round_timer]]] → 4:32'
   },
   {
     type: 'datetime',
     icon: Calendar,
     description: 'ISO 8601 datetime. For scheduled events, stream start times.',
-    example: '[[[c:next_event]]] → 2026-03-01T20:00:00Z',
+    example: '[[[c:next_event]]] → 2026-03-01T20:00:00Z'
   },
   {
     type: 'boolean',
     icon: ToggleLeft,
     description: 'Stores "1" or "0". Toggle overlay sections live from your dashboard.',
-    example: '[[[if:c:show_goal]]] → show or hide',
-  },
+    example: '[[[if:c:show_goal]]] → show or hide'
+  }
 ];
 
 const twitchEvents = [
@@ -57,7 +75,7 @@ const twitchEvents = [
   { type: 'channel.raid', label: 'Incoming Raid', tag: 'event.viewers' },
   { type: 'channel.channel_[...]_redemption.add', label: 'Channel Points', tag: 'event.reward.title' },
   { type: 'stream.online', label: 'Stream Online', tag: 'event.type' },
-  { type: 'stream.offline', label: 'Stream Offline', tag: '' },
+  { type: 'stream.offline', label: 'Stream Offline', tag: '' }
 ];
 
 const alertPipelineSteps = [
@@ -67,7 +85,7 @@ const alertPipelineSteps = [
   'Current overlay data merged with the event payload (event.viewers, event.user_name, etc.)',
   'Compiled alert broadcast to Pusher channel alerts.{twitch_id}',
   'Overlay receives the payload, renders into the alert DOM node, plays transition',
-  'Auto-dismisses after configured duration. Static overlay continues uninterrupted.',
+  'Auto-dismisses after configured duration. Static overlay continues uninterrupted.'
 ];
 </script>
 
@@ -89,7 +107,8 @@ const alertPipelineSteps = [
         property="og:description"
         content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
       />
-      <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+      <meta property="og:image"
+            content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="Overlabels • build Twitch overlays with HTML, CSS, and live data" />
@@ -101,7 +120,8 @@ const alertPipelineSteps = [
         name="twitter:description"
         content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
       />
-      <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+      <meta name="twitter:image"
+            content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
       <meta name="twitter:image:alt" content="Overlabels • build Twitch overlays with HTML, CSS, and live data" />
     </Head>
 
@@ -110,36 +130,44 @@ const alertPipelineSteps = [
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
           <Link href="/" class="flex items-center gap-2.5">
-            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt="" class="hidden h-8 w-8 dark:block" />
+            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt=""
+                                                                                    class="hidden h-8 w-8 dark:block" />
             <span class="text-lg font-bold tracking-tight">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </Link>
           <div class="hidden items-center gap-6 lg:flex">
             <a href="#tags" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Tags</a>
-            <a href="#controls" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Controls</a>
+            <a href="#controls"
+               class="text-sm text-muted-foreground transition-colors hover:text-foreground">Controls</a>
             <a href="#conditionals" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Conditionals</a>
             <a href="#events" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Events</a>
             <a href="#integrations" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Integrations</a>
             <a href="#kits" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Kits</a>
             <Link href="/help" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Help</Link>
-            <Link href="/help/manifesto" class="text-sm text-muted-foreground transition-colors hover:text-foreground">Why Overlabels</Link>
+            <Link href="/help/manifesto" class="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              Why Overlabels
+            </Link>
             <DarkModeToggle />
             <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm">
-              Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
+              Dashboard
+              <ArrowRight class="ml-1.5 h-4 w-4" />
             </Link>
             <LoginSocial v-else />
           </div>
           <div class="flex items-center gap-3 lg:hidden">
             <DarkModeToggle />
-            <button @click="mobileMenuOpen = !mobileMenuOpen" class="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground">
+            <button @click="mobileMenuOpen = !mobileMenuOpen"
+                    class="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground">
               <X v-if="mobileMenuOpen" class="h-5 w-5" />
               <Menu v-else class="h-5 w-5" />
             </button>
           </div>
         </div>
         <div class="container mx-auto px-4 pb-3 sm:px-6 lg:hidden">
-          <Link v-if="$page.props.auth.user" :href="route('dashboard.index')" class="btn btn-primary text-sm flex w-full justify-center">
-            Dashboard <ArrowRight class="ml-1.5 h-4 w-4" />
+          <Link v-if="$page.props.auth.user" :href="route('dashboard.index')"
+                class="btn btn-primary text-sm flex w-full justify-center">
+            Dashboard
+            <ArrowRight class="ml-1.5 h-4 w-4" />
           </Link>
           <LoginSocial v-else class="flex! w-full justify-center" />
         </div>
@@ -162,16 +190,24 @@ const alertPipelineSteps = [
             @click="mobileMenuOpen = false"
           >{{ item.label }}</a>
           <div class="my-2 border-t border-border/50"></div>
-          <Link href="/help" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Help</Link>
-          <Link href="/help/manifesto" class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" @click="mobileMenuOpen = false">Why Overlabels</Link>
+          <Link href="/help"
+                class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="mobileMenuOpen = false">Help
+          </Link>
+          <Link href="/help/manifesto"
+                class="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                @click="mobileMenuOpen = false">Why Overlabels
+          </Link>
         </div>
       </div>
     </nav>
 
     <!-- Closed Beta Banner -->
-    <div class="border-b border-purple-300 bg-purple-100 dark:border-purple-500/30 dark:bg-purple-950/40 py-3 text-center">
+    <div
+      class="border-b border-purple-300 bg-purple-100 dark:border-purple-500/30 dark:bg-purple-950/40 py-3 text-center">
       <p class="text-sm text-purple-800 dark:text-purple-200">
-        <span class="mr-1.5 inline-block rounded-full bg-purple-200 dark:bg-purple-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300">Closed Beta</span>
+        <span
+          class="mr-1.5 inline-block rounded-full bg-purple-200 dark:bg-purple-500/20 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300">Closed Beta</span>
         Overlabels is open to the first 100 Twitch streamers. Spots are limited while we polish the experience.
       </p>
     </div>
@@ -181,7 +217,9 @@ const alertPipelineSteps = [
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
           <div class="mb-6 flex flex-wrap items-center gap-3">
-            <Badge variant="outline" class="border-sky-500/40 px-3 py-1 font-mono text-xs text-sky-500"> Code-first · Live data · Instant updates </Badge>
+            <Badge variant="outline" class="border-sky-500/40 px-3 py-1 font-mono text-xs text-sky-500"> Code-first ·
+              Live data · Instant updates
+            </Badge>
             <Badge variant="outline" class="px-3 py-1 text-xs">Free · Open source</Badge>
           </div>
 
@@ -191,10 +229,13 @@ const alertPipelineSteps = [
           </h1>
 
           <p class="mb-4 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-            Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs, raids, and more. Connect Ko-fi and StreamLabs for live donation tracking. Update things instantly from your dashboard.
+            Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs,
+            raids, and more. Connect Ko-fi and StreamLabs for live donation tracking. Update things instantly from your
+            dashboard.
           </p>
           <p class="mb-14 max-w-2xl text-base text-muted-foreground">
-            No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage and <span class="text-sky-500">Overlabels keeps it live.</span>
+            No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage and <span
+            class="text-sky-500">Overlabels keeps it live.</span>
           </p>
 
           <!-- Hero code blocks -->
@@ -209,18 +250,21 @@ const alertPipelineSteps = [
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span
+                  class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">followers</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span
+                  class="text-foreground">followers</span
                 ><span class="text-zinc-500">&lt;/small&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
                 <div class="mt-2"></div>
                 <div><span class="text-sky-600 dark:text-sky-400">[[[if:followers_total &gt;= 1000]]]</span></div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"milestone"</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span
+                  class="text-emerald-600 dark:text-emerald-400">"milestone"</span
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-foreground">four digits. let's go.</span></div>
@@ -240,11 +284,13 @@ const alertPipelineSteps = [
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-emerald-600 dark:text-emerald-300">1,342</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span
+                  class="text-emerald-600 dark:text-emerald-300">1,342</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">followers</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span
+                  class="text-foreground">followers</span
                 ><span class="text-zinc-500">&lt;/small&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
@@ -261,10 +307,14 @@ const alertPipelineSteps = [
 
           <div class="flex flex-wrap gap-4">
             <Link v-if="!$page.props.auth.user" href="#get-started">
-              <button class="btn btn-primary">Get started free <ArrowRight class="ml-2 h-4 w-4" /></button>
+              <button class="btn btn-primary">Get started free
+                <ArrowRight class="ml-2 h-4 w-4" />
+              </button>
             </Link>
             <Link v-else :href="route('dashboard.index')">
-              <button class="btn btn-primary">Go to dashboard <ArrowRight class="ml-2 h-4 w-4" /></button>
+              <button class="btn btn-primary">Go to dashboard
+                <ArrowRight class="ml-2 h-4 w-4" />
+              </button>
             </Link>
             <Link href="/help/manifesto">
               <button class="btn btn-secondary">Read the manifesto</button>
@@ -281,7 +331,8 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">01 — Tags</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Simple tags. That’s it.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Use a simple tag format to pull in live Twitch data. It works in HTML, in CSS, and inside show/hide rules. Easy to read, easy to scan.
+            Use a simple tag format to pull in live Twitch data. It works in HTML, in CSS, and inside show/hide rules.
+            Easy to read, easy to scan.
           </p>
 
           <!-- Tabs -->
@@ -326,15 +377,19 @@ const alertPipelineSteps = [
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[subscribers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span
+                  class="text-amber-700 dark:text-amber-400">[[[subscribers_total]]]</span
                 ><span class="text-foreground"> subs</span><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-foreground">Latest: </span
-                ><span class="text-amber-700 dark:text-amber-400">[[[subscribers_latest_user_name]]]</span><span class="text-zinc-500">&lt;/span&gt;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span
+                  class="text-foreground">Latest: </span
+                ><span class="text-amber-700 dark:text-amber-400">[[[subscribers_latest_user_name]]]</span><span
+                  class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[channel_game]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;span&gt;</span><span
+                  class="text-amber-700 dark:text-amber-400">[[[channel_game]]]</span
                 ><span class="text-foreground"> | </span><span class="text-amber-700 dark:text-amber-400">[[[channel_title]]]</span
                 ><span class="text-zinc-500">&lt;/span&gt;</span>
                 </div>
@@ -350,27 +405,35 @@ const alertPipelineSteps = [
           <div v-show="syntaxTab === 'css'">
             <div class="mb-4 overflow-hidden rounded-md border border-border">
               <div class="border-b border-border bg-muted/50 px-4 py-2.5">
-                <span class="font-mono text-xs text-muted-foreground">overlay.css — live values can be used inside CSS</span>
+                <span
+                  class="font-mono text-xs text-muted-foreground">overlay.css — live values can be used inside CSS</span>
               </div>
               <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
-                <div><span class="text-sky-600 dark:text-sky-400">.follower-bar</span><span class="text-zinc-500"> &#123;</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">.follower-bar</span><span class="text-zinc-500"> &#123;</span>
+                </div>
                 <div>
                   &nbsp;&nbsp;<span class="text-zinc-600 dark:text-zinc-400">width</span><span class="text-zinc-500">: calc(</span
-                ><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span><span class="text-zinc-500"> / </span
-                ><span class="text-amber-700 dark:text-amber-400">[[[goals_latest_target]]]</span><span class="text-zinc-500"> * 100%);</span>
+                ><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span><span
+                  class="text-zinc-500"> / </span
+                ><span class="text-amber-700 dark:text-amber-400">[[[goals_latest_target]]]</span><span
+                  class="text-zinc-500"> * 100%);</span>
                 </div>
                 <div><span class="text-zinc-500">&#125;</span></div>
                 <div class="mt-3"></div>
-                <div><span class="text-sky-600 dark:text-sky-400">.stream-title::before</span><span class="text-zinc-500"> &#123;</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">.stream-title::before</span><span
+                  class="text-zinc-500"> &#123;</span></div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-600 dark:text-zinc-400">content</span><span class="text-zinc-500">: </span><span class="text-emerald-600 dark:text-emerald-400">"</span
-                ><span class="text-amber-700 dark:text-amber-400">[[[channel_title]]]</span><span class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">;</span>
+                  &nbsp;&nbsp;<span class="text-zinc-600 dark:text-zinc-400">content</span><span
+                  class="text-zinc-500">: </span><span class="text-emerald-600 dark:text-emerald-400">"</span
+                ><span class="text-amber-700 dark:text-amber-400">[[[channel_title]]]</span><span
+                  class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">;</span>
                 </div>
                 <div><span class="text-zinc-500">&#125;</span></div>
               </div>
             </div>
             <p class="text-sm text-muted-foreground">
-              Dynamic widths, generated content, colour values driven by data — anything a CSS value can express, a tag can provide.
+              Dynamic widths, generated content, colour values driven by data — anything a CSS value can express, a tag
+              can provide.
             </p>
           </div>
 
@@ -385,21 +448,25 @@ const alertPipelineSteps = [
                 ><span class="text-zinc-500">&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;h1&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.user_name]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;h1&gt;</span><span
+                  class="text-amber-700 dark:text-amber-400">[[[event.user_name]]]</span
                 ><span class="text-foreground"> just followed!</span><span class="text-zinc-500">&lt;/h1&gt;</span>
                 </div>
                 <div>
-                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-foreground">Follower #</span><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
+                  &nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span
+                  class="text-foreground">Follower #</span><span class="text-amber-700 dark:text-amber-400">[[[followers_total]]]</span
                 ><span class="text-zinc-500">&lt;/p&gt;</span>
                 </div>
                 <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
                 <div class="mt-2 text-xs text-muted-foreground/60">
-                  <span class="text-zinc-500">&lt;!--</span> First ever: wilko_dj <span class="text-zinc-500">--&gt;</span>
+                  <span class="text-zinc-500">&lt;!--</span> First ever: wilko_dj <span
+                  class="text-zinc-500">--&gt;</span>
                 </div>
               </div>
             </div>
             <p class="text-sm text-muted-foreground">
-              Event tags are merged with your static overlay data at render time. All static tags remain available inside alert templates — mix them
+              Event tags are merged with your static overlay data at render time. All static tags remain available
+              inside alert templates — mix them
               freely.
             </p>
           </div>
@@ -414,24 +481,31 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">02 — Controls</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Typed, mutable overlay state.</h2>
           <p class="mb-3 max-w-2xl text-lg text-muted-foreground">
-            Controls are named, typed values you define per template and update from your dashboard while the overlay is live in OBS. Change a value
+            Controls are named, typed values you define per template and update from your dashboard while the overlay is
+            live in OBS. Change a value
             and every connected overlay re-renders that tag instantly — no page reload, no OBS interaction required.
           </p>
           <p class="mb-12 max-w-2xl text-muted-foreground">
-            Reference any control with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">[[[c:key]]]</code> — in HTML,
+            Reference any control with <code
+            class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">[[[c:key]]]</code>
+            — in HTML,
             in CSS, and in conditional blocks.
             <Link href="/help/controls" class="ml-1 text-sky-500 hover:underline">Full controls reference →</Link>
           </p>
 
           <!-- Control types grid -->
           <div class="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div v-for="ctrl in controlTypes" :key="ctrl.type" class="rounded-md border border-border bg-background p-4">
+            <div v-for="ctrl in controlTypes" :key="ctrl.type"
+                 class="rounded-md border border-border bg-background p-4">
               <div class="mb-2 flex items-center gap-2">
                 <component :is="ctrl.icon" class="h-4 w-4 shrink-0 text-sky-500" />
                 <span class="font-mono text-sm font-semibold">{{ ctrl.type }}</span>
               </div>
               <p class="mb-3 text-sm text-muted-foreground">{{ ctrl.description }}</p>
-              <div class="overflow-x-auto rounded bg-accent px-3 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-400">{{ ctrl.example }}</div>
+              <div
+                class="overflow-x-auto rounded bg-accent px-3 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-400">
+                {{ ctrl.example }}
+              </div>
             </div>
           </div>
 
@@ -447,18 +521,25 @@ const alertPipelineSteps = [
               <div class="mt-2"></div>
               <div><span class="text-sky-600 dark:text-sky-400">[[[if:c:show_timer]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"timer </span
-              ><span class="text-sky-600 dark:text-sky-400">[[[if:c:round_timer &lt;= 10]]]</span><span class="text-emerald-600 dark:text-emerald-400">danger</span
-              ><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span><span class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span
+                class="text-emerald-600 dark:text-emerald-400">"timer </span
+              ><span class="text-sky-600 dark:text-sky-400">[[[if:c:round_timer &lt;= 10]]]</span><span
+                class="text-emerald-600 dark:text-emerald-400">danger</span
+              ><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span><span
+                class="text-emerald-600 dark:text-emerald-400">"</span><span class="text-zinc-500">&gt;</span>
               </div>
-              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">[[[c:round_timer]]]</span></div>
+              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">[[[c:round_timer]]]</span>
+              </div>
               <div>&nbsp;&nbsp;<span class="text-zinc-500">&lt;/div&gt;</span></div>
               <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
             </div>
           </div>
           <p class="mt-3 text-sm text-muted-foreground">
-            The timer ticks at 250ms resolution. The <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">danger</code> class applies
-            automatically when the countdown reaches 10 seconds. Flip the boolean from the dashboard to show or hide the block — live.
+            The timer ticks at 250ms resolution. The <code
+            class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">danger</code>
+            class applies
+            automatically when the countdown reaches 10 seconds. Flip the boolean from the dashboard to show or hide the
+            block — live.
           </p>
         </div>
       </div>
@@ -471,8 +552,10 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">03 — Conditional Rendering</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">A comparison engine in your template.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Any tag — Twitch data, control value, or event payload — can drive a conditional block. Evaluated client-side in the overlay with no
-            server round-trips and no <code class="rounded bg-muted px-1.5 text-sm">eval()</code>. Nesting supported up to 10 levels deep.
+            Any tag — Twitch data, control value, or event payload — can drive a conditional block. Evaluated
+            client-side in the overlay with no
+            server round-trips and no <code class="rounded bg-muted px-1.5 text-sm">eval()</code>. Nesting supported up
+            to 10 levels deep.
             <Link href="/help/conditionals" class="ml-1 text-sky-500 hover:underline">Full syntax reference →</Link>
           </p>
 
@@ -542,8 +625,10 @@ const alertPipelineSteps = [
               <div class="mt-3"></div>
               <div><span class="text-sky-600 dark:text-sky-400">[[[if:followers_total &gt;= 10000]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"tenk-badge"</span
-              ><span class="text-zinc-500">&gt;</span><span class="text-foreground">10K club</span><span class="text-zinc-500">&lt;/div&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;div class=</span><span
+                class="text-emerald-600 dark:text-emerald-400">"tenk-badge"</span
+              ><span class="text-zinc-500">&gt;</span><span class="text-foreground">10K club</span><span
+                class="text-zinc-500">&lt;/div&gt;</span>
               </div>
               <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
             </div>
@@ -559,17 +644,24 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">04 — Event Alerts</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Every Twitch event. One syntax.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Assign an alert template to any EventSub event. When the event fires, Overlabels renders the template with the payload merged into the tag
-            context, broadcasts the compiled alert to your overlay over WebSocket, and displays it with a configured transition and duration — all
+            Assign an alert template to any EventSub event. When the event fires, Overlabels renders the template with
+            the payload merged into the tag
+            context, broadcasts the compiled alert to your overlay over WebSocket, and displays it with a configured
+            transition and duration — all
             without any interaction from you.
           </p>
 
           <!-- Events grid -->
           <div class="mb-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div v-for="evt in twitchEvents" :key="evt.type" class="rounded-md border border-border bg-background p-4 w-[100%]">
+            <div v-for="evt in twitchEvents" :key="evt.type"
+                 class="rounded-md border border-border bg-background p-4 w-[100%]">
               <div class="mb-1 text-sm font-semibold">{{ evt.label }}</div>
-              <div class="mb-3 max-w-full overflow-x-hidden font-mono text-xs text-muted-foreground">{{ evt.type }}</div>
-              <div v-if="evt.tag" class="rounded bg-accent px-2.5 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-300">[[[{{ evt.tag }}]]]</div>
+              <div class="mb-3 max-w-full overflow-x-hidden font-mono text-xs text-muted-foreground">{{ evt.type }}
+              </div>
+              <div v-if="evt.tag"
+                   class="rounded bg-accent px-2.5 py-1.5 font-mono text-xs text-amber-700 dark:text-amber-300">
+                [[[{{ evt.tag }}]]]
+              </div>
               <div v-else class="rounded bg-background px-2.5 py-1.5 font-mono text-xs text-zinc-600">no payload</div>
             </div>
           </div>
@@ -585,7 +677,8 @@ const alertPipelineSteps = [
                 :key="i"
                 class="flex items-start gap-4 bg-background px-5 py-3.5 transition-colors hover:bg-muted/30"
               >
-                <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500/70">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500/70">{{ String(i + 1).padStart(2, '0')
+                  }}</span>
                 <span class="text-sm text-foreground">{{ step }}</span>
               </div>
             </div>
@@ -600,11 +693,15 @@ const alertPipelineSteps = [
         <div class="mx-auto max-w-5xl">
           <div class="mb-4 flex items-center gap-3">
             <Badge variant="outline" class="px-3 py-1 font-mono text-xs">05 — Integrations</Badge>
-            <Badge class="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">NEW</Badge>
+            <Badge class="border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">
+              NEW
+            </Badge>
           </div>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Donations. Tracked. Live.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Connect your Ko-fi or StreamLabs account and Overlabels automatically tracks every donation in real time. Counters update, alerts fire, and your overlay stays current - all without touching a single line of code after setup.
+            Connect your Ko-fi or StreamLabs account and Overlabels automatically tracks every donation in real time.
+            Counters update, alerts fire, and your overlay stays current - all without touching a single line of code
+            after setup.
           </p>
 
           <!-- Integration cards -->
@@ -621,12 +718,19 @@ const alertPipelineSteps = [
                 </div>
               </div>
               <p class="mb-4 text-sm text-muted-foreground">
-                Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the same alert pipeline as Twitch events.
+                Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the
+                same alert pipeline as Twitch events.
               </p>
               <div class="space-y-1.5 font-mono text-xs">
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:kofis_received]]]</div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:latest_kofi_supporter_name]]]</div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:kofi:total_received]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:kofi:kofis_received]]]
+                </div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:kofi:latest_kofi_supporter_name]]]
+                </div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:kofi:total_received]]]
+                </div>
               </div>
             </div>
 
@@ -642,12 +746,19 @@ const alertPipelineSteps = [
                 </div>
               </div>
               <p class="mb-4 text-sm text-muted-foreground">
-                One click to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.
+                One click to authenticate. Overlabels listens for donations in real time and auto-provisions six
+                controls the moment you connect.
               </p>
               <div class="space-y-1.5 font-mono text-xs">
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:donations_received]]]</div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:latest_donor_name]]]</div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">[[[c:streamlabs:total_received]]]</div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:streamlabs:donations_received]]]
+                </div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:streamlabs:latest_donor_name]]]
+                </div>
+                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                  [[[c:streamlabs:total_received]]]
+                </div>
               </div>
             </div>
           </div>
@@ -659,24 +770,33 @@ const alertPipelineSteps = [
             </div>
             <div class="overflow-x-auto bg-background p-5 font-mono text-sm leading-7">
               <div>
-                <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"donation-alert"</span><span class="text-zinc-500">&gt;</span>
+                <span class="text-zinc-500">&lt;div class=</span><span class="text-emerald-600 dark:text-emerald-400">"donation-alert"</span><span
+                class="text-zinc-500">&gt;</span>
               </div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;h2&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.from_name]]]</span><span class="text-foreground"> donated </span><span class="text-amber-700 dark:text-amber-400">[[[event.formatted_amount]]]</span><span class="text-zinc-500">&lt;/h2&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;h2&gt;</span><span
+                class="text-amber-700 dark:text-amber-400">[[[event.from_name]]]</span><span class="text-foreground"> donated </span><span
+                class="text-amber-700 dark:text-amber-400">[[[event.formatted_amount]]]</span><span
+                class="text-zinc-500">&lt;/h2&gt;</span>
               </div>
               <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[if:event.message]]]</span></div>
               <div>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span class="text-amber-700 dark:text-amber-400">[[[event.message]]]</span><span class="text-zinc-500">&lt;/p&gt;</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-zinc-500">&lt;p&gt;</span><span
+                class="text-amber-700 dark:text-amber-400">[[[event.message]]]</span><span class="text-zinc-500">&lt;/p&gt;</span>
               </div>
               <div>&nbsp;&nbsp;<span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
               <div>
-                &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span class="text-foreground">via </span><span class="text-amber-700 dark:text-amber-400">[[[event.source]]]</span><span class="text-zinc-500">&lt;/small&gt;</span>
+                &nbsp;&nbsp;<span class="text-zinc-500">&lt;small&gt;</span><span
+                class="text-foreground">via </span><span
+                class="text-amber-700 dark:text-amber-400">[[[event.source]]]</span><span class="text-zinc-500">&lt;/small&gt;</span>
               </div>
               <div><span class="text-zinc-500">&lt;/div&gt;</span></div>
             </div>
           </div>
           <p class="mt-3 text-sm text-muted-foreground">
-            Ko-fi and StreamLabs expose the same normalized event tags. Write your donation alert once and it works for both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code> tells your overlay which platform it came from.
+            Ko-fi and StreamLabs expose the same normalized event tags. Write your donation alert once and it works for
+            both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code>
+            tells your overlay which platform it came from.
           </p>
         </div>
       </div>
@@ -689,8 +809,10 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">06 — Kits &amp; Copying</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Good design compounds.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Any public template or kit can be copied. One click, one copy, fully yours to modify, extend, or break. An Overlay Kit is a collection of
-            templates - a static overlay, a follower alert, a subscription alert, a raid alert - designed as a cohesive visual system. Copy the kit,
+            Any public template or kit can be copied. One click, one copy, fully yours to modify, extend, or break. An
+            Overlay Kit is a collection of
+            templates - a static overlay, a follower alert, a subscription alert, a raid alert - designed as a cohesive
+            visual system. Copy the kit,
             get everything at once.
           </p>
 
@@ -706,7 +828,8 @@ const alertPipelineSteps = [
               <Layers class="mb-4 h-8 w-8 text-sky-500" />
               <h3 class="mb-2 font-semibold">Overlay Kits</h3>
               <p class="text-sm text-muted-foreground">
-                Collections of templates sharing a visual language. Copy the kit, get the whole system. No assembly required.
+                Collections of templates sharing a visual language. Copy the kit, get the whole system. No assembly
+                required.
               </p>
             </div>
             <div class="rounded-md border border-border bg-background p-6">
@@ -728,20 +851,25 @@ const alertPipelineSteps = [
           <Badge variant="outline" class="mb-4 px-3 py-1 font-mono text-xs">07 — Zero to Overlay</Badge>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">From signup to OBS in minutes.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            When you sign up, Overlabels runs an automated onboarding pipeline: generates your per-user webhook secret, copies the starter kit into
-            your account, auto-assigns alert templates to event types, and generates your full personalised tag set from your live Twitch data. You
+            When you sign up, Overlabels runs an automated onboarding pipeline: generates your per-user webhook secret,
+            copies the starter kit into
+            your account, auto-assigns alert templates to event types, and generates your full personalised tag set from
+            your live Twitch data. You
             arrive to a working overlay.
           </p>
 
           <div class="grid gap-10 sm:grid-cols-2">
             <div>
-              <h3 class="mb-5 flex items-center gap-2 text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-                <Zap class="h-4 w-4 text-sky-500" /> Automated on signup
+              <h3
+                class="mb-5 flex items-center gap-2 text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+                <Zap class="h-4 w-4 text-sky-500" />
+                Automated on signup
               </h3>
               <ul class="space-y-4 text-sm">
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">01</span>
-                  <span class="text-muted-foreground">Per-user webhook secret generated for HMAC-SHA256 validation</span>
+                  <span
+                    class="text-muted-foreground">Per-user webhook secret generated for HMAC-SHA256 validation</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">02</span>
@@ -749,7 +877,8 @@ const alertPipelineSteps = [
                 </li>
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">03</span>
-                  <span class="text-muted-foreground">Alert templates auto-assigned to event types by keyword matching</span>
+                  <span
+                    class="text-muted-foreground">Alert templates auto-assigned to event types by keyword matching</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">04</span>
@@ -759,28 +888,36 @@ const alertPipelineSteps = [
             </div>
 
             <div>
-              <h3 class="mb-5 flex items-center gap-2 text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-                <Code2 class="h-4 w-4 text-sky-500" /> Personalised testing page
+              <h3
+                class="mb-5 flex items-center gap-2 text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+                <Code2 class="h-4 w-4 text-sky-500" />
+                Personalised testing page
               </h3>
               <p class="mb-4 text-sm text-muted-foreground">
-                The <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-sky-600 dark:text-sky-400">/testing</code> page gives you ready-to-run
-                <a href="https://github.com/twitchdev/twitch-cli" target="_blank" rel="noopener" class="text-sky-500 hover:underline">Twitch CLI</a>
+                The <code
+                class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-xs text-sky-600 dark:text-sky-400">/testing</code>
+                page gives you ready-to-run
+                <a href="https://github.com/twitchdev/twitch-cli" target="_blank" rel="noopener"
+                   class="text-sky-500 hover:underline">Twitch CLI</a>
                 commands for every event type, pre-filled with your credentials.
               </p>
               <div class="overflow-x-auto rounded-md bg-background p-4 font-mono text-xs leading-6">
                 <div><span class="text-zinc-500">$ twitch event trigger channel.follow \</span></div>
                 <div><span class="text-zinc-500">&nbsp;&nbsp;--transport=webhook \</span></div>
                 <div>
-                  <span class="text-zinc-500">&nbsp;&nbsp;-F </span><span class="text-emerald-600 dark:text-emerald-400">https://overlabels.com/api/twitch/webhook</span
+                  <span class="text-zinc-500">&nbsp;&nbsp;-F </span><span
+                  class="text-emerald-600 dark:text-emerald-400">https://overlabels.com/api/twitch/webhook</span
                 ><span class="text-zinc-500"> \</span>
                 </div>
                 <div>
                   <span class="text-zinc-500">&nbsp;&nbsp;-s </span><span class="text-amber-700 dark:text-amber-300">your_webhook_secret</span
                 ><span class="text-zinc-500"> \</span>
                 </div>
-                <div><span class="text-zinc-500">&nbsp;&nbsp;--to-user </span><span class="text-amber-700 dark:text-amber-300">your_twitch_id</span></div>
+                <div><span class="text-zinc-500">&nbsp;&nbsp;--to-user </span><span
+                  class="text-amber-700 dark:text-amber-300">your_twitch_id</span></div>
               </div>
-              <p class="mt-3 text-xs text-muted-foreground">Commands are blurred by default and revealed on hover. No secrets exposed in source.</p>
+              <p class="mt-3 text-xs text-muted-foreground">Commands are blurred by default and revealed on hover. No
+                secrets exposed in source.</p>
             </div>
           </div>
         </div>
@@ -800,12 +937,15 @@ const alertPipelineSteps = [
           </p>
 
           <div v-if="$page.props.auth.user" class="flex flex-col items-center gap-4">
-            <Link :href="route('dashboard.index')" class="btn btn-primary px-8 text-base"> Go to Dashboard <ArrowRight class="ml-2 h-5 w-5" /> </Link>
+            <Link :href="route('dashboard.index')" class="btn btn-primary px-8 text-base"> Go to Dashboard
+              <ArrowRight class="ml-2 h-5 w-5" />
+            </Link>
           </div>
           <div v-else class="flex flex-col items-center gap-6">
             <LoginSocial />
             <p class="text-xs text-muted-foreground">
-              Authenticate with Twitch. You must have an email address attached to your account before you can login. Revoke access anytime from your
+              Authenticate with Twitch. You must have an email address attached to your account before you can login.
+              Revoke access anytime from your
               Twitch settings.
             </p>
           </div>
@@ -818,7 +958,8 @@ const alertPipelineSteps = [
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div class="flex items-center gap-2.5">
-            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt="" class="hidden h-8 w-8 dark:block" />
+            <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt=""
+                                                                                    class="hidden h-8 w-8 dark:block" />
             <span class="font-semibold">Overlabels</span>
             <Badge variant="outline" class="text-xs">Beta</Badge>
           </div>
@@ -834,14 +975,16 @@ const alertPipelineSteps = [
               rel="noopener"
               class="flex items-center gap-1.5 transition-colors hover:text-foreground"
             >
-              GitHub <Github class="h-4 w-4" />
+              GitHub
+              <Github class="h-4 w-4" />
             </a>
           </div>
         </div>
         <div class="border-t border-border/50 pt-8 text-center text-xs text-muted-foreground">
           Made by JasperDiscovers for the Twitch streaming community. Forever free, forever open.<br />
           First live notification ever received: a follow from
-          <a href="https://twitch.tv/wilko_dj" target="_blank" rel="noopener" class="font-semibold text-foreground hover:text-sky-500">wilko_dj</a>.
+          <a href="https://twitch.tv/wilko_dj" target="_blank" rel="noopener"
+             class="font-semibold text-foreground hover:text-sky-500">wilko_dj</a>.
           Thanks for making it real.<br />
           FAQ: Will you support Kick.com? No.
         </div>

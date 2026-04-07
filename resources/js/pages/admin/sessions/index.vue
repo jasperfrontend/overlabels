@@ -53,7 +53,7 @@ defineProps<{ sessions: Paginator }>();
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Sessions', href: route('admin.sessions.index') },
+  { title: 'Sessions', href: route('admin.sessions.index') }
 ];
 
 function invalidate(id: string) {
@@ -96,7 +96,7 @@ const banForm = useForm({
   ban_user: false,
   ban_ip: false,
   comment: '',
-  duration: 'permanent',
+  duration: 'permanent'
 });
 
 function openBanForm(session: Session, banUser: boolean, banIp: boolean) {
@@ -115,7 +115,7 @@ function closeBanForm() {
 function submitBan() {
   banForm.post(route('admin.bans.from-session'), {
     preserveScroll: true,
-    onSuccess: () => closeBanForm(),
+    onSuccess: () => closeBanForm()
   });
 }
 
@@ -125,7 +125,7 @@ const durations = [
   { value: '24h', label: '24 hours' },
   { value: '7d', label: '7 days' },
   { value: '30d', label: '30 days' },
-  { value: 'permanent', label: 'Permanent' },
+  { value: 'permanent', label: 'Permanent' }
 ];
 
 const locationFields: { key: keyof IpLocation; label: string }[] = [
@@ -141,7 +141,7 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
   { key: 'currencyCode', label: 'Currency' },
   { key: 'isp', label: 'ISP' },
   { key: 'org', label: 'Organization' },
-  { key: 'asName', label: 'AS' },
+  { key: 'asName', label: 'AS' }
 ];
 </script>
 
@@ -167,12 +167,16 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
           <select v-model="banForm.duration" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
             <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
           </select>
-          <button @click="submitBan" :disabled="banForm.processing" class="rounded bg-destructive px-3 py-1.5 text-destructive-foreground text-sm hover:bg-destructive/90 disabled:opacity-50">
+          <button @click="submitBan" :disabled="banForm.processing"
+                  class="rounded bg-destructive px-3 py-1.5 text-destructive-foreground text-sm hover:bg-destructive/90 disabled:opacity-50">
             Confirm Ban
           </button>
-          <button @click="closeBanForm" class="rounded border border-sidebar px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
+          <button @click="closeBanForm" class="rounded border border-sidebar px-3 py-1.5 text-sm hover:bg-muted">
+            Cancel
+          </button>
         </div>
-        <div v-if="banForm.errors.ban_user || banForm.errors.ban_ip || banForm.errors.session_id" class="text-sm text-destructive">
+        <div v-if="banForm.errors.ban_user || banForm.errors.ban_ip || banForm.errors.session_id"
+             class="text-sm text-destructive">
           {{ banForm.errors.ban_user || banForm.errors.ban_ip || banForm.errors.session_id }}
         </div>
       </div>
@@ -184,7 +188,8 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
           <div class="flex items-start justify-between gap-2">
             <div>
               <div class="font-medium flex items-center gap-2">
-                <a v-if="session.user" :href="route('admin.users.show', session.user.id)" class="hover:underline">{{ session.user.name }}</a>
+                <a v-if="session.user" :href="route('admin.users.show', session.user.id)"
+                   class="hover:underline">{{ session.user.name }}</a>
                 <span v-else class="text-muted-foreground">Guest</span>
                 <Badge v-if="session.is_user_banned" variant="destructive" class="text-[10px]">Banned</Badge>
                 <Badge v-if="session.is_ip_banned" variant="destructive" class="text-[10px]">IP Banned</Badge>
@@ -192,13 +197,20 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
               <div class="font-mono text-xs text-muted-foreground">{{ session.id.substring(0, 24) }}…</div>
             </div>
             <div class="flex flex-col gap-1 shrink-0">
-              <button @click="invalidate(session.id)" class="text-xs text-destructive hover:underline">Invalidate</button>
-              <button v-if="session.user && !session.is_user_banned" @click="openBanForm(session, true, false)" class="text-xs text-destructive hover:underline">Ban User</button>
-              <button v-if="session.ip_address && !session.is_ip_banned" @click="openBanForm(session, false, true)" class="text-xs text-destructive hover:underline">Ban IP</button>
+              <button @click="invalidate(session.id)" class="text-xs text-destructive hover:underline">Invalidate
+              </button>
+              <button v-if="session.user && !session.is_user_banned" @click="openBanForm(session, true, false)"
+                      class="text-xs text-destructive hover:underline">Ban User
+              </button>
+              <button v-if="session.ip_address && !session.is_ip_banned" @click="openBanForm(session, false, true)"
+                      class="text-xs text-destructive hover:underline">Ban IP
+              </button>
             </div>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)" class="font-mono hover:underline">{{ session.ip_address }}</button>
+            <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)" class="font-mono hover:underline">
+              {{ session.ip_address }}
+            </button>
             <span v-else>No IP</span>
             <span>Active {{ session.last_activity_human }}</span>
           </div>
@@ -209,44 +221,53 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
       <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">User</th>
-              <th class="px-3 py-2">IP Address</th>
-              <th class="px-3 py-2">Status</th>
-              <th class="px-3 py-2">Last Activity</th>
-              <th class="px-3 py-2">Session ID</th>
-              <th class="px-3 py-2"></th>
-            </tr>
+          <tr>
+            <th class="px-3 py-2">User</th>
+            <th class="px-3 py-2">IP Address</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">Last Activity</th>
+            <th class="px-3 py-2">Session ID</th>
+            <th class="px-3 py-2"></th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="session in sessions.data" :key="session.id" class="border-t border-sidebar">
-              <td class="px-3 py-2">
-                <div v-if="session.user">
-                  <a :href="route('admin.users.show', session.user.id)" class="hover:underline">{{ session.user.name }}</a>
-                </div>
-                <span v-else class="text-muted-foreground">Guest</span>
-              </td>
-              <td class="px-3 py-2 font-mono text-xs">
-                <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)" class="text-muted-foreground cursor-pointer hover:text-foreground hover:underline">{{ session.ip_address }}</button>
-                <span v-else class="text-muted-foreground">&mdash;</span>
-              </td>
-              <td class="px-3 py-2">
-                <div class="flex gap-1">
-                  <Badge v-if="session.is_user_banned" variant="destructive" class="text-[10px]">User Banned</Badge>
-                  <Badge v-if="session.is_ip_banned" variant="destructive" class="text-[10px]">IP Banned</Badge>
-                </div>
-              </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ session.last_activity_human }}</td>
-              <td class="px-3 py-2 font-mono text-xs text-muted-foreground">{{ session.id.substring(0, 16) }}…</td>
-              <td class="px-3 py-2">
-                <div class="flex gap-2">
-                  <button @click="invalidate(session.id)" class="text-xs text-destructive hover:underline">Invalidate</button>
-                  <button v-if="session.user && !session.is_user_banned" @click="openBanForm(session, true, false)" class="text-xs text-destructive hover:underline">Ban User</button>
-                  <button v-if="session.ip_address && !session.is_ip_banned" @click="openBanForm(session, false, true)" class="text-xs text-destructive hover:underline">Ban IP</button>
-                </div>
-              </td>
-            </tr>
-            <EmptyState v-if="sessions.data.length === 0" :colspan="6" message="No sessions found." />
+          <tr v-for="session in sessions.data" :key="session.id" class="border-t border-sidebar">
+            <td class="px-3 py-2">
+              <div v-if="session.user">
+                <a :href="route('admin.users.show', session.user.id)" class="hover:underline">{{ session.user.name
+                  }}</a>
+              </div>
+              <span v-else class="text-muted-foreground">Guest</span>
+            </td>
+            <td class="px-3 py-2 font-mono text-xs">
+              <button v-if="session.ip_address" @click="lookupIp(session.ip_address!)"
+                      class="text-muted-foreground cursor-pointer hover:text-foreground hover:underline">
+                {{ session.ip_address }}
+              </button>
+              <span v-else class="text-muted-foreground">&mdash;</span>
+            </td>
+            <td class="px-3 py-2">
+              <div class="flex gap-1">
+                <Badge v-if="session.is_user_banned" variant="destructive" class="text-[10px]">User Banned</Badge>
+                <Badge v-if="session.is_ip_banned" variant="destructive" class="text-[10px]">IP Banned</Badge>
+              </div>
+            </td>
+            <td class="px-3 py-2 text-xs text-muted-foreground">{{ session.last_activity_human }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-muted-foreground">{{ session.id.substring(0, 16) }}…</td>
+            <td class="px-3 py-2">
+              <div class="flex gap-2">
+                <button @click="invalidate(session.id)" class="text-xs text-destructive hover:underline">Invalidate
+                </button>
+                <button v-if="session.user && !session.is_user_banned" @click="openBanForm(session, true, false)"
+                        class="text-xs text-destructive hover:underline">Ban User
+                </button>
+                <button v-if="session.ip_address && !session.is_ip_banned" @click="openBanForm(session, false, true)"
+                        class="text-xs text-destructive hover:underline">Ban IP
+                </button>
+              </div>
+            </td>
+          </tr>
+          <EmptyState v-if="sessions.data.length === 0" :colspan="6" message="No sessions found." />
           </tbody>
         </table>
       </div>
@@ -265,7 +286,8 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
         <div v-else-if="ipError" class="py-4 text-center text-sm text-destructive">{{ ipError }}</div>
 
         <div v-else-if="ipLocation" class="space-y-1">
-          <div v-for="field in locationFields" :key="field.key" class="flex justify-between gap-4 text-sm border-b border-border py-1.5 last:border-0">
+          <div v-for="field in locationFields" :key="field.key"
+               class="flex justify-between gap-4 text-sm border-b border-border py-1.5 last:border-0">
             <span class="text-muted-foreground shrink-0">{{ field.label }}</span>
             <span class="font-mono text-right">{{ ipLocation[field.key] ?? '—' }}</span>
           </div>

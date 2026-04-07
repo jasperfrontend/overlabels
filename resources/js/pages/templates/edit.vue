@@ -13,12 +13,32 @@ import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
-import {Brackets, Code, InfoIcon, RefreshCcwDot, Save, ExternalLink, Split, Trash, MoreVertical, SlidersHorizontal, SquarePenIcon, Target, ImageIcon} from 'lucide-vue-next';
+import {
+  Brackets,
+  Code,
+  InfoIcon,
+  RefreshCcwDot,
+  Save,
+  ExternalLink,
+  Split,
+  Trash,
+  MoreVertical,
+  SlidersHorizontal,
+  SquarePenIcon,
+  Target,
+  ImageIcon
+} from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { stripScriptsFromFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 interface TemplateTag {
   display_tag: string;
@@ -27,9 +47,9 @@ interface TemplateTag {
 }
 
 interface OverlayOption {
-  id: number
-  name: string
-  slug: string
+  id: number;
+  name: string;
+  slug: string;
 }
 
 interface Props {
@@ -68,7 +88,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  template: Object,
+  template: Object
 });
 
 const { triggerLinkWarning } = useLinkWarning();
@@ -80,7 +100,7 @@ const {
   deleteTemplate,
   toastMessage: templateToastMessage,
   toastType: templateToastType,
-  showToast: showTemplateToast,
+  showToast: showTemplateToast
 } = useTemplateActions(props.template);
 
 const form = useForm({
@@ -89,14 +109,15 @@ const form = useForm({
   head: props?.template?.head || '',
   html: props?.template?.html || '',
   css: props?.template?.css || '',
-  is_public: props?.template?.is_public,
+  is_public: props?.template?.is_public
 });
 
 function getListContext(): { title: string; href: string } {
   try {
     const stored = sessionStorage.getItem('templates_list_context');
     if (stored) return JSON.parse(stored);
-  } catch { /* ignore */ }
+  } catch { /* ignore */
+  }
   return { title: 'My overlays', href: route('templates.index') };
 }
 
@@ -105,16 +126,16 @@ const listContext = getListContext();
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: listContext.title,
-    href: listContext.href,
+    href: listContext.href
   },
   {
     title: props.template?.name || 'Template',
-    href: `/templates/${props.template?.id}`,
+    href: `/templates/${props.template?.id}`
   },
   {
     title: 'Edit',
-    href: route('templates.edit', props.template),
-  },
+    href: route('templates.edit', props.template)
+  }
 ];
 
 const mainTabs = computed(() => {
@@ -124,7 +145,7 @@ const mainTabs = computed(() => {
     { key: 'tags', label: 'Tags', icon: Brackets },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
     { key: 'panel', label: 'Values', icon: SquarePenIcon },
-    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
+    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon }
   ];
   if (props.template.type === 'alert') {
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
@@ -144,8 +165,8 @@ function saveTargeting() {
     {
       preserveScroll: true,
       onSuccess: () => pushToast('Targeting settings saved.', 'success'),
-      onError: () => pushToast('Failed to save targeting settings.', 'error'),
-    },
+      onError: () => pushToast('Failed to save targeting settings.', 'error')
+    }
   );
 }
 
@@ -175,7 +196,7 @@ const submitForm = () => {
     description: form.description,
     head: form.head,
     html: form.html,
-    css: form.css,
+    css: form.css
   });
   Object.assign(form, sanitized);
 
@@ -186,10 +207,10 @@ const submitForm = () => {
         removed > 0
           ? `Saved! Also removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported.`
           : 'Overlay saved successfully!',
-        removed > 0 ? 'warning' : 'success',
+        removed > 0 ? 'warning' : 'success'
       );
     },
-    onError: () => pushToast('Failed to save overlay.', 'error'),
+    onError: () => pushToast('Failed to save overlay.', 'error')
   });
 };
 
@@ -204,10 +225,10 @@ onMounted(() => {
     () => {
       triggerLinkWarning(
         () => openExternalLink(`/overlay/${props.template?.slug}/public`, '_blank'),
-        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.',
+        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.'
       );
     },
-    { description: 'Preview in new tab' },
+    { description: 'Preview in new tab' }
   );
 });
 
@@ -254,7 +275,8 @@ onMounted(() => {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem v-if="canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+              <DropdownMenuItem v-if="canDelete" class="text-destructive focus:text-destructive"
+                                @click="deleteTemplate">
                 <Trash class="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -269,7 +291,8 @@ onMounted(() => {
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
         <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card">
-          <div class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
+          <div
+            class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
               v-for="(tab, index) in mainTabs"
               :key="tab.key"
@@ -308,7 +331,8 @@ onMounted(() => {
             </div>
 
             <div>
-              <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
+              <label for="description"
+                     class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
               <textarea id="description" v-model="form.description" rows="3" class="input-border w-full" />
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
             </div>
@@ -336,7 +360,9 @@ onMounted(() => {
 
           <!-- Controls Tab -->
           <div v-if="mainTab === 'controls'" class="p-4">
-            <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
+            <ControlsManager :template="template" :initial-controls="localControls"
+                             :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
+                             @change="localControls = $event" />
           </div>
 
           <!-- Values Tab -->

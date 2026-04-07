@@ -43,8 +43,8 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Event Alerts Builder',
-    href: '/alerts',
-  },
+    href: '/alerts'
+  }
 ];
 
 const localMappings = ref<EventMapping[]>(
@@ -53,8 +53,8 @@ const localMappings = ref<EventMapping[]>(
     duration_ms: mapping.duration_ms || 5000,
     transition_in: mapping.transition_in || 'fade',
     transition_out: mapping.transition_out || 'fade',
-    enabled: mapping.enabled || false,
-  })),
+    enabled: mapping.enabled || false
+  }))
 );
 
 // Build local external mappings for each connected service, one entry per event type
@@ -73,7 +73,7 @@ function buildExternalMappings(): ExternalEventMapping[] {
         duration_ms: existing?.duration_ms ?? 5000,
         transition_in: existing?.transition_in ?? 'fade',
         transition_out: existing?.transition_out ?? 'fade',
-        enabled: existing?.enabled ?? false,
+        enabled: existing?.enabled ?? false
       });
     }
   }
@@ -139,7 +139,7 @@ const saveAllMappings = async () => {
       duration_ms: mapping.duration_ms,
       transition_in: mapping.transition_in,
       transition_out: mapping.transition_out,
-      enabled: mapping.enabled,
+      enabled: mapping.enabled
     }));
 
     await axios.put('/alerts/bulk', { mappings: mappingsToSave });
@@ -153,7 +153,7 @@ const saveAllMappings = async () => {
         duration_ms: m.duration_ms,
         transition_in: m.transition_in,
         transition_out: m.transition_out,
-        enabled: m.enabled,
+        enabled: m.enabled
       }));
 
       await axios.put('/alerts/external/bulk', { mappings: externalToSave });
@@ -175,7 +175,7 @@ const saveAllMappings = async () => {
 };
 
 const serviceLabel: Record<string, string> = {
-  kofi: 'Ko-fi',
+  kofi: 'Ko-fi'
 };
 </script>
 
@@ -229,8 +229,10 @@ const serviceLabel: Record<string, string> = {
         <div class="flex gap-3">
           <AlertTriangleIcon class="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
           <div>
-            <Heading title="No Alert Templates Available" description="Create your first alert template to start configuring events." />
-            <Link :href="route('templates.create')" class="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
+            <Heading title="No Alert Templates Available"
+                     description="Create your first alert template to start configuring events." />
+            <Link :href="route('templates.create')"
+                  class="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
               <Sparkles class="h-4 w-4" />
               Create your first template
             </Link>
@@ -280,13 +282,16 @@ const serviceLabel: Record<string, string> = {
                 <span :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                   {{ getTemplateName(mapping.template_id) }}
                 </span>
-                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
+                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000
+                  }}s · in: {{ transitionInTypes[mapping.transition_in]
+                  }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
               </div>
             </div>
 
             <!-- Status Indicator -->
             <div class="flex items-center gap-2">
-              <div v-if="mapping.enabled && !mapping.template_id" class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
+              <div v-if="mapping.enabled && !mapping.template_id" class="h-2 w-2 rounded-full bg-yellow-500"
+                   title="Template not selected"></div>
               <div v-else-if="mapping.enabled" class="h-2 w-2 rounded-full bg-green-500" title="Active"></div>
               <svg
                 class="h-5 w-5 text-muted-foreground transition-transform"
@@ -317,7 +322,8 @@ const serviceLabel: Record<string, string> = {
                   }"
                 >
                   <option :value="null">Select a template...</option>
-                  <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id" :value="template.id">
+                  <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id"
+                          :value="template.id">
                     {{ template.name }}
                   </option>
                 </select>
@@ -370,11 +376,14 @@ const serviceLabel: Record<string, string> = {
             </div>
 
             <!-- Preview Description -->
-            <div v-if="mapping.template_id" class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
+            <div v-if="mapping.template_id"
+                 class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
               <p class="text-sm">
                 <span class="font-medium">Preview:</span>
-                When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the "{{ getTemplateName(mapping.template_id) }}" alert will
-                enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
+                When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the
+                "{{ getTemplateName(mapping.template_id) }}" alert will
+                enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for
+                {{ mapping.duration_ms / 1000 }} seconds,
                 then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
               </p>
             </div>
@@ -422,7 +431,8 @@ const serviceLabel: Record<string, string> = {
                       <h3 class="font-medium text-foreground">
                         {{ externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type }}
                       </h3>
-                      <span class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-56">
+                      <span
+                        class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-56">
                         {{ mapping.event_type }}
                       </span>
                     </div>
@@ -432,13 +442,15 @@ const serviceLabel: Record<string, string> = {
                       <span :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                         {{ getTemplateName(mapping.overlay_template_id) }}
                       </span>
-                      <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in] }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
+                      <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in]
+                        }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
                     </div>
                   </div>
 
                   <!-- Status Indicator -->
                   <div class="flex items-center gap-2">
-                    <div v-if="mapping.enabled && !mapping.overlay_template_id" class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
+                    <div v-if="mapping.enabled && !mapping.overlay_template_id"
+                         class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
                     <div v-else-if="mapping.enabled" class="h-2 w-2 rounded-full bg-green-500" title="Active"></div>
                     <svg
                       class="h-5 w-5 text-muted-foreground transition-transform"
@@ -469,11 +481,13 @@ const serviceLabel: Record<string, string> = {
                         }"
                       >
                         <option :value="null">Select a template...</option>
-                        <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id" :value="template.id">
+                        <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id"
+                                :value="template.id">
                           {{ template.name }}
                         </option>
                       </select>
-                      <p v-if="!mapping.overlay_template_id" class="text-xs text-yellow-600">Select a template to show alerts</p>
+                      <p v-if="!mapping.overlay_template_id" class="text-xs text-yellow-600">Select a template to show
+                        alerts</p>
                     </div>
 
                     <!-- Duration Input -->
@@ -522,11 +536,14 @@ const serviceLabel: Record<string, string> = {
                   </div>
 
                   <!-- Preview Description -->
-                  <div v-if="mapping.overlay_template_id" class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
+                  <div v-if="mapping.overlay_template_id"
+                       class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
                     <p class="text-sm">
                       <span class="font-medium">Preview:</span>
-                      When a {{ (externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type).toLowerCase() }} occurs, the "{{ getTemplateName(mapping.overlay_template_id) }}" alert will
-                      enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for {{ mapping.duration_ms / 1000 }} seconds,
+                      When a {{ (externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type).toLowerCase()
+                      }} occurs, the "{{ getTemplateName(mapping.overlay_template_id) }}" alert will
+                      enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display
+                      for {{ mapping.duration_ms / 1000 }} seconds,
                       then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
                     </p>
                   </div>

@@ -65,8 +65,8 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Template Tag Generator',
-    href: '/tags-generator',
-  },
+    href: '/tags-generator'
+  }
 ];
 
 // State with proper TypeScript types
@@ -147,7 +147,7 @@ const pollJobStatus = async () => {
         // Refresh the page to show new tags
         setTimeout(() => {
           router.reload({
-            only: ['existingTags', 'hasExistingTags'],
+            only: ['existingTags', 'hasExistingTags']
           });
         }, 1000);
       } else if (completedJob && completedJob.status === 'failed') {
@@ -217,8 +217,8 @@ const generateTags = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      }
     });
 
     const data = await response.json();
@@ -267,8 +267,8 @@ const clearAllTags = async () => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      }
     });
 
     const data = await response.json();
@@ -310,8 +310,8 @@ const cleanupRedundantTags = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      }
     });
 
     const data = await response.json();
@@ -409,7 +409,7 @@ const copyTag = async (tagName: string) => {
   } catch (error) {
     console.error('Failed to copy:', error);
     showToast.value = true;
-    toastMessage.value = "Failed to copy tag.";
+    toastMessage.value = 'Failed to copy tag.';
     toastType.value = 'error';
   }
 };
@@ -445,7 +445,8 @@ const getDataTypeClass = (dataType: string) => {
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
     <div class="p-4">
       <div class="mb-6 flex items-center justify-between">
-        <Heading title="Your Template Tags" description="These template tags represent your Twitch account data. You can also view these tags while creating or editing an overlay or alert." />
+        <Heading title="Your Template Tags"
+                 description="These template tags represent your Twitch account data. You can also view these tags while creating or editing an overlay or alert." />
         <div class="flex gap-2">
           <button v-if="!hasExistingTags" @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
             <RefreshCw v-if="isGenerating" class="h-4 w-4 animate-spin" />
@@ -469,7 +470,8 @@ const getDataTypeClass = (dataType: string) => {
       <!-- Job Progress Display -->
       <div v-if="currentGenerateJob || currentCleanupJob" class="mb-6 space-y-4">
         <!-- Generation Progress -->
-        <div v-if="currentGenerateJob" class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+        <div v-if="currentGenerateJob"
+             class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Template Tag Generation</h3>
             <span class="text-xs text-blue-600 dark:text-blue-400">{{ currentGenerateJob.status }}</span>
@@ -480,14 +482,16 @@ const getDataTypeClass = (dataType: string) => {
               <span class="text-blue-600 dark:text-blue-400">{{ currentGenerateJob.progress.progress }}%</span>
             </div>
             <div class="w-full bg-blue-200 rounded-full h-2 dark:bg-blue-800">
-              <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="{ width: currentGenerateJob.progress.progress + '%' }"></div>
+              <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                   :style="{ width: currentGenerateJob.progress.progress + '%' }"></div>
             </div>
           </div>
           <p v-else class="text-sm text-blue-700 dark:text-blue-300">Starting generation...</p>
         </div>
 
         <!-- Cleanup Progress -->
-        <div v-if="currentCleanupJob" class="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
+        <div v-if="currentCleanupJob"
+             class="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">Template Tag Cleanup</h3>
             <span class="text-xs text-orange-600 dark:text-orange-400">{{ currentCleanupJob.status }}</span>
@@ -498,7 +502,8 @@ const getDataTypeClass = (dataType: string) => {
               <span class="text-orange-600 dark:text-orange-400">{{ currentCleanupJob.progress.progress }}%</span>
             </div>
             <div class="w-full bg-orange-200 rounded-full h-2 dark:bg-orange-800">
-              <div class="bg-orange-600 h-2 rounded-full transition-all duration-300" :style="{ width: currentCleanupJob.progress.progress + '%' }"></div>
+              <div class="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                   :style="{ width: currentCleanupJob.progress.progress + '%' }"></div>
             </div>
           </div>
           <p v-else class="text-sm text-orange-700 dark:text-orange-300">Starting cleanup...</p>
@@ -506,7 +511,8 @@ const getDataTypeClass = (dataType: string) => {
       </div>
 
       <!-- Error Display -->
-      <div v-if="generationError" class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+      <div v-if="generationError"
+           class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
         <div class="flex items-center gap-2">
           <AlertCircle class="h-5 w-5 text-red-600 dark:text-red-400" />
           <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Generation Error</h3>
@@ -523,12 +529,14 @@ const getDataTypeClass = (dataType: string) => {
         >
           <!-- Category Header -->
           <details class="group">
-            <summary class="flex cursor-pointer list-none items-center justify-between rounded-sm p-4 bg-accent hover:bg-sidebar">
+            <summary
+              class="flex cursor-pointer list-none items-center justify-between rounded-sm p-4 bg-accent hover:bg-sidebar">
               <span class="flex items-center">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">
                   {{ categoryData.category.display_name }}
                 </span>
-                <span class="ml-3 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+                <span
+                  class="ml-3 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
                   {{ categoryData.tags.length }} tags
                 </span>
               </span>
@@ -588,7 +596,8 @@ const getDataTypeClass = (dataType: string) => {
                       class="cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                     >
                       <svg class="h-4 w-4" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>
 
@@ -611,9 +620,11 @@ const getDataTypeClass = (dataType: string) => {
                 <div v-if="tagPreviews[tag.id]" class="mt-3 bg-background p-4">
                   <div class="mb-2 flex items-center justify-between">
                     <span class="text-sm font-medium text-foreground">Live Preview:</span>
-                    <button @click="clearPreview(tag.id)" class="cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300">
+                    <button @click="clearPreview(tag.id)"
+                            class="cursor-pointer transition hover:text-gray-600 dark:hover:text-gray-300">
                       <svg class="h-4 w-4" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
                       </svg>
                     </button>
                   </div>
@@ -648,6 +659,7 @@ const getDataTypeClass = (dataType: string) => {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

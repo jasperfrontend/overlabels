@@ -33,7 +33,7 @@ watch(
       toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const refreshing = ref(false);
@@ -47,7 +47,7 @@ function refresh() {
       setTimeout(() => {
         refreshing.value = false;
       }, 600);
-    },
+    }
   });
 }
 
@@ -81,7 +81,8 @@ const parentWithoutHttpsWithSlash = currentParentURL.replace(/^https?:\/\//, '')
     <div class="transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.length > 0" :events="events" />
 
-      <EmptyState v-else message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active." />
+      <EmptyState v-else
+                  message="No events yet. Events will appear here once your Twitch EventSub subscriptions are active." />
     </div>
   </div>
 
@@ -96,7 +97,8 @@ const parentWithoutHttpsWithSlash = currentParentURL.replace(/^https?:\/\//, '')
           Your recent events. click an event and tap Yes to replay the event in your overlay(s)
         </p>
 
-        <button class="text-lg leading-none text-base-content/60 hover:text-base-content" type="button" @click="showInfo = false">
+        <button class="text-lg leading-none text-base-content/60 hover:text-base-content" type="button"
+                @click="showInfo = false">
           ×
         </button>
       </div>

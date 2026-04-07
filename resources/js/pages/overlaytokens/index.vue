@@ -28,7 +28,7 @@ const { tokens } = defineProps<{ tokens: Token[] }>();
 
 /** UI */
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Overlay Access Tokens', href: '/tokens' },
+  { title: 'Overlay Access Tokens', href: '/tokens' }
 ];
 
 /** Create flow */
@@ -46,7 +46,7 @@ const form = ref<{
   name: '',
   expires_at: null,
   allowed_ips: [],
-  abilities: ['read'],
+  abilities: ['read']
 });
 
 /** Keep form.allowed_ips in sync with ipInput */
@@ -122,13 +122,18 @@ const formatDate = (date: string | null | undefined) =>
               <h3 class="text-lg -mt-0.5 mr-1 font-semibold">{{ token.name }}</h3>
             </div>
             <div class="mt-0.5">
-              <p class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+              <p
+                class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
                 <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Prefix: <code class="bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">{{ token.prefix }}...</code>
+                Prefix: <code
+                class="bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">{{ token.prefix
+                }}...</code>
               </p>
             </div>
             <div class="mt-0.5">
-              <p class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Access Count">
+              <p
+                class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition"
+                title="Access Count">
                 <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
               </p>
@@ -169,7 +174,9 @@ const formatDate = (date: string | null | undefined) =>
         access to it, or if you think it may have leaked on stream." description-class="text-orange-300" />
       </div>
       <div class="my-4 text-sm bg-background">
-        <Heading title="Treat your Overlay Token like a password." description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone." description-class="text-orange-300" />
+        <Heading title="Treat your Overlay Token like a password."
+                 description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone."
+                 description-class="text-orange-300" />
       </div>
     </div>
 
@@ -181,7 +188,8 @@ const formatDate = (date: string | null | undefined) =>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium" for="token-name">Token Name</label>
-            <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2" placeholder="My OBS Stream" />
+            <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2"
+                   placeholder="My OBS Stream" />
           </div>
 
           <div>

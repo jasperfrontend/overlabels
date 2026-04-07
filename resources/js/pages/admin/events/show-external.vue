@@ -23,7 +23,10 @@ const props = defineProps<{ event: ExternalEvent }>();
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
   { title: 'Events', href: route('admin.events.index', { source: 'external' }) },
-  { title: `${props.event.service}/${props.event.event_type} #${props.event.id}`, href: route('admin.events.external.show', props.event.id) },
+  {
+    title: `${props.event.service}/${props.event.event_type} #${props.event.id}`,
+    href: route('admin.events.external.show', props.event.id)
+  }
 ];
 
 const showRawPayload = ref(false);
@@ -35,7 +38,8 @@ const showRawPayload = ref(false);
     <div class="flex flex-col gap-6 p-4 max-w-3xl">
       <div class="flex items-center gap-3">
         <Badge variant="outline" class="font-mono">{{ event.service }}</Badge>
-        <h1 class="text-2xl font-bold font-mono">{{ event.event_type }} <span class="text-muted-foreground text-lg">#{{ event.id }}</span></h1>
+        <h1 class="text-2xl font-bold font-mono">{{ event.event_type }} <span
+          class="text-muted-foreground text-lg">#{{ event.id }}</span></h1>
       </div>
 
       <Card>
@@ -43,7 +47,9 @@ const showRawPayload = ref(false);
           <div>
             <span class="text-muted-foreground">User</span>
             <div>
-              <Link v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</Link>
+              <Link v-if="event.user" :href="route('admin.users.show', event.user.id)" class="hover:underline">
+                {{ event.user.name }}
+              </Link>
               <span v-else>—</span>
             </div>
           </div>
@@ -54,13 +60,17 @@ const showRawPayload = ref(false);
           <div>
             <span class="text-muted-foreground">Controls Updated</span>
             <div>
-              <Badge :variant="event.controls_updated ? 'default' : 'secondary'">{{ event.controls_updated ? 'Yes' : 'No' }}</Badge>
+              <Badge :variant="event.controls_updated ? 'default' : 'secondary'">
+                {{ event.controls_updated ? 'Yes' : 'No' }}
+              </Badge>
             </div>
           </div>
           <div>
             <span class="text-muted-foreground">Alert Dispatched</span>
             <div>
-              <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">{{ event.alert_dispatched ? 'Yes' : 'No' }}</Badge>
+              <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">
+                {{ event.alert_dispatched ? 'Yes' : 'No' }}
+              </Badge>
             </div>
           </div>
           <div v-if="event.message_id">
@@ -71,9 +81,12 @@ const showRawPayload = ref(false);
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Normalized Payload</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Normalized Payload</CardTitle>
+        </CardHeader>
         <CardContent>
-          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.normalized_payload, null, 2) }}</pre>
+          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.normalized_payload, null, 2)
+            }}</pre>
         </CardContent>
       </Card>
 
@@ -84,16 +97,20 @@ const showRawPayload = ref(false);
             <button
               class="text-sm font-normal text-muted-foreground hover:text-foreground"
               @click="showRawPayload = !showRawPayload"
-            >{{ showRawPayload ? 'Hide' : 'Show' }}</button>
+            >{{ showRawPayload ? 'Hide' : 'Show' }}
+            </button>
           </CardTitle>
         </CardHeader>
         <CardContent v-if="showRawPayload">
-          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.raw_payload, null, 2) }}</pre>
+          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.raw_payload, null, 2)
+            }}</pre>
         </CardContent>
       </Card>
 
       <div>
-        <Link :href="route('admin.events.index', { source: 'external' })" class="text-sm text-muted-foreground hover:text-foreground">← Back to External Events</Link>
+        <Link :href="route('admin.events.index', { source: 'external' })"
+              class="text-sm text-muted-foreground hover:text-foreground">← Back to External Events
+        </Link>
       </div>
     </div>
   </AppLayout>

@@ -30,20 +30,26 @@ const engaging = ref(false);
 function startEngage() {
   engageStep.value = 1;
 }
+
 function engageStep2() {
   engageStep.value = 2;
   engageConfirmWord.value = '';
 }
+
 function cancelEngage() {
   engageStep.value = 0;
   engageReason.value = '';
   engageConfirmWord.value = '';
 }
+
 function submitEngage() {
   if (!engageConfirmValid.value) return;
   engaging.value = true;
   router.post(route('admin.lockdown.activate'), { reason: engageReason.value }, {
-    onFinish: () => { engaging.value = false; cancelEngage(); },
+    onFinish: () => {
+      engaging.value = false;
+      cancelEngage();
+    }
   });
 }
 
@@ -54,13 +60,18 @@ const lifting = ref(false);
 function confirmLift() {
   liftConfirming.value = true;
 }
+
 function cancelLift() {
   liftConfirming.value = false;
 }
+
 function submitLift() {
   lifting.value = true;
   router.post(route('admin.lockdown.deactivate'), {}, {
-    onFinish: () => { lifting.value = false; liftConfirming.value = false; },
+    onFinish: () => {
+      lifting.value = false;
+      liftConfirming.value = false;
+    }
   });
 }
 
@@ -71,7 +82,8 @@ function formatDate(iso?: string) {
 </script>
 
 <template>
-  <AppLayout :breadcrumbs="[{ title: 'Admin', href: route('admin.dashboard') }, { title: 'Lockdown', href: route('admin.lockdown.index') }]">
+  <AppLayout
+    :breadcrumbs="[{ title: 'Admin', href: route('admin.dashboard') }, { title: 'Lockdown', href: route('admin.lockdown.index') }]">
     <div class="mx-auto max-w-2xl space-y-8 p-6">
 
       <!-- Status card -->
@@ -114,7 +126,8 @@ function formatDate(iso?: string) {
 
         <template v-else>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            All overlays are rendering normally. {{ activeTokens }} active token{{ activeTokens !== 1 ? 's' : '' }} in use.
+            All overlays are rendering normally. {{ activeTokens }} active token{{ activeTokens !== 1 ? 's' : '' }} in
+            use.
           </p>
         </template>
       </div>
@@ -167,7 +180,8 @@ function formatDate(iso?: string) {
         </div>
 
         <!-- Step 1: Consequences + reason -->
-        <div v-else-if="engageStep === 1" class="rounded-lg border border-red-400 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
+        <div v-else-if="engageStep === 1"
+             class="rounded-lg border border-red-400 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
           <h3 class="font-bold text-red-700 dark:text-red-400">Engaging lockdown will immediately:</h3>
           <ul class="list-disc list-inside text-sm space-y-1 text-gray-700 dark:text-gray-300">
             <li>Deactivate all <strong>{{ props.activeTokens }}</strong> overlay access tokens</li>
@@ -203,7 +217,8 @@ function formatDate(iso?: string) {
         </div>
 
         <!-- Step 2: Type LOCKDOWN to confirm -->
-        <div v-else-if="engageStep === 2" class="rounded-lg border-2 border-red-600 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
+        <div v-else-if="engageStep === 2"
+             class="rounded-lg border-2 border-red-600 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
           <h3 class="font-bold text-red-700 dark:text-red-400">Final confirmation</h3>
           <p class="text-sm">
             Type <strong class="font-mono tracking-widest">LOCKDOWN</strong> below to enable the engage button.
@@ -233,7 +248,8 @@ function formatDate(iso?: string) {
       </div>
 
       <!-- Info box -->
-      <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400 space-y-2">
+      <div
+        class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400 space-y-2">
         <p class="font-medium text-gray-800 dark:text-gray-200">Emergency CLI commands</p>
         <p>If this admin panel is unreachable, you can also engage/release lockdown via artisan:</p>
         <pre class="rounded bg-gray-100 dark:bg-gray-800 px-3 py-2 text-xs font-mono">php artisan lockdown:engage "reason here"

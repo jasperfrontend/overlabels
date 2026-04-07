@@ -13,7 +13,7 @@ import type { AppPageProps } from '@/types';
 
 const props = defineProps({
   templates: Object,
-  filters: Object,
+  filters: Object
 });
 
 const filters = ref({
@@ -21,13 +21,13 @@ const filters = ref({
   search: props.filters?.search || '',
   type: props.filters?.type || '',
   sort: props.filters?.sort || 'created_at',
-  direction: props.filters?.direction || 'desc',
+  direction: props.filters?.direction || 'desc'
 });
 
 const applyFilter = () => {
   router.get(route('templates.index'), filters.value, {
     preserveState: true,
-    preserveScroll: true,
+    preserveScroll: true
   });
 };
 
@@ -43,11 +43,11 @@ const pageTitle = computed(() => {
   const ownerMap: Record<string, string> = {
     all_templates: 'All',
     mine: 'My',
-    public: 'Public',
+    public: 'Public'
   };
   const typeMap: Record<string, string> = {
     alert: 'event alerts',
-    static: 'static overlays',
+    static: 'static overlays'
   };
 
   const owner = ownerMap[filters.value.filter] ?? 'All';
@@ -55,7 +55,7 @@ const pageTitle = computed(() => {
 
   return `${owner} ${type}`;
 });
-const pageTitleString = pageTitle.value
+const pageTitleString = pageTitle.value;
 
 // Persist filter context so show/edit pages can build accurate breadcrumbs
 watchEffect(() => {
@@ -65,15 +65,15 @@ watchEffect(() => {
   });
   sessionStorage.setItem('templates_list_context', JSON.stringify({
     title: pageTitle.value,
-    href: `${route('templates.index')}?${params.toString()}`,
+    href: `${route('templates.index')}?${params.toString()}`
   }));
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: pageTitleString,
-    href: '/templates',
-  },
+    href: '/templates'
+  }
 ];
 </script>
 

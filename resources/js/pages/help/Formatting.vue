@@ -6,12 +6,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Help',
-    href: '/help',
+    href: '/help'
   },
   {
     title: 'Formatting',
-    href: '/help/formatting',
-  },
+    href: '/help/formatting'
+  }
 ];
 </script>
 
@@ -31,7 +31,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       property="og:description"
       content="Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware."
     />
-    <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta property="og:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
@@ -42,7 +43,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       name="twitter:description"
       content="Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware."
     />
-    <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta name="twitter:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
   </Head>
 
@@ -53,7 +55,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-8">
           <h1 class="mb-4 text-4xl font-bold">Formatting Pipes</h1>
           <p class="text-lg text-foreground mb-4">
-            Pipes let you format raw values directly inside your template tags. Append a pipe character and a formatter name to any tag,
+            Pipes let you format raw values directly inside your template tags. Append a pipe character and a formatter
+            name to any tag,
             and the overlay renders the formatted result instead of the raw value.
           </p>
           <p class="text-lg text-foreground">
@@ -85,7 +88,8 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
-                Add a pipe <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|</code> after any tag name,
+                Add a pipe <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|</code> after any tag
+                name,
                 followed by the formatter. Some formatters accept arguments after a colon.
               </p>
               <div class="space-y-3">
@@ -99,15 +103,19 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
               </div>
               <p class="mt-4 text-sm text-foreground">
-                The pipe is stripped before the tag is resolved. A tag like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:score|round]]]</code>
-                still reads the value of the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">score</code> control - the pipe only affects how it is displayed.
+                The pipe is stripped before the tag is resolved. A tag like <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:score|round]]]</code>
+                still reads the value of the <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">score</code> control - the pipe only
+                affects how it is displayed.
               </p>
             </div>
 
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Works with all tag types</h3>
               <p class="mb-4 text-foreground">
-                Pipes work on any template tag - controls, Twitch data, Ko-fi data, StreamLabs data, event data. Anything between
+                Pipes work on any template tag - controls, Twitch data, Ko-fi data, StreamLabs data, event data.
+                Anything between
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[</code> and
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">]]]</code> can have a pipe.
               </p>
@@ -132,33 +140,34 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
             <p class="mb-4 text-foreground">
-              Rounds a numeric value. Without arguments, rounds to a whole number. Pass a number to control decimal places.
+              Rounds a numeric value. Without arguments, rounds to a whole number. Pass a number to control decimal
+              places.
             </p>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b border-sidebar text-left">
-                    <th class="pb-2 pr-4 font-semibold">Tag</th>
-                    <th class="pb-2 pr-4 font-semibold">Raw value</th>
-                    <th class="pb-2 font-semibold">Output</th>
-                  </tr>
+                <tr class="border-b border-sidebar text-left">
+                  <th class="pb-2 pr-4 font-semibold">Tag</th>
+                  <th class="pb-2 pr-4 font-semibold">Raw value</th>
+                  <th class="pb-2 font-semibold">Output</th>
+                </tr>
                 </thead>
                 <tbody class="font-mono">
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[c:score|round]]]</td>
-                    <td class="py-2 pr-4">42.789</td>
-                    <td class="py-2">43</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[c:score|round:1]]]</td>
-                    <td class="py-2 pr-4">42.789</td>
-                    <td class="py-2">42.8</td>
-                  </tr>
-                  <tr>
-                    <td class="py-2 pr-4">[[[c:score|round:2]]]</td>
-                    <td class="py-2 pr-4">42.789</td>
-                    <td class="py-2">42.79</td>
-                  </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4">[[[c:score|round]]]</td>
+                  <td class="py-2 pr-4">42.789</td>
+                  <td class="py-2">43</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4">[[[c:score|round:1]]]</td>
+                  <td class="py-2 pr-4">42.789</td>
+                  <td class="py-2">42.8</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4">[[[c:score|round:2]]]</td>
+                  <td class="py-2 pr-4">42.789</td>
+                  <td class="py-2">42.79</td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -181,26 +190,26 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b border-sidebar text-left">
-                    <th class="pb-2 pr-4 font-semibold">Tag</th>
-                    <th class="pb-2 pr-4 font-semibold">Raw value</th>
-                    <th class="pb-2 pr-4 font-semibold">en-US</th>
-                    <th class="pb-2 font-semibold">nl-NL</th>
-                  </tr>
+                <tr class="border-b border-sidebar text-left">
+                  <th class="pb-2 pr-4 font-semibold">Tag</th>
+                  <th class="pb-2 pr-4 font-semibold">Raw value</th>
+                  <th class="pb-2 pr-4 font-semibold">en-US</th>
+                  <th class="pb-2 font-semibold">nl-NL</th>
+                </tr>
                 </thead>
                 <tbody class="font-mono">
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[c:viewers|number]]]</td>
-                    <td class="py-2 pr-4">1234567</td>
-                    <td class="py-2 pr-4">1,234,567</td>
-                    <td class="py-2">1.234.567</td>
-                  </tr>
-                  <tr>
-                    <td class="py-2 pr-4">[[[c:ratio|number:2]]]</td>
-                    <td class="py-2 pr-4">3.5</td>
-                    <td class="py-2 pr-4">3.50</td>
-                    <td class="py-2">3,50</td>
-                  </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4">[[[c:viewers|number]]]</td>
+                  <td class="py-2 pr-4">1234567</td>
+                  <td class="py-2 pr-4">1,234,567</td>
+                  <td class="py-2">1.234.567</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4">[[[c:ratio|number:2]]]</td>
+                  <td class="py-2 pr-4">3.5</td>
+                  <td class="py-2 pr-4">3.50</td>
+                  <td class="py-2">3,50</td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -217,41 +226,44 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-6">
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
-                Formats a number as a currency value with the proper symbol, decimal places, and separators for your locale.
+                Formats a number as a currency value with the proper symbol, decimal places, and separators for your
+                locale.
               </p>
               <p class="mb-4 text-foreground">
-                Without arguments, the currency is determined by your locale (EUR for Dutch, GBP for British, USD for American, etc.).
-                Pass a three-letter <a href="https://en.wikipedia.org/wiki/ISO_4217" target="_blank" class="text-violet-400 hover:underline">ISO 4217</a> currency code to override.
+                Without arguments, the currency is determined by your locale (EUR for Dutch, GBP for British, USD for
+                American, etc.).
+                Pass a three-letter <a href="https://en.wikipedia.org/wiki/ISO_4217" target="_blank"
+                                       class="text-violet-400 hover:underline">ISO 4217</a> currency code to override.
               </p>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-sidebar text-left">
-                      <th class="pb-2 pr-4 font-semibold">Tag</th>
-                      <th class="pb-2 pr-4 font-semibold">Raw value</th>
-                      <th class="pb-2 pr-4 font-semibold">en-US</th>
-                      <th class="pb-2 font-semibold">nl-NL</th>
-                    </tr>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">Raw value</th>
+                    <th class="pb-2 pr-4 font-semibold">en-US</th>
+                    <th class="pb-2 font-semibold">nl-NL</th>
+                  </tr>
                   </thead>
                   <tbody class="font-mono">
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:goal|currency]]]</td>
-                      <td class="py-2 pr-4">42.5</td>
-                      <td class="py-2 pr-4">$42.50</td>
-                      <td class="py-2">&euro; 42,50</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:goal|currency:EUR]]]</td>
-                      <td class="py-2 pr-4">42.5</td>
-                      <td class="py-2 pr-4">&euro;42.50</td>
-                      <td class="py-2">&euro; 42,50</td>
-                    </tr>
-                    <tr>
-                      <td class="py-2 pr-4">[[[c:goal|currency:JPY]]]</td>
-                      <td class="py-2 pr-4">4250</td>
-                      <td class="py-2 pr-4">&yen;4,250</td>
-                      <td class="py-2">JP&yen; 4.250</td>
-                    </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:goal|currency]]]</td>
+                    <td class="py-2 pr-4">42.5</td>
+                    <td class="py-2 pr-4">$42.50</td>
+                    <td class="py-2">&euro; 42,50</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:goal|currency:EUR]]]</td>
+                    <td class="py-2 pr-4">42.5</td>
+                    <td class="py-2 pr-4">&euro;42.50</td>
+                    <td class="py-2">&euro; 42,50</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:goal|currency:JPY]]]</td>
+                    <td class="py-2 pr-4">4250</td>
+                    <td class="py-2 pr-4">&yen;4,250</td>
+                    <td class="py-2">JP&yen; 4.250</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -259,10 +271,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
-                <strong>Tip:</strong> If your streaming currency differs from your locale's default, just pass the code explicitly.
+                <strong>Tip:</strong> If your streaming currency differs from your locale's default, just pass the code
+                explicitly.
                 A Dutch streamer who receives USD donations can use
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:kofi:latest_donation_amount|currency:USD]]]</code>
-                and the number formatting will still respect the Dutch locale (period for thousands, comma for decimals).
+                and the number formatting will still respect the Dutch locale (period for thousands, comma for
+                decimals).
               </p>
             </div>
           </div>
@@ -279,34 +293,35 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Auto-format (no arguments)</h3>
               <p class="mb-4 text-foreground">
-                Without arguments, the duration formatter picks the most readable format based on how large the value is.
+                Without arguments, the duration formatter picks the most readable format based on how large the value
+                is.
                 The input is always in <strong>seconds</strong>.
               </p>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-sidebar text-left">
-                      <th class="pb-2 pr-4 font-semibold">Raw seconds</th>
-                      <th class="pb-2 font-semibold">Output</th>
-                    </tr>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Raw seconds</th>
+                    <th class="pb-2 font-semibold">Output</th>
+                  </tr>
                   </thead>
                   <tbody class="font-mono">
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">45</td>
-                      <td class="py-2">0:45</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">754</td>
-                      <td class="py-2">12:34</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">8107</td>
-                      <td class="py-2">2:15:07</td>
-                    </tr>
-                    <tr>
-                      <td class="py-2 pr-4">93907</td>
-                      <td class="py-2">1d 2h 5m</td>
-                    </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">45</td>
+                    <td class="py-2">0:45</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">754</td>
+                    <td class="py-2">12:34</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">8107</td>
+                    <td class="py-2">2:15:07</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">93907</td>
+                    <td class="py-2">1d 2h 5m</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -324,48 +339,52 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-sidebar text-left">
-                      <th class="pb-2 pr-4 font-semibold">Tag</th>
-                      <th class="pb-2 pr-4 font-semibold">Seconds</th>
-                      <th class="pb-2 font-semibold">Output</th>
-                    </tr>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">Seconds</th>
+                    <th class="pb-2 font-semibold">Output</th>
+                  </tr>
                   </thead>
                   <tbody class="font-mono">
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:timer|duration:hh:mm:ss]]]</td>
-                      <td class="py-2 pr-4">8107</td>
-                      <td class="py-2">02:15:07</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:timer|duration:mm:ss]]]</td>
-                      <td class="py-2 pr-4">8107</td>
-                      <td class="py-2">135:07</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:timer|duration:dd:hh:mm:ss]]]</td>
-                      <td class="py-2 pr-4">93907</td>
-                      <td class="py-2">01:02:05:07</td>
-                    </tr>
-                    <tr>
-                      <td class="py-2 pr-4">[[[c:timer|duration:mm:ss]]]</td>
-                      <td class="py-2 pr-4">45</td>
-                      <td class="py-2">00:45</td>
-                    </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:timer|duration:hh:mm:ss]]]</td>
+                    <td class="py-2 pr-4">8107</td>
+                    <td class="py-2">02:15:07</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:timer|duration:mm:ss]]]</td>
+                    <td class="py-2 pr-4">8107</td>
+                    <td class="py-2">135:07</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:timer|duration:dd:hh:mm:ss]]]</td>
+                    <td class="py-2 pr-4">93907</td>
+                    <td class="py-2">01:02:05:07</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:timer|duration:mm:ss]]]</td>
+                    <td class="py-2 pr-4">45</td>
+                    <td class="py-2">00:45</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
               <p class="mt-4 text-sm text-foreground">
                 The overflow rule means <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">mm:ss</code>
-                with 8107 seconds gives you <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">135:07</code>,
+                with 8107 seconds gives you <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">135:07</code>,
                 not <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">15:07</code>.
-                The hours spill into the minutes because there is no <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">hh</code> in the pattern.
+                The hours spill into the minutes because there is no <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">hh</code> in the pattern.
               </p>
             </div>
 
             <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
-                <strong>Tip:</strong> Negative values (like a countdown past zero) are supported. The output will be prefixed with
-                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-</code>, e.g. <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-02:15</code>.
+                <strong>Tip:</strong> Negative values (like a countdown past zero) are supported. The output will be
+                prefixed with
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-</code>, e.g. <code
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">-02:15</code>.
               </p>
             </div>
           </div>
@@ -387,46 +406,46 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
-                    <tr class="border-b border-sidebar text-left">
-                      <th class="pb-2 pr-4 font-semibold">Tag</th>
-                      <th class="pb-2 pr-4 font-semibold">en-US</th>
-                      <th class="pb-2 font-semibold">nl-NL</th>
-                    </tr>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">en-US</th>
+                    <th class="pb-2 font-semibold">nl-NL</th>
+                  </tr>
                   </thead>
                   <tbody class="font-mono">
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date]]]</td>
-                      <td class="py-2 pr-4">Apr 5, 2026, 7:00 PM</td>
-                      <td class="py-2">5 apr 2026, 19:00</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date:short]]]</td>
-                      <td class="py-2 pr-4">Apr 5, 7:00 PM</td>
-                      <td class="py-2">5 apr, 19:00</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date:long]]]</td>
-                      <td class="py-2 pr-4">Saturday, April 5, 2026, 7:00 PM</td>
-                      <td class="py-2">zaterdag 5 april 2026, 19:00</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date:date]]]</td>
-                      <td class="py-2 pr-4">Apr 5, 2026</td>
-                      <td class="py-2">5 apr 2026</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date:time]]]</td>
-                      <td class="py-2 pr-4">7:00:00 PM</td>
-                      <td class="py-2">19:00:00</td>
-                    </tr>
-                    <tr class="border-b border-sidebar/50">
-                      <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy]]]</td>
-                      <td class="py-2 pr-4" colspan="2">05-04-2026</td>
-                    </tr>
-                    <tr>
-                      <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy HH:mm]]]</td>
-                      <td class="py-2 pr-4" colspan="2">05-04-2026 19:00</td>
-                    </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date]]]</td>
+                    <td class="py-2 pr-4">Apr 5, 2026, 7:00 PM</td>
+                    <td class="py-2">5 apr 2026, 19:00</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date:short]]]</td>
+                    <td class="py-2 pr-4">Apr 5, 7:00 PM</td>
+                    <td class="py-2">5 apr, 19:00</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date:long]]]</td>
+                    <td class="py-2 pr-4">Saturday, April 5, 2026, 7:00 PM</td>
+                    <td class="py-2">zaterdag 5 april 2026, 19:00</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date:date]]]</td>
+                    <td class="py-2 pr-4">Apr 5, 2026</td>
+                    <td class="py-2">5 apr 2026</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date:time]]]</td>
+                    <td class="py-2 pr-4">7:00:00 PM</td>
+                    <td class="py-2">19:00:00</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy]]]</td>
+                    <td class="py-2 pr-4" colspan="2">05-04-2026</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:event_date|date:dd-MM-yyyy HH:mm]]]</td>
+                    <td class="py-2 pr-4" colspan="2">05-04-2026 19:00</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -479,23 +498,23 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b border-sidebar text-left">
-                    <th class="pb-2 pr-4 font-semibold">Tag</th>
-                    <th class="pb-2 pr-4 font-semibold">Raw value</th>
-                    <th class="pb-2 font-semibold">Output</th>
-                  </tr>
+                <tr class="border-b border-sidebar text-left">
+                  <th class="pb-2 pr-4 font-semibold">Tag</th>
+                  <th class="pb-2 pr-4 font-semibold">Raw value</th>
+                  <th class="pb-2 font-semibold">Output</th>
+                </tr>
                 </thead>
                 <tbody class="font-mono">
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[event.user_name|uppercase]]]</td>
-                    <td class="py-2 pr-4">NightBot</td>
-                    <td class="py-2">NIGHTBOT</td>
-                  </tr>
-                  <tr>
-                    <td class="py-2 pr-4">[[[event.user_name|lowercase]]]</td>
-                    <td class="py-2 pr-4">NightBot</td>
-                    <td class="py-2">nightbot</td>
-                  </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4">[[[event.user_name|uppercase]]]</td>
+                  <td class="py-2 pr-4">NightBot</td>
+                  <td class="py-2">NIGHTBOT</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4">[[[event.user_name|lowercase]]]</td>
+                  <td class="py-2 pr-4">NightBot</td>
+                  <td class="py-2">nightbot</td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -511,7 +530,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-foreground">
                 The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|number</code>,
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|currency</code>, and
-                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|date</code> formatters are all locale-aware.
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|date</code> formatters are all
+                locale-aware.
                 Your locale controls things like:
               </p>
               <ul class="list-disc pl-6 space-y-2 text-foreground">
@@ -526,8 +546,11 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Changing your locale</h3>
               <p class="mb-4 text-foreground">
-                Go to <Link href="/settings/appearance" class="text-violet-400 hover:underline">Settings &gt; Appearance</Link>
-                and pick your locale from the dropdown. You will see a live preview of how numbers, currencies, and dates
+                Go to
+                <Link href="/settings/appearance" class="text-violet-400 hover:underline">Settings &gt; Appearance
+                </Link>
+                and pick your locale from the dropdown. You will see a live preview of how numbers, currencies, and
+                dates
                 will look in your overlays.
               </p>
               <p class="text-foreground">
@@ -576,30 +599,36 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div>
                 <h3 class="text-xl mb-3">Pipes are display-only</h3>
                 <p>
-                  Formatting never changes the stored value. Your control still holds the raw number - the pipe just changes
-                  how the overlay renders it. Two tags referencing the same control with different pipes will display differently
+                  Formatting never changes the stored value. Your control still holds the raw number - the pipe just
+                  changes
+                  how the overlay renders it. Two tags referencing the same control with different pipes will display
+                  differently
                   but read the same underlying value.
                 </p>
               </div>
               <div>
                 <h3 class="text-xl mb-3">Unknown formatters are ignored</h3>
                 <p>
-                  If you typo a formatter name, the value is displayed as-is. No errors, no blank output - just the raw value.
+                  If you typo a formatter name, the value is displayed as-is. No errors, no blank output - just the raw
+                  value.
                   Check your spelling if formatting does not seem to apply.
                 </p>
               </div>
               <div>
                 <h3 class="text-xl mb-3">Duration expects seconds</h3>
                 <p>
-                  The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|duration</code> formatter always expects the
-                  raw value to be in seconds. Timer controls already output seconds, so they work perfectly. If you are feeding in a custom
+                  The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|duration</code> formatter
+                  always expects the
+                  raw value to be in seconds. Timer controls already output seconds, so they work perfectly. If you are
+                  feeding in a custom
                   value, make sure it is seconds.
                 </p>
               </div>
               <div>
                 <h3 class="text-xl mb-3">Same tag, different format</h3>
                 <p class="mb-3">
-                  You can reference the same control multiple times with different pipes. This is useful for showing the same value in
+                  You can reference the same control multiple times with different pipes. This is useful for showing the
+                  same value in
                   different formats.
                 </p>
                 <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
@@ -619,48 +648,48 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b border-sidebar text-left">
-                    <th class="pb-2 pr-4 font-semibold">Pipe</th>
-                    <th class="pb-2 pr-4 font-semibold">Arguments</th>
-                    <th class="pb-2 font-semibold">Description</th>
-                  </tr>
+                <tr class="border-b border-sidebar text-left">
+                  <th class="pb-2 pr-4 font-semibold">Pipe</th>
+                  <th class="pb-2 pr-4 font-semibold">Arguments</th>
+                  <th class="pb-2 font-semibold">Description</th>
+                </tr>
                 </thead>
                 <tbody>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|round</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">N (decimal places)</td>
-                    <td class="py-2">Round to N decimals (default: 0)</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|number</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">N (decimal places)</td>
-                    <td class="py-2">Locale-aware thousands separators</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|currency</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">CODE (e.g. EUR, GBP)</td>
-                    <td class="py-2">Locale-aware currency with symbol</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|duration</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">pattern (hh:mm:ss, mm:ss, etc.)</td>
-                    <td class="py-2">Seconds to human-readable time</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|date</td>
-                    <td class="py-2 pr-4 font-mono text-muted-foreground">short, long, date, time, or pattern</td>
-                    <td class="py-2">Locale-aware date + time formatting</td>
-                  </tr>
-                  <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4 font-mono">|uppercase</td>
-                    <td class="py-2 pr-4 text-muted-foreground">-</td>
-                    <td class="py-2">ALL CAPS</td>
-                  </tr>
-                  <tr>
-                    <td class="py-2 pr-4 font-mono">|lowercase</td>
-                    <td class="py-2 pr-4 text-muted-foreground">-</td>
-                    <td class="py-2">all lowercase</td>
-                  </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|round</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">N (decimal places)</td>
+                  <td class="py-2">Round to N decimals (default: 0)</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|number</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">N (decimal places)</td>
+                  <td class="py-2">Locale-aware thousands separators</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|currency</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">CODE (e.g. EUR, GBP)</td>
+                  <td class="py-2">Locale-aware currency with symbol</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|duration</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">pattern (hh:mm:ss, mm:ss, etc.)</td>
+                  <td class="py-2">Seconds to human-readable time</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|date</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">short, long, date, time, or pattern</td>
+                  <td class="py-2">Locale-aware date + time formatting</td>
+                </tr>
+                <tr class="border-b border-sidebar/50">
+                  <td class="py-2 pr-4 font-mono">|uppercase</td>
+                  <td class="py-2 pr-4 text-muted-foreground">-</td>
+                  <td class="py-2">ALL CAPS</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 font-mono">|lowercase</td>
+                  <td class="py-2 pr-4 text-muted-foreground">-</td>
+                  <td class="py-2">all lowercase</td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -670,12 +699,17 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Footer -->
         <h2 class="mb-6 text-2xl font-bold" id="help">More help</h2>
         <p class="mb-6 text-foreground">
-          See the <Link href="/help/conditionals" class="text-violet-400 hover:underline">Conditional Tags</Link> and
-          <Link href="/help/controls" class="text-violet-400 hover:underline">Controls</Link> guides for more on
+          See the
+          <Link href="/help/conditionals" class="text-violet-400 hover:underline">Conditional Tags</Link>
+          and
+          <Link href="/help/controls" class="text-violet-400 hover:underline">Controls</Link>
+          guides for more on
           how template tags and controls work. If you are stuck,
           <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>
-          or <a href="https://github.com/jasperfrontend/overlabels/issues" target="_blank" class="text-violet-400 hover:underline">open an issue</a> on
-          <a href="https://github.com/jasperfrontend/overlabels" target="_blank" class="text-violet-400 hover:underline">GitHub</a>.
+          or <a href="https://github.com/jasperfrontend/overlabels/issues" target="_blank"
+                class="text-violet-400 hover:underline">open an issue</a> on
+          <a href="https://github.com/jasperfrontend/overlabels" target="_blank"
+             class="text-violet-400 hover:underline">GitHub</a>.
         </p>
 
       </div>

@@ -22,19 +22,19 @@ const twitch = 'https://www.twitch.tv/';
 const props = defineProps({
   twitchData: {
     type: Object,
-    required: true,
+    required: true
   },
   error: {
     type: String,
-    required: false,
-  },
+    required: false
+  }
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Your Twitch Data',
-    href: '/twitchdata',
-  },
+    href: '/twitchdata'
+  }
 ];
 
 function getTierStyle(tier: string) {
@@ -47,6 +47,7 @@ function getTierStyle(tier: string) {
       return '';
   }
 }
+
 const confirmExpensiveApiCall = () => {
   if (confirm('ATTENTION:\nThis refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.')) {
     isRefreshing.value = true;
@@ -112,7 +113,7 @@ const checkTokenValidity = () => {
   if (Date.now() - lastRefreshTime.value > thirtyMinutes) {
     // Make a lightweight API call to check token
     router.reload({
-      only: ['twitchData'],
+      only: ['twitchData']
     });
   }
 };
@@ -142,9 +143,9 @@ watch(
       toastType.value = page.props.flash?.type || 'info';
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
-watch (
+watch(
   () => auth.value.user,
   (authUser) => {
     if (authUser) {
@@ -153,9 +154,9 @@ watch (
       router.visit('/', {
         replace: true,
         preserveState: true
-      })
+      });
     }
-  }, { immediate: true },
+  }, { immediate: true }
 );
 </script>
 
@@ -166,7 +167,8 @@ watch (
       <div class="w-full max-w-4xl">
         <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = ''" />
         <h1 class="mb-6 text-center text-4xl font-extrabold tracking-tight">Your Twitch Data</h1>
-        <div v-if="connectionError" class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
+        <div v-if="connectionError"
+             class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
           <p class="font-semibold">Connection Error</p>
           <p class="text-sm">Unable to connect to Twitch API. Your session may have expired.</p>
           <button
@@ -245,19 +247,21 @@ watch (
           </div>
 
           <h2 class="text-center text-2xl font-bold text-accent-foreground">
-            <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" class="hover:text-muted-foreground" target="_blank">{{
-              props.twitchData.channel.broadcaster_name
-            }}</a>
+            <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" class="hover:text-muted-foreground"
+               target="_blank">{{
+                props.twitchData.channel.broadcaster_name
+              }}</a>
           </h2>
 
-          <div class="text-center text-violet-400">(Twitch Channel ID: {{props.twitchData.user.id}})</div>
+          <div class="text-center text-violet-400">(Twitch Channel ID: {{ props.twitchData.user.id }})</div>
 
           <div class="mb-4 text-center text-sm text-muted-foreground">
             {{ props.twitchData.user.description }}
           </div>
 
           <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <a v-if="props.twitchData.channel_followers.total" :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
+            <a v-if="props.twitchData.channel_followers.total"
+               :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
               <div
                 class="btn btn-cancel flex flex-col items-center justify-center"
               >
@@ -312,7 +316,9 @@ watch (
                   <span class="inline-block font-semibold">{{ sub.user_name }}</span>
                   <span class="inline-block text-sm">
                     {{ sub.plan_name }}
-                    <span v-if="sub.is_gift" class="text-sm text-muted-foreground italic"> (Gifted by {{ sub.gifter_name || 'N/A' }}) </span>
+                    <span v-if="sub.is_gift"
+                          class="text-sm text-muted-foreground italic"> (Gifted by {{ sub.gifter_name || 'N/A'
+                      }}) </span>
                   </span>
                 </a>
               </li>

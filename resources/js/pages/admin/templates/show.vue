@@ -17,16 +17,18 @@ const props = defineProps<{
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
   { title: 'Templates', href: route('admin.templates.index') },
-  { title: props.template.name, href: route('admin.templates.show', props.template.id) },
+  { title: props.template.name, href: route('admin.templates.show', props.template.id) }
 ];
 
 const visibilityForm = useForm({ is_public: props.template.is_public });
+
 function toggleVisibility() {
   visibilityForm.is_public = !visibilityForm.is_public;
   visibilityForm.patch(route('admin.templates.update', props.template.id));
 }
 
 const showDeleteConfirm = ref(false);
+
 function submitDelete() {
   router.delete(route('admin.templates.destroy', props.template.id));
 }
@@ -43,7 +45,9 @@ function submitDelete() {
         </div>
         <div class="flex gap-2">
           <Badge variant="outline">{{ template.type }}</Badge>
-          <Badge :variant="template.is_public ? 'default' : 'secondary'">{{ template.is_public ? 'public' : 'private' }}</Badge>
+          <Badge :variant="template.is_public ? 'default' : 'secondary'">{{ template.is_public ? 'public' : 'private'
+            }}
+          </Badge>
         </div>
       </div>
 
@@ -52,7 +56,8 @@ function submitDelete() {
           <div>
             <span class="text-muted-foreground">Owner</span>
             <div>
-              <a v-if="template.owner" :href="route('admin.users.show', template.owner.id)" class="hover:underline">{{ template.owner.name }}</a>
+              <a v-if="template.owner" :href="route('admin.users.show', template.owner.id)"
+                 class="hover:underline">{{ template.owner.name }}</a>
               <span v-else>—</span>
             </div>
           </div>
@@ -80,7 +85,9 @@ function submitDelete() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Visibility</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Visibility</CardTitle>
+        </CardHeader>
         <CardContent class="space-y-3">
           <p class="text-sm text-muted-foreground">Toggle whether this template is publicly visible.</p>
           <Button variant="outline" size="sm" @click="toggleVisibility" :disabled="visibilityForm.processing">
@@ -90,7 +97,9 @@ function submitDelete() {
       </Card>
 
       <Card class="border-destructive">
-        <CardHeader><CardTitle class="text-destructive">Danger Zone</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle class="text-destructive">Danger Zone</CardTitle>
+        </CardHeader>
         <CardContent class="space-y-3">
           <p class="text-sm text-muted-foreground">Permanently delete this template. Cannot be undone.</p>
           <div v-if="!showDeleteConfirm">

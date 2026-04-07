@@ -8,7 +8,13 @@ import ControlsManager from '@/components/ControlsManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
 import {
   SplitIcon,
@@ -25,17 +31,18 @@ import {
   CopyIcon,
   InfoIcon,
   TargetIcon,
-  ImageIcon,
+  ImageIcon
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { VisuallyHidden } from 'reka-ui';
+
 const showPreview = ref(false);
 
 interface OverlayOption {
-  id: number
-  name: string
-  slug: string
+  id: number;
+  name: string;
+  slug: string;
 }
 
 const props = defineProps<{
@@ -52,14 +59,14 @@ const props = defineProps<{
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
   { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' }
 ];
 
 const mainTabs = computed(() => {
   const tabs: Array<{ key: string; label: string; icon: any }> = [
     { key: 'overview', label: 'Details', icon: LightbulbIcon },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
-    { key: 'panel', label: 'Values', icon: SquarePenIcon },
+    { key: 'panel', label: 'Values', icon: SquarePenIcon }
   ];
   if (props.template?.screenshot_url) {
     tabs.push({ key: 'screenshot', label: 'Screenshot', icon: ImageIcon });
@@ -92,10 +99,11 @@ function saveTargeting() {
         toastMessage.value = 'Failed to save targeting settings.';
         toastType.value = 'error';
         showToast.value = true;
-      },
-    },
+      }
+    }
   );
 }
+
 const showCode = ref(true);
 const showOBSHelp = ref(false);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
@@ -113,7 +121,7 @@ const {
   forkWizardOpen,
   forkWizardTemplateId,
   forkWizardTemplateSlug,
-  forkWizardSourceControls,
+  forkWizardSourceControls
 } = useTemplateActions(props.template);
 
 // Local toast state for clipboard copy
@@ -129,7 +137,8 @@ function getListContext(): { title: string; href: string } {
   try {
     const stored = sessionStorage.getItem('templates_list_context');
     if (stored) return JSON.parse(stored);
-  } catch { /* ignore */ }
+  } catch { /* ignore */
+  }
   return { title: 'My overlays', href: route('templates.index') };
 }
 
@@ -138,12 +147,12 @@ const listContext = getListContext();
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: listContext.title,
-    href: listContext.href,
+    href: listContext.href
   },
   {
     title: props.template?.name || 'Template',
-    href: `/templates/${props.template?.id}`,
-  },
+    href: `/templates/${props.template?.id}`
+  }
 ];
 
 </script>
@@ -200,7 +209,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 Copy
               </DropdownMenuItem>
               <DropdownMenuSeparator v-if="canEdit" />
-              <DropdownMenuItem v-if="canEdit && canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
+              <DropdownMenuItem v-if="canEdit && canDelete" class="text-destructive focus:text-destructive"
+                                @click="deleteTemplate">
                 <TrashIcon class="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -245,31 +255,43 @@ const breadcrumbs: BreadcrumbItem[] = [
             <DialogTitle>Adding this overlay to OBS</DialogTitle>
           </DialogHeader>
           <div class="space-y-4 text-sm">
-            <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
+            <div
+              class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
               <p class="font-semibold">Your personal access token is required</p>
-              <p class="mt-1">Every overlay URL contains a <code class="rounded bg-black/10 px-1 dark:bg-white/10">#YOUR_TOKEN_HERE</code> placeholder. You must replace it with your real token before the overlay will work.</p>
+              <p class="mt-1">Every overlay URL contains a <code class="rounded bg-black/10 px-1 dark:bg-white/10">#YOUR_TOKEN_HERE</code>
+                placeholder. You must replace it with your real token before the overlay will work.</p>
             </div>
 
             <div>
               <p class="mb-1 font-medium">Where is my token?</p>
-              <p class="text-muted-foreground">Your token was generated during onboarding and shown to you once — it is never stored in full and cannot be retrieved again. You can find the partial preview (first few characters) on your <a :href="route('tokens.index')" target="_blank" class="text-violet-400 hover:underline">Access Tokens page</a>. If you no longer have it, create a new token there.</p>
+              <p class="text-muted-foreground">Your token was generated during onboarding and shown to you once — it is
+                never stored in full and cannot be retrieved again. You can find the partial preview (first few
+                characters) on your <a :href="route('tokens.index')" target="_blank"
+                                       class="text-violet-400 hover:underline">Access Tokens page</a>. If you no longer
+                have it, create a new token there.</p>
             </div>
 
             <div>
               <p class="mb-2 font-medium">Steps to add in OBS</p>
               <ol class="list-decimal space-y-1.5 pl-4 text-muted-foreground">
                 <li>Copy the OBS URL above using the copy button.</li>
-                <li>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> at the end of the URL with your actual token. KEEP THE #!!</li>
+                <li>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> at the
+                  end of the URL with your actual token. KEEP THE #!!
+                </li>
                 <li>In OBS, add a new <strong class="text-foreground">Browser Source</strong>.</li>
                 <li>Paste the full URL (with your real token) into the URL field.</li>
-                <li>Set <strong class="text-foreground">Width</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1920</code> and <strong class="text-foreground">Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code> for full-screen coverage.</li>
+                <li>Set <strong class="text-foreground">Width</strong> to <code
+                  class="rounded bg-accent px-1 text-accent-foreground">1920</code> and <strong class="text-foreground">Height</strong>
+                  to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code> for full-screen coverage.
+                </li>
                 <li>Click <strong class="text-foreground">OK</strong>. Your overlay is now live!</li>
               </ol>
             </div>
 
             <div class="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
               <p class="font-semibold">Never share your token URL on stream</p>
-              <p class="mt-1">Your token acts like a password. Anyone with it can trigger your overlays. Keep the URL out of screen recordings, screenshots, and live video.</p>
+              <p class="mt-1">Your token acts like a password. Anyone with it can trigger your overlays. Keep the URL
+                out of screen recordings, screenshots, and live video.</p>
             </div>
           </div>
         </DialogContent>
@@ -277,7 +299,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Main Tabs (owner only) -->
       <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card p-0 pb-0">
-        <div class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
+        <div
+          class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
             v-for="(tab, index) in mainTabs"
             :key="tab.key"
@@ -297,7 +320,9 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-card">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
-          <ControlsManager :template="template" :initial-controls="localControls" :connected-services="connectedServices" :user-scoped-controls="userScopedControls" @change="localControls = $event" />
+          <ControlsManager :template="template" :initial-controls="localControls"
+                           :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
+                           @change="localControls = $event" />
         </div>
 
         <!-- Control Panel tab -->
@@ -329,7 +354,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <DialogFooter>
               <div class="flex w-full items-center justify-between gap-2">
                 <div class="text-sm text-muted-foreground">
-                  Screenshot: {{props.template?.name}}
+                  Screenshot: {{ props.template?.name }}
                 </div>
                 <button type="button" class="ml-auto btn btn-chill" @click="showPreview = false">Close</button>
               </div>
@@ -348,18 +373,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
-<!--          <button-->
-<!--            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"-->
-<!--            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"-->
-<!--            @click="showCode = !showCode"-->
-<!--          >-->
-<!--            <CodeIcon class="h-4 w-4 shrink-0" />-->
-<!--            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>-->
-<!--            <ChevronDownIcon-->
-<!--              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"-->
-<!--              :class="{ 'rotate-180': showCode }"-->
-<!--            />-->
-<!--          </button>-->
+          <!--          <button-->
+          <!--            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"-->
+          <!--            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"-->
+          <!--            @click="showCode = !showCode"-->
+          <!--          >-->
+          <!--            <CodeIcon class="h-4 w-4 shrink-0" />-->
+          <!--            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>-->
+          <!--            <ChevronDownIcon-->
+          <!--              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"-->
+          <!--              :class="{ 'rotate-180': showCode }"-->
+          <!--            />-->
+          <!--          </button>-->
 
           <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-sidebar border-b-sidebar">
             <!-- File tabs sidebar -->
@@ -381,7 +406,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <!-- Code panel -->
             <div class="relative flex-1 bg-background text-gray-700 dark:text-accent-foreground">
-              <pre class="h-[50vh] overflow-auto p-4"><code class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
+              <pre class="h-[50vh] overflow-auto p-4"><code
+                class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
               <button
                 @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
                 class="btn btn-sm btn-primary absolute top-4 right-8 w-30"

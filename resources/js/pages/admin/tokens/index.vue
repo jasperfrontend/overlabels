@@ -30,7 +30,7 @@ defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Tokens', href: route('admin.tokens.index') },
+  { title: 'Tokens', href: route('admin.tokens.index') }
 ];
 
 function deleteToken(id: number) {
@@ -65,11 +65,13 @@ function deleteToken(id: number) {
             </div>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
-            <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}</Badge>
+            <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}
+            </Badge>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span v-if="token.user">
-              Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
+              Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name
+              }}</a>
             </span>
             <span>{{ token.access_count }} uses</span>
             <span>Expires: {{ token.expires_at ?? 'Never' }}</span>
@@ -81,36 +83,39 @@ function deleteToken(id: number) {
       <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Name / Prefix</th>
-              <th class="px-3 py-2">Owner</th>
-              <th class="px-3 py-2">Status</th>
-              <th class="px-3 py-2">Uses</th>
-              <th class="px-3 py-2">Expires</th>
-              <th class="px-3 py-2"></th>
-            </tr>
+          <tr>
+            <th class="px-3 py-2">Name / Prefix</th>
+            <th class="px-3 py-2">Owner</th>
+            <th class="px-3 py-2">Status</th>
+            <th class="px-3 py-2">Uses</th>
+            <th class="px-3 py-2">Expires</th>
+            <th class="px-3 py-2"></th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="token in tokens.data" :key="token.id" class="border-t border-sidebar">
-              <td class="px-3 py-2">
-                <div class="font-medium">{{ token.name }}</div>
-                <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
-              </td>
-              <td class="px-3 py-2">
-                <a v-if="token.user" :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
-                <span v-else class="text-muted-foreground">—</span>
-              </td>
-              <td class="px-3 py-2">
-                <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}</Badge>
-              </td>
-              <td class="px-3 py-2">{{ token.access_count }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ token.expires_at ?? 'Never' }}</td>
-              <td class="px-3 py-2 flex gap-2">
-                <a :href="route('admin.tokens.show', token.id)" class="text-primary text-xs hover:underline">View</a>
-                <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
-              </td>
-            </tr>
-            <EmptyState v-if="tokens.data.length === 0" :colspan="6" message="No tokens found." />
+          <tr v-for="token in tokens.data" :key="token.id" class="border-t border-sidebar">
+            <td class="px-3 py-2">
+              <div class="font-medium">{{ token.name }}</div>
+              <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
+            </td>
+            <td class="px-3 py-2">
+              <a v-if="token.user" :href="route('admin.users.show', token.user.id)"
+                 class="hover:underline">{{ token.user.name }}</a>
+              <span v-else class="text-muted-foreground">—</span>
+            </td>
+            <td class="px-3 py-2">
+              <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive'
+                }}
+              </Badge>
+            </td>
+            <td class="px-3 py-2">{{ token.access_count }}</td>
+            <td class="px-3 py-2 text-xs text-muted-foreground">{{ token.expires_at ?? 'Never' }}</td>
+            <td class="px-3 py-2 flex gap-2">
+              <a :href="route('admin.tokens.show', token.id)" class="text-primary text-xs hover:underline">View</a>
+              <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
+            </td>
+          </tr>
+          <EmptyState v-if="tokens.data.length === 0" :colspan="6" message="No tokens found." />
           </tbody>
         </table>
       </div>
@@ -118,7 +123,7 @@ function deleteToken(id: number) {
       <div class="flex gap-1">
         <template v-for="link in tokens.links" :key="link.label">
           <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm"
-            :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
           <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
         </template>
       </div>

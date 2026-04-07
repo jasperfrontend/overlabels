@@ -35,7 +35,7 @@ watch(
       toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 const refreshing = ref(false);
@@ -49,19 +49,19 @@ function refresh() {
       setTimeout(() => {
         refreshing.value = false;
       }, 600);
-    },
+    }
   });
 }
 
 const breadcrumbs = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard'
   },
   {
     title: 'Recent events',
-    href: '/dashboard/recents',
-  },
+    href: '/dashboard/recents'
+  }
 ];
 </script>
 

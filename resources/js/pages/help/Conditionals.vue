@@ -6,12 +6,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Help',
-    href: '/help',
+    href: '/help'
   },
   {
     title: 'Conditional Tags',
-    href: '/help/conditionals',
-  },
+    href: '/help/conditionals'
+  }
 ];
 </script>
 
@@ -31,7 +31,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       property="og:description"
       content="Complete reference for conditional template tags, event data, Ko-fi and StreamLabs integration tags in Overlabels overlays."
     />
-    <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta property="og:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
@@ -42,7 +43,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       name="twitter:description"
       content="Complete reference for conditional template tags, event data, Ko-fi and StreamLabs integration tags in Overlabels overlays."
     />
-    <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta name="twitter:image"
+          content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
@@ -50,8 +52,14 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-8">
           <h1 class="mb-4 text-4xl font-bold">Conditional Tags Reference</h1>
-          <p class="text-lg text-foreground">Complete guide to conditional template tags and available event data for your overlays.</p>
-          <p class="text-lg text-foreground">See your <a href="/tags" class="text-violet-400 hover:underline">static Template Tags</a> you can use for your account level. Looking to format numbers, durations, or currencies? See <Link href="/help/formatting" class="text-violet-400 hover:underline">Formatting Pipes</Link>.</p>
+          <p class="text-lg text-foreground">Complete guide to conditional template tags and available event data for
+            your overlays.</p>
+          <p class="text-lg text-foreground">See your <a href="/tags" class="text-violet-400 hover:underline">static
+            Template Tags</a> you can use for your account level. Looking to format numbers, durations, or currencies?
+            See
+            <Link href="/help/formatting" class="text-violet-400 hover:underline">Formatting Pipes</Link>
+            .
+          </p>
         </div>
 
         <!-- Table of Contents -->
@@ -59,7 +67,8 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold" id="toc">Table of Contents</h2>
           <ul class="space-y-2">
             <li><a href="#conditionals" class="text-violet-400 hover:underline">Conditional Template Syntax</a></li>
-            <li><a href="#event-based-template-tags" class="text-violet-400 hover:underline">Event-based Template Tags</a></li>
+            <li><a href="#event-based-template-tags" class="text-violet-400 hover:underline">Event-based Template
+              Tags</a></li>
             <li><a href="#kofi-events" class="text-violet-400 hover:underline">Ko-fi Integration Events</a></li>
             <li><a href="#streamlabs-events" class="text-violet-400 hover:underline">StreamLabs Integration</a></li>
             <li><a href="#tips" class="text-violet-400 hover:underline">Tips &amp; Best Practices</a></li>
@@ -70,7 +79,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="conditionals">
           <h2 class="mb-6 text-2xl font-bold">Conditional Template Syntax</h2>
           <p class="mb-6 text-muted-foreground">
-            Use conditional logic to dynamically show or hide content in your overlays based on real-time data. All conditionals are processed
+            Use conditional logic to dynamically show or hide content in your overlays based on real-time data. All
+            conditionals are processed
             client-side for security.
           </p>
 
@@ -79,7 +89,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Boolean Conditions</h3>
               <p class="mb-4 text-muted-foreground">
-                Test if a value exists and is truthy. Values considered false: <code>null</code>, <code>undefined</code>, <code>""</code>,
+                Test if a value exists and is truthy. Values considered false: <code>null</code>, <code>undefined</code>,
+                <code>""</code>,
                 <code>"false"</code>, <code>"0"</code>
               </p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
@@ -93,7 +104,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Numerical Comparisons</h3>
               <p class="mb-4 text-muted-foreground">
-                Compare numbers using standard operators: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>,
+                Compare numbers using standard operators: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>,
+                <code>&lt;=</code>,
                 <code>!=</code>, <code>=</code>
               </p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
@@ -110,7 +122,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- String Comparisons -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">String Comparisons</h3>
-              <p class="mb-4 text-muted-foreground">Compare text values using <code>=</code> and <code>!=</code> operators.</p>
+              <p class="mb-4 text-muted-foreground">Compare text values using <code>=</code> and <code>!=</code>
+                operators.</p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
                 [[[if:channel_language = en]]]<br />
                 &nbsp;&nbsp;&lt;p&gt;Welcome to our English stream!&lt;/p&gt;<br />
@@ -124,11 +137,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Event-based Conditionals</h3>
               <p class="mb-4 text-muted-foreground">
-                Use event data in alert templates to create dynamic alerts based on donation/subscription amounts, viewer counts, etc.
+                Use event data in alert templates to create dynamic alerts based on donation/subscription amounts,
+                viewer counts, etc.
               </p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
                 [[[if:event.bits >= 1000]]]<br />
-                &nbsp;&nbsp;&lt;div class="big-cheer"&gt;HUGE CHEER! [[[event.user_name]]] donated [[[event.bits]]] bits!&lt;/div&gt;<br />
+                &nbsp;&nbsp;&lt;div class="big-cheer"&gt;HUGE CHEER! [[[event.user_name]]] donated [[[event.bits]]]
+                bits!&lt;/div&gt;<br />
                 [[[elseif:event.bits >= 100]]]<br />
                 &nbsp;&nbsp;&lt;div class="medium-cheer"&gt;Thanks [[[event.user_name]]] for [[[event.bits]]] bits!&lt;/div&gt;<br />
                 [[[else]]]<br />
@@ -140,7 +155,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Nested Conditionals -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Nested Conditionals</h3>
-              <p class="mb-4 text-muted-foreground">You can nest conditionals up to 10 levels deep for complex logic.</p>
+              <p class="mb-4 text-muted-foreground">You can nest conditionals up to 10 levels deep for complex
+                logic.</p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
                 [[[if:event.tier = 3000]]]<br />
                 &nbsp;&nbsp;[[[if:event.total >= 10]]]<br />
@@ -158,7 +174,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="event-based-template-tags">
           <h2 class="mb-6 text-2xl font-bold">Event-based Template Tags</h2>
           <p class="mb-6 text-muted-foreground">
-            These tags are available in alert templates and contain data specific to each Twitch event. Use <code>[[[event.tag_name]]]</code> syntax.
+            These tags are available in alert templates and contain data specific to each Twitch event. Use <code>[[[event.tag_name]]]</code>
+            syntax.
           </p>
 
           <div class="space-y-8">
@@ -207,8 +224,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <h4 class="mb-2 font-semibold">Subscription Data</h4>
                   <div class="space-y-2 font-mono text-sm">
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
-                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span>
+                    </div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span>
+                    </div>
                     <div><code>[[[event.is_gift]]]</code> - true/false if gifted</div>
                   </div>
                 </div>
@@ -235,8 +254,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <h4 class="mb-2 font-semibold">Gift Data</h4>
                   <div class="space-y-2 font-mono text-sm">
                     <div><code>[[[event.total]]]</code> - Number of subs gifted</div>
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
-                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span>
+                    </div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span>
+                    </div>
                     <div><code>[[[event.cumulative_total]]]</code> - Total gifts ever</div>
                     <div><code>[[[event.is_anonymous]]]</code> - true/false if anonymous</div>
                   </div>
@@ -256,8 +277,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <h4 class="mb-2 font-semibold">User Information</h4>
                   <div class="space-y-2 font-mono text-sm">
                     <div><code>[[[event.user_name]]]</code> - Subscriber's display name</div>
-                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span></div>
-                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span></div>
+                    <div><code>[[[event.tier]]]</code> - Sub tier (1000, 2000, 3000) <span class="text-orange-400">DON'T USE THIS</span>
+                    </div>
+                    <div><code>[[[event.tier_display]]]</code> - Sub display (1, 2, 3) <span class="text-green-400">USE THIS</span>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -299,7 +322,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <div class="mt-4 rounded bg-sidebar p-4">
                 <h5 class="mb-2 font-semibold">Example Usage:</h5>
-                <code class="text-sm"> [[[if:event.bits >= 1000]]]HUGE CHEER![[[endif]]] [[[event.user_name]]] cheered [[[event.bits]]] bits! </code>
+                <code class="text-sm"> [[[if:event.bits >= 1000]]]HUGE CHEER![[[endif]]] [[[event.user_name]]] cheered
+                  [[[event.bits]]] bits! </code>
               </div>
             </div>
 
@@ -378,7 +402,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <div class="mt-4 rounded border border-green-200 bg-green-50 p-4">
                 <p class="text-sm text-green-800">
-                  <strong>Note:</strong> This event is useful for logging, but viewers probably won't see live alerts since the stream just started.
+                  <strong>Note:</strong> This event is useful for logging, but viewers probably won't see live alerts
+                  since the stream just started.
                 </p>
               </div>
             </div>
@@ -402,7 +427,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <div class="mt-4 rounded border border-red-200 bg-red-50 p-4">
                 <p class="text-sm text-red-800">
-                  <strong>Note:</strong> This event is useful for logging, but viewers won't see alerts since the stream went offline.
+                  <strong>Note:</strong> This event is useful for logging, but viewers won't see alerts since the stream
+                  went offline.
                 </p>
               </div>
             </div>
@@ -413,7 +439,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="kofi-events">
           <h2 class="mb-6 text-2xl font-bold">Ko-fi Integration Events</h2>
           <p class="mb-6 text-muted-foreground">
-            These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure which alert fires for each
+            These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure
+            which alert fires for each
             event type on the <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
           </p>
 
@@ -424,11 +451,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span class="mr-2 inline-block h-4 w-4 rounded bg-orange-400"></span>
                 All Ko-fi Events
               </h3>
-              <p class="mb-4 text-muted-foreground">Available on every Ko-fi event type (donation, subscription, shop_order, commission).</p>
+              <p class="mb-4 text-muted-foreground">Available on every Ko-fi event type (donation, subscription,
+                shop_order, commission).</p>
               <div class="space-y-2 font-mono text-sm">
                 <div><code>[[[event.from_name]]]</code> — name of the supporter</div>
-                <div><code>[[[event.source]]]</code> — display name of the platform (e.g. <code>"Ko-fi"</code>) — useful for reusing the same value across multiple donation services</div>
-                <div><code>[[[event.type]]]</code> — normalized type: <code>donation</code>, <code>subscription</code>, <code>shop_order</code>, or <code>commission</code></div>
+                <div><code>[[[event.source]]]</code> — display name of the platform (e.g. <code>"Ko-fi"</code>) — useful
+                  for reusing the same value across multiple donation services
+                </div>
+                <div><code>[[[event.type]]]</code> — normalized type: <code>donation</code>, <code>subscription</code>,
+                  <code>shop_order</code>, or <code>commission</code></div>
                 <div><code>[[[event.transaction_id]]]</code> — unique Ko-fi transaction ID</div>
                 <div><code>[[[event.url]]]</code> — supporter's Ko-fi page URL</div>
               </div>
@@ -440,7 +471,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span class="mr-2 inline-block h-4 w-4 rounded bg-yellow-400"></span>
                 Donation &amp; Subscription Events
               </h3>
-              <p class="mb-4 text-muted-foreground">Additional tags available for <code>donation</code> and <code>subscription</code> events.</p>
+              <p class="mb-4 text-muted-foreground">Additional tags available for <code>donation</code> and <code>subscription</code>
+                events.</p>
               <div class="space-y-2 font-mono text-sm">
                 <div><code>[[[event.message]]]</code> — supporter's message</div>
                 <div><code>[[[event.amount]]]</code> — amount as a string (e.g. <code>"5.00"</code>)</div>
@@ -457,7 +489,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p class="mb-4 text-muted-foreground">Extra tags exclusive to Ko-fi <code>subscription</code> events.</p>
               <div class="space-y-2 font-mono text-sm">
                 <div><code>[[[event.tier_name]]]</code> — subscription tier name</div>
-                <div><code>[[[event.is_first_sub]]]</code> — <code>"1"</code> if this is the supporter's first payment, <code>"0"</code> otherwise</div>
+                <div><code>[[[event.is_first_sub]]]</code> — <code>"1"</code> if this is the supporter's first payment,
+                  <code>"0"</code> otherwise
+                </div>
                 <div><code>[[[event.is_subscription]]]</code> — always <code>"1"</code> for subscription events</div>
               </div>
             </div>
@@ -470,7 +504,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;div class="message"&gt;[[[if:event.message]]][[[event.message]]][[[endif]]]&lt;/div&gt;
               </div>
               <p class="mt-4 text-sm text-muted-foreground">
-                The <code>[[[if:event.message]]]</code> guard ensures the message block is only rendered when the supporter left a message.
+                The <code>[[[if:event.message]]]</code> guard ensures the message block is only rendered when the
+                supporter left a message.
               </p>
             </div>
           </div>
@@ -480,7 +515,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="streamlabs-events">
           <h2 class="mb-6 text-2xl font-bold">StreamLabs Integration</h2>
           <p class="mb-6 text-muted-foreground">
-            Connect your StreamLabs account to receive live donation data in your overlays. Once authenticated, Overlabels automatically tracks
+            Connect your StreamLabs account to receive live donation data in your overlays. Once authenticated,
+            Overlabels automatically tracks
             donations and updates your controls in real time - no webhook URLs or manual setup needed.
           </p>
 
@@ -489,9 +525,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">How It Works</h3>
               <ol class="list-inside list-decimal space-y-2 text-muted-foreground">
-                <li>Go to <a href="/settings/integrations/streamlabs" class="text-violet-400 hover:underline">Settings &gt; Integrations &gt; StreamLabs</a> and click <strong>Authenticate with StreamLabs</strong>.</li>
+                <li>Go to <a href="/settings/integrations/streamlabs" class="text-violet-400 hover:underline">Settings
+                  &gt; Integrations &gt; StreamLabs</a> and click <strong>Authenticate with StreamLabs</strong>.
+                </li>
                 <li>Authorize Overlabels in the StreamLabs popup.</li>
-                <li>Done. Overlabels listens for donations automatically and updates your overlay controls in real time.</li>
+                <li>Done. Overlabels listens for donations automatically and updates your overlay controls in real
+                  time.
+                </li>
               </ol>
             </div>
 
@@ -502,16 +542,21 @@ const breadcrumbs: BreadcrumbItem[] = [
                 Auto-provisioned Controls
               </h3>
               <p class="mb-4 text-muted-foreground">
-                When you connect StreamLabs, six controls are automatically created and kept up to date with every donation.
+                When you connect StreamLabs, six controls are automatically created and kept up to date with every
+                donation.
                 Use them in any overlay template with the <code>[[[c:streamlabs:key]]]</code> syntax.
               </p>
               <div class="space-y-2 font-mono text-sm">
-                <div><code>[[[c:streamlabs:donations_received]]]</code> - total number of donations received (counter)</div>
+                <div><code>[[[c:streamlabs:donations_received]]]</code> - total number of donations received (counter)
+                </div>
                 <div><code>[[[c:streamlabs:latest_donor_name]]]</code> - name of the most recent donor</div>
                 <div><code>[[[c:streamlabs:latest_donation_amount]]]</code> - amount of the most recent donation</div>
                 <div><code>[[[c:streamlabs:latest_donation_message]]]</code> - message from the most recent donor</div>
-                <div><code>[[[c:streamlabs:latest_donation_currency]]]</code> - currency of the most recent donation (e.g. USD)</div>
-                <div><code>[[[c:streamlabs:total_received]]]</code> - running total of all donation amounts (session)</div>
+                <div><code>[[[c:streamlabs:latest_donation_currency]]]</code> - currency of the most recent donation
+                  (e.g. USD)
+                </div>
+                <div><code>[[[c:streamlabs:total_received]]]</code> - running total of all donation amounts (session)
+                </div>
               </div>
             </div>
 
@@ -522,7 +567,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 StreamLabs Donation Event Tags
               </h3>
               <p class="mb-4 text-muted-foreground">
-                These tags are available in <strong>alert templates</strong> triggered by StreamLabs donations. Configure which alert fires on the
+                These tags are available in <strong>alert templates</strong> triggered by StreamLabs donations.
+                Configure which alert fires on the
                 <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
               </p>
               <div class="space-y-2 font-mono text-sm">
@@ -532,7 +578,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div><code>[[[event.currency]]]</code> - currency code (e.g. <code>"USD"</code>)</div>
                 <div><code>[[[event.formatted_amount]]]</code> - formatted amount (e.g. <code>"$5.00"</code>)</div>
                 <div><code>[[[event.type]]]</code> - always <code>"donation"</code></div>
-                <div><code>[[[event.source]]]</code> - always <code>"StreamLabs"</code> - useful for reusing alert templates across donation services</div>
+                <div><code>[[[event.source]]]</code> - always <code>"StreamLabs"</code> - useful for reusing alert
+                  templates across donation services
+                </div>
                 <div><code>[[[event.transaction_id]]]</code> - unique event identifier</div>
               </div>
             </div>
@@ -549,7 +597,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;/div&gt;
               </div>
               <p class="mt-4 text-sm text-muted-foreground">
-                The same alert template works for both Ko-fi and StreamLabs donations since they share the same event tags (<code>event.from_name</code>, <code>event.amount</code>, <code>event.message</code>, etc.).
+                The same alert template works for both Ko-fi and StreamLabs donations since they share the same event
+                tags (<code>event.from_name</code>, <code>event.amount</code>, <code>event.message</code>, etc.).
               </p>
             </div>
 
@@ -560,21 +609,24 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <div>
                   <h4 class="font-semibold text-foreground">Test Mode</h4>
                   <p>
-                    Toggle test mode on the StreamLabs settings page to experiment with donations without affecting your live counters. When you turn test
+                    Toggle test mode on the StreamLabs settings page to experiment with donations without affecting your
+                    live counters. When you turn test
                     mode off, the donation counter resets to your seed value.
                   </p>
                 </div>
                 <div>
                   <h4 class="font-semibold text-foreground">Starting Donation Count</h4>
                   <p>
-                    Already have donations from before connecting? Set a starting count so your <code>[[[c:streamlabs:donations_received]]]</code> control
+                    Already have donations from before connecting? Set a starting count so your <code>[[[c:streamlabs:donations_received]]]</code>
+                    control
                     picks up where you left off.
                   </p>
                 </div>
                 <div>
                   <h4 class="font-semibold text-foreground">Shared Alert Templates</h4>
                   <p>
-                    StreamLabs and Ko-fi donation events expose the same core tags, so you can point both services at the same alert template.
+                    StreamLabs and Ko-fi donation events expose the same core tags, so you can point both services at
+                    the same alert template.
                   </p>
                 </div>
               </div>
@@ -588,17 +640,21 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="space-y-4 text-muted-foreground">
             <div>
               <h4 class="font-semibold text-foreground">Use Meaningful Conditions</h4>
-              <p>Create different alert styles based on the value: small donations vs large donations, new followers vs milestone followers.</p>
+              <p>Create different alert styles based on the value: small donations vs large donations, new followers vs
+                milestone followers.</p>
             </div>
             <div>
               <h4 class="font-semibold text-foreground">Test Your Conditions</h4>
               <p>
                 Use the
-                <a class="text-accent-foreground underline hover:no-underline" href="/testing" target="_blank" rel="nofollow noopener"
-                  >Twitch Testing Guide</a
+                <a class="text-accent-foreground underline hover:no-underline" href="/testing" target="_blank"
+                   rel="nofollow noopener"
+                >Twitch Testing Guide</a
                 >
-                to test your alert templates with different event values to ensure they work as expected. Be sure to install the
-                <a class="text-accent-foreground underline hover:no-underline" href="https://dev.twitch.tv/docs/cli/" target="_blank">Twitch CLI</a>
+                to test your alert templates with different event values to ensure they work as expected. Be sure to
+                install the
+                <a class="text-accent-foreground underline hover:no-underline" href="https://dev.twitch.tv/docs/cli/"
+                   target="_blank">Twitch CLI</a>
                 first!
               </p>
             </div>
@@ -609,12 +665,16 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div>
               <h4 class="font-semibold text-foreground">Copy the Starter Kit</h4>
               <p>
-                <Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Copy the Overlabels Starter Kit</Link> to get a great
+                <Link class="text-accent-foreground underline hover:no-underline" href="/kits/1">Copy the Overlabels
+                  Starter Kit
+                </Link>
+                to get a great
                 set of defaults to work with.
               </p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">If you speak HTML & CSS and understand conditional logic, you're in the right place</h4>
+              <h4 class="font-semibold text-foreground">If you speak HTML & CSS and understand conditional logic, you're
+                in the right place</h4>
               <p>
                 Overlabels assumes you know your way around HTML, CSS and a template engine.
               </p>

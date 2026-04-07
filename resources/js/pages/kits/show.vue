@@ -56,7 +56,7 @@ const handleDelete = () => {
 
   if (confirm('Are you sure you want to delete this kit? This action cannot be undone.')) {
     router.delete(`/kits/${props.kit.id}`, {
-      onSuccess: () => router.visit('/kits'),
+      onSuccess: () => router.visit('/kits')
     });
   }
 };
@@ -111,15 +111,15 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
-    year: 'numeric',
+    year: 'numeric'
   });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'View Kit "' + props.kit.title + '"',
-    href: route('kits.index'),
-  },
+    href: route('kits.index')
+  }
 ];
 </script>
 
@@ -129,7 +129,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <div class="space-y-4 p-4">
       <!-- Back button -->
-      <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="route('kits.index')"
+            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kits
       </Link>
@@ -140,7 +141,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted lg:aspect-video">
           <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
         </div>
-        <div v-else class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
+        <div v-else
+             class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
           <Package class="h-16 w-16 text-primary/40" />
         </div>
 
@@ -165,7 +167,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
               <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div v-if="kit.owner" class="flex items-center gap-2">
-                  <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
+                  <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name"
+                       class="h-6 w-6 rounded-full" />
                   <span>by {{ kit.owner.name }}</span>
                 </div>
 
@@ -266,7 +269,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 :alt="template.name"
                 class="h-full w-full object-cover transition-transform duration-300"
               />
-              <div v-else class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
+              <div v-else
+                   class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
                 <component :is="template.type === 'alert' ? Zap : Layers" class="h-10 w-10 text-primary/30" />
               </div>
             </div>
@@ -274,7 +278,9 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Info -->
             <div class="p-4">
               <div class="mb-1 flex items-center gap-2">
-                <h3 class="truncate font-semibold group-hover:text-violet-500 dark:group-hover:text-violet-300 transition-colors">{{ template.name }}</h3>
+                <h3
+                  class="truncate font-semibold group-hover:text-violet-500 dark:group-hover:text-violet-300 transition-colors">
+                  {{ template.name }}</h3>
                 <Badge
                   class="shrink-0 text-xs"
                   :class="template.type === 'alert'
@@ -284,7 +290,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                   {{ template.type === 'alert' ? 'Alert' : 'Static' }}
                 </Badge>
               </div>
-              <p v-if="template.description" class="line-clamp-2 text-sm text-muted-foreground">{{ template.description }}</p>
+              <p v-if="template.description" class="line-clamp-2 text-sm text-muted-foreground">{{ template.description
+                }}</p>
             </div>
           </Link>
         </div>

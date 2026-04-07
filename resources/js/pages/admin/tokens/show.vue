@@ -33,7 +33,7 @@ const props = defineProps<{
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
   { title: 'Tokens', href: route('admin.tokens.index') },
-  { title: props.token.name, href: route('admin.tokens.show', props.token.id) },
+  { title: props.token.name, href: route('admin.tokens.show', props.token.id) }
 ];
 </script>
 
@@ -43,7 +43,8 @@ const breadcrumbs = [
     <div class="flex flex-col gap-6 p-4 max-w-3xl">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">{{ token.name }}</h1>
-        <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}</Badge>
+        <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}
+        </Badge>
       </div>
 
       <Card>
@@ -55,7 +56,8 @@ const breadcrumbs = [
           <div>
             <span class="text-muted-foreground">Owner</span>
             <div>
-              <a v-if="token.user" :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
+              <a v-if="token.user" :href="route('admin.users.show', token.user.id)"
+                 class="hover:underline">{{ token.user.name }}</a>
               <span v-else>—</span>
             </div>
           </div>
@@ -79,23 +81,25 @@ const breadcrumbs = [
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Access Log (last 50)</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Access Log (last 50)</CardTitle>
+        </CardHeader>
         <CardContent>
           <table class="w-full text-xs">
             <thead class="text-left text-muted-foreground">
-              <tr>
-                <th class="pb-2">Template</th>
-                <th class="pb-2">IP</th>
-                <th class="pb-2">Accessed At</th>
-              </tr>
+            <tr>
+              <th class="pb-2">Template</th>
+              <th class="pb-2">IP</th>
+              <th class="pb-2">Accessed At</th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="log in accessLogs" :key="log.id" class="border-t">
-                <td class="py-1.5 font-mono">{{ log.template_slug ?? '—' }}</td>
-                <td class="py-1.5 text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
-                <td class="py-1.5 text-muted-foreground">{{ log.accessed_at }}</td>
-              </tr>
-              <EmptyState v-if="accessLogs.length === 0" :colspan="3" message="No access logs." />
+            <tr v-for="log in accessLogs" :key="log.id" class="border-t">
+              <td class="py-1.5 font-mono">{{ log.template_slug ?? '—' }}</td>
+              <td class="py-1.5 text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
+              <td class="py-1.5 text-muted-foreground">{{ log.accessed_at }}</td>
+            </tr>
+            <EmptyState v-if="accessLogs.length === 0" :colspan="3" message="No access logs." />
             </tbody>
           </table>
         </CardContent>

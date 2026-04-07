@@ -26,6 +26,7 @@ class IntegrationController extends Controller
                 'name' => $this->serviceName($service),
                 'connected' => (bool) $integration,
                 'enabled' => $integration?->enabled ?? false,
+                'test_mode' => $integration?->test_mode ?? false,
                 'last_received_at' => $integration?->last_received_at?->toIso8601String(),
             ];
         }, ExternalServiceRegistry::services());
@@ -41,6 +42,7 @@ class IntegrationController extends Controller
             'kofi' => 'Ko-fi',
             'gpslogger' => 'GPSLogger',
             'streamlabs' => 'StreamLabs',
+            'streamelements' => 'StreamElements',
             'throne' => 'Throne',
             'patreon' => 'Patreon',
             'fourthwall' => 'Fourthwall',

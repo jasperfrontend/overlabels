@@ -31,20 +31,20 @@ const props = defineProps<{
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Settings', href: '/settings' },
   { title: 'Integrations', href: '/settings/integrations' },
-  { title: 'Ko-fi', href: '/settings/integrations/kofi' },
+  { title: 'Ko-fi', href: '/settings/integrations/kofi' }
 ];
 
 const EVENT_TYPES = [
   { value: 'donation', label: 'Donations' },
   { value: 'subscription', label: 'Subscriptions' },
   { value: 'shop_order', label: 'Shop Orders' },
-  { value: 'commission', label: 'Commissions' },
+  { value: 'commission', label: 'Commissions' }
 ];
 
 const form = useForm({
   verification_token: '',
   enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
-  enabled: props.integration.connected ? props.integration.enabled : true,
+  enabled: props.integration.connected ? props.integration.enabled : true
 });
 
 // Test mode is independent of the main form — toggled instantly via its own endpoint
@@ -64,7 +64,7 @@ async function setSeedCount() {
   seedError.value = null;
   try {
     const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
-      initial_count: seedCount.value,
+      initial_count: seedCount.value
     });
     kofisSeedSet.value = data.kofis_seed_set;
     kofisSeedValue.value = data.kofis_seed_value;
@@ -96,7 +96,7 @@ function toggleEvent(eventType: string) {
 
 function save() {
   form.post('/settings/integrations/kofi', {
-    preserveScroll: true,
+    preserveScroll: true
   });
 }
 
@@ -104,7 +104,7 @@ async function toggleTestMode() {
   testModeLoading.value = true;
   try {
     const { data } = await axios.patch('/settings/integrations/kofi/test-mode', {
-      test_mode: testMode.value,
+      test_mode: testMode.value
     });
     testMode.value = data.test_mode;
   } catch {
@@ -128,218 +128,223 @@ function formatDate(iso: string | null): string {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Ko-fi Integration" />
+  <AppLayout :breadcrumbs="breadcrumbItems">
+    <Head title="Ko-fi Integration" />
 
-        <SettingsLayout>
-            <div class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <HeadingSmall
-                        title="Ko-fi"
-                        description="Receive donation alerts and update overlay controls from Ko-fi."
-                    />
+    <SettingsLayout>
+      <div class="space-y-6">
+        <div class="flex items-center justify-between">
+          <HeadingSmall
+            title="Ko-fi"
+            description="Receive donation alerts and update overlay controls from Ko-fi."
+          />
 
-                    <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
-                    <Badge v-else variant="secondary">Not connected</Badge>
-                </div>
+          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
+          </Badge>
+          <Badge v-else variant="secondary">Not connected</Badge>
+        </div>
 
-                <div v-if="!integration.connected" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
-                    <HeadingSmall
-                        title="Why Ko-fi?"
-                        description="Learn why Ko-fi is the best way to receive donations as a streamer - and why Overlabels chose it as our first integration."
-                    />
-                    <Button variant="outline" size="sm" as-child>
-                        <Link href="/help/why-kofi">Read more</Link>
-                    </Button>
-                </div>
+        <div v-if="!integration.connected" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
+          <HeadingSmall
+            title="Why Ko-fi?"
+            description="Learn why Ko-fi is the best way to receive donations as a streamer - and why Overlabels chose it as our first integration."
+          />
+          <Button variant="outline" size="sm" as-child>
+            <Link href="/help/why-kofi">Read more</Link>
+          </Button>
+        </div>
 
-                <div v-if="integration.connected" class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
-                  <p class="font-medium text-foreground">What to do next</p>
-                  <ol class="list-decimal pl-4 space-y-1">
-                    <li>
-                      Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
-                      to configure which alert template fires for each Ko-fi event type (Donation, Subscription, etc.).
-                    </li>
-                    <li>
-                      Open any <strong>static</strong> overlay template → <strong>Controls</strong> tab → <strong>Add control</strong>
-                      to add Ko-fi data controls (donation count, latest donor name, etc.) that update live.
-                    </li>
-                  </ol>
-                </div>
+        <div v-if="integration.connected"
+             class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+          <p class="font-medium text-foreground">What to do next</p>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li>
+              Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
+              to configure which alert template fires for each Ko-fi event type (Donation, Subscription, etc.).
+            </li>
+            <li>
+              Open any <strong>static</strong> overlay template → <strong>Controls</strong> tab → <strong>Add
+              control</strong>
+              to add Ko-fi data controls (donation count, latest donor name, etc.) that update live.
+            </li>
+          </ol>
+        </div>
 
-                <form class="space-y-6" @submit.prevent="save">
-                    <!-- Verification Token -->
-                    <div class="space-y-2">
-                        <Label for="verification_token">Ko-fi Verification Token</Label>
-                        <p class="text-muted-foreground text-sm">
-                            Find this in Ko-fi → My Page → API → Verification Token.
-                        </p>
-                        <Input
-                            id="verification_token"
-                            v-model="form.verification_token"
-                            type="text"
-                            :placeholder="integration.has_token ? '(token saved — enter new to replace)' : 'Paste your verification token'"
-                            autocomplete="off"
-                        />
-                        <p v-if="form.errors.verification_token" class="text-destructive text-sm">
-                            {{ form.errors.verification_token }}
-                        </p>
-                    </div>
+        <form class="space-y-6" @submit.prevent="save">
+          <!-- Verification Token -->
+          <div class="space-y-2">
+            <Label for="verification_token">Ko-fi Verification Token</Label>
+            <p class="text-muted-foreground text-sm">
+              Find this in Ko-fi → My Page → API → Verification Token.
+            </p>
+            <Input
+              id="verification_token"
+              v-model="form.verification_token"
+              type="text"
+              :placeholder="integration.has_token ? '(token saved — enter new to replace)' : 'Paste your verification token'"
+              autocomplete="off"
+            />
+            <p v-if="form.errors.verification_token" class="text-destructive text-sm">
+              {{ form.errors.verification_token }}
+            </p>
+          </div>
 
-                    <!-- Webhook URL (read-only) -->
-                    <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
-                        <Label>Your Webhook URL</Label>
-                        <p class="text-muted-foreground text-sm">
-                            Paste this URL into Ko-fi → My Page → API → Webhook URL.
-                        </p>
-                        <div class="flex gap-2">
-                            <Input
-                                :model-value="integration.webhook_url ?? ''"
-                                readonly
-                                class="font-mono text-sm"
-                            />
-                            <Button type="button" variant="outline" @click="copyWebhookUrl">
-                                {{ copied ? 'Copied!' : 'Copy' }}
-                            </Button>
-                        </div>
-                    </div>
-
-                    <!-- Enabled Event Types -->
-                    <div class="space-y-2">
-                        <Label>Alert on</Label>
-                        <p class="text-muted-foreground text-sm">
-                            Which Ko-fi event types should trigger alerts and update controls.
-                        </p>
-                        <div class="flex flex-wrap gap-2">
-                            <Button
-                                v-for="et in EVENT_TYPES"
-                                :key="et.value"
-                                type="button"
-                                :variant="form.enabled_events.includes(et.value) ? 'default' : 'outline'"
-                                size="sm"
-                                @click="toggleEvent(et.value)"
-                            >
-                                {{ et.label }}
-                            </Button>
-                        </div>
-                    </div>
-
-                    <!-- Last received -->
-                    <p v-if="integration.connected" class="text-muted-foreground text-sm">
-                        Last event received: {{ formatDate(integration.last_received_at) }}
-                    </p>
-
-                    <div class="flex gap-2">
-                        <Button type="submit" :disabled="form.processing">
-                            {{ integration.connected ? 'Save changes' : 'Connect Ko-fi' }}
-                        </Button>
-                        <Button variant="outline" as-child>
-                            <Link href="/settings/integrations">Cancel</Link>
-                        </Button>
-                    </div>
-                </form>
-
-                <!-- Test mode — independent toggle, saves instantly -->
-                <template v-if="integration.connected">
-                    <Separator />
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-3">
-                            <button
-                                type="button"
-                                role="switch"
-                                :aria-checked="testMode"
-                                :disabled="testModeLoading"
-                                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                                :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
-                                @click="testMode = !testMode; toggleTestMode()"
-                            >
-                                <span
-                                    class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
-                                    :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
-                                />
-                            </button>
-                            <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
-                                Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
-                                <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving…</span>
-                            </Label>
-                        </div>
-                        <p class="text-muted-foreground text-sm">
-                            Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
-                            <span v-if="testMode" class="text-yellow-500 font-bold">
-                                Turn this off before going live — your donation count will reset to {{ kofisSeedValue ?? 0 }}.
-                            </span>
-                        </p>
-                        <div v-if="testMode" class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
-                            Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
-                        </div>
-                    </div>
-                </template>
-
-                <!-- Starting donation count (one-time seed) -->
-                <template v-if="integration.connected">
-                    <Separator />
-                    <div class="space-y-2">
-                        <p class="font-medium text-sm">Starting donation count</p>
-
-                        <!-- Already seeded — locked -->
-                        <template v-if="kofisSeedSet">
-                            <p class="text-muted-foreground text-sm">
-                                Starting count set to <strong>{{ kofisSeedValue?.toLocaleString() }}</strong>.
-                                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:kofis_received]]]</code>
-                                controls started from this value.
-                            </p>
-                            <p class="text-muted-foreground text-sm">
-                                Need to correct it? Email
-                                <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
-                            </p>
-                        </template>
-
-                        <!-- Not seeded yet -->
-                        <template v-else>
-                            <p class="text-muted-foreground text-sm">
-                                Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
-                                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
-                                controls update immediately.
-                            </p>
-                            <div class="flex gap-2 items-start">
-                                <div class="flex-1 space-y-1">
-                                    <input
-                                        v-model.number="seedCount"
-                                        type="number"
-                                        min="0"
-                                        placeholder="e.g. 1256"
-                                        :disabled="seedLoading"
-                                    />
-                                    <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    :disabled="seedLoading || seedCount === null"
-                                    @click="setSeedCount"
-                                >
-                                    {{ seedLoading ? 'Saving…' : 'Set starting count' }}
-                                </Button>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-
-                <!-- Danger zone -->
-                <template v-if="integration.connected">
-                    <Separator />
-                    <div class="space-y-2">
-                        <p class="font-medium text-sm">Danger zone</p>
-                        <p class="text-muted-foreground text-sm">
-                            Disconnecting Ko-fi will remove all Ko-fi-managed controls (donation counts, latest donor,
-                            etc.) from your overlays.
-                        </p>
-                        <Button variant="destructive" size="sm" type="button" @click="disconnect">
-                            Disconnect Ko-fi
-                        </Button>
-                    </div>
-                </template>
+          <!-- Webhook URL (read-only) -->
+          <div v-if="integration.connected && integration.webhook_url" class="space-y-2">
+            <Label>Your Webhook URL</Label>
+            <p class="text-muted-foreground text-sm">
+              Paste this URL into Ko-fi → My Page → API → Webhook URL.
+            </p>
+            <div class="flex gap-2">
+              <Input
+                :model-value="integration.webhook_url ?? ''"
+                readonly
+                class="font-mono text-sm"
+              />
+              <Button type="button" variant="outline" @click="copyWebhookUrl">
+                {{ copied ? 'Copied!' : 'Copy' }}
+              </Button>
             </div>
-        </SettingsLayout>
-    </AppLayout>
+          </div>
+
+          <!-- Enabled Event Types -->
+          <div class="space-y-2">
+            <Label>Alert on</Label>
+            <p class="text-muted-foreground text-sm">
+              Which Ko-fi event types should trigger alerts and update controls.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <Button
+                v-for="et in EVENT_TYPES"
+                :key="et.value"
+                type="button"
+                :variant="form.enabled_events.includes(et.value) ? 'default' : 'outline'"
+                size="sm"
+                @click="toggleEvent(et.value)"
+              >
+                {{ et.label }}
+              </Button>
+            </div>
+          </div>
+
+          <!-- Last received -->
+          <p v-if="integration.connected" class="text-muted-foreground text-sm">
+            Last event received: {{ formatDate(integration.last_received_at) }}
+          </p>
+
+          <div class="flex gap-2">
+            <Button type="submit" :disabled="form.processing">
+              {{ integration.connected ? 'Save changes' : 'Connect Ko-fi' }}
+            </Button>
+            <Button variant="outline" as-child>
+              <Link href="/settings/integrations">Cancel</Link>
+            </Button>
+          </div>
+        </form>
+
+        <!-- Test mode — independent toggle, saves instantly -->
+        <template v-if="integration.connected">
+          <Separator />
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="testMode"
+                :disabled="testModeLoading"
+                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
+                @click="testMode = !testMode; toggleTestMode()"
+              >
+                          <span
+                            class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
+                            :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
+                          />
+              </button>
+              <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
+                Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
+                <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving…</span>
+              </Label>
+            </div>
+            <p class="text-muted-foreground text-sm">
+              Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
+              <span v-if="testMode" class="text-yellow-500 font-bold">
+                          Turn this off before going live — your donation count will reset to {{ kofisSeedValue ?? 0 }}.
+                      </span>
+            </p>
+            <div v-if="testMode"
+                 class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+              Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
+            </div>
+          </div>
+        </template>
+
+        <!-- Starting donation count (one-time seed) -->
+        <template v-if="integration.connected">
+          <Separator />
+          <div class="space-y-2">
+            <p class="font-medium text-sm">Starting donation count</p>
+
+            <!-- Already seeded — locked -->
+            <template v-if="kofisSeedSet">
+              <p class="text-muted-foreground text-sm">
+                Starting count set to <strong>{{ kofisSeedValue?.toLocaleString() }}</strong>.
+                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:kofis_received]]]</code>
+                controls started from this value.
+              </p>
+              <p class="text-muted-foreground text-sm">
+                Need to correct it? Email
+                <a href="mailto:jasper@emailjasper.com"
+                   class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
+              </p>
+            </template>
+
+            <!-- Not seeded yet -->
+            <template v-else>
+              <p class="text-muted-foreground text-sm">
+                Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
+                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
+                controls update immediately.
+              </p>
+              <div class="flex gap-2 items-start">
+                <div class="flex-1 space-y-1">
+                  <input
+                    v-model.number="seedCount"
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1256"
+                    :disabled="seedLoading"
+                  />
+                  <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="seedLoading || seedCount === null"
+                  @click="setSeedCount"
+                >
+                  {{ seedLoading ? 'Saving…' : 'Set starting count' }}
+                </Button>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- Danger zone -->
+        <template v-if="integration.connected">
+          <Separator />
+          <div class="space-y-2">
+            <p class="font-medium text-sm">Danger zone</p>
+            <p class="text-muted-foreground text-sm">
+              Disconnecting Ko-fi will remove all Ko-fi-managed controls (donation counts, latest donor,
+              etc.) from your overlays.
+            </p>
+            <Button variant="destructive" size="sm" type="button" @click="disconnect">
+              Disconnect Ko-fi
+            </Button>
+          </div>
+        </template>
+      </div>
+    </SettingsLayout>
+  </AppLayout>
 </template>

@@ -33,7 +33,7 @@ const form = useForm({
   description: props.kit.description || '',
   is_public: props.kit.is_public,
   thumbnail_url: props.kit.thumbnail_url || '',
-  template_ids: [...props.selectedTemplateIds],
+  template_ids: [...props.selectedTemplateIds]
 });
 
 const selectedTemplates = computed(() => {
@@ -56,15 +56,15 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
 const submit = () => {
   // Use put method for Cloudinary URL submission
   form.put(`/kits/${props.kit.id}`, {
-    preserveScroll: true,
+    preserveScroll: true
   });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Edit Kit "' + props.kit.title + '"',
-    href: route('kits.index'),
-  },
+    href: route('kits.index')
+  }
 ];
 </script>
 
@@ -74,7 +74,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
       <!-- Back button -->
-      <Link :href="`/kits/${kit.id}`" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="`/kits/${kit.id}`"
+            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kit
       </Link>
@@ -88,7 +89,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <form @submit.prevent="submit" class="space-y-6">
         <!-- Basic Information -->
-
 
 
         <Card class="gap-4">
@@ -155,7 +155,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Thumbnail Upload -->
         <Card>
           <CardHeader>
-            <HeadingSmall title="Kit Thumbnail" description="Update your kit's thumbnail image (2560x1440px recommended, max 10MB). Be sure to provide a high quality thumbnail so your kit looks great in the library." />
+            <HeadingSmall title="Kit Thumbnail"
+                          description="Update your kit's thumbnail image (2560x1440px recommended, max 10MB). Be sure to provide a high quality thumbnail so your kit looks great in the library." />
           </CardHeader>
           <CardContent>
             <ImageDropZone
@@ -171,7 +172,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Template Selection -->
         <Card>
           <CardHeader>
-            <HeadingSmall title="Select Templates *" description="Choose which of your templates to include in this kit." />
+            <HeadingSmall title="Select Templates *"
+                          description="Choose which of your templates to include in this kit." />
           </CardHeader>
           <CardContent>
             <EmptyState
@@ -219,9 +221,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         </Card>
 
         <!-- Fork Information -->
-        <div v-if="kit.fork_count > 0" class="rounded-lg border border-amber-500/50 bg-amber-50 p-4 dark:bg-amber-950/20">
+        <div v-if="kit.fork_count > 0"
+             class="rounded-lg border border-amber-500/50 bg-amber-50 p-4 dark:bg-amber-950/20">
           <p class="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Note:</strong> This kit has been forked {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : '' }} and cannot be deleted.
+            <strong>Note:</strong> This kit has been forked {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : ''
+            }} and cannot be deleted.
           </p>
         </div>
 

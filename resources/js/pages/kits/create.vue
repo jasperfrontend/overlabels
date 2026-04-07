@@ -24,7 +24,7 @@ const form = useForm({
   description: '',
   is_public: false,
   thumbnail_url: '' as string,
-  template_ids: [] as number[],
+  template_ids: [] as number[]
 });
 
 const selectedTemplates = computed(() => {
@@ -46,7 +46,7 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
 
 const submit = () => {
   form.post('/kits', {
-    preserveScroll: true,
+    preserveScroll: true
   });
 };
 </script>
@@ -57,7 +57,8 @@ const submit = () => {
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
       <!-- Back button -->
-      <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="route('kits.index')"
+            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kits
       </Link>
