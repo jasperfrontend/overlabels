@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 7th, 2026 - Fix: Timer controls not working in expressions
+
+- Timer controls (and their `:running` companion) caused expression evaluation to silently fail, producing no output on the overlay.
+- Root cause: `buildContext()` in the expression engine treated `c:timer:running` as a namespaced key (namespace `timer`, subkey `running`), overwriting the scalar `c:timer` value with a namespace object. This made `c.timer + 2` throw a TypeError that was silently caught.
+- Fixed `buildContext()` to skip namespaced keys when a scalar value already occupies that namespace, and to let scalar keys overwrite any pre-existing namespace object.
+- Fixed ExpressionBuilder preview showing wrong values for timer controls (always used empty string instead of computing elapsed seconds from config).
+
 ## April 7th, 2026 - UI: Timer running indicators and light mode contrast
 
 - Timer cards in ControlPanel now show a green/red gradient background and ring border indicating running/stopped state, with a colored dot next to the timer display. Countto timers are excluded (always running).

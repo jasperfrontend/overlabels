@@ -6,7 +6,7 @@
  * handles the cascade automatically - when a control value changes, any
  * expression that references it re-evaluates.
  *
- * Security: the evaluator is sandboxed by construction. It only handles
+ * Security: construction sandboxes the evaluator. It only handles
  * a whitelist of AST node types, uses Object.create(null) for context
  * objects, and blocks prototype chain access. No eval / new Function.
  */
@@ -105,13 +105,21 @@ export function buildContext(data: Record<string, unknown>): Record<string, unkn
 
       if (BLOCKED_PROPS.has(namespace) || BLOCKED_PROPS.has(subKey)) continue;
 
+      // If a scalar value already occupies this namespace (e.g. c:timer = "42"),
+      // don't clobber it with a namespace object from c:timer:running.
+      const existing = c[namespace];
+      if (existing !== undefined && existing !== null && typeof existing !== 'object') {
+        continue;
+      }
+
       // Create or reuse the namespace object
-      if (c[namespace] === undefined || c[namespace] === null || typeof c[namespace] !== 'object') {
+      if (existing === undefined || existing === null) {
         c[namespace] = Object.create(null);
       }
       (c[namespace] as Record<string, unknown>)[subKey] = val;
     } else {
       if (BLOCKED_PROPS.has(rawKey)) continue;
+      // Overwrite any existing namespace object - scalar keys take priority
       c[rawKey] = val;
     }
   }
@@ -229,7 +237,7 @@ interface ExpressionEntry {
   stop: WatchStopHandle | null;
 }
 
- 
+
 export function useExpressionEngine(data: Ref<Record<string, any> | null | undefined>) {
   const registry = new Map<string, ExpressionEntry>();
 

@@ -38,6 +38,31 @@ watch(expressionText, (val) => {
 
 const expressionError = ref('');
 const expressionPreview = ref('');
+
+/** Compute a representative preview value for a control, including timer types. */
+function resolvePreviewValue(ctrl: OverlayControl): unknown {
+  if (ctrl.type === 'timer') {
+    const cfg = ctrl.config ?? {};
+    const mode = cfg.mode ?? 'countup';
+    const offset = Number(cfg.offset_seconds ?? 0);
+
+    if (mode === 'countto') {
+      const target = cfg.target_datetime ? new Date(cfg.target_datetime).getTime() : null;
+      if (!target) return 0;
+      return Math.max(0, Math.floor((target - Date.now()) / 1000));
+    }
+
+    let elapsed = offset;
+    if (cfg.running && cfg.started_at) {
+      elapsed = offset + Math.floor((Date.now() - new Date(cfg.started_at).getTime()) / 1000);
+    }
+
+    const base = Number(cfg.base_seconds ?? 0);
+    return mode === 'countdown' ? Math.max(0, base - elapsed) : elapsed;
+  }
+
+  return ctrl.value ?? '';
+}
 const helpOpen = ref(false);
 const controlFilter = ref('');
 
@@ -57,7 +82,7 @@ watch(expressionText, (text) => {
     const mockData: Record<string, unknown> = {};
     for (const ctrl of props.availableControls) {
       const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
-      mockData[key] = ctrl.value ?? '';
+      mockData[key] = resolvePreviewValue(ctrl);
     }
 
     const ctx = buildContext(mockData);
