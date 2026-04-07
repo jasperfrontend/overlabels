@@ -55,7 +55,7 @@ const twitchEvents = [
   { type: 'channel.subscription.message', label: 'Resubscription', tag: 'event.message.text' },
   { type: 'channel.cheer', label: 'Bits Cheer', tag: 'event.bits' },
   { type: 'channel.raid', label: 'Incoming Raid', tag: 'event.viewers' },
-  { type: 'channel.channel_points_custom_reward_redemption.add', label: 'Channel Points', tag: 'event.reward.title' },
+  { type: 'channel.channel_[...]_redemption.add', label: 'Channel Points', tag: 'event.reward.title' },
   { type: 'stream.online', label: 'Stream Online', tag: 'event.type' },
   { type: 'stream.offline', label: 'Stream Offline', tag: '' },
 ];
