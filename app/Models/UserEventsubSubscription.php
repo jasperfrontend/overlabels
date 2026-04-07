@@ -79,6 +79,7 @@ class UserEventsubSubscription extends Model
             'notification_failures_exceeded',
             'authorization_revoked',
             'user_removed',
+            'not_found_on_twitch',
         ]);
     }
 }

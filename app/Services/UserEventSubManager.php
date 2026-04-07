@@ -255,35 +255,24 @@ class UserEventSubManager
             $twitchSub = $twitchSubsMap->get($userSub->twitch_subscription_id);
 
             if (! $twitchSub) {
-                // Subscription doesn't exist on Twitch - recreate it
+                // Subscription not found on Twitch - mark as failed locally
                 $status['missing']++;
-
-                // Delete the old record
-                $userSub->delete();
-
-                // Recreate the subscription
-                $this->createSingleSubscription($user, $userSub->event_type);
-                $status['renewed']++;
-
+                $userSub->update([
+                    'status' => 'not_found_on_twitch',
+                    'last_verified_at' => now(),
+                ]);
+            } elseif ($twitchSub['status'] === 'enabled') {
+                $status['active']++;
+                $userSub->update([
+                    'status' => 'enabled',
+                    'last_verified_at' => now(),
+                ]);
             } else {
-                // Update status from Twitch
+                $status['failed']++;
                 $userSub->update([
                     'status' => $twitchSub['status'],
                     'last_verified_at' => now(),
                 ]);
-
-                if ($twitchSub['status'] === 'enabled') {
-                    $status['active']++;
-                } else {
-                    $status['failed']++;
-
-                    // Try to renew if failed
-                    if ($userSub->needsRenewal()) {
-                        $userSub->delete();
-                        $this->createSingleSubscription($user, $userSub->event_type);
-                        $status['renewed']++;
-                    }
-                }
             }
         }
 
