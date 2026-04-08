@@ -166,6 +166,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &nbsp;&nbsp;[[[endif]]]<br />
                 [[[endif]]]
               </div>
+              <p class="mt-3 text-sm text-muted-foreground">
+                This example contains a gift bomb - when one person gifts multiple subs at once. Read how Overlabels
+                <a href="#gift-bomb-detection" class="text-foreground underline underline-offset-2 hover:no-underline">handles gift sub bombs</a>
+                (multiple subs from the same person) so your overlay shows one clean alert instead of dozens.
+              </p>
             </div>
           </div>
         </div>
@@ -265,7 +270,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
 
               <!-- Gift Bomb Detection -->
-              <div class="mt-6 rounded-lg border border-pink-500/20 bg-pink-500/5 p-4">
+              <div id="gift-bomb-detection" class="mt-6 rounded-lg border border-pink-500/20 bg-pink-500/5 p-4">
                 <h4 class="mb-2 font-semibold">Gift bomb detection</h4>
                 <p class="mb-3 text-sm text-muted-foreground">
                   When someone gifts multiple subs at once (a "gift bomb"), Twitch sends each gift as a separate event.
