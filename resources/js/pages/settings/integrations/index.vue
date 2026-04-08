@@ -61,7 +61,7 @@ async function connectEventSub() {
     eventsubMessage.value = data.message;
 
     if (data.success) {
-      setTimeout(() => router.reload(), 3000);
+      router.reload();
     }
   } catch {
     eventsubMessage.value = 'Failed to connect. Please try again.';

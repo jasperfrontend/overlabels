@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Fix: EventSub Connect button not working
+
+- The Connect button dispatched a `SetupUserEventSubSubscriptions` job that never ran (likely serialization issue with the private `$user` property).
+- Changed the connect endpoint to run setup synchronously via `UserEventSubManager` instead of dispatching a queue job. The user now gets immediate feedback with actual results (created/existing/failed counts).
+- Removed the 3-second delay before page reload - the page now reloads immediately after setup completes.
+- The queued job is still used for auto-connect on login (where synchronous execution would block the login flow).
+
 ## April 8th, 2026 - Fix: EventSub subscription status stuck at pending
 
 - Race condition: Twitch sends the challenge verification request before the queue worker finishes storing the subscription record in the database. The challenge handler's `WHERE twitch_subscription_id = ...` update silently matches 0 rows, so the status stays `webhook_callback_verification_pending` forever.

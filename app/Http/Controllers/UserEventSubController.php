@@ -58,16 +58,30 @@ class UserEventSubController extends Controller
         $user = $request->user();
 
         try {
-            // Dispatch job to setup subscriptions (force recreate to clean up stale/pending ones)
-            SetupUserEventSubSubscriptions::dispatch($user, true);
+            // Force recreate: remove existing subscriptions first
+            $this->manager->removeUserSubscriptions($user);
+
+            // Setup subscriptions synchronously so the user gets immediate feedback
+            $results = $this->manager->setupUserSubscriptions($user);
+
+            $created = count($results['created']);
+            $failed = count($results['failed']);
+            $existing = count($results['existing']);
+
+            Log::info('EventSub setup completed', [
+                'user_id' => $user->id,
+                'created' => $created,
+                'failed' => $failed,
+                'existing' => $existing,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'EventSub setup has been queued. Subscriptions will be created shortly.',
+                'message' => "EventSub connected: $created created, $existing existing, $failed failed.",
             ]);
 
         } catch (Exception $e) {
-            Log::error('Failed to queue EventSub setup', [
+            Log::error('Failed to setup EventSub', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
