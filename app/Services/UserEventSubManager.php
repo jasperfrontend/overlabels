@@ -192,24 +192,43 @@ class UserEventSubManager
             return 0;
         }
 
-        // Get all user's subscriptions
-        $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
-
-        foreach ($subscriptions as $subscription) {
+        // Delete local DB records
+        $localSubs = UserEventsubSubscription::where('user_id', $user->id)->get();
+        foreach ($localSubs as $subscription) {
             try {
-                // Delete from Twitch
                 if ($this->eventSubService->deleteSubscription($appToken, $subscription->twitch_subscription_id)) {
                     $deletedCount++;
                 }
-
-                // Delete from database regardless (to clean up)
-                $subscription->delete();
-
             } catch (Exception $e) {
-                Log::warning('Failed to delete subscription', [
+                Log::warning('Failed to delete subscription from Twitch', [
                     'subscription_id' => $subscription->twitch_subscription_id,
                     'error' => $e->getMessage(),
                 ]);
+            }
+            $subscription->delete();
+        }
+
+        // Also clean up Twitch-side subscriptions that may not be in our DB
+        $twitchSubs = $this->eventSubService->getSubscriptions($appToken);
+        if ($twitchSubs && isset($twitchSubs['data'])) {
+            foreach ($twitchSubs['data'] as $sub) {
+                $condition = $sub['condition'] ?? [];
+                $belongsToUser = ($condition['broadcaster_user_id'] ?? null) === $user->twitch_id
+                    || ($condition['to_broadcaster_user_id'] ?? null) === $user->twitch_id
+                    || ($condition['moderator_user_id'] ?? null) === $user->twitch_id;
+
+                if ($belongsToUser) {
+                    try {
+                        if ($this->eventSubService->deleteSubscription($appToken, $sub['id'])) {
+                            $deletedCount++;
+                        }
+                    } catch (Exception $e) {
+                        Log::warning('Failed to delete Twitch-side subscription', [
+                            'subscription_id' => $sub['id'],
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
         }
 

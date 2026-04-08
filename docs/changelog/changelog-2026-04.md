@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Fix: Remove stale Twitch-side subscriptions before recreating
+
+- `removeUserSubscriptions` only deleted subscriptions tracked in the local DB. If the DB was out of sync (e.g. from the broken queue job), Twitch-side subscriptions remained, causing 409 Conflict on recreation.
+- Now also fetches all subscriptions from Twitch's API and deletes any belonging to the user by matching `broadcaster_user_id` / `to_broadcaster_user_id` in the condition.
+
 ## April 8th, 2026 - Fix: EventSub Connect button not working
 
 - The Connect button dispatched a `SetupUserEventSubSubscriptions` job that never ran (likely serialization issue with the private `$user` property).
