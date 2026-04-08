@@ -1,5 +1,9 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Debug: improved logging for invalid webhook signature
+
+- Replaced the non-functional `Log::warning('Twitch webhook signature', $request)` with structured diagnostic data: subscription ID, message ID, event type, broadcaster ID, whether the user has a per-user webhook secret, and whether the global secret is configured.
+
 ## April 8th, 2026 - Fix: Dashboard stream status not updating in real-time
 
 - The dashboard app did not initialize Echo/WebSocket, so `StreamStatusChanged` broadcasts from the stream state machine were never received by the frontend.

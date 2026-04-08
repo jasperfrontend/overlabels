@@ -279,7 +279,24 @@ class TwitchEventSubController extends Controller
             // For all other message types, verify signature
             if ($messageType !== 'webhook_callback_verification') {
                 if (! $this->verifyTwitchSignature($request)) {
-                    Log::warning('Invalid Twitch webhook signature', ['message_type' => $messageType]);
+                    $debugData = json_decode($body, true);
+                    $debugEvent = $debugData['event'] ?? [];
+                    $debugEventType = $debugData['subscription']['type'] ?? 'unknown';
+                    $debugBroadcasterId = $debugEventType === 'channel.raid'
+                        ? ($debugEvent['to_broadcaster_user_id'] ?? null)
+                        : ($debugEvent['broadcaster_user_id'] ?? null);
+                    $debugUser = $debugBroadcasterId ? User::where('twitch_id', $debugBroadcasterId)->first() : null;
+
+                    Log::warning('Invalid Twitch webhook signature', [
+                        'message_type' => $messageType,
+                        'event_type' => $debugEventType,
+                        'subscription_id' => $debugData['subscription']['id'] ?? 'unknown',
+                        'message_id' => $request->header('Twitch-Eventsub-Message-Id'),
+                        'broadcaster_id' => $debugBroadcasterId,
+                        'user_has_webhook_secret' => $debugUser ? ($debugUser->webhook_secret !== null) : 'user_not_found',
+                        'global_secret_set' => config('app.twitch_webhook_secret') !== null,
+                        'signature_prefix' => substr($request->header('Twitch-Eventsub-Message-Signature') ?? '', 0, 20).'...',
+                    ]);
 
                     return response('Invalid signature', 403);
                 }
