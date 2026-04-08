@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Feature: Prune unused tokens on admin panel
+
+- Added a prune bar to the admin tokens page, matching the existing event/log pruning pattern.
+- Prunes tokens with 0 uses older than 6, 12, or 24 months (or all unused tokens).
+- Only deletes tokens that have never been used (`access_count = 0`) - active tokens are always safe.
+- Audit logged as `tokens.pruned` with period and count.
+
 ## April 8th, 2026 - Feature: Add to OBS generates a ready-to-use URL
 
 - The "Add to OBS" button on the template page now generates a fresh secure token and returns a complete OBS URL with the token already embedded.

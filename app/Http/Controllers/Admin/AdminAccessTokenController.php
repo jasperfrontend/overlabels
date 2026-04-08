@@ -43,6 +43,26 @@ class AdminAccessTokenController extends Controller
         ]);
     }
 
+    public function prune(Request $request): RedirectResponse
+    {
+        $period = $request->input('period', '12');
+
+        $query = OverlayAccessToken::where('access_count', 0);
+        if ($period !== 'all') {
+            $query->where('created_at', '<', now()->subMonths((int) $period));
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        $this->audit->log($request->user(), 'tokens.pruned', null, null, [
+            'period' => $period,
+            'deleted_count' => $count,
+        ], $request);
+
+        return back()->with('message', "Pruned {$count} unused token".($count === 1 ? '' : 's').'.');
+    }
+
     public function destroy(Request $request, OverlayAccessToken $token): RedirectResponse
     {
         $this->audit->log($request->user(), 'token.deleted', 'OverlayAccessToken', $token->id, [

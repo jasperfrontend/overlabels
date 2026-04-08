@@ -57,6 +57,7 @@ Route::prefix('admin')
 
         // Tokens
         Route::get('/tokens', [AdminAccessTokenController::class, 'index'])->name('tokens.index');
+        Route::delete('/tokens/prune', [AdminAccessTokenController::class, 'prune'])->name('tokens.prune');
         Route::get('/tokens/{token}', [AdminAccessTokenController::class, 'show'])->name('tokens.show');
         Route::delete('/tokens/{token}', [AdminAccessTokenController::class, 'destroy'])->name('tokens.destroy');
 

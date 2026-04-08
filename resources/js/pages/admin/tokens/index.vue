@@ -4,6 +4,7 @@ import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
+import { ref, watch } from 'vue';
 
 interface Token {
   id: number;
@@ -38,6 +39,18 @@ function deleteToken(id: number) {
     router.delete(route('admin.tokens.destroy', id));
   }
 }
+
+const prunePeriod = ref('12');
+const showPruneConfirm = ref(false);
+
+function submitPrune() {
+  router.delete(route('admin.tokens.prune'), {
+    data: { period: prunePeriod.value },
+    onSuccess: () => { showPruneConfirm.value = false; },
+  });
+}
+
+watch(prunePeriod, () => { showPruneConfirm.value = false; });
 </script>
 
 <template>
@@ -49,6 +62,34 @@ function deleteToken(id: number) {
           <span class="text-sm text-muted-foreground">{{ tokens.total }} total</span>
         </template>
       </PageHeader>
+
+      <!-- Prune bar -->
+      <div class="flex flex-wrap items-center gap-2 rounded border border-destructive/30 bg-destructive/5 px-3 py-2">
+        <span class="text-sm text-muted-foreground">Prune unused tokens (0 uses) older than</span>
+        <select v-model="prunePeriod" class="rounded border px-2 py-1 text-sm bg-background">
+          <option value="6">6 months</option>
+          <option value="12">12 months</option>
+          <option value="24">24 months</option>
+          <option value="all">Any age</option>
+        </select>
+        <template v-if="!showPruneConfirm">
+          <button
+            class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            @click="showPruneConfirm = true">Prune
+          </button>
+        </template>
+        <template v-else>
+          <span class="text-sm font-medium text-destructive">
+            {{ prunePeriod === 'all' ? 'Delete ALL unused tokens?' : `Delete all unused tokens older than ${prunePeriod} months?` }}
+          </span>
+          <button
+            class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90"
+            @click="submitPrune">Yes, prune
+          </button>
+          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">Cancel
+          </button>
+        </template>
+      </div>
 
       <!-- Card view (< lg) -->
       <div class="lg:hidden space-y-2">
