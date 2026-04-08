@@ -31,7 +31,6 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     variant="ghost"
     size="icon"
     class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
-    :title="isLive ? 'Live for ' + uptime : isTransitioning ? 'Stream transitioning...' : ''"
   >
     <Avatar v-if="showAvatar" class="size-8 overflow-hidden rounded-full">
       <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
@@ -42,17 +41,19 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     </Avatar>
     <span
       v-if="isLive"
-      class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-green-500 ring-2 ring-background"
+      class="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-green-500 ring-2 ring-background"
     />
     <span
       v-else-if="isTransitioning"
-      class="absolute -top-0.5 -right-0.5 size-3 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
+      class="absolute -top-0.5 -right-0.5 size-2 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
     />
   </Button>
 
   <div class="grid flex-1 text-left text-sm leading-tight" v-if="user">
     <span class="truncate font-medium">{{ user.name }}</span>
-    <span v-if="showEmail" class="truncate text-xs text-muted-foreground">{{ user.email }}</span>
+    <span v-if="isLive" class="text-xs text-green-400">Live for {{ uptime }}</span>
+    <span v-else-if="isTransitioning" class="text-xs text-yellow-400">Checking stream status</span>
+    <span v-else class="text-xs text-red-400">Not live</span>
   </div>
   <div v-else>
     <Link href="/">
