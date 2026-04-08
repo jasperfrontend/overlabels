@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Docs: Gift bomb detection explained on help page
+
+- Added a detailed explanation of the gift bomb detection system to the Subscription Gifts section on the Conditionals help page.
+- Explains why the system exists (Twitch sends individual events per gift), how it works (8-second collection window, live counter updates), and display durations per gift count tier.
+- Includes a conditional template example for styling large gift bombs differently.
+
 ## April 8th, 2026 - Feature: Active events modal on integrations page
 
 - The "Listening to 9 events" text on the integrations page now has a clickable link that opens a dialog showing all supported Twitch EventSub events with their human-readable labels.

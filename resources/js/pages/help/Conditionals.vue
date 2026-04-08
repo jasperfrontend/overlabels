@@ -263,6 +263,42 @@ const breadcrumbs: BreadcrumbItem[] = [
                   </div>
                 </div>
               </div>
+
+              <!-- Gift Bomb Detection -->
+              <div class="mt-6 rounded-lg border border-pink-500/20 bg-pink-500/5 p-4">
+                <h4 class="mb-2 font-semibold">Gift bomb detection</h4>
+                <p class="mb-3 text-sm text-muted-foreground">
+                  When someone gifts multiple subs at once (a "gift bomb"), Twitch sends each gift as a separate event.
+                  Without intervention, gifting 25 subs would trigger 25 individual alerts - which is chaos.
+                </p>
+                <p class="mb-3 text-sm text-muted-foreground">
+                  Overlabels automatically detects gift bombs by collecting gifts from the same person within an 8-second
+                  window and combining them into a single alert. The alert updates live as more gifts come in, so your
+                  overlay shows a running count instead of a flood of notifications.
+                </p>
+                <p class="mb-3 text-sm text-muted-foreground">
+                  The alert stays on screen longer for bigger gift bombs:
+                </p>
+                <ul class="mb-3 space-y-1 text-sm text-muted-foreground">
+                  <li>2-4 gifts: 5 seconds</li>
+                  <li>5-19 gifts: 6 seconds</li>
+                  <li>20-49 gifts: 8 seconds</li>
+                  <li>50+ gifts: 10 seconds</li>
+                </ul>
+                <p class="text-sm text-muted-foreground">
+                  Use <code>[[[event.total]]]</code> in your template to show the final gift count.
+                  You can combine this with conditionals to style large gift bombs differently:
+                </p>
+                <div class="mt-3 rounded bg-sidebar p-4 font-mono text-sm">
+                  [[[if:event.total >= 25]]]<br />
+                  &nbsp;&nbsp;&lt;div class="mega-bomb"&gt;[[[event.user_name]]] just gifted [[[event.total]]] subs!&lt;/div&gt;<br />
+                  [[[elseif:event.total >= 5]]]<br />
+                  &nbsp;&nbsp;&lt;div class="gift-bomb"&gt;[[[event.user_name]]] gifted [[[event.total]]] subs!&lt;/div&gt;<br />
+                  [[[else]]]<br />
+                  &nbsp;&nbsp;&lt;div&gt;[[[event.user_name]]] gifted [[[event.total]]] subs&lt;/div&gt;<br />
+                  [[[endif]]]
+                </div>
+              </div>
             </div>
 
             <!-- Channel Subscription Message Event -->
