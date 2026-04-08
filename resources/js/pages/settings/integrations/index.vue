@@ -70,31 +70,6 @@ async function connectEventSub() {
   }
 }
 
-async function refreshEventSub() {
-  eventsubLoading.value = true;
-  eventsubMessage.value = '';
-
-  try {
-    const response = await fetch('/eventsub/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-      },
-    });
-
-    const data = await response.json();
-    eventsubMessage.value = data.message;
-
-    if (data.success) {
-      setTimeout(() => router.reload(), 2000);
-    }
-  } catch {
-    eventsubMessage.value = 'Failed to refresh. Please try again.';
-  } finally {
-    eventsubLoading.value = false;
-  }
-}
 
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
@@ -129,14 +104,11 @@ function formatDate(iso: string | null): string {
                   Connected since {{ formatDate(eventsub.connected_at) }}
                 </p>
                 <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-yellow-600 dark:text-yellow-400">
-                  Subscriptions may need to be reconnected. Click "Reconnect" below.
+                  Subscriptions may need to be reconnected. Click "(Re)connect".
                 </p>
               </div>
 
               <div class="flex gap-2">
-                <Button v-if="eventsub.active_count > 0" variant="outline" :disabled="eventsubLoading" @click="refreshEventSub">
-                  Refresh
-                </Button>
                 <Button variant="default" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
                 </Button>

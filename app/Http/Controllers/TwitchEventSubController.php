@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Random\RandomException;
+use Throwable;
 
 class TwitchEventSubController extends Controller
 {
@@ -625,6 +626,7 @@ class TwitchEventSubController extends Controller
 
             // Still broadcast the event even if database storage fails
             broadcast(new TwitchEventReceived($eventType, $event));
+        } catch (Throwable $e) {
         }
     }
 
@@ -706,7 +708,7 @@ class TwitchEventSubController extends Controller
 
         $this->renderEventAlert($user, $mapping, $reconstructedData);
         $randomString = str_pad(random_int(1, 999999), 4, '0', STR_PAD_LEFT);
-        $message = "Replayed alert {$twitchEvent->event_type} (ID: {$twitchEvent->id}-{$randomString})";
+        $message = "Replayed alert $twitchEvent->event_type (ID: $twitchEvent->id-$randomString)";
 
         return back()->with('message', $message)->with('type', 'success');
     }
