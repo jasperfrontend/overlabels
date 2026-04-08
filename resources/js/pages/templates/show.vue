@@ -122,20 +122,27 @@ async function generateOBSUrl() {
   obsError.value = '';
 
   try {
-    const response = await fetch(route('tokens.store'), {
+    const url = route('tokens.store');
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
       },
       body: JSON.stringify({ name: `OBS - ${props.template?.name ?? 'Overlay'}` }),
     });
 
-    if (!response.ok) throw new Error('Failed to generate token');
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('[OBS URL] Token generation failed', { status: response.status, body: errorBody, url });
+      throw new Error(`Token generation failed (${response.status})`);
+    }
 
     const data = await response.json();
     obsGeneratedUrl.value = `${window.location.origin}/overlay/${props.template?.slug}/#${data.plain_token}`;
-  } catch {
+  } catch (e) {
+    console.error('[OBS URL]', e);
     obsError.value = 'Failed to generate a token. Please try again.';
   } finally {
     obsGenerating.value = false;
@@ -313,7 +320,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <li>Set <strong>Width</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1920</code>
                   and <strong>Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code>.
                 </li>
-                <li>Click <strong>OK</strong>. Your overlay is live!</li>
+                <li>Click <strong>OK</strong>. Right-click the source and choose <strong>Transform &gt; Fit to screen</strong>
+                  (or press <code class="rounded bg-accent px-1 text-accent-foreground">Ctrl+F</code>) to make it full-screen.
+                </li>
+                <li>Your overlay is live!</li>
               </ol>
             </div>
 

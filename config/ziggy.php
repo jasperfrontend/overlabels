@@ -15,7 +15,6 @@ return [
         'privacy',
         'terms',
         'template.export',
-        'tokens.store',
         'tokens.revoke',
         'tokens.destroy',
         'events.store',
