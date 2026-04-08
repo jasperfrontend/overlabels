@@ -224,7 +224,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- OBS URL — compact row -->
       <div class="mb-5 flex items-center gap-2">
-        <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">OBS URL</span>
+        <button
+          @click="showOBSHelp = true"
+          class="h-9.5 flex gap-2 shrink-0 btn btn-private"
+          title="How to add this overlay to OBS"
+        >
+          <span class="shrink-0 text-xs font-medium uppercase tracking-wide">Add to OBS</span>
+          <InfoIcon class="h-4 w-4" />
+        </button>
         <div class="flex min-w-0 flex-1 items-center">
           <input
             :value="authUrl"
@@ -233,19 +240,13 @@ const breadcrumbs: BreadcrumbItem[] = [
           />
           <button
             @click="copyToClipboard(authUrl, 'OBS URL')"
-            class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border px-3 h-9.5 peer-focus:border-gray-400 peer-focus:bg-gray-400/20 hover:bg-gray-400/40"
+            class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border px-3 h-9.5 peer-focus:border-violet-400 peer-focus:bg-violet-400/20 hover:bg-violet-400/40"
             title="Copy URL"
           >
             <CopyIcon class="h-4 w-4" />
           </button>
         </div>
-        <button
-          @click="showOBSHelp = true"
-          class="shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
-          title="How to add this overlay to OBS"
-        >
-          <InfoIcon class="h-4 w-4" />
-        </button>
+
       </div>
 
       <!-- OBS Setup Dialog -->
@@ -276,7 +277,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <ol class="list-decimal space-y-1.5 pl-4 text-muted-foreground">
                 <li>Copy the OBS URL above using the copy button.</li>
                 <li>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> at the
-                  end of the URL with your actual token. KEEP THE #!!
+                  end of the URL with your actual token. <span class="text-yellow-400">KEEP THE # IN THE URL</span>.
                 </li>
                 <li>In OBS, add a new <strong class="text-foreground">Browser Source</strong>.</li>
                 <li>Paste the full URL (with your real token) into the URL field.</li>

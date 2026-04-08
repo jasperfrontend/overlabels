@@ -50,6 +50,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $owner
  * @property-read Collection<int, OverlayTemplate> $targetStaticOverlays
  * @property-read int|null $target_static_overlays_count
+ *
  * @method static Builder<static>|OverlayTemplate alert()
  * @method static OverlayTemplateFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayTemplate newModelQuery()
@@ -76,6 +77,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|OverlayTemplate whereUpdatedAt($value)
  * @method static Builder<static>|OverlayTemplate whereVersion($value)
  * @method static Builder<static>|OverlayTemplate whereViewCount($value)
+ *
  * @mixin Eloquent
  */
 class OverlayTemplate extends Model
@@ -209,14 +211,13 @@ class OverlayTemplate extends Model
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->fork_of_id = $this->id;
-
         // Create the forked name and limit to 100 characters
-        $forkedName = 'Forked from '.$this->name;
-        if (strlen($forkedName) > 70) {
+        $copiedName = 'Copy: '.$this->owner->name.' - '.$this->name;
+        if (strlen($copiedName) > 70) {
             // If it's too long, truncate and add ellipsis
-            $forkedName = substr($forkedName, 0, 97).'...';
+            $copiedName = substr($copiedName, 0, 97).'...';
         }
-        $fork->name = $forkedName;
+        $fork->name = $copiedName;
 
         $fork->version = 1;
         $fork->view_count = 0;

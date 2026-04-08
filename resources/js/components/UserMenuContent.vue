@@ -10,6 +10,7 @@ import {
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { BookOpen, Code, Coffee, Grid2x2Check, LogOut, Shield, ShieldAlert, SunMoon, Terminal } from 'lucide-vue-next';
+import UserInfo from '@/components/UserInfo.vue';
 
 const settingsItems = [
   { label: 'Theme Settings', href: route('settings.appearance'), icon: SunMoon },
@@ -35,13 +36,13 @@ const handleLogout = () => {
 </script>
 
 <template>
-<!--  <DropdownMenuLabel class="p-0 font-normal">-->
-<!--    <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">-->
-<!--      <UserInfo :user="user" :show-email="false" />-->
-<!--    </div>-->
-<!--  </DropdownMenuLabel>-->
+  <DropdownMenuLabel class="p-0 font-normal">
+    <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+      <UserInfo :user="user" :show-email="false" />
+    </div>
+  </DropdownMenuLabel>
 
-<!--  <DropdownMenuSeparator />-->
+  <DropdownMenuSeparator />
 
   <!-- Theme toggle -->
   <DropdownMenuGroup>

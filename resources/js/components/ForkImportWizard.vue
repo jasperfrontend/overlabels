@@ -146,7 +146,7 @@ function skip() {
       </div>
       <DialogFooter class="gap-2">
         <button class="btn btn-cancel" @click="skip">
-          Skip all, take me to the fork
+          Skip all, take me to the overlay
         </button>
         <button class="btn btn-primary" :disabled="importing" @click="confirm">
           {{ importing ? 'Importing...' : 'Import selected' }}
