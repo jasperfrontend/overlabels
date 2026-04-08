@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
@@ -38,11 +38,7 @@ const user = computed(() => page.props.auth.user);
             <div v-if="user" class="p-3">
               <DropdownMenu>
                 <DropdownMenuTrigger class="flex items-center gap-2 p-2 px-4 rounded hover:bg-sidebar-accent cursor-pointer outline-none">
-                  <Avatar class="size-6">
-                    <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
-                    <AvatarFallback>{{ user.name.charAt(0) }}</AvatarFallback>
-                  </Avatar>
-                  <span class="text-sm">{{ user.name }}</span>
+                  <UserInfo :user="user" :show-email="false" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="min-w-56 rounded-lg" side="bottom" align="end" :side-offset="4">
                   <UserMenuContent :user="user" />

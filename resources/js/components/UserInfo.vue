@@ -53,7 +53,7 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     <span class="truncate font-medium">{{ user.name }}</span>
     <span v-if="isLive" class="text-xs text-green-400">Live for {{ uptime }}</span>
     <span v-else-if="isTransitioning" class="text-xs text-yellow-400">Checking stream status</span>
-    <span v-else class="text-xs text-red-400">Not live</span>
+    <span v-else class="text-xs text-muted-foreground">Not live</span>
   </div>
   <div v-else>
     <Link href="/">
