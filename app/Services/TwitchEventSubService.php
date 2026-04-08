@@ -141,7 +141,7 @@ class TwitchEventSubService
     /**
      * Subscribe to the channel follow events (Version 2 - REQUIRES APP TOKEN)
      */
-    public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToFollows(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         // Get app access token for follow events (v2 requires app token)
         $appToken = $this->getAppAccessToken();
@@ -164,7 +164,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -175,7 +175,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel subscription events (Uses user access token)
      */
-    public function subscribeToSubscriptions(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToSubscriptions(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -193,7 +193,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -204,7 +204,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel raids
      */
-    public function subscribeToRaids(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToRaids(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         $payload = [
             'type' => 'channel.raid',
@@ -215,7 +215,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
         Log::info('Subscribing to raid events', $payload);
@@ -226,7 +226,7 @@ class TwitchEventSubService
     /**
      * Subscribe to stream online events
      */
-    public function subscribeToStreamOnline(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToStreamOnline(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         $payload = [
             'type' => 'stream.online',
@@ -237,7 +237,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -247,7 +247,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel subscription gift events (when someone gifts subscriptions)
      */
-    public function subscribeToSubscriptionGifts(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToSubscriptionGifts(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -265,7 +265,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -275,7 +275,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel subscription message events (resubscriptions with messages)
      */
-    public function subscribeToSubscriptionMessages(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToSubscriptionMessages(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -293,7 +293,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -303,7 +303,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel point redemption events (add)
      */
-    public function subscribeToChannelPointsRedemptionAdd(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToChannelPointsRedemptionAdd(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -321,7 +321,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -331,7 +331,7 @@ class TwitchEventSubService
     /**
      * Subscribe to channel point redemption events (update)
      */
-    public function subscribeToChannelPointsRedemptionUpdate(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToChannelPointsRedemptionUpdate(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -349,7 +349,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 
@@ -359,7 +359,7 @@ class TwitchEventSubService
     /**
      * Subscribe to stream offline events
      */
-    public function subscribeToStreamOffline(string $userAccessToken, string $userId, string $callbackUrl): ?array
+    public function subscribeToStreamOffline(string $userAccessToken, string $userId, string $callbackUrl, ?string $webhookSecret = null): ?array
     {
         if (! $userAccessToken) {
             return [
@@ -377,7 +377,7 @@ class TwitchEventSubService
             'transport' => [
                 'method' => 'webhook',
                 'callback' => $callbackUrl,
-                'secret' => config('app.twitch_webhook_secret'),
+                'secret' => $webhookSecret ?? config('app.twitch_webhook_secret'),
             ],
         ];
 

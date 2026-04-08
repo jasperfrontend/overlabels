@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Fix: align webhook secrets across subscription creation paths
+
+- `TwitchEventSubService` subscribe methods now accept an optional `$webhookSecret` parameter instead of always hardcoding the global secret.
+- `TwitchEventSubController::connect()` now passes the user's per-user `webhook_secret`, matching what `UserEventSubManager` already does.
+- Previously, subscriptions created via `connect()` used the global secret while `UserEventSubManager` used the user secret, causing duplicate subscriptions with mismatched secrets and Twitch retry storms on every event.
+- After deploying, do a disconnect + reconnect from Settings > Integrations to recreate subscriptions with the correct secret.
+
 ## April 8th, 2026 - Debug: improved logging for invalid webhook signature
 
 - Replaced the non-functional `Log::warning('Twitch webhook signature', $request)` with structured diagnostic data: subscription ID, message ID, event type, broadcaster ID, whether the user has a per-user webhook secret, and whether the global secret is configured.

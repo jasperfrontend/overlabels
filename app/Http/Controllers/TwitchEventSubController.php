@@ -69,44 +69,51 @@ class TwitchEventSubController extends Controller
         try {
             // The callback URL that Twitch will send events to
             $callbackUrl = config('app.url').'/api/twitch/webhook';
+            $secret = $user->webhook_secret;
 
             // Subscribe to follow events
             $followSub = $this->eventSubService->subscribeToFollows(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
 
             // Subscribe to subscription events
             $subSub = $this->eventSubService->subscribeToSubscriptions(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
 
             // Subscribe to gift subscription events
             $giftSub = $this->eventSubService->subscribeToSubscriptionGifts(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
 
             // Subscribe to subscription message events (resubs)
             $resubSub = $this->eventSubService->subscribeToSubscriptionMessages(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
 
             $raidSub = $this->eventSubService->subscribeToRaids(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
             $onlineSub = $this->eventSubService->subscribeToStreamOnline(
                 $user->access_token,
                 $user->twitch_id,
-                $callbackUrl
+                $callbackUrl,
+                $secret
             );
 
             $results = [
