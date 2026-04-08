@@ -199,7 +199,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &nbsp;&nbsp;Now playing: &lt;span&gt;[[[c:song_title]]]&lt;/span&gt;<br />
                 &lt;/div&gt;
               </div>
-              <p class="mt-4 text-sm text-muted-foreground">
+              <p class="mt-4 text-sm text-foreground">
                 Text controls also work well for storing URLs (image sources, links, etc.) that you want to swap out
                 without editing overlay code.
               </p>
@@ -330,7 +330,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                   &nbsp;&nbsp;&lt;/div&gt;<br />
                   [[[endif]]]
                 </div>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-sm text-foreground">
                   The <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:running</code> value updates
                   instantly when you press Start or Stop in the Control Panel.
                 </p>
@@ -380,7 +380,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &nbsp;&nbsp;Next stream: &lt;span&gt;[[[c:next_stream|date:short]]]&lt;/span&gt;<br />
                 &lt;/div&gt;
               </div>
-              <p class="mt-4 text-sm text-muted-foreground">
+              <p class="mt-4 text-sm text-foreground">
                 Use
                 <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link>
                 like
@@ -423,7 +423,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 class="text-violet-400">c.streamlabs.total_received + c.kofi.total_received</span><br /><br />
                 &lt;div&gt;Total donations: $[[[c:total_donations|round]]]&lt;/div&gt;
               </div>
-              <div class="mt-4 space-y-2 text-sm text-muted-foreground">
+              <div class="mt-4 space-y-2 text-sm text-foreground">
                 <p>Expressions support standard math operators (<code
                   class="rounded bg-background px-1 py-0.5 font-mono text-xs">+ - * / %</code>), comparisons, ternary
                   operators, and parentheses.</p>

@@ -78,7 +78,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Conditional Syntax Section -->
         <div class="mb-12" id="conditionals">
           <h2 class="mb-6 text-2xl font-bold">Conditional Template Syntax</h2>
-          <p class="mb-6 text-muted-foreground">
+          <p class="mb-6 text-foreground">
             Use conditional logic to dynamically show or hide content in your overlays based on real-time data. All
             conditionals are processed
             client-side for security.
@@ -88,7 +88,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Boolean Conditions -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Boolean Conditions</h3>
-              <p class="mb-4 text-muted-foreground">
+              <p class="mb-4 text-foreground">
                 Test if a value exists and is truthy. Values considered false: <code>null</code>, <code>undefined</code>,
                 <code>""</code>,
                 <code>"false"</code>, <code>"0"</code>
@@ -103,7 +103,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Numerical Comparisons -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Numerical Comparisons</h3>
-              <p class="mb-4 text-muted-foreground">
+              <p class="mb-4 text-foreground">
                 Compare numbers using standard operators: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>,
                 <code>&lt;=</code>,
                 <code>!=</code>, <code>=</code>
@@ -122,7 +122,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- String Comparisons -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">String Comparisons</h3>
-              <p class="mb-4 text-muted-foreground">Compare text values using <code>=</code> and <code>!=</code>
+              <p class="mb-4 text-foreground">Compare text values using <code>=</code> and <code>!=</code>
                 operators.</p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
                 [[[if:channel_language = en]]]<br />
@@ -136,7 +136,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Event-based Conditionals -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Event-based Conditionals</h3>
-              <p class="mb-4 text-muted-foreground">
+              <p class="mb-4 text-foreground">
                 Use event data in alert templates to create dynamic alerts based on donation/subscription amounts,
                 viewer counts, etc.
               </p>
@@ -155,7 +155,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Nested Conditionals -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Nested Conditionals</h3>
-              <p class="mb-4 text-muted-foreground">You can nest conditionals up to 10 levels deep for complex
+              <p class="mb-4 text-foreground">You can nest conditionals up to 10 levels deep for complex
                 logic.</p>
               <div class="rounded bg-sidebar p-4 font-mono text-sm">
                 [[[if:event.tier = 3000]]]<br />
@@ -166,7 +166,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &nbsp;&nbsp;[[[endif]]]<br />
                 [[[endif]]]
               </div>
-              <p class="mt-3 text-sm text-muted-foreground">
+              <p class="mt-3 text-sm text-foreground">
                 This example contains a gift bomb - when one person gifts multiple subs at once. Read how Overlabels
                 <a href="#gift-bomb-detection" class="text-foreground underline underline-offset-2 hover:no-underline">handles gift sub bombs</a>
                 (multiple subs from the same person) so your overlay shows one clean alert instead of dozens.
@@ -178,7 +178,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Event-based Template Tags Section -->
         <div class="mb-12" id="event-based-template-tags">
           <h2 class="mb-6 text-2xl font-bold">Event-based Template Tags</h2>
-          <p class="mb-6 text-muted-foreground">
+          <p class="mb-6 text-foreground">
             These tags are available in alert templates and contain data specific to each Twitch event. Use <code>[[[event.tag_name]]]</code>
             syntax.
           </p>
@@ -272,25 +272,25 @@ const breadcrumbs: BreadcrumbItem[] = [
               <!-- Gift Bomb Detection -->
               <div id="gift-bomb-detection" class="mt-6 rounded-lg border border-pink-500/20 bg-pink-500/5 p-4">
                 <h4 class="mb-2 font-semibold">Gift bomb detection</h4>
-                <p class="mb-3 text-sm text-muted-foreground">
+                <p class="mb-3 text-sm text-foreground">
                   When someone gifts multiple subs at once (a "gift bomb"), Twitch sends each gift as a separate event.
                   Without intervention, gifting 25 subs would trigger 25 individual alerts - which is chaos.
                 </p>
-                <p class="mb-3 text-sm text-muted-foreground">
+                <p class="mb-3 text-sm text-foreground">
                   Overlabels automatically detects gift bombs by collecting gifts from the same person within an 8-second
                   window and combining them into a single alert. The alert updates live as more gifts come in, so your
                   overlay shows a running count instead of a flood of notifications.
                 </p>
-                <p class="mb-3 text-sm text-muted-foreground">
+                <p class="mb-3 text-sm text-foreground">
                   The alert stays on screen longer for bigger gift bombs:
                 </p>
-                <ul class="mb-3 space-y-1 text-sm text-muted-foreground">
+                <ul class="mb-3 space-y-1 text-sm text-foreground">
                   <li>2-4 gifts: 5 seconds</li>
                   <li>5-19 gifts: 6 seconds</li>
                   <li>20-49 gifts: 8 seconds</li>
                   <li>50+ gifts: 10 seconds</li>
                 </ul>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-sm text-foreground">
                   Use <code>[[[event.total]]]</code> in your template to show the final gift count.
                   You can combine this with conditionals to style large gift bombs differently:
                 </p>
@@ -479,7 +479,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Ko-fi Integration Events Section -->
         <div class="mb-12" id="kofi-events">
           <h2 class="mb-6 text-2xl font-bold">Ko-fi Integration Events</h2>
-          <p class="mb-6 text-muted-foreground">
+          <p class="mb-6 text-foreground">
             These tags are available in <strong>alert templates</strong> that are triggered by Ko-fi events. Configure
             which alert fires for each
             event type on the <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
@@ -544,7 +544,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;div class="donor"&gt;[[[event.from_name]]] donated [[[event.amount]]] [[[event.currency]]]!&lt;/div&gt;<br />
                 &lt;div class="message"&gt;[[[if:event.message]]][[[event.message]]][[[endif]]]&lt;/div&gt;
               </div>
-              <p class="mt-4 text-sm text-muted-foreground">
+              <p class="mt-4 text-sm text-foreground">
                 The <code>[[[if:event.message]]]</code> guard ensures the message block is only rendered when the
                 supporter left a message.
               </p>
@@ -555,7 +555,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- StreamLabs Integration Section -->
         <div class="mb-12" id="streamlabs-events">
           <h2 class="mb-6 text-2xl font-bold">StreamLabs Integration</h2>
-          <p class="mb-6 text-muted-foreground">
+          <p class="mb-6 text-foreground">
             Connect your StreamLabs account to receive live donation data in your overlays. Once authenticated,
             Overlabels automatically tracks
             donations and updates your controls in real time - no webhook URLs or manual setup needed.
@@ -565,7 +565,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- How it works -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">How It Works</h3>
-              <ol class="list-inside list-decimal space-y-2 text-muted-foreground">
+              <ol class="list-inside list-decimal space-y-2 text-foreground">
                 <li>Go to <a href="/settings/integrations/streamlabs" class="text-violet-400 hover:underline">Settings
                   &gt; Integrations &gt; StreamLabs</a> and click <strong>Authenticate with StreamLabs</strong>.
                 </li>
@@ -582,7 +582,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span class="mr-2 inline-block h-4 w-4 rounded bg-emerald-500"></span>
                 Auto-provisioned Controls
               </h3>
-              <p class="mb-4 text-muted-foreground">
+              <p class="mb-4 text-foreground">
                 When you connect StreamLabs, six controls are automatically created and kept up to date with every
                 donation.
                 Use them in any overlay template with the <code>[[[c:streamlabs:key]]]</code> syntax.
@@ -607,7 +607,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span class="mr-2 inline-block h-4 w-4 rounded bg-emerald-500"></span>
                 StreamLabs Donation Event Tags
               </h3>
-              <p class="mb-4 text-muted-foreground">
+              <p class="mb-4 text-foreground">
                 These tags are available in <strong>alert templates</strong> triggered by StreamLabs donations.
                 Configure which alert fires on the
                 <a href="/alerts" class="text-violet-400 hover:underline">Alerts Builder</a> page.
@@ -637,7 +637,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &nbsp;&nbsp;[[[endif]]]<br />
                 &lt;/div&gt;
               </div>
-              <p class="mt-4 text-sm text-muted-foreground">
+              <p class="mt-4 text-sm text-foreground">
                 The same alert template works for both Ko-fi and StreamLabs donations since they share the same event
                 tags (<code>event.from_name</code>, <code>event.amount</code>, <code>event.message</code>, etc.).
               </p>
@@ -646,7 +646,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Features -->
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <h3 class="mb-4 text-xl font-semibold">Features</h3>
-              <div class="space-y-4 text-muted-foreground">
+              <div class="space-y-4 text-foreground">
                 <div>
                   <h4 class="font-semibold text-foreground">Test Mode</h4>
                   <p>
@@ -678,7 +678,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Tips Section -->
         <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="tips">
           <h2 class="mb-4 text-2xl font-bold">Tips & Best Practices</h2>
-          <div class="space-y-4 text-muted-foreground">
+          <div class="space-y-4 text-foreground">
             <div>
               <h4 class="font-semibold text-foreground">Use Meaningful Conditions</h4>
               <p>Create different alert styles based on the value: small donations vs large donations, new followers vs

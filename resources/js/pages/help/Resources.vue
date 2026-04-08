@@ -271,7 +271,7 @@ const cssTools = [
         <!-- Colors -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Colors</h2>
-          <p class="text-muted-foreground">Pick colors, generate palettes, and find the right look for your
+          <p class="text-foreground">Pick colors, generate palettes, and find the right look for your
             overlays.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
@@ -291,7 +291,7 @@ const cssTools = [
         <!-- Gradients & Contrast -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Gradients & Contrast</h2>
-          <p class="text-muted-foreground">Generate CSS gradients and check readability.</p>
+          <p class="text-foreground">Generate CSS gradients and check readability.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
               v-for="resource in gradients"
@@ -310,7 +310,7 @@ const cssTools = [
         <!-- Icons -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Icons (1-click SVG copy)</h2>
-          <p class="text-muted-foreground">Browse thousands of icons and copy the SVG straight into your overlay
+          <p class="text-foreground">Browse thousands of icons and copy the SVG straight into your overlay
             HTML.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
@@ -330,7 +330,7 @@ const cssTools = [
         <!-- Fonts -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Fonts</h2>
-          <p class="text-muted-foreground">Free font libraries you can use in your overlays via CSS imports.</p>
+          <p class="text-foreground">Free font libraries you can use in your overlays via CSS imports.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
               v-for="resource in fonts"
@@ -349,7 +349,7 @@ const cssTools = [
         <!-- Textures & Patterns -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Textures & Patterns</h2>
-          <p class="text-muted-foreground">Backgrounds, seamless patterns, and SVG generators for overlay flair.</p>
+          <p class="text-foreground">Backgrounds, seamless patterns, and SVG generators for overlay flair.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
               v-for="resource in textures"
@@ -368,7 +368,7 @@ const cssTools = [
         <!-- Animations -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Animations</h2>
-          <p class="text-muted-foreground">CSS animations, Lottie files, loaders, and animated backgrounds for your
+          <p class="text-foreground">CSS animations, Lottie files, loaders, and animated backgrounds for your
             overlays.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
@@ -388,7 +388,7 @@ const cssTools = [
         <!-- Sounds -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">Sounds</h2>
-          <p class="text-muted-foreground">Free sound effects for alert overlays. No attribution required unless
+          <p class="text-foreground">Free sound effects for alert overlays. No attribution required unless
             noted.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
@@ -408,7 +408,7 @@ const cssTools = [
         <!-- CSS Tools -->
         <section class="space-y-4 mb-6">
           <h2 class="text-2xl font-bold">CSS Tools</h2>
-          <p class="text-muted-foreground">Visual generators for shadows, shapes, glass effects, and more.</p>
+          <p class="text-foreground">Visual generators for shadows, shapes, glass effects, and more.</p>
           <div class="grid gap-3 sm:grid-cols-2">
             <a
               v-for="resource in cssTools"
@@ -426,7 +426,7 @@ const cssTools = [
 
         <!-- Note -->
         <section class="rounded-lg border bg-sidebar-accent p-5 text-center">
-          <p class="text-sm text-muted-foreground">
+          <p class="text-sm text-foreground">
             Know a great free resource that should be on this list?
             Let us know at <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
           </p>
