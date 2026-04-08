@@ -12,6 +12,8 @@ export function useTemplateActions(template: any) {
   const forkWizardTemplateId = ref<number>(0);
   const forkWizardTemplateSlug = ref<string>('');
   const forkWizardSourceControls = ref<any[]>([]);
+  const forkWizardRequiredServices = ref<string[]>([]);
+  const forkWizardConnectedServices = ref<string[]>([]);
 
   const canDelete = computed(() => !template?.kits_exists);
 
@@ -35,11 +37,16 @@ export function useTemplateActions(template: any) {
       const response = await axios.post(route('templates.fork', template));
       const data = response.data;
 
-      if (data.has_controls && data.source_controls?.length > 0) {
+      const hasControls = data.has_controls && data.source_controls?.length > 0;
+      const hasRequiredServices = data.required_services?.length > 0;
+
+      if (hasControls || hasRequiredServices) {
         // Show import wizard before navigating
         forkWizardTemplateId.value = data.template.id;
         forkWizardTemplateSlug.value = data.template.slug;
-        forkWizardSourceControls.value = data.source_controls;
+        forkWizardSourceControls.value = data.source_controls ?? [];
+        forkWizardRequiredServices.value = data.required_services ?? [];
+        forkWizardConnectedServices.value = data.connected_services ?? [];
         forkWizardOpen.value = true;
       } else {
         router.visit(route('templates.show', data.template));
@@ -77,5 +84,7 @@ export function useTemplateActions(template: any) {
     forkWizardTemplateId,
     forkWizardTemplateSlug,
     forkWizardSourceControls,
+    forkWizardRequiredServices,
+    forkWizardConnectedServices,
   };
 }

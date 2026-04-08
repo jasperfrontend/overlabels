@@ -168,7 +168,9 @@ const {
   forkWizardOpen,
   forkWizardTemplateId,
   forkWizardTemplateSlug,
-  forkWizardSourceControls
+  forkWizardSourceControls,
+  forkWizardRequiredServices,
+  forkWizardConnectedServices
 } = useTemplateActions(props.template);
 
 // Local toast state for clipboard copy
@@ -213,6 +215,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       :forked-template-id="forkWizardTemplateId"
       :forked-template-slug="forkWizardTemplateSlug"
       :source-controls="forkWizardSourceControls"
+      :required-services="forkWizardRequiredServices"
+      :connected-services="forkWizardConnectedServices"
     />
 
     <div class="p-4">

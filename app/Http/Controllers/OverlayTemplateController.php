@@ -631,11 +631,18 @@ class OverlayTemplateController extends Controller
 
         // Check if this is an AJAX request or a regular form submission
         if ($request->wantsJson()) {
+            $connectedServices = ExternalIntegration::where('user_id', $request->user()->id)
+                ->where('enabled', true)
+                ->pluck('service')
+                ->toArray();
+
             return response()->json([
                 'template' => $fork,
                 'message' => 'Template forked successfully',
                 'source_controls' => $fork->_sourceControls,
                 'has_controls' => $fork->_hasControls,
+                'required_services' => $fork->_requiredServices,
+                'connected_services' => $connectedServices,
             ]);
         }
 

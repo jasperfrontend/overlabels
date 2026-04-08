@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Feature: Copy wizard warns about missing integrations
+
+- When copying a template that uses external service controls (Ko-fi, StreamLabs, etc.), the import wizard now detects which services the template HTML references.
+- Compares against the destination user's connected integrations and shows a clear notice: amber warning for missing services with a link to Settings, or a green confirmation if everything is connected.
+- The wizard now opens even when a template has no regular controls but does reference external services, so users are never left wondering why service tags don't resolve.
+
 ## April 9th, 2026 - Fix: Copy from edit page now shows the import wizard
 
 - Copying a template from the edit page skipped the ForkImportWizard and went straight to the new template without importing controls.

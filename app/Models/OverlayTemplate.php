@@ -204,6 +204,25 @@ class OverlayTemplate extends Model
     }
 
     /**
+     * Detect which external services are referenced in the template HTML/CSS
+     * by scanning for [[[c:service:key]]] patterns.
+     *
+     * @return string[] List of unique service keys (e.g. ['kofi', 'streamlabs'])
+     */
+    public function detectRequiredServices(): array
+    {
+        $services = [];
+        $pattern = '/\[\[\[c:([a-zA-Z0-9_]+):[a-zA-Z0-9_]+(?:\|[a-zA-Z0-9_.:% -]+)?]]]/';
+
+        foreach (['html', 'css', 'head'] as $field) {
+            preg_match_all($pattern, $this->{$field} ?? '', $matches);
+            $services = array_merge($services, $matches[1] ?? []);
+        }
+
+        return array_values(array_unique($services));
+    }
+
+    /**
      * Fork this template
      */
     public function fork(User $user): self
@@ -236,6 +255,10 @@ class OverlayTemplate extends Model
 
         $fork->_sourceControls = $sourceControls;
         $fork->_hasControls = count($sourceControls) > 0;
+
+        // Detect which external services are referenced in template HTML/CSS
+        // by scanning for [[[c:service:key]]] patterns
+        $fork->_requiredServices = $this->detectRequiredServices();
 
         return $fork;
     }
