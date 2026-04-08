@@ -164,6 +164,11 @@ class UserEventSubManager
             }
         }
 
+        // Reconcile local subscription status with Twitch's actual status.
+        // Challenges may have completed while we were creating later subscriptions,
+        // but the DB records were created before the challenge handler could update them.
+        $this->verifyUserSubscriptions($user);
+
         // Update user's eventsub connection status
         $user->update([
             'eventsub_connected_at' => now(),

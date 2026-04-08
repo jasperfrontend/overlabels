@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Fix: EventSub subscription status stuck at pending
+
+- Race condition: Twitch sends the challenge verification request before the queue worker finishes storing the subscription record in the database. The challenge handler's `WHERE twitch_subscription_id = ...` update silently matches 0 rows, so the status stays `webhook_callback_verification_pending` forever.
+- Added a `verifyUserSubscriptions` call at the end of `setupUserSubscriptions` that reconciles local status with Twitch's actual status. By the time all 9 subscriptions are created, earlier challenges have completed, so the verification picks up the correct `enabled` status.
+- This fixes the Settings > Integrations page showing "No active subscriptions" and the yellow reconnect warning despite subscriptions working correctly.
+
 ## April 8th, 2026 - Fix: align webhook secrets across subscription creation paths
 
 - `TwitchEventSubService` subscribe methods now accept an optional `$webhookSecret` parameter instead of always hardcoding the global secret.
