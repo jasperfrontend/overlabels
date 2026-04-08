@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Fix: Copy from edit page now shows the import wizard
+
+- Copying a template from the edit page skipped the ForkImportWizard and went straight to the new template without importing controls.
+- Added the ForkImportWizard component and wired up the wizard state from `useTemplateActions`, matching the show page behavior.
+
 ## April 9th, 2026 - Fix: Copying a template now includes control values
 
 - Copying a template previously created controls with empty values, requiring users to re-enter everything manually.

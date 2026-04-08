@@ -12,6 +12,7 @@ import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
+import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import {
   Brackets,
@@ -100,7 +101,11 @@ const {
   deleteTemplate,
   toastMessage: templateToastMessage,
   toastType: templateToastType,
-  showToast: showTemplateToast
+  showToast: showTemplateToast,
+  forkWizardOpen,
+  forkWizardTemplateId,
+  forkWizardTemplateSlug,
+  forkWizardSourceControls
 } = useTemplateActions(props.template);
 
 const form = useForm({
@@ -237,6 +242,12 @@ onMounted(() => {
 <template>
   <Head :title="`Editing: ${template.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
+    <ForkImportWizard
+      v-model:open="forkWizardOpen"
+      :forked-template-id="forkWizardTemplateId"
+      :forked-template-slug="forkWizardTemplateSlug"
+      :source-controls="forkWizardSourceControls"
+    />
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
