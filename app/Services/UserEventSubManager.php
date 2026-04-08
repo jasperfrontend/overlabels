@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use DateMalformedStringException;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class UserEventSubManager
     private TwitchEventSubService $eventSubService;
 
     // Define which events we support
-    private const SUPPORTED_EVENTS = [
+    private const array SUPPORTED_EVENTS = [
         'channel.follow' => [
             'version' => '2',
             'condition_keys' => ['broadcaster_user_id', 'moderator_user_id'],
@@ -60,6 +61,8 @@ class UserEventSubManager
 
     /**
      * Setup all EventSub subscriptions for a user
+     * @throws DateMalformedStringException
+     * @throws Exception
      */
     public function setupUserSubscriptions(User $user): array
     {
@@ -148,11 +151,6 @@ class UserEventSubManager
 
                 $results['created'][] = $eventType;
 
-                Log::info('Created EventSub subscription', [
-                    'user_id' => $user->id,
-                    'event_type' => $eventType,
-                    'subscription_id' => $subscription->twitch_subscription_id,
-                ]);
             } else {
                 $results['failed'][$eventType] = $response['message'] ?? 'Unknown error';
 
@@ -305,6 +303,7 @@ class UserEventSubManager
 
     /**
      * Create a single subscription for a user
+     * @throws DateMalformedStringException
      */
     private function createSingleSubscription(User $user, string $eventType): bool
     {
@@ -383,19 +382,6 @@ class UserEventSubManager
      */
     private function getWebhookUrl(): string
     {
-        // In production, use the production URL
-        if (config('app.env') === 'production') {
-            // Use the configured production URL
-            return rtrim(config('app.url'), '/').'/api/twitch/webhook';
-        }
-
-        // For local development, check for ngrok or use local URL
-        // You could also check an environment variable like NGROK_URL
-        if ($ngrokUrl = env('NGROK_URL')) {
-            return rtrim($ngrokUrl, '/').'/api/twitch/webhook';
-        }
-
-        // Default to configured URL
         return rtrim(config('app.url'), '/').'/api/twitch/webhook';
     }
 

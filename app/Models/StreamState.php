@@ -7,26 +7,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StreamState extends Model
 {
-    public const STATE_OFFLINE = 'offline';
+    public const string STATE_OFFLINE = 'offline';
 
-    public const STATE_STARTING = 'starting';
+    public const string STATE_STARTING = 'starting';
 
-    public const STATE_LIVE = 'live';
+    public const string STATE_LIVE = 'live';
 
-    public const STATE_ENDING = 'ending';
+    public const string STATE_ENDING = 'ending';
 
-    public const VALID_STATES = [
+    public const array VALID_STATES = [
         self::STATE_OFFLINE,
         self::STATE_STARTING,
         self::STATE_LIVE,
         self::STATE_ENDING,
     ];
 
-    public const CONFIDENCE_THRESHOLD = 0.75;
+    public const float CONFIDENCE_THRESHOLD = 0.75;
 
-    public const CONFIDENCE_INCREMENT = 0.25;
+    public const float CONFIDENCE_INCREMENT = 0.25;
 
-    public const GRACE_PERIOD_SECONDS = 120;
+    public const int GRACE_PERIOD_SECONDS = 30;
 
     protected $fillable = [
         'user_id',

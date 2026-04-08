@@ -12,8 +12,9 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
-class StreamStateMachineService
+readonly class StreamStateMachineService
 {
     public function __construct(
         private TwitchApiService $twitchApi,
@@ -24,6 +25,8 @@ class StreamStateMachineService
     /**
      * Handle an EventSub stream.online event.
      * Transitions to "starting" and dispatches Helix verification.
+     *
+     * @throws Throwable
      */
     public function handleEventSubOnline(User $user, array $eventData): void
     {

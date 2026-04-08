@@ -270,12 +270,6 @@ class TwitchEventSubController extends Controller
                         ->update(['status' => 'enabled', 'last_verified_at' => now()]);
                 }
 
-                Log::info('Responding to EventSub challenge', [
-                    'challenge_length' => strlen($challenge),
-                    'subscription_type' => $data['subscription']['type'] ?? 'unknown',
-                    'subscription_id' => $subscriptionId,
-                ]);
-
                 return response($challenge, 200)
                     ->header('Content-Type', 'text/plain')
                     ->header('Content-Length', strlen($challenge));
@@ -514,9 +508,6 @@ class TwitchEventSubController extends Controller
                     // New follower - refresh followers and goals
                     $this->twitchService->clearChannelFollowersCaches($broadcasterId);
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info('Cleared follower and goals caches for new follow event', [
-                        'broadcaster_id' => $broadcasterId,
-                    ]);
                     break;
 
                 case 'channel.subscribe':
@@ -525,28 +516,17 @@ class TwitchEventSubController extends Controller
                     // New subscriber - refresh subscribers and goals
                     $this->twitchService->clearSubscribersCaches($broadcasterId);
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info('Cleared subscriber and goals caches for subscription event', [
-                        'event_type' => $eventType,
-                        'broadcaster_id' => $broadcasterId,
-                    ]);
                     break;
 
                 case 'channel.raid':
                     // Raid might affect goals
                     $this->twitchService->clearGoalsCaches($broadcasterId);
-                    Log::info('Cleared goals cache for raid event', [
-                        'broadcaster_id' => $broadcasterId,
-                    ]);
                     break;
 
                 case 'stream.online':
                 case 'stream.offline':
                     // Stream status change - might want to refresh channel info
                     $this->twitchService->clearChannelInfoCaches($broadcasterId);
-                    Log::info('Cleared channel info cache for stream status change', [
-                        'event_type' => $eventType,
-                        'broadcaster_id' => $broadcasterId,
-                    ]);
                     break;
 
                 default:
@@ -589,8 +569,6 @@ class TwitchEventSubController extends Controller
                 'processed' => false,
             ]);
 
-            Log::info("Stored Twitch event in database: $eventType (ID: $twitchEvent->id)");
-
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
 
@@ -605,12 +583,6 @@ class TwitchEventSubController extends Controller
                 }
             }
 
-            Log::info('Processing event for broadcaster', [
-                'event_type' => $eventType,
-                'broadcaster_id' => $broadcasterId,
-                'event_keys' => array_keys($event),
-            ]);
-
             if ($broadcasterId) {
                 if ($user) {
                     // Check if user has a template mapping for this event
@@ -621,11 +593,7 @@ class TwitchEventSubController extends Controller
                         ->first();
 
                     if ($mapping && $mapping->template) {
-                        Log::info('Found template mapping for event', [
-                            'event_type' => $eventType,
-                            'template_id' => $mapping->template_id,
-                            'user_id' => $user->id,
-                        ]);
+
                         // Render the user's custom alert template
                         $this->renderEventAlert($user, $mapping, $data);
                     } else {
@@ -697,12 +665,6 @@ class TwitchEventSubController extends Controller
                 $user->twitch_id,
                 $targetSlugs
             ));
-
-            Log::info("Rendered custom alert for user {$user->id}", [
-                'event_type' => $eventData['subscription']['type'],
-                'template_id' => $mapping->template_id,
-                'duration' => $mapping->duration_ms,
-            ]);
 
         } catch (Exception $e) {
             Log::error("Failed to render event alert: {$e->getMessage()}", [
