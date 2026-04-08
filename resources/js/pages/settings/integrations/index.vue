@@ -85,7 +85,7 @@ function formatDate(iso: string | null): string {
       <div class="space-y-6">
         <!-- Twitch EventSub -->
         <div>
-          <HeadingSmall title="Twitch EventSub" description="Real-time event subscriptions from Twitch for alerts, per-stream counters, and live detection." />
+          <HeadingSmall title="Twitch" description="Real-time events from Twitch for alerts, per-stream counters, and live detection." />
 
           <div class="mt-4 rounded-lg border p-4">
             <div class="flex items-center justify-between">
@@ -94,7 +94,7 @@ function formatDate(iso: string | null): string {
                   <span class="font-medium">Twitch Alerts</span>
 
                   <Badge v-if="eventsub.active_count > 0" variant="default" class="bg-green-400 hover:bg-green-400">
-                    Listening to {{ eventsub.active_count }} events
+                    Connected
                   </Badge>
 
                   <Badge v-else-if="eventsub.connected" variant="secondary" class="bg-yellow-400 hover:bg-yellow-400 text-primary-foreground">
@@ -106,8 +106,8 @@ function formatDate(iso: string | null): string {
                   </Badge>
                 </div>
 
-                <p v-if="eventsub.connected_at" class="text-muted-foreground text-sm">
-                  Connected since {{ formatDate(eventsub.connected_at) }}
+                <p v-if="eventsub.connected && eventsub" class="text-muted-foreground text-sm">
+                  Listening to {{ eventsub.active_count }} events
                 </p>
 
                 <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-yellow-600 dark:text-yellow-400">
