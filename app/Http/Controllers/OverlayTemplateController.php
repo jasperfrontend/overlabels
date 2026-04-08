@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TemplateUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
+use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
+use App\Services\TwitchTokenService;
+use Cloudinary\Cloudinary;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -129,7 +133,7 @@ class OverlayTemplateController extends Controller
         $isLive = $canEdit && StreamSessionService::isLive(auth()->user());
 
         $userScopedControls = $canEdit
-            ? \App\Models\OverlayControl::where('user_id', auth()->id())
+            ? OverlayControl::where('user_id', auth()->id())
                 ->whereNull('overlay_template_id')
                 ->where('source_managed', true)
                 ->orderBy('sort_order')
@@ -197,7 +201,7 @@ class OverlayTemplateController extends Controller
 
         $isLive = StreamSessionService::isLive(auth()->user());
 
-        $userScopedControls = \App\Models\OverlayControl::where('user_id', auth()->id())
+        $userScopedControls = OverlayControl::where('user_id', auth()->id())
             ->whereNull('overlay_template_id')
             ->where('source_managed', true)
             ->orderBy('sort_order')
@@ -331,8 +335,13 @@ class OverlayTemplateController extends Controller
         // Find template
         $template = OverlayTemplate::where('slug', $validated['slug'])->firstOrFail();
 
-        // Get user and their Twitch data
+        // Get user and ensure their Twitch token is still valid
         $user = $token->user;
+
+        $tokenService = app(TwitchTokenService::class);
+        if (! $tokenService->ensureValidToken($user)) {
+            $user->refresh();
+        }
 
         if (! $user->access_token) {
             return response()->json(['error' => 'User has no Twitch connection.'], 400);
@@ -365,7 +374,7 @@ class OverlayTemplateController extends Controller
             );
 
             // Inject control values: template-scoped + user-scoped (source_managed)
-            $controls = \App\Models\OverlayControl::where(function ($q) use ($template, $user) {
+            $controls = OverlayControl::where(function ($q) use ($template, $user) {
                 $q->where('overlay_template_id', $template->id)
                     ->orWhere(function ($q2) use ($user) {
                         $q2->where('user_id', $user->id)
@@ -522,7 +531,7 @@ class OverlayTemplateController extends Controller
 
         // Notify any open overlays to reload
         if ($request->user()->twitch_id) {
-            \App\Events\TemplateUpdated::dispatch($template->slug, $request->user()->twitch_id);
+            TemplateUpdated::dispatch($template->slug, $request->user()->twitch_id);
         }
 
         // For Inertia requests, redirect to the show page with a success message
@@ -597,10 +606,10 @@ class OverlayTemplateController extends Controller
             // Format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
             if (preg_match('#/upload/(?:v\d+/)?(.+)\.\w+$#', $url, $matches)) {
                 $publicId = $matches[1];
-                $cloudinary = new \Cloudinary\Cloudinary(config('services.cloudinary.url'));
+                $cloudinary = new Cloudinary(config('services.cloudinary.url'));
                 $cloudinary->adminApi()->deleteAssets($publicId);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Failed to delete Cloudinary asset', [
                 'url' => $url,
                 'error' => $e->getMessage(),

@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Fix: Overlays now auto-refresh expired Twitch tokens
+
+- Overlays were losing Twitch auth because the `/api/overlay/render` endpoint never refreshed expired Twitch tokens. The dashboard did this automatically via `EnsureValidTwitchToken` middleware, but the overlay path (token-based, stateless) bypassed it entirely.
+- Added `TwitchTokenService::ensureValidToken()` call to `renderAuthenticated()` so overlays silently refresh tokens the same way the dashboard does.
+- This eliminates the health status banner that appeared after Twitch token expiry, especially after server restarts.
+
 ## April 9th, 2026 - Feature: Prune unused tokens on admin panel
 
 - Added a prune bar to the admin tokens page, matching the existing event/log pruning pattern.
