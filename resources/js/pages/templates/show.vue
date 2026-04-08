@@ -29,9 +29,11 @@ import {
   CodeIcon,
   PaletteIcon,
   CopyIcon,
-  InfoIcon,
   TargetIcon,
-  ImageIcon
+  ImageIcon,
+  Loader2,
+  CheckIcon,
+  AlertTriangleIcon
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
@@ -106,11 +108,49 @@ function saveTargeting() {
 
 const showCode = ref(true);
 const showOBSHelp = ref(false);
+const obsGenerating = ref(false);
+const obsGeneratedUrl = ref<string | null>(null);
+const obsUrlCopied = ref(false);
+const obsError = ref('');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
+
+async function generateOBSUrl() {
+  showOBSHelp.value = true;
+  obsGenerating.value = true;
+  obsGeneratedUrl.value = null;
+  obsUrlCopied.value = false;
+  obsError.value = '';
+
+  try {
+    const response = await fetch(route('tokens.store'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+      },
+      body: JSON.stringify({ name: `OBS - ${props.template?.name ?? 'Overlay'}` }),
+    });
+
+    if (!response.ok) throw new Error('Failed to generate token');
+
+    const data = await response.json();
+    obsGeneratedUrl.value = `${window.location.origin}/overlay/${props.template?.slug}/#${data.plain_token}`;
+  } catch {
+    obsError.value = 'Failed to generate a token. Please try again.';
+  } finally {
+    obsGenerating.value = false;
+  }
+}
+
+function copyOBSUrl() {
+  if (!obsGeneratedUrl.value) return;
+  navigator.clipboard.writeText(obsGeneratedUrl.value);
+  obsUrlCopied.value = true;
+  setTimeout(() => { obsUrlCopied.value = false; }, 3000);
+}
 
 // Use the template actions composable
 const {
-  authUrl,
   canDelete,
   previewTemplate,
   forkTemplate,
@@ -222,77 +262,65 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <!-- OBS URL — compact row -->
-      <div class="mb-5 flex items-center gap-2">
+      <!-- Add to OBS -->
+      <div class="mb-5">
         <button
-          @click="showOBSHelp = true"
+          @click="generateOBSUrl"
           class="h-9.5 flex gap-2 shrink-0 btn btn-private"
-          title="How to add this overlay to OBS"
         >
           <span class="shrink-0 text-xs font-medium uppercase tracking-wide">Add to OBS</span>
-          <InfoIcon class="h-4 w-4" />
         </button>
-        <div class="flex min-w-0 flex-1 items-center">
-          <input
-            :value="authUrl"
-            readonly
-            class="peer input-border min-w-0 flex-1 rounded-r-none"
-          />
-          <button
-            @click="copyToClipboard(authUrl, 'OBS URL')"
-            class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border px-3 h-9.5 peer-focus:border-violet-400 peer-focus:bg-violet-400/20 hover:bg-violet-400/40"
-            title="Copy URL"
-          >
-            <CopyIcon class="h-4 w-4" />
-          </button>
-        </div>
-
       </div>
 
-      <!-- OBS Setup Dialog -->
+      <!-- OBS URL Dialog -->
       <Dialog v-model:open="showOBSHelp">
         <DialogContent class="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Adding this overlay to OBS</DialogTitle>
+            <DialogTitle>Add this overlay to OBS</DialogTitle>
           </DialogHeader>
-          <div class="space-y-4 text-sm">
-            <div
-              class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
-              <p class="font-semibold">Your personal access token is required</p>
-              <p class="mt-1">Every overlay URL contains a <code class="rounded bg-black/10 px-1 dark:bg-white/10">#YOUR_TOKEN_HERE</code>
-                placeholder. You must replace it with your real token before the overlay will work.</p>
+
+          <!-- Loading state -->
+          <div v-if="obsGenerating" class="flex items-center justify-center gap-3 py-8">
+            <Loader2 class="h-5 w-5 animate-spin text-violet-400" />
+            <span class="text-sm">Generating your secure URL...</span>
+          </div>
+
+          <!-- Error state -->
+          <div v-else-if="obsError" class="space-y-4 text-sm">
+            <div class="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
+              <p>{{ obsError }}</p>
+            </div>
+          </div>
+
+          <!-- URL generated -->
+          <div v-else-if="obsGeneratedUrl" class="space-y-4 text-sm">
+            <p class="text-foreground">Your OBS URL is ready. Copy it and paste it into a Browser Source in OBS.</p>
+
+            <div class="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-950/10 p-3 font-mono text-xs break-all">
+              <span class="flex-1 text-green-300/80 select-all">{{ obsGeneratedUrl }}</span>
+              <button class="shrink-0 rounded-md p-2 transition hover:bg-green-500/10" title="Copy URL" @click="copyOBSUrl">
+                <CheckIcon v-if="obsUrlCopied" class="h-4 w-4 text-green-400" />
+                <CopyIcon v-else class="h-4 w-4 text-green-400" />
+              </button>
             </div>
 
             <div>
-              <p class="mb-1 font-medium">Where is my token?</p>
-              <p class="text-muted-foreground">Your token was generated during onboarding and shown to you once — it is
-                never stored in full and cannot be retrieved again. You can find the partial preview (first few
-                characters) on your <a :href="route('tokens.index')" target="_blank"
-                                       class="text-violet-400 hover:underline">Access Tokens page</a>. If you no longer
-                have it, create a new token there.</p>
-            </div>
-
-            <div>
-              <p class="mb-2 font-medium">Steps to add in OBS</p>
-              <ol class="list-decimal space-y-1.5 pl-4 text-muted-foreground">
-                <li>Copy the OBS URL above using the copy button.</li>
-                <li>Replace <code class="rounded bg-accent px-1 text-accent-foreground">#YOUR_TOKEN_HERE</code> at the
-                  end of the URL with your actual token. <span class="text-yellow-400">KEEP THE # IN THE URL</span>.
+              <p class="mb-2 font-medium">Steps</p>
+              <ol class="list-decimal space-y-1.5 pl-4 text-foreground">
+                <li>Copy the URL above.</li>
+                <li>In OBS, add a new <strong>Browser Source</strong>.</li>
+                <li>Paste the URL into the URL field.</li>
+                <li>Set <strong>Width</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1920</code>
+                  and <strong>Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code>.
                 </li>
-                <li>In OBS, add a new <strong class="text-foreground">Browser Source</strong>.</li>
-                <li>Paste the full URL (with your real token) into the URL field.</li>
-                <li>Set <strong class="text-foreground">Width</strong> to <code
-                  class="rounded bg-accent px-1 text-accent-foreground">1920</code> and <strong class="text-foreground">Height</strong>
-                  to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code> for full-screen coverage.
-                </li>
-                <li>Click <strong class="text-foreground">OK</strong>. Your overlay is now live!</li>
+                <li>Click <strong>OK</strong>. Your overlay is live!</li>
               </ol>
             </div>
 
-            <div class="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
-              <p class="font-semibold">Never share your token URL on stream</p>
-              <p class="mt-1">Your token acts like a password. Anyone with it can trigger your overlays. Keep the URL
-                out of screen recordings, screenshots, and live video.</p>
+            <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
+              <AlertTriangleIcon class="mb-1 inline h-4 w-4" />
+              <strong>This URL is shown once.</strong> It contains a secure token that cannot be retrieved again.
+              Save it somewhere safe and never show it on stream.
             </div>
           </div>
         </DialogContent>

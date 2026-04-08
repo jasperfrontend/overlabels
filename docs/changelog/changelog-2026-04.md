@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Feature: Add to OBS generates a ready-to-use URL
+
+- The "Add to OBS" button on the template page now generates a fresh secure token and returns a complete OBS URL with the token already embedded.
+- Users no longer need to find, save, or manually stitch their token into a URL - just click, copy, paste into OBS.
+- The URL is shown once in a dialog with clear steps: copy, add Browser Source, paste, done.
+- Each click creates a new token named "OBS - [template name]" for easy identification on the Access Tokens page.
+
+## April 8th, 2026 - Copy: Use text-foreground for body copy on help pages
+
+- Replaced text-muted-foreground with text-foreground on all body copy across help pages.
+- Muted is now reserved for genuinely secondary text like card descriptions and event type subtitles.
+
 ## April 8th, 2026 - Docs: Gift bomb detection explained on help page
 
 - Added a detailed explanation of the gift bomb detection system to the Subscription Gifts section on the Conditionals help page.
