@@ -51,8 +51,8 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
 
   <div class="grid flex-1 text-left text-sm leading-tight" v-if="user">
     <span class="truncate font-medium">{{ user.name }}</span>
-    <span v-if="isLive" class="text-xs text-green-400 font-mono w-25">Live for {{ uptime }}</span>
-    <span v-else-if="isTransitioning" class="text-xs text-yellow-400 font-mono w-25">Checking stream status</span>
+    <span v-if="isLive" class="text-xs text-green-400 font-mono w-30">Live for {{ uptime }}</span>
+    <span v-else-if="isTransitioning" class="text-xs text-yellow-400 font-mono w-25">Checking stream</span>
     <span v-else class="text-xs text-muted-foreground font-mono w-25">Not streaming</span>
   </div>
   <div v-else>
