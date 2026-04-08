@@ -6,6 +6,14 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { ref } from 'vue';
 
@@ -18,11 +26,18 @@ interface ServiceInfo {
   last_received_at: string | null;
 }
 
+interface EventSubEvent {
+  key: string;
+  label: string;
+  active: boolean;
+}
+
 interface EventSubInfo {
   connected: boolean;
   connected_at: string | null;
   subscription_count: number;
   active_count: number;
+  supported_events: EventSubEvent[];
 }
 
 const props = defineProps<{
@@ -106,9 +121,37 @@ function formatDate(iso: string | null): string {
                   </Badge>
                 </div>
 
-                <p v-if="eventsub.connected && eventsub" class="text-muted-foreground text-sm">
-                  Listening to {{ eventsub.active_count }} events
-                </p>
+                <Dialog>
+                  <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-muted-foreground text-sm">
+                    Listening to
+                    <DialogTrigger as-child>
+                      <button class="text-foreground underline underline-offset-2 hover:no-underline cursor-pointer">
+                        {{ eventsub.active_count }} events
+                      </button>
+                    </DialogTrigger>
+                  </p>
+
+                  <DialogContent class="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Active events ({{ eventsub.active_count }})</DialogTitle>
+                      <DialogDescription>
+                        These are the Twitch events your overlays can respond to.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <ul class="space-y-2">
+                      <li
+                        v-for="event in eventsub.supported_events"
+                        :key="event.key"
+                        class="flex items-center gap-2 text-sm"
+                      >
+                        <span v-if="event.active" class="text-green-500">&#10003;</span>
+                        <span v-else class="text-muted-foreground">&#10005;</span>
+                        <span :class="{ 'text-muted-foreground': !event.active }">{{ event.label }}</span>
+                      </li>
+                    </ul>
+                  </DialogContent>
+                </Dialog>
 
                 <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-yellow-600 dark:text-yellow-400">
                   Not receiving Twitch events. Click "(Re)connect".

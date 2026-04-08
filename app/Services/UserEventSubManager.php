@@ -61,6 +61,7 @@ class UserEventSubManager
 
     /**
      * Setup all EventSub subscriptions for a user
+     *
      * @throws DateMalformedStringException
      * @throws Exception
      */
@@ -303,6 +304,7 @@ class UserEventSubManager
 
     /**
      * Create a single subscription for a user
+     *
      * @throws DateMalformedStringException
      */
     private function createSingleSubscription(User $user, string $eventType): bool
@@ -383,6 +385,29 @@ class UserEventSubManager
     private function getWebhookUrl(): string
     {
         return rtrim(config('app.url'), '/').'/api/twitch/webhook';
+    }
+
+    /**
+     * Get the list of supported events with human-readable labels.
+     *
+     * @return array<string, string>
+     */
+    public static function getSupportedEventLabels(): array
+    {
+        $labels = [
+            'stream.online' => 'Stream goes live',
+            'stream.offline' => 'Stream goes offline',
+            'channel.follow' => 'New follower',
+            'channel.subscribe' => 'Subscription',
+            'channel.subscription.gift' => 'Gifted subscription',
+            'channel.subscription.message' => 'Resubscription message',
+            'channel.raid' => 'Raid received',
+            'channel.channel_points_custom_reward_redemption.add' => 'Channel points redeemed',
+            'channel.channel_points_custom_reward_redemption.update' => 'Channel points redemption updated',
+        ];
+
+        // Only return labels for events that are actually in SUPPORTED_EVENTS
+        return array_intersect_key($labels, self::SUPPORTED_EVENTS);
     }
 
     /**

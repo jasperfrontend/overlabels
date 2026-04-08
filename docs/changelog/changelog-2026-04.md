@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Feature: Active events modal on integrations page
+
+- The "Listening to 9 events" text on the integrations page now has a clickable link that opens a dialog showing all supported Twitch EventSub events with their human-readable labels.
+- Each event shows a checkmark or cross indicating whether it's currently active for the user.
+- Added `getSupportedEventLabels()` to `UserEventSubManager` to map event types to friendly names, kept in sync with `SUPPORTED_EVENTS`.
+
 ## April 8th, 2026 - Fix: Remove stale Twitch-side subscriptions before recreating
 
 - `removeUserSubscriptions` only deleted subscriptions tracked in the local DB. If the DB was out of sync (e.g. from the broken queue job), Twitch-side subscriptions remained, causing 409 Conflict on recreation.

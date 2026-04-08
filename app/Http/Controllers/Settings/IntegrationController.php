@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
+use App\Services\UserEventSubManager;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,6 +36,8 @@ class IntegrationController extends Controller
         $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
         $activeCount = $subscriptions->where('status', 'enabled')->count();
 
+        $eventLabels = UserEventSubManager::getSupportedEventLabels();
+
         return Inertia::render('settings/integrations/index', [
             'services' => array_values($services),
             'eventsub' => [
@@ -42,6 +45,15 @@ class IntegrationController extends Controller
                 'connected_at' => $user->eventsub_connected_at?->toIso8601String(),
                 'subscription_count' => $subscriptions->count(),
                 'active_count' => $activeCount,
+                'supported_events' => array_map(
+                    fn (string $label, string $key) => [
+                        'key' => $key,
+                        'label' => $label,
+                        'active' => $subscriptions->where('event_type', $key)->where('status', 'enabled')->isNotEmpty(),
+                    ],
+                    $eventLabels,
+                    array_keys($eventLabels),
+                ),
             ],
         ]);
     }
