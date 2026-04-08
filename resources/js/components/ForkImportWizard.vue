@@ -18,6 +18,7 @@ interface SourceControl {
   key: string;
   label: string | null;
   type: string;
+  value: string | null;
   config: Record<string, any> | null;
   sort_order: number;
 }
@@ -39,6 +40,7 @@ interface WizardRow {
   key: string;
   label: string | null;
   type: string;
+  value: string | null;
   config: Record<string, any> | null;
   sort_order: number;
 }
@@ -55,6 +57,7 @@ watch(() => props.open, (open) => {
       key: c.key,
       label: c.label,
       type: c.type,
+      value: c.value,
       config: c.config,
       sort_order: c.sort_order,
     }));
@@ -71,6 +74,7 @@ async function confirm() {
         key: r.key,
         label: r.label,
         type: r.type,
+        value: r.value,
         config: r.config,
         sort_order: r.sort_order,
       })),

@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Fix: Copying a template now includes control values
+
+- Copying a template previously created controls with empty values, requiring users to re-enter everything manually.
+- The fork flow now threads `value` through the entire pipeline: model query, wizard UI, and backend import endpoint.
+- All control values (text, number, etc.) are carried over from the source template.
+
 ## April 9th, 2026 - Fix: Overlays now auto-refresh expired Twitch tokens
 
 - Overlays were losing Twitch auth because the `/api/overlay/render` endpoint never refreshed expired Twitch tokens. The dashboard did this automatically via `EnsureValidTwitchToken` middleware, but the overlay path (token-based, stateless) bypassed it entirely.

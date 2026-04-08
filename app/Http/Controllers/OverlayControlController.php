@@ -399,6 +399,7 @@ class OverlayControlController extends Controller
             'controls.*.key' => 'required|string|max:50|regex:'.OverlayControl::KEY_PATTERN,
             'controls.*.label' => 'nullable|string|max:100',
             'controls.*.type' => 'required|in:'.implode(',', OverlayControl::TYPES),
+            'controls.*.value' => 'nullable|string|max:1000',
             'controls.*.config' => 'nullable|array',
             'controls.*.sort_order' => 'nullable|integer|min:0',
         ]);
@@ -426,7 +427,7 @@ class OverlayControlController extends Controller
                 'key' => $item['key'],
                 'label' => $item['label'] ?? null,
                 'type' => $item['type'],
-                'value' => null,
+                'value' => $item['value'] ?? null,
                 'config' => $item['config'] ?? null,
                 'sort_order' => $item['sort_order'] ?? 0,
             ]);

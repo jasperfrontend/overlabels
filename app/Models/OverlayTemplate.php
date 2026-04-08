@@ -229,7 +229,7 @@ class OverlayTemplate extends Model
 
         // Attach source controls metadata for the fork wizard (not persisted to DB)
         $sourceControls = $this->controls()
-            ->select(['key', 'label', 'type', 'config', 'sort_order'])
+            ->select(['key', 'label', 'type', 'value', 'config', 'sort_order'])
             ->orderBy('sort_order')
             ->get()
             ->toArray();
