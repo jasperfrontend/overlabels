@@ -91,20 +91,27 @@ function formatDate(iso: string | null): string {
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span class="font-medium">EventSub Subscriptions</span>
+                  <span class="font-medium">Twitch Alerts</span>
+
                   <Badge v-if="eventsub.active_count > 0" variant="default" class="bg-green-400 hover:bg-green-400">
-                    {{ eventsub.active_count }} active
+                    Listening to {{ eventsub.active_count }} events
                   </Badge>
-                  <Badge v-else-if="eventsub.connected" variant="secondary" class="bg-yellow-400 hover:bg-yellow-400">
-                    No active subscriptions
+
+                  <Badge v-else-if="eventsub.connected" variant="secondary" class="bg-yellow-400 hover:bg-yellow-400 text-primary-foreground">
+                    Not listening to any events
                   </Badge>
-                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">Not connected</Badge>
+
+                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">
+                    Not connected to Twitch
+                  </Badge>
                 </div>
+
                 <p v-if="eventsub.connected_at" class="text-muted-foreground text-sm">
                   Connected since {{ formatDate(eventsub.connected_at) }}
                 </p>
+
                 <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-yellow-600 dark:text-yellow-400">
-                  Subscriptions may need to be reconnected. Click "(Re)connect".
+                  Not receiving Twitch events. Click "(Re)connect".
                 </p>
               </div>
 
