@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 8th, 2026 - Fix: Dashboard stream status not updating in real-time
+
+- The dashboard app did not initialize Echo/WebSocket, so `StreamStatusChanged` broadcasts from the stream state machine were never received by the frontend.
+- Added Echo/Reverb initialization to `app.ts` (matching the existing overlay app setup).
+- Updated `useStreamState` composable to listen for `.stream.status` events on the user's `alerts.{twitchId}` channel, so the live dot, transitioning indicator, and uptime counter update in real-time without requiring a page refresh.
+
 ## April 7th, 2026 - Fix: EventSub webhook challenge response
 
 - Replaced the `exit()` hack in the webhook challenge handler with a proper Laravel `response()`.

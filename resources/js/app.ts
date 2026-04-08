@@ -7,6 +7,8 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 const pinia = createPinia()
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -28,3 +30,19 @@ createInertiaApp({
 
 // This will set light / dark mode on a page load...
 initializeTheme();
+
+// Set up Echo for dashboard WebSocket events (Reverb uses the Pusher protocol)
+window.Pusher = Pusher;
+try {
+    window.Echo = new Echo({
+        broadcaster: 'reverb',
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        wsHost: import.meta.env.VITE_REVERB_HOST,
+        wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+        wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+        forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+        enabledTransports: ['ws', 'wss'],
+    });
+} catch (err) {
+    console.error('Failed to initialize Echo:', err);
+}
