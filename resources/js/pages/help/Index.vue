@@ -13,7 +13,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const pages = [
   {
-    title: 'Conditional Tags',
+    title: 'Conditional and Event Tags',
     description: 'If/else logic, comparisons, event data tags, and integration tags for Ko-fi and StreamLabs.',
     href: '/help/conditionals',
     icon: Brackets

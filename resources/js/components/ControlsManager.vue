@@ -198,7 +198,7 @@ function configSummary(ctrl: OverlayControl): string[] {
           </TableCell>
           <TableCell class="text-right opacity-20 transition group-hover:opacity-100">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="btn btn-sm btn-secondary px-2" title="Edit" @click="openEdit(ctrl)">
+              <button type="button" class="btn btn-sm btn-primary px-2" title="Edit" @click="openEdit(ctrl)">
                 <PencilIcon class="h-3.5 w-3.5" />
               </button>
               <button type="button" class="btn btn-sm btn-danger px-2" title="Delete" @click="deleteControl(ctrl)">
