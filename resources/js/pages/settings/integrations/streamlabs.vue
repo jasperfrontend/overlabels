@@ -26,7 +26,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-  { title: 'Settings', href: '/settings' },
+  { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
   { title: 'StreamLabs', href: '/settings/integrations/streamlabs' }
 ];

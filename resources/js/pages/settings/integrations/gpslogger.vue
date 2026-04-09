@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-  { title: 'Settings', href: '/settings' },
+  { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
   { title: 'GPSLogger', href: '/settings/integrations/gpslogger' }
 ];
