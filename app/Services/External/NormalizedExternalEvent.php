@@ -5,18 +5,18 @@ namespace App\Services\External;
 /**
  * Immutable DTO representing a normalized external service event.
  */
-final class NormalizedExternalEvent
+final readonly class NormalizedExternalEvent
 {
     public function __construct(
-        public readonly string $service,
-        public readonly string $eventType,
-        public readonly string $messageId,
-        public readonly ?string $fromName,
-        public readonly ?string $message,
-        public readonly ?string $amount,
-        public readonly ?string $currency,
-        public readonly array $templateTags,  // ['event.from_name' => ..., 'event.amount' => ...]
-        public readonly array $raw,           // original decoded payload
+        public string  $service,
+        public string  $eventType,
+        public string  $messageId,
+        public ?string $fromName,
+        public ?string $message,
+        public ?string $amount,
+        public ?string $currency,
+        public array   $templateTags,  // ['event.from_name' => ..., 'event.amount' => ...]
+        public array   $raw,           // original decoded payload
     ) {}
 
     public function getService(): string { return $this->service; }

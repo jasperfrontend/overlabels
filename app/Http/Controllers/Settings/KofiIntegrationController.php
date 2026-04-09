@@ -90,13 +90,13 @@ class KofiIntegrationController extends Controller
         );
 
         // Force enabled on first connection; respect the submitted value on updates.
-        $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
+        $integration->enabled = $isNew || ($validated['enabled'] ?? true);
         $integration->save();
 
         return back()->with('success', 'Ko-fi integration saved.');
     }
 
-    public function setTestMode(Request $request): \Illuminate\Http\JsonResponse
+    public function setTestMode(Request $request): JsonResponse
     {
         $user = auth()->user();
 

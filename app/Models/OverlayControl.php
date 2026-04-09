@@ -83,10 +83,9 @@ class OverlayControl extends Model
     public static function sanitizeValue(string $type, mixed $raw): string
     {
         return match ($type) {
-            'text', 'expression' => strip_tags((string) $raw),
+            'text', 'expression', 'datetime' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
-            'datetime' => strip_tags((string) $raw),
             default => '', // timer: value derived from config
         };
     }
