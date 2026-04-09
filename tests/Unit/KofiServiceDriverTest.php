@@ -156,10 +156,40 @@ test('getControlUpdates increments kofis_received for donation', function () {
     expect($updates['total_received'])->toBe(['action' => 'add', 'amount' => 10.0]);
 });
 
-test('getControlUpdates returns empty for commission events', function () {
-    $payload = ['kofi_transaction_id' => 'txn-c', 'from_name' => 'Carol'];
+test('getControlUpdates updates controls for commission events', function () {
+    $payload = [
+        'kofi_transaction_id' => 'txn-c',
+        'from_name' => 'Carol',
+        'message' => 'Custom art request',
+        'amount' => '27.95',
+        'currency' => 'EUR',
+    ];
     $event = $this->driver->normalizeEvent($payload, 'commission');
     $updates = $this->driver->getControlUpdates($event);
 
-    expect($updates)->toBeEmpty();
+    expect($updates['kofis_received'])->toBe(['action' => 'increment']);
+    expect($updates['latest_donor_name'])->toBe('Carol');
+    expect($updates['latest_donation_message'])->toBe('Custom art request');
+    expect($updates['latest_donation_amount'])->toBe('27.95');
+    expect($updates['latest_donation_currency'])->toBe('EUR');
+    expect($updates['total_received'])->toBe(['action' => 'add', 'amount' => 27.95]);
+});
+
+test('getControlUpdates updates controls for shop order events', function () {
+    $payload = [
+        'kofi_transaction_id' => 'txn-s',
+        'from_name' => 'Jo Example',
+        'message' => null,
+        'amount' => '27.95',
+        'currency' => 'USD',
+    ];
+    $event = $this->driver->normalizeEvent($payload, 'shop_order');
+    $updates = $this->driver->getControlUpdates($event);
+
+    expect($updates['kofis_received'])->toBe(['action' => 'increment']);
+    expect($updates['latest_donor_name'])->toBe('Jo Example');
+    expect($updates['latest_donation_message'])->toBe('');
+    expect($updates['latest_donation_amount'])->toBe('27.95');
+    expect($updates['latest_donation_currency'])->toBe('USD');
+    expect($updates['total_received'])->toBe(['action' => 'add', 'amount' => 27.95]);
 });

@@ -122,7 +122,7 @@ class KofiServiceDriver implements ExternalServiceDriver
     {
         $updates = [];
 
-        if (in_array($event->getEventType(), ['donation', 'subscription'])) {
+        if (in_array($event->getEventType(), ['donation', 'subscription', 'shop_order', 'commission'])) {
             $updates['kofis_received'] = ['action' => 'increment'];
             $updates['latest_donor_name'] = $event->getFromName() ?? '';
             $updates['latest_donation_message'] = $event->getMessage() ?? '';
@@ -132,9 +132,6 @@ class KofiServiceDriver implements ExternalServiceDriver
                 $updates['latest_donation_amount'] = $event->getAmount();
                 $updates['total_received'] = ['action' => 'add', 'amount' => (float) $event->getAmount()];
             }
-        } elseif ($event->getEventType() === 'shop_order') {
-            $updates['kofis_received'] = ['action' => 'increment'];
-            $updates['latest_donor_name'] = $event->getFromName() ?? '';
         }
 
         return $updates;

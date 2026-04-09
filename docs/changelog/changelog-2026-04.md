@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 9th, 2026 - Fix: Ko-fi Shop Orders and Commissions not updating controls
+
+- Ko-fi Shop Order webhooks only incremented `kofis_received` and set `latest_donor_name`, skipping `latest_donation_amount`, `latest_donation_currency`, `latest_donation_message`, and `total_received` despite the payload containing all those fields.
+- Ko-fi Commission webhooks were not handled at all by `getControlUpdates()`.
+- All four Ko-fi event types (Donation, Subscription, Shop Order, Commission) now update the full set of controls identically.
+
 ## April 9th, 2026 - Feature: Copy wizard warns about missing integrations
 
 - When copying a template that uses external service controls (Ko-fi, StreamLabs, etc.), the import wizard now detects which services the template HTML references.
