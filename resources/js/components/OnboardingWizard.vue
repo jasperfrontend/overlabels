@@ -382,17 +382,10 @@ function dismiss() {
         </div>
         <!-- Warning -->
         <p class="text-sm">
-          This token is shown <strong class="text-orange-300">only once</strong> and cannot be recovered.
+          For security reasons, this Token is shown <strong class="text-orange-300">only once</strong> and cannot be retrieved after.
           <strong>Never share it or show it on stream.</strong>
         </p>
       </CardHeader>
-      <div>
-        <img
-          alt=""
-          src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODdoa3c5cHF3ZnlleDUxZGRraWs2enhidDM0MHVmY2x1aDY2OHE0dyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cZskL3prfU4hwZI4l9/giphy.gif"
-          class="p-4"
-        />
-      </div>
       <CardContent class="space-y-5">
         <!-- Token not yet generated -->
         <template v-if="!plainToken">
@@ -451,7 +444,7 @@ function dismiss() {
             <div class="group">
               <Heading
                 title="STEP 2: Save this token (for future overlays)"
-                description="DO NOT LOSE THIS TOKEN!!! Please I beg you: SAVE THIS TOKEN"
+                description="Do not lose this token. Should you have lost it, just generate a new OBS url from the Template settings page."
                 description-class="text-red-400"
                 class="mt-6"
               />
@@ -469,8 +462,7 @@ function dismiss() {
             <label class="flex cursor-pointer items-center gap-3">
               <Checkbox v-model="tokenSaved" />
               <span class="text-sm"
-                >STEP 3: I'M NOT STUPID AND HAVE READ THIS WHOLE PAGE AND THEN -> I've copied my token and added the Browser Source</span
-              >
+                >STEP 3: I have copied my token and added the Browser Source to OBS</span>
             </label>
 
             <Button :disabled="!tokenSaved" class="gap-2" @click="completeOnboarding">
