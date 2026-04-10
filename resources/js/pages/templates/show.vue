@@ -401,7 +401,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </Dialog>
 
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card p-0 pb-0">
+      <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">
         <div
           class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
@@ -484,7 +484,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 :key="tab.key"
                 @click="activeTab = tab.key"
                 :class="[
-                  'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase transition-colors',
+                    'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase transition-colors',
                   activeTab === tab.key
                     ? 'bg-background text-accent-foreground'
                     : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',

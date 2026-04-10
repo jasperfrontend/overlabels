@@ -85,7 +85,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
             type="button"
             @click="codeTab = tab.key"
             :class="[
-              'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase transition-colors',
+              'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase transition-colors',
               codeTab === tab.key
                 ? 'bg-background text-accent-foreground'
                 : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',

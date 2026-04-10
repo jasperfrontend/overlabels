@@ -70,7 +70,7 @@ interface Props {
     updated_at: string;
     view_count: number;
     fork_count: number;
-    template_tags: TemplateTag[] | null;
+    template_tags: string[] | null | undefined;
   };
   availableTags: Array<{
     tag_name: string;
@@ -305,7 +305,7 @@ onMounted(() => {
 
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
-        <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-card">
+        <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
           <div
             class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
