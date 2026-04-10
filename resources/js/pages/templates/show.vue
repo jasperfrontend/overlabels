@@ -37,9 +37,13 @@ import {
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+import { useLinkWarning } from '@/composables/useLinkWarning';
 import { VisuallyHidden } from 'reka-ui';
 
 const showPreview = ref(false);
+const showObsScreenshot = ref(false);
+
+const { triggerLinkWarning } = useLinkWarning();
 
 interface OverlayOption {
   id: number;
@@ -112,49 +116,55 @@ const showOBSHelp = ref(false);
 const obsGenerating = ref(false);
 const obsGeneratedUrl = ref<string | null>(null);
 const obsUrlCopied = ref(false);
+const obsConfirmedCopied = ref(false);
 const obsError = ref('');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
-async function generateOBSUrl() {
-  showOBSHelp.value = true;
-  obsGenerating.value = true;
-  obsGeneratedUrl.value = null;
-  obsUrlCopied.value = false;
-  obsError.value = '';
+function generateOBSUrl() {
+  triggerLinkWarning(async () => {
+    showOBSHelp.value = true;
+    obsGenerating.value = true;
+    obsGeneratedUrl.value = null;
+    obsUrlCopied.value = false;
+    obsConfirmedCopied.value = false;
+    obsError.value = '';
+    try {
+      const url = route('tokens.store');
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
+        },
+        body: JSON.stringify({ name: `OBS - ${props.template?.name ?? 'Overlay'}` })
+      });
 
-  try {
-    const url = route('tokens.store');
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-      },
-      body: JSON.stringify({ name: `OBS - ${props.template?.name ?? 'Overlay'}` }),
-    });
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('[OBS URL] Token generation failed', { status: response.status, body: errorBody, url });
+        obsError.value = 'Failed to generate a token. Please try again.';
+        return;
+      }
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('[OBS URL] Token generation failed', { status: response.status, body: errorBody, url });
-      throw new Error(`Token generation failed (${response.status})`);
+      const data = await response.json();
+      obsGeneratedUrl.value = `${window.location.origin}/overlay/${props.template?.slug}/#${data.plain_token}`;
+    } catch (e) {
+      console.error('[OBS URL]', e);
+      obsError.value = 'Failed to generate a token. Please try again.';
+    } finally {
+      obsGenerating.value = false;
     }
-
-    const data = await response.json();
-    obsGeneratedUrl.value = `${window.location.origin}/overlay/${props.template?.slug}/#${data.plain_token}`;
-  } catch (e) {
-    console.error('[OBS URL]', e);
-    obsError.value = 'Failed to generate a token. Please try again.';
-  } finally {
-    obsGenerating.value = false;
-  }
+  }, 'The next screen shows your personal token and you should NOT show this on stream.\n\nIf you are currently streaming, move this screen away from your stream before continuing.');
 }
 
 function copyOBSUrl() {
   if (!obsGeneratedUrl.value) return;
   navigator.clipboard.writeText(obsGeneratedUrl.value);
   obsUrlCopied.value = true;
-  setTimeout(() => { obsUrlCopied.value = false; }, 3000);
+  setTimeout(() => {
+    obsUrlCopied.value = false;
+  }, 5000);
 }
 
 // Use the template actions composable
@@ -228,10 +238,10 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
             <span
-              class="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium"
+              class="shrink-0 rounded-sm px-2 py-0.5 text-xs font-medium"
               :class="template?.is_public
-                ? 'border-green-500/40 text-green-500 dark:text-green-400'
-                : 'border-violet-500/40 text-violet-500 dark:text-violet-400'"
+                ? 'bg-green-500/10 text-green-500 dark:text-green-400'
+                : 'bg-violet-500/10 text-violet-500 dark:text-violet-400'"
             >
               {{ template?.is_public ? 'Public' : 'Private' }}
             </span>
@@ -277,11 +287,11 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Add to OBS -->
       <div class="mb-5">
         <button
-          @click="generateOBSUrl"
-          class="h-9.5 flex gap-2 shrink-0 btn btn-private"
+          @click="generateOBSUrl()"
+          class="h-9.5 flex gap-2 shrink-0 w-50 btn btn-xl border-0 bg-teal-400 hover:bg-teal-500 text-black"
           title="Add this overlay to your OBS"
         >
-          <span class="shrink-0 text-xs font-medium uppercase tracking-wide flex items-center gap-1.5">
+          <span class="shrink-0 text-sm font-medium uppercase tracking-wide flex items-center gap-1.5">
             <span v-html="obsIconSVG" class="size-4 inline-block" />
             Add to OBS
           </span>
@@ -289,8 +299,8 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- OBS URL Dialog -->
-      <Dialog v-model:open="showOBSHelp">
-        <DialogContent class="max-w-lg">
+      <Dialog :open="showOBSHelp">
+        <DialogContent class="max-w-lg" @escape-key-down.prevent @pointer-down-outside.prevent @interact-outside.prevent>
           <DialogHeader>
             <DialogTitle>Add this overlay to OBS</DialogTitle>
           </DialogHeader>
@@ -313,36 +323,80 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p class="text-green-400" v-if="obsUrlCopied">URL Copied to clipboard</p>
             <p class="text-foreground" v-else>Click to copy this URL, then paste it into a Browser Source in OBS.</p>
 
-            <div class="flex items-center cursor-pointer gap-2 rounded-lg border border-green-500/20 bg-green-950/10 p-3 font-mono text-xs break-all" @click="copyOBSUrl">
-              <span class="flex-1 text-green-300/80 select-all">{{ obsGeneratedUrl }}</span>
-              <button class="shrink-0 rounded-md p-2 transition hover:bg-green-500/10" title="Copy URL">
+            <button
+              class="flex items-center cursor-pointer gap-2 rounded-lg border
+              border-green-500/20 bg-green-400/10 dark:bg-green-950/10 p-3
+              font-mono text-xs break-all transition-colors hover:bg-green-400/20
+              active:ring active:ring-green-500"
+              :class="obsUrlCopied ? 'border-green-500/40 ring ring-green-500/80' : 'border-green-500/20'"
+              @click="copyOBSUrl"
+            >
+              <span class="flex-1 text-green-600 dark:text-green-300/80">{{ obsGeneratedUrl }}</span>
+              <span class="shrink-0 rounded-md p-2 transition hover:bg-green-500/10" title="Copy URL">
                 <CheckIcon v-if="obsUrlCopied" class="h-4 w-4 text-green-400" />
                 <CopyIcon v-else class="h-4 w-4 text-green-400" />
-              </button>
-            </div>
+              </span>
+            </button>
 
             <div>
               <p class="mb-2 font-medium">Steps</p>
               <ol class="list-decimal space-y-1.5 pl-4 text-foreground">
-                <li>Copy the URL above.</li>
+                <li><strong>Click the box above</strong> to copy the overlay URL.</li>
                 <li>In OBS, add a new <strong>Browser Source</strong>.</li>
                 <li>Paste the URL into the URL field.</li>
-                <li>Set <strong>Width</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1920</code>
+                <li>Set <strong>Width</strong> to <code
+                  class="rounded bg-accent px-1 text-accent-foreground">1920</code>
                   and <strong>Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code>.
                 </li>
-                <li>Click <strong>OK</strong>. Right-click the source and choose <strong>Transform &gt; Fit to screen</strong>
-                  (or press <code class="rounded bg-accent px-1 text-accent-foreground">Ctrl+F</code>) to make it full-screen.
+                <li>Leave "Shutdown source when not visible" and "Refresh browser source when scene becomes active both <strong>unchecked</strong>.</li>
+                <li>Click <strong>OK</strong>. Right-click the source and choose <strong>Transform &gt; Fit to
+                  screen</strong>
+                  (or press <code class="rounded bg-accent px-1 text-accent-foreground">Ctrl+F</code>) to make it
+                  full-screen.
                 </li>
                 <li>Your overlay is live!</li>
               </ol>
+              <p class="mt-2 text-foreground">
+                Your OBS Browser Source settings should look like
+                <button type="button" class="underline text-violet-400 hover:text-violet-300 cursor-pointer" @click="showObsScreenshot = true">this example</button>.
+              </p>
             </div>
 
-            <div class="rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400">
-              <AlertTriangleIcon class="mb-1 inline h-4 w-4" />
-              <strong>This URL is shown once.</strong> It contains a secure token that cannot be retrieved again.
-              Save it somewhere safe and never show it on stream.
+            <div class="h-px bg-violet-300"></div>
+
+            <div class="flex flex-col bg-violet-600/10 p-2 border rounded-sm border-violet-500/50 gap-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input v-model="obsConfirmedCopied" type="checkbox" />
+                <span class="text-sm text-foreground">I have copied this overlay to my OBS as a Browser Source</span>
+              </label>
+
+              <button
+                v-if="obsConfirmedCopied"
+                type="button"
+                class="btn btn-primary mt-2"
+                @click="showOBSHelp = false"
+              >
+                Close this screen and continue
+              </button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <!-- OBS Settings Screenshot Modal -->
+      <Dialog :open="showObsScreenshot" @update:open="showObsScreenshot = $event">
+        <DialogContent class="max-w-[90vw] max-h-[90vh] w-auto p-2 sm:max-w-[90vw]">
+          <VisuallyHidden>
+            <DialogTitle>OBS Browser Source settings example</DialogTitle>
+          </VisuallyHidden>
+          <img
+            src="/obs-brower-source-settings.png"
+            alt="OBS Browser Source settings example"
+            class="max-w-full max-h-[80vh] rounded object-contain"
+          />
+          <DialogFooter>
+            <button type="button" class="ml-auto btn btn-chill" @click="showObsScreenshot = false">Close</button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -422,19 +476,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
-          <!--          <button-->
-          <!--            class="mb-0 flex w-full cursor-pointer items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-accent-foreground"-->
-          <!--            :class="showCode ? 'border-b-0 rounded-b-none' : 'rounded-sm'"-->
-          <!--            @click="showCode = !showCode"-->
-          <!--          >-->
-          <!--            <CodeIcon class="h-4 w-4 shrink-0" />-->
-          <!--            <span>{{ showCode ? 'Hide source' : 'View source' }}</span>-->
-          <!--            <ChevronDownIcon-->
-          <!--              class="ml-auto h-4 w-4 shrink-0 transition-transform duration-200"-->
-          <!--              :class="{ 'rotate-180': showCode }"-->
-          <!--            />-->
-          <!--          </button>-->
-
           <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-sidebar border-b-sidebar">
             <!-- File tabs sidebar -->
             <div class="flex flex-col border-r border-sidebar bg-sidebar text-sidebar-foreground">
@@ -467,7 +508,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Meta + Template Tags -->
-          <div class="mt-8">
+          <div>
             <TemplateMeta
               :created-at="template?.created_at"
               :updated-at="template?.updated_at"
@@ -475,6 +516,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               :fork-count="template?.fork_count"
               :template-tags="template?.template_tags"
               :fork-parent="template?.fork_parent"
+              :slug="template?.slug"
+              :owner="template?.owner.name"
             />
           </div>
         </div>

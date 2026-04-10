@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 10th, 2026 - UX improvements to overlay show page and template tags
+
+- Replaced native browser `confirm()` on OBS URL generation with the styled LinkWarningModal used elsewhere in the app.
+- OBS URL dialog can no longer be closed by clicking outside, pressing Escape, or the X button. Users must check a confirmation checkbox before a Close button appears, preventing accidental loss of the one-time token URL.
+- Added OBS Browser Source settings screenshot modal accessible from the setup steps.
+- Improved button styles: new `.btn-plain`, `.btn-secondary` (blue), `.btn-tertiary` (pink, formerly secondary), and size classes `.btn-md`, `.btn-l`, `.btn-xl`.
+- Template tags in TemplateMeta are now interactive: click to copy the tag (wrapped in `[[[...]]]` syntax) to clipboard with a brief "Copied!" indicator that preserves button width to prevent layout shift.
+- Template tags can be sorted by order of appearance (default) or alphabetically.
+- TemplateMeta now shows slug and owner fields.
+
 ## April 9th, 2026 - Fix: Ko-fi Shop Orders and Commissions not updating controls
 
 - Ko-fi Shop Order webhooks only incremented `kofis_received` and set `latest_donor_name`, skipping `latest_donation_amount`, `latest_donation_currency`, `latest_donation_message`, and `total_received` despite the payload containing all those fields.

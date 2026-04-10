@@ -358,13 +358,14 @@ onMounted(() => {
                 <span class="text-sm">Make this overlay public (others can view and fork it)</span>
               </label>
             </div>
-
             <TemplateMeta
               :created-at="template?.created_at"
               :updated-at="template?.updated_at"
               :view-count="template?.view_count"
               :fork-count="template?.fork_count"
               :template-tags="template?.template_tags"
+              :slug="template.slug"
+              owner="You"
             />
           </div>
 
