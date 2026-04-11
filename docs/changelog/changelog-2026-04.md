@@ -1,5 +1,37 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - Security: comprehensive XSS sanitization for overlay templates
+
+Overlabels lets users write raw HTML/CSS for their overlays - that's the whole point. But with great `v-html` comes great responsibility. After the axios prototype pollution vulnerability (CVE score 10.0/10, patched via Dependabot in #99) prompted a broader security review, we ran a full XSS audit against the overlay template system. The existing sanitizer only stripped `<script>` tags. That's it. Everything else walked right through.
+
+Here's what we tested and what we found:
+
+**Previously blocked (by the old script-only sanitizer):**
+- `<script>` tags and variants - stripped on save
+
+**Previously NOT blocked (now fixed):**
+- `<form action="javascript:alert(1)">` - **executed perfectly**. This was the big one.
+- `<svg onload=alert(1)>`, `<img onerror=...>`, `<div onclick=...>`, and every other inline event handler (`on*` attributes) - all stripped now
+- `javascript:` URIs in `href`, `action`, `src`, `data`, `formaction`, `xlink:href` attributes - all stripped now
+- HTML-entity-encoded `javascript:` URIs (`&#106;&#97;&#118;...`) that browsers silently decode back to `javascript:` - caught via entity decoding before pattern matching
+- `<meta http-equiv="refresh" content="0;url=javascript:...">` - stripped now
+- `javascript:` inside CSS `url()` expressions - replaced with `url(about:blank)`
+
+**Already safe (browser won't execute):**
+- `<div style="width: expression(...)">` - CSS expressions are dead in modern browsers
+- `<object data="javascript:...">` - ignored by browsers
+- `<iframe src="data:text/html,...">` - script content inside stripped, leaving inert empty data URI
+
+**What changed:**
+
+- Rewrote `resources/js/utils/sanitize.ts` from a single `<script>`-only regex into a multi-layer sanitizer covering event handlers, javascript URIs (plain and entity-encoded), meta refresh tags, and CSS url() expressions. Removed unused `stripScripts` function.
+- Created `app/Services/HtmlSanitizationService.php` - server-side sanitizer with the same coverage. This is the authoritative security layer since client-side sanitization can always be bypassed with curl/Postman.
+- Wired `HtmlSanitizationService::sanitizeTemplateFields()` into both `store()` and `update()` in `OverlayTemplateController`.
+- Updated `create.vue` and `edit.vue` to use the new `sanitizeHtmlFields` function with improved toast messaging.
+- 21 unit tests covering all attack vectors plus safe HTML preservation.
+
+Normal overlay HTML (divs, styles, images, links, forms with real actions, template tags) passes through completely untouched.
+
 ## April 10th, 2026 - UX improvements to overlay show page and template tags
 
 - Replaced native browser `confirm()` on OBS URL generation with the styled LinkWarningModal used elsewhere in the app.

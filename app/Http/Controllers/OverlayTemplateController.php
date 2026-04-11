@@ -7,6 +7,7 @@ use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Services\HtmlSanitizationService;
 use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
@@ -483,6 +484,8 @@ class OverlayTemplateController extends Controller
             'is_public' => 'boolean',
         ]);
 
+        $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
+
         $template = $request->user()->overlayTemplates()->create($validated);
 
         // Extract and store template tags
@@ -520,6 +523,8 @@ class OverlayTemplateController extends Controller
             'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
         ]);
+
+        $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
 
         $template->update($validated);
 

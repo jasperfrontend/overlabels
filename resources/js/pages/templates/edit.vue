@@ -30,7 +30,7 @@ import {
   ImageIcon
 } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { stripScriptsFromFields } from '@/utils/sanitize';
+import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import {
@@ -198,7 +198,7 @@ watch(showTemplateToast, (on) => {
 const openExternalLink = (link: any, target: string) => window.open(link, target);
 
 const submitForm = () => {
-  const { sanitized, removed } = stripScriptsFromFields({
+  const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
     head: form.head,
@@ -212,7 +212,7 @@ const submitForm = () => {
     onSuccess: () => {
       pushToast(
         removed > 0
-          ? `Saved! Also removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported.`
+          ? `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`
           : 'Overlay saved successfully!',
         removed > 0 ? 'warning' : 'success'
       );

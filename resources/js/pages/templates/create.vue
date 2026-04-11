@@ -10,7 +10,7 @@ import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { stripScriptsFromFields } from '@/utils/sanitize';
+import { sanitizeHtmlFields } from '@/utils/sanitize';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
@@ -46,7 +46,7 @@ const showToast = ref(false);
 const { register } = useKeyboardShortcuts();
 
 const submitForm = () => {
-  const { sanitized, removed } = stripScriptsFromFields({
+  const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
     head: form.head,
@@ -56,7 +56,7 @@ const submitForm = () => {
   Object.assign(form, sanitized);
 
   if (removed > 0) {
-    toastMessage.value = `Also removed ${removed} script tag${removed === 1 ? '' : 's'} — inline scripts aren't supported.`;
+    toastMessage.value = `Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`;
     toastType.value = 'warning';
     showToast.value = true;
   }

