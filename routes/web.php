@@ -332,7 +332,7 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Integration Suggestions (rate limited: 3 per hour per user)
     Route::post('/integration-suggestions', [IntegrationSuggestionController::class, 'store'])
-        ->middleware('throttle:30,60')
+        ->middleware('throttle:3,60')
         ->name('integration-suggestions.store');
 
     // Controls Management

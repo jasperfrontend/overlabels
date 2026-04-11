@@ -14,7 +14,7 @@ Route::middleware('auth.redirect')->group(function () {
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);
-        $request->user()->update(['locale' => $request->locale]);
+        $request->user()->update(['locale' => $request->input('locale')]);
 
         return back();
     })->name('settings.locale');
