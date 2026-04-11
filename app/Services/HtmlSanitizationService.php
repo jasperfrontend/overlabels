@@ -12,7 +12,7 @@ class HtmlSanitizationService
      * - <script> tags (including content)
      * - Inline event handlers (on*)
      * - javascript: URIs (plain and HTML-entity-encoded)
-     * - Interactive elements: <form>, <button>, <input>, <textarea>, <select>, <object>
+     * - Interactive/embeddable elements: <form>, <button>, <input>, <textarea>, <select>, <object>, <iframe>, <embed>
      * - <meta http-equiv="refresh"> with javascript:/data: URIs
      * - javascript: inside CSS url()
      *
@@ -59,6 +59,9 @@ class HtmlSanitizationService
         $value = preg_replace('/<object\b[^>]*>[\s\S]*?<\/object\s*>/i', '', $value);
         $value = preg_replace('/<input\b[^>]*\/?>/i', '', $value);
         $value = preg_replace('/<select\b[^>]*>[\s\S]*?<\/select\s*>/i', '', $value);
+        $value = preg_replace('/<iframe\b[^>]*>[\s\S]*?<\/iframe\s*>/i', '', $value);
+        $value = preg_replace('/<iframe\b[^>]*\/?>/i', '', $value); // self-closing
+        $value = preg_replace('/<embed\b[^>]*\/?>/i', '', $value);
 
         // Strip <meta http-equiv="refresh"> tags with javascript: or data: URIs
         $value = preg_replace(

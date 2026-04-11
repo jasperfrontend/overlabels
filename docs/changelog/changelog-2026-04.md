@@ -30,7 +30,8 @@ Here's what we tested and what we found:
 - Wired `HtmlSanitizationService::sanitizeTemplateFields()` into both `store()` and `update()` in `OverlayTemplateController`.
 - Updated `create.vue` and `edit.vue` to use the new `sanitizeHtmlFields` function with improved toast messaging.
 - Stripped all interactive/input elements entirely: `<form>`, `<button>`, `<input>`, `<textarea>`, `<select>`, `<object>`. Overlays are "dumb by nature" - they display data, they never submit it. There is no legitimate reason for any of these elements to exist in an overlay template.
-- 24 unit tests covering all attack vectors plus safe HTML preservation.
+- Nuked `<iframe>` and `<embed>` entirely. Instead of maintaining a safelist of "approved" embed domains (maintenance nightmare, bypass potential, subdomain sprawl, support burden), we removed all embeds and added an "integration suggestion" flow: when a user tries to embed external content and saves, the toast offers a "Suggest integration" link that opens a modal. Users can submit the service URL, a description, and optional context. Submissions are forwarded to a configurable Discord webhook (`INTEGRATION_SUGGESTION_WEBHOOK_URL` in .env) with a violet embed showing who suggested it and what they want. Rate limited to 3 suggestions per hour per user.
+- 27 unit tests covering all attack vectors plus safe HTML preservation.
 
 Normal overlay HTML (divs, styles, images, links, forms with real actions, template tags) passes through completely untouched.
 

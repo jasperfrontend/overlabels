@@ -13,6 +13,7 @@ import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import {
   Brackets,
@@ -197,7 +198,14 @@ watch(showTemplateToast, (on) => {
 
 const openExternalLink = (link: any, target: string) => window.open(link, target);
 
+const suggestionModalOpen = ref(false);
+const showSuggestionLink = ref(false);
+
 const submitForm = () => {
+  // Check if embeddable elements were present before sanitization
+  const rawHtml = `${form.head} ${form.html} ${form.css}`;
+  const hadEmbeds = /<iframe\b|<embed\b|<object\b/i.test(rawHtml);
+
   const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
@@ -210,12 +218,21 @@ const submitForm = () => {
   form.put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
-      pushToast(
-        removed > 0
-          ? `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`
-          : 'Overlay saved successfully!',
-        removed > 0 ? 'warning' : 'success'
-      );
+      if (removed > 0 && hadEmbeds) {
+        showSuggestionLink.value = true;
+        pushToast(
+          `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'}. Embeds (iframes, objects) are not allowed - want to suggest an integration instead?`,
+          'warning'
+        );
+      } else if (removed > 0) {
+        pushToast(
+          `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`,
+          'warning'
+        );
+      } else {
+        showSuggestionLink.value = false;
+        pushToast('Overlay saved successfully!', 'success');
+      }
     },
     onError: () => pushToast('Failed to save overlay.', 'error')
   });
@@ -244,6 +261,7 @@ onMounted(() => {
 <template>
   <Head :title="`Editing: ${template.name}`" />
   <AppLayout :breadcrumbs="breadcrumbs">
+    <IntegrationSuggestionModal v-model:open="suggestionModalOpen" />
     <ForkImportWizard
       v-model:open="forkWizardOpen"
       :forked-template-id="forkWizardTemplateId"
@@ -417,6 +435,14 @@ onMounted(() => {
     </div>
 
 
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false">
+      <button
+        v-if="showSuggestionLink"
+        class="ml-2 underline font-medium hover:no-underline"
+        @click="showToast = false; suggestionModalOpen = true;"
+      >
+        Suggest integration
+      </button>
+    </RekaToast>
   </AppLayout>
 </template>

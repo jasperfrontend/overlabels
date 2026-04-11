@@ -37,4 +37,8 @@ return [
         'webhook_secret' => env('RAILWAY_WEBHOOK_SECRET'),
     ],
 
+    'integration_suggestions' => [
+        'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
+    ],
+
 ];

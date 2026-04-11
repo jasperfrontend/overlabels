@@ -6,6 +6,7 @@ use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
+use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
@@ -328,6 +329,11 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
     });
+
+    // Integration Suggestions (rate limited: 3 per hour per user)
+    Route::post('/integration-suggestions', [IntegrationSuggestionController::class, 'store'])
+        ->middleware('throttle:3,60')
+        ->name('integration-suggestions.store');
 
     // Controls Management
     Route::prefix('templates/{template}/controls')

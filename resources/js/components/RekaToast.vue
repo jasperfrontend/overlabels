@@ -18,6 +18,7 @@
         <p class="text-sm leading-snug" :class="color.body">
           <span class="sr-only">{{ color.label }}: </span>
           {{ message }}
+          <slot />
         </p>
       </div>
 

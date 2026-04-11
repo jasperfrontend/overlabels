@@ -34,8 +34,9 @@ test('strips javascript uri in href', function () {
 });
 
 test('strips javascript uri in src', function () {
-    expect(HtmlSanitizationService::sanitize('<iframe src="javascript:alert(1)">'))
-        ->toBe('<iframe>');
+    // iframe is stripped entirely now, but the javascript: URI rule still applies to other tags
+    expect(HtmlSanitizationService::sanitize('<svg src="javascript:alert(1)">'))
+        ->toBe('<svg>');
 });
 
 // --- Interactive elements stripped entirely ---
@@ -77,6 +78,21 @@ test('strips select elements', function () {
 
 test('strips object elements', function () {
     expect(HtmlSanitizationService::sanitize('<div>before</div><object data="something.swf" type="application/x-shockwave-flash"></object><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
+});
+
+test('strips iframe elements with content', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><iframe src="https://example.com"></iframe><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
+});
+
+test('strips self-closing iframe elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><iframe src="https://example.com" /><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
+});
+
+test('strips embed elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><embed src="video.mp4" type="video/mp4"><div>after</div>'))
         ->toBe('<div>before</div><div>after</div>');
 });
 

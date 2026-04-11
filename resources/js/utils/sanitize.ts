@@ -10,6 +10,9 @@ const TEXTAREA_TAG_PATTERN = /<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>/gi;
 const OBJECT_TAG_PATTERN = /<object\b[^>]*>[\s\S]*?<\/object\s*>/gi;
 const SELECT_TAG_PATTERN = /<select\b[^>]*>[\s\S]*?<\/select\s*>/gi;
 const INPUT_TAG_PATTERN = /<input\b[^>]*\/?>/gi;
+const IFRAME_TAG_PATTERN = /<iframe\b[^>]*>[\s\S]*?<\/iframe\s*>/gi;
+const IFRAME_SELFCLOSE_PATTERN = /<iframe\b[^>]*\/?>/gi;
+const EMBED_TAG_PATTERN = /<embed\b[^>]*\/?>/gi;
 
 /**
  * Strips inline event-handler attributes (onclick, onload, onerror, etc.)
@@ -61,7 +64,7 @@ function decodeHtmlEntities(str: string): string {
 /**
  * Sanitize a single HTML string by stripping dangerous constructs:
  * - <script> tags (including content)
- * - Interactive elements: <form>, <button>, <input>, <textarea>, <select>, <object>
+ * - Interactive/embeddable elements: <form>, <button>, <input>, <textarea>, <select>, <object>, <iframe>, <embed>
  * - Inline event handlers (on*)
  * - javascript: URIs (plain and HTML-entity-encoded)
  * - <meta http-equiv="refresh"> with javascript:/data: URIs
@@ -90,6 +93,9 @@ export function sanitizeHtml(value: string): { value: string; removed: number } 
     result = countAndReplace(result, OBJECT_TAG_PATTERN);
     result = countAndReplace(result, SELECT_TAG_PATTERN);
     result = countAndReplace(result, INPUT_TAG_PATTERN);
+    result = countAndReplace(result, IFRAME_TAG_PATTERN);
+    result = countAndReplace(result, IFRAME_SELFCLOSE_PATTERN);
+    result = countAndReplace(result, EMBED_TAG_PATTERN);
     result = countAndReplace(result, EVENT_HANDLER_PATTERN);
     result = countAndReplace(result, JAVASCRIPT_URI_PATTERN);
 
