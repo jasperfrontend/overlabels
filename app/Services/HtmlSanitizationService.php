@@ -93,6 +93,11 @@ class HtmlSanitizationService
             if (isset($validated[$field])) {
                 $validated[$field] = static::sanitize($validated[$field]);
             }
+            // ConvertEmptyStringsToNull turns "" into null, but the DB column
+            // is NOT NULL. Coalesce back to empty string.
+            if (array_key_exists($field, $validated) && $validated[$field] === null) {
+                $validated[$field] = '';
+            }
         }
 
         return $validated;
