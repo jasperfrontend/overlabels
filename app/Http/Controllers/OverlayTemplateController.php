@@ -478,7 +478,7 @@ class OverlayTemplateController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'head' => 'nullable|string',
-            'html' => 'required|string',
+            'html' => 'present|nullable|string',
             'css' => 'nullable|string',
             'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
