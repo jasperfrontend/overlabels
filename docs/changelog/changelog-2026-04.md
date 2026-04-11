@@ -29,7 +29,8 @@ Here's what we tested and what we found:
 - Created `app/Services/HtmlSanitizationService.php` - server-side sanitizer with the same coverage. This is the authoritative security layer since client-side sanitization can always be bypassed with curl/Postman.
 - Wired `HtmlSanitizationService::sanitizeTemplateFields()` into both `store()` and `update()` in `OverlayTemplateController`.
 - Updated `create.vue` and `edit.vue` to use the new `sanitizeHtmlFields` function with improved toast messaging.
-- 21 unit tests covering all attack vectors plus safe HTML preservation.
+- Stripped all interactive/input elements entirely: `<form>`, `<button>`, `<input>`, `<textarea>`, `<select>`, `<object>`. Overlays are "dumb by nature" - they display data, they never submit it. There is no legitimate reason for any of these elements to exist in an overlay template.
+- 24 unit tests covering all attack vectors plus safe HTML preservation.
 
 Normal overlay HTML (divs, styles, images, links, forms with real actions, template tags) passes through completely untouched.
 

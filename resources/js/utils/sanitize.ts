@@ -1,10 +1,15 @@
 const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
 
 /**
- * Strips <form> blocks entirely (including content). Overlays are display-only
- * and should never submit data anywhere.
+ * Strips interactive/input elements entirely. Overlays are display-only
+ * and should never contain form controls or embeddable objects.
  */
 const FORM_TAG_PATTERN = /<form\b[^>]*>[\s\S]*?<\/form\s*>/gi;
+const BUTTON_TAG_PATTERN = /<button\b[^>]*>[\s\S]*?<\/button\s*>/gi;
+const TEXTAREA_TAG_PATTERN = /<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>/gi;
+const OBJECT_TAG_PATTERN = /<object\b[^>]*>[\s\S]*?<\/object\s*>/gi;
+const SELECT_TAG_PATTERN = /<select\b[^>]*>[\s\S]*?<\/select\s*>/gi;
+const INPUT_TAG_PATTERN = /<input\b[^>]*\/?>/gi;
 
 /**
  * Strips inline event-handler attributes (onclick, onload, onerror, etc.)
@@ -56,7 +61,7 @@ function decodeHtmlEntities(str: string): string {
 /**
  * Sanitize a single HTML string by stripping dangerous constructs:
  * - <script> tags (including content)
- * - <form> blocks (overlays are display-only, never submit data)
+ * - Interactive elements: <form>, <button>, <input>, <textarea>, <select>, <object>
  * - Inline event handlers (on*)
  * - javascript: URIs (plain and HTML-entity-encoded)
  * - <meta http-equiv="refresh"> with javascript:/data: URIs
@@ -80,6 +85,11 @@ export function sanitizeHtml(value: string): { value: string; removed: number } 
 
     let result = countAndReplace(value, SCRIPT_TAG_PATTERN);
     result = countAndReplace(result, FORM_TAG_PATTERN);
+    result = countAndReplace(result, BUTTON_TAG_PATTERN);
+    result = countAndReplace(result, TEXTAREA_TAG_PATTERN);
+    result = countAndReplace(result, OBJECT_TAG_PATTERN);
+    result = countAndReplace(result, SELECT_TAG_PATTERN);
+    result = countAndReplace(result, INPUT_TAG_PATTERN);
     result = countAndReplace(result, EVENT_HANDLER_PATTERN);
     result = countAndReplace(result, JAVASCRIPT_URI_PATTERN);
 

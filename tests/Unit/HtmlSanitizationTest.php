@@ -21,11 +21,6 @@ test('strips svg onload event handler', function () {
         ->toBe('<svg>');
 });
 
-test('strips onclick event handler', function () {
-    expect(HtmlSanitizationService::sanitize('<button onclick="alert(1)">Click</button>'))
-        ->toBe('<button>Click</button>');
-});
-
 test('strips onerror event handler', function () {
     expect(HtmlSanitizationService::sanitize('<img onerror="alert(1)" src="x">'))
         ->toBe('<img src="x">');
@@ -43,25 +38,45 @@ test('strips javascript uri in src', function () {
         ->toBe('<iframe>');
 });
 
-test('strips javascript uri in formaction', function () {
-    expect(HtmlSanitizationService::sanitize('<button formaction="javascript:alert(1)">Go</button>'))
-        ->toBe('<button>Go</button>');
-});
-
-// --- Form blocks ---
+// --- Interactive elements stripped entirely ---
 
 test('strips form blocks entirely', function () {
     expect(HtmlSanitizationService::sanitize('<form action="/submit"><input type="text"><button>OK</button></form>'))
         ->toBe('');
 });
 
-test('strips form with javascript action entirely', function () {
-    expect(HtmlSanitizationService::sanitize('<form action="javascript:alert(1)"><button>Click</button></form>'))
-        ->toBe('');
-});
-
 test('strips form and preserves surrounding content', function () {
     expect(HtmlSanitizationService::sanitize('<div>before</div><form><input></form><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
+});
+
+test('strips button elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>text</div><button>Click me</button><p>more</p>'))
+        ->toBe('<div>text</div><p>more</p>');
+});
+
+test('strips input elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>label</div><input type="text" value="data"><p>end</p>'))
+        ->toBe('<div>label</div><p>end</p>');
+});
+
+test('strips self-closing input elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><input /><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
+});
+
+test('strips textarea elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>label</div><textarea>user input</textarea><p>end</p>'))
+        ->toBe('<div>label</div><p>end</p>');
+});
+
+test('strips select elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>pick</div><select><option>A</option><option>B</option></select><p>end</p>'))
+        ->toBe('<div>pick</div><p>end</p>');
+});
+
+test('strips object elements', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><object data="something.swf" type="application/x-shockwave-flash"></object><div>after</div>'))
         ->toBe('<div>before</div><div>after</div>');
 });
 
@@ -89,14 +104,12 @@ test('neutralises javascript inside css url()', function () {
 // --- Section 9: HTML-entity-encoded javascript: URIs ---
 
 test('strips decimal-entity-encoded javascript uri in href', function () {
-    // &#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58; = javascript:
     $encoded = '&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)';
     expect(HtmlSanitizationService::sanitize('<a href="'.$encoded.'">link</a>'))
         ->toBe('<a>link</a>');
 });
 
 test('strips hex-entity-encoded javascript uri in href', function () {
-    // &#x6A;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3A; = javascript:
     $encoded = '&#x6A;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3A;alert(1)';
     expect(HtmlSanitizationService::sanitize('<a href="'.$encoded.'">link</a>'))
         ->toBe('<a>link</a>');
@@ -135,12 +148,8 @@ test('sanitizeTemplateFields only processes relevant fields', function () {
 
     $result = HtmlSanitizationService::sanitizeTemplateFields($input);
 
-    // name is NOT sanitized (not in the list)
     expect($result['name'])->toBe('<script>alert(1)</script>My Template');
-    // html IS sanitized
     expect($result['html'])->toBe('<div>hello</div>');
-    // css is unchanged (no dangerous content)
     expect($result['css'])->toBe('body { color: red; }');
-    // type is unchanged
     expect($result['type'])->toBe('static');
 });

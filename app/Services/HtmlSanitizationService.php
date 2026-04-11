@@ -12,7 +12,7 @@ class HtmlSanitizationService
      * - <script> tags (including content)
      * - Inline event handlers (on*)
      * - javascript: URIs (plain and HTML-entity-encoded)
-     * - <form> blocks (overlays are display-only, never submit data)
+     * - Interactive elements: <form>, <button>, <input>, <textarea>, <select>, <object>
      * - <meta http-equiv="refresh"> with javascript:/data: URIs
      * - javascript: inside CSS url()
      *
@@ -52,8 +52,13 @@ class HtmlSanitizationService
             $value,
         );
 
-        // Strip <form> blocks entirely - overlays are display-only, never submit data
+        // Strip interactive/input elements - overlays are display-only
         $value = preg_replace('/<form\b[^>]*>[\s\S]*?<\/form\s*>/i', '', $value);
+        $value = preg_replace('/<button\b[^>]*>[\s\S]*?<\/button\s*>/i', '', $value);
+        $value = preg_replace('/<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>/i', '', $value);
+        $value = preg_replace('/<object\b[^>]*>[\s\S]*?<\/object\s*>/i', '', $value);
+        $value = preg_replace('/<input\b[^>]*\/?>/i', '', $value);
+        $value = preg_replace('/<select\b[^>]*>[\s\S]*?<\/select\s*>/i', '', $value);
 
         // Strip <meta http-equiv="refresh"> tags with javascript: or data: URIs
         $value = preg_replace(
