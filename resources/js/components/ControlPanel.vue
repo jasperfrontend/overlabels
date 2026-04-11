@@ -5,8 +5,6 @@ import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import RefreshIcon from '@/components/RefreshIcon.vue';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const props = defineProps<{
@@ -18,8 +16,8 @@ const props = defineProps<{
 /** Known external service sources and their display labels. */
 const SERVICE_LABELS: Record<string, string> = {
   kofi: 'Ko-fi',
-  streamlabs: 'StreamLabs',
-  gpslogger: 'GPS Logger',
+  streamlabs: 'Streamlabs',
+  gpslogger: 'GPSLogger',
 };
 
 /** Build the template tag key: c:source:key for external, c:key for twitch/user. */
