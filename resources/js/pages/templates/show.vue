@@ -32,8 +32,7 @@ import {
   TargetIcon,
   ImageIcon,
   Loader2,
-  CheckIcon,
-  AlertTriangleIcon
+  CheckIcon
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
@@ -348,7 +347,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                   class="rounded bg-accent px-1 text-accent-foreground">1920</code>
                   and <strong>Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code>.
                 </li>
-                <li>Leave "Shutdown source when not visible" and "Refresh browser source when scene becomes active both <strong>unchecked</strong>.</li>
+                <li>Leave "Shutdown source when not visible" and "Refresh browser source when scene becomes active" both <strong>unchecked</strong>.</li>
                 <li>Click <strong>OK</strong>. Right-click the source and choose <strong>Transform &gt; Fit to
                   screen</strong>
                   (or press <code class="rounded bg-accent px-1 text-accent-foreground">Ctrl+F</code>) to make it
