@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 import RekaToast from '@/components/RekaToast.vue';
-import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon } from 'lucide-vue-next';
+import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import RefreshIcon from '@/components/RefreshIcon.vue';
 
@@ -12,19 +12,78 @@ const props = defineProps<{
   isLive?: boolean;
 }>();
 
+/** Known external service sources and their display labels. */
+const SERVICE_LABELS: Record<string, string> = {
+  kofi: 'Ko-fi',
+  streamlabs: 'StreamLabs',
+  gpslogger: 'GPS Logger',
+};
+
+/** Build the template tag key: c:source:key for external, c:key for twitch/user. */
+function tagKey(ctrl: OverlayControl): string {
+  if (ctrl.source && ctrl.source !== 'twitch') {
+    return `c:${ctrl.source}:${ctrl.key}`;
+  }
+  return `c:${ctrl.key}`;
+}
+
 function isTwitchOffline(ctrl: OverlayControl): boolean {
   return ctrl.source === 'twitch' && ctrl.source_managed && !props.isLive;
 }
+
+/** Group controls by category for organized display. */
+interface ControlGroup {
+  label: string;
+  controls: OverlayControl[];
+}
+
+const groupedControls = computed<ControlGroup[]>(() => {
+  const serviceGroups: Record<string, OverlayControl[]> = {};
+  const userControls: Record<string, OverlayControl[]> = {};
+
+  for (const ctrl of props.controls) {
+    if (ctrl.source && ctrl.source !== 'twitch' && SERVICE_LABELS[ctrl.source]) {
+      if (!serviceGroups[ctrl.source]) serviceGroups[ctrl.source] = [];
+      serviceGroups[ctrl.source].push(ctrl);
+    } else {
+      const type = ctrl.type;
+      if (!userControls[type]) userControls[type] = [];
+      userControls[type].push(ctrl);
+    }
+  }
+
+  const groups: ControlGroup[] = [];
+
+  const typeLabels: Record<string, string> = {
+    text: 'Text',
+    number: 'Number',
+    counter: 'Counter',
+    timer: 'Timer',
+    boolean: 'Toggle',
+    expression: 'Expression',
+    datetime: 'Date/Time',
+  };
+
+  const typeOrder = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'datetime'];
+  for (const type of typeOrder) {
+    if (userControls[type]?.length) {
+      groups.push({ label: typeLabels[type] ?? type, controls: userControls[type] });
+    }
+  }
+
+  for (const [source, ctrls] of Object.entries(serviceGroups)) {
+    groups.push({ label: SERVICE_LABELS[source] ?? source, controls: ctrls });
+  }
+
+  return groups;
+});
 
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error'>('success');
 const showToast = ref(false);
 
-// Per-control local input values for text/number/datetime
 const localValues = ref<Record<number, string>>({});
-// Per-control saving state
 const saving = ref<Record<number, boolean>>({});
-// Timer display intervals
 const timerIntervals = ref<Record<number, number>>({});
 const timerDisplays = ref<Record<number, string>>({});
 
@@ -93,7 +152,6 @@ function stopTimerTick(id: number) {
   }
 }
 
-// Initialize timer displays
 props.controls.forEach((ctrl) => {
   if (ctrl.type === 'timer') {
     startTimerTick(ctrl);
@@ -104,8 +162,6 @@ async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
   saving.value[ctrl.id] = true;
   try {
     const { data } = await axios.post(`/templates/${props.template.id}/controls/${ctrl.id}/value`, payload);
-
-    // Update local control state
     if (data.control) {
       Object.assign(ctrl, data.control);
     }
@@ -163,156 +219,186 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      <div v-for="ctrl in controls" :key="ctrl.id" :class="[
-        'rounded-md bg-accent/70 dark:bg-background p-6 transition-all duration-500',
-        isTwitchOffline(ctrl) && 'opacity-50',
-        ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-gradient-to-br from-green-500/15 to-background ring-1 ring-green-500/35',
-        ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-gradient-to-br from-red-500/15 to-background ring-1 ring-red-500/30',
-      ]">
-        <div class="mb-2">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <span class="font-medium">{{ ctrl.label || ctrl.key }}</span>
-              <span class="ml-2 font-mono text-xs text-muted-foreground">c:{{ ctrl.key }}</span>
+    <template v-for="group in groupedControls" :key="group.label">
+      <div class="mt-6 first:mt-0">
+        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ group.label }}</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
+            'rounded-md p-6 transition-all duration-500',
+            ctrl.source_managed
+              ? 'bg-muted/40 dark:bg-muted/20 border border-dashed border-muted-foreground/20'
+              : 'bg-accent/70 dark:bg-background',
+            isTwitchOffline(ctrl) && 'opacity-50',
+            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background ring-1 ring-green-500/35',
+            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background ring-1 ring-red-500/30',
+          ]">
+            <div class="mb-2">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
+                  <span class="ml-2 font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span v-if="ctrl.source_managed" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" title="Managed by an external service - value updates automatically">
+                    <LockIcon class="h-2.5 w-2.5" />
+                    Managed
+                  </span>
+                  <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
+                  <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-              <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+
+            <!-- Source-managed: read-only value display -->
+            <div v-if="ctrl.source_managed" class="flex items-center gap-3">
+              <div class="min-w-0 flex-1 font-mono text-sm text-foreground truncate">
+                {{ ctrl.value ?? '-' }}
+              </div>
             </div>
+
+            <!-- Text control -->
+            <template v-else-if="ctrl.type === 'text'">
+              <form @submit.prevent="saveTextValue(ctrl)" class="flex group gap-0">
+                <input
+                  type="text"
+                  :value="getLocalValue(ctrl)"
+                  :title="getLocalValue(ctrl) || 'Click to edit'"
+                  @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+                  class="peer input-border flex-1"
+                  placeholder="Enter text..."
+                />
+                <button
+                  type="submit"
+                  class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
+                  :disabled="saving[ctrl.id]"
+                  @click="saveTextValue(ctrl)"
+                >
+                  <SaveIcon class="h-3.5 w-3.5" />
+                </button>
+              </form>
+            </template>
+
+            <!-- Number control -->
+            <template v-else-if="ctrl.type === 'number'">
+              <div class="flex">
+                <input
+                  :value="getLocalValue(ctrl)"
+                  :title="getLocalValue(ctrl) || 'Click to edit'"
+                  @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+                  type="number"
+                  :min="ctrl.config?.min"
+                  :max="ctrl.config?.max"
+                  :step="ctrl.config?.step ?? 1"
+                  class="peer input-border flex-1"
+                />
+                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+                  <SaveIcon class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </template>
+
+            <!-- Counter control -->
+            <template v-else-if="ctrl.type === 'counter'">
+              <div class="flex items-center gap-3">
+                <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
+                  {{ ctrl.value ?? '0' }}
+                </div>
+                <div class="flex gap-1.5">
+                  <button
+                    class="btn btn-sm btn-secondary px-3 text-lg"
+                    :disabled="saving[ctrl.id]"
+                    @click="counterAction(ctrl, 'decrement')"
+                    title="Decrement"
+                  >
+                    −
+                  </button>
+                  <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
+                    +
+                  </button>
+                  <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
+                    <RotateCcwIcon class="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Timer control -->
+            <template v-else-if="ctrl.type === 'timer'">
+              <div class="flex items-center gap-3">
+                <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
+                  <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
+                  <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
+                  {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
+                </div>
+                <template v-if="ctrl.config?.mode === 'countto'">
+                  <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? new Date(ctrl.config.target_datetime).toLocaleString() : 'no target set' }}</span>
+                </template>
+                <div v-else class="flex gap-1.5">
+                  <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
+                    <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
+                    <PlayIcon v-else class="h-3.5 w-3.5" />
+                    <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
+                  </button>
+                  <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
+                    <RotateCcwIcon class="h-3.5 w-3.5" />
+                    <span class="ml-1">Reset</span>
+                  </button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Boolean control -->
+            <template v-else-if="ctrl.type === 'boolean'">
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="ctrl.value === '1'"
+                  :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
+                  :disabled="saving[ctrl.id]"
+                  @click="toggleBoolean(ctrl)"
+                  :class="[
+                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+                    ctrl.value === '1' ? 'bg-accent' : 'bg-input',
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
+                      ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
+                    ]"
+                  />
+                </button>
+                <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
+                  ctrl.value === '1' ? 'On' : 'Off'
+                }}</span>
+              </div>
+            </template>
+
+            <!-- Expression control (read-only, evaluated in overlay) -->
+            <template v-else-if="ctrl.type === 'expression'">
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</span>
+              </div>
+            </template>
+
+            <!-- Datetime control -->
+            <template v-else-if="ctrl.type === 'datetime'">
+              <div class="flex gap-0">
+                <input
+                  :value="getLocalValue(ctrl)"
+                  @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
+                  type="datetime-local"
+                  class="peer input-border flex-1"
+                />
+                <button class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+                  <SaveIcon class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </template>
           </div>
-        </div>
-
-        <!-- Text control -->
-        <div v-if="ctrl.type === 'text'">
-          <form @submit.prevent="saveTextValue(ctrl)" class="flex group gap-0">
-            <input
-              type="text"
-              :value="getLocalValue(ctrl)"
-              :title="getLocalValue(ctrl) || 'Click to edit'"
-              @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-              class="peer input-border flex-1"
-              placeholder="Enter text..."
-            />
-            <button
-              type="submit"
-              class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
-              :disabled="saving[ctrl.id]"
-              @click="saveTextValue(ctrl)"
-            >
-              <SaveIcon class="h-3.5 w-3.5" />
-
-            </button>
-          </form>
-        </div>
-
-        <!-- Number control -->
-        <div v-else-if="ctrl.type === 'number'" class="flex">
-          <input
-            :value="getLocalValue(ctrl)"
-            :title="getLocalValue(ctrl) || 'Click to edit'"
-            @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-            type="number"
-            :min="ctrl.config?.min"
-            :max="ctrl.config?.max"
-            :step="ctrl.config?.step ?? 1"
-            class="peer input-border flex-1"
-          />
-          <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
-            <SaveIcon class="h-3.5 w-3.5" />
-          </button>
-        </div>
-
-        <!-- Counter control -->
-        <div v-else-if="ctrl.type === 'counter'" class="flex items-center gap-3">
-          <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
-            {{ ctrl.value ?? '0' }}
-          </div>
-          <div class="flex gap-1.5">
-            <button
-              class="btn btn-sm btn-secondary px-3 text-lg"
-              :disabled="saving[ctrl.id]"
-              @click="counterAction(ctrl, 'decrement')"
-              title="Decrement"
-            >
-              −
-            </button>
-            <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
-              +
-            </button>
-            <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
-              <RotateCcwIcon class="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Timer control -->
-        <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
-          <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
-            <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
-            <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
-            {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
-          </div>
-          <template v-if="ctrl.config?.mode === 'countto'">
-            <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? new Date(ctrl.config.target_datetime).toLocaleString() : 'no target set' }}</span>
-          </template>
-          <div v-else class="flex gap-1.5">
-            <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
-              <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
-              <PlayIcon v-else class="h-3.5 w-3.5" />
-              <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
-            </button>
-            <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
-              <RotateCcwIcon class="h-3.5 w-3.5" />
-              <span class="ml-1">Reset</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Boolean control -->
-        <div v-else-if="ctrl.type === 'boolean'" class="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="ctrl.value === '1'"
-            :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
-            :disabled="saving[ctrl.id]"
-            @click="toggleBoolean(ctrl)"
-            :class="[
-              'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-              ctrl.value === '1' ? 'bg-accent' : 'bg-input',
-            ]"
-          >
-            <span
-              :class="[
-                'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
-                ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
-              ]"
-            />
-          </button>
-          <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
-            ctrl.value === '1' ? 'On' : 'Off'
-          }}</span>
-        </div>
-
-        <!-- Expression control (read-only, evaluated in overlay) -->
-        <div v-else-if="ctrl.type === 'expression'" class="flex items-center gap-3">
-          <span class="text-xs text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</span>
-        </div>
-
-        <!-- Datetime control -->
-        <div v-else-if="ctrl.type === 'datetime'" class="flex gap-0">
-          <input
-            :value="getLocalValue(ctrl)"
-            @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
-            type="datetime-local"
-            class="peer input-border flex-1"
-          />
-          <button class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
-            <SaveIcon class="h-3.5 w-3.5" />
-          </button>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>

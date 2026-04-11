@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - UX: ControlPanel rewrite with grouped controls and managed state
+
+- Rewrote `ControlPanel.vue` to organize controls into labeled groups by type (Counter, Timer, Number, Text, Toggle, Expression, Date/Time), with external service controls (Ko-fi, StreamLabs, GPS Logger) displayed in their own named sections.
+- Fixed template tag keys for external service controls: now correctly displays `c:kofi:kofis_received` instead of the incorrect `c:kofis_received`. The `tagKey()` helper builds the proper namespaced key for any source.
+- Source-managed controls (updated automatically by external services) now render as read-only value displays instead of interactive widgets. They get a dashed border, muted background, and a lock icon "Managed" badge to clearly communicate that values are externally controlled.
+- Removed leftover debug `<pre>` output from control cards.
+- Fixed `$request->locale` in `routes/settings.php` - Symfony's base Request class has a protected `$locale` property, so magic `__get` access collides. Changed to `$request->input('locale')`.
+
 ## April 11th, 2026 - Security: comprehensive XSS sanitization for overlay templates
 
 Overlabels lets users write raw HTML/CSS for their overlays - that's the whole point. But with great `v-html` comes great responsibility. After the axios prototype pollution vulnerability (CVE score 10.0/10, patched via Dependabot in #99) prompted a broader security review, we ran a full XSS audit against the overlay template system. The existing sanitizer only stripped `<script>` tags. That's it. Everything else walked right through.
