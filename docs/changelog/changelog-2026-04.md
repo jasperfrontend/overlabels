@@ -1,5 +1,16 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - UX: collapsible and searchable control groups in ControlPanel
+
+- Control groups in `ControlPanel.vue` are now collapsible (using Reka Collapsible) with expand/collapse all toggle. Collapse state is persisted to localStorage.
+- Added a search bar that filters controls by label, key, tag key, or group name, with a count summary and empty-state message.
+- Styled collapsible group headers with chevron icon, group name, and control count badge.
+- Polished control card styling: sidebar backgrounds, softer source-managed badge colors, tooltip on Offline badge.
+- Added `for`/`id`/`name` attributes to control labels and inputs for accessibility.
+- Removed hardcoded `rounded-l-md` from the shared `.input-border` class so border radius can be set per-use.
+- Swapped `<Input>` component to plain `<input>` with `input-border` in the TemplateTagsList search bar for consistency.
+- Changed body copy color from `text-muted-foreground` to `text-foreground` in ControlPanel, ControlsManager, and TemplateTagsList descriptions.
+
 ## April 11th, 2026 - UX: ControlPanel rewrite with grouped controls and managed state
 
 - Rewrote `ControlPanel.vue` to organize controls into labeled groups by type (Counter, Timer, Number, Text, Toggle, Expression, Date/Time), with external service controls (Ko-fi, StreamLabs, GPS Logger) displayed in their own named sections.

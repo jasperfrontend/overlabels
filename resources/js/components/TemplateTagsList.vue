@@ -284,7 +284,7 @@ onMounted(() => {
 
   <!-- Header section -->
   <div class="mb-5 space-y-3">
-    <p class="text-sm leading-relaxed text-muted-foreground">
+    <p class="text-sm leading-relaxed text-foreground">
       Tags represent live Twitch data you can use in your HTML and CSS templates. Click any tag to copy it to your clipboard, then paste it into your template code.
       Visit
       <a class="font-medium text-violet-400 underline decoration-violet-400/30 underline-offset-2 hover:text-violet-300 hover:decoration-violet-300/50" :href="route('help.conditionals')" target="_blank">Help</a>
@@ -305,10 +305,10 @@ onMounted(() => {
   <div class="mb-4 flex items-center gap-3">
     <div class="relative flex-1">
       <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-      <Input
+      <input
         v-model="searchQuery"
         placeholder="Filter tags..."
-        class="h-8 pl-8 text-sm"
+        class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
       />
     </div>
     <button

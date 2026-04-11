@@ -135,7 +135,7 @@ function configSummary(ctrl: OverlayControl): string[] {
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">Define mutable values your template can reference. Check <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a>
+      <p class="text-sm text-foreground">Define mutable values your template can reference. Check <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a>
       to see how to implement Controls in your Overlays.</p>
       <button
         type="button"

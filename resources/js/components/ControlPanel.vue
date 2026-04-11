@@ -2,9 +2,12 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import RekaToast from '@/components/RekaToast.vue';
-import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon } from 'lucide-vue-next';
+import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import RefreshIcon from '@/components/RefreshIcon.vue';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const props = defineProps<{
   template: OverlayTemplate;
@@ -77,6 +80,74 @@ const groupedControls = computed<ControlGroup[]>(() => {
 
   return groups;
 });
+
+// Search and collapse state
+const searchQuery = ref('');
+
+const filteredGroupedControls = computed<ControlGroup[]>(() => {
+  const query = searchQuery.value.toLowerCase().trim();
+  if (!query) return groupedControls.value;
+
+  return groupedControls.value
+    .map((group) => ({
+      label: group.label,
+      controls: group.controls.filter((ctrl) => {
+        const matchesLabel = (ctrl.label || '').toLowerCase().includes(query);
+        const matchesKey = ctrl.key.toLowerCase().includes(query);
+        const matchesTag = tagKey(ctrl).toLowerCase().includes(query);
+        const matchesGroup = group.label.toLowerCase().includes(query);
+        return matchesLabel || matchesKey || matchesTag || matchesGroup;
+      }),
+    }))
+    .filter((group) => group.controls.length > 0);
+});
+
+const totalVisibleControls = computed(() => {
+  return filteredGroupedControls.value.reduce((sum, g) => sum + g.controls.length, 0);
+});
+
+const EXPANDED_KEY = 'control_panel_expanded';
+
+function loadExpandedState(): Record<string, boolean> {
+  try {
+    const stored = localStorage.getItem(EXPANDED_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function saveExpandedState(): void {
+  try {
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expandedGroups.value));
+  } catch {
+    // ignore
+  }
+}
+
+const expandedGroups = ref<Record<string, boolean>>(loadExpandedState());
+
+function isGroupExpanded(label: string): boolean {
+  return expandedGroups.value[label] ?? true;
+}
+
+function toggleGroup(label: string): void {
+  expandedGroups.value[label] = !isGroupExpanded(label);
+  saveExpandedState();
+}
+
+const allExpanded = computed(() => {
+  return filteredGroupedControls.value.every((g) => isGroupExpanded(g.label));
+});
+
+function toggleAll(): void {
+  const newState = !allExpanded.value;
+  filteredGroupedControls.value.forEach((g) => {
+    expandedGroups.value[g.label] = newState;
+  });
+  saveExpandedState();
+}
 
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error'>('success');
@@ -206,7 +277,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">
+      <p class="text-sm text-foreground">
         Manage the values of the Controls created in this Overlay. Check
         <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a> to see how to implement Controls in your
         Overlays.
@@ -219,29 +290,80 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
 
-    <template v-for="group in groupedControls" :key="group.label">
-      <div class="mt-6 first:mt-0">
-        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ group.label }}</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <template v-if="controls.length > 0">
+      <!-- Search and collapse/expand bar -->
+      <div class="mb-4 flex items-center gap-3">
+        <div class="relative flex-1 gap-2">
+          <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            v-model="searchQuery"
+            placeholder="Filter controls..."
+            class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
+          />
+        </div>
+      </div>
+
+      <!-- Count and collapse/expand toggle -->
+      <div class="mb-3 flex items-center text-xs text-muted-foreground">
+        <span v-if="searchQuery">
+          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
+        </span>
+        <span v-else>
+          {{ controls.length }} controls across {{ groupedControls.length }} groups
+        </span>
+        <button
+          v-if="filteredGroupedControls.length > 0"
+          class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          @click.prevent="toggleAll"
+        >
+          <ChevronsDownUp v-if="allExpanded" :size="13" />
+          <ChevronsUpDown v-else :size="13" />
+          {{ allExpanded ? 'Collapse all' : 'Expand all' }}
+        </button>
+      </div>
+
+      <!-- No results -->
+      <div v-if="searchQuery && filteredGroupedControls.length === 0" class="py-8 text-center">
+        <p class="text-sm text-muted-foreground">No controls match "{{ searchQuery }}"</p>
+      </div>
+
+      <!-- Collapsible groups -->
+      <div class="space-y-1.5">
+        <Collapsible
+          v-for="group in filteredGroupedControls"
+          :key="group.label"
+          :open="isGroupExpanded(group.label)"
+          @update:open="toggleGroup(group.label)"
+        >
+          <CollapsibleTrigger
+            class="group flex w-full cursor-pointer bg-sidebar items-center gap-2 rounded-md px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
+            :class="{ 'bg-sidebar-accent/50 rounded-b-none pb-0': isGroupExpanded(group.label) }"
+          >
+            <ChevronRight
+              :size="14"
+              class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
+            />
+            <span class="text-sm font-medium">{{ group.label }}</span>
+            <span class="ml-auto text-xs px-2.5 py-1.5 bg-card">{{ group.controls.length }}</span>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <div class="grid grid-cols-1 bg-sidebar/50 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
           <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
-            'rounded-md p-6 transition-all duration-500',
-            ctrl.source_managed
-              ? 'bg-sidebar-accent border border-dashed border-muted-foreground/20'
-              : 'bg-sidebar-accent',
-            isTwitchOffline(ctrl) && 'opacity-60',
-            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background ring-1 ring-green-500/35',
-            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background ring-1 ring-red-500/30',
+            'p-6 transition-all duration-500 bg-sidebar',
+            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
+            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
           ]">
             <div class="mb-2">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex flex-col gap-1 items-start">
-                  <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
+                  <label :for="`cp-input-${ctrl.id}`"><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label>
                   <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
                 </div>
                 <div class="flex flex-col text-center gap-2">
                   <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
-                  <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-                  <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
+                  <span v-if="isTwitchOffline(ctrl)" title="This Control only works when you're streaming" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
+                  <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 bg-mauve-300/50 dark:bg-mauve-700/50 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
                     <LockIcon class="h-2.5 w-2.5" />
                     {{ SERVICE_LABELS[ctrl.source] }}
                   </span>
@@ -261,6 +383,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
               <form @submit.prevent="saveTextValue(ctrl)" class="flex group gap-0">
                 <input
                   type="text"
+                  :id="`cp-input-${ctrl.id}`"
+                  :name="`cp-input-${ctrl.id}`"
                   :value="getLocalValue(ctrl)"
                   :title="getLocalValue(ctrl) || 'Click to edit'"
                   @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
@@ -284,6 +408,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <input
                   :value="getLocalValue(ctrl)"
                   :title="getLocalValue(ctrl) || 'Click to edit'"
+                  :id="`cp-input-${ctrl.id}`"
+                  :name="`cp-input-${ctrl.id}`"
                   @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
                   type="number"
                   :min="ctrl.config?.min"
@@ -369,9 +495,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
                     ]"
                   />
                 </button>
-                <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">{{
-                  ctrl.value === '1' ? 'On' : 'Off'
-                }}</span>
+                <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">
+                  {{ctrl.value === '1' ? 'On' : 'Off'}}
+                </span>
               </div>
             </template>
 
@@ -388,6 +514,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <input
                   :value="getLocalValue(ctrl)"
                   @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
+                  :id="`cp-input-${ctrl.id}`"
+                  :name="`cp-input-${ctrl.id}`"
                   type="datetime-local"
                   class="peer input-border flex-1"
                 />
@@ -397,7 +525,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
               </div>
             </template>
           </div>
-        </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </template>
   </div>
