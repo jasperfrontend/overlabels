@@ -185,7 +185,8 @@ export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
 /** All supported function names. */
 export const SUPPORTED_FUNCTIONS = new Set([
   'argmax', 'argmin', 'latest', 'oldest',
-  'max', 'min', 'abs', 'round', 'floor', 'ceil',
+  'max', 'min', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
+  'now',
 ]);
 
 const FUNCTIONS: Record<string, FnImpl> = {
@@ -198,10 +199,15 @@ const FUNCTIONS: Record<string, FnImpl> = {
   // Scalar math
   max: (args) => Math.max(...args.map(toNum)),
   min: (args) => Math.min(...args.map(toNum)),
+  sum: (args) => args.reduce((acc: number, v) => acc + toNum(v), 0),
+  avg: (args) => args.length === 0 ? 0 : args.reduce((acc: number, v) => acc + toNum(v), 0) / args.length,
   abs: (args) => Math.abs(toNum(args[0])),
   round: (args) => Math.round(toNum(args[0])),
   floor: (args) => Math.floor(toNum(args[0])),
   ceil: (args) => Math.ceil(toNum(args[0])),
+
+  // Time (Unix epoch seconds, matching _at companion values)
+  now: () => Math.floor(Date.now() / 1000),
 };
 
 // ---------------------------------------------------------------------------

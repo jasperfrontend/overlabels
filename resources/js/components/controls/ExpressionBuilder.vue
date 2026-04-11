@@ -175,9 +175,13 @@ function insertVariable(ctrl: OverlayControl) {
   insertAtCursor(expressionRef(ctrl));
 }
 
-function insertLatestExample() {
+const exampleCopied = ref(false);
+
+async function copyExampleCode() {
   const example = `latest(c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name, c.kofi.latest_donor_name_at, c.kofi.latest_donor_name)`;
-  insertAtCursor(example);
+  await navigator.clipboard.writeText(example);
+  exampleCopied.value = true;
+  setTimeout(() => { exampleCopied.value = false; }, 3000);
 }
 
 // Group controls by source for visual clarity
@@ -327,9 +331,15 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
             </div>
             <div>
               <div class="flex flex-wrap gap-1.5 mb-1.5">
-                <code v-for="fn in ['max', 'min', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                <code v-for="fn in ['max', 'min', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
               </div>
-              <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code> and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code> accept multiple arguments.</p>
+              <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sum</code>, and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">avg</code> accept multiple arguments.</p>
+            </div>
+            <div>
+              <div class="flex flex-wrap gap-1.5 mb-1.5">
+                <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">now()</code>
+              </div>
+              <p class="text-xs text-muted-foreground">Returns the current timestamp in milliseconds. Useful for calculating time since an event.</p>
             </div>
           </div>
         </div>
@@ -350,9 +360,9 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
               <button
                 type="button"
                 class="text-violet-400 hover:text-violet-300 cursor-pointer font-sans underline float-right text-[10px] ml-2"
-                @click="insertLatestExample(); helpOpen = false"
+                @click="copyExampleCode()"
               >
-                insert this
+                {{ exampleCopied ? 'Copied!' : 'Copy' }}
               </button>
               latest(<br />
               &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />

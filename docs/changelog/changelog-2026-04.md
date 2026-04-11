@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - Feature: sum, avg, now() and help page docs for expression functions
+
+- Added `sum()`, `avg()`, and `now()` to the expression engine function set.
+- `now()` returns Unix epoch seconds (matching `_at` companion values), enabling patterns like `now() - max(c.kofi.latest_donor_at, c.streamlabs.latest_donor_at)`.
+- Updated `/help/controls#type-expression` with new code examples (`latest()`, `now() - max()`), a full "Available functions" reference, and two new best practices: "Use functions instead of nested ternaries" and "Use now() to track time since an event".
+- Changed ExpressionBuilder help dialog example action from insert-at-cursor to copy-to-clipboard with "Copied!" feedback.
+
 ## April 11th, 2026 - Feature: function calls in Expression Engine
 
 - Added `CallExpression` support to the expression engine evaluator, enabling function calls in expressions.

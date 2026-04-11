@@ -417,17 +417,55 @@ const breadcrumbs: BreadcrumbItem[] = [
                 Expression: <span class="text-violet-400">c.deaths > 10 ? "tilted" : "focused"</span><br /><br />
                 &lt;div class="status"&gt;Mood: [[[c:mood]]]&lt;/div&gt;
               </div>
-              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
-                &lt;!-- Cross-service comparison --&gt;<br />
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Cross-service total --&gt;<br />
                 Expression: <span
                 class="text-violet-400">c.streamlabs.total_received + c.kofi.total_received</span><br /><br />
                 &lt;div&gt;Total donations: $[[[c:total_donations|round]]]&lt;/div&gt;
               </div>
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Latest donor across all services --&gt;<br />
+                Expression: <span class="text-violet-400">latest(<br />
+                &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
+                &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
+                )</span><br /><br />
+                &lt;div&gt;Latest donor: [[[c:latest_donor]]]&lt;/div&gt;
+              </div>
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                &lt;!-- Seconds since last donation --&gt;<br />
+                Expression: <span class="text-violet-400">now() - max(c.kofi.latest_donor_at, c.streamlabs.latest_donor_at)</span><br /><br />
+                &lt;div&gt;Last donation: [[[c:since_last_donation|duration:mm:ss]]] ago&lt;/div&gt;
+              </div>
+
               <div class="mt-4 space-y-2 text-sm text-foreground">
                 <p>Expressions support standard math operators (<code
                   class="rounded bg-background px-1 py-0.5 font-mono text-xs">+ - * / %</code>), comparisons, ternary
                   operators, and parentheses.</p>
                 <p>Circular dependencies (A depends on B, B depends on A) are detected and blocked when you save.</p>
+              </div>
+
+              <div class="mt-6">
+                <h4 class="mb-3 text-lg font-semibold text-foreground">Available functions</h4>
+                <div class="space-y-4 text-sm text-foreground">
+                  <div>
+                    <div class="mb-1.5 flex flex-wrap gap-1.5">
+                      <code v-for="fn in ['latest', 'oldest', 'argmax', 'argmin']" :key="fn" class="rounded bg-background px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                    </div>
+                    <p>Accept pairs of <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">value, label</code> arguments. Return the label paired with the highest (<code class="rounded bg-background px-1 py-0.5 font-mono text-xs">latest</code> / <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">argmax</code>) or lowest (<code class="rounded bg-background px-1 py-0.5 font-mono text-xs">oldest</code> / <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">argmin</code>) value. Works with numbers and timestamps. First pair wins on ties.</p>
+                  </div>
+                  <div>
+                    <div class="mb-1.5 flex flex-wrap gap-1.5">
+                      <code v-for="fn in ['max', 'min', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-background px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                    </div>
+                    <p>Standard math functions. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">max</code>, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">min</code>, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">sum</code>, and <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">avg</code> accept multiple arguments.</p>
+                  </div>
+                  <div>
+                    <div class="mb-1.5">
+                      <code class="rounded bg-background px-2 py-0.5 font-mono text-xs">now()</code>
+                    </div>
+                    <p>Returns the current timestamp in seconds. Useful for calculating time since an event, e.g. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">now() - c.kofi.latest_donor_at</code>.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -825,6 +863,43 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;/div&gt;<br />
                 [[[endif]]]
               </div>
+            </div>
+            <div>
+              <h3 class="text-foreground text-xl mb-4">Use functions instead of nested ternaries</h3>
+              <p class="mb-2">
+                When comparing values across multiple services, avoid chaining <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">? :</code> operators.
+                Use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">latest()</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">oldest()</code>, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">max()</code>, or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">min()</code> instead - they scale to any number of services without nesting.
+              </p>
+              <p class="mb-2 text-foreground font-medium">Instead of this:</p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed mb-3">
+                <span class="text-red-400">c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at<br />
+                &nbsp;&nbsp;? c.streamlabs.latest_donor_name<br />
+                &nbsp;&nbsp;: c.kofi.latest_donor_name</span>
+              </div>
+              <p class="mb-2 text-foreground font-medium">Do this:</p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                <span class="text-green-400">latest(<br />
+                &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
+                &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
+                )</span>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-foreground text-xl mb-4">Use now() to track time since an event</h3>
+              <p class="mb-2">
+                Combine <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">now()</code> with <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">max()</code> and <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">_at</code> timestamps to show how long ago something happened - across any number of services.
+              </p>
+              <p class="mb-2 text-foreground font-medium">Example - seconds since the latest donation:</p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed mb-3">
+                <span class="text-violet-400">now() - max(<br />
+                &nbsp;&nbsp;c.kofi.latest_donor_at,<br />
+                &nbsp;&nbsp;c.streamlabs.latest_donor_at,<br />
+                &nbsp;&nbsp;c.streamelements.latest_donor_at<br />
+                )</span>
+              </div>
+              <p>
+                Pair it with the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">duration</code> pipe formatter in your template to display it as <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:since_last_donation|duration:mm:ss]]]</code>.
+              </p>
             </div>
             <div>
               <h3 class="text-foreground text-xl mb-4">Values are sanitized</h3>
