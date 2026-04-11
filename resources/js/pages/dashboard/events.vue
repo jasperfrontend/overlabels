@@ -50,9 +50,6 @@ function refresh() {
     }
   });
 }
-
-const currentParentURL = window.location.origin;
-const parentWithoutHttpsWithSlash = currentParentURL.replace(/^https?:\/\//, '').replace(/\/$/, '');
 </script>
 
 <template>

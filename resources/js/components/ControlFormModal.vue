@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import axios from 'axios';
 import {
   Dialog,
@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
@@ -39,6 +38,7 @@ const isEditing = computed(() => !!props.control);
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
+const manualInputRef = ref<HTMLInputElement | null>(null);
 
 // Service preset selection
 const servicePresetKey = ref('');
@@ -108,6 +108,14 @@ watch(servicePresetKey, (combinedKey) => {
 // Sort order
 type SortMode = 'before' | 'after' | 'manual';
 const sortMode = ref<SortMode>('after');
+
+watch(sortMode, (newMode) => {
+  if (newMode === 'manual') {
+    nextTick(() => {
+      manualInputRef.value?.focus();
+    });
+  }
+});
 
 function resolvedSortOrder(): number {
   const existing = props.existingControls ?? [];
@@ -349,11 +357,11 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <select
               v-model="servicePresetKey"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full input-border"
             >
               <option value="">- Select a preset control -</option>
               <optgroup v-if="showTwitchPresets && availableTwitchPresets.length" label="Twitch - Per-Stream Counters">
@@ -386,11 +394,11 @@ async function save() {
           <!-- Label (always shown) -->
           <div class="space-y-2">
             <Label for="ctrl-label">Give your control a name <span class="text-muted-foreground text-xs">(be descriptive)</span></Label>
-            <Input
+            <input
               id="ctrl-label"
               v-model="form.label"
               :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
-              class="mt-1"
+              class="input-border w-full"
               :class="{ 'border-destructive': errors.label }"
             />
             <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
@@ -401,12 +409,12 @@ async function save() {
             <!-- Key (immutable after creation) -->
             <div class="space-y-2">
               <Label for="ctrl-key">Key <span class="text-muted-foreground text-xs">(auto-generated from name)</span></Label>
-              <Input
+              <input
                 id="ctrl-key"
                 v-model="form.key"
                 :disabled="isEditing"
                 placeholder="e.g. death_counter"
-                class="mt-1"
+                class="input-border w-full"
                 :class="{ 'border-destructive': errors.key, 'border-amber-500': !errors.key && keyWarning }"
                 @input="keyManuallyEdited = true"
               />
@@ -428,7 +436,7 @@ async function save() {
               <select
                 id="ctrl-type"
                 v-model="form.type"
-                class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
+                class="w-full input-border"
               >
                 <option value="text">Text</option>
                 <option value="number">Number</option>
@@ -444,11 +452,12 @@ async function save() {
             <!-- Value (text/number/counter) -->
             <div v-if="['text', 'number', 'counter'].includes(form.type)" class="space-y-2">
               <Label for="ctrl-value">{{ isEditing ? 'Value' : 'Initial Value' }} <span class="text-muted-foreground text-xs">(optional)</span></Label>
-              <Input
+              <input
                 id="ctrl-value"
                 v-model="form.value"
                 :type="form.type === 'number' || form.type === 'counter' ? 'number' : 'text'"
                 placeholder="Leave blank to start empty"
+                class="input-border w-full"
               />
               <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
             </div>
@@ -481,19 +490,19 @@ async function save() {
               <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-2">
                   <Label for="ctrl-min">Min</Label>
-                  <Input id="ctrl-min" v-model.number="form.config.min" type="number" placeholder="No limit" />
+                  <input id="ctrl-min" class="input-border" v-model.number="form.config.min" type="number" placeholder="No limit" />
                 </div>
                 <div class="space-y-2">
                   <Label for="ctrl-max">Max</Label>
-                  <Input id="ctrl-max" v-model.number="form.config.max" type="number" placeholder="No limit" />
+                  <input id="ctrl-max" class="input-border" v-model.number="form.config.max" type="number" placeholder="No limit" />
                 </div>
                 <div class="space-y-2">
                   <Label for="ctrl-step">Step</Label>
-                  <Input id="ctrl-step" v-model.number="form.config.step" type="number" min="0" step="any" />
+                  <input id="ctrl-step" class="input-border" v-model.number="form.config.step" type="number" min="0" step="any" />
                 </div>
                 <div class="space-y-2">
                   <Label for="ctrl-reset">Reset value</Label>
-                  <Input id="ctrl-reset" v-model.number="form.config.reset_value" type="number" step="any" />
+                  <input id="ctrl-reset" class="input-border" v-model.number="form.config.reset_value" type="number" step="any" />
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -507,7 +516,12 @@ async function save() {
               </div>
               <div v-if="form.config.random" class="space-y-2">
                 <Label for="ctrl-random-interval">Update interval (ms)</Label>
-                <Input id="ctrl-random-interval" v-model.number="form.config.random_interval" type="number" min="100" step="100" placeholder="1000" />
+                <input
+                  id="ctrl-random-interval"
+                  class="w-full input-border"
+                  v-model.number="form.config.random_interval"
+                  type="number" min="100" step="100" placeholder="1000"
+                />
                 <p class="text-xs text-muted-foreground">
                   How often to generate a new random value. Default: 1000ms (1 second).
                 </p>
@@ -536,7 +550,7 @@ async function save() {
               </div>
               <div v-if="form.config.mode === 'countdown'" class="space-y-2">
                 <Label for="ctrl-base">Base duration (seconds)</Label>
-                <Input id="ctrl-base" v-model.number="form.config.base_seconds" type="number" min="0" />
+                <input id="ctrl-base" class="w-full input-border" v-model.number="form.config.base_seconds" type="number" min="0" />
               </div>
               <div v-if="form.config.mode === 'countto'" class="space-y-2">
                 <Label for="ctrl-target">Target date/time</Label>
@@ -544,7 +558,7 @@ async function save() {
                   id="ctrl-target"
                   v-model="form.config.target_datetime"
                   type="datetime-local"
-                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+                  class="w-full input-border"
                 />
                 <p class="text-xs text-muted-foreground">The timer will count down the seconds remaining until this date and time.</p>
               </div>
@@ -557,19 +571,25 @@ async function save() {
             <select
               id="ctrl-sort"
               v-model="sortMode"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full input-border"
             >
               <option value="after">After existing (last)</option>
               <option value="before">Before existing (first)</option>
               <option value="manual">Enter sort order manually</option>
             </select>
-            <Input
+            <label
               v-if="sortMode === 'manual'"
+              for="position-manual-input" class="mt-1.5 block text-sm font-medium text-foreground">Enter manual sort order</label>
+
+            <input
+              v-if="sortMode === 'manual'"
+              id="position-manual-input"
               v-model.number="form.sort_order"
+              ref="manualInputRef"
               type="number"
               min="0"
               placeholder="0"
-              class="mt-1.5"
+              class="w-full input-border"
             />
             <p v-if="errors.sort_order" class="text-xs text-destructive">{{ errors.sort_order }}</p>
           </div>

@@ -113,8 +113,8 @@ test('strips meta refresh with data uri', function () {
 test('neutralises javascript inside css url()', function () {
     $html = '<div style="background: url(\'javascript:alert(6)\')">test</div>';
     $result = HtmlSanitizationService::sanitize($html);
-    expect($result)->not->toContain('javascript:');
-    expect($result)->toContain('url(about:blank)');
+    expect($result)->not->toContain('javascript:')
+        ->and($result)->toContain('url(about:blank)');
 });
 
 // --- Section 9: HTML-entity-encoded javascript: URIs ---
@@ -149,9 +149,9 @@ test('preserves safe css url()', function () {
 });
 
 test('handles case insensitive patterns', function () {
-    expect(HtmlSanitizationService::sanitize('<SCRIPT>alert(1)</SCRIPT>'))->toBe('');
-    expect(HtmlSanitizationService::sanitize('<div ONCLICK="alert(1)">'))->toBe('<div>');
-    expect(HtmlSanitizationService::sanitize('<a HREF="JAVASCRIPT:alert(1)">x</a>'))->toBe('<a>x</a>');
+    expect(HtmlSanitizationService::sanitize('<SCRIPT>alert(1)</SCRIPT>'))->toBe('')
+        ->and(HtmlSanitizationService::sanitize('<div ONCLICK="alert(1)">'))->toBe('<div>')
+        ->and(HtmlSanitizationService::sanitize('<a HREF="JAVASCRIPT:alert(1)">x</a>'))->toBe('<a>x</a>');
 });
 
 test('sanitizeTemplateFields only processes relevant fields', function () {
@@ -164,8 +164,8 @@ test('sanitizeTemplateFields only processes relevant fields', function () {
 
     $result = HtmlSanitizationService::sanitizeTemplateFields($input);
 
-    expect($result['name'])->toBe('<script>alert(1)</script>My Template');
-    expect($result['html'])->toBe('<div>hello</div>');
-    expect($result['css'])->toBe('body { color: red; }');
-    expect($result['type'])->toBe('static');
+    expect($result['name'])->toBe('<script>alert(1)</script>My Template')
+        ->and($result['html'])->toBe('<div>hello</div>')
+        ->and($result['css'])->toBe('body { color: red; }')
+        ->and($result['type'])->toBe('static');
 });

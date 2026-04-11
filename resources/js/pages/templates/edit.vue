@@ -43,12 +43,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
-interface TemplateTag {
-  display_tag: string;
-  description: string;
-  category?: string;
-}
-
 interface OverlayOption {
   id: number;
   name: string;

@@ -178,11 +178,6 @@ const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
 
-// Utility: escape regex special characters in keys
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
 // Pipe args allow word chars, dots, colons, and hyphens (for date patterns like dd-MM-yyyy)
 const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\- ]+))?]]]/g;

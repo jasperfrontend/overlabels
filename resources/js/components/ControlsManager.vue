@@ -113,7 +113,7 @@ function configSummary(ctrl: OverlayControl): string[] {
     parts.push(ctrl.value);
   }
   if (ctrl.source_managed) {
-    parts.push('Managed by source');
+    parts.push('Managed by source *');
   }
 
   return parts;
@@ -153,7 +153,7 @@ function configSummary(ctrl: OverlayControl): string[] {
       No controls yet. Add one to get started.
     </div>
 
-    <Table v-else class="border border-border bg-background">
+    <Table v-else class="border border-sidebar-accent bg-background">
       <TableHeader>
         <TableRow>
           <TableHead>Order</TableHead>
@@ -166,19 +166,18 @@ function configSummary(ctrl: OverlayControl): string[] {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group odd:bg-accent/50">
-          <TableCell class="text-sm font-mono w-10 text-center">{{ctrl.sort_order}}</TableCell>
-          <TableCell class="font-mono text-sm font-medium">
-            <span v-if="isSourceManaged(ctrl)" class="text-xs text-violet-400">*</span>
+        <TableRow v-for="ctrl in controls" :key="ctrl.id" class="group odd:bg-accent/10 cursor-pointer" @click="openEdit(ctrl)" :title="`Click to edit ${ctrl.label || ctrl.key}`">
+          <TableCell class="text-sm font-mono w-10 text-muted-foreground text-center">{{ctrl.sort_order}}</TableCell>
+          <TableCell class="font-mono text-sm text-muted-foreground font-medium">
             {{ snippetKey(ctrl) }}
           </TableCell>
-          <TableCell class="text-muted-foreground">{{ ctrl.label || '—' }}</TableCell>
+          <TableCell class="text-foreground">{{ ctrl.label || '—' }}</TableCell>
           <TableCell>
             <Badge variant="outline" class="capitalize">
               {{ ctrl.type }}
             </Badge>
           </TableCell>
-          <TableCell class="text-xs text-muted-foreground max-w-48">
+          <TableCell class="text-xs text-foreground max-w-48">
             <div v-if="configSummary(ctrl).length" class="flex flex-wrap gap-x-2 gap-y-0.5 overflow-hidden">
               <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="whitespace-nowrap truncate max-w-48" :title="part">{{ part }}</span>
             </div>
@@ -188,8 +187,8 @@ function configSummary(ctrl: OverlayControl): string[] {
           <TableCell>
             <button
               type="button"
-              class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-60 transition group-hover:opacity-80 hover:opacity-100"
-              :title="`Copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
+              class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent px-2 py-0.5 font-mono text-xs text-muted-foreground cursor-pointer opacity-60 transition group-hover:opacity-80 hover:opacity-100"
+              :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
               @click="copySnippet(ctrl)"
             >
               <CopyIcon class="h-3 w-3 shrink-0" />
@@ -210,7 +209,7 @@ function configSummary(ctrl: OverlayControl): string[] {
       </TableBody>
     </Table>
     <div class="flex items-center justify-between text-xs">
-      <span class="text-muted-foreground"><span class="text-violet-400">*</span> these controls are managed by their source. The values cannot be manually changed.</span> <span class="ml-auto ">{{ controlsCounter }}/50 Controls in use.</span>
+      <span class="text-foreground">* these controls are managed by their source. The values cannot be manually changed.</span> <span class="ml-auto ">{{ controlsCounter }}/50 Controls in use.</span>
     </div>
 
   </div>

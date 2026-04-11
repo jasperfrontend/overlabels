@@ -33,7 +33,7 @@ import type { AppPageProps } from '@/types';
 const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth.user);
 const isAdmin = computed(() => page.props.isAdmin);
-//@ts-ignore on runtime __COMMIT_HASH__ is replaced by the actual commit hash through Vite
+//@ts-expect-error on runtime __COMMIT_HASH__ is replaced by the actual commit hash through Vite
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [

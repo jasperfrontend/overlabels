@@ -444,7 +444,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <p>Circular dependencies (A depends on B, B depends on A) are detected and blocked when you save.</p>
               </div>
 
-              <div class="mt-6">
+              <div class="mt-6" id="available-functions">
                 <h4 class="mb-3 text-lg font-semibold text-foreground">Available functions</h4>
                 <div class="space-y-4 text-sm text-foreground">
                   <div>

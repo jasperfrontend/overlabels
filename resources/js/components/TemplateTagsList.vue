@@ -3,8 +3,6 @@ import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
 import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import RekaToast from '@/components/RekaToast.vue';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';

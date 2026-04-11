@@ -111,7 +111,7 @@
 
 
   .input-border {
-    @apply flex-1 border border-border dark:border-violet-300/30 p-2 text-sm text-muted-foreground bg-background transition-[border-color] outline-none;
+    @apply flex-1 border border-border rounded-none dark:border-violet-300/30 p-2 text-sm text-muted-foreground bg-background transition-[border-color] outline-none;
     @apply focus:border focus:border-violet-400 focus:text-accent-foreground
   }
 

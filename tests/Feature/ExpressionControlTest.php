@@ -48,10 +48,10 @@ test('creating expression control with valid expression succeeds', function () {
         ->where('overlay_template_id', $template->id)
         ->first();
 
-    expect($control)->not->toBeNull();
-    expect($control->type)->toBe('expression');
-    expect($control->config['expression'])->toBe('c.deaths * 2');
-    expect($control->config['dependencies'])->toBe(['deaths']);
+    expect($control)->not->toBeNull()
+        ->and($control->type)->toBe('expression')
+        ->and($control->config['expression'])->toBe('c.deaths * 2')
+        ->and($control->config['dependencies'])->toBe(['deaths']);
 });
 
 test('creating expression control referencing service-managed control extracts namespaced deps', function () {
@@ -97,8 +97,8 @@ test('creating expression control referencing service-managed control extracts n
         ->where('overlay_template_id', $template->id)
         ->first();
 
-    expect($control->config['dependencies'])->toContain('kofi:kofis_received');
-    expect($control->config['dependencies'])->toContain('streamlabs:donations_received');
+    expect($control->config['dependencies'])->toContain('kofi:kofis_received')
+        ->and($control->config['dependencies'])->toContain('streamlabs:donations_received');
 });
 
 test('creating expression control with missing dependency returns 422', function () {
@@ -282,9 +282,9 @@ test('extractExpressionDependencies parses simple references', function () {
 
 test('extractExpressionDependencies parses namespaced references', function () {
     $deps = OverlayControl::extractExpressionDependencies('c.kofi.kofis_received + c.streamlabs.total_received');
-    expect($deps)->toContain('kofi:kofis_received');
-    expect($deps)->toContain('streamlabs:total_received');
-    expect($deps)->toHaveCount(2);
+    expect($deps)->toContain('kofi:kofis_received')
+        ->and($deps)->toContain('streamlabs:total_received')
+        ->and($deps)->toHaveCount(2);
 });
 
 test('extractExpressionDependencies deduplicates references', function () {
@@ -294,23 +294,23 @@ test('extractExpressionDependencies deduplicates references', function () {
 
 test('extractExpressionDependencies handles mixed references', function () {
     $deps = OverlayControl::extractExpressionDependencies('c.deaths > 5 ? c.kofi.total_received : c.goal');
-    expect($deps)->toContain('deaths');
-    expect($deps)->toContain('kofi:total_received');
-    expect($deps)->toContain('goal');
-    expect($deps)->toHaveCount(3);
+    expect($deps)->toContain('deaths')
+        ->and($deps)->toContain('kofi:total_received')
+        ->and($deps)->toContain('goal')
+        ->and($deps)->toHaveCount(3);
 });
 
 test('extractExpressionDependencies resolves _at references to base controls', function () {
     $deps = OverlayControl::extractExpressionDependencies(
         'c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at ? c.streamlabs.latest_donor_name : c.kofi.latest_donor_name'
     );
-    expect($deps)->toContain('streamlabs:latest_donor_name');
-    expect($deps)->toContain('kofi:latest_donor_name');
-    expect($deps)->toHaveCount(2);
+    expect($deps)->toContain('streamlabs:latest_donor_name')
+        ->and($deps)->toContain('kofi:latest_donor_name')
+        ->and($deps)->toHaveCount(2);
 });
 
 test('extractExpressionDependencies resolves template-scoped _at references', function () {
     $deps = OverlayControl::extractExpressionDependencies('c.deaths_at > 1000 ? c.deaths : 0');
-    expect($deps)->toContain('deaths');
-    expect($deps)->toHaveCount(1);
+    expect($deps)->toContain('deaths')
+        ->and($deps)->toHaveCount(1);
 });
