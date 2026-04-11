@@ -241,7 +241,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <div class="flex flex-col text-center gap-2">
                   <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
                   <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-                  <span v-if="ctrl.source && ctrl.source_managed" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
+                  <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
                     <LockIcon class="h-2.5 w-2.5" />
                     {{ SERVICE_LABELS[ctrl.source] }}
                   </span>
