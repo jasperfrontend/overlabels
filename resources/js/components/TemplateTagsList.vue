@@ -283,7 +283,7 @@ onMounted(() => {
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
   <!-- Header section -->
-  <div class="mb-5 space-y-3">
+  <div class="mb-5 pt-1 space-y-3">
     <p class="text-sm leading-relaxed text-foreground">
       Tags represent live Twitch data you can use in your HTML and CSS templates. Click any tag to copy it to your clipboard, then paste it into your template code.
       Visit
@@ -348,22 +348,25 @@ onMounted(() => {
         :open="isCategoryExpanded(String(category))"
         @update:open="toggleCategory(String(category))"
       >
-        <CollapsibleTrigger class="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent/50">
+        <CollapsibleTrigger
+          class="group flex w-full cursor-pointer bg-sidebar items-center gap-2 rounded-md px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
+          :class="{ 'bg-sidebar-accent/50 rounded-b-none pb-0': isCategoryExpanded(String(category)) }"
+        >
           <ChevronRight
             :size="14"
             class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
           />
           <span class="text-sm font-medium">{{ category }}</span>
-          <Badge variant="secondary" class="ml-auto text-[10px] tabular-nums">{{ tags.length }}</Badge>
+          <span class="ml-auto text-xs px-2.5 py-1.5 bg-card">{{ tags.length }}</span>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div class="flex flex-wrap gap-1.5 px-2 pt-1.5 pb-2.5">
+          <div class="flex flex-wrap bg-sidebar/50 gap-2 p-4">
             <Tooltip v-for="tag in tags" :key="tag.display_tag">
               <TooltipTrigger as-child>
                 <button
                   @click.prevent="copyTag(tag.display_tag)"
-                  class="cursor-pointer rounded border border-border/60 bg-card px-2 py-0.5 font-mono text-xs text-muted-foreground transition-all hover:border-violet-400/50 hover:bg-violet-500/10 hover:text-violet-300"
+                  class="cursor-pointer rounded border border-sidebar-accent bg-card px-2 py-1 font-mono text-xs text-muted-foreground transition-all hover:border-violet-400/50 hover:bg-violet-500/10 hover:text-violet-300"
                   :title="`Click to copy ${tag.display_tag}`"
                 >
                   {{ tag.display_tag }}
@@ -371,7 +374,7 @@ onMounted(() => {
               </TooltipTrigger>
               <TooltipContent side="bottom" :side-offset="6" class="max-w-64">
                 <p>{{ tag.description }}</p>
-                <p class="mt-0.5 text-[10px] text-muted-foreground">Click to copy</p>
+                <p class="mt-0.5 text-xs text-muted-foreground">Click to copy</p>
               </TooltipContent>
             </Tooltip>
           </div>
