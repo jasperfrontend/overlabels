@@ -226,25 +226,25 @@ async function toggleBoolean(ctrl: OverlayControl) {
           <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
             'rounded-md p-6 transition-all duration-500',
             ctrl.source_managed
-              ? 'bg-muted/40 dark:bg-muted/20 border border-dashed border-muted-foreground/20'
-              : 'bg-accent/70 dark:bg-background',
-            isTwitchOffline(ctrl) && 'opacity-50',
+              ? 'bg-sidebar-accent border border-dashed border-muted-foreground/20'
+              : 'bg-sidebar-accent',
+            isTwitchOffline(ctrl) && 'opacity-60',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background ring-1 ring-green-500/35',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background ring-1 ring-red-500/30',
           ]">
             <div class="mb-2">
               <div class="flex items-center justify-between mb-4">
-                <div>
+                <div class="flex flex-col gap-1 items-start">
                   <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
-                  <span class="ml-2 font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
+                  <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <span v-if="ctrl.source_managed" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" title="Managed by an external service - value updates automatically">
-                    <LockIcon class="h-2.5 w-2.5" />
-                    Managed
-                  </span>
+                <div class="flex flex-col text-center gap-2">
+                  <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
                   <span v-if="isTwitchOffline(ctrl)" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-                  <span class="text-xs text-muted-foreground capitalize">{{ ctrl.type }}</span>
+                  <span v-if="ctrl.source && ctrl.source_managed" class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
+                    <LockIcon class="h-2.5 w-2.5" />
+                    {{ SERVICE_LABELS[ctrl.source] }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -378,7 +378,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             <!-- Expression control (read-only, evaluated in overlay) -->
             <template v-else-if="ctrl.type === 'expression'">
               <div class="flex items-center gap-3">
-                <span class="text-xs text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</span>
+                <pre class="text-xs bg-card w-full rounded-sm p-2 select-all text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
               </div>
             </template>
 
