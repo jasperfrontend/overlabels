@@ -438,7 +438,7 @@ onMounted(() => {
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false">
       <button
         v-if="showSuggestionLink"
-        class="ml-2 underline font-medium hover:no-underline"
+        class="mt-2 btn hover:text-card"
         @click="showToast = false; suggestionModalOpen = true;"
       >
         Suggest integration

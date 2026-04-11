@@ -84,7 +84,7 @@ function close() {
       <div v-if="submitted" class="py-6 text-center">
         <p class="text-foreground font-medium">Thanks for the suggestion!</p>
         <p class="text-sm text-muted-foreground mt-1">We'll take a look and see what we can do.</p>
-        <button class="btn btn-primary mt-4" @click="close">Close</button>
+        <button class="btn btn-primary mt-4 m-auto" @click="close">Sounds good!</button>
       </div>
 
       <form v-else @submit.prevent="submit" class="space-y-4">

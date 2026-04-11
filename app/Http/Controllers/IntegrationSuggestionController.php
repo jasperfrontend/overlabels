@@ -18,11 +18,12 @@ class IntegrationSuggestionController extends Controller
         ]);
 
         $user = $request->user();
+
         $webhookUrl = config('services.integration_suggestions.webhook_url');
 
         if (! $webhookUrl) {
             Log::warning('Integration suggestion received but no webhook URL configured', [
-                'user' => $user->display_name,
+                'user' => $user->name,
                 'service_url' => $validated['service_url'],
             ]);
 
@@ -33,7 +34,7 @@ class IntegrationSuggestionController extends Controller
             'title' => 'Integration Suggestion',
             'color' => 0x7C3AED, // violet-600
             'fields' => [
-                ['name' => 'From', 'value' => $user->display_name.' ('.$user->twitch_id.')', 'inline' => true],
+                ['name' => 'From', 'value' => $user->name.' ('.$user->twitch_id.')', 'inline' => true],
                 ['name' => 'Service URL', 'value' => $validated['service_url'], 'inline' => false],
                 ['name' => 'What it does', 'value' => $validated['example'], 'inline' => false],
             ],
