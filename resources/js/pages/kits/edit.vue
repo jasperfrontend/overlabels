@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { ArrowLeft, Package, CheckCheck, Square } from 'lucide-vue-next';
+import { ArrowLeft, Package } from 'lucide-vue-next';
+import PublicToggle from '@/components/PublicToggle.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -123,32 +124,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               <p v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</p>
             </div>
 
-            <div
-              class="flex items-center justify-between rounded-sm border p-4 cursor-pointer hover:bg-background"
-              :class="form.is_public? 'border-green-500 bg-green-300/5' : 'border-border bg-background-50/20'"
-              @click="form.is_public = !form.is_public">
-              <div class="space-y-0.5">
-                <div v-if="form.is_public">Public Kit <small>(Click to make private)</small></div>
-                <div v-else>Private Kit <small>(Click to make public)</small></div>
-                <p
-                  v-if="form.is_public"
-                  class="text-sm text-green-500"
-                >
-                  Public kits can be discovered and copied by other users.
-                </p>
-                <p
-                  v-else
-                  class="text-sm text-muted-foreground"
-                >
-                  Private kits are only visible to you and cannot be copied by other users.
-                </p>
-              </div>
+            <PublicToggle v-model="form.is_public" label="Kit" />
 
-              <CheckCheck v-if="form.is_public" class="h-5 w-5 text-green-500" />
-              <Square v-else class="h-5 w-5 text-muted-foreground" />
-
-              <input type="checkbox" class="hidden" name="is_public" id="is_public" v-model="form.is_public" />
-            </div>
           </CardContent>
         </Card>
 

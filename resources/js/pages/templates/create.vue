@@ -9,6 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
+import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 
@@ -133,7 +134,7 @@ onMounted(() => {
           <!-- Meta Tab -->
           <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5">
             <div>
-              <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Overlay Name *</label>
+              <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Overlay Name *</label>
               <input
                 id="name"
                 v-model="form.name"
@@ -149,7 +150,7 @@ onMounted(() => {
 
             <div>
               <label for="description"
-                     class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
+                     class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
               <textarea
                 id="description"
                 v-model="form.description"
@@ -160,9 +161,11 @@ onMounted(() => {
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
             </div>
 
+            <PublicToggle v-model="form.is_public" label="Overlay" />
+
             <!-- Overlay Type -->
             <div>
-              <label class="mb-2 block text-sm font-medium text-accent-foreground/50">Overlay Type *</label>
+              <label class="mb-2 block text-sm font-medium text-accent-foreground">Overlay Type *</label>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
@@ -213,10 +216,11 @@ onMounted(() => {
               <div v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</div>
             </div>
 
+
             <!-- Event alert tips -->
             <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
-              <strong class="text-accent-foreground/70">Event Alert tips:</strong>
-              <ul class="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
+              <strong class="text-accent-foreground">Event Alert tips:</strong>
+              <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
                 <li>
                   Visit the <a class="text-violet-400 hover:underline"
                                href="/help/conditionals#event-based-template-tags" target="_blank">Help docs</a> for all
@@ -228,16 +232,6 @@ onMounted(() => {
               </ul>
             </div>
 
-            <div>
-              <label class="flex items-center gap-2">
-                <input
-                  v-model="form.is_public"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                />
-                <span class="text-sm">Make this overlay public (others can view and fork it)</span>
-              </label>
-            </div>
           </div>
 
           <!-- Code Tab -->

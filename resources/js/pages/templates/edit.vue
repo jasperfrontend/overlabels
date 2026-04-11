@@ -28,8 +28,9 @@ import {
   SlidersHorizontal,
   SquarePenIcon,
   Target,
-  ImageIcon
+  ImageIcon,
 } from 'lucide-vue-next';
+import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { useLinkWarning } from '@/composables/useLinkWarning';
@@ -358,24 +359,20 @@ onMounted(() => {
           <!-- Meta Tab -->
           <div v-if="mainTab === 'meta'" class="max-w-5xl p-4 space-y-4">
             <div>
-              <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground/50">Title *</label>
+              <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Title *</label>
               <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
               <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
             </div>
 
             <div>
               <label for="description"
-                     class="mb-1 block text-sm font-medium text-accent-foreground/50">Description</label>
+                     class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
               <textarea id="description" v-model="form.description" rows="3" class="input-border w-full" />
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
             </div>
 
-            <div>
-              <label class="flex items-center gap-2">
-                <input v-model="form.is_public" type="checkbox" />
-                <span class="text-sm">Make this overlay public (others can view and fork it)</span>
-              </label>
-            </div>
+            <PublicToggle v-model="form.is_public" label="Overlay" />
+
             <TemplateMeta
               :created-at="template?.created_at"
               :updated-at="template?.updated_at"

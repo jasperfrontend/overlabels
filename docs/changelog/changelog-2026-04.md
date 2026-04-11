@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - Refactor: extract PublicToggle component
+
+- Extracted the duplicated public/private toggle block from `templates/create.vue`, `templates/edit.vue`, and `kits/edit.vue` into a shared `PublicToggle.vue` component.
+- Component accepts `v-model` (boolean) and a `label` prop ("Overlay" or "Kit") to customize the displayed text.
+- Removed unused `CheckCheck` and `Square` icon imports from all three pages.
+- Removed outdated `rounded-sm` from the kits/edit usage.
+
 ## April 11th, 2026 - UX: collapsible and searchable control groups in ControlPanel
 
 - Control groups in `ControlPanel.vue` are now collapsible (using Reka Collapsible) with expand/collapse all toggle. Collapse state is persisted to localStorage.
