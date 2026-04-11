@@ -40,3 +40,4 @@ yarn-error.log
 /tests/Unit/OverlayControlSanitizationTest.php
 /.env.testing
 /nul
+/backup.sql
