@@ -8,6 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { HelpCircle } from 'lucide-vue-next';
 import { buildContext, evaluate, ARG_FUNCTIONS, SUPPORTED_FUNCTIONS } from '@/composables/useExpressionEngine';
 import type { OverlayControl } from '@/types';
@@ -64,6 +70,17 @@ function resolvePreviewValue(ctrl: OverlayControl): unknown {
   return ctrl.value ?? '';
 }
 const helpOpen = ref(false);
+const HELP_TAB_KEY = 'expression-help-tab';
+const helpTab = ref(localStorage.getItem(HELP_TAB_KEY) ?? 'basics');
+
+watch(helpTab, (val) => {
+  if (val) {
+    localStorage.setItem(HELP_TAB_KEY, val);
+  } else {
+    localStorage.removeItem(HELP_TAB_KEY);
+  }
+});
+
 const controlFilter = ref('');
 
 /** Walk an AST and return a validation error for unsupported/misconfigured function calls, or null if valid. */
@@ -299,92 +316,104 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
 
   <!-- Help Dialog -->
   <Dialog v-model:open="helpOpen">
-    <DialogContent class="max-w-lg">
+    <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Expression Syntax</DialogTitle>
       </DialogHeader>
-      <div class="space-y-4 text-sm">
-        <div>
-          <p class="font-semibold mb-2">Referencing controls</p>
-          <div class="space-y-1.5 text-foreground">
-            <p>Use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.key</code> to reference a control's current value.</p>
-            <p>For service controls, use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.service.key</code> (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.total_received</code>).</p>
-            <p>Append <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">_at</code> to any control to get its last-updated timestamp (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.latest_donor_name_at</code>).</p>
-          </div>
-        </div>
-
-        <div>
-          <p class="font-semibold mb-2">Operators</p>
-          <div class="flex flex-wrap gap-1.5">
-            <code v-for="op in ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=', '&&', '||', '? :']" :key="op" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ op }}</code>
-          </div>
-        </div>
-
-        <div>
-          <p class="font-semibold mb-2">Functions</p>
-          <div class="space-y-2 text-foreground">
-            <div>
-              <div class="flex flex-wrap gap-1.5 mb-1.5">
-                <code v-for="fn in ['latest', 'oldest', 'argmax', 'argmin']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+      <Accordion type="single" collapsible v-model="helpTab" class="text-sm">
+        <!-- Basics: controls, operators, strings -->
+        <AccordionItem value="basics">
+          <AccordionTrigger>Controls, operators and strings</AccordionTrigger>
+          <AccordionContent>
+            <div class="space-y-4 text-foreground">
+              <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-muted-foreground">Referencing controls</p>
+                <ul class="list-disc pl-4 text-sm">
+                  <li>Use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.key</code> to reference a control's current value.</li>
+                  <li>For service controls, use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.service.key</code> (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.total_received</code>).</li>
+                  <li>Append <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">_at</code> to any control to get its last-updated timestamp (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.latest_donor_name_at</code>).</li>
+                </ul>
               </div>
-              <p class="text-xs text-muted-foreground">Accept pairs of <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">value, label</code> arguments. Return the label paired with the highest (latest/argmax) or lowest (oldest/argmin) value. Works with numbers and timestamps.</p>
-            </div>
-            <div>
-              <div class="flex flex-wrap gap-1.5 mb-1.5">
-                <code v-for="fn in ['max', 'min', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+              <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-muted-foreground">Operators</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <code v-for="op in ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=', '&&', '||', '? :']" :key="op" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ op }}</code>
+                </div>
               </div>
-              <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sum</code>, and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">avg</code> accept multiple arguments.</p>
-            </div>
-            <div>
-              <div class="flex flex-wrap gap-1.5 mb-1.5">
-                <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">now()</code>
+              <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-muted-foreground">Strings</p>
+                <p>When working with text values, wrap them in quotes: <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.myname == "JasperDiscovers" ? "cyan" : "red"</code></p>
               </div>
-              <p class="text-xs text-muted-foreground">Returns the current timestamp in milliseconds. Useful for calculating time since an event.</p>
             </div>
-          </div>
-        </div>
+          </AccordionContent>
+        </AccordionItem>
 
-        <div>
-          <p class="font-semibold mb-2">Examples</p>
-          <div class="space-y-3">
-            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Win rate percentage:</p>
-              c.wins / (c.wins + c.losses) * 100
+        <!-- Functions -->
+        <AccordionItem value="functions">
+          <AccordionTrigger>Functions</AccordionTrigger>
+          <AccordionContent>
+            <div class="space-y-3 text-foreground">
+              <div>
+                <div class="flex flex-wrap gap-1.5 mb-1.5">
+                  <code v-for="fn in ['latest', 'oldest', 'argmax', 'argmin']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                </div>
+                <p class="text-xs text-muted-foreground">Accept pairs of <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">value, label</code> arguments. Return the label paired with the highest (latest/argmax) or lowest (oldest/argmin) value. Works with numbers and timestamps.</p>
+              </div>
+              <div>
+                <div class="flex flex-wrap gap-1.5 mb-1.5">
+                  <code v-for="fn in ['max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                </div>
+                <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sum</code>, and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">avg</code> accept multiple arguments.</p>
+              </div>
+              <div>
+                <div class="flex flex-wrap gap-1.5 mb-1.5">
+                  <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">now()</code>
+                </div>
+                <p class="text-xs text-muted-foreground">Returns the current timestamp in milliseconds. Useful for calculating time since an event.</p>
+              </div>
             </div>
-            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Conditional text based on a value:</p>
-              c.deaths > 10 ? "tilted" : "focused"
-            </div>
-            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Most recent donor across services:</p>
-              <button
-                type="button"
-                class="text-violet-400 hover:text-violet-300 cursor-pointer font-sans underline float-right text-[10px] ml-2"
-                @click="copyExampleCode()"
-              >
-                {{ exampleCopied ? 'Copied!' : 'Copy' }}
-              </button>
-              latest(<br />
-              &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
-              &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
-              )
-            </div>
-            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Total donations across services:</p>
-              c.streamlabs.total_received + c.kofi.total_received
-            </div>
-            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Highest single donation amount:</p>
-              max(c.streamlabs.latest_donation_amount, c.kofi.latest_donation_amount)
-            </div>
-          </div>
-        </div>
+          </AccordionContent>
+        </AccordionItem>
 
-        <div>
-          <p class="font-semibold mb-2">Strings</p>
-          <p class="text-foreground">When working with text values, wrap them in quotes: <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.myname == "JasperDiscovers" ? "cyan" : "red"</code></p>
-        </div>
-      </div>
+        <!-- Examples -->
+        <AccordionItem value="examples">
+          <AccordionTrigger>Examples</AccordionTrigger>
+          <AccordionContent>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Win rate percentage:</p>
+                c.wins / (c.wins + c.losses) * 100
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Conditional text based on a value:</p>
+                c.deaths > 10 ? "tilted" : "focused"
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Most recent donor across services:</p>
+                <button
+                  type="button"
+                  class="text-violet-400 hover:text-violet-300 cursor-pointer font-sans underline float-right text-[10px] ml-2"
+                  @click="copyExampleCode()"
+                >
+                  {{ exampleCopied ? 'Copied!' : 'Copy' }}
+                </button>
+                latest(<br />
+                &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
+                &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
+                )
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Total donations across services:</p>
+                c.streamlabs.total_received + c.kofi.total_received
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Highest single donation amount:</p>
+                max(c.streamlabs.latest_donation_amount, c.kofi.latest_donation_amount)
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </DialogContent>
   </Dialog>
 </template>

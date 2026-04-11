@@ -74,10 +74,6 @@ function snippetKey(ctrl: OverlayControl): string {
   return ctrl.source_managed && ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
 }
 
-function isSourceManaged(ctrl: OverlayControl): boolean {
-  return ctrl.source_managed;
-}
-
 async function copySnippet(ctrl: OverlayControl) {
   const key = snippetKey(ctrl);
   try {
@@ -189,7 +185,7 @@ function configSummary(ctrl: OverlayControl): string[] {
               type="button"
               class="flex items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent px-2 py-0.5 font-mono text-xs text-muted-foreground cursor-pointer opacity-60 transition group-hover:opacity-80 hover:opacity-100"
               :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
-              @click="copySnippet(ctrl)"
+              @click.stop="copySnippet(ctrl)"
             >
               <CopyIcon class="h-3 w-3 shrink-0" />
               [[[c:{{ snippetKey(ctrl) }}]]]
@@ -197,10 +193,10 @@ function configSummary(ctrl: OverlayControl): string[] {
           </TableCell>
           <TableCell class="text-right opacity-20 transition group-hover:opacity-100">
             <div class="flex items-center justify-end gap-1">
-              <button type="button" class="btn btn-sm btn-primary px-2" title="Edit" @click="openEdit(ctrl)">
+              <button type="button" class="btn btn-sm btn-primary px-2" :title="`Edit Control: ${ctrl.label}`" @click.stop="openEdit(ctrl)">
                 <PencilIcon class="h-3.5 w-3.5" />
               </button>
-              <button type="button" class="btn btn-sm btn-danger px-2" title="Delete" @click="deleteControl(ctrl)">
+              <button type="button" class="btn btn-sm btn-danger px-2" :title="`Delete Control: ${ctrl.label}`" @click.stop="deleteControl(ctrl)">
                 <Trash2Icon class="h-3.5 w-3.5" />
               </button>
             </div>

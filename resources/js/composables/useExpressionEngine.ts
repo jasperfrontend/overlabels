@@ -105,7 +105,7 @@ export function buildContext(data: Record<string, unknown>): Record<string, unkn
 
       if (BLOCKED_PROPS.has(namespace) || BLOCKED_PROPS.has(subKey)) continue;
 
-      // If a scalar value already occupies this namespace (e.g. c:timer = "42"),
+      // If a scalar value already occupies this namespace (e.g., c:timer = "42"),
       // don't clobber it with a namespace object from c:timer:running.
       const existing = c[namespace];
       if (existing !== undefined && existing !== null && typeof existing !== 'object') {
@@ -185,7 +185,7 @@ export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
 /** All supported function names. */
 export const SUPPORTED_FUNCTIONS = new Set([
   'argmax', 'argmin', 'latest', 'oldest',
-  'max', 'min', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
+  'max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
   'now',
 ]);
 
@@ -199,6 +199,7 @@ const FUNCTIONS: Record<string, FnImpl> = {
   // Scalar math
   max: (args) => Math.max(...args.map(toNum)),
   min: (args) => Math.min(...args.map(toNum)),
+  clamp: (args) => Math.min(Math.max(toNum(args[0]), toNum(args[1])), toNum(args[2])),
   sum: (args) => args.reduce((acc: number, v) => acc + toNum(v), 0),
   avg: (args) => args.length === 0 ? 0 : args.reduce((acc: number, v) => acc + toNum(v), 0) / args.length,
   abs: (args) => Math.abs(toNum(args[0])),
