@@ -12,6 +12,7 @@ class HtmlSanitizationService
      * - <script> tags (including content)
      * - Inline event handlers (on*)
      * - javascript: URIs (plain and HTML-entity-encoded)
+     * - <form> blocks (overlays are display-only, never submit data)
      * - <meta http-equiv="refresh"> with javascript:/data: URIs
      * - javascript: inside CSS url()
      *
@@ -50,6 +51,9 @@ class HtmlSanitizationService
             },
             $value,
         );
+
+        // Strip <form> blocks entirely - overlays are display-only, never submit data
+        $value = preg_replace('/<form\b[^>]*>[\s\S]*?<\/form\s*>/i', '', $value);
 
         // Strip <meta http-equiv="refresh"> tags with javascript: or data: URIs
         $value = preg_replace(

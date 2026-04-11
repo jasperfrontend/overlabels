@@ -33,11 +33,6 @@ test('strips onerror event handler', function () {
 
 // --- Section 3: javascript: URIs ---
 
-test('strips javascript uri in form action', function () {
-    expect(HtmlSanitizationService::sanitize('<form action="javascript:alert(1)"><button>Click</button></form>'))
-        ->toBe('<form><button>Click</button></form>');
-});
-
 test('strips javascript uri in href', function () {
     expect(HtmlSanitizationService::sanitize('<a href="javascript:alert(1)">link</a>'))
         ->toBe('<a>link</a>');
@@ -51,6 +46,23 @@ test('strips javascript uri in src', function () {
 test('strips javascript uri in formaction', function () {
     expect(HtmlSanitizationService::sanitize('<button formaction="javascript:alert(1)">Go</button>'))
         ->toBe('<button>Go</button>');
+});
+
+// --- Form blocks ---
+
+test('strips form blocks entirely', function () {
+    expect(HtmlSanitizationService::sanitize('<form action="/submit"><input type="text"><button>OK</button></form>'))
+        ->toBe('');
+});
+
+test('strips form with javascript action entirely', function () {
+    expect(HtmlSanitizationService::sanitize('<form action="javascript:alert(1)"><button>Click</button></form>'))
+        ->toBe('');
+});
+
+test('strips form and preserves surrounding content', function () {
+    expect(HtmlSanitizationService::sanitize('<div>before</div><form><input></form><div>after</div>'))
+        ->toBe('<div>before</div><div>after</div>');
 });
 
 // --- Section 5: Meta refresh ---
@@ -90,18 +102,7 @@ test('strips hex-entity-encoded javascript uri in href', function () {
         ->toBe('<a>link</a>');
 });
 
-test('strips entity-encoded javascript uri in form action', function () {
-    $encoded = '&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;&#58;alert(1)';
-    expect(HtmlSanitizationService::sanitize('<form action="'.$encoded.'"><button>Go</button></form>'))
-        ->toBe('<form><button>Go</button></form>');
-});
-
 // --- Safe content: must survive untouched ---
-
-test('preserves safe form action', function () {
-    expect(HtmlSanitizationService::sanitize('<form action="/submit"><button>OK</button></form>'))
-        ->toBe('<form action="/submit"><button>OK</button></form>');
-});
 
 test('preserves safe href', function () {
     expect(HtmlSanitizationService::sanitize('<a href="https://example.com">link</a>'))

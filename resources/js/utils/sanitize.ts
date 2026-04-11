@@ -1,6 +1,12 @@
 const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
 
 /**
+ * Strips <form> blocks entirely (including content). Overlays are display-only
+ * and should never submit data anywhere.
+ */
+const FORM_TAG_PATTERN = /<form\b[^>]*>[\s\S]*?<\/form\s*>/gi;
+
+/**
  * Strips inline event-handler attributes (onclick, onload, onerror, etc.)
  * from HTML tags. Matches on<word>="..." or on<word>='...' or unquoted.
  */
@@ -50,6 +56,7 @@ function decodeHtmlEntities(str: string): string {
 /**
  * Sanitize a single HTML string by stripping dangerous constructs:
  * - <script> tags (including content)
+ * - <form> blocks (overlays are display-only, never submit data)
  * - Inline event handlers (on*)
  * - javascript: URIs (plain and HTML-entity-encoded)
  * - <meta http-equiv="refresh"> with javascript:/data: URIs
@@ -72,6 +79,7 @@ export function sanitizeHtml(value: string): { value: string; removed: number } 
     };
 
     let result = countAndReplace(value, SCRIPT_TAG_PATTERN);
+    result = countAndReplace(result, FORM_TAG_PATTERN);
     result = countAndReplace(result, EVENT_HANDLER_PATTERN);
     result = countAndReplace(result, JAVASCRIPT_URI_PATTERN);
 

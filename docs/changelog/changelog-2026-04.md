@@ -16,6 +16,7 @@ Here's what we tested and what we found:
 - HTML-entity-encoded `javascript:` URIs (`&#106;&#97;&#118;...`) that browsers silently decode back to `javascript:` - caught via entity decoding before pattern matching
 - `<meta http-equiv="refresh" content="0;url=javascript:...">` - stripped now
 - `javascript:` inside CSS `url()` expressions - replaced with `url(about:blank)`
+- `<form>` blocks stripped entirely - overlays are display-only and should never submit data anywhere. This is a philosophical decision: overlays are "dumb by nature."
 
 **Already safe (browser won't execute):**
 - `<div style="width: expression(...)">` - CSS expressions are dead in modern browsers
@@ -24,7 +25,7 @@ Here's what we tested and what we found:
 
 **What changed:**
 
-- Rewrote `resources/js/utils/sanitize.ts` from a single `<script>`-only regex into a multi-layer sanitizer covering event handlers, javascript URIs (plain and entity-encoded), meta refresh tags, and CSS url() expressions. Removed unused `stripScripts` function.
+- Rewrote `resources/js/utils/sanitize.ts` from a single `<script>`-only regex into a multi-layer sanitizer covering event handlers, javascript URIs (plain and entity-encoded), form blocks, meta refresh tags, and CSS url() expressions. Removed unused `stripScripts` function.
 - Created `app/Services/HtmlSanitizationService.php` - server-side sanitizer with the same coverage. This is the authoritative security layer since client-side sanitization can always be bypassed with curl/Postman.
 - Wired `HtmlSanitizationService::sanitizeTemplateFields()` into both `store()` and `update()` in `OverlayTemplateController`.
 - Updated `create.vue` and `edit.vue` to use the new `sanitizeHtmlFields` function with improved toast messaging.
