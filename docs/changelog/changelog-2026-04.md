@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 11th, 2026 - Feature: function calls in Expression Engine
+
+- Added `CallExpression` support to the expression engine evaluator, enabling function calls in expressions.
+- New **arg-family functions**: `latest()`, `oldest()`, `argmax()`, `argmin()` - accept pairs of `(value, label)` arguments and return the label paired with the highest/lowest value. Handles numeric values and ISO date/timestamp strings. First pair wins on ties.
+- New **scalar math functions**: `max()`, `min()`, `abs()`, `round()`, `floor()`, `ceil()`.
+- `latest()` and `oldest()` are aliases for `argmax()` and `argmin()` - named to match Twitch vocabulary ("latest subscriber", "latest donor").
+- `ExpressionBuilder.vue` now validates function calls at parse time: unknown function names and odd argument counts on arg-family functions show clear inline errors.
+- Updated the Expression help dialog with a new "Functions" section documenting all available functions.
+- Replaced the cross-service comparison example with the cleaner `latest()` syntax.
+
 ## April 11th, 2026 - Refactor: extract PublicToggle component
 
 - Extracted the duplicated public/private toggle block from `templates/create.vue`, `templates/edit.vue`, and `kits/edit.vue` into a shared `PublicToggle.vue` component.

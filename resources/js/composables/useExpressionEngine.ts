@@ -65,8 +65,8 @@ function toNum(v: unknown): number {
 function isTruthy(v: unknown): boolean {
   if (v === 0 || v === '' || v === null || v === undefined || v === false) return false;
   if (typeof v === 'number' && isNaN(v)) return false;
-  if (v === '0' || v === 'false') return false;
-  return true;
+  return !(v === '0' || v === 'false');
+
 }
 
 /** Numeric coercion for comparisons - match existing useConditionalTemplates behavior */
@@ -140,6 +140,71 @@ function coerceValue(raw: unknown): unknown {
 }
 
 // ---------------------------------------------------------------------------
+// Built-in functions (CallExpression support)
+// ---------------------------------------------------------------------------
+
+/** Coerce a value to a comparable number - handles numeric strings and ISO dates. */
+function toComparable(v: unknown): number {
+  if (typeof v === 'number') return v;
+  if (v === null || v === undefined || v === '') return -Infinity;
+  const s = String(v);
+  const n = Number(s);
+  if (!isNaN(n)) return n;
+  // Try ISO date string
+  const ms = Date.parse(s);
+  return isNaN(ms) ? -Infinity : ms;
+}
+
+/**
+ * argmax(value1, label1, value2, label2, ...) - returns the label paired with the highest value.
+ * argmin works identically but picks the lowest value.
+ * Ties: first pair wins.
+ */
+function argExtreme(args: unknown[], mode: 'max' | 'min'): unknown {
+  if (args.length === 0) return '';
+  if (args.length % 2 !== 0) return '⚠ Odd argument count - needs value, label pairs';
+
+  let bestVal = toComparable(args[0]);
+  let bestLabel = args[1];
+
+  for (let i = 2; i < args.length; i += 2) {
+    const val = toComparable(args[i]);
+    if (mode === 'max' ? val > bestVal : val < bestVal) {
+      bestVal = val;
+      bestLabel = args[i + 1];
+    }
+  }
+  return bestLabel;
+}
+
+type FnImpl = (args: unknown[]) => unknown;
+
+/** Names of arg-family functions that require even argument counts (value, label pairs). */
+export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
+
+/** All supported function names. */
+export const SUPPORTED_FUNCTIONS = new Set([
+  'argmax', 'argmin', 'latest', 'oldest',
+  'max', 'min', 'abs', 'round', 'floor', 'ceil',
+]);
+
+const FUNCTIONS: Record<string, FnImpl> = {
+  // arg* family - return the label paired with the winning value
+  argmax: (args) => argExtreme(args, 'max'),
+  argmin: (args) => argExtreme(args, 'min'),
+  latest: (args) => argExtreme(args, 'max'),
+  oldest: (args) => argExtreme(args, 'min'),
+
+  // Scalar math
+  max: (args) => Math.max(...args.map(toNum)),
+  min: (args) => Math.min(...args.map(toNum)),
+  abs: (args) => Math.abs(toNum(args[0])),
+  round: (args) => Math.round(toNum(args[0])),
+  floor: (args) => Math.floor(toNum(args[0])),
+  ceil: (args) => Math.ceil(toNum(args[0])),
+};
+
+// ---------------------------------------------------------------------------
 // AST evaluator - recursive tree walker
 // ---------------------------------------------------------------------------
 
@@ -204,8 +269,19 @@ export function evaluate(node: jsep.Expression, ctx: Record<string, unknown>): u
         : evaluate(ce.alternate, ctx);
     }
 
-    // All other node types (CallExpression, ArrayExpression, ThisExpression,
-    // Compound, etc.) are intentionally unsupported for security.
+    case 'CallExpression': {
+      const ce = node as jsep.CallExpression;
+      // Only allow simple function names (Identifier), not computed calls
+      if (ce.callee.type !== 'Identifier') return undefined;
+      const fnName = (ce.callee as jsep.Identifier).name;
+      const fn = FUNCTIONS[fnName];
+      if (!fn) return undefined;
+      const args = ce.arguments.map((arg) => evaluate(arg, ctx));
+      return fn(args);
+    }
+
+    // All other node types (ArrayExpression, ThisExpression, Compound, etc.)
+    // are intentionally unsupported for security.
     default:
       return undefined;
   }

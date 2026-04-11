@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HelpCircle } from 'lucide-vue-next';
-import { buildContext, evaluate } from '@/composables/useExpressionEngine';
+import { buildContext, evaluate, ARG_FUNCTIONS, SUPPORTED_FUNCTIONS } from '@/composables/useExpressionEngine';
 import type { OverlayControl } from '@/types';
 
 const props = defineProps<{
@@ -66,6 +66,40 @@ function resolvePreviewValue(ctrl: OverlayControl): unknown {
 const helpOpen = ref(false);
 const controlFilter = ref('');
 
+/** Walk an AST and return a validation error for unsupported/misconfigured function calls, or null if valid. */
+function validateFunctions(node: jsep.Expression): string | null {
+  switch (node.type) {
+    case 'CallExpression': {
+      const ce = node as jsep.CallExpression;
+      if (ce.callee.type !== 'Identifier') return 'Only simple function names are supported (no computed calls).';
+      const name = (ce.callee as jsep.Identifier).name;
+      if (!SUPPORTED_FUNCTIONS.has(name)) return `Unknown function "${name}". Supported: ${[...SUPPORTED_FUNCTIONS].join(', ')}.`;
+      if (ARG_FUNCTIONS.has(name) && ce.arguments.length % 2 !== 0) {
+        return `${name}() requires pairs of (value, label) arguments - got ${ce.arguments.length} (odd).`;
+      }
+      for (const arg of ce.arguments) {
+        const err = validateFunctions(arg);
+        if (err) return err;
+      }
+      return null;
+    }
+    case 'BinaryExpression': {
+      const be = node as jsep.BinaryExpression;
+      return validateFunctions(be.left) ?? validateFunctions(be.right);
+    }
+    case 'UnaryExpression':
+      return validateFunctions((node as jsep.UnaryExpression).argument);
+    case 'ConditionalExpression': {
+      const ce = node as jsep.ConditionalExpression;
+      return validateFunctions(ce.test) ?? validateFunctions(ce.consequent) ?? validateFunctions(ce.alternate);
+    }
+    case 'MemberExpression':
+      return validateFunctions((node as jsep.MemberExpression).object);
+    default:
+      return null;
+  }
+}
+
 watch(expressionText, (text) => {
   expressionError.value = '';
   expressionPreview.value = '';
@@ -78,6 +112,12 @@ watch(expressionText, (text) => {
 
   try {
     const ast = jsep(text);
+
+    const fnError = validateFunctions(ast);
+    if (fnError) {
+      expressionError.value = fnError;
+      return;
+    }
 
     const mockData: Record<string, unknown> = {};
     for (const ctrl of props.availableControls) {
@@ -135,11 +175,8 @@ function insertVariable(ctrl: OverlayControl) {
   insertAtCursor(expressionRef(ctrl));
 }
 
-function insertExample() {
-  const example = `c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at
-    ? c.streamlabs.latest_donor_name
-    : c.kofi.latest_donor_name`;
-
+function insertLatestExample() {
+  const example = `latest(c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name, c.kofi.latest_donor_name_at, c.kofi.latest_donor_name)`;
   insertAtCursor(example);
 }
 
@@ -273,9 +310,27 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
         </div>
 
         <div>
-          <p class="font-semibold mb-2">Supported operators</p>
+          <p class="font-semibold mb-2">Operators</p>
           <div class="flex flex-wrap gap-1.5">
-            <code v-for="op in ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=', '&&', '||', '? :', '()']" :key="op" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ op }}</code>
+            <code v-for="op in ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=', '&&', '||', '? :']" :key="op" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ op }}</code>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-2">Functions</p>
+          <div class="space-y-2 text-foreground">
+            <div>
+              <div class="flex flex-wrap gap-1.5 mb-1.5">
+                <code v-for="fn in ['latest', 'oldest', 'argmax', 'argmin']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+              </div>
+              <p class="text-xs text-muted-foreground">Accept pairs of <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">value, label</code> arguments. Return the label paired with the highest (latest/argmax) or lowest (oldest/argmin) value. Works with numbers and timestamps.</p>
+            </div>
+            <div>
+              <div class="flex flex-wrap gap-1.5 mb-1.5">
+                <code v-for="fn in ['max', 'min', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+              </div>
+              <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code> and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code> accept multiple arguments.</p>
+            </div>
           </div>
         </div>
 
@@ -291,21 +346,26 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
               c.deaths > 10 ? "tilted" : "focused"
             </div>
             <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-              <p class="text-muted-foreground font-sans mb-1">Cross-service comparison (most recent donor):</p>
+              <p class="text-muted-foreground font-sans mb-1">Most recent donor across services:</p>
               <button
                 type="button"
                 class="text-violet-400 hover:text-violet-300 cursor-pointer font-sans underline float-right text-[10px] ml-2"
-                @click="insertExample(); helpOpen = false"
+                @click="insertLatestExample(); helpOpen = false"
               >
                 insert this
               </button>
-              c.streamlabs.latest_donor_name_at &gt; c.kofi.latest_donor_name_at<br />
-              &nbsp;&nbsp;? c.streamlabs.latest_donor_name<br />
-              &nbsp;&nbsp;: c.kofi.latest_donor_name
+              latest(<br />
+              &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
+              &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
+              )
             </div>
             <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
               <p class="text-muted-foreground font-sans mb-1">Total donations across services:</p>
               c.streamlabs.total_received + c.kofi.total_received
+            </div>
+            <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+              <p class="text-muted-foreground font-sans mb-1">Highest single donation amount:</p>
+              max(c.streamlabs.latest_donation_amount, c.kofi.latest_donation_amount)
             </div>
           </div>
         </div>
