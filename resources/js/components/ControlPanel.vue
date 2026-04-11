@@ -4,7 +4,6 @@ import axios from 'axios';
 import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
-import RefreshIcon from '@/components/RefreshIcon.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const props = defineProps<{
@@ -280,10 +279,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
         <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a> to see how to implement Controls in your
         Overlays.
       </p>
-      <button class="btn btn-primary btn-sm btn-dead opacity-0">
-        <RefreshIcon class="mr-1.5 h-3.5 w-3.5" />
-        Refresh
-      </button>
+      <div class="h-7.5"></div>
     </div>
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
@@ -502,7 +498,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             <!-- Expression control (read-only, evaluated in overlay) -->
             <template v-else-if="ctrl.type === 'expression'">
               <div class="flex items-center gap-3">
-                <pre class="text-xs bg-card w-full rounded-sm p-2 select-all text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
+                <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
               </div>
             </template>
 

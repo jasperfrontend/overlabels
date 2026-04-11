@@ -434,6 +434,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Screenshot tab -->
         <div v-if="mainTab === 'screenshot'" class="mb-6 p-4">
+          <div class="mt-1.25 pb-5 flex items-center text-sm gap-2">
+            {{ props.template?.name }} - screenshot
+          </div>
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
@@ -494,12 +497,12 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
             <!-- Code panel -->
-            <div class="relative flex-1 bg-background text-gray-700 dark:text-accent-foreground">
+            <div class="relative flex-1 bg-sidebar-accent/50 text-gray-700 dark:text-accent-foreground">
               <pre class="h-[50vh] overflow-auto p-4"><code
-                class="text-sm">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
+                class="text-sm text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
               <button
                 @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
-                class="btn btn-sm btn-primary absolute top-4 right-8 w-30"
+                class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
               >
                 Copy {{ activeTab.toUpperCase() }}
               </button>
