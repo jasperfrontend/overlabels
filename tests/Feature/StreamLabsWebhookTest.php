@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Testing\TestResponse;
 
 uses(DatabaseTransactions::class);
 
@@ -55,7 +56,7 @@ function streamLabsDonationPayload(array $overrides = []): array
     ], $overrides);
 }
 
-function postStreamLabs(string $webhookToken, array $payload, string $secret = 'test-secret'): \Illuminate\Testing\TestResponse
+function postStreamLabs(string $webhookToken, array $payload, string $secret = 'test-secret'): TestResponse
 {
     return test()->postJson(
         "/api/webhooks/streamlabs/{$webhookToken}",

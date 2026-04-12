@@ -32,6 +32,7 @@ use Random\RandomException;
  * @property-read Collection<int, OverlayAccessLog> $accessLogs
  * @property-read int|null $access_logs_count
  * @property-read User|null $user
+ *
  * @method static OverlayAccessTokenFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayAccessToken newModelQuery()
  * @method static Builder<static>|OverlayAccessToken newQuery()
@@ -50,6 +51,7 @@ use Random\RandomException;
  * @method static Builder<static>|OverlayAccessToken whereTokenPrefix($value)
  * @method static Builder<static>|OverlayAccessToken whereUpdatedAt($value)
  * @method static Builder<static>|OverlayAccessToken whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class OverlayAccessToken extends Model

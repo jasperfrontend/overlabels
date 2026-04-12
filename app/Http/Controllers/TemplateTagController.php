@@ -20,7 +20,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
-
 class TemplateTagController extends Controller
 {
     protected JsonTemplateParserService $parser;

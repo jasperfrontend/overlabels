@@ -187,7 +187,7 @@ class DefaultTemplateProviderService
     public function getSampleData(): array
     {
         // Use the TemplateDataMapperService for consistent sample data
-        $templateDataMapper = app(\App\Services\TemplateDataMapperService::class);
+        $templateDataMapper = app(TemplateDataMapperService::class);
 
         return $templateDataMapper->getSampleTemplateData();
     }

@@ -28,6 +28,7 @@ use Random\RandomException;
  * @property bool $source_managed
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
+ *
  * @method static OverlayControlFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayControl newModelQuery()
  * @method static Builder<static>|OverlayControl newQuery()
@@ -45,6 +46,7 @@ use Random\RandomException;
  * @method static Builder<static>|OverlayControl whereUpdatedAt($value)
  * @method static Builder<static>|OverlayControl whereUserId($value)
  * @method static Builder<static>|OverlayControl whereValue($value)
+ *
  * @mixin Eloquent
  */
 class OverlayControl extends Model
@@ -94,6 +96,7 @@ class OverlayControl extends Model
      * Resolve the display value for this control.
      * For timer: compute elapsed seconds from config state.
      * For all others: return stored value.
+     *
      * @throws RandomException
      */
     public function resolveDisplayValue(): string
@@ -123,6 +126,7 @@ class OverlayControl extends Model
 
     /**
      * Generate a random integer between the configured min and max.
+     *
      * @throws RandomException
      */
     private function resolveRandomValue(): string
@@ -269,7 +273,7 @@ class OverlayControl extends Model
                 // Strip _at suffix — these are virtual companion values, not real controls.
                 // The base control is the actual dependency.
                 $key = preg_replace('/_at$/', '', $key);
-                $deps[] = $match[1] . ':' . $key;
+                $deps[] = $match[1].':'.$key;
             } else {
                 $key = $match[1];
                 $key = preg_replace('/_at$/', '', $key);

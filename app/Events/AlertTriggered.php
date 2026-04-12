@@ -70,13 +70,13 @@ class AlertTriggered implements ShouldBroadcast
     {
         return [
             'alert' => [
-                'html'                 => $this->html,
-                'css'                  => $this->css,
-                'data'                 => $this->data,
-                'duration'             => $this->duration,
-                'transition_in'        => $this->transitionIn,
-                'transition_out'       => $this->transitionOut,
-                'timestamp'            => now()->timestamp,
+                'html' => $this->html,
+                'css' => $this->css,
+                'data' => $this->data,
+                'duration' => $this->duration,
+                'transition_in' => $this->transitionIn,
+                'transition_out' => $this->transitionOut,
+                'timestamp' => now()->timestamp,
                 'target_overlay_slugs' => $this->targetOverlaySlugs,
             ],
         ];

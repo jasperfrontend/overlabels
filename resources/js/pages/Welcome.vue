@@ -5,7 +5,6 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import {
   ArrowRight,
-  Github,
   Zap,
   ToggleLeft,
   Timer,
@@ -95,7 +94,7 @@ const alertPipelineSteps = [
       <title>Overlabels - Live Twitch overlays with HTML & CSS</title>
       <meta
         name="description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
       />
 
       <!-- Open Graph -->
@@ -105,7 +104,7 @@ const alertPipelineSteps = [
       <meta property="og:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
       <meta
         property="og:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
       />
       <meta property="og:image"
             content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
@@ -118,7 +117,7 @@ const alertPipelineSteps = [
       <meta name="twitter:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
       <meta
         name="twitter:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and StreamLabs, and update your overlay instantly. Free and open source."
+        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
       />
       <meta name="twitter:image"
             content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
@@ -230,7 +229,7 @@ const alertPipelineSteps = [
 
           <p class="mb-4 max-w-2xl text-xl leading-relaxed text-muted-foreground">
             Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs,
-            raids, and more. Connect Ko-fi and StreamLabs for live donation tracking. Update things instantly from your
+            raids, and more. Connect Ko-fi and Streamlabs for live donation tracking. Update things instantly from your
             dashboard.
           </p>
           <p class="mb-14 max-w-2xl text-base text-muted-foreground">
@@ -654,7 +653,7 @@ const alertPipelineSteps = [
           <!-- Events grid -->
           <div class="mb-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div v-for="evt in twitchEvents" :key="evt.type"
-                 class="rounded-md border border-border bg-background p-4 w-[100%]">
+                 class="rounded-md border border-border bg-background p-4 w-full">
               <div class="mb-1 text-sm font-semibold">{{ evt.label }}</div>
               <div class="mb-3 max-w-full overflow-x-hidden font-mono text-xs text-muted-foreground">{{ evt.type }}
               </div>
@@ -699,7 +698,7 @@ const alertPipelineSteps = [
           </div>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Donations. Tracked. Live.</h2>
           <p class="mb-12 max-w-2xl text-lg text-muted-foreground">
-            Connect your Ko-fi or StreamLabs account and Overlabels automatically tracks every donation in real time.
+            Connect your Ko-fi or Streamlabs account and Overlabels automatically tracks every donation in real time.
             Counters update, alerts fire, and your overlay stays current - all without touching a single line of code
             after setup.
           </p>
@@ -734,14 +733,14 @@ const alertPipelineSteps = [
               </div>
             </div>
 
-            <!-- StreamLabs -->
+            <!-- Streamlabs -->
             <div class="rounded-md border border-border bg-background p-6">
               <div class="mb-4 flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
                   <DollarSign class="h-5 w-5 text-emerald-500" />
                 </div>
                 <div>
-                  <h3 class="font-semibold">StreamLabs</h3>
+                  <h3 class="font-semibold">Streamlabs</h3>
                   <p class="text-xs text-muted-foreground">Live donation tracking via OAuth</p>
                 </div>
               </div>
@@ -794,7 +793,7 @@ const alertPipelineSteps = [
             </div>
           </div>
           <p class="mt-3 text-sm text-muted-foreground">
-            Ko-fi and StreamLabs expose the same normalized event tags. Write your donation alert once and it works for
+            Ko-fi and Streamlabs expose the same normalized event tags. Write your donation alert once and it works for
             both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code>
             tells your overlay which platform it came from.
           </p>
@@ -976,7 +975,6 @@ const alertPipelineSteps = [
               class="flex items-center gap-1.5 transition-colors hover:text-foreground"
             >
               GitHub
-              <Github class="h-4 w-4" />
             </a>
           </div>
         </div>

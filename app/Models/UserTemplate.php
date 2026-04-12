@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read mixed $used_template_tags
  * @property-read User|null $user
+ *
  * @method static UserTemplateFactory factory($count = null, $state = [])
  * @method static Builder<static>|UserTemplate newModelQuery()
  * @method static Builder<static>|UserTemplate newQuery()
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|UserTemplate whereUpdatedAt($value)
  * @method static Builder<static>|UserTemplate whereUsedTags($value)
  * @method static Builder<static>|UserTemplate whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class UserTemplate extends Model

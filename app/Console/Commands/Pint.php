@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Symfony\Component\Process\Process;
 
 class Pint extends Command
 {
@@ -22,7 +23,7 @@ class Pint extends Command
             $args[] = '--dirty';
         }
 
-        $process = new \Symfony\Component\Process\Process($args, base_path());
+        $process = new Process($args, base_path());
         $process->setTimeout(120);
         $process->setTty(false);
         $process->run(fn ($type, $buffer) => $this->output->write($buffer));

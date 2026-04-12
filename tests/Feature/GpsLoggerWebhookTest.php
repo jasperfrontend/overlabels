@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Testing\TestResponse;
 
 uses(DatabaseTransactions::class);
 
@@ -42,7 +43,7 @@ function gpsPayload(array $overrides = []): array
     ], $overrides);
 }
 
-function postGps(string $webhookToken, array $payload, string $token = 'test-gps-token'): \Illuminate\Testing\TestResponse
+function postGps(string $webhookToken, array $payload, string $token = 'test-gps-token'): TestResponse
 {
     return test()->postJson(
         "/api/webhooks/gpslogger/{$webhookToken}",

@@ -30,6 +30,7 @@ use Log;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string $slug
  * @property-read User|null $user
+ *
  * @method static OverlayHashFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayHash forUser(int $userId)
  * @method static Builder<static>|OverlayHash newModelQuery()
@@ -49,6 +50,7 @@ use Log;
  * @method static Builder<static>|OverlayHash whereSlug($value)
  * @method static Builder<static>|OverlayHash whereUpdatedAt($value)
  * @method static Builder<static>|OverlayHash whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class OverlayHash extends Model

@@ -132,11 +132,6 @@ class AdminUserController extends Controller
         return back()->with('message', 'Role updated successfully.');
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @return RedirectResponse
-     */
     public function destroy(Request $request, int $id): RedirectResponse
     {
         $user = User::withTrashed()->findOrFail($id);

@@ -111,7 +111,7 @@ class AdminTwitchEventController extends Controller
     {
         $period = $request->input('period', '90');
         $source = $request->input('source', 'twitch');
-        $model  = $source === 'external' ? ExternalEvent::class : TwitchEvent::class;
+        $model = $source === 'external' ? ExternalEvent::class : TwitchEvent::class;
 
         $query = $model::query();
         if ($period !== 'all') {
@@ -126,7 +126,7 @@ class AdminTwitchEventController extends Controller
             'deleted_count' => $count,
         ], $request);
 
-        return back()->with('message', "Pruned {$count} {$source} event" . ($count === 1 ? '' : 's') . '.');
+        return back()->with('message', "Pruned {$count} {$source} event".($count === 1 ? '' : 's').'.');
     }
 
     public function destroy(Request $request, TwitchEvent $event): RedirectResponse

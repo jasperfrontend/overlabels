@@ -1,7 +1,6 @@
 <?php
 
 use App\Events\AlertTriggered;
-use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
@@ -22,24 +21,24 @@ function makeAlertAndStaticTemplates(): array
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
 
     $alert = OverlayTemplate::factory()->create([
-        'owner_id'   => $user->id,
+        'owner_id' => $user->id,
         'fork_of_id' => null,
-        'type'       => 'alert',
-        'slug'       => 'alert-'.fake()->unique()->lexify('????????'),
+        'type' => 'alert',
+        'slug' => 'alert-'.fake()->unique()->lexify('????????'),
     ]);
 
     $static1 = OverlayTemplate::factory()->create([
-        'owner_id'   => $user->id,
+        'owner_id' => $user->id,
         'fork_of_id' => null,
-        'type'       => 'static',
-        'slug'       => 'static-'.fake()->unique()->lexify('????????'),
+        'type' => 'static',
+        'slug' => 'static-'.fake()->unique()->lexify('????????'),
     ]);
 
     $static2 = OverlayTemplate::factory()->create([
-        'owner_id'   => $user->id,
+        'owner_id' => $user->id,
         'fork_of_id' => null,
-        'type'       => 'static',
-        'slug'       => 'static-'.fake()->unique()->lexify('????????'),
+        'type' => 'static',
+        'slug' => 'static-'.fake()->unique()->lexify('????????'),
     ]);
 
     return [$user, $alert, $static1, $static2];
@@ -113,10 +112,10 @@ test('updateTargetOverlays rejects IDs that are not static type', function () {
 
     // Create another alert template — should not be selectable as a "target"
     $anotherAlert = OverlayTemplate::factory()->create([
-        'owner_id'   => $user->id,
+        'owner_id' => $user->id,
         'fork_of_id' => null,
-        'type'       => 'alert',
-        'slug'       => 'other-alert-'.fake()->unique()->lexify('????????'),
+        'type' => 'alert',
+        'slug' => 'other-alert-'.fake()->unique()->lexify('????????'),
     ]);
     $this->actingAs($user);
 
@@ -131,10 +130,10 @@ test('updateTargetOverlays rejects IDs owned by another user', function () {
     [$user, $alert, $static1] = makeAlertAndStaticTemplates();
     $other = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
     $otherStatic = OverlayTemplate::factory()->create([
-        'owner_id'   => $other->id,
+        'owner_id' => $other->id,
         'fork_of_id' => null,
-        'type'       => 'static',
-        'slug'       => 'other-static-'.fake()->unique()->lexify('????????'),
+        'type' => 'static',
+        'slug' => 'other-static-'.fake()->unique()->lexify('????????'),
     ]);
     $this->actingAs($user);
 
@@ -159,33 +158,33 @@ test('ExternalAlertService dispatches AlertTriggered with target slugs when set'
 
     // Create external event + mapping
     $integration = ExternalIntegration::factory()->create([
-        'user_id'     => $user->id,
-        'service'     => 'kofi',
-        'enabled'     => true,
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'enabled' => true,
         'credentials' => Crypt::encryptString(json_encode(['verification_token' => 'tok'])),
     ]);
 
     ExternalEventTemplateMapping::create([
-        'user_id'             => $user->id,
-        'service'             => 'kofi',
-        'event_type'          => 'donation',
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
         'overlay_template_id' => $alertTemplate->id,
-        'enabled'             => true,
-        'duration_ms'         => 5000,
-        'transition_in'       => 'fade',
-        'transition_out'      => 'fade',
+        'enabled' => true,
+        'duration_ms' => 5000,
+        'transition_in' => 'fade',
+        'transition_out' => 'fade',
     ]);
 
     // Post a Ko-fi webhook to trigger the pipeline
     $payload = [
-        'verification_token'            => 'tok',
-        'kofi_transaction_id'           => 'txn-'.fake()->uuid(),
-        'from_name'                     => 'Bob',
-        'message'                       => 'Hi!',
-        'amount'                        => '5.00',
-        'currency'                      => 'USD',
-        'type'                          => 'Donation',
-        'is_subscription_payment'       => false,
+        'verification_token' => 'tok',
+        'kofi_transaction_id' => 'txn-'.fake()->uuid(),
+        'from_name' => 'Bob',
+        'message' => 'Hi!',
+        'amount' => '5.00',
+        'currency' => 'USD',
+        'type' => 'Donation',
+        'is_subscription_payment' => false,
         'is_first_subscription_payment' => false,
     ];
 
@@ -203,32 +202,32 @@ test('ExternalAlertService dispatches AlertTriggered with null target slugs when
     // No targets attached
 
     $integration = ExternalIntegration::factory()->create([
-        'user_id'     => $user->id,
-        'service'     => 'kofi',
-        'enabled'     => true,
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'enabled' => true,
         'credentials' => Crypt::encryptString(json_encode(['verification_token' => 'tok2'])),
     ]);
 
     ExternalEventTemplateMapping::create([
-        'user_id'             => $user->id,
-        'service'             => 'kofi',
-        'event_type'          => 'donation',
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
         'overlay_template_id' => $alertTemplate->id,
-        'enabled'             => true,
-        'duration_ms'         => 5000,
-        'transition_in'       => 'fade',
-        'transition_out'      => 'fade',
+        'enabled' => true,
+        'duration_ms' => 5000,
+        'transition_in' => 'fade',
+        'transition_out' => 'fade',
     ]);
 
     $payload = [
-        'verification_token'            => 'tok2',
-        'kofi_transaction_id'           => 'txn-'.fake()->uuid(),
-        'from_name'                     => 'Carol',
-        'message'                       => '',
-        'amount'                        => '3.00',
-        'currency'                      => 'USD',
-        'type'                          => 'Donation',
-        'is_subscription_payment'       => false,
+        'verification_token' => 'tok2',
+        'kofi_transaction_id' => 'txn-'.fake()->uuid(),
+        'from_name' => 'Carol',
+        'message' => '',
+        'amount' => '3.00',
+        'currency' => 'USD',
+        'type' => 'Donation',
+        'is_subscription_payment' => false,
         'is_first_subscription_payment' => false,
     ];
 
@@ -250,22 +249,22 @@ test('external event replay includes target_overlay_slugs when configured', func
     $alertTemplate->targetStaticOverlays()->attach($static1->id);
 
     ExternalEventTemplateMapping::create([
-        'user_id'             => $user->id,
-        'service'             => 'kofi',
-        'event_type'          => 'donation',
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
         'overlay_template_id' => $alertTemplate->id,
-        'enabled'             => true,
-        'duration_ms'         => 5000,
-        'transition_in'       => 'fade',
-        'transition_out'      => 'fade',
+        'enabled' => true,
+        'duration_ms' => 5000,
+        'transition_in' => 'fade',
+        'transition_out' => 'fade',
     ]);
 
     $externalEvent = ExternalEvent::create([
-        'user_id'            => $user->id,
-        'service'            => 'kofi',
-        'event_type'         => 'donation',
-        'message_id'         => 'msg-'.fake()->uuid(),
-        'raw_payload'        => ['from_name' => 'Dave'],
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'message_id' => 'msg-'.fake()->uuid(),
+        'raw_payload' => ['from_name' => 'Dave'],
         'normalized_payload' => ['event.from_name' => 'Dave'],
     ]);
 
@@ -285,22 +284,22 @@ test('external event replay has null target slugs when none configured', functio
     // No targets
 
     ExternalEventTemplateMapping::create([
-        'user_id'             => $user->id,
-        'service'             => 'kofi',
-        'event_type'          => 'donation',
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
         'overlay_template_id' => $alertTemplate->id,
-        'enabled'             => true,
-        'duration_ms'         => 5000,
-        'transition_in'       => 'fade',
-        'transition_out'      => 'fade',
+        'enabled' => true,
+        'duration_ms' => 5000,
+        'transition_in' => 'fade',
+        'transition_out' => 'fade',
     ]);
 
     $externalEvent = ExternalEvent::create([
-        'user_id'            => $user->id,
-        'service'            => 'kofi',
-        'event_type'         => 'donation',
-        'message_id'         => 'msg-'.fake()->uuid(),
-        'raw_payload'        => ['from_name' => 'Eve'],
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'message_id' => 'msg-'.fake()->uuid(),
+        'raw_payload' => ['from_name' => 'Eve'],
         'normalized_payload' => ['event.from_name' => 'Eve'],
     ]);
 

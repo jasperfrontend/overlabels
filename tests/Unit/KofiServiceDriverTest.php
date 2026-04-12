@@ -3,7 +3,6 @@
 use App\Models\ExternalIntegration;
 use App\Services\External\Drivers\KofiServiceDriver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
 
 beforeEach(function () {
     $this->driver = new KofiServiceDriver;

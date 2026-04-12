@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Kit;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Kit>
+ * @extends Factory<Kit>
  */
 class KitFactory extends Factory
 {
@@ -17,7 +19,7 @@ class KitFactory extends Factory
     public function definition(): array
     {
         return [
-            'owner_id' => \App\Models\User::factory(),
+            'owner_id' => User::factory(),
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(),
             'thumbnail' => null,

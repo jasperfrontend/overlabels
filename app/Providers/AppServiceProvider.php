@@ -2,13 +2,20 @@
 
 namespace App\Providers;
 
+use App\Events\UserRegistered;
+use App\Listeners\OnboardNewUserListener;
+use App\Listeners\SendSignupNotification;
 use App\Services\DefaultTemplateProviderService;
+use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Telescope\TelescopeServiceProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Twitch\Provider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,14 +32,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Register TemplateDataMapperService as singleton
         // This handles transformation of nested API data to flat template structure
-        $this->app->singleton(\App\Services\TemplateDataMapperService::class, function ($app) {
-            return new \App\Services\TemplateDataMapperService;
+        $this->app->singleton(TemplateDataMapperService::class, function ($app) {
+            return new TemplateDataMapperService;
         });
 
         // Register Telescope only in local development
         // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)
-        if ($this->app->isLocal() && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
-            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+        if ($this->app->isLocal() && class_exists(TelescopeServiceProvider::class)) {
+            $this->app->register(TelescopeServiceProvider::class);
             $this->app->register(\App\Providers\TelescopeServiceProvider::class);
         }
     }
@@ -77,19 +84,19 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
-        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
-            $event->extendSocialite('twitch', \SocialiteProviders\Twitch\Provider::class);
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('twitch', Provider::class);
         });
 
         // Register user registration event listeners
         Event::listen(
-            \App\Events\UserRegistered::class,
-            \App\Listeners\SendSignupNotification::class
+            UserRegistered::class,
+            SendSignupNotification::class
         );
 
         Event::listen(
-            \App\Events\UserRegistered::class,
-            \App\Listeners\OnboardNewUserListener::class
+            UserRegistered::class,
+            OnboardNewUserListener::class
         );
     }
 }

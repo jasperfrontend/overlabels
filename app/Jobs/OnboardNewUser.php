@@ -63,6 +63,7 @@ class OnboardNewUser implements ShouldQueue
     /**
      * @property User $user
      * @property string $webhook_secret
+     *
      * @throws RandomException
      */
     private function generateWebhookSecret(): void

@@ -89,8 +89,7 @@ function exampleDate(): string {
       </div>
 
       <div class="space-y-6">
-        <HeadingSmall title="Formatting locale"
-                      description="Controls how numbers, currencies, and dates are formatted in your overlays." />
+        <HeadingSmall title="Formatting locale" description="Controls how numbers, currencies, and dates are formatted in your overlays." />
         <div class="space-y-3">
           <select
             :value="locale"

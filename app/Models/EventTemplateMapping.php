@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property-read string $event_type_display
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
+ *
  * @method static Builder<static>|EventTemplateMapping newModelQuery()
  * @method static Builder<static>|EventTemplateMapping newQuery()
  * @method static Builder<static>|EventTemplateMapping query()
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|EventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|EventTemplateMapping whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class EventTemplateMapping extends Model
@@ -77,26 +79,26 @@ class EventTemplateMapping extends Model
      * Available transition types for enter animations
      */
     public const array TRANSITION_IN_TYPES = [
-        'fade'         => 'Fade in',
-        'scale'        => 'Scale in',
+        'fade' => 'Fade in',
+        'scale' => 'Scale in',
         'slide-bottom' => 'Slide up from bottom',
-        'slide-top'    => 'Slide down from top',
-        'slide-left'   => 'Slide in from left',
-        'slide-right'  => 'Slide in from right',
-        'none'         => 'None (instant)',
+        'slide-top' => 'Slide down from top',
+        'slide-left' => 'Slide in from left',
+        'slide-right' => 'Slide in from right',
+        'none' => 'None (instant)',
     ];
 
     /**
      * Available transition types for exit animations
      */
     public const array TRANSITION_OUT_TYPES = [
-        'fade'         => 'Fade out',
-        'scale'        => 'Scale out',
+        'fade' => 'Fade out',
+        'scale' => 'Scale out',
         'slide-bottom' => 'Slide down to bottom',
-        'slide-top'    => 'Slide up to top',
-        'slide-left'   => 'Slide out to left',
-        'slide-right'  => 'Slide out to right',
-        'none'         => 'None (instant)',
+        'slide-top' => 'Slide up to top',
+        'slide-left' => 'Slide out to left',
+        'slide-right' => 'Slide out to right',
+        'none' => 'None (instant)',
     ];
 
     /**

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Testing\TestResponse;
 
 uses(DatabaseTransactions::class);
 
@@ -33,7 +34,7 @@ function kofiPayload(array $overrides = []): array
 {
     return array_merge([
         'verification_token' => 'test-token',
-        'kofi_transaction_id' => 'txn-' . fake()->uuid(),
+        'kofi_transaction_id' => 'txn-'.fake()->uuid(),
         'from_name' => 'Alice',
         'message' => 'Hello!',
         'amount' => '5.00',
@@ -44,7 +45,7 @@ function kofiPayload(array $overrides = []): array
     ], $overrides);
 }
 
-function postKofi(string $webhookToken, array $payload): \Illuminate\Testing\TestResponse
+function postKofi(string $webhookToken, array $payload): TestResponse
 {
     // Ko-fi sends form-encoded body with a `data` JSON string field
     return test()->post(
@@ -85,7 +86,7 @@ test('returns 403 when verification token does not match', function () {
 test('returns 200 and stores event for valid donation payload', function () {
     [$user, $integration] = makeKofiIntegration('test-token');
 
-    $transactionId = 'txn-' . fake()->uuid();
+    $transactionId = 'txn-'.fake()->uuid();
     $payload = kofiPayload(['kofi_transaction_id' => $transactionId]);
 
     postKofi($integration->webhook_token, $payload)

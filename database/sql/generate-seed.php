@@ -1,4 +1,7 @@
 <?php
+
+use Illuminate\Contracts\Console\Kernel;
+
 /**
  * Starter seed generator.
  *
@@ -15,10 +18,10 @@
  *   php artisan db:seed-import   (if you add that command later)
  */
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__.'/../../vendor/autoload.php';
 
-$app = require __DIR__ . '/../../bootstrap/app.php';
-$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app = require __DIR__.'/../../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 $pdo = DB::getPdo();
 
@@ -28,28 +31,38 @@ $pdo = DB::getPdo();
 
 function quote($pdo, $val): string
 {
-    if ($val === null) return 'NULL';
-    if (is_bool($val)) return $val ? 'true' : 'false';
-    if (is_int($val) || is_float($val)) return (string) $val;
+    if ($val === null) {
+        return 'NULL';
+    }
+    if (is_bool($val)) {
+        return $val ? 'true' : 'false';
+    }
+    if (is_int($val) || is_float($val)) {
+        return (string) $val;
+    }
+
     return $pdo->quote($val);
 }
 
 function rows_to_inserts($pdo, string $table, array $rows): string
 {
-    if (empty($rows)) return "-- (no rows in {$table})\n";
-    $out = "";
+    if (empty($rows)) {
+        return "-- (no rows in {$table})\n";
+    }
+    $out = '';
     foreach ($rows as $row) {
         $row = (array) $row;
         $cols = implode(', ', array_keys($row));
-        $vals = implode(', ', array_map(fn($v) => quote($pdo, $v), array_values($row)));
+        $vals = implode(', ', array_map(fn ($v) => quote($pdo, $v), array_values($row)));
         $out .= "INSERT INTO public.{$table} ({$cols}) VALUES ({$vals});\n";
     }
+
     return $out;
 }
 
 function seq_reset(string $table, string $col = 'id'): string
 {
-    return "SELECT setval(pg_get_serial_sequence('public.{$table}', '{$col}'), " .
+    return "SELECT setval(pg_get_serial_sequence('public.{$table}', '{$col}'), ".
            "COALESCE((SELECT MAX({$col}) FROM public.{$table}), 1));\n";
 }
 
@@ -60,23 +73,24 @@ function seq_reset(string $table, string $col = 'id'): string
 // Users — strip all credentials/tokens; they're re-populated on Twitch login
 $users = DB::table('users')->get()->map(function ($u) {
     $u = (array) $u;
-    $u['access_token']      = null;
-    $u['refresh_token']     = null;
-    $u['token_expires_at']  = null;
-    $u['twitch_data']       = null;
-    $u['webhook_secret']    = null;
-    $u['remember_token']    = null;
+    $u['access_token'] = null;
+    $u['refresh_token'] = null;
+    $u['token_expires_at'] = null;
+    $u['twitch_data'] = null;
+    $u['webhook_secret'] = null;
+    $u['remember_token'] = null;
     $u['eventsub_connected_at'] = null;
+
     return $u;
 })->all();
 
 $tag_categories = DB::table('template_tag_categories')->orderBy('id')->get()->all();
-$tags           = DB::table('template_tags')->orderBy('id')->get()->all();
-$kits           = DB::table('kits')->orderBy('id')->get()->all();
-$kit_templates  = DB::table('kit_templates')->orderBy('id')->get()->all();
-$templates      = DB::table('overlay_templates')->orderBy('id')->get()->all();
-$controls       = DB::table('overlay_controls')->orderBy('id')->get()->all();
-$event_maps     = DB::table('event_template_mappings')->orderBy('id')->get()->all();
+$tags = DB::table('template_tags')->orderBy('id')->get()->all();
+$kits = DB::table('kits')->orderBy('id')->get()->all();
+$kit_templates = DB::table('kit_templates')->orderBy('id')->get()->all();
+$templates = DB::table('overlay_templates')->orderBy('id')->get()->all();
+$controls = DB::table('overlay_controls')->orderBy('id')->get()->all();
+$event_maps = DB::table('event_template_mappings')->orderBy('id')->get()->all();
 
 // ---------------------------------------------------------------------------
 // Build SQL
@@ -85,11 +99,11 @@ $event_maps     = DB::table('event_template_mappings')->orderBy('id')->get()->al
 $now = date('Y-m-d H:i:s');
 $tables_seeded = ['users', 'template_tag_categories', 'template_tags', 'kits', 'kit_templates', 'overlay_templates', 'overlay_controls', 'event_template_mappings'];
 
-$sql  = "-- =============================================================================\n";
+$sql = "-- =============================================================================\n";
 $sql .= "-- Overlabels starter seed\n";
 $sql .= "-- Generated: {$now}\n";
 $sql .= "--\n";
-$sql .= "-- Tables: " . implode(', ', $tables_seeded) . "\n";
+$sql .= '-- Tables: '.implode(', ', $tables_seeded)."\n";
 $sql .= "-- Sensitive user fields (tokens, twitch_data, webhook_secret) are stripped.\n";
 $sql .= "-- Run AFTER php artisan migrate on a fresh database.\n";
 $sql .= "--\n";
@@ -157,10 +171,10 @@ $sql .= "COMMIT;\n";
 // Write file
 // ---------------------------------------------------------------------------
 
-$output = __DIR__ . '/starter-seed.sql';
+$output = __DIR__.'/starter-seed.sql';
 file_put_contents($output, $sql);
 echo "Seed written to {$output}\n";
-echo "Rows: users=" . count($users) . ", tag_categories=" . count($tag_categories) .
-     ", tags=" . count($tags) . ", kits=" . count($kits) .
-     ", kit_templates=" . count($kit_templates) . ", overlay_templates=" . count($templates) .
-     ", overlay_controls=" . count($controls) . ", event_mappings=" . count($event_maps) . "\n";
+echo 'Rows: users='.count($users).', tag_categories='.count($tag_categories).
+     ', tags='.count($tags).', kits='.count($kits).
+     ', kit_templates='.count($kit_templates).', overlay_templates='.count($templates).
+     ', overlay_controls='.count($controls).', event_mappings='.count($event_maps)."\n";

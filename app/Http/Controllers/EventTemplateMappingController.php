@@ -73,13 +73,13 @@ class EventTemplateMappingController extends Controller
         }
 
         return Inertia::render('events/index', [
-            'mappings'           => $allMappings,
-            'alertTemplates'     => $alertTemplates,
-            'eventTypes'         => $eventTypes,
-            'transitionInTypes'  => EventTemplateMapping::TRANSITION_IN_TYPES,
+            'mappings' => $allMappings,
+            'alertTemplates' => $alertTemplates,
+            'eventTypes' => $eventTypes,
+            'transitionInTypes' => EventTemplateMapping::TRANSITION_IN_TYPES,
             'transitionOutTypes' => EventTemplateMapping::TRANSITION_OUT_TYPES,
-            'externalServices'   => $connectedServices,
-            'externalMappings'   => $externalMappings,
+            'externalServices' => $connectedServices,
+            'externalMappings' => $externalMappings,
             'externalEventTypes' => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES,
         ]);
     }

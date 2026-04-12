@@ -7,7 +7,6 @@ use App\Contracts\StatefulExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
-use Log;
 
 class GpsLoggerServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
 {

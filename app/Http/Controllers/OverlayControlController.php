@@ -85,15 +85,15 @@ class OverlayControlController extends Controller
 
             $control = OverlayControl::create([
                 'overlay_template_id' => $template->id,
-                'user_id'             => auth()->id(),
-                'key'                 => $def['key'],
-                'label'               => $validated['label'] ?? $def['label'] ?? null,
-                'type'                => $def['type'],
-                'value'               => $def['value'] ?? null,
-                'config'              => $def['config'] ?? null,
-                'sort_order'          => $validated['sort_order'] ?? 0,
-                'source'              => $source,
-                'source_managed'      => true,
+                'user_id' => auth()->id(),
+                'key' => $def['key'],
+                'label' => $validated['label'] ?? $def['label'] ?? null,
+                'type' => $def['type'],
+                'value' => $def['value'] ?? null,
+                'config' => $def['config'] ?? null,
+                'sort_order' => $validated['sort_order'] ?? 0,
+                'source' => $source,
+                'source_managed' => true,
             ]);
 
             return response()->json(['control' => $control], 201);
@@ -457,11 +457,6 @@ class OverlayControlController extends Controller
         );
     }
 
-    /**
-     * @param array $dependencies
-     * @param Collection $available
-     * @return void
-     */
     public function dependencies(array $dependencies, Collection $available): void
     {
         foreach ($dependencies as $dep) {
@@ -478,7 +473,7 @@ class OverlayControlController extends Controller
                 return $c->key === $depKey && ($c->source ?: null) === $depSource;
             });
 
-            if (!$found) {
+            if (! $found) {
                 $label = $depSource ? "$depSource:$depKey" : $depKey;
                 abort(422, "Referenced control '$label' not found in scope.");
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayTemplate;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +16,7 @@ class ExternalEventTemplateMappingController extends Controller
     /**
      * Update or create a single external event mapping.
      */
-    public function store(Request $request, string $service): \Illuminate\Http\JsonResponse
+    public function store(Request $request, string $service): JsonResponse
     {
         if (! array_key_exists($service, ExternalEventTemplateMapping::SERVICE_EVENT_TYPES)) {
             abort(404, "Unknown service: {$service}");
@@ -24,12 +25,12 @@ class ExternalEventTemplateMappingController extends Controller
         $validEventTypes = array_keys(ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$service]);
 
         $validated = $request->validate([
-            'event_type'     => 'required|string|in:' . implode(',', $validEventTypes),
+            'event_type' => 'required|string|in:'.implode(',', $validEventTypes),
             'overlay_template_id' => 'nullable|exists:overlay_templates,id',
-            'duration_ms'    => 'nullable|integer|min:1000|max:30000',
-            'transition_in'  => 'nullable|string|in:' . implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_IN_TYPES)),
-            'transition_out' => 'nullable|string|in:' . implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_OUT_TYPES)),
-            'enabled'        => 'nullable|boolean',
+            'duration_ms' => 'nullable|integer|min:1000|max:30000',
+            'transition_in' => 'nullable|string|in:'.implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_IN_TYPES)),
+            'transition_out' => 'nullable|string|in:'.implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_OUT_TYPES)),
+            'enabled' => 'nullable|boolean',
         ]);
 
         $user = Auth::user();
@@ -47,16 +48,16 @@ class ExternalEventTemplateMappingController extends Controller
 
         ExternalEventTemplateMapping::updateOrCreate(
             [
-                'user_id'    => $user->id,
-                'service'    => $service,
+                'user_id' => $user->id,
+                'service' => $service,
                 'event_type' => $validated['event_type'],
             ],
             [
                 'overlay_template_id' => $validated['overlay_template_id'] ?? null,
-                'duration_ms'         => $validated['duration_ms'] ?? 5000,
-                'transition_in'       => $validated['transition_in'] ?? 'fade',
-                'transition_out'      => $validated['transition_out'] ?? 'fade',
-                'enabled'             => $validated['enabled'] ?? false,
+                'duration_ms' => $validated['duration_ms'] ?? 5000,
+                'transition_in' => $validated['transition_in'] ?? 'fade',
+                'transition_out' => $validated['transition_out'] ?? 'fade',
+                'enabled' => $validated['enabled'] ?? false,
             ]
         );
 
@@ -66,18 +67,18 @@ class ExternalEventTemplateMappingController extends Controller
     /**
      * Bulk update external event mappings.
      */
-    public function updateMultiple(Request $request): \Illuminate\Http\JsonResponse
+    public function updateMultiple(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
-                'mappings'              => 'required|array',
-                'mappings.*.service'    => 'required|string',
+                'mappings' => 'required|array',
+                'mappings.*.service' => 'required|string',
                 'mappings.*.event_type' => 'required|string',
                 'mappings.*.overlay_template_id' => 'nullable|integer|exists:overlay_templates,id',
-                'mappings.*.duration_ms'    => 'nullable|integer|min:1000|max:30000',
-                'mappings.*.transition_in'  => 'nullable|string|in:' . implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_IN_TYPES)),
-                'mappings.*.transition_out' => 'nullable|string|in:' . implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_OUT_TYPES)),
-                'mappings.*.enabled'        => 'nullable|boolean',
+                'mappings.*.duration_ms' => 'nullable|integer|min:1000|max:30000',
+                'mappings.*.transition_in' => 'nullable|string|in:'.implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_IN_TYPES)),
+                'mappings.*.transition_out' => 'nullable|string|in:'.implode(',', array_keys(ExternalEventTemplateMapping::TRANSITION_OUT_TYPES)),
+                'mappings.*.enabled' => 'nullable|boolean',
             ]);
 
             $user = Auth::user();
@@ -89,7 +90,7 @@ class ExternalEventTemplateMappingController extends Controller
                 if (! array_key_exists($service, ExternalEventTemplateMapping::SERVICE_EVENT_TYPES)) {
                     return response()->json([
                         'success' => false,
-                        'error'   => "Unknown service: {$service}",
+                        'error' => "Unknown service: {$service}",
                     ], 422);
                 }
 
@@ -97,7 +98,7 @@ class ExternalEventTemplateMappingController extends Controller
                 if (! in_array($mappingData['event_type'], $validEventTypes, true)) {
                     return response()->json([
                         'success' => false,
-                        'error'   => "Invalid event type '{$mappingData['event_type']}' for service '{$service}'",
+                        'error' => "Invalid event type '{$mappingData['event_type']}' for service '{$service}'",
                     ], 422);
                 }
 
@@ -110,48 +111,48 @@ class ExternalEventTemplateMappingController extends Controller
                     if (! $template) {
                         return response()->json([
                             'success' => false,
-                            'error'   => "Invalid template for {$service}:{$mappingData['event_type']}",
+                            'error' => "Invalid template for {$service}:{$mappingData['event_type']}",
                         ], 422);
                     }
                 }
 
                 $updatedMappings[] = ExternalEventTemplateMapping::updateOrCreate(
                     [
-                        'user_id'    => $user->id,
-                        'service'    => $service,
+                        'user_id' => $user->id,
+                        'service' => $service,
                         'event_type' => $mappingData['event_type'],
                     ],
                     [
                         'overlay_template_id' => $mappingData['overlay_template_id'] ?? null,
-                        'duration_ms'         => $mappingData['duration_ms'] ?? 5000,
-                        'transition_in'       => $mappingData['transition_in'] ?? 'fade',
-                        'transition_out'      => $mappingData['transition_out'] ?? 'fade',
-                        'enabled'             => $mappingData['enabled'] ?? false,
+                        'duration_ms' => $mappingData['duration_ms'] ?? 5000,
+                        'transition_in' => $mappingData['transition_in'] ?? 'fade',
+                        'transition_out' => $mappingData['transition_out'] ?? 'fade',
+                        'enabled' => $mappingData['enabled'] ?? false,
                     ]
                 );
             }
 
             return response()->json([
-                'success'       => true,
-                'message'       => 'External event mappings updated successfully',
+                'success' => true,
+                'message' => 'External event mappings updated successfully',
                 'updated_count' => count($updatedMappings),
             ]);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Validation failed',
-                'errors'  => $e->errors(),
+                'error' => 'Validation failed',
+                'errors' => $e->errors(),
             ], 422);
         } catch (Exception $e) {
             Log::error('Failed to update external event mappings', [
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'error'   => 'Failed to update external event mappings',
+                'error' => 'Failed to update external event mappings',
             ], 500);
         }
     }
@@ -159,7 +160,7 @@ class ExternalEventTemplateMappingController extends Controller
     /**
      * Delete a single external event mapping.
      */
-    public function destroy(string $service, string $eventType): \Illuminate\Http\JsonResponse
+    public function destroy(string $service, string $eventType): JsonResponse
     {
         $user = Auth::user();
 

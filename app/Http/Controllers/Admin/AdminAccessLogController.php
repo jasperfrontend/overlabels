@@ -55,6 +55,6 @@ class AdminAccessLogController extends Controller
             'deleted_count' => $count,
         ], $request);
 
-        return back()->with('message', "Pruned {$count} access log entr" . ($count === 1 ? 'y' : 'ies') . '.');
+        return back()->with('message', "Pruned {$count} access log entr".($count === 1 ? 'y' : 'ies').'.');
     }
 }

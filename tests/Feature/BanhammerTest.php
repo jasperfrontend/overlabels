@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Mchev\Banhammer\IP;
 use Mchev\Banhammer\Models\Ban;
@@ -222,15 +223,15 @@ test('webhook routes bypass ban check', function () {
     // Twitch webhook — verify the middleware path exclusion works
     // The test IP may not propagate through withServerVariables in all Laravel test versions,
     // so we verify the middleware's path exclusion logic directly
-    $request = \Illuminate\Http\Request::create('/api/twitch/webhook', 'POST');
+    $request = Request::create('/api/twitch/webhook', 'POST');
     expect($request->is('api/twitch/webhook'))->toBeTrue();
 
     // External webhook path exclusion
-    $request2 = \Illuminate\Http\Request::create('/api/webhooks/kofi/abc123', 'POST');
+    $request2 = Request::create('/api/webhooks/kofi/abc123', 'POST');
     expect($request2->is('api/webhooks/*'))->toBeTrue();
 
     // Health check path exclusion
-    $request3 = \Illuminate\Http\Request::create('/api/eventsub-health-check', 'GET');
+    $request3 = Request::create('/api/eventsub-health-check', 'GET');
     expect($request3->is('api/eventsub-health-check'))->toBeTrue();
 });
 

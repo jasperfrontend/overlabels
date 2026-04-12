@@ -51,7 +51,7 @@ class ExternalEventController extends Controller
             targetOverlaySlugs: $targetSlugs,
         ));
 
-        $label = ucfirst($externalEvent->event_type) . ' (' . ucfirst($externalEvent->service) . ')';
+        $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';
 
         return back()->with('message', "Replayed {$label} alert.")->with('type', 'success');
     }

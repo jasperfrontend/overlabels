@@ -35,6 +35,7 @@ use Illuminate\Support\Str;
  * @property-read User|null $owner
  * @property-read Collection<int, OverlayTemplate> $templates
  * @property-read int|null $templates_count
+ *
  * @method static KitFactory factory($count = null, $state = [])
  * @method static Builder<static>|Kit newModelQuery()
  * @method static Builder<static>|Kit newQuery()
@@ -52,6 +53,7 @@ use Illuminate\Support\Str;
  * @method static Builder<static>|Kit whereThumbnail($value)
  * @method static Builder<static>|Kit whereTitle($value)
  * @method static Builder<static>|Kit whereUpdatedAt($value)
+ *
  * @mixin Eloquent
  */
 class Kit extends Model

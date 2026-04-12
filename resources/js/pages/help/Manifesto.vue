@@ -92,8 +92,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               Native web standards do the heavy lifting. Scripting is a no-no.
             </h2>
             <p class="text-foreground">
-              If something can be achieved with plain HTML, CSS and some conditional logic, it's perfect for Overlabels.
-              If you can't solve your problem with HTML and CSS alone, it doesn't belong on Overlabels.
+              Overlabels leans on native web standards - HTML, CSS, conditional logic, and a built-in expression engine
+              with math functions like sum, avg, min, max, clamp, round, and more. That's a surprisingly powerful
+              toolkit, and it covers the vast majority of overlay use cases without any custom scripting.
             </p>
           </div>
 
