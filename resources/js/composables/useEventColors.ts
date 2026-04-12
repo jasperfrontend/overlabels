@@ -24,6 +24,7 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   kofi:       { dot: 'bg-[#ff5a16]', border: 'hover:border-l-[#ff5a16]' },
   streamlabs: { dot: 'bg-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
+  streamelements: { dot: 'bg-[#2700ff]', border: 'hover:border-l-[#2700ff]' },
 };
 
 const DEFAULT_STYLE = { dot: 'bg-slate-500', border: 'hover:border-l-slate-500' };
