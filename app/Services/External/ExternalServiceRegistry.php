@@ -7,6 +7,7 @@ use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 use App\Services\External\Drivers\StreamElementsServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
+use InvalidArgumentException;
 
 class ExternalServiceRegistry
 {
@@ -31,12 +32,12 @@ class ExternalServiceRegistry
     /**
      * Resolve and return a driver instance for the given service key.
      *
-     * @throws \InvalidArgumentException if service is not registered
+     * @throws InvalidArgumentException if service is not registered
      */
     public static function driver(string $service): ExternalServiceDriver
     {
         if (! static::has($service)) {
-            throw new \InvalidArgumentException("Unknown external service: {$service}");
+            throw new InvalidArgumentException("Unknown external service: {$service}");
         }
 
         return app(static::$drivers[$service]);

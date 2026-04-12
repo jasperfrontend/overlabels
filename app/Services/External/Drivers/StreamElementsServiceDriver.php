@@ -7,6 +7,7 @@ use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Log;
 
 class StreamElementsServiceDriver implements ExternalServiceDriver
 {
@@ -54,7 +55,7 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
         $data = $payload['data'] ?? [];
-
+        Log::info('StreamElements payload', ['payload' => $payload]);
         $fromName = $data['displayName'] ?? $data['username'] ?? null;
         $message = $data['message'] ?? null;
         $amount = isset($data['amount']) ? (string) $data['amount'] : null;
@@ -62,12 +63,12 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
 
         $messageId = $payload['_id']
             ?? $data['tipId']
-            ?? ('se_'.(string) Str::uuid());
+            ?? ('se_'. Str::uuid());
 
         $tags = [
             'event.from_name' => (string) ($fromName ?? ''),
             'event.message' => (string) ($message ?? ''),
-            'event.amount' => (string) ($amount ?? ''),
+            'event.amount' => $amount ?? '',
             'event.currency' => (string) ($currency ?? ''),
             'event.type' => $eventType,
             'event.source' => 'StreamElements',

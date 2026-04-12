@@ -14,7 +14,7 @@ class StreamSessionService
     /**
      * Mapping of Twitch event types to stream control keys.
      */
-    public const EVENT_CONTROL_MAP = [
+    public const array EVENT_CONTROL_MAP = [
         'channel.follow' => 'follows_this_stream',
         'channel.subscribe' => 'subs_this_stream',
         'channel.subscription.gift' => 'gift_subs_this_stream',
@@ -26,7 +26,7 @@ class StreamSessionService
     /**
      * Control presets users can add to their overlays.
      */
-    public const CONTROL_PRESETS = [
+    public const array CONTROL_PRESETS = [
         ['key' => 'follows_this_stream', 'type' => 'counter', 'label' => 'Followers This Stream', 'value' => '0'],
         ['key' => 'subs_this_stream', 'type' => 'counter', 'label' => 'Subs This Stream', 'value' => '0'],
         ['key' => 'gift_subs_this_stream', 'type' => 'counter', 'label' => 'Gift Subs This Stream', 'value' => '0'],
