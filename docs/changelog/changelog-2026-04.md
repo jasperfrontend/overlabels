@@ -1,5 +1,21 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Tooling: `stream:fake-live` and `stream:fake-offline` artisan commands
+
+- Added two artisan commands in `routes/console.php` (following the existing `lockdown:engage` / `lockdown:release`
+  closure-command pattern) to make Twitch CLI testing actually usable. The controls pipeline gates on
+  `StreamState::isConfidentlyLive()`, so `twitch event trigger channel.cheer ...` never updates per-stream counters
+  unless the state machine believes the channel is live - which a faked payload cannot achieve on its own.
+- `php artisan stream:fake-live {twitch_id}` opens a real `StreamSession` via `StreamSessionService::openSession()`
+  (which also resets twitch source_managed controls), then flips the `StreamState` row to `live` with confidence
+  1.0, stamps `last_event_at`/`last_verified_at` to now, and clears `grace_period_until`. `channel.cheer` and the
+  other countable events will now update controls as if you were really streaming.
+- `php artisan stream:fake-offline {twitch_id}` calls `StreamSessionService::closeSession()` and flips the row back
+  to `offline` with confidence 1.0, clearing `current_session_id`, `helix_stream_id`, and the grace timer.
+- The commands include a nudge that the safety-net scheduler (every 5 min) will dispatch `VerifyStreamState` for
+  rows with a stale `last_verified_at`, so a forgotten fake-live session will eventually get reconciled against
+  Helix and fall back to offline on its own - the companion `fake-offline` call is still the clean way to end it.
+
 ## April 13th, 2026 - UX: Combobox replaces the massive preset picker in the Add Control modal
 
 - Replaced the huge native `<select>` in `ControlFormModal.vue` (Stream Controls > preset picker) with a searchable

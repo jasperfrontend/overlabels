@@ -7,6 +7,7 @@ use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Services\LockdownService;
+use App\Services\StreamSessionService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -53,6 +54,54 @@ Artisan::command('lockdown:release', function () {
     $lockdown->deactivate($ghost, $request);
     $this->info('Lockdown lifted. Access tokens restored.');
 })->purpose('Release system lockdown mode');
+
+Artisan::command('stream:fake-live {twitch_id : The Twitch ID of the user to fake as live}', function (string $twitch_id) {
+    $user = User::where('twitch_id', $twitch_id)->first();
+    if (! $user) {
+        $this->error("No user found with Twitch ID {$twitch_id}.");
+
+        return;
+    }
+    $state = StreamState::forUser($user);
+    if ($state->isConfidentlyLive()) {
+        $this->warn("User {$user->name} is already confidently live (confidence {$state->confidence}).");
+
+        return;
+    }
+    $session = app(StreamSessionService::class)->openSession($user);
+    $state->update([
+        'state' => StreamState::STATE_LIVE,
+        'confidence' => 1.0,
+        'current_session_id' => $session->id,
+        'last_event_at' => now(),
+        'last_verified_at' => now(),
+        'grace_period_until' => null,
+    ]);
+    $this->info("User {$user->name} is now faked live (session #{$session->id}).");
+    $this->line('Fire test events with the Twitch CLI now - controls will accumulate.');
+    $this->line("Within ~5 min the safety-net scheduler may revert this if Helix disagrees; call stream:fake-offline {$twitch_id} when done.");
+})->purpose('Force a user into live state for CLI testing (no Helix verification)');
+
+Artisan::command('stream:fake-offline {twitch_id : The Twitch ID of the user to fake as offline}', function (string $twitch_id) {
+    $user = User::where('twitch_id', $twitch_id)->first();
+    if (! $user) {
+        $this->error("No user found with Twitch ID {$twitch_id}.");
+
+        return;
+    }
+    $state = StreamState::forUser($user);
+    app(StreamSessionService::class)->closeSession($user);
+    $state->update([
+        'state' => StreamState::STATE_OFFLINE,
+        'confidence' => 1.0,
+        'current_session_id' => null,
+        'helix_stream_id' => null,
+        'grace_period_until' => null,
+        'last_event_at' => now(),
+        'last_verified_at' => now(),
+    ]);
+    $this->info("User {$user->name} is now faked offline.");
+})->purpose('Force a user into offline state for CLI testing');
 
 Artisan::command('ban:ip {ip : The IP address to ban} {comment? : Optional reason}', function (string $ip, ?string $comment = null) {
     if (IP::isBanned($ip)) {
