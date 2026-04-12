@@ -320,45 +320,33 @@ const breadcrumbs: BreadcrumbItem[] = [
           <!-- URL generated -->
           <div v-else-if="obsGeneratedUrl" class="space-y-4 text-sm">
             <p class="text-green-400" v-if="obsUrlCopied">URL Copied to clipboard</p>
-            <p class="text-foreground" v-else>Click to copy this URL, then paste it into a Browser Source in OBS.</p>
+            <p class="text-foreground" v-else>Easy: Just drag the box below in your OBS and click "Yes" to confirm.</p>
 
-            <button
+            <a
               class="flex items-center cursor-pointer gap-2 rounded-lg border
               border-green-500/20 bg-green-400/10 dark:bg-green-950/10 p-3
               font-mono text-xs break-all transition-colors hover:bg-green-400/20
-              active:ring active:ring-green-500"
+              active:ring active:ring-green-500 select-all"
               :class="obsUrlCopied ? 'border-green-500/40 ring ring-green-500/80' : 'border-green-500/20'"
-              @click="copyOBSUrl"
+              :href="obsGeneratedUrl"
+              @click.prevent="copyOBSUrl"
             >
               <span class="flex-1 text-green-600 dark:text-green-300/80">{{ obsGeneratedUrl }}</span>
               <span class="shrink-0 rounded-md p-2 transition hover:bg-green-500/10" title="Copy URL">
                 <CheckIcon v-if="obsUrlCopied" class="h-4 w-4 text-green-400" />
                 <CopyIcon v-else class="h-4 w-4 text-green-400" />
               </span>
-            </button>
+            </a>
 
             <div>
-              <p class="mb-2 font-medium">Steps</p>
               <ol class="list-decimal space-y-1.5 pl-4 text-foreground">
-                <li><strong>Click the box above</strong> to copy the overlay URL.</li>
-                <li>In OBS, add a new <strong>Browser Source</strong>.</li>
-                <li>Paste the URL into the URL field.</li>
-                <li>Set <strong>Width</strong> to <code
-                  class="rounded bg-accent px-1 text-accent-foreground">1920</code>
-                  and <strong>Height</strong> to <code class="rounded bg-accent px-1 text-accent-foreground">1080</code>.
+                <li><strong>Drag the box above</strong> directly on to OBS.</li>
+                <li>In OBS, this will automatically create a new <strong>Browser Source</strong>.</li>
+                <li>Alternatively, you can click the green box above to copy the link and create the browser source manually. Be sure to set it to fullscreen (right click > transform > Fit to screen)</li>
+                <li>Your OBS Browser Source settings should look like
+                  <button type="button" class="underline text-violet-400 hover:text-violet-300 cursor-pointer" @click="showObsScreenshot = true">this example</button>.
                 </li>
-                <li>Leave "Shutdown source when not visible" and "Refresh browser source when scene becomes active" both <strong>unchecked</strong>.</li>
-                <li>Click <strong>OK</strong>. Right-click the source and choose <strong>Transform &gt; Fit to
-                  screen</strong>
-                  (or press <code class="rounded bg-accent px-1 text-accent-foreground">Ctrl+F</code>) to make it
-                  full-screen.
-                </li>
-                <li>Your overlay is live!</li>
               </ol>
-              <p class="mt-2 text-foreground">
-                Your OBS Browser Source settings should look like
-                <button type="button" class="underline text-violet-400 hover:text-violet-300 cursor-pointer" @click="showObsScreenshot = true">this example</button>.
-              </p>
             </div>
 
             <div class="h-px bg-violet-300"></div>
