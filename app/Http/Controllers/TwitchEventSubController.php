@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Models\EventTemplateMapping;
+use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
@@ -711,6 +712,78 @@ class TwitchEventSubController extends Controller
         $message = "Replayed alert $twitchEvent->event_type (ID: $twitchEvent->id-$randomString)";
 
         return back()->with('message', $message)->with('type', 'success');
+    }
+
+    /**
+     * Fire a synthetic channel.cheer event through the normal handler pipeline.
+     * Used by the "Send test cheer" button on the integrations page so users can
+     * iterate on cheer alerts and bits controls without the Twitch CLI.
+     *
+     * @throws RandomException
+     */
+    public function testCheer(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user || ! $user->twitch_id) {
+            return response()->json(['error' => 'User not authenticated with Twitch.'], 401);
+        }
+
+        $bits = random_int(100, 1000);
+        $cheererName = 'TestCheerer';
+        $message = "cheer{$bits} test cheer from the integrations page!";
+
+        $event = [
+            'broadcaster_user_id' => (string) $user->twitch_id,
+            'broadcaster_user_login' => $user->name,
+            'broadcaster_user_name' => $user->name,
+            'user_id' => '999999999',
+            'user_login' => strtolower($cheererName),
+            'user_name' => $cheererName,
+            'is_anonymous' => false,
+            'message' => $message,
+            'bits' => $bits,
+        ];
+
+        $data = [
+            'subscription' => ['type' => 'channel.cheer'],
+            'event' => $event,
+        ];
+
+        TwitchEvent::create([
+            'user_id' => $user->id,
+            'event_type' => 'channel.cheer',
+            'event_data' => $event,
+            'twitch_timestamp' => now(),
+            'processed' => true,
+        ]);
+
+        $wasLive = StreamState::forUser($user)->isConfidentlyLive();
+
+        $this->streamSessionService->handleEvent($user, 'channel.cheer', $event);
+
+        $mapping = EventTemplateMapping::with('template')
+            ->where('user_id', $user->id)
+            ->where('event_type', 'channel.cheer')
+            ->where('enabled', true)
+            ->first();
+
+        $alertFired = false;
+        if ($mapping && $mapping->template) {
+            $this->renderEventAlert($user, $mapping, $data);
+            $alertFired = true;
+        }
+
+        broadcast(new TwitchEventReceived('channel.cheer', $event));
+
+        return response()->json([
+            'ok' => true,
+            'bits' => $bits,
+            'cheerer_name' => $cheererName,
+            'alert_fired' => $alertFired,
+            'controls_updated' => $wasLive,
+            'is_live' => $wasLive,
+        ]);
     }
 
     /**

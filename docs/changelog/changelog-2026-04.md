@@ -1,5 +1,22 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Feature: "Send test cheer" button on the Twitch integration card
+
+- Added a "Send test cheer" button to the Twitch section of the integrations settings page, visible once
+  EventSub is connected with at least one active subscription. Clicking it fires a synthetic `channel.cheer`
+  event with a random bits amount between 100 and 1000 from a `TestCheerer` donor, without requiring the
+  Twitch CLI or a real fan. Useful for iterating on cheer alert templates and bits-driven controls.
+- New `TwitchEventSubController::testCheer()` method builds the same payload shape Twitch EventSub uses
+  (`broadcaster_user_id`, `user_name`, `is_anonymous`, `message`, `bits`) and runs it through the identical
+  pipeline a real event takes: writes a `TwitchEvent` row, calls `StreamSessionService::handleEvent()` (which
+  still gates control updates on `isConfidentlyLive()`), looks up the enabled `channel.cheer` mapping and
+  renders the alert, and broadcasts `TwitchEventReceived` so the activity feed reflects it.
+- Wired at `POST /twitch/test-cheer` (auth-protected via the web route group).
+- Response JSON reports back what happened: `alert_fired` is false if the user hasn't mapped a template to
+  `channel.cheer`, `controls_updated` is false if the stream isn't confidently live. The UI surfaces both
+  conditions as amber hints (the live-state hint points to `php artisan stream:fake-live {twitch_id}`) so the
+  streamer knows why an overlay might have stayed silent.
+
 ## April 13th, 2026 - Tooling: `stream:fake-live` and `stream:fake-offline` artisan commands
 
 - Added two artisan commands in `routes/console.php` (following the existing `lockdown:engage` / `lockdown:release`

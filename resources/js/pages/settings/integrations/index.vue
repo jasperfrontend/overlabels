@@ -59,6 +59,51 @@ const breadcrumbItems: BreadcrumbItem[] = [
 const eventsubLoading = ref(false);
 const eventsubMessage = ref('');
 
+const testCheerLoading = ref(false);
+const testCheerMessage = ref('');
+const testCheerIsWarning = ref(false);
+
+async function sendTestCheer() {
+  testCheerLoading.value = true;
+  testCheerMessage.value = '';
+  testCheerIsWarning.value = false;
+
+  try {
+    const response = await fetch('/twitch/test-cheer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      testCheerMessage.value = data.error ?? 'Failed to fire test cheer.';
+      testCheerIsWarning.value = true;
+      return;
+    }
+
+    const parts = [`Fired ${data.bits} bits from ${data.cheerer_name}.`];
+    if (!data.alert_fired) {
+      parts.push('No alert mapped to channel.cheer, so nothing will appear on your overlays.');
+      testCheerIsWarning.value = true;
+    }
+    if (!data.controls_updated) {
+      parts.push('Controls did not update because the stream is not live. Use php artisan stream:fake-live {twitch_id} to bypass.');
+      testCheerIsWarning.value = true;
+    }
+    testCheerMessage.value = parts.join(' ');
+  } catch {
+    testCheerMessage.value = 'Failed to fire test cheer. Please try again.';
+    testCheerIsWarning.value = true;
+  } finally {
+    testCheerLoading.value = false;
+  }
+}
+
 async function connectEventSub() {
   eventsubLoading.value = true;
   eventsubMessage.value = '';
@@ -159,6 +204,14 @@ function formatDate(iso: string | null): string {
               </div>
 
               <div class="flex gap-2">
+                <Button
+                  v-if="eventsub.active_count > 0"
+                  variant="outline"
+                  :disabled="testCheerLoading"
+                  @click="sendTestCheer"
+                >
+                  {{ testCheerLoading ? 'Firing...' : 'Send test cheer' }}
+                </Button>
                 <Button variant="default" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
                 </Button>
@@ -167,6 +220,13 @@ function formatDate(iso: string | null): string {
 
             <p v-if="eventsubMessage" class="text-muted-foreground mt-2 text-sm">
               {{ eventsubMessage }}
+            </p>
+            <p
+              v-if="testCheerMessage"
+              class="mt-2 text-sm"
+              :class="testCheerIsWarning ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'"
+            >
+              {{ testCheerMessage }}
             </p>
           </div>
         </div>

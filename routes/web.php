@@ -417,6 +417,9 @@ Route::middleware('auth.redirect')->group(function () {
     // Replay a historical event as an alert
     Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');
 
+    // Fire a synthetic channel.cheer for alert/control testing
+    Route::post('/twitch/test-cheer', [TwitchEventSubController::class, 'testCheer'])->name('twitch.test-cheer');
+
     // Replay a stored external (Ko-fi, etc.) event as an alert
     Route::post('/external-events/{externalEvent}/replay', [ExternalEventController::class, 'replay'])->name('external-events.replay');
 
