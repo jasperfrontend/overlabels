@@ -5,6 +5,7 @@ namespace App\Services\External;
 use App\Contracts\ExternalServiceDriver;
 use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
+use App\Services\External\Drivers\StreamElementsServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
 
 class ExternalServiceRegistry
@@ -16,6 +17,7 @@ class ExternalServiceRegistry
         'kofi' => KofiServiceDriver::class,
         'gpslogger' => GpsLoggerServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
+        'streamelements' => StreamElementsServiceDriver::class,
     ];
 
     /**

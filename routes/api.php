@@ -6,7 +6,15 @@ use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Middleware\CheckBanned;
+use App\Jobs\SetupUserEventSubSubscriptions;
+use App\Models\ExternalIntegration;
+use App\Models\User;
+use App\Models\UserEventsubSubscription;
+use App\Services\TwitchApiService;
+use App\Services\TwitchEventSubService;
+use App\Services\UserEventSubManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
@@ -28,16 +36,16 @@ Route::prefix('/overlay')->group(function () {
             return response()->json(['error' => 'Invalid channel ID'], 400);
         }
 
-        $emotes = \Illuminate\Support\Facades\Cache::remember(
+        $emotes = Cache::remember(
             "twitch_channel_emotes_{$channelId}",
             now()->addHours(24),
             function () use ($channelId) {
-                $appToken = app(\App\Services\TwitchEventSubService::class)->getAppAccessToken();
+                $appToken = app(TwitchEventSubService::class)->getAppAccessToken();
                 if (! $appToken) {
                     return [];
                 }
 
-                return app(\App\Services\TwitchApiService::class)->getChannelEmotes($appToken, $channelId);
+                return app(TwitchApiService::class)->getChannelEmotes($appToken, $channelId);
             }
         );
 
@@ -67,7 +75,7 @@ Route::get('/internal/streamlabs/integrations', function () {
         abort(403);
     }
 
-    $integrations = \App\Models\ExternalIntegration::where('service', 'streamlabs')
+    $integrations = ExternalIntegration::where('service', 'streamlabs')
         ->where('enabled', true)
         ->get()
         ->map(function ($integration) {
@@ -82,6 +90,37 @@ Route::get('/internal/streamlabs/integrations', function () {
             ];
         })
         ->filter(fn ($i) => $i['socket_token'] && $i['listener_secret'])
+        ->values();
+
+    return response()->json(['integrations' => $integrations]);
+})
+    ->middleware(['throttle:10,1'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
+// Internal endpoint for StreamElements Node.js listener to fetch active integrations.
+// Returns the per-user JWT used for Socket.IO authentication at realtime.streamelements.com.
+Route::get('/internal/streamelements/integrations', function () {
+    $secret = config('services.streamelements.listener_secret');
+
+    if (empty($secret) || ! hash_equals($secret, (string) request()->header('X-Internal-Secret', ''))) {
+        abort(403);
+    }
+
+    $integrations = ExternalIntegration::where('service', 'streamelements')
+        ->where('enabled', true)
+        ->get()
+        ->map(function ($integration) {
+            $credentials = $integration->getCredentialsDecrypted();
+
+            return [
+                'id' => $integration->id,
+                'user_id' => $integration->user_id,
+                'webhook_token' => $integration->webhook_token,
+                'jwt_token' => $credentials['jwt_token'] ?? null,
+                'listener_secret' => $credentials['listener_secret'] ?? null,
+            ];
+        })
+        ->filter(fn ($i) => $i['jwt_token'] && $i['listener_secret'])
         ->values();
 
     return response()->json(['integrations' => $integrations]);
@@ -107,11 +146,11 @@ Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::cl
 // EventSub health check endpoint for external cron services
 Route::get('/eventsub-health-check', function () {
     try {
-        $manager = app(\App\Services\UserEventSubManager::class);
+        $manager = app(UserEventSubManager::class);
         $stats = $manager->getGlobalStats();
 
         // Get failed subscriptions
-        $failedSubs = \App\Models\UserEventsubSubscription::whereIn('status', [
+        $failedSubs = UserEventsubSubscription::whereIn('status', [
             'webhook_callback_verification_failed',
             'notification_failures_exceeded',
             'authorization_revoked',
@@ -122,17 +161,17 @@ Route::get('/eventsub-health-check', function () {
         if ($failedSubs->count() > 0) {
             foreach ($failedSubs->groupBy('user_id') as $userId => $userFailedSubs) {
                 $user = $userFailedSubs->first()->user;
-                \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, true);
+                SetupUserEventSubSubscriptions::dispatch($user, true);
             }
         }
 
         // Check for users who should be connected but aren't
-        $usersNeedingSetup = \App\Models\User::where('eventsub_auto_connect', true)
+        $usersNeedingSetup = User::where('eventsub_auto_connect', true)
             ->whereNull('eventsub_connected_at')
             ->get();
 
         foreach ($usersNeedingSetup as $user) {
-            \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, false);
+            SetupUserEventSubSubscriptions::dispatch($user, false);
         }
 
         return response()->json([
@@ -146,7 +185,7 @@ Route::get('/eventsub-health-check', function () {
         ]);
 
     } catch (Exception $e) {
-        \Log::error('EventSub health check failed', [
+        Log::error('EventSub health check failed', [
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);

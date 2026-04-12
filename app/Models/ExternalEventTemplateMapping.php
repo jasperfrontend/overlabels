@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property array<array-key, mixed>|null $settings
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
+ *
  * @method static Builder<static>|ExternalEventTemplateMapping newModelQuery()
  * @method static Builder<static>|ExternalEventTemplateMapping newQuery()
  * @method static Builder<static>|ExternalEventTemplateMapping query()
@@ -38,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ExternalEventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class ExternalEventTemplateMapping extends Model
@@ -101,6 +103,9 @@ class ExternalEventTemplateMapping extends Model
         ],
         'streamlabs' => [
             'donation' => 'StreamLabs Donation',
+        ],
+        'streamelements' => [
+            'tip' => 'StreamElements Tip',
         ],
     ];
 

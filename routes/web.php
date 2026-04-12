@@ -2,19 +2,24 @@
 
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
+use App\Http\Controllers\ExternalEventTemplateMappingController;
+use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
-use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
+use App\Http\Controllers\UserEventSubController;
+use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\User;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
@@ -248,7 +253,7 @@ Route::get('/auth/callback/twitch', function () {
                 ]);
 
                 // Dispatch the job to setup EventSub subscriptions
-                \App\Jobs\SetupUserEventSubSubscriptions::dispatch($user, false);
+                SetupUserEventSubSubscriptions::dispatch($user, false);
 
             } catch (Exception $e) {
                 Log::warning('Failed to dispatch EventSub setup job', [
@@ -286,7 +291,7 @@ Route::get('/auth/callback/twitch', function () {
 });
 
 // StreamLabs OAuth callback
-Route::get('/auth/callback/streamlabs', [App\Http\Controllers\Settings\StreamLabsIntegrationController::class, 'callback'])
+Route::get('/auth/callback/streamlabs', [StreamLabsIntegrationController::class, 'callback'])
     ->middleware('auth.redirect')
     ->name('auth.callback.streamlabs');
 
@@ -361,28 +366,28 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Event Template Mapping Management
     Route::prefix('alerts')->name('events.')->group(function () {
-        Route::get('/', [App\Http\Controllers\EventTemplateMappingController::class, 'index'])->name('index');
-        Route::post('/', [App\Http\Controllers\EventTemplateMappingController::class, 'store'])->name('store');
-        Route::put('/bulk', [App\Http\Controllers\EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
-        Route::delete('/{eventType}', [App\Http\Controllers\EventTemplateMappingController::class, 'destroy'])->name('destroy');
+        Route::get('/', [EventTemplateMappingController::class, 'index'])->name('index');
+        Route::post('/', [EventTemplateMappingController::class, 'store'])->name('store');
+        Route::put('/bulk', [EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
+        Route::delete('/{eventType}', [EventTemplateMappingController::class, 'destroy'])->name('destroy');
 
         // External service event mappings
         Route::prefix('external')->name('external.')->group(function () {
-            Route::post('/{service}', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'store'])->name('store');
-            Route::put('/bulk', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
-            Route::delete('/{service}/{eventType}', [App\Http\Controllers\ExternalEventTemplateMappingController::class, 'destroy'])->name('destroy');
+            Route::post('/{service}', [ExternalEventTemplateMappingController::class, 'store'])->name('store');
+            Route::put('/bulk', [ExternalEventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
+            Route::delete('/{service}/{eventType}', [ExternalEventTemplateMappingController::class, 'destroy'])->name('destroy');
         });
     });
 
     // EventSub Management
     Route::prefix('eventsub')->name('eventsub.')->group(function () {
-        Route::get('/', [App\Http\Controllers\UserEventSubController::class, 'index'])->name('index');
-        Route::post('/connect', [App\Http\Controllers\UserEventSubController::class, 'connect'])->name('connect');
-        Route::post('/disconnect', [App\Http\Controllers\UserEventSubController::class, 'disconnect'])->name('disconnect');
-        Route::post('/refresh', [App\Http\Controllers\UserEventSubController::class, 'refresh'])->name('refresh');
-        Route::post('/auto-connect', [App\Http\Controllers\UserEventSubController::class, 'toggleAutoConnect'])->name('auto-connect');
-        Route::get('/status', [App\Http\Controllers\UserEventSubController::class, 'status'])->name('status');
-        Route::get('/admin/stats', [App\Http\Controllers\UserEventSubController::class, 'adminStats'])->name('admin.stats');
+        Route::get('/', [UserEventSubController::class, 'index'])->name('index');
+        Route::post('/connect', [UserEventSubController::class, 'connect'])->name('connect');
+        Route::post('/disconnect', [UserEventSubController::class, 'disconnect'])->name('disconnect');
+        Route::post('/refresh', [UserEventSubController::class, 'refresh'])->name('refresh');
+        Route::post('/auto-connect', [UserEventSubController::class, 'toggleAutoConnect'])->name('auto-connect');
+        Route::get('/status', [UserEventSubController::class, 'status'])->name('status');
+        Route::get('/admin/stats', [UserEventSubController::class, 'adminStats'])->name('admin.stats');
     });
 
     // Template tag generator interface

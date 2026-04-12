@@ -1,6 +1,6 @@
 # Claude Code Memory Export
 
-Last updated: 2026-03-15
+Last updated: 2026-04-12
 
 ---
 
@@ -174,6 +174,24 @@ Critical variables:
 - App approval: unapproved apps limited to 10 whitelisted users - closed beta banner shown on settings page
 - Template syntax: `[[[c:streamlabs:donations_received]]]`
 - In tests: use `postJson` with `X-Listener-Secret` header (NOT form-encoded like Ko-fi)
+
+### StreamElements Integration
+
+- JWT-based (NOT OAuth): StreamElements does not have self-serve OAuth app registration. Users generate a JWT from their dashboard (Account > Channels > Show secrets > JWT Token) and paste it into the Overlabels settings page
+- JWTs have no refresh flow - if revoked, user must paste a new one. This trade-off is why the integration is JWT rather than OAuth
+- WebSocket: Socket.IO at `https://realtime.streamelements.com`. After connect, `socket.emit('authenticate', { method: 'jwt', token: jwtToken })`. Listen for `'authenticated'` (channelId), `'unauthorized'`, `'event'`
+- Only `tip` event type supported - payload shape: `{ _id, channel, type: 'tip', data: { username, displayName, amount, message, currency, tipId } }`
+- Uses Socket.IO (pull model) via server-side Node.js listener, NOT webhooks
+- `streamelements-listener.mjs` bridges SE Socket.IO -> POST to `/api/webhooks/streamelements/{webhook_token}`
+- Internal API `GET /api/internal/streamelements/integrations` is polled every 60s and returns `jwt_token` + `listener_secret` per integration. Authenticated by `STREAMELEMENTS_LISTENER_SECRET`
+- Listener reconnects when JWT changes (checks cached token vs new one from poll). On `unauthorized`, drops connection; user must save a new JWT to recover
+- Verification: `X-Listener-Secret` header checked against per-integration `listener_secret` credential
+- Auto-provisions 6 controls: `tips_received`, `latest_tipper_name`, `latest_tip_amount`, `latest_tip_message`, `latest_tip_currency`, `total_tips_received`
+- Credentials stored (encrypted): `jwt_token`, `listener_secret`
+- Env vars: `STREAMELEMENTS_LISTENER_SECRET` only (no client id/secret)
+- Settings routes: under `settings/integrations/streamelements` prefix. `POST /settings/integrations/streamelements` saves/replaces the JWT. Seed method named `seedTipCount()` (not `seedDonationCount`), settings keys `tips_seed_set`/`tips_seed_value`
+- Template syntax: `[[[c:streamelements:tips_received]]]`
+- In tests: use `postJson` with `X-Listener-Secret` header (same as StreamLabs). Test credentials shape: `['jwt_token' => ..., 'listener_secret' => ...]`
 
 ## Admin Panel (Implemented Feb 2026)
 

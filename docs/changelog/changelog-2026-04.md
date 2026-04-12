@@ -1,5 +1,28 @@
 # CHANGELOG APRIL 2026
 
+## April 12th, 2026 - Feature: StreamElements tipping integration
+
+- Added StreamElements as a full External Integration, authenticated via user-supplied JWT tokens. StreamElements does
+  not offer self-serve OAuth app registration, so the integration uses the JWT path that every user can generate from
+  their StreamElements dashboard: Account > Channels > Show secrets > JWT Token.
+- New `StreamElementsServiceDriver` mirrors the StreamLabs pattern: verifies listener requests, normalizes the SE tip
+  payload (`_id`, `data.displayName`/`username`, `amount`, `message`, `currency`, `tipId`), and auto-provisions six
+  controls (`tips_received`, `latest_tipper_name`, `latest_tip_amount`, `latest_tip_message`, `latest_tip_currency`,
+  `total_tips_received`).
+- Internal API endpoint `GET /api/internal/streamelements/integrations` is polled by the listener every 60s and
+  returns the per-user JWT plus listener secret for each active integration. Authenticated with
+  `STREAMELEMENTS_LISTENER_SECRET`.
+- New Node.js listener (`streamelements-listener.mjs`) bridges `realtime.streamelements.com` Socket.IO events to the
+  Laravel webhook endpoint. Authenticates with `{ method: 'jwt', token: jwtToken }`, reconnects when a user rotates
+  their JWT, and drops sockets on `unauthorized` (JWT revoked server-side).
+- New settings page at `/settings/integrations/streamelements` with a password-type JWT input, save/replace button,
+  test mode toggle, one-time starting tip count seed, and a link to the StreamElements dashboard.
+- Template tag syntax: `[[[c:streamelements:tips_received]]]`, `[[[c:streamelements:latest_tipper_name]]]`, etc.
+- Added `STREAMELEMENTS_LISTENER_SECRET` to `.env.example` and `config/services.php`. Registered in
+  `ExternalServiceRegistry` and `ExternalEventTemplateMapping::SERVICE_EVENT_TYPES`.
+- 29 new tests (driver, JWT save/disconnect, webhook) covering payload normalization, dedup, listener secret
+  generation, JWT replacement, and control provisioning.
+
 ## April 11th, 2026 - Feature: sum, avg, now() and help page docs for expression functions
 
 - Added `sum()`, `avg()`, and `now()` to the expression engine function set.

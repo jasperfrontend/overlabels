@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
+use App\Http\Controllers\Settings\StreamElementsIntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,5 +39,11 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/streamlabs/test-mode', [StreamLabsIntegrationController::class, 'setTestMode'])->name('streamlabs.test-mode');
         Route::post('/streamlabs/seed-count', [StreamLabsIntegrationController::class, 'seedDonationCount'])->name('streamlabs.seed-count');
         Route::delete('/streamlabs', [StreamLabsIntegrationController::class, 'disconnect'])->name('streamlabs.disconnect');
+
+        Route::get('/streamelements', [StreamElementsIntegrationController::class, 'show'])->name('streamelements.show');
+        Route::post('/streamelements', [StreamElementsIntegrationController::class, 'save'])->name('streamelements.save');
+        Route::patch('/streamelements/test-mode', [StreamElementsIntegrationController::class, 'setTestMode'])->name('streamelements.test-mode');
+        Route::post('/streamelements/seed-count', [StreamElementsIntegrationController::class, 'seedTipCount'])->name('streamelements.seed-count');
+        Route::delete('/streamelements', [StreamElementsIntegrationController::class, 'disconnect'])->name('streamelements.disconnect');
     });
 });

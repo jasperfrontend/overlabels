@@ -33,6 +33,10 @@ return [
         'listener_secret' => env('STREAMLABS_LISTENER_SECRET'),
     ],
 
+    'streamelements' => [
+        'listener_secret' => env('STREAMELEMENTS_LISTENER_SECRET'),
+    ],
+
     'railway' => [
         'webhook_secret' => env('RAILWAY_WEBHOOK_SECRET'),
     ],
