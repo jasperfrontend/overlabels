@@ -25,6 +25,7 @@ const props = defineProps<{
   open: boolean;
   template: OverlayTemplate;
   control?: OverlayControl | null;
+  copyFrom?: OverlayControl | null;
   connectedServices?: string[];
   existingControls?: OverlayControl[];
   userScopedControls?: OverlayControl[];
@@ -52,20 +53,21 @@ const selectedServicePreset = computed(() => {
   return presets.find((p) => p.key === key) ?? null;
 });
 
+const isCopying = computed(() => !isEditing.value && !!props.copyFrom);
 const showKofiPresets = computed(
-  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('kofi'),
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('kofi'),
 );
 const showGpsPresets = computed(
-  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
 );
 const showStreamLabsPresets = computed(
-  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
 );
 const showStreamElementsPresets = computed(
-  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamelements'),
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamelements'),
 );
 const showTwitchPresets = computed(
-  () => !isEditing.value && props.template?.type === 'static',
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static',
 );
 
 // Filter out presets that already exist as controls on this template
@@ -231,6 +233,30 @@ watch(() => props.open, (open) => {
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
       expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
+    } else if (props.copyFrom) {
+      const c = props.copyFrom;
+      const cfg = c.config ?? {};
+      form.value = {
+        key: '',
+        label: `${c.label || c.key} (copy)`,
+        type: c.type,
+        value: c.value ?? '',
+        config: {
+          min: cfg.min ?? undefined,
+          max: cfg.max ?? undefined,
+          step: cfg.step ?? 1,
+          reset_value: cfg.reset_value ?? 0,
+          random: cfg.random ?? false,
+          random_interval: cfg.random_interval ?? 1000,
+          mode: cfg.mode ?? 'countup',
+          base_seconds: cfg.base_seconds ?? 0,
+          target_datetime: cfg.target_datetime ?? '',
+        },
+        sort_order: 0,
+      };
+      booleanValue.value = c.value === '1';
+      sortMode.value = 'after';
+      expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
     } else {
       form.value = {
         key: '',
@@ -353,7 +379,7 @@ async function save() {
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent :class="form.type === 'expression' ? 'max-w-300' : 'max-w-lg'">
       <DialogHeader>
-        <DialogTitle>{{ isEditing ? 'Edit Control' : 'Add Control' }}</DialogTitle>
+        <DialogTitle>{{ isEditing ? 'Edit Control' : copyFrom ? 'Duplicate Control' : 'Add Control' }}</DialogTitle>
       </DialogHeader>
 
       <div :class="form.type === 'expression' ? 'grid grid-cols-1 gap-6 py-2 md:grid-cols-2' : 'space-y-4 py-2'">

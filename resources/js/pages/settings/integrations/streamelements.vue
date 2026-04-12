@@ -130,7 +130,7 @@ function formatDate(iso: string | null): string {
               to add StreamElements data controls (donation count, latest donor name, etc.) that update live.
             </li>
             <li>
-              Enable test mode below, then visit <a href="https://streamelements.com/dashboard/activities"
+              Enable test mode below, then visit <a href="https://streamelements.com/dashboard/activity"
                                                     class="text-violet-400 hover:underline" target="_blank">your
               StreamElements dashboard</a>
               to fire a few test tips.

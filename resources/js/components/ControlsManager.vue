@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import axios from 'axios';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusIcon, PencilIcon, Trash2Icon, CopyIcon } from 'lucide-vue-next';
+import { PlusIcon, PencilIcon, Trash2Icon, CopyIcon, CopyPlusIcon } from 'lucide-vue-next';
 import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
@@ -22,6 +22,7 @@ const emit = defineEmits<{
 const controls = ref<OverlayControl[]>([...props.initialControls]);
 const modalOpen = ref(false);
 const editingControl = ref<OverlayControl | null>(null);
+const copyingFrom = ref<OverlayControl | null>(null);
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error'>('success');
 const showToast = ref(false);
@@ -37,11 +38,19 @@ function showMsg(msg: string, type: 'success' | 'error' = 'success') {
 
 function openAdd() {
   editingControl.value = null;
+  copyingFrom.value = null;
   modalOpen.value = true;
 }
 
 function openEdit(control: OverlayControl) {
   editingControl.value = control;
+  copyingFrom.value = null;
+  modalOpen.value = true;
+}
+
+function openCopy(control: OverlayControl) {
+  editingControl.value = null;
+  copyingFrom.value = control;
   modalOpen.value = true;
 }
 
@@ -123,6 +132,7 @@ function configSummary(ctrl: OverlayControl): string[] {
     v-model:open="modalOpen"
     :template="template"
     :control="editingControl"
+    :copy-from="copyingFrom"
     :connected-services="connectedServices"
     :existing-controls="controls"
     :user-scoped-controls="userScopedControls"
@@ -195,6 +205,15 @@ function configSummary(ctrl: OverlayControl): string[] {
             <div class="flex items-center justify-end gap-1">
               <button type="button" class="btn btn-sm btn-primary px-2" :title="`Edit Control: ${ctrl.label}`" @click.stop="openEdit(ctrl)">
                 <PencilIcon class="h-3.5 w-3.5" />
+              </button>
+              <button
+                v-if="!ctrl.source_managed"
+                type="button"
+                class="btn btn-sm btn-primary px-2"
+                :title="`Duplicate Control: ${ctrl.label}`"
+                @click.stop="openCopy(ctrl)"
+              >
+                <CopyPlusIcon class="h-3.5 w-3.5" />
               </button>
               <button type="button" class="btn btn-sm btn-danger px-2" :title="`Delete Control: ${ctrl.label}`" @click.stop="deleteControl(ctrl)">
                 <Trash2Icon class="h-3.5 w-3.5" />

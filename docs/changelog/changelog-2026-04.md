@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Feature: duplicate controls from the Controls Manager
+
+- Added a Duplicate button to each row in `ControlsManager.vue` (new `CopyPlusIcon` next to edit/delete). Clicking it
+  opens `ControlFormModal.vue` in add mode with every field (type, value, full config, expression text, boolean state)
+  pre-populated from the source control. The label becomes `"<original> (copy)"` so the auto-slugify watcher derives a
+  fresh key (e.g. `reel_1` -> `reel_1_copy`); the user can tweak anything and save.
+- New `copyFrom` prop on `ControlFormModal.vue`; dialog title switches to "Duplicate Control". The service preset
+  picker is hidden while copying so selecting a preset can't silently wipe the duplicated values. `source_managed`
+  rows don't show the Duplicate button since those need to go through the service preset flow.
+- Fixed a broken link on the StreamElements settings page: the "fire a few test tips" CTA pointed to
+  `streamelements.com/dashboard/activities` (404); corrected to `/dashboard/activity`.
+
 ## April 12th, 2026 - Fix: align StreamElements with donation-family naming and wire Preset Controls
 
 - Aligned StreamElements with Ko-fi and StreamLabs donation-family naming so a single alert template
