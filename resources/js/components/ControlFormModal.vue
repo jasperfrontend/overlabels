@@ -10,6 +10,18 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  Combobox,
+  ComboboxAnchor,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxTrigger,
+} from '@/components/ui/combobox';
+import { ChevronsUpDownIcon } from 'lucide-vue-next';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
   KOFI_PRESETS,
@@ -52,6 +64,16 @@ const selectedServicePreset = computed(() => {
   const key = servicePresetKey.value.substring(servicePresetKey.value.indexOf(':') + 1);
   return presets.find((p) => p.key === key) ?? null;
 });
+
+function displayPresetValue(combinedKey: string): string {
+  if (!combinedKey) return '';
+  const separatorIndex = combinedKey.indexOf(':');
+  if (separatorIndex < 0) return '';
+  const source = combinedKey.substring(0, separatorIndex);
+  const key = combinedKey.substring(separatorIndex + 1);
+  const preset = getPresetsForSource(source).find((p) => p.key === key);
+  return preset ? preset.label : '';
+}
 
 const isCopying = computed(() => !isEditing.value && !!props.copyFrom);
 const showKofiPresets = computed(
@@ -390,37 +412,70 @@ async function save() {
           <!-- Service Presets -->
           <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
-            <select
-              v-model="servicePresetKey"
-              class="w-full input-border"
-            >
-              <option value="">- Select a preset control -</option>
-              <optgroup v-if="showTwitchPresets && availableTwitchPresets.length" label="Twitch - Per-Stream Counters">
-                <option v-for="preset in availableTwitchPresets" :key="'twitch:' + preset.key" :value="'twitch:' + preset.key">
-                  {{ preset.label }} ({{ preset.type }})
-                </option>
-              </optgroup>
-              <optgroup v-if="showKofiPresets && availableKofiPresets.length" label="Ko-fi">
-                <option v-for="preset in availableKofiPresets" :key="'kofi:' + preset.key" :value="'kofi:' + preset.key">
-                  {{ preset.label }} ({{ preset.type }})
-                </option>
-              </optgroup>
-              <optgroup v-if="showGpsPresets && availableGpsPresets.length" label="GPSLogger">
-                <option v-for="preset in availableGpsPresets" :key="'gpslogger:' + preset.key" :value="'gpslogger:' + preset.key">
-                  {{ preset.label }} ({{ preset.type }})
-                </option>
-              </optgroup>
-              <optgroup v-if="showStreamLabsPresets && availableStreamLabsPresets.length" label="StreamLabs">
-                <option v-for="preset in availableStreamLabsPresets" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
-                  {{ preset.label }} ({{ preset.type }})
-                </option>
-              </optgroup>
-              <optgroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length" label="StreamElements">
-                <option v-for="preset in availableStreamElementsPresets" :key="'streamelements:' + preset.key" :value="'streamelements:' + preset.key">
-                  {{ preset.label }} ({{ preset.type }})
-                </option>
-              </optgroup>
-            </select>
+            <Combobox v-model="servicePresetKey" open-on-click open-on-focus>
+              <ComboboxAnchor>
+                <ComboboxInput
+                  :display-value="displayPresetValue"
+                  placeholder="Search preset controls..."
+                />
+                <ComboboxTrigger>
+                  <ChevronsUpDownIcon class="size-4 shrink-0" />
+                </ComboboxTrigger>
+              </ComboboxAnchor>
+              <ComboboxContent>
+                <ComboboxEmpty>No presets found.</ComboboxEmpty>
+                <ComboboxGroup v-if="showTwitchPresets && availableTwitchPresets.length">
+                  <ComboboxLabel>Twitch - Per-Stream Counters</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableTwitchPresets"
+                    :key="'twitch:' + preset.key"
+                    :value="'twitch:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showKofiPresets && availableKofiPresets.length">
+                  <ComboboxLabel>Ko-fi</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableKofiPresets"
+                    :key="'kofi:' + preset.key"
+                    :value="'kofi:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showGpsPresets && availableGpsPresets.length">
+                  <ComboboxLabel>GPSLogger</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableGpsPresets"
+                    :key="'gpslogger:' + preset.key"
+                    :value="'gpslogger:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showStreamLabsPresets && availableStreamLabsPresets.length">
+                  <ComboboxLabel>StreamLabs</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableStreamLabsPresets"
+                    :key="'streamlabs:' + preset.key"
+                    :value="'streamlabs:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length">
+                  <ComboboxLabel>StreamElements</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableStreamElementsPresets"
+                    :key="'streamelements:' + preset.key"
+                    :value="'streamelements:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+              </ComboboxContent>
+            </Combobox>
             <p v-if="selectedServicePreset && servicePresetSource" class="text-xs text-muted-foreground">
               Use <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:{{ servicePresetSource }}:{{ selectedServicePreset.key }}]]]</code>
               in your template. Value is managed automatically{{ servicePresetSource === 'twitch' ? ' - resets when you go live' : '' }}.

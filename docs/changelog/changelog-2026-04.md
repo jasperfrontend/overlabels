@@ -1,5 +1,22 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - UX: Combobox replaces the massive preset picker in the Add Control modal
+
+- Replaced the huge native `<select>` in `ControlFormModal.vue` (Stream Controls > preset picker) with a searchable
+  Combobox built on Reka UI primitives. Users can now type to filter across every preset from every connected service
+  instead of scrolling a wall of optgroups - for example, typing "bits" immediately narrows to the new Twitch
+  bits/cheer presets, and typing "latest" surfaces `latest_donor_name`, `latest_cheerer_name`, etc. across Ko-fi,
+  StreamLabs, StreamElements, and Twitch.
+- Added a new shadcn-style wrapper set under `resources/js/components/ui/combobox/`: `Combobox`, `ComboboxAnchor`,
+  `ComboboxInput`, `ComboboxTrigger`, `ComboboxContent`, `ComboboxEmpty`, `ComboboxGroup`, `ComboboxLabel`,
+  `ComboboxItem` (plus barrel `index.ts`). Styling matches the rest of the app (Overlabels violet focus ring on the
+  anchor, `data-[highlighted]` and `data-[state=checked]` item states, `rounded-sm` popover, `max-h-72` scrolling
+  viewport) and the content uses Reka's `--reka-combobox-trigger-width` CSS variable so the dropdown matches the
+  anchor's width.
+- Filtering is Reka's built-in `useFilter` `contains` (case/accent-insensitive), so no custom filter code was needed.
+  The input displays the selected preset's human label via a `display-value` function that splits the stored
+  `source:key` composite.
+
 ## April 13th, 2026 - Feature: Twitch Bits/Cheer preset controls (parity with donation services)
 
 - Added five new Twitch stream controls so `channel.cheer` payloads can drive overlays the same way Ko-fi,
