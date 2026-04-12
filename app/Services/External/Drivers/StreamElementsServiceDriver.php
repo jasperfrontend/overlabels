@@ -90,7 +90,7 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
 
     public function getSupportedEventTypes(): array
     {
-        return ['tip'];
+        return ['donation'];
     }
 
     /**
