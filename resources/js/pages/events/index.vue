@@ -14,6 +14,7 @@ interface EventMapping {
   template_id: number | null;
   duration_ms: number;
   transition_in: string;
+
   transition_out: string;
   enabled: boolean;
 }
