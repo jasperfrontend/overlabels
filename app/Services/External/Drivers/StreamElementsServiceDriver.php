@@ -41,7 +41,7 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function parseEventType(array $payload): ?string
     {
         return match ($payload['type'] ?? '') {
-            'tip' => 'tip',
+            'tip' => 'donation',
             default => null,
         };
     }
