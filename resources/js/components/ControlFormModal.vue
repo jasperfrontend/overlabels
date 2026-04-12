@@ -15,6 +15,7 @@ import {
   KOFI_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
+  STREAMELEMENTS_PRESETS,
   TWITCH_PRESETS,
   getPresetsForSource,
 } from '@/components/controls/controlPresets';
@@ -60,6 +61,9 @@ const showGpsPresets = computed(
 const showStreamLabsPresets = computed(
   () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
 );
+const showStreamElementsPresets = computed(
+  () => !isEditing.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamelements'),
+);
 const showTwitchPresets = computed(
   () => !isEditing.value && props.template?.type === 'static',
 );
@@ -75,6 +79,7 @@ const availableTwitchPresets = computed(() => TWITCH_PRESETS.filter((p) => !isPr
 const availableKofiPresets = computed(() => KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key)));
 const availableGpsPresets = computed(() => GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key)));
 const availableStreamLabsPresets = computed(() => STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key)));
+const availableStreamElementsPresets = computed(() => STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key)));
 
 watch(servicePresetKey, (combinedKey) => {
   if (!combinedKey) {
@@ -357,7 +362,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <select
               v-model="servicePresetKey"
@@ -381,6 +386,11 @@ async function save() {
               </optgroup>
               <optgroup v-if="showStreamLabsPresets && availableStreamLabsPresets.length" label="StreamLabs">
                 <option v-for="preset in availableStreamLabsPresets" :key="'streamlabs:' + preset.key" :value="'streamlabs:' + preset.key">
+                  {{ preset.label }} ({{ preset.type }})
+                </option>
+              </optgroup>
+              <optgroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length" label="StreamLabs">
+                <option v-for="preset in availableStreamElementsPresets" :key="'streamelements:' + preset.key" :value="'streamelements:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>

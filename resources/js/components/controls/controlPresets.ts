@@ -31,6 +31,15 @@ export const STREAMLABS_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
 ];
 
+export const STREAMELEMENTS_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'StreamElements Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'StreamElements Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'StreamElements Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'StreamElements Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'StreamElements Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'StreamElements Total Received (session)', type: 'number' },
+];
+
 export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
@@ -46,6 +55,7 @@ export function getPresetsForSource(source: string): ServicePreset[] {
     case 'kofi': return KOFI_PRESETS;
     case 'gpslogger': return GPS_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
+    case 'streamelements': return STREAMELEMENTS_PRESETS;
     default: return [];
   }
 }
