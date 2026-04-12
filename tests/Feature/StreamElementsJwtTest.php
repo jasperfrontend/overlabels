@@ -119,7 +119,7 @@ test('disconnect deletes integration and deprovisions controls', function () {
     ]);
 
     OverlayControl::provisionServiceControl($user, 'streamelements', [
-        'key' => 'tips_received', 'type' => 'counter', 'label' => 'Tips', 'value' => '0',
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Donations', 'value' => '0',
     ]);
 
     $this->delete('/settings/integrations/streamelements')

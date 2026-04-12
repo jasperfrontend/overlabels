@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('transition_out')->default('fade')->after('transition_in');
         });
 
-        DB::statement("UPDATE event_template_mappings SET transition_in = transition_type, transition_out = transition_type");
+        DB::statement('UPDATE event_template_mappings SET transition_in = transition_type, transition_out = transition_type');
 
         Schema::table('event_template_mappings', function (Blueprint $table) {
             $table->dropColumn('transition_type');
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->string('transition_type')->default('fade')->after('duration_ms');
         });
 
-        DB::statement("UPDATE event_template_mappings SET transition_type = transition_in");
+        DB::statement('UPDATE event_template_mappings SET transition_type = transition_in');
 
         Schema::table('event_template_mappings', function (Blueprint $table) {
             $table->dropColumn(['transition_in', 'transition_out']);

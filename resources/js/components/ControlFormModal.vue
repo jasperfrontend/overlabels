@@ -389,7 +389,7 @@ async function save() {
                   {{ preset.label }} ({{ preset.type }})
                 </option>
               </optgroup>
-              <optgroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length" label="StreamLabs">
+              <optgroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length" label="StreamElements">
                 <option v-for="preset in availableStreamElementsPresets" :key="'streamelements:' + preset.key" :value="'streamelements:' + preset.key">
                   {{ preset.label }} ({{ preset.type }})
                 </option>

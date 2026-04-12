@@ -7,7 +7,6 @@ use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Log;
 
 class StreamElementsServiceDriver implements ExternalServiceDriver
 {
@@ -55,7 +54,6 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
         $data = $payload['data'] ?? [];
-        Log::info('StreamElements payload', ['payload' => $payload]);
         $fromName = $data['displayName'] ?? $data['username'] ?? null;
         $message = $data['message'] ?? null;
         $amount = isset($data['amount']) ? (string) $data['amount'] : null;
@@ -63,7 +61,7 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
 
         $messageId = $payload['_id']
             ?? $data['tipId']
-            ?? ('se_'. Str::uuid());
+            ?? ('se_'.Str::uuid());
 
         $tags = [
             'event.from_name' => (string) ($fromName ?? ''),
@@ -99,12 +97,12 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function getAutoProvisionedControls(): array
     {
         return [
-            ['key' => 'tips_received', 'type' => 'counter', 'label' => 'StreamElements Tips Received', 'value' => '0'],
-            ['key' => 'latest_tipper_name', 'type' => 'text', 'label' => 'Latest Tipper Name', 'value' => ''],
-            ['key' => 'latest_tip_amount', 'type' => 'number', 'label' => 'Latest Tip Amount', 'value' => '0'],
-            ['key' => 'latest_tip_message', 'type' => 'text', 'label' => 'Latest Tip Message', 'value' => ''],
-            ['key' => 'latest_tip_currency', 'type' => 'text', 'label' => 'Latest Tip Currency', 'value' => ''],
-            ['key' => 'total_tips_received', 'type' => 'number', 'label' => 'Total StreamElements Amount (session)', 'value' => '0'],
+            ['key' => 'donations_received', 'type' => 'counter', 'label' => 'StreamElements Donations Received', 'value' => '0'],
+            ['key' => 'latest_donor_name', 'type' => 'text', 'label' => 'Latest Donor Name', 'value' => ''],
+            ['key' => 'latest_donation_amount', 'type' => 'number', 'label' => 'Latest Donation Amount', 'value' => '0'],
+            ['key' => 'latest_donation_message', 'type' => 'text', 'label' => 'Latest Donation Message', 'value' => ''],
+            ['key' => 'latest_donation_currency', 'type' => 'text', 'label' => 'Latest Currency', 'value' => ''],
+            ['key' => 'total_received', 'type' => 'number', 'label' => 'Total StreamElements Amount (session)', 'value' => '0'],
         ];
     }
 
@@ -113,20 +111,20 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
      */
     public function getControlUpdates(NormalizedExternalEvent $event): array
     {
-        if ($event->getEventType() !== 'tip') {
+        if ($event->getEventType() !== 'donation') {
             return [];
         }
 
         $updates = [
-            'tips_received' => ['action' => 'increment'],
-            'latest_tipper_name' => $event->getFromName() ?? '',
-            'latest_tip_message' => $event->getMessage() ?? '',
-            'latest_tip_currency' => $event->getCurrency() ?? '',
+            'donations_received' => ['action' => 'increment'],
+            'latest_donor_name' => $event->getFromName() ?? '',
+            'latest_donation_message' => $event->getMessage() ?? '',
+            'latest_donation_currency' => $event->getCurrency() ?? '',
         ];
 
         if ($event->getAmount() !== null) {
-            $updates['latest_tip_amount'] = $event->getAmount();
-            $updates['total_tips_received'] = ['action' => 'add', 'amount' => (float) $event->getAmount()];
+            $updates['latest_donation_amount'] = $event->getAmount();
+            $updates['total_received'] = ['action' => 'add', 'amount' => (float) $event->getAmount()];
         }
 
         return $updates;

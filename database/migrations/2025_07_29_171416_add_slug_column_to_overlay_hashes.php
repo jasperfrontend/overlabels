@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\FunSlugGenerationService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -20,7 +21,7 @@ return new class extends Migration
         });
 
         // Update existing records to have fun slugs
-        $slugService = app(\App\Services\FunSlugGenerationService::class);
+        $slugService = app(FunSlugGenerationService::class);
 
         DB::table('overlay_hashes')->get()->each(function ($hash) use ($slugService) {
             $slug = $slugService->generateUniqueSlug();

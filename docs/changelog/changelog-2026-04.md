@@ -1,14 +1,30 @@
 # CHANGELOG APRIL 2026
 
+## April 12th, 2026 - Fix: align StreamElements with donation-family naming and wire Preset Controls
+
+- Aligned StreamElements with Ko-fi and StreamLabs donation-family naming so a single alert template
+  (`[[[if:event.type = donation]]]`) fires for every donation source. `parseEventType()` maps SE's `tip` to
+  `donation`; driver, controller, settings page, tests, and changelog all now use donation-family keys.
+- Fixed a silent bug in `StreamElementsServiceDriver::getControlUpdates()`: it checked `!== 'tip'` while
+  `parseEventType()` returned `'donation'`, so no control updates ever ran. Now checks `!== 'donation'`.
+- Fixed a copy-paste bug in `ControlFormModal.vue` where the StreamElements optgroup carried `label="StreamLabs"`.
+- Renamed controller method `seedTipCount()` -> `seedDonationCount()`, settings keys `tips_seed_set`/`tips_seed_value`
+  -> `donations_seed_set`/`donations_seed_value`, and control keys `tips_received` -> `donations_received`,
+  `latest_tipper_name` -> `latest_donor_name`, `latest_tip_*` -> `latest_donation_*`, `total_tips_received` ->
+  `total_received`.
+- Existing StreamElements integrations need a one-time disconnect + reconnect from the settings page to drop the
+  old tip-family controls and reprovision under the new donation-family keys.
+
 ## April 12th, 2026 - Feature: StreamElements tipping integration
 
 - Added StreamElements as a full External Integration, authenticated via user-supplied JWT tokens. StreamElements does
   not offer self-serve OAuth app registration, so the integration uses the JWT path that every user can generate from
   their StreamElements dashboard: Account > Channels > Show secrets > JWT Token.
 - New `StreamElementsServiceDriver` mirrors the StreamLabs pattern: verifies listener requests, normalizes the SE tip
-  payload (`_id`, `data.displayName`/`username`, `amount`, `message`, `currency`, `tipId`), and auto-provisions six
-  controls (`tips_received`, `latest_tipper_name`, `latest_tip_amount`, `latest_tip_message`, `latest_tip_currency`,
-  `total_tips_received`).
+  payload (`_id`, `data.displayName`/`username`, `amount`, `message`, `currency`, `tipId`), maps SE's `tip` event type
+  to `donation` (aligning with Ko-fi and StreamLabs so one alert template can target `[[[if:event.type = donation]]]`
+  for all three sources), and auto-provisions six controls (`donations_received`, `latest_donor_name`,
+  `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`).
 - Internal API endpoint `GET /api/internal/streamelements/integrations` is polled by the listener every 60s and
   returns the per-user JWT plus listener secret for each active integration. Authenticated with
   `STREAMELEMENTS_LISTENER_SECRET`.
@@ -17,7 +33,7 @@
   their JWT, and drops sockets on `unauthorized` (JWT revoked server-side).
 - New settings page at `/settings/integrations/streamelements` with a password-type JWT input, save/replace button,
   test mode toggle, one-time starting tip count seed, and a link to the StreamElements dashboard.
-- Template tag syntax: `[[[c:streamelements:tips_received]]]`, `[[[c:streamelements:latest_tipper_name]]]`, etc.
+- Template tag syntax: `[[[c:streamelements:donations_received]]]`, `[[[c:streamelements:latest_donor_name]]]`, etc.
 - Added `STREAMELEMENTS_LISTENER_SECRET` to `.env.example` and `config/services.php`. Registered in
   `ExternalServiceRegistry` and `ExternalEventTemplateMapping::SERVICE_EVENT_TYPES`.
 - 29 new tests (driver, JWT save/disconnect, webhook) covering payload normalization, dedup, listener secret

@@ -100,7 +100,7 @@ test('returns 200 and stores event for valid tip payload', function () {
     $this->assertDatabaseHas('external_events', [
         'user_id' => $user->id,
         'service' => 'streamelements',
-        'event_type' => 'tip',
+        'event_type' => 'donation',
         'message_id' => $eventId,
     ]);
 });
@@ -131,13 +131,13 @@ test('returns duplicate status for duplicate _id', function () {
 // Control updates
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('increments tips_received control on tip', function () {
+test('increments donations_received control on tip', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
     OverlayControl::provisionServiceControl($user, 'streamelements', [
-        'key' => 'tips_received', 'type' => 'counter', 'label' => 'Tips', 'value' => '0',
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Donations', 'value' => '0',
     ]);
 
     postStreamElements($integration->webhook_token, streamElementsTipPayload())
@@ -146,20 +146,20 @@ test('increments tips_received control on tip', function () {
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
         'source' => 'streamelements',
-        'key' => 'tips_received',
+        'key' => 'donations_received',
         'value' => '1',
     ]);
 
     Event::assertDispatched(ControlValueUpdated::class);
 });
 
-test('sets latest_tipper_name on tip', function () {
+test('sets latest_donor_name on tip', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
     OverlayControl::provisionServiceControl($user, 'streamelements', [
-        'key' => 'latest_tipper_name', 'type' => 'text', 'label' => 'Latest Tipper', 'value' => '',
+        'key' => 'latest_donor_name', 'type' => 'text', 'label' => 'Latest Donor', 'value' => '',
     ]);
 
     $payload = streamElementsTipPayload(['data_overrides' => ['displayName' => 'GenerousTipper']]);
@@ -168,18 +168,18 @@ test('sets latest_tipper_name on tip', function () {
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
         'source' => 'streamelements',
-        'key' => 'latest_tipper_name',
+        'key' => 'latest_donor_name',
         'value' => 'GenerousTipper',
     ]);
 });
 
-test('accumulates total_tips_received across multiple tips', function () {
+test('accumulates total_received across multiple tips', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
     OverlayControl::provisionServiceControl($user, 'streamelements', [
-        'key' => 'total_tips_received', 'type' => 'number', 'label' => 'Total', 'value' => '0',
+        'key' => 'total_received', 'type' => 'number', 'label' => 'Total', 'value' => '0',
     ]);
 
     postStreamElements($integration->webhook_token, streamElementsTipPayload([
@@ -193,7 +193,7 @@ test('accumulates total_tips_received across multiple tips', function () {
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
         'source' => 'streamelements',
-        'key' => 'total_tips_received',
+        'key' => 'total_received',
         'value' => '15.5',
     ]);
 });

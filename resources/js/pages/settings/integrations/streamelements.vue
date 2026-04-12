@@ -18,8 +18,8 @@ interface IntegrationData {
   last_received_at: string | null;
   settings: Record<string, unknown>;
   has_jwt: boolean;
-  tips_seed_set: boolean;
-  tips_seed_value: number | null;
+  donations_seed_set: boolean;
+  donations_seed_value: number | null;
 }
 
 const props = defineProps<{
@@ -43,8 +43,8 @@ const testModeLoading = ref(false);
 const seedCount = ref<number | null>(null);
 const seedLoading = ref(false);
 const seedError = ref<string | null>(null);
-const tipsSeedSet = ref(props.integration.tips_seed_set);
-const tipsSeedValue = ref(props.integration.tips_seed_value);
+const donationsSeedSet = ref(props.integration.donations_seed_set);
+const donationsSeedValue = ref(props.integration.donations_seed_value);
 
 function save() {
   form.post('/settings/integrations/streamelements', {
@@ -63,8 +63,8 @@ async function setSeedCount() {
     const { data } = await axios.post('/settings/integrations/streamelements/seed-count', {
       initial_count: seedCount.value
     });
-    tipsSeedSet.value = data.tips_seed_set;
-    tipsSeedValue.value = data.tips_seed_value;
+    donationsSeedSet.value = data.donations_seed_set;
+    donationsSeedValue.value = data.donations_seed_value;
   } catch (e: unknown) {
     const err = e as { response?: { data?: { error?: string } } };
     seedError.value = err.response?.data?.error ?? 'Something went wrong.';
@@ -122,12 +122,12 @@ function formatDate(iso: string | null): string {
           <ol class="list-decimal pl-4 space-y-1">
             <li>
               Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
-              to configure which alert template fires for StreamElements tips.
+              to configure which alert template fires for StreamElements donations.
             </li>
             <li>
               Open any <strong>static</strong> overlay template &rarr; <strong>Controls</strong> tab &rarr; <strong>Add
               control</strong>
-              to add StreamElements data controls (tip count, latest tipper name, etc.) that update live.
+              to add StreamElements data controls (donation count, latest donor name, etc.) that update live.
             </li>
             <li>
               Enable test mode below, then visit <a href="https://streamelements.com/dashboard/activities"
@@ -206,7 +206,7 @@ function formatDate(iso: string | null): string {
             <p class="text-muted-foreground text-sm">
               Disables duplicate event detection. Fire the same tip as many times as you like.
               <span v-if="testMode" class="text-yellow-500 font-bold">
-                Turn this off before going live - your tip count will reset to {{ tipsSeedValue ?? 0 }}.
+                Turn this off before going live - your donation count will reset to {{ donationsSeedValue ?? 0 }}.
               </span>
             </p>
             <div v-if="testMode"
@@ -216,17 +216,17 @@ function formatDate(iso: string | null): string {
           </div>
         </template>
 
-        <!-- Starting tip count (one-time seed) -->
+        <!-- Starting donation count (one-time seed) -->
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Starting tip count</p>
+            <p class="font-medium text-sm">Starting donation count</p>
 
-            <template v-if="tipsSeedSet">
+            <template v-if="donationsSeedSet">
               <p class="text-muted-foreground text-sm">
-                Starting count set to <strong>{{ tipsSeedValue?.toLocaleString() }}</strong>.
+                Starting count set to <strong>{{ donationsSeedValue?.toLocaleString() }}</strong>.
                 Your <code
-                class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:streamelements:tips_received]]]</code>
+                class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:streamelements:donations_received]]]</code>
                 controls started from this value.
               </p>
               <p class="text-muted-foreground text-sm">
@@ -238,8 +238,9 @@ function formatDate(iso: string | null): string {
 
             <template v-else>
               <p class="text-muted-foreground text-sm">
-                Had StreamElements tips before joining? Set your starting count so your overlay doesn't begin at zero.
-                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">tips_received</code>
+                Had StreamElements donations before joining? Set your starting count so your overlay doesn't begin at
+                zero. This can only be set once. All your
+                <code class="rounded bg-black/10 px-1 dark:bg-white/10">donations_received</code>
                 controls update immediately.
               </p>
               <div class="flex gap-2 items-start">

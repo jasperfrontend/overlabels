@@ -20,8 +20,8 @@ test('getServiceKey returns streamelements', function () {
 // parseEventType
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('parseEventType maps tip to tip', function () {
-    expect($this->driver->parseEventType(['type' => 'tip']))->toBe('tip');
+test('parseEventType maps tip to donation', function () {
+    expect($this->driver->parseEventType(['type' => 'tip']))->toBe('donation');
 });
 
 test('parseEventType returns null for unknown type', function () {
@@ -51,10 +51,10 @@ test('normalizeEvent correctly maps StreamElements tip payload', function () {
         ],
     ];
 
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
 
     expect($event->getService())->toBe('streamelements');
-    expect($event->getEventType())->toBe('tip');
+    expect($event->getEventType())->toBe('donation');
     expect($event->getMessageId())->toBe('5f8d0d55b54764421b7156c4');
     expect($event->getFromName())->toBe('TestTipper');
     expect($event->getMessage())->toBe('Great stream!');
@@ -80,13 +80,13 @@ test('normalizeEvent falls back to tipId when _id missing', function () {
         ],
     ];
 
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
     expect($event->getMessageId())->toBe('fallback_tip_id');
 });
 
 test('normalizeEvent generates id when no identifiers present', function () {
     $payload = ['type' => 'tip', 'data' => ['username' => 'Anon']];
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
 
     expect($event->getMessageId())->toBeString()
         ->not()->toBeEmpty()
@@ -104,13 +104,13 @@ test('normalizeEvent falls back to username when displayName missing', function 
         ],
     ];
 
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
     expect($event->getFromName())->toBe('tipper_user');
 });
 
 test('normalizeEvent handles empty data array', function () {
     $payload = ['_id' => 'x', 'type' => 'tip', 'data' => []];
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
 
     expect($event->getFromName())->toBeNull();
     expect($event->getAmount())->toBeNull();
@@ -125,12 +125,12 @@ test('getAutoProvisionedControls returns expected control keys', function () {
     $keys = array_column($controls, 'key');
 
     expect($controls)->toHaveCount(6);
-    expect($keys)->toContain('tips_received');
-    expect($keys)->toContain('latest_tipper_name');
-    expect($keys)->toContain('latest_tip_amount');
-    expect($keys)->toContain('latest_tip_message');
-    expect($keys)->toContain('latest_tip_currency');
-    expect($keys)->toContain('total_tips_received');
+    expect($keys)->toContain('donations_received');
+    expect($keys)->toContain('latest_donor_name');
+    expect($keys)->toContain('latest_donation_amount');
+    expect($keys)->toContain('latest_donation_message');
+    expect($keys)->toContain('latest_donation_currency');
+    expect($keys)->toContain('total_received');
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ test('verifyRequest returns true when secret matches', function () {
 // getControlUpdates
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('getControlUpdates increments tips_received for tip', function () {
+test('getControlUpdates increments donations_received for donation', function () {
     $payload = [
         '_id' => 'evt_001',
         'type' => 'tip',
@@ -177,18 +177,18 @@ test('getControlUpdates increments tips_received for tip', function () {
             'message' => 'Nice work!',
         ],
     ];
-    $event = $this->driver->normalizeEvent($payload, 'tip');
+    $event = $this->driver->normalizeEvent($payload, 'donation');
     $updates = $this->driver->getControlUpdates($event);
 
-    expect($updates['tips_received'])->toBe(['action' => 'increment']);
-    expect($updates['latest_tipper_name'])->toBe('Bob');
-    expect($updates['latest_tip_amount'])->toBe('10.00');
-    expect($updates['latest_tip_message'])->toBe('Nice work!');
-    expect($updates['latest_tip_currency'])->toBe('USD');
-    expect($updates['total_tips_received'])->toBe(['action' => 'add', 'amount' => 10.0]);
+    expect($updates['donations_received'])->toBe(['action' => 'increment']);
+    expect($updates['latest_donor_name'])->toBe('Bob');
+    expect($updates['latest_donation_amount'])->toBe('10.00');
+    expect($updates['latest_donation_message'])->toBe('Nice work!');
+    expect($updates['latest_donation_currency'])->toBe('USD');
+    expect($updates['total_received'])->toBe(['action' => 'add', 'amount' => 10.0]);
 });
 
-test('getControlUpdates returns empty for non-tip events', function () {
+test('getControlUpdates returns empty for non-donation events', function () {
     $payload = [
         '_id' => 'x',
         'type' => 'follow',

@@ -43,7 +43,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/streamelements', [StreamElementsIntegrationController::class, 'show'])->name('streamelements.show');
         Route::post('/streamelements', [StreamElementsIntegrationController::class, 'save'])->name('streamelements.save');
         Route::patch('/streamelements/test-mode', [StreamElementsIntegrationController::class, 'setTestMode'])->name('streamelements.test-mode');
-        Route::post('/streamelements/seed-count', [StreamElementsIntegrationController::class, 'seedTipCount'])->name('streamelements.seed-count');
+        Route::post('/streamelements/seed-count', [StreamElementsIntegrationController::class, 'seedDonationCount'])->name('streamelements.seed-count');
         Route::delete('/streamelements', [StreamElementsIntegrationController::class, 'disconnect'])->name('streamelements.disconnect');
     });
 });

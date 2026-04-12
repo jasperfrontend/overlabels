@@ -16,14 +16,14 @@ return new class extends Migration
         // threshold, so dead rows pile up. Setting a 1% scale factor means
         // autovacuum kicks in as soon as ~1 dead row exists.
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("
+            DB::statement('
                 ALTER TABLE sessions
                 SET (
                     autovacuum_vacuum_scale_factor = 0.01,
                     autovacuum_analyze_scale_factor = 0.01,
                     autovacuum_vacuum_cost_delay = 2
                 )
-            ");
+            ');
         }
     }
 
@@ -37,7 +37,7 @@ return new class extends Migration
         });
 
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("ALTER TABLE sessions RESET (autovacuum_vacuum_scale_factor, autovacuum_analyze_scale_factor, autovacuum_vacuum_cost_delay)");
+            DB::statement('ALTER TABLE sessions RESET (autovacuum_vacuum_scale_factor, autovacuum_analyze_scale_factor, autovacuum_vacuum_cost_delay)');
         }
     }
 };

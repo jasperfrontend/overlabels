@@ -276,7 +276,7 @@ class OverlayHashController extends Controller
 
         try {
             // Get fresh Twitch data for this user
-            $twitchApiService = app(\App\Services\TwitchApiService::class);
+            $twitchApiService = app(TwitchApiService::class);
             $twitchData = $twitchApiService->getExtendedUserData($user->access_token, $user->twitch_id);
 
             // Determine an output format based on request

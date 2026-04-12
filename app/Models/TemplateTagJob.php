@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $user
+ *
  * @method static Builder<static>|TemplateTagJob newModelQuery()
  * @method static Builder<static>|TemplateTagJob newQuery()
  * @method static Builder<static>|TemplateTagJob query()
@@ -38,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|TemplateTagJob whereStatus($value)
  * @method static Builder<static>|TemplateTagJob whereUpdatedAt($value)
  * @method static Builder<static>|TemplateTagJob whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class TemplateTagJob extends Model

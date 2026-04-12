@@ -39,8 +39,8 @@ class StreamElementsIntegrationController extends Controller
                 'last_received_at' => $integration->last_received_at?->toIso8601String(),
                 'settings' => $settings,
                 'has_jwt' => ! empty($credentials['jwt_token']),
-                'tips_seed_set' => ! empty($settings['tips_seed_set']),
-                'tips_seed_value' => $settings['tips_seed_value'] ?? null,
+                'donations_seed_set' => ! empty($settings['donations_seed_set']),
+                'donations_seed_value' => $settings['donations_seed_value'] ?? null,
             ] : [
                 'connected' => false,
                 'enabled' => false,
@@ -48,8 +48,8 @@ class StreamElementsIntegrationController extends Controller
                 'last_received_at' => null,
                 'settings' => [],
                 'has_jwt' => false,
-                'tips_seed_set' => false,
-                'tips_seed_value' => null,
+                'donations_seed_set' => false,
+                'donations_seed_value' => null,
             ],
         ]);
     }
@@ -116,7 +116,7 @@ class StreamElementsIntegrationController extends Controller
 
         if (! $validated['test_mode']) {
             $settings = $integration->settings ?? [];
-            $seedValue = (string) ($settings['tips_seed_value'] ?? 0);
+            $seedValue = (string) ($settings['donations_seed_value'] ?? 0);
 
             $controls = OverlayControl::where('user_id', $user->id)
                 ->where('source', 'streamelements')
@@ -126,7 +126,7 @@ class StreamElementsIntegrationController extends Controller
 
             foreach ($controls as $control) {
                 $resetValue = match ($control->key) {
-                    'tips_received' => $seedValue,
+                    'donations_received' => $seedValue,
                     default => in_array($control->type, ['counter', 'number']) ? '0' : '',
                 };
 
@@ -149,7 +149,7 @@ class StreamElementsIntegrationController extends Controller
         return response()->json(['test_mode' => $integration->test_mode]);
     }
 
-    public function seedTipCount(Request $request): JsonResponse
+    public function seedDonationCount(Request $request): JsonResponse
     {
         $user = auth()->user();
 
@@ -163,7 +163,7 @@ class StreamElementsIntegrationController extends Controller
 
         $settings = $integration->settings ?? [];
 
-        if (! empty($settings['tips_seed_set'])) {
+        if (! empty($settings['donations_seed_set'])) {
             return response()->json(['error' => 'Starting count has already been set.'], 403);
         }
 
@@ -173,19 +173,19 @@ class StreamElementsIntegrationController extends Controller
 
         OverlayControl::where('user_id', $user->id)
             ->where('source', 'streamelements')
-            ->where('key', 'tips_received')
+            ->where('key', 'donations_received')
             ->where('source_managed', true)
             ->update(['value' => (string) $validated['initial_count']]);
 
         $integration->settings = array_merge($settings, [
-            'tips_seed_set' => true,
-            'tips_seed_value' => $validated['initial_count'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => $validated['initial_count'],
         ]);
         $integration->save();
 
         return response()->json([
-            'tips_seed_set' => true,
-            'tips_seed_value' => $validated['initial_count'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => $validated['initial_count'],
         ]);
     }
 
