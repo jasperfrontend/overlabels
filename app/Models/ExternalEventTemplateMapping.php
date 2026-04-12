@@ -105,7 +105,7 @@ class ExternalEventTemplateMapping extends Model
             'donation' => 'StreamLabs Donation',
         ],
         'streamelements' => [
-            'tip' => 'StreamElements Tip',
+            'donation' => 'StreamElements Tip',
         ],
     ];
 
