@@ -15,6 +15,7 @@ const props = defineProps<{
 /** Known external service sources and their display labels. */
 const SERVICE_LABELS: Record<string, string> = {
   kofi: 'Ko-fi',
+  streamelements: 'StreamElements',
   streamlabs: 'Streamlabs',
   gpslogger: 'GPSLogger',
 };
