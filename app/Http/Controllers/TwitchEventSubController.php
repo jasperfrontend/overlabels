@@ -580,7 +580,7 @@ class TwitchEventSubController extends Controller
                 } elseif ($eventType === 'stream.offline') {
                     $this->streamStateMachine->handleEventSubOffline($user, $event);
                 } else {
-                    $this->streamSessionService->handleEvent($user, $eventType);
+                    $this->streamSessionService->handleEvent($user, $eventType, $event);
                 }
             }
 

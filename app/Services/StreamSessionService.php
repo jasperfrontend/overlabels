@@ -21,6 +21,7 @@ class StreamSessionService
         'channel.subscription.message' => 'resubs_this_stream',
         'channel.raid' => 'raids_this_stream',
         'channel.channel_points_custom_reward_redemption.add' => 'redemptions_this_stream',
+        'channel.cheer' => 'cheers_this_stream',
     ];
 
     /**
@@ -33,6 +34,11 @@ class StreamSessionService
         ['key' => 'resubs_this_stream', 'type' => 'counter', 'label' => 'Resubs This Stream', 'value' => '0'],
         ['key' => 'raids_this_stream', 'type' => 'counter', 'label' => 'Raids This Stream', 'value' => '0'],
         ['key' => 'redemptions_this_stream', 'type' => 'counter', 'label' => 'Redemptions This Stream', 'value' => '0'],
+        ['key' => 'cheers_this_stream', 'type' => 'counter', 'label' => 'Cheers This Stream', 'value' => '0'],
+        ['key' => 'bits_this_stream', 'type' => 'number', 'label' => 'Bits This Stream (total)', 'value' => '0'],
+        ['key' => 'latest_cheerer_name', 'type' => 'text', 'label' => 'Latest Cheerer Name', 'value' => ''],
+        ['key' => 'latest_cheer_amount', 'type' => 'number', 'label' => 'Latest Cheer Amount (bits)', 'value' => '0'],
+        ['key' => 'latest_cheer_message', 'type' => 'text', 'label' => 'Latest Cheer Message', 'value' => ''],
     ];
 
     /**
@@ -77,37 +83,67 @@ class StreamSessionService
 
     /**
      * Handle a countable Twitch event: increment the matching control if user has one.
+     * For channel.cheer, also accumulates bits and records latest-cheer details.
      */
-    public function handleEvent(User $user, string $eventType): void
+    public function handleEvent(User $user, string $eventType, array $event = []): void
     {
         $controlKey = self::EVENT_CONTROL_MAP[$eventType] ?? null;
+        $isCheer = $eventType === 'channel.cheer';
 
-        if (! $controlKey) {
+        if (! $controlKey && ! $isCheer) {
             return;
         }
 
-        // Only increment if user is confidently live
+        // Only apply if user is confidently live
         $state = StreamState::forUser($user);
         if (! $state->isConfidentlyLive()) {
             return;
         }
 
+        if ($controlKey) {
+            $this->applyTwitchControl($user, $controlKey, function (OverlayControl $control) {
+                $step = (float) ($control->config['step'] ?? 1);
+                $current = (float) ($control->value ?? 0);
+
+                return (string) ($current + $step);
+            });
+
+            Log::info("Incremented twitch control {$controlKey} for user {$user->id}");
+        }
+
+        if ($isCheer) {
+            $bits = (int) ($event['bits'] ?? 0);
+            $cheererName = ($event['is_anonymous'] ?? false)
+                ? 'Anonymous'
+                : ($event['user_name'] ?? 'Anonymous');
+            $message = (string) ($event['message'] ?? '');
+
+            $this->applyTwitchControl($user, 'bits_this_stream', function (OverlayControl $control) use ($bits) {
+                $current = (float) ($control->value ?? 0);
+
+                return (string) ($current + $bits);
+            });
+            $this->applyTwitchControl($user, 'latest_cheerer_name', fn () => $cheererName);
+            $this->applyTwitchControl($user, 'latest_cheer_amount', fn () => (string) $bits);
+            $this->applyTwitchControl($user, 'latest_cheer_message', fn () => $message);
+        }
+    }
+
+    /**
+     * Update every twitch source_managed control matching this key, then broadcast each change.
+     * The transformer receives the control and returns the new stringified value.
+     */
+    private function applyTwitchControl(User $user, string $key, callable $transform): void
+    {
         $controls = OverlayControl::where('user_id', $user->id)
             ->where('source', 'twitch')
-            ->where('key', $controlKey)
+            ->where('key', $key)
             ->where('source_managed', true)
             ->with('template')
             ->get();
 
-        if ($controls->isEmpty()) {
-            return;
-        }
-
         foreach ($controls as $control) {
-            $step = (float) ($control->config['step'] ?? 1);
-            $current = (float) ($control->value ?? 0);
-            $newValue = (string) ($current + $step);
-
+            $newValue = (string) $transform($control);
             $control->update(['value' => $newValue]);
 
             $overlaySlug = $control->overlay_template_id
@@ -121,10 +157,7 @@ class StreamSessionService
                 $newValue,
                 $user->twitch_id,
             );
-
         }
-
-        Log::info("Incremented twitch control {$controlKey} for user {$user->id}");
     }
 
     /**

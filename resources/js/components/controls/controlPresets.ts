@@ -47,6 +47,11 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'resubs_this_stream', label: 'Resubs This Stream', type: 'counter' },
   { key: 'raids_this_stream', label: 'Raids This Stream', type: 'counter' },
   { key: 'redemptions_this_stream', label: 'Redemptions This Stream', type: 'counter' },
+  { key: 'cheers_this_stream', label: 'Cheers This Stream', type: 'counter' },
+  { key: 'bits_this_stream', label: 'Bits This Stream (total)', type: 'number' },
+  { key: 'latest_cheerer_name', label: 'Latest Cheerer Name', type: 'text' },
+  { key: 'latest_cheer_amount', label: 'Latest Cheer Amount (bits)', type: 'number' },
+  { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
 ];
 
 export function getPresetsForSource(source: string): ServicePreset[] {

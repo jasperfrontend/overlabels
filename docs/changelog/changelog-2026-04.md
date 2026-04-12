@@ -1,5 +1,27 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Feature: Twitch Bits/Cheer preset controls (parity with donation services)
+
+- Added five new Twitch stream controls so `channel.cheer` payloads can drive overlays the same way Ko-fi,
+  StreamLabs, and StreamElements donations already do: `cheers_this_stream` (counter, +1 per cheer event),
+  `bits_this_stream` (number, accumulates the bits amount), `latest_cheerer_name`, `latest_cheer_amount`,
+  and `latest_cheer_message`. Available from the Stream Controls preset picker on any static template.
+- `StreamSessionService::EVENT_CONTROL_MAP` now includes `channel.cheer => cheers_this_stream`, and
+  `CONTROL_PRESETS` gained the five new entries (also surfaced in `OverlayControlController::store` for
+  preset-based provisioning and in `controlPresets.ts` for the Controls Manager UI).
+- `StreamSessionService::handleEvent()` now accepts the full event payload and has a dedicated
+  `channel.cheer` branch that accumulates bits on top of `bits_this_stream`, and `set`s the latest-cheer
+  trio from `event.user_name` (falling back to "Anonymous" when `is_anonymous`), `event.bits`, and
+  `event.message`. The increment/broadcast boilerplate was extracted into a private
+  `applyTwitchControl()` helper so the counter path and the cheer path share one code path.
+- `TwitchEventSubController@handleTwitchEvent` now passes the `$event` array when forwarding to
+  `handleEvent()`, so the cheer handler can read `bits`, `user_name`, `is_anonymous`, and `message`.
+- Like the other per-stream counters, all five cheer controls reset when the stream goes live via
+  `resetControls()` (no changes needed - it already loops every twitch source_managed control for the user).
+- Template tag syntax: `[[[c:twitch:cheers_this_stream]]]`, `[[[c:twitch:bits_this_stream]]]`,
+  `[[[c:twitch:latest_cheerer_name]]]`, `[[[c:twitch:latest_cheer_amount]]]`,
+  `[[[c:twitch:latest_cheer_message]]]`.
+
 ## April 13th, 2026 - Feature: duplicate controls from the Controls Manager
 
 - Added a Duplicate button to each row in `ControlsManager.vue` (new `CopyPlusIcon` next to edit/delete). Clicking it
