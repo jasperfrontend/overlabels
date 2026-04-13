@@ -1,5 +1,20 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Expression controls: round() takes an optional decimals arg
+
+- `useExpressionEngine.ts`: `round(x)` unchanged (returns a number via
+  `Math.round`). New 2-arg form `round(x, n)` returns a string via
+  `toFixed(n)`, so `round(0.1 + 0.2, 2) === "0.30"` with the trailing zero
+  preserved - same semantics as the `|round:N` pipe formatter. `n` clamped
+  to `[0, 100]` to stay within `toFixed`'s native range.
+- Consequence of returning a string: math operators after a 2-arg
+  `round()` concatenate rather than add. Help text in both surfaces calls
+  this out and recommends putting `round(..., n)` at the end of an
+  expression - or reaching for the `|round:n` pipe when the result is
+  text-only.
+- Controls help page links the inline "|round:2 pipe" mention to
+  `/help/formatting` so users land on the full formatter docs.
+
 ## April 13th, 2026 - Expression controls: mod() is floor-based, not JS remainder
 
 - `useExpressionEngine.ts`: `mod(a, b)` now evaluates as `a - b * floor(a / b)`

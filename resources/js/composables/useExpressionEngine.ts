@@ -205,7 +205,12 @@ const FUNCTIONS: Record<string, FnImpl> = {
   sum: (args) => args.reduce((acc: number, v) => acc + toNum(v), 0),
   avg: (args) => args.length === 0 ? 0 : args.reduce((acc: number, v) => acc + toNum(v), 0) / args.length,
   abs: (args) => Math.abs(toNum(args[0])),
-  round: (args) => Math.round(toNum(args[0])),
+  round: (args) => {
+    const n = toNum(args[0]);
+    if (args.length < 2) return Math.round(n);
+    const digits = Math.max(0, Math.min(100, Math.floor(toNum(args[1]))));
+    return n.toFixed(digits);
+  },
   floor: (args) => Math.floor(toNum(args[0])),
   ceil: (args) => Math.ceil(toNum(args[0])),
   sin: (args) => Math.sin(toNum(args[0])),
