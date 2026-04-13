@@ -65,32 +65,6 @@ class DefaultTemplateProviderService
     }
 
     /**
-     * Get a complete HTML document with CSS injected
-     * This is used by OverlayHashController for serving actual overlays
-     */
-    public function getCompleteDefaultHtml(array $data = []): string
-    {
-        $html = $this->getDefaultHtml();
-        $css = $this->getDefaultCss();
-
-        // Replace template data if provided (for direct serving)
-        if (! empty($data)) {
-            foreach ($data as $key => $value) {
-                $html = str_replace("[[[{$key}]]]", htmlspecialchars($value), $html);
-            }
-        }
-
-        // Inject CSS into HTML
-        if (str_contains($html, '<style>')) {
-            $html = preg_replace('/<style[^>]*>.*?<\/style>/s', "<style>{$css}</style>", $html);
-        } else {
-            $html = str_replace('</head>', "<style>{$css}</style>\n</head>", $html);
-        }
-
-        return $html;
-    }
-
-    /**
      * Check if template files exist and are readable
      */
     public function validateTemplateFiles(): array
@@ -192,12 +166,4 @@ class DefaultTemplateProviderService
         return $templateDataMapper->getSampleTemplateData();
     }
 
-    /**
-     * Create a preview with sample data
-     * Useful for API endpoints that need to show template previews
-     */
-    public function getPreviewHtml(): string
-    {
-        return $this->getCompleteDefaultHtml($this->getSampleData());
-    }
 }

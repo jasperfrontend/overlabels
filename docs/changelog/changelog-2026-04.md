@@ -1,5 +1,22 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Cleanup: remove dead OverlayHash code path
+
+- `OverlayHash` was an older hash-based public-link scheme for overlays that was fully superseded
+  by `OverlayAccessToken` (64-char hex token in the URL fragment, sha256 stored server-side). The
+  model, controller, and factory were still sitting in the repo but no routes referenced them -
+  confirmed via grep on `routes/`. Removed:
+  - `app/Models/OverlayHash.php`
+  - `app/Http/Controllers/OverlayHashController.php` (also contained a `Log::info($hash)` that
+    would have leaked hash_key values to logs had the controller ever been wired up again)
+  - `database/factories/OverlayHashFactory.php`
+  - `DefaultTemplateProviderService::getCompleteDefaultHtml()` and `getPreviewHtml()` -
+    only ever called from the dead controller.
+- Migrations for `overlay_hashes` are kept intact (they represent historical DB state on existing
+  deployments). The table is unused going forward.
+- Updated `CLAUDE.md` Overlay System section to reflect the single auth mechanism.
+- Part of Milestone 4.5 (Security Audit & Dead Code Removal). `php artisan test` -> 203 passed.
+
 ## April 13th, 2026 - Security: HTML-encode substituted tag values in OverlayRenderer
 
 - Fixed an indirect XSS vector where donor-supplied strings (Ko-fi / StreamLabs / StreamElements
