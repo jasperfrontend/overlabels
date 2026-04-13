@@ -449,8 +449,7 @@ const alertPipelineSteps = [
             </div>
             <p class="text-sm text-muted-foreground">
               Event tags are merged with your static overlay data at render time. All static tags remain available
-              inside alert templates — mix them
-              freely.
+              inside alert templates. You're encouraged to mix them freely.
             </p>
           </div>
         </div>
@@ -468,7 +467,7 @@ const alertPipelineSteps = [
             live in OBS. Change a value
             and your overlay re-renders the new data near-instantly. All without page reloads, of course!
           </p>
-          <p class="mb-12 max-w-2xl text-muted-foreground">
+          <p class="mb-12 max-w-2xl text-foreground">
             Reference any control with <code
             class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">[[[c:key]]]</code>
             — in HTML,

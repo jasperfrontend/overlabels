@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - UX: Welcome page copy polish, Twitch "Connect" button rework
+
+- Welcome page: small copy tweak under the "Event tags are merged with your static overlay data" paragraph,
+  and swapped one stray muted paragraph to `text-foreground` for better contrast.
+- `LoginSocial.vue`: switched the "Login with Twitch" button to a constrained anchor styled as a "Connect"
+  CTA so it can be dropped into marketing copy inline. Keeps the same `loginWithTwitch` handler, but now
+  stops event propagation so a parent click-handler doesn't swallow the navigation.
+
 ## April 13th, 2026 - UX: one-test-cheer-per-minute cooldown with live countdown
 
 - "Send test cheer" is now rate-limited client-side to one fire per minute. On success the button label flips
