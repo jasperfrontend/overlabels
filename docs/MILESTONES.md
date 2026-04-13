@@ -63,9 +63,9 @@ Completed milestones are kept here as a record of intent vs. reality.
 - No new features — this milestone was purely polish and layout
 </details>
 
----
+<details>
+<summary><strong>Milestone 4.5 — Security Audit & Dead Code Removal</strong></summary>
 
-## Milestone 4.5 — Security Audit & Dead Code Removal
 > *No new features ship until this is done. The goal is to be able to say with confidence:*
 > *"this codebase is as safe as we can reasonably make it."*
 >
@@ -74,29 +74,7 @@ Completed milestones are kept here as a record of intent vs. reality.
 > *but no write access — mutating state still requires a valid auth session and the correct*
 > *Twitch ID. Streamers are warned about this. It stays.*
 
-### Codebase cleanup
-- Audit all routes — remove or gate anything that shouldn't be publicly reachable
-- Remove dead routes, unused controllers, unused models, unused migrations
-- Remove unused npm packages and composer packages
-- Drop or repurpose any database tables that are no longer referenced
-- Delete dead Vue components, composables, and utility files
-- Confirm every queue job, event, and listener is actually wired up and used
-
-### Security review
-- Audit every controller for missing auth middleware (especially API routes)
-- Confirm all user-owned resources check ownership before read/write/delete (no IDOR)
-- Confirm no raw user input is ever passed to `exec`, `shell_exec`, `system`, or eval-equivalent
-- Review all file upload paths (if any) for extension and MIME validation
-- Confirm CSRF protection is in place on all state-mutating web routes
-- Confirm webhook endpoints that skip CSRF (intentionally) have their own signature/token verification
-- Confirm encrypted credentials (`Crypt::encryptString`) are never logged or serialised into responses
-- Review rate limiting — ensure public-facing endpoints (overlay render, webhooks) are rate-limited
-- Confirm no sensitive values leak into JavaScript via Inertia shared props or `window.*`
-- Review admin panel access — confirm `EnsureAdminRole` middleware is applied everywhere and returns 404 (not 403) to non-admins
-
-### Known accepted risks (document, don't fix)
-- **Hash-based overlay URLs** (`/overlay/{hash}`) — the hash is a client-side decryption key, never parsed or validated on the backend. The alternative — backend-rendered templates gated behind a session — would couple the rendering pipeline to auth state, add server overhead on every overlay frame, and break OBS browser sources entirely (no session support). Frontend stays dumb, backend stays detached. A leaked hash gives read access to static overlay content; it grants no write access and no ability to mutate state, which still requires a valid auth session. Streamers are warned. This is the right trade-off.
-- OBS browser sources cannot hold auth sessions — URL-fragment token delivery is the only viable mechanism for read-only overlay access and that is fine
+</details>
 
 <details>
 <summary><strong>Milestone 5d — Output Formatting (Pipe System)</strong></summary>
