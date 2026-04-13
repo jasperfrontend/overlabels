@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 
 interface ServiceInfo {
   key: string;
@@ -62,6 +62,26 @@ const eventsubMessage = ref('');
 const testCheerLoading = ref(false);
 const testCheerMessage = ref('');
 const testCheerIsWarning = ref(false);
+const testCheerCooldown = ref(0);
+let testCheerInterval: ReturnType<typeof setInterval> | null = null;
+
+const TEST_CHEER_COOLDOWN_SECONDS = 60;
+
+function startTestCheerCooldown() {
+  testCheerCooldown.value = TEST_CHEER_COOLDOWN_SECONDS;
+  if (testCheerInterval) clearInterval(testCheerInterval);
+  testCheerInterval = setInterval(() => {
+    testCheerCooldown.value--;
+    if (testCheerCooldown.value <= 0 && testCheerInterval) {
+      clearInterval(testCheerInterval);
+      testCheerInterval = null;
+    }
+  }, 1000);
+}
+
+onBeforeUnmount(() => {
+  if (testCheerInterval) clearInterval(testCheerInterval);
+});
 
 async function sendTestCheer() {
   testCheerLoading.value = true;
@@ -86,9 +106,14 @@ async function sendTestCheer() {
       return;
     }
 
-    const parts = [`Fired ${data.bits} bits from ${data.cheerer_name}.`];
+    startTestCheerCooldown();
+
+    const parts = [
+      `Thanks for testing! Fired ${data.bits} bits from ${data.cheerer_name}.`,
+      'This event will disappear from your logs in ~60 seconds, and you can only fire one test cheer per minute to keep things tidy.',
+    ];
     if (!data.alert_fired) {
-      parts.push('No alert mapped to channel.cheer, so nothing will appear on your overlays.');
+      parts.push('Heads up: no alert is mapped to channel.cheer, so nothing will appear on your overlays.');
       testCheerIsWarning.value = true;
     }
     if (!data.controls_updated) {
@@ -207,10 +232,12 @@ function formatDate(iso: string | null): string {
                 <Button
                   v-if="eventsub.active_count > 0"
                   variant="outline"
-                  :disabled="testCheerLoading"
+                  :disabled="testCheerLoading || testCheerCooldown > 0"
                   @click="sendTestCheer"
                 >
-                  {{ testCheerLoading ? 'Firing...' : 'Send test cheer' }}
+                  <template v-if="testCheerLoading">Firing...</template>
+                  <template v-else-if="testCheerCooldown > 0">Wait {{ testCheerCooldown }}s</template>
+                  <template v-else>Send test cheer</template>
                 </Button>
                 <Button variant="default" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}

@@ -1,5 +1,16 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - UX: one-test-cheer-per-minute cooldown with live countdown
+
+- "Send test cheer" is now rate-limited client-side to one fire per minute. On success the button label flips
+  to `Wait 59s`, `Wait 58s`, ... and disables itself until the cooldown clears - matching the 60s lifetime of
+  the `DeleteTestTwitchEvent` job so there's only ever one synthetic event row alive at a time.
+- The status line under the button now explains what just happened: "Thanks for testing! Fired N bits from
+  TestCheerer. This event will disappear from your logs in ~60 seconds, and you can only fire one test cheer
+  per minute to keep things tidy." Amber warnings still append when the mapping is missing or the stream
+  isn't live.
+- Uses `setInterval` with `onBeforeUnmount` cleanup so leaving the settings page doesn't leak timers.
+
 ## April 13th, 2026 - UX: test cheers vanish from event logs after 1 minute
 
 - "Send test cheer" still persists a `TwitchEvent` row so the cheer appears briefly in the activity feed
