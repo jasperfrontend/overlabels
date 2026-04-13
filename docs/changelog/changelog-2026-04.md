@@ -1,5 +1,25 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Help docs: bot section and shared help layout
+
+- New `HelpLayout.vue` under `resources/js/layouts/` - wraps the `<Head>` meta block
+  (title/description, OG, Twitter card, fixed OG image) and the `AppLayout` + container
+  chrome that every help page was repeating. Pages now pass `breadcrumbs`, `title`,
+  `description`, and `canonical-url` as props and render everything else into a default slot.
+- New `HelpCardGrid.vue` under `resources/js/components/help/` - the icon-badged card grid
+  from the `/help` landing, extracted so the bot landing can reuse it. Typed via a local
+  `HelpCard` interface (title/description/href/icon).
+- `/help/bot` landing page: short intro + a "How it works, in one paragraph" callout that
+  summarises the chat -> bot -> API -> broadcast -> overlay loop for streamers, plus a
+  card grid (currently one card, linking to Commands).
+- `/help/bot/commands`: lists the five seeded commands (`!control`, `!set`, `!increment`,
+  `!decrement`, `!reset`) with a color-coded permission-tier badge per command, a one-line
+  summary, and one chat / bot-reply example each. Mentions that `!increment`/`!decrement`
+  take an optional numeric amount.
+- `/help` landing refactored onto the new layout - lost ~60 lines of duplicated meta
+  boilerplate, gained a "Twitch Chat Bot" card linking to `/help/bot`.
+- `routes/web.php`: added named routes `help.bot` and `help.bot.commands`.
+
 ## April 13th, 2026 - Milestone 5 Phase 2: bot commands + chat-writable controls
 
 - New `bot_commands` table (user_id FK, command, permission_level, enabled, unique on

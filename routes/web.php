@@ -72,6 +72,14 @@ Route::get('/help/manifesto', function () {
     return Inertia::render('help/Manifesto');
 })->name('help.manifesto');
 
+Route::get('/help/bot', function () {
+    return Inertia::render('help/bot/Index');
+})->name('help.bot');
+
+Route::get('/help/bot/commands', function () {
+    return Inertia::render('help/bot/Commands');
+})->name('help.bot.commands');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
