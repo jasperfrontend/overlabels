@@ -1,5 +1,16 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Expression help: float-precision note on fract / sin / cos
+
+- `ExpressionBuilder.vue` Help dialog and `/help/controls`: added a short paragraph
+  under the animation helpers calling out that `fract(10.2)` evaluates to
+  `0.19999...993`, not `0.2`, because IEEE 754. Pitched as "expected, invisible for
+  animation math, pipe through `|round:n` for display".
+- Both notes link to `/help/formatting`. The in-builder dialog uses a plain anchor
+  with `target="_blank"` so opening the formatter docs doesn't close the template
+  editor; the public help page uses an Inertia `<Link>` matching the two existing
+  "formatting pipes" references on the same page.
+
 ## April 13th, 2026 - Expression controls: sin, cos, fract, mod, PI
 
 - `useExpressionEngine.ts`: added four functions and one constant to the evaluator
