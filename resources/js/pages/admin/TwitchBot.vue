@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { computed } from 'vue';
 
@@ -105,13 +104,10 @@ const canConnect = computed(
         </CardContent>
       </Card>
 
-      <div class="flex gap-3">
-        <Button
-          :disabled="!canConnect"
-          @click="() => { window.location.href = route('admin.twitchbot.redirect'); }"
-        >
+      <div class="flex gap-3" v-if="canConnect">
+        <a :href="route('admin.twitchbot.redirect')" class="inline-flex items-center gap-2">
           {{ props.connected ? 'Reconnect' : 'Connect @overlabels account' }}
-        </Button>
+        </a>
       </div>
     </div>
   </AppLayout>
