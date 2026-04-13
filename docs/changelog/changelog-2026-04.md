@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - UX: test cheers vanish from event logs after 1 minute
+
+- "Send test cheer" still persists a `TwitchEvent` row so the cheer appears briefly in the activity feed
+  (useful confirmation that the fire actually happened), but now dispatches a `DeleteTestTwitchEvent` queued
+  job with a 60-second delay to remove that row afterwards. Matches StreamElements' UX where test tips show
+  up in the dashboard until you leave the page or refresh - here they just physically disappear from the DB
+  after a minute so the activity log doesn't fill up with synthetic entries over time.
+- New `App\Jobs\DeleteTestTwitchEvent` (2 tries, idempotent - delete-by-id no-ops if the row is already gone).
+
 ## April 13th, 2026 - Feature: "Send test cheer" button on the Twitch integration card
 
 - Added a "Send test cheer" button to the Twitch section of the integrations settings page, visible once

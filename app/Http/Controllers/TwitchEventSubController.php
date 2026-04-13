@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
+use App\Jobs\DeleteTestTwitchEvent;
 use App\Models\EventTemplateMapping;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
@@ -750,13 +751,18 @@ class TwitchEventSubController extends Controller
             'event' => $event,
         ];
 
-        TwitchEvent::create([
+        $testEvent = TwitchEvent::create([
             'user_id' => $user->id,
             'event_type' => 'channel.cheer',
             'event_data' => $event,
             'twitch_timestamp' => now(),
             'processed' => true,
         ]);
+
+        // Show briefly in event logs, then vanish - same UX as StreamElements'
+        // test tips. A minute is long enough for the user to see the row before
+        // the queued job reaps it.
+        DeleteTestTwitchEvent::dispatch($testEvent->id)->delay(now()->addMinute());
 
         $wasLive = StreamState::forUser($user)->isConfidentlyLive();
 
