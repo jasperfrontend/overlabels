@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\ExternalWebhookController;
+use App\Http\Controllers\Api\Internal\BotChannelController;
+use App\Http\Controllers\Api\Internal\BotTokenController;
 use App\Http\Controllers\Api\RailwayWebhookController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
@@ -127,6 +129,17 @@ Route::get('/internal/streamelements/integrations', function () {
 })
     ->middleware(['throttle:10,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
+// Internal endpoints for the @overlabels Twitch bot service (separate repo/Railway service).
+// Auth: X-Internal-Secret header, validated by bot.internal middleware.
+Route::prefix('/internal/bot')
+    ->middleware(['bot.internal', 'throttle:30,1'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
+    ->group(function () {
+        Route::get('/channels', [BotChannelController::class, 'index']);
+        Route::get('/tokens', [BotTokenController::class, 'show']);
+        Route::post('/tokens', [BotTokenController::class, 'store']);
+    });
 
 // Railway deployment webhook - triggers version update broadcast
 Route::post('/webhooks/railway/{token}', [RailwayWebhookController::class, 'handle'])

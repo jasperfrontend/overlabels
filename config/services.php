@@ -37,6 +37,13 @@ return [
         'listener_secret' => env('STREAMELEMENTS_LISTENER_SECRET'),
     ],
 
+    'twitchbot' => [
+        'client_id' => env('TWITCHBOT_CLIENT_ID'),
+        'client_secret' => env('TWITCHBOT_CLIENT_SECRET'),
+        'redirect' => env('TWITCHBOT_REDIRECT_URI', env('APP_URL').'/auth/twitchbot/callback'),
+        'listener_secret' => env('TWITCHBOT_LISTENER_SECRET'),
+    ],
+
     'railway' => [
         'webhook_secret' => env('RAILWAY_WEBHOOK_SECRET'),
     ],

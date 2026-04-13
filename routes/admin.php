@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTemplateTagController;
+use App\Http\Controllers\Admin\AdminTwitchBotController;
 use App\Http\Controllers\Admin\AdminTwitchEventController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\ImpersonationController;
@@ -88,4 +89,14 @@ Route::prefix('admin')
 
         // Onboarding preview
         Route::post('/onboarding-preview', [AdminDashboardController::class, 'previewOnboarding'])->name('onboarding.preview');
+
+        // Twitch Bot (@overlabels shared account)
+        Route::get('/twitchbot', [AdminTwitchBotController::class, 'index'])->name('twitchbot.index');
     });
+
+// Twitch Bot OAuth flow - must live at /auth/twitchbot/callback to match the Twitch app's
+// registered redirect URI. Admin-only. Not under the /admin/ prefix.
+Route::middleware(['admin.role'])->group(function () {
+    Route::get('/auth/twitchbot', [AdminTwitchBotController::class, 'redirect'])->name('admin.twitchbot.redirect');
+    Route::get('/auth/twitchbot/callback', [AdminTwitchBotController::class, 'callback'])->name('admin.twitchbot.callback');
+});

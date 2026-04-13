@@ -1,5 +1,38 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Milestone 5 Phase 1: Twitch bot foundation (Laravel side)
+
+- New `bot_tokens` table (single-row by `account` unique constraint) storing the @overlabels
+  account's OAuth tokens. `BotToken` model uses Laravel's `'encrypted'` cast on `access_token`
+  and `refresh_token` so they're at-rest encrypted in Postgres - verified by a test that asserts
+  the raw column does not contain the plaintext.
+- `users.bot_enabled` boolean (default false, indexed) - per-user opt-in for the bot to join
+  their channel. Streamers will toggle this in a settings page in Phase 3; for now the column
+  exists and the channel-list endpoint already filters on it.
+- `VerifyBotListenerSecret` middleware (alias `bot.internal`) checks the `X-Internal-Secret`
+  header against `config('services.twitchbot.listener_secret')`, matching the StreamLabs/SE
+  pattern. Three internal endpoints behind it: `GET /api/internal/bot/channels` (lowercase
+  Twitch logins of opted-in users), `GET /api/internal/bot/tokens`, and `POST /api/internal/bot/tokens`
+  (for refresh persistence from the bot service - returns 204).
+- Admin-only OAuth flow at `GET /auth/twitchbot` -> `GET /auth/twitchbot/callback` (callback URL
+  matches the Twitch app's registered redirect URI). Exchanges the authorization code for tokens,
+  stores them via `BotToken::updateOrCreate`, redirects to a small `/admin/twitchbot` status page.
+  Scopes requested: `user:read:chat user:write:chat user:bot` - exactly what Twurple's EventSub
+  chat client needs. `force_verify=true` so the admin can sign into a different Twitch account
+  (the bot account) than they're currently logged into on twitch.tv.
+- `config/services.php` gains a `twitchbot` block with `client_id`, `client_secret`,
+  `redirect` (defaults to `${APP_URL}/auth/twitchbot/callback`), and `listener_secret`.
+- `MILESTONES.md`: collapsed MS5a/b/c into a single MS5 entry reflecting the architectural
+  decisions (shared @overlabels account, separate Node repo on Railway, Twurple/EventSub Chat,
+  internal API contract).
+- Bot service (overlabels-bot) lives in a separate repo and Railway service. Pulls tokens at
+  startup and POSTs back after Twurple refreshes them - so once the admin completes OAuth here,
+  the bot is unblocked without anything pasted into Railway env vars except the listener secret
+  and the Twitch app credentials.
+- `php artisan test` -> 217 passed (14 new tests in `BotInternalApiTest.php` covering 403 paths,
+  empty-list, lowercase logins, missing-login skip, 404-when-no-tokens, encrypted-at-rest,
+  validation errors, upsert).
+
 ## April 13th, 2026 - Cleanup: remove dead OverlayHash code path
 
 - `OverlayHash` was an older hash-based public-link scheme for overlays that was fully superseded

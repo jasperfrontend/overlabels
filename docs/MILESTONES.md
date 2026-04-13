@@ -91,30 +91,45 @@ Completed milestones are kept here as a record of intent vs. reality.
 
 ---
 
-## Milestone 5a — Twitch Bot: Foundation
-> *MS5 is too large for one milestone. This is the framework layer.*
+## Milestone 5 — Twitch Bot (@overlabels)
+> *A chat bot that lets streamers and their mods read and mutate overlay state from chat. Runs as the shared @overlabels Twitch account so streamers can `/ban overlabels` if it misbehaves - ban-rage would otherwise turn into uninstall-rage. Free marketing surface as a side effect.*
 
-- Bot connection layer (Twitch IRC / EventSub Chat)
-- Per-user bot auth (users connect their own bot account or use a shared one)
-- Command registration system: declare a command, its arguments, and its handler
-- Permission model: who can trigger which commands (broadcaster, mods, everyone)
-- Groundwork is generic enough that adding new command types later is additive, not invasive
+**Architecture**
+- Separate repo + Railway service (Node/TypeScript). Can't live in this Laravel repo because Railway's build pack reads `package.json` and mis-detects the stack
+- Built on [Twurple](https://twurple.js.org/) (Helix + EventSub Chat); IRC is soft-deprecated by Twitch
+- One shared OAuth token for @overlabels. No per-user bot auth, no piggybacking on Nightbot/StreamElements
+- Streamers enable the bot by typing `/mod overlabels` in their own channel
+- Rate limits: shared across all channels. Not a near-term concern; Twitch will lift limits on request if needed
 
-## Milestone 5b — Twitch Bot: Read Commands
-> *Commands that surface information from Overlabels into chat.*
+**Overlabels-side additions**
+- `bot_commands` table (user_id, command, enabled, permission_level, response_template, control_key)
+- Settings page to manage enabled commands per user
+- Internal API routes authed by `BOT_LISTENER_SECRET` header, mirroring the StreamLabs/SE listener pattern:
+  - `GET /api/internal/bot/channels` - channel join list
+  - `GET /api/internal/bot/commands` - per-channel command config
+  - `GET /api/internal/bot/controls/{user}/{key}` - read a control value
+  - `POST /api/internal/bot/controls/{user}/{key}` - write a control value (fires existing `ControlValueUpdated` broadcast, overlay updates for free)
 
-- `!control <key>` — print current value of a control to chat
-- `!overlay` — print the overlay status (active/inactive)
+**Commands at launch**
+
+*Read:*
+- `!control <key>` - print current value of a control to chat
+- `!overlay` - print overlay status (active/inactive)
+
+*Write (broadcaster/mod by default, configurable):*
+- `!set <key> <value>` - set a control value
+- `!increment <key>` / `!decrement <key>` - counter manipulation
+- `!reset <key>` - reset to default
+
+**Permissions**
+- Bot checks Twitch chat-event badges (broadcaster/mod/vip/sub) at command time
+- No ACL table needed on either side
+- Per-command permission level configurable in Overlabels settings
+
+**Generic framework**
+- Command registration system: declare command, args, handler, permission level
+- Adding new commands later is additive, not invasive
 - Configurable response templates per command
-
-## Milestone 5c — Twitch Bot: Write Commands
-> *Commands that mutate state. This is where it gets interesting.*
-
-- `!set <key> <value>` — set a control value
-- `!increment <key>` / `!decrement <key>` — counter manipulation
-- `!reset <key>` — reset to default
-- Broadcaster/mod-only by default, configurable per command
-- Changes fire the same `ControlValueUpdated` broadcast the overlay already listens to
 
 ## Milestone 6 — Community (Rebuilt Properly)
 > *The original community feature was removed because it was bad. This time, do it right.*
@@ -125,4 +140,4 @@ Completed milestones are kept here as a record of intent vs. reality.
 - No gamification, no badges, no points. Just useful discovery.
 
 
-*Last updated: April 2026*
+*Last updated: 2026-04-13*

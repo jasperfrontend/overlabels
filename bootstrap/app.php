@@ -18,6 +18,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RateLimitOverlayAccess;
 use App\Http\Middleware\RedirectIfUnauthenticated;
 use App\Http\Middleware\ValidateOverlayToken;
+use App\Http\Middleware\VerifyBotListenerSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -63,6 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.role' => EnsureAdminRole::class,
             'lockdown' => CheckLockdown::class,
             'check.banned' => CheckBanned::class,
+            'bot.internal' => VerifyBotListenerSecret::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
