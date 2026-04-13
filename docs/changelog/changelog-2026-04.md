@@ -1,5 +1,42 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Milestone 5 Phase 2: bot commands + chat-writable controls
+
+- New `bot_commands` table (user_id FK, command, permission_level, enabled, unique on
+  user_id+command). Bot-side holds the response templates; we just store which commands
+  exist per streamer and the minimum Twitch permission tier required to invoke them
+  (everyone / subscriber / vip / moderator / broadcaster).
+- `BotCommand::DEFAULTS` = the five seed commands: `!control` (everyone), `!set`,
+  `!increment`, `!decrement` (moderator), `!reset` (broadcaster). Fixed response
+  templates live in the bot repo; this side only enforces existence and permission.
+- `UserObserver` seeds the default set on `bot_enabled` transitioning true -> via the
+  idempotent `BotCommand::seedDefaults($user)`. Also handles the `created` case for
+  users created with `bot_enabled=true`. `firstOrCreate` keeps it safe to re-run, so
+  permission overrides survive a toggle-off/toggle-on cycle (verified by tests).
+- `users.bot_enabled` added to `$fillable` - was the reason the observer looked dead
+  under `->update(['bot_enabled' => true])` during the first test run.
+- Three new internal endpoints under `/api/internal/bot`:
+  - `GET /commands` - returns `{channels: {<lowercase_login>: [{command, permission_level}, ...]}}`,
+    only enabled rows, only opted-in users with a resolvable `twitch_data.login`.
+  - `GET /controls/{login}/{key}` - returns `{key, type, value, label}` for the first
+    matching non-source-managed control. Uses `resolveDisplayValue()` so timers and
+    random-mode controls return the right thing, not the raw stored value.
+  - `POST /controls/{login}/{key}` - validates `action` (set|increment|decrement|reset)
+    + optional `value`/`amount`. Applies to every non-source-managed control with that
+    key for the user (a key can exist on multiple templates), dispatches
+    `ControlValueUpdated` for each.
+- Service-managed controls (Ko-fi `donations_received`, StreamLabs counters, etc.) are
+  invisible to the bot: the `source_managed=false` filter in the read/write queries
+  means chat commands 404 on them instead of leaking the kofi:-namespaced value or
+  allowing chat to bump a donation counter. When we want to expose those to chat later,
+  it's a deliberate addition rather than an accident.
+- Route constraints pin `login` to `[a-z0-9_]+` and `key` to `OverlayControl::KEY_PATTERN`
+  so malformed chat input falls out at routing instead of hitting the controller.
+- `php artisan test` -> 241 passed (24 new tests in `BotInternalApiTest.php`:
+  observer seed-on-opt-in + idempotency, commands shape + filtering, controls show
+  shape + source-managed hidden, all four write actions, validation, 404 paths,
+  ControlValueUpdated dispatch).
+
 ## April 13th, 2026 - Milestone 5 Phase 1: Twitch bot foundation (Laravel side)
 
 - New `bot_tokens` table (single-row by `account` unique constraint) storing the @overlabels

@@ -52,6 +52,7 @@ use Mchev\Banhammer\Traits\Bannable;
  * @property-read int|null $overlay_access_tokens_count
  * @property-read Collection<int, OverlayTemplate> $overlayTemplates
  * @property-read int|null $overlay_templates_count
+ *
  * @method static Builder<static>|User banned(bool $banned = true)
  * @method static Builder<static>|User bannedByType(string $className)
  * @method static UserFactory factory($count = null, $state = [])
@@ -84,6 +85,7 @@ use Mchev\Banhammer\Traits\Bannable;
  * @method static Builder<static>|User whereWebhookSecret($value)
  * @method static Builder<static>|User withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|User withoutTrashed()
+ *
  * @mixin Eloquent
  * @mixin IdeHelperUser
  */
@@ -115,6 +117,7 @@ class User extends Authenticatable
         'role',
         'locale',
         'is_system_user',
+        'bot_enabled',
     ];
 
     /**
@@ -188,6 +191,11 @@ class User extends Authenticatable
     public function streamState(): HasOne
     {
         return $this->hasOne(StreamState::class);
+    }
+
+    public function botCommands(): HasMany
+    {
+        return $this->hasMany(BotCommand::class);
     }
 
     public function streamSessions(): HasMany

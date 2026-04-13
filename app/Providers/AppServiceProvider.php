@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
 use App\Listeners\SendSignupNotification;
+use App\Models\User;
+use App\Observers\UserObserver;
 use App\Services\DefaultTemplateProviderService;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -98,5 +100,7 @@ class AppServiceProvider extends ServiceProvider
             UserRegistered::class,
             OnboardNewUserListener::class
         );
+
+        User::observe(UserObserver::class);
     }
 }
