@@ -92,37 +92,37 @@ const alertPipelineSteps = [
 <template>
   <div class="min-h-screen bg-sidebar-accent text-foreground">
     <Head>
-      <title>Overlabels - Live Twitch overlays with HTML & CSS</title>
+      <title>Overlabels - Reactive Twitch overlays for people who code</title>
       <meta
         name="description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
+        content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source."
       />
 
       <!-- Open Graph -->
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://overlabels.com/" />
       <meta property="og:site_name" content="Overlabels" />
-      <meta property="og:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
+      <meta property="og:title" content="Overlabels • Reactive Twitch overlays for people who code" />
       <meta
         property="og:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
+        content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source."
       />
       <meta property="og:image"
             content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content="Overlabels • build Twitch overlays with HTML, CSS, and live data" />
+      <meta property="og:image:alt" content="Overlabels • reactive Twitch overlays for people who code" />
 
       <!-- Twitter / X -->
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Overlabels • Live Twitch overlays with HTML & CSS" />
+      <meta name="twitter:title" content="Overlabels • Reactive Twitch overlays for people who code" />
       <meta
         name="twitter:description"
-        content="Build Twitch overlays with HTML and CSS. Pull in live Twitch data, show alerts, track donations from Ko-fi and Streamlabs, and update your overlay instantly. Free and open source."
+        content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source."
       />
       <meta name="twitter:image"
             content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
-      <meta name="twitter:image:alt" content="Overlabels • build Twitch overlays with HTML, CSS, and live data" />
+      <meta name="twitter:image:alt" content="Overlabels • reactive Twitch overlays for people who code" />
     </Head>
 
     <!-- Navigation -->
@@ -208,17 +208,15 @@ const alertPipelineSteps = [
         <div class="mx-auto max-w-5xl">
 
           <h1 class="mb-6 text-5xl leading-[1.05] font-bold tracking-tight sm:text-6xl md:text-7xl">
-            Live overlays,<br />
-            <span class="text-sky-500">for Twitch.</span>
+            Your overlay is a webpage.<br />
+            <span class="text-sky-500">We make it reactive.</span>
           </h1>
 
           <p class="mb-4 max-w-2xl text-xl leading-relaxed text-foreground">
-            Build overlays with HTML and CSS. Drop in live Twitch data with simple tags. Show alerts for follows, subs,
-            raids, and more. Connect Ko-fi, StreamElements and Streamlabs for live donation tracking. Update things instantly from your
-            dashboard.
+            Template tags, a reactive expression engine, and pipe formatters wired into the HTML and CSS you already write. Pull live Twitch data with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">[[[tag]]]</code>. Derive state with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">c.wins / (c.wins + c.losses) * 100</code>. React to follows, raids, and donations from Ko-fi, Streamlabs, and StreamElements. Update anything from your dashboard and watch the overlay catch up in milliseconds.
           </p>
           <p class="mb-14 max-w-2xl text-base text-foreground">
-            No drag-and-drop editor. No weird file formats. No lock-in. Your overlay is a normal webpage and <strong>Overlabels keeps it live.</strong>
+            No drag-and-drop editor. No proprietary file format. No lock-in. <strong>Overlabels is the reactive substrate - your overlay is just a webpage it keeps alive.</strong>
           </p>
 
           <!-- Hero code blocks -->

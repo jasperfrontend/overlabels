@@ -1,5 +1,27 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Welcome.vue hero rewrite: lead with the substrate, not the task
+
+- Prompted by the observation that the old hero ("Live overlays, for Twitch" +
+  feature list) was pitched at an audience that doesn't exist for this product:
+  non-devs get scared off by "HTML and CSS" on the same page, and the devs who
+  stick around get nothing to latch on to. The rewrite leads with what kind of
+  system Overlabels actually is.
+- H1 now reads "Your overlay is a webpage. / We make it reactive." with the
+  blue accent on the verb instead of the platform name.
+- Hero subcopy names the three primary abstractions out loud - template tags,
+  reactive expressions, pipe formatters - with inline code samples
+  (`[[[tag]]]`, `c.wins / (c.wins + c.losses) * 100`) as proof-of-existence.
+  People who recognise the syntax feel seen; people who don't get a soft
+  self-select-out signal.
+- Second paragraph reframes the product as "the reactive substrate" rather
+  than something passively keeping a page live.
+- `<Head>` title, meta description, OG, and Twitter card copy all updated to
+  mirror the hero tone. Title is now
+  "Overlabels - Reactive Twitch overlays for people who code".
+- Nothing below the hero touched - the Controls / Conditionals / Events /
+  Integrations sections already address technical readers.
+
 ## April 13th, 2026 - Expression controls: round() takes an optional decimals arg
 
 - `useExpressionEngine.ts`: `round(x)` unchanged (returns a number via
