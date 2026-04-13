@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Deploy: Node in Railway runtime for SSR
+
+- Added `nixpacks.toml` at the repo root with `nixPkgs = ["...", "nodejs_20"]` so Railway's Nixpacks builder
+  keeps Node on `PATH` in the runtime image, not just the build phase. Without this, `php artisan
+  inertia:start-ssr` was crashing with `sh: 1: exec: node: not found` because Nixpacks picks PHP as the
+  primary provider for the repo (via `composer.json`) and strips Node from the final container.
+
 ## April 13th, 2026 - Feature: Inertia SSR so marketing and /help routes are crawlable
 
 - Wired up Inertia server-side rendering so the public-facing pages (`/` and the `/help/*` tree) ship
