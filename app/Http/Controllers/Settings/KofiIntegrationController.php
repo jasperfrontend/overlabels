@@ -44,8 +44,8 @@ class KofiIntegrationController extends Controller
                 'last_received_at' => $integration->last_received_at?->toIso8601String(),
                 'settings' => $settings,
                 'has_token' => ! empty($credentials['verification_token']),
-                'kofis_seed_set' => ! empty($settings['kofis_seed_set']),
-                'kofis_seed_value' => $settings['kofis_seed_value'] ?? null,
+                'donations_seed_set' => ! empty($settings['donations_seed_set']),
+                'donations_seed_value' => $settings['donations_seed_value'] ?? null,
             ] : [
                 'connected' => false,
                 'enabled' => false,
@@ -54,8 +54,8 @@ class KofiIntegrationController extends Controller
                 'last_received_at' => null,
                 'settings' => [],
                 'has_token' => false,
-                'kofis_seed_set' => false,
-                'kofis_seed_value' => null,
+                'donations_seed_set' => false,
+                'donations_seed_value' => null,
             ],
         ]);
     }
@@ -83,7 +83,7 @@ class KofiIntegrationController extends Controller
             'verification_token' => $validated['verification_token'],
         ]);
 
-        // Merge so that one-time flags (e.g. kofis_seed_set) survive a re-save
+        // Merge so that one-time flags (e.g. donations_seed_set) survive a re-save
         $integration->settings = array_merge(
             $integration->settings ?? [],
             ['enabled_events' => $validated['enabled_events'] ?? ['donation', 'subscription', 'shop_order']],
@@ -115,7 +115,7 @@ class KofiIntegrationController extends Controller
         // When test mode is turned OFF, reset all service-managed controls to defaults
         if (! $validated['test_mode']) {
             $settings = $integration->settings ?? [];
-            $seedValue = (string) ($settings['kofis_seed_value'] ?? 0);
+            $seedValue = (string) ($settings['donations_seed_value'] ?? 0);
 
             $controls = OverlayControl::where('user_id', $user->id)
                 ->where('source', 'kofi')
@@ -125,7 +125,7 @@ class KofiIntegrationController extends Controller
 
             foreach ($controls as $control) {
                 $resetValue = match ($control->key) {
-                    'kofis_received' => $seedValue,
+                    'donations_received' => $seedValue,
                     default => in_array($control->type, ['counter', 'number']) ? '0' : '',
                 };
 
@@ -162,7 +162,7 @@ class KofiIntegrationController extends Controller
 
         $settings = $integration->settings ?? [];
 
-        if (! empty($settings['kofis_seed_set'])) {
+        if (! empty($settings['donations_seed_set'])) {
             return response()->json(['error' => 'Starting count has already been set.'], 403);
         }
 
@@ -170,22 +170,22 @@ class KofiIntegrationController extends Controller
             'initial_count' => 'required|integer|min:0|max:9999999',
         ]);
 
-        // Apply to all kofis_received controls belonging to this user
+        // Apply to all donations_received controls belonging to this user
         OverlayControl::where('user_id', $user->id)
             ->where('source', 'kofi')
-            ->where('key', 'kofis_received')
+            ->where('key', 'donations_received')
             ->where('source_managed', true)
             ->update(['value' => (string) $validated['initial_count']]);
 
         $integration->settings = array_merge($settings, [
-            'kofis_seed_set' => true,
-            'kofis_seed_value' => $validated['initial_count'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => $validated['initial_count'],
         ]);
         $integration->save();
 
         return response()->json([
-            'kofis_seed_set' => true,
-            'kofis_seed_value' => $validated['initial_count'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => $validated['initial_count'],
         ]);
     }
 

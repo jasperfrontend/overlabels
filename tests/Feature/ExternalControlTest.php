@@ -21,7 +21,7 @@ function makeTemplateAndServiceControl(): array
     $control = OverlayControl::create([
         'overlay_template_id' => $template->id,
         'user_id' => $user->id,
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'label' => 'Ko-fi Donations Received',
         'type' => 'counter',
         'value' => '5',
@@ -57,12 +57,12 @@ test('broadcastKey includes source prefix for service-managed control', function
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
 
     $control = new OverlayControl([
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'source' => 'kofi',
         'source_managed' => true,
     ]);
 
-    expect($control->broadcastKey())->toBe('kofi:kofis_received');
+    expect($control->broadcastKey())->toBe('kofi:donations_received');
 });
 
 test('broadcastKey returns plain key for user-managed control', function () {
@@ -79,7 +79,7 @@ test('provisionServiceControl creates user-scoped control', function () {
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
 
     $control = OverlayControl::provisionServiceControl($user, 'kofi', [
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'type' => 'counter',
         'label' => 'Test',
         'value' => '0',
@@ -91,7 +91,7 @@ test('provisionServiceControl creates user-scoped control', function () {
     expect($control->user_id)->toBe($user->id);
 });
 
-test('disabling test mode resets kofis_received to seed value', function () {
+test('disabling test mode resets donations_received to seed value', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
@@ -102,15 +102,15 @@ test('disabling test mode resets kofis_received to seed value', function () {
         'test_mode' => true,
         'settings' => [
             'enabled_events' => ['donation'],
-            'kofis_seed_set' => true,
-            'kofis_seed_value' => 42,
+            'donations_seed_set' => true,
+            'donations_seed_value' => 42,
         ],
     ]);
 
     $control = OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'label' => 'Ko-fi Donations Received',
         'type' => 'counter',
         'value' => '50',
@@ -128,7 +128,7 @@ test('disabling test mode resets kofis_received to seed value', function () {
     Event::assertDispatched(ControlValueUpdated::class);
 });
 
-test('disabling test mode resets kofis_received to 0 when no seed set', function () {
+test('disabling test mode resets donations_received to 0 when no seed set', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
@@ -143,7 +143,7 @@ test('disabling test mode resets kofis_received to 0 when no seed set', function
     $control = OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'label' => 'Ko-fi Donations Received',
         'type' => 'counter',
         'value' => '15',
@@ -159,7 +159,7 @@ test('disabling test mode resets kofis_received to 0 when no seed set', function
     expect($control->fresh()->value)->toBe('0');
 });
 
-test('enabling test mode does not reset kofis_received', function () {
+test('enabling test mode does not reset donations_received', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
@@ -174,7 +174,7 @@ test('enabling test mode does not reset kofis_received', function () {
     $control = OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'label' => 'Ko-fi Donations Received',
         'type' => 'counter',
         'value' => '15',

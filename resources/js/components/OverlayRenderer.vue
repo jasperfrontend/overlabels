@@ -498,7 +498,7 @@ function handleControlUpdated(event: any) {
     if (randomIntervals[event.key]) {
       stopRandomTick(event.key);
     }
-    // event.key may be namespaced (e.g. "kofi:kofis_received") — store as "c:kofi:kofis_received"
+    // event.key may be namespaced (e.g. "kofi:donations_received") — store as "c:kofi:donations_received"
     data.value = {
       ...data.value,
       [`c:${event.key}`]: event.value,

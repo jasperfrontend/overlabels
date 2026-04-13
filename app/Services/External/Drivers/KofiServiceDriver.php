@@ -106,7 +106,7 @@ class KofiServiceDriver implements ExternalServiceDriver
     public function getAutoProvisionedControls(): array
     {
         return [
-            ['key' => 'kofis_received', 'type' => 'counter', 'label' => 'Ko-fi Donations Received', 'value' => '0'],
+            ['key' => 'donations_received', 'type' => 'counter', 'label' => 'Ko-fi Donations Received', 'value' => '0'],
             ['key' => 'latest_donor_name', 'type' => 'text', 'label' => 'Latest Donor Name', 'value' => ''],
             ['key' => 'latest_donation_amount', 'type' => 'number', 'label' => 'Latest Donation Amount', 'value' => '0'],
             ['key' => 'latest_donation_message', 'type' => 'text', 'label' => 'Latest Donation Message', 'value' => ''],
@@ -123,7 +123,7 @@ class KofiServiceDriver implements ExternalServiceDriver
         $updates = [];
 
         if (in_array($event->getEventType(), ['donation', 'subscription', 'shop_order', 'commission'])) {
-            $updates['kofis_received'] = ['action' => 'increment'];
+            $updates['donations_received'] = ['action' => 'increment'];
             $updates['latest_donor_name'] = $event->getFromName() ?? '';
             $updates['latest_donation_message'] = $event->getMessage() ?? '';
             $updates['latest_donation_currency'] = $event->getCurrency() ?? '';

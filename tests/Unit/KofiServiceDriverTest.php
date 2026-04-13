@@ -95,7 +95,7 @@ test('getAutoProvisionedControls returns expected control keys', function () {
     $controls = $this->driver->getAutoProvisionedControls();
     $keys = array_column($controls, 'key');
 
-    expect($keys)->toContain('kofis_received');
+    expect($keys)->toContain('donations_received');
     expect($keys)->toContain('latest_donor_name');
     expect($keys)->toContain('latest_donation_amount');
     expect($keys)->toContain('latest_donation_message');
@@ -136,7 +136,7 @@ test('verifyRequest returns true when token matches', function () {
 // getControlUpdates
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('getControlUpdates increments kofis_received for donation', function () {
+test('getControlUpdates increments donations_received for donation', function () {
     $payload = [
         'kofi_transaction_id' => 'txn-001',
         'from_name' => 'Bob',
@@ -149,7 +149,7 @@ test('getControlUpdates increments kofis_received for donation', function () {
     $event = $this->driver->normalizeEvent($payload, 'donation');
     $updates = $this->driver->getControlUpdates($event);
 
-    expect($updates['kofis_received'])->toBe(['action' => 'increment']);
+    expect($updates['donations_received'])->toBe(['action' => 'increment']);
     expect($updates['latest_donor_name'])->toBe('Bob');
     expect($updates['latest_donation_amount'])->toBe('10.00');
     expect($updates['total_received'])->toBe(['action' => 'add', 'amount' => 10.0]);
@@ -166,7 +166,7 @@ test('getControlUpdates updates controls for commission events', function () {
     $event = $this->driver->normalizeEvent($payload, 'commission');
     $updates = $this->driver->getControlUpdates($event);
 
-    expect($updates['kofis_received'])->toBe(['action' => 'increment']);
+    expect($updates['donations_received'])->toBe(['action' => 'increment']);
     expect($updates['latest_donor_name'])->toBe('Carol');
     expect($updates['latest_donation_message'])->toBe('Custom art request');
     expect($updates['latest_donation_amount'])->toBe('27.95');
@@ -185,7 +185,7 @@ test('getControlUpdates updates controls for shop order events', function () {
     $event = $this->driver->normalizeEvent($payload, 'shop_order');
     $updates = $this->driver->getControlUpdates($event);
 
-    expect($updates['kofis_received'])->toBe(['action' => 'increment']);
+    expect($updates['donations_received'])->toBe(['action' => 'increment']);
     expect($updates['latest_donor_name'])->toBe('Jo Example');
     expect($updates['latest_donation_message'])->toBe('');
     expect($updates['latest_donation_amount'])->toBe('27.95');

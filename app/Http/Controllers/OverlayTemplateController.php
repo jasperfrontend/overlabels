@@ -389,8 +389,8 @@ class OverlayTemplateController extends Controller
             $expressionControls = [];
             $randomControls = [];
             foreach ($controls as $control) {
-                // Service-managed controls use namespaced broadcast key (e.g. "kofi:kofis_received")
-                // matching the [[[c:kofi:kofis_received]]] template tag syntax.
+                // Service-managed controls use namespaced broadcast key (e.g. "kofi:donations_received")
+                // matching the [[[c:kofi:donations_received]]] template tag syntax.
                 $dataKey = $control->source_managed
                     ? 'c:'.$control->broadcastKey()
                     : 'c:'.$control->key;

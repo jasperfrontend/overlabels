@@ -277,7 +277,7 @@ Ko-fi webhooks deliver donation, subscription, shop order, and commission events
 Controls use the `kofi:` namespace:
 
 ```html
-<span>[[[c:kofi:kofis_received]]]</span>
+<span>[[[c:kofi:donations_received]]]</span>
 <span>[[[c:kofi:latest_donor_name]]]</span>
 ```
 

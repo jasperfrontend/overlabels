@@ -177,7 +177,7 @@ class OverlayControl extends Model
 
     /**
      * The broadcast key used for ControlValueUpdated events.
-     * For service-managed controls, includes the source namespace: "kofi:kofis_received"
+     * For service-managed controls, includes the source namespace: "kofi:donations_received"
      * For template controls, is just the key: "goal"
      */
     public function broadcastKey(): string
@@ -258,7 +258,7 @@ class OverlayControl extends Model
      *
      * Examples:
      *   "c.deaths + 1" => ["deaths"]
-     *   "c.kofi.kofis_received + c.streamlabs.total_received" => ["kofi:kofis_received", "streamlabs:total_received"]
+     *   "c.kofi.donations_received + c.streamlabs.total_received" => ["kofi:donations_received", "streamlabs:total_received"]
      */
     public static function extractExpressionDependencies(string $expression): array
     {

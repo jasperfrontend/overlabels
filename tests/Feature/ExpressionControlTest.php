@@ -61,7 +61,7 @@ test('creating expression control referencing service-managed control extracts n
     OverlayControl::create([
         'overlay_template_id' => null,
         'user_id' => $user->id,
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'type' => 'counter',
         'value' => '10',
         'source' => 'kofi',
@@ -88,7 +88,7 @@ test('creating expression control referencing service-managed control extracts n
         'label' => 'Total Donations',
         'type' => 'expression',
         'config' => [
-            'expression' => 'c.kofi.kofis_received + c.streamlabs.donations_received',
+            'expression' => 'c.kofi.donations_received + c.streamlabs.donations_received',
         ],
     ]);
 
@@ -97,7 +97,7 @@ test('creating expression control referencing service-managed control extracts n
         ->where('overlay_template_id', $template->id)
         ->first();
 
-    expect($control->config['dependencies'])->toContain('kofi:kofis_received')
+    expect($control->config['dependencies'])->toContain('kofi:donations_received')
         ->and($control->config['dependencies'])->toContain('streamlabs:donations_received');
 });
 
@@ -281,8 +281,8 @@ test('extractExpressionDependencies parses simple references', function () {
 });
 
 test('extractExpressionDependencies parses namespaced references', function () {
-    $deps = OverlayControl::extractExpressionDependencies('c.kofi.kofis_received + c.streamlabs.total_received');
-    expect($deps)->toContain('kofi:kofis_received')
+    $deps = OverlayControl::extractExpressionDependencies('c.kofi.donations_received + c.streamlabs.total_received');
+    expect($deps)->toContain('kofi:donations_received')
         ->and($deps)->toContain('streamlabs:total_received')
         ->and($deps)->toHaveCount(2);
 });

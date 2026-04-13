@@ -7,7 +7,7 @@ export interface ServicePreset {
 }
 
 export const KOFI_PRESETS: ServicePreset[] = [
-  { key: 'kofis_received', label: 'Ko-fi Donations Received', type: 'counter' },
+  { key: 'donations_received', label: 'Ko-fi Donations Received', type: 'counter' },
   { key: 'latest_donor_name', label: 'Ko-fi Latest Donor Name', type: 'text' },
   { key: 'latest_donation_amount', label: 'Ko-fi Latest Donation Amount', type: 'number' },
   { key: 'latest_donation_message', label: 'Ko-fi Latest Donation Message', type: 'text' },

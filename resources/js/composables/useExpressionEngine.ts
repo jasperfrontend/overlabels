@@ -97,7 +97,7 @@ export function buildContext(data: Record<string, unknown>): Record<string, unkn
     const rawVal = data[key];
     const val = coerceValue(rawVal);
 
-    // Check for namespaced keys like "kofi:kofis_received"
+    // Check for namespaced keys like "kofi:donations_received"
     const colonIdx = rawKey.indexOf(':');
     if (colonIdx !== -1) {
       const namespace = rawKey.slice(0, colonIdx);

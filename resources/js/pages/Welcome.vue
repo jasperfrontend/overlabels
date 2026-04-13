@@ -25,7 +25,32 @@ import {
 import { ref } from 'vue';
 
 const syntaxTab = ref('static');
+const integrationsTab = ref<'kofi' | 'streamlabs' | 'streamelements'>('kofi');
 const mobileMenuOpen = ref(false);
+
+const integrationConfigs = {
+  kofi: {
+    name: 'Ko-fi',
+    namespace: 'kofi',
+    tagline: 'Donations, subscriptions, shop orders',
+    description:
+      'Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the same alert pipeline as Twitch events.',
+  },
+  streamlabs: {
+    name: 'Streamlabs',
+    namespace: 'streamlabs',
+    tagline: 'Live donation tracking via OAuth',
+    description:
+      'One click to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.',
+  },
+  streamelements: {
+    name: 'StreamElements',
+    namespace: 'streamelements',
+    tagline: 'Live donation tracking via JWT',
+    description:
+      'Paste your JWT token to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.',
+  },
+} as const;
 
 const controlTypes = [
   {
@@ -684,89 +709,57 @@ const alertPipelineSteps = [
             after setup.
           </p>
 
-          <!-- Integration cards -->
-          <div class="mb-12 grid gap-6 sm:grid-cols-3">
-            <!-- Ko-fi -->
-            <div class="rounded-sm bg-card p-6">
-              <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
-                  <Heart class="h-5 w-5 text-sky-500" />
-                </div>
-                <div>
-                  <h3 class="font-semibold">Ko-fi</h3>
-                  <p class="text-xs text-muted-foreground">Donations, subscriptions, shop orders</p>
-                </div>
+          <!-- Integration tabs -->
+          <div class="mb-8 flex gap-0 overflow-x-auto border-b border-sidebar-accent">
+            <button
+              v-for="service in (['kofi', 'streamlabs', 'streamelements'] as const)"
+              :key="service"
+              @click="integrationsTab = service"
+              :class="[
+                '-mb-px shrink-0 cursor-pointer border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                integrationsTab === service ? 'border-sky-500 text-sky-500' : 'border-transparent text-muted-foreground hover:text-foreground',
+              ]"
+            >
+              {{ integrationConfigs[service].name }}
+            </button>
+          </div>
+
+          <!-- Unified integration card -->
+          <div class="mb-12 rounded-sm bg-card p-6">
+            <div class="mb-4 flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
+                <Heart v-if="integrationsTab === 'kofi'" class="h-5 w-5 text-sky-500" />
+                <DollarSign v-else class="h-5 w-5 text-sky-500" />
               </div>
-              <p class="mb-4 text-sm text-foreground">
-                Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the
-                same alert pipeline as Twitch events.
-              </p>
-              <div class="space-y-1.5 font-mono text-xs">
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:kofi:kofis_received]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:kofi:latest_kofi_supporter_name]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:kofi:total_received]]]
-                </div>
+              <div>
+                <h3 class="font-semibold">{{ integrationConfigs[integrationsTab].name }}</h3>
+                <p class="text-xs text-muted-foreground">{{ integrationConfigs[integrationsTab].tagline }}</p>
               </div>
             </div>
-
-            <!-- Streamlabs -->
-            <div class="rounded-sm bg-card p-6">
-              <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <DollarSign class="h-5 w-5 text-emerald-500" />
-                </div>
-                <div>
-                  <h3 class="font-semibold">Streamlabs</h3>
-                  <p class="text-xs text-muted-foreground">Live donation tracking via OAuth</p>
-                </div>
+            <p class="mb-4 max-w-3xl text-sm text-foreground">
+              {{ integrationConfigs[integrationsTab].description }}
+            </p>
+            <p class="mb-4 text-xs text-muted-foreground">
+              Six auto-provisioned controls, identical shape across every service:
+            </p>
+            <div class="grid gap-1.5 font-mono text-xs sm:grid-cols-2">
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:total_received]]]
               </div>
-              <p class="mb-4 text-sm text-foreground">
-                One click to authenticate. Overlabels listens for donations in real time and auto-provisions six
-                controls the moment you connect.
-              </p>
-              <div class="space-y-1.5 font-mono text-xs">
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:donations_received]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:latest_donor_name]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:total_received]]]
-                </div>
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:latest_donor_name]]]
               </div>
-            </div>
-
-            <!-- StreamElements -->
-            <div class="rounded-sm bg-card p-6">
-              <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <DollarSign class="h-5 w-5 text-emerald-500" />
-                </div>
-                <div>
-                  <h3 class="font-semibold">StreamElements</h3>
-                  <p class="text-xs text-muted-foreground">Live donation tracking via JWT</p>
-                </div>
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:donations_received]]]
               </div>
-              <p class="mb-4 text-sm text-foreground">
-                Paste your JWT token to authenticate. Overlabels listens for donations in real time and auto-provisions six
-                controls the moment you connect.
-              </p>
-              <div class="space-y-1.5 font-mono text-xs">
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:donations_received]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:latest_donor_name]]]
-                </div>
-                <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
-                  [[[c:streamlabs:total_received]]]
-                </div>
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:latest_donation_amount]]]
+              </div>
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:latest_donation_message]]]
+              </div>
+              <div class="rounded bg-accent px-2.5 py-1.5 text-amber-700 dark:text-amber-400">
+                [[[c:<span class="text-sky-500">{{ integrationConfigs[integrationsTab].namespace }}</span>:latest_donation_currency]]]
               </div>
             </div>
           </div>
@@ -944,11 +937,13 @@ const alertPipelineSteps = [
     <section class="border-b border-sidebar-accent py-24">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
-          <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Zero to Overlay</Badge>
-          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">From signup to OBS in minutes.</h2>
+          <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Getting started</Badge>
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">The Onboarding Wizard</h2>
           <p class="mb-12 max-w-2xl text-lg text-foreground">
-            Directly after signing up, Overlabels handles the full setup automatically.
-            Your alerts, templates, and Twitch data are configured so you land in a working setup.
+            After signing up, the system will trigger an onboarding wizard which will set you up with the defaults you need to
+            make Overlabels work for you: One overlay, a bunch of alerts and your secret token is generated and applied to the URL
+            you need to add to your OBS. We also generate your personal template tags that match the level of your Twitch account.
+            This so you don't up with affiliate level capabilities if you're a Twitch partner and vice versa. Yeah, we're cool like that.
           </p>
 
           <div class="grid gap-10 sm:grid-cols-2">
@@ -1011,7 +1006,8 @@ const alertPipelineSteps = [
                   class="text-amber-700 dark:text-amber-300">another_twitch_id</span></div>
               </div>
               <p class="mt-3 text-xs text-foreground">You'll need to have
-                <a href="https://dev.twitch.tv/docs/cli/" class="text-sky-500 hover:text-sky-500 hover:underline" target="_blank">Twitch CLI</a> installed for this to work.</p>
+                <a href="https://dev.twitch.tv/docs/cli/"
+                   class="text-sky-500 hover:text-sky-500 hover:underline" target="_blank">Twitch CLI</a> installed for this to work.</p>
             </div>
           </div>
         </div>

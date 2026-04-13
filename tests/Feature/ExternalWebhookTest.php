@@ -126,14 +126,14 @@ test('returns 200 with duplicate status for duplicate message_id', function () {
 // Control updates
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('increments kofis_received control on donation', function () {
+test('increments donations_received control on donation', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeKofiIntegration();
 
     // Pre-provision the controls
     OverlayControl::provisionServiceControl($user, 'kofi', [
-        'key' => 'kofis_received', 'type' => 'counter', 'label' => 'Donations', 'value' => '0',
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Donations', 'value' => '0',
     ]);
 
     postKofi($integration->webhook_token, kofiPayload())->assertStatus(200);
@@ -141,7 +141,7 @@ test('increments kofis_received control on donation', function () {
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
         'source' => 'kofi',
-        'key' => 'kofis_received',
+        'key' => 'donations_received',
         'value' => '1',
     ]);
 

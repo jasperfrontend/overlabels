@@ -84,8 +84,8 @@ class AdminUserController extends Controller
             'recentTemplates' => $recentTemplates,
             'accessTokens' => $accessTokens,
             'recentAuditEntries' => $recentAuditEntries,
-            'kofiSeedSet' => ! empty($kofiSettings['kofis_seed_set']),
-            'kofiSeedValue' => $kofiSettings['kofis_seed_value'] ?? null,
+            'kofiSeedSet' => ! empty($kofiSettings['donations_seed_set']),
+            'kofiSeedValue' => $kofiSettings['donations_seed_value'] ?? null,
             'kofiConnected' => $kofiIntegration !== null,
             'isBanned' => $user->isBanned(),
             'activeBan' => $activeBan ? [
@@ -237,13 +237,13 @@ class AdminUserController extends Controller
 
         OverlayControl::where('user_id', $user->id)
             ->where('source', 'kofi')
-            ->where('key', 'kofis_received')
+            ->where('key', 'donations_received')
             ->where('source_managed', true)
             ->update(['value' => (string) $validated['initial_count']]);
 
         $integration->settings = array_merge($integration->settings ?? [], [
-            'kofis_seed_set' => true,
-            'kofis_seed_value' => $validated['initial_count'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => $validated['initial_count'],
         ]);
         $integration->save();
 

@@ -114,11 +114,11 @@ Critical variables:
 - `overlay_controls` table: id, overlay_template_id (nullable!), user_id, key, label, type, value, config (json), sort_order, source, source_managed
 - `OverlayControl` model: `sanitizeValue()`, `resolveDisplayValue()`, `createForTemplate()`, `provisionServiceControl()`, `broadcastKey()`
 - Carbon `diffInSeconds` bug: use `$start->diffInSeconds($now)` not `$now->diffInSeconds($start)` (latter returns negative)
-- Template syntax: `[[[c:key]]]` or namespaced `[[[c:kofi:kofis_received]]]` - colon already in regex char class
+- Template syntax: `[[[c:key]]]` or namespaced `[[[c:kofi:donations_received]]]` - colon already in regex char class
 - Broadcast: `ControlValueUpdated` -> `alerts.{twitch_id}` channel, broadcastAs `control.updated`
 - Service-managed controls: `source_managed=true` -> `setValue()` and `update()` return 403
 - User-scoped controls: `overlay_template_id=null`, available in all user's overlays
-- Namespaced broadcast key: "kofi:kofis_received" -> stored in data as "c:kofi:kofis_received"
+- Namespaced broadcast key: "kofi:donations_received" -> stored in data as "c:kofi:donations_received"
 - Empty `overlay_slug` in broadcast = user-scoped; OverlayRenderer applies to all overlays
 
 ## Pipe Formatting System (Implemented Apr 2026)
@@ -153,7 +153,7 @@ Critical variables:
 - `ControlFormModal.vue` shows Ko-fi presets when `connectedServices` includes 'kofi' AND template.type === 'static'
 - `ExternalControlService::applyUpdates()` uses `->with('template')->get()` (not `->first()`); loops all matching controls
 - `OverlayControl` relationship is `template()` not `overlayTemplate()` - use `$control->template?->slug`
-- `renderAuthenticated()` uses `c:` + `broadcastKey()` for source_managed controls -> `c:kofi:kofis_received`
+- `renderAuthenticated()` uses `c:` + `broadcastKey()` for source_managed controls -> `c:kofi:donations_received`
 - `connectedServices` prop threaded: OverlayTemplateController::show() -> show.vue -> ControlsManager.vue -> ControlFormModal.vue
 
 ### StreamLabs Integration

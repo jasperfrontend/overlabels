@@ -19,8 +19,8 @@ interface IntegrationData {
   last_received_at: string | null;
   settings: { enabled_events?: string[] };
   has_token: boolean;
-  kofis_seed_set: boolean;
-  kofis_seed_value: number | null;
+  donations_seed_set: boolean;
+  donations_seed_value: number | null;
 }
 
 const props = defineProps<{
@@ -54,8 +54,8 @@ const testModeLoading = ref(false);
 const seedCount = ref<number | null>(null);
 const seedLoading = ref(false);
 const seedError = ref<string | null>(null);
-const kofisSeedSet = ref(props.integration.kofis_seed_set);
-const kofisSeedValue = ref(props.integration.kofis_seed_value);
+const donationsSeedSet = ref(props.integration.donations_seed_set);
+const donationsSeedValue = ref(props.integration.donations_seed_value);
 
 async function setSeedCount() {
   if (seedCount.value === null || seedCount.value < 0) return;
@@ -65,8 +65,8 @@ async function setSeedCount() {
     const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
       initial_count: seedCount.value
     });
-    kofisSeedSet.value = data.kofis_seed_set;
-    kofisSeedValue.value = data.kofis_seed_value;
+    donationsSeedSet.value = data.donations_seed_set;
+    donationsSeedValue.value = data.donations_seed_value;
   } catch (e: any) {
     seedError.value = e.response?.data?.error ?? 'Something went wrong.';
   } finally {
@@ -269,7 +269,7 @@ function formatDate(iso: string | null): string {
             <p class="text-muted-foreground text-sm">
               Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
               <span v-if="testMode" class="text-yellow-500 font-bold">
-                          Turn this off before going live — your donation count will reset to {{ kofisSeedValue ?? 0 }}.
+                          Turn this off before going live — your donation count will reset to {{ donationsSeedValue ?? 0 }}.
                       </span>
             </p>
             <div v-if="testMode"
@@ -286,10 +286,10 @@ function formatDate(iso: string | null): string {
             <p class="font-medium text-sm">Starting donation count</p>
 
             <!-- Already seeded — locked -->
-            <template v-if="kofisSeedSet">
+            <template v-if="donationsSeedSet">
               <p class="text-muted-foreground text-sm">
-                Starting count set to <strong>{{ kofisSeedValue?.toLocaleString() }}</strong>.
-                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:kofis_received]]]</code>
+                Starting count set to <strong>{{ donationsSeedValue?.toLocaleString() }}</strong>.
+                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:donations_received]]]</code>
                 controls started from this value.
               </p>
               <p class="text-muted-foreground text-sm">
@@ -303,7 +303,7 @@ function formatDate(iso: string | null): string {
             <template v-else>
               <p class="text-muted-foreground text-sm">
                 Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
-                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">kofis_received</code>
+                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">donations_received</code>
                 controls update immediately.
               </p>
               <div class="flex gap-2 items-start">

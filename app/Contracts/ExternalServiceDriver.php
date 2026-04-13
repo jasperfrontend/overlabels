@@ -44,7 +44,7 @@ interface ExternalServiceDriver
 
     /**
      * Return the control update map for a given normalized event.
-     * Keys are control keys (e.g. 'kofis_received'), values are:
+     * Keys are control keys (e.g. 'donations_received'), values are:
      *   - string: new absolute value
      *   - ['action' => 'increment']: increment by step
      *   - ['action' => 'add', 'amount' => n]: add n to current value

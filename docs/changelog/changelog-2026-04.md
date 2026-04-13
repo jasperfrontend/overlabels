@@ -1,5 +1,45 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Breaking: rename Ko-fi `kofis_received` to `donations_received`
+
+- When Ko-fi was the only external integration, its auto-provisioned counter was playfully called
+  `kofis_received`. Now that Streamlabs and StreamElements also live in the system and both use the
+  generic `donations_received`, Ko-fi's cute pun became a naming inconsistency that leaked into
+  documentation, expression control examples, and the new landing-page integration tab (which had
+  to show three pipes of identical shape plus one cute outlier).
+- Renamed in the driver, controllers, frontend settings page, control presets, tests, and comments:
+  - Control key: `kofis_received` -> `donations_received` (source=kofi)
+  - Settings JSON keys: `kofis_seed_set` / `kofis_seed_value` ->
+    `donations_seed_set` / `donations_seed_value`
+  - Vue refs: `kofisSeedSet` / `kofisSeedValue` -> `donationsSeedSet` / `donationsSeedValue`
+- Added data migration `2026_04_14_120000_rename_kofi_donations_received.php` that rewrites:
+  1. `overlay_controls.key` for rows with `source=kofi` and `key=kofis_received`.
+  2. `overlay_controls.value` for expression controls referencing `c.kofi.kofis_received`.
+  3. `overlay_controls.config.dependencies` for expression controls referencing
+     `kofi:kofis_received`.
+  4. `overlay_templates.html`, `css`, `js`, and `template_tags` for any occurrences of
+     `[[[c:kofi:kofis_received]]]`.
+  5. `external_integrations.settings` JSON for `service=kofi` - renames `kofis_seed_*` keys to
+     `donations_seed_*`.
+- Because the Welcome.vue integration tab now has genuinely identical control names across all
+  three donation services, the code block drops its `counterKey` override and just uses
+  `donations_received` directly - "only the namespace word changes" is now literally true.
+- Historical changelog entries keep the old `kofis_received` naming - they're a frozen record.
+
+## April 14th, 2026 - Welcome.vue: unify external integrations into tabs
+
+- Previously the Integrations section had three side-by-side cards. Two of them also claimed "six
+  auto-provisioned controls" but only showed three, which was plainly wrong. The cards also made
+  the three services look like different products when the whole point of the section is that
+  they are interchangeable.
+- Replaced the 3-column grid with a single tab strip (Ko-fi / Streamlabs / StreamElements) sharing
+  the sky-underline pattern used by the Tags section's Live data / Live CSS / Alerts tabs. Below
+  the tabs, one card swaps service name, tagline, description, and icon based on the active tab.
+  The six auto-provisioned controls render in a 2-column grid with the namespace word accented in
+  sky, so the "only this word changes" story is visible at a glance.
+- Net effect: less real estate, more accurate (six controls shown, not three), and the unity of
+  the three services reads visually.
+
 ## April 14th, 2026 - Welcome.vue: reverse subathon case study + Twitch bits in the `latest()` block
 
 - A user wired up a reverse subathon (clock ticks down, donations subtract
