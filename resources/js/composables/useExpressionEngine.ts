@@ -126,6 +126,7 @@ export function buildContext(data: Record<string, unknown>): Record<string, unkn
 
   const ctx: Record<string, unknown> = Object.create(null);
   ctx['c'] = c;
+  ctx['PI'] = Math.PI;
   return ctx;
 }
 
@@ -186,6 +187,7 @@ export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
 export const SUPPORTED_FUNCTIONS = new Set([
   'argmax', 'argmin', 'latest', 'oldest',
   'max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
+  'sin', 'cos', 'fract', 'mod',
   'now',
 ]);
 
@@ -206,6 +208,16 @@ const FUNCTIONS: Record<string, FnImpl> = {
   round: (args) => Math.round(toNum(args[0])),
   floor: (args) => Math.floor(toNum(args[0])),
   ceil: (args) => Math.ceil(toNum(args[0])),
+  sin: (args) => Math.sin(toNum(args[0])),
+  cos: (args) => Math.cos(toNum(args[0])),
+  fract: (args) => {
+    const x = toNum(args[0]);
+    return x - Math.floor(x);
+  },
+  mod: (args) => {
+    const b = toNum(args[1]);
+    return b === 0 ? 0 : toNum(args[0]) % b;
+  },
 
   // Time (Unix epoch seconds, matching _at companion values)
   now: () => Math.floor(Date.now() / 1000),

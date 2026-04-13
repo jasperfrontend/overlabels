@@ -460,6 +460,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <p>Standard math functions. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">max</code>, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">min</code>, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">sum</code>, and <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">avg</code> accept multiple arguments.</p>
                   </div>
                   <div>
+                    <div class="mb-1.5 flex flex-wrap gap-1.5">
+                      <code v-for="fn in ['sin', 'cos', 'fract', 'mod']" :key="fn" class="rounded bg-background px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                      <code class="rounded bg-background px-2 py-0.5 font-mono text-xs">PI</code>
+                    </div>
+                    <p>Animation-friendly helpers. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">sin</code> and <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">cos</code> take radians. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">fract(x)</code> returns the fractional part (<code class="rounded bg-background px-1 py-0.5 font-mono text-xs">x - floor(x)</code>, so <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">fract(-0.3) === 0.7</code>). <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">mod(a, b)</code> is identical to the <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">%</code> operator. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">PI</code> is a bare identifier - use <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">PI</code>, not <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">PI()</code>.</p>
+                  </div>
+                  <div>
                     <div class="mb-1.5">
                       <code class="rounded bg-background px-2 py-0.5 font-mono text-xs">now()</code>
                     </div>

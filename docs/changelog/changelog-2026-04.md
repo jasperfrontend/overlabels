@@ -1,5 +1,24 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Expression controls: sin, cos, fract, mod, PI
+
+- `useExpressionEngine.ts`: added four functions and one constant to the evaluator
+  whitelist. Requested by a web-animation dev who wanted to drive overlay values with
+  trig/fract math.
+  - `sin(x)`, `cos(x)` - radians, matching JS `Math.sin`/`cos`.
+  - `fract(x)` - GLSL-style fractional part (`x - floor(x)`), so `fract(-0.3) === 0.7`.
+  - `mod(a, b)` - identical to the `%` operator, including the divide-by-zero returns 0
+    safety net. Kept as a function for readability in shader-style expressions.
+  - `PI` - bare identifier, not a call. Added at the context root in `buildContext`;
+    safe because user control keys live under the `c.` namespace.
+- `SUPPORTED_FUNCTIONS` set extended so the in-builder preview validator accepts the
+  new calls without falsely flagging them as unknown.
+- `ExpressionBuilder.vue` Help dialog and `/help/controls` page: new chip row listing
+  the animation helpers, with a note that `sin`/`cos` are radians and `PI` is a bare
+  identifier.
+- Drive-by: builder's Help dialog said `now()` returns milliseconds; it returns seconds.
+  Corrected. Public help page already had it right.
+
 ## April 13th, 2026 - Help docs: bot section and shared help layout
 
 - New `HelpLayout.vue` under `resources/js/layouts/` - wraps the `<Head>` meta block

@@ -367,9 +367,16 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
               </div>
               <div>
                 <div class="flex flex-wrap gap-1.5 mb-1.5">
+                  <code v-for="fn in ['sin', 'cos', 'fract', 'mod']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                  <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">PI</code>
+                </div>
+                <p class="text-xs text-muted-foreground">Animation-friendly helpers. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sin</code> and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">cos</code> take radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(x)</code> returns the fractional part (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x - floor(x)</code>). <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(a, b)</code> matches the <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">%</code> operator. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code> is a bare identifier - use <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code>, not <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI()</code>.</p>
+              </div>
+              <div>
+                <div class="flex flex-wrap gap-1.5 mb-1.5">
                   <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">now()</code>
                 </div>
-                <p class="text-xs text-muted-foreground">Returns the current timestamp in milliseconds. Useful for calculating time since an event.</p>
+                <p class="text-xs text-muted-foreground">Returns the current timestamp in seconds. Useful for calculating time since an event.</p>
               </div>
             </div>
           </AccordionContent>
