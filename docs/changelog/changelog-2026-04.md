@@ -1,11 +1,14 @@
 # CHANGELOG APRIL 2026
 
-## April 13th, 2026 - Deploy: Node in Railway runtime for SSR
+## April 13th, 2026 - Deploy: split SSR into its own Railway service
 
-- Added `nixpacks.toml` at the repo root with `nixPkgs = ["...", "nodejs_20"]` so Railway's Nixpacks builder
-  keeps Node on `PATH` in the runtime image, not just the build phase. Without this, `php artisan
-  inertia:start-ssr` was crashing with `sh: 1: exec: node: not found` because Nixpacks picks PHP as the
-  primary provider for the repo (via `composer.json`) and strips Node from the final container.
+- Tried `nixpacks.toml` with `nixPkgs = ["...", "nodejs_20"]` first; Railway's Nixpacks runtime image still
+  stripped Node because the PHP provider's final container stage doesn't carry Node forward. `php artisan
+  inertia:start-ssr` kept crashing with `sh: 1: exec: node: not found`.
+- Moved to a dedicated Railway service for SSR pointed at the same repo. Build:
+  `npm install && npm run build:ssr`, start: `node bootstrap/ssr/ssr.js`. Laravel service points at it via
+  `INERTIA_SSR_URL=http://<ssr-service>.railway.internal:13714` and no longer runs the SSR process itself.
+- Removed the dead `nixpacks.toml` so the repo doesn't carry config that isn't doing anything.
 
 ## April 13th, 2026 - Feature: Inertia SSR so marketing and /help routes are crawlable
 
