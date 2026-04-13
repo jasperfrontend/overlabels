@@ -1,5 +1,25 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Welcome.vue: reverse subathon case study + Twitch bits in the `latest()` block
+
+- A user wired up a reverse subathon (clock ticks down, donations subtract
+  time, stream ends at zero) on top of three number controls plus a single
+  `clamp()` expression. It's the cleanest demonstration of what expression
+  controls actually enable, so it earns a dedicated case-study block on the
+  landing page right below the `latest()` highlight.
+- New "Case study" block walks through the three driving controls
+  (`donathon_timer`, `deduction_per_donation`, `total_donations`) and shows
+  the formula as the punchline:
+  `clamp(c.donathon_timer - (c.deduction_per_donation * c.total_donations), 0, c.donathon_timer)`.
+- Closing sky-tinted callout notes that swapping the `-` for a `+` converts
+  the same expression into a classic add-time subathon. One-liner conversion,
+  zero new controls.
+- While in there, extended the existing `latest()` example code block from
+  three pipes (Streamlabs, Ko-fi, StreamElements) to four by appending the
+  Twitch bits pair (`c.twitch.latest_cheerer_name` / `latest_cheer_amount`).
+  The H3 and supporting prose already said "three donation services plus
+  Twitch bits" - the code block now matches.
+
 ## April 14th, 2026 - Welcome.vue: correct the `_at` caption in the latest() block
 
 - The caption under the `latest()` highlight block previously said the pattern
