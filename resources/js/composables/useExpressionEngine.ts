@@ -215,8 +215,9 @@ const FUNCTIONS: Record<string, FnImpl> = {
     return x - Math.floor(x);
   },
   mod: (args) => {
+    const a = toNum(args[0]);
     const b = toNum(args[1]);
-    return b === 0 ? 0 : toNum(args[0]) % b;
+    return b === 0 ? 0 : a - b * Math.floor(a / b);
   },
 
   // Time (Unix epoch seconds, matching _at companion values)

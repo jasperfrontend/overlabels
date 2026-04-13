@@ -1,5 +1,16 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Expression controls: mod() is floor-based, not JS remainder
+
+- `useExpressionEngine.ts`: `mod(a, b)` now evaluates as `a - b * floor(a / b)`
+  instead of `a % b`. Caught by local testing: `mod(-1, 5)` was returning `-1`
+  (JS remainder) when the animation-math expectation is `4` (GLSL/mathematical
+  modulo). Floor-based mod always returns a result with the same sign as `b`.
+- Help text in `ExpressionBuilder.vue` and `/help/controls` updated: `mod()` no
+  longer claims parity with `%`. Each surface now spells out the distinction and
+  points at the `%` operator for anyone who actually wants JS remainder.
+- Divide-by-zero still returns `0` (unchanged).
+
 ## April 13th, 2026 - Expression help: float-precision note on fract / sin / cos
 
 - `ExpressionBuilder.vue` Help dialog and `/help/controls`: added a short paragraph
