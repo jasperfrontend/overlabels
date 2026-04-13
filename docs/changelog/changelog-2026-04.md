@@ -1,38 +1,5 @@
 # CHANGELOG APRIL 2026
 
-## April 13th, 2026 - Deploy: split SSR into its own Railway service
-
-- Tried `nixpacks.toml` with `nixPkgs = ["...", "nodejs_20"]` first; Railway's Nixpacks runtime image still
-  stripped Node because the PHP provider's final container stage doesn't carry Node forward. `php artisan
-  inertia:start-ssr` kept crashing with `sh: 1: exec: node: not found`.
-- Moved to a dedicated Railway service for SSR pointed at the same repo. Build:
-  `npm install && npm run build:ssr`, start: `node bootstrap/ssr/ssr.js`. Laravel service points at it via
-  `INERTIA_SSR_URL=http://<ssr-service>.railway.internal:13714` and no longer runs the SSR process itself.
-- Removed the dead `nixpacks.toml` so the repo doesn't carry config that isn't doing anything.
-
-## April 13th, 2026 - Feature: Inertia SSR so marketing and /help routes are crawlable
-
-- Wired up Inertia server-side rendering so the public-facing pages (`/` and the `/help/*` tree) ship
-  fully-rendered HTML to crawlers and LLMs instead of the empty Inertia app shell. Previously those pages
-  returned a `<div id="app" data-page="...json...">` that no scraper could parse, so sending an AI at
-  `overlabels.com/help/controls` with "read this and help me" got you garbled Inertia json. Now the same
-  request returns real HTML with headings, copy, and links in the body.
-- `resources/js/ssr.ts` was already scaffolded but broken: bare `route()` calls inside `<script setup>`
-  (used heavily in `AppSidebar.vue`) worked client-side because `ZiggyVue` assigns `route` to `window`, but
-  failed SSR with `ReferenceError: route is not defined`. Fixed by binding a ziggy-aware `route` helper to
-  `globalThis` inside the SSR setup function before `createSSRApp`, mirroring the client-side behavior.
-- `vite.config.mts`: the `codemirror` and `websocket` `manualChunks` config was crashing the SSR build with
-  `"vue-codemirror" cannot be included in manualChunks because it is resolved as an external module`. Wrapped
-  `rollupOptions` in a `isSsrBuild ? {} : {...}` ternary so the chunk splitting only runs for the client build.
-- `config/inertia.php`: `ssr.enabled` and `ssr.url` are now env-driven via `INERTIA_SSR_ENABLED` (defaults to
-  `false`) and `INERTIA_SSR_URL`. The previous hardcoded `true` meant every Laravel request tried to hit an
-  SSR server on `127.0.0.1:13714` that nobody was running. Now SSR is opt-in per environment, and graceful
-  fallback behavior is the default.
-- `@vue/server-renderer@3.5.29` added to devDependencies (matching the installed Vue version).
-- Deployment note: to turn SSR on in production, set `INERTIA_SSR_ENABLED=true` in the env, run
-  `npm run build:ssr` during the build step (outputs `bootstrap/ssr/ssr.js`), and run `php artisan
-  inertia:start-ssr` as a supervisor/systemd-managed process.
-
 ## April 13th, 2026 - UX: one-test-cheer-per-minute cooldown with live countdown
 
 - "Send test cheer" is now rate-limited client-side to one fire per minute. On success the button label flips

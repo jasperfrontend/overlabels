@@ -11,7 +11,7 @@ try {
     commitHash = (process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
 }
 
-export default defineConfig(({ isSsrBuild }) => ({
+export default defineConfig({
     define: {
         __COMMIT_HASH__: JSON.stringify(commitHash),
     },
@@ -33,24 +33,22 @@ export default defineConfig(({ isSsrBuild }) => ({
     ],
     build: {
         chunkSizeWarningLimit: 1000,
-        rollupOptions: isSsrBuild
-            ? {}
-            : {
-                output: {
-                    manualChunks: {
-                        codemirror: [
-                            'vue-codemirror',
-                            'codemirror',
-                            '@codemirror/lang-html',
-                            '@codemirror/lang-css',
-                            '@codemirror/lang-javascript',
-                            '@codemirror/theme-one-dark',
-                            '@codemirror/view',
-                            '@codemirror/state'
-                        ],
-                        websocket: ['pusher-js', 'laravel-echo'],
-                    }
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    codemirror: [
+                        'vue-codemirror',
+                        'codemirror',
+                        '@codemirror/lang-html',
+                        '@codemirror/lang-css',
+                        '@codemirror/lang-javascript',
+                        '@codemirror/theme-one-dark',
+                        '@codemirror/view',
+                        '@codemirror/state'
+                    ],
+                    websocket: ['pusher-js', 'laravel-echo'],
                 }
             }
+        }
     }
-}));
+});
