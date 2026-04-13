@@ -182,32 +182,43 @@ const userId = ref<string | null>(null);
 // Pipe args allow word chars, dots, colons, and hyphens (for date patterns like dd-MM-yyyy)
 const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\- ]+))?]]]/g;
 
-function replaceTagsWithFormatting(source: string, sourceData: Record<string, any>): string {
+// HTML-encode substituted tag values so donor-supplied strings (Ko-fi/StreamLabs/StreamElements
+// donor names and messages) can't break out of attribute or text context when the result is
+// rendered via v-html. Encodes the five chars that matter for HTML/attribute contexts.
+// CSS output path skips this because style.textContent is not HTML-parsed.
+function encodeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function replaceTagsWithFormatting(source: string, sourceData: Record<string, any>, encode: boolean = true): string {
   return source.replace(TAG_REGEX, (_match, key: string, pipe: string | undefined) => {
     const val = sourceData[key];
     if (val === undefined || val === null || typeof val === 'object') return '';
     const strVal = String(val);
-    if (pipe) {
-      return applyFormatter(strVal, pipe, userLocale.value);
-    }
-    return strVal;
+    const formatted = pipe ? applyFormatter(strVal, pipe, userLocale.value) : strVal;
+    return encode ? encodeHtml(formatted) : formatted;
   });
 }
 
-function parseSource(source: string | null | undefined): string {
+function parseSource(source: string | null | undefined, encode: boolean = true): string {
   if (!source) return '';
   let result = source;
 
   if (data.value && typeof data.value === 'object') {
     result = processTemplate(result, data.value);
-    result = replaceTagsWithFormatting(result, data.value);
+    result = replaceTagsWithFormatting(result, data.value, encode);
   }
 
   return result;
 }
 
-const compiledHtml = computed(() => parseSource(rawHtml.value));
-const compiledCss = computed(() => parseSource(css.value));
+const compiledHtml = computed(() => parseSource(rawHtml.value, true));
+const compiledCss = computed(() => parseSource(css.value, false));
 watch(compiledCss, (newCss) => injectStyle(newCss));
 
 function injectStyle(styleString: string) {

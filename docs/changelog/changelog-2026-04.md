@@ -1,5 +1,19 @@
 # CHANGELOG APRIL 2026
 
+## April 13th, 2026 - Security: HTML-encode substituted tag values in OverlayRenderer
+
+- Fixed an indirect XSS vector where donor-supplied strings (Ko-fi / StreamLabs / StreamElements
+  donor names, donation messages, etc.) were substituted into the overlay HTML string without
+  HTML-encoding before being rendered via `v-html`. A donor could craft a name or message
+  containing `<script>` or attribute-breaking quotes and execute script in the OBS browser source
+  context. `strip_tags()` on the server side is not sufficient (it doesn't encode `"`, `'`, `=`).
+- `OverlayRenderer.vue`: added `encodeHtml()` helper and an `encode` flag to
+  `replaceTagsWithFormatting` / `parseSource`. The HTML paths (`compiledHtml`, `compiledAlertHtml`)
+  encode `&`, `<`, `>`, `"`, `'` on substituted values; the CSS path (`compiledCss`) skips
+  encoding because `style.textContent` is not HTML-parsed.
+- Impact bounded to the isolated overlay document (no session, no dashboard pivot), but the fix
+  closes the attribute-break / script-injection surface for all donor-controlled control values.
+
 ## April 13th, 2026 - UX: Welcome page copy polish, Twitch "Connect" button rework
 
 - Welcome page: small copy tweak under the "Event tags are merged with your static overlay data" paragraph,
