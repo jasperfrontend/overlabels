@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Welcome.vue: correct the `_at` caption in the latest() block
+
+- The caption under the `latest()` highlight block previously said the pattern
+  "works for anything you can pair with an `_at` field," which implied `_at`
+  was a selective suffix on certain controls. Not true: every control in
+  Overlabels automatically exposes an `_at` companion, and every timestamp on
+  the platform is normalized to Unix seconds.
+- Updated caption spells that out so the copy doesn't misrepresent the
+  platform's timestamp contract.
+
 ## April 14th, 2026 - Welcome.vue: highlight latest() as the cross-service killer feature
 
 - New highlighted block at the end of the Integrations section, right after the

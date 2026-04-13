@@ -843,7 +843,7 @@ const alertPipelineSteps = [
               </div>
             </div>
             <p class="mt-3 max-w-3xl text-sm text-muted-foreground">
-              <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-sky-500">latest()</code> takes pairs of <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">(timestamp, label)</code> arguments, picks the highest timestamp, and returns the paired label. Works the same way for totals, counters, or anything else you can pair with an <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">_at</code> field. Reactive, so your overlay updates the instant a new donation lands on any pipe.
+              <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-sky-500">latest()</code> takes pairs of <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">(timestamp, label)</code> arguments, picks the highest timestamp, and returns its paired label. Every control in Overlabels automatically exposes an <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">_at</code> companion holding its last-update time in seconds - every timestamp on the platform is normalized that way - so the same pattern works for totals, counters, or anything else you want to rank by recency. Reactive, so your overlay catches up the instant a new donation lands on any pipe.
             </p>
           </div>
         </div>
