@@ -1,5 +1,25 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Welcome.vue: highlight latest() as the cross-service killer feature
+
+- New highlighted block at the end of the Integrations section, right after the
+  "shared alert template" example, featuring `latest()` as the single most
+  differentiating feature on the landing page.
+- Framing: every other overlay tool on the market is owned by a donation
+  platform (Streamlabs, StreamElements, Ko-fi), so they all hide each other's
+  donations by design. Overlabels is a neutral third party - so one `latest()`
+  call across all three `_at` pairs gives the actual most-recent donor across
+  the whole stream.
+- Uses a real two-control example (the one a user wired up themselves):
+  `c:latest_donator` and `c:last_donation_amount`, each a `latest()` call
+  fanning across all three service namespaces.
+- Visual treatment matches the existing sky-accent "Power combo" block in the
+  Controls section (sky border + sky-tinted header, card-colored body) so it
+  reads as a first-class highlight rather than an afterthought.
+- Caption explains the mechanics in plain terms: `latest()` takes `(timestamp,
+  label)` pairs, picks the highest timestamp, returns its paired label.
+  Reactive, so the overlay catches up the instant a donation hits any pipe.
+
 ## April 14th, 2026 - Welcome.vue hero rewrite: lead with the substrate, not the task
 
 - Prompted by the observation that the old hero ("Live overlays, for Twitch" +

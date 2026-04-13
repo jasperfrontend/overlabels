@@ -806,6 +806,46 @@ const alertPipelineSteps = [
             both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code>
             tells your overlay which platform it came from.
           </p>
+
+          <!-- The latest() killer feature -->
+          <div class="mt-16 border-t border-sidebar-accent pt-16">
+            <Badge class="mb-4 border-sky-500/40 bg-sky-500/10 hover:border-sky-500/40 hover:bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-500">
+              No vendor lock-in
+            </Badge>
+            <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+              Three donation services. One <code class="font-mono text-sky-500">latest()</code>.
+            </h3>
+            <p class="mb-4 max-w-3xl text-lg text-foreground">
+              Every other overlay tool on the market is owned by a donation platform. Streamlabs' overlays show Streamlabs donations. StreamElements' overlays show StreamElements donations. Ko-fi's overlays show Ko-fi donations. That's not a bug, it's the business model.
+            </p>
+            <p class="mb-8 max-w-3xl text-lg text-foreground">
+              Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all three into one <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> call and you get the actual most-recent donor across your whole stream. <strong>One name, one amount, three pipes.</strong>
+            </p>
+
+            <div class="overflow-hidden rounded-sm">
+              <div class="flex items-center gap-2 border-b border-sky-500/20 bg-sky-400/10 dark:bg-sky-950/20 px-4 py-2.5">
+                <span class="font-mono text-xs text-sky-600 dark:text-sky-400">Two expression controls. The whole cross-service story.</span>
+              </div>
+              <div class="overflow-x-auto bg-card p-5 font-mono text-sm leading-7">
+                <div><span class="text-zinc-600 dark:text-zinc-400 italic">// c:latest_donator</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donor_name_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donor_name</span><span class="text-zinc-500">,</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donor_name_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donor_name</span><span class="text-zinc-500">,</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donor_name_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donor_name</span></div>
+                <div><span class="text-zinc-500">)</span></div>
+                <div class="mt-4"></div>
+                <div><span class="text-zinc-600 dark:text-zinc-400 italic">// c:last_donation_amount</span></div>
+                <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donation_amount_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donation_amount_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
+                <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donation_amount_at</span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donation_amount</span></div>
+                <div><span class="text-zinc-500">)</span></div>
+              </div>
+            </div>
+            <p class="mt-3 max-w-3xl text-sm text-muted-foreground">
+              <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-sky-500">latest()</code> takes pairs of <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">(timestamp, label)</code> arguments, picks the highest timestamp, and returns the paired label. Works the same way for totals, counters, or anything else you can pair with an <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">_at</code> field. Reactive, so your overlay updates the instant a new donation lands on any pipe.
+            </p>
+          </div>
         </div>
       </div>
     </section>
