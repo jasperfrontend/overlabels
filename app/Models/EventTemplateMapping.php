@@ -23,7 +23,6 @@ use Illuminate\Support\Carbon;
  * @property-read string $event_type_display
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
- *
  * @method static Builder<static>|EventTemplateMapping newModelQuery()
  * @method static Builder<static>|EventTemplateMapping newQuery()
  * @method static Builder<static>|EventTemplateMapping query()
@@ -38,8 +37,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|EventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|EventTemplateMapping whereUserId($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperEventTemplateMapping
  */
 class EventTemplateMapping extends Model
 {

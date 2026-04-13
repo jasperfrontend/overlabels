@@ -23,7 +23,8 @@
 
         "socialiteproviders/twitch": "^5.4",
         "stevebauman/location": "^7.6",
-        "tightenco/ziggy": "^2.4"
+        "tightenco/ziggy": "^2.4",
+      "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.7",

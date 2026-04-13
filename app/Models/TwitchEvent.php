@@ -18,7 +18,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property int|null $user_id
  * @property-read User|null $user
- *
  * @method static Builder<static>|TwitchEvent newModelQuery()
  * @method static Builder<static>|TwitchEvent newQuery()
  * @method static Builder<static>|TwitchEvent ofType(string $type)
@@ -32,8 +31,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|TwitchEvent whereTwitchTimestamp($value)
  * @method static Builder<static>|TwitchEvent whereUpdatedAt($value)
  * @method static Builder<static>|TwitchEvent whereUserId($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperTwitchEvent
  */
 class TwitchEvent extends Model
 {

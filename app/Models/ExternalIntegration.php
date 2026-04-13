@@ -32,7 +32,6 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, ExternalEventTemplateMapping> $mappings
  * @property-read int|null $mappings_count
  * @property-read User|null $user
- *
  * @method static ExternalIntegrationFactory factory($count = null, $state = [])
  * @method static Builder<static>|ExternalIntegration newModelQuery()
  * @method static Builder<static>|ExternalIntegration newQuery()
@@ -48,8 +47,8 @@ use Illuminate\Support\Str;
  * @method static Builder<static>|ExternalIntegration whereUpdatedAt($value)
  * @method static Builder<static>|ExternalIntegration whereUserId($value)
  * @method static Builder<static>|ExternalIntegration whereWebhookToken($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperExternalIntegration
  */
 class ExternalIntegration extends Model
 {

@@ -72,13 +72,11 @@ class HtmlSanitizationService
 
         // Strip javascript: inside CSS url() expressions.
         // The value may be wrapped in quotes: url('javascript:...') or url("javascript:...")
-        $value = preg_replace(
+        return preg_replace(
             '/url\s*\(\s*["\']?\s*javascript\s*:[^)]*["\']?\s*\)/i',
             'url(about:blank)',
             $value,
         );
-
-        return $value;
     }
 
     /**

@@ -26,7 +26,6 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, TemplateTag> $templateTags
  * @property-read int|null $template_tags_count
  * @property-read User|null $user
- *
  * @method static Builder<static>|TemplateTagCategory newModelQuery()
  * @method static Builder<static>|TemplateTagCategory newQuery()
  * @method static Builder<static>|TemplateTagCategory query()
@@ -39,8 +38,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|TemplateTagCategory whereSortOrder($value)
  * @method static Builder<static>|TemplateTagCategory whereUpdatedAt($value)
  * @method static Builder<static>|TemplateTagCategory whereUserId($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperTemplateTagCategory
  */
 class TemplateTagCategory extends Model
 {

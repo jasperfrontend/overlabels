@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 class ManageEventSub extends Command
 {
-    protected $signature = 'eventsub:manage 
+    protected $signature = 'eventsub:manage
                             {action : create|delete|status}
                             {--user-id=73327367 : Twitch user ID}
                             {--url= : Override webhook URL (for production)}
@@ -246,6 +246,9 @@ class ManageEventSub extends Command
         return 0;
     }
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     private function showStatus(User $user)
     {
         $this->info('Fetching subscription status...');
@@ -279,7 +282,7 @@ class ManageEventSub extends Command
                        (str_contains($url, 'ngrok') ? '🌐 Ngrok' : '❓ Other'));
 
             $created = isset($sub['created_at'])
-                ? (new DateTime($sub['created_at']))->format('Y-m-d H:i')
+                ? new DateTime($sub['created_at'])->format('Y-m-d H:i')
                 : 'Unknown';
 
             $status = match ($sub['status']) {

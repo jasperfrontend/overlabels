@@ -99,7 +99,7 @@ class ExternalWebhookController extends Controller
         $eventType = $driver->parseEventType($payload);
 
         if (! $eventType) {
-            return response()->json(['status' => 'ignored', 'reason' => 'Unsupported event type.'], 200);
+            return response()->json(['status' => 'ignored', 'reason' => 'Unsupported event type.']);
         }
 
         // 7. Normalize event
@@ -128,7 +128,7 @@ class ExternalWebhookController extends Controller
                 'message_id' => $normalizedEvent->getMessageId(),
             ]);
 
-            return response()->json(['status' => 'duplicate'], 200);
+            return response()->json(['status' => 'duplicate']);
         }
 
         // 9. Update service-managed controls
@@ -152,7 +152,7 @@ class ExternalWebhookController extends Controller
         // 11. Update integration's last_received_at
         $integration->update(['last_received_at' => now()]);
 
-        return response()->json(['status' => 'ok'], 200);
+        return response()->json(['status' => 'ok']);
     }
 
     /**

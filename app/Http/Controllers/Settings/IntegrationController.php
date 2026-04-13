@@ -7,11 +7,17 @@ use App\Models\ExternalIntegration;
 use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\UserEventSubManager;
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class IntegrationController extends Controller
 {
+    public function __construct(private readonly UserEventSubManager $eventSubManager) {}
+
     public function index(): Response
     {
         $user = auth()->user();
@@ -56,6 +62,47 @@ class IntegrationController extends Controller
                 ),
             ],
         ]);
+    }
+
+    /**
+     * Connect EventSub: wipe existing subscriptions and create a fresh set so the
+     * user gets immediate feedback on which event types subscribed successfully.
+     * Called from settings/integrations/index.vue via POST /eventsub/connect.
+     */
+    public function connectEventSub(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        try {
+            $this->eventSubManager->removeUserSubscriptions($user);
+            $results = $this->eventSubManager->setupUserSubscriptions($user);
+
+            $created = count($results['created']);
+            $failed = count($results['failed']);
+            $existing = count($results['existing']);
+
+            Log::info('EventSub setup completed', [
+                'user_id' => $user->id,
+                'created' => $created,
+                'failed' => $failed,
+                'existing' => $existing,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "EventSub connected: $created created, $existing existing, $failed failed.",
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to setup EventSub', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to setup EventSub connections.',
+            ], 500);
+        }
     }
 
     private function serviceName(string $key): string

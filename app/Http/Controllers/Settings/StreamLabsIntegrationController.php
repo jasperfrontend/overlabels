@@ -8,6 +8,7 @@ use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Random\RandomException;
 
 class StreamLabsIntegrationController extends Controller
 {
@@ -70,6 +72,7 @@ class StreamLabsIntegrationController extends Controller
 
     /**
      * Handle the OAuth callback from StreamLabs.
+     * @throws ConnectionException|RandomException
      */
     public function callback(Request $request): RedirectResponse
     {

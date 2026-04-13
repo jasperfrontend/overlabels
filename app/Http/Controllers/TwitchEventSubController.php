@@ -20,7 +20,6 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 use Random\RandomException;
 use Throwable;
 
@@ -50,13 +49,6 @@ class TwitchEventSubController extends Controller
         $this->streamStateMachine = $streamStateMachine;
     }
 
-    /**
-     * Show the EventSub demo page
-     */
-    public function index()
-    {
-        return Inertia::render('EventSubDemo');
-    }
 
     /**
      * Connect to EventSub (create subscriptions)
@@ -346,114 +338,6 @@ class TwitchEventSubController extends Controller
         }
     }
 
-    public function webhookStatus()
-    {
-        return response()->json([
-            'last_activity' => Cache::get('last_webhook_activity'),
-            'challenge_received' => Cache::get('webhook_challenge_received', false),
-            'error' => Cache::get('webhook_error'),
-        ]);
-    }
-
-    /**
-     * Check and log the current status of all subscriptions
-     */
-    public function checkStatus(Request $request)
-    {
-        $user = $request->user();
-
-        if (! $user || ! $user->access_token) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        try {
-            // Get an app access token to check app-created subscriptions
-            $appToken = $this->eventSubService->getAppAccessToken();
-
-            if (! $appToken) {
-                return response()->json(['error' => 'Could not get app token'], 500);
-            }
-
-            // Check subscriptions with app token
-            $subscriptions = $this->eventSubService->getSubscriptions($appToken);
-
-            return response()->json([
-                'subscriptions' => $subscriptions['data'] ?? [],
-                'total' => $subscriptions['total'] ?? 0,
-                'breakdown' => collect($subscriptions['data'] ?? [])->groupBy('status')->map->count(),
-                'token_type' => 'app_token',
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('Failed to check EventSub status: '.$e->getMessage());
-
-            return response()->json(['error' => 'Failed to get status'], 500);
-        }
-    }
-
-    /**
-     * Clean up ALL EventSub subscriptions (both user and app token created)
-     */
-    public function cleanupAll(Request $request)
-    {
-        $user = $request->user();
-
-        if (! $user || ! $user->access_token) {
-            return response()->json(['error' => 'User not authenticated'], 401);
-        }
-
-        $deletedCount = 0;
-        $errors = [];
-
-        try {
-            // Get app access token
-            $appToken = $this->eventSubService->getAppAccessToken();
-
-            if ($appToken) {
-                // Clean up app token subscriptions
-                $appSubscriptions = $this->eventSubService->getSubscriptions($appToken);
-
-                if ($appSubscriptions && isset($appSubscriptions['data'])) {
-                    foreach ($appSubscriptions['data'] as $subscription) {
-                        if ($this->eventSubService->deleteSubscription($appToken, $subscription['id'])) {
-                            $deletedCount++;
-                        } else {
-                            $errors[] = "Failed to delete app subscription: {$subscription['id']}";
-                        }
-                    }
-                }
-            }
-
-            // Also try with a user token
-            $userSubscriptions = $this->eventSubService->getSubscriptions($user->access_token);
-
-            if ($userSubscriptions && isset($userSubscriptions['data'])) {
-                foreach ($userSubscriptions['data'] as $subscription) {
-                    if ($this->eventSubService->deleteSubscription($user->access_token, $subscription['id'])) {
-                        $deletedCount++;
-                    } else {
-                        $errors[] = "Failed to delete user subscription: {$subscription['id']}";
-                    }
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => "Cleaned up $deletedCount subscriptions",
-                'deleted_count' => $deletedCount,
-                'errors' => $errors,
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('EventSub cleanup failed: '.$e->getMessage());
-
-            return response()->json([
-                'error' => 'Failed to cleanup subscriptions',
-                'message' => $e->getMessage(),
-                'deleted_count' => $deletedCount,
-            ], 500);
-        }
-    }
 
     /**
      * Verify that the webhook came from Twitch
@@ -564,7 +448,7 @@ class TwitchEventSubController extends Controller
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
 
             // Store the event in the database
-            $twitchEvent = TwitchEvent::create([
+            TwitchEvent::create([
                 'user_id' => $user?->id,
                 'event_type' => $eventType,
                 'event_data' => $event,
@@ -628,7 +512,7 @@ class TwitchEventSubController extends Controller
 
             // Still broadcast the event even if database storage fails
             broadcast(new TwitchEventReceived($eventType, $event));
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
@@ -732,7 +616,7 @@ class TwitchEventSubController extends Controller
 
         $bits = random_int(100, 1000);
         $cheererName = 'TestCheerer';
-        $message = "cheer{$bits} test cheer from the integrations page!";
+        $message = "cheer$bits test cheer from the integrations page!";
 
         $event = [
             'broadcaster_user_id' => (string) $user->twitch_id,

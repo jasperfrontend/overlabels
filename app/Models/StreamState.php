@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @mixin IdeHelperStreamState
+ */
 class StreamState extends Model
 {
     public const string STATE_OFFLINE = 'offline';

@@ -40,7 +40,7 @@
         .olb-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.08); }
         .olb-label { color: rgba(255,255,255,0.5); white-space: nowrap; }
         .olb-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .olb-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); cursor: pointer; font: inherit; font-size: 11px; letter-spacing: 0.3px; transition: all 0.15s ease; line-height: 1.4; }
+        .olb-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); cursor: pointer; font: inherit; font-size: 11px; letter-spacing: .04rem; transition: all 0.15s ease; line-height: 1.4; }
         .olb-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2); }
         .olb-btn:active { transform: scale(0.97); }
         .olb-btn--accent { background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.3); color: rgba(190, 170, 255, 0.9); }

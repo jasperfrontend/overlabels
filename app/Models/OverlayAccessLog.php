@@ -17,7 +17,6 @@ use Illuminate\Support\Carbon;
  * @property array<array-key, mixed>|null $metadata
  * @property Carbon $accessed_at
  * @property-read OverlayAccessToken $token
- *
  * @method static Builder<static>|OverlayAccessLog newModelQuery()
  * @method static Builder<static>|OverlayAccessLog newQuery()
  * @method static Builder<static>|OverlayAccessLog query()
@@ -28,8 +27,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|OverlayAccessLog whereTemplateSlug($value)
  * @method static Builder<static>|OverlayAccessLog whereTokenId($value)
  * @method static Builder<static>|OverlayAccessLog whereUserAgent($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperOverlayAccessLog
  */
 class OverlayAccessLog extends Model
 {

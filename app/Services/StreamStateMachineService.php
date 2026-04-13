@@ -9,6 +9,7 @@ use App\Models\StreamSession;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -72,6 +73,7 @@ readonly class StreamStateMachineService
     /**
      * Handle an EventSub stream.offline event.
      * Transitions to "ending" with grace period and dispatches Helix verification.
+     * @throws Throwable
      */
     public function handleEventSubOffline(User $user, array $eventData): void
     {
@@ -115,6 +117,8 @@ readonly class StreamStateMachineService
     /**
      * Verify the current stream state against Twitch Helix API.
      * Called by the VerifyStreamState job.
+     * @throws ConnectionException
+     * @throws Throwable
      */
     public function verify(User $user): void
     {

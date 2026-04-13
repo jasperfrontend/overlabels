@@ -466,27 +466,7 @@ class JsonTemplateParserService
             ->orderBy('display_name')
             ->get();
 
-        $organized = [];
-
-        foreach ($categories as $category) {
-            $organized[$category->name] = [
-                'category' => $category,
-                'tags' => $category->activeTemplateTags->map(function ($tag) {
-                    return [
-                        'id' => $tag->id,
-                        'tag_name' => $tag->tag_name,
-                        'display_tag' => $tag->display_tag,
-                        'display_name' => $tag->display_name,
-                        'description' => $tag->description,
-                        'data_type' => $tag->data_type,
-                        'sample_data' => $tag->sample_data,
-                        'json_path' => $tag->json_path,
-                    ];
-                }),
-            ];
-        }
-
-        return $organized;
+        return $this->extracted_categories($categories);
     }
 
     /**
@@ -502,27 +482,7 @@ class JsonTemplateParserService
             ->orderBy('display_name')
             ->get();
 
-        $organized = [];
-
-        foreach ($categories as $category) {
-            $organized[$category->name] = [
-                'category' => $category,
-                'tags' => $category->activeTemplateTags->map(function ($tag) {
-                    return [
-                        'id' => $tag->id,
-                        'tag_name' => $tag->tag_name,
-                        'display_tag' => $tag->display_tag,
-                        'display_name' => $tag->display_name,
-                        'description' => $tag->description,
-                        'data_type' => $tag->data_type,
-                        'sample_data' => $tag->sample_data,
-                        'json_path' => $tag->json_path,
-                    ];
-                }),
-            ];
-        }
-
-        return $organized;
+        return $this->extracted_categories($categories);
     }
 
     /**
@@ -651,5 +611,34 @@ class JsonTemplateParserService
         }
 
         return empty($options) ? null : $options;
+    }
+
+    /**
+     * @param \LaravelIdea\Helper\App\Models\_IH_TemplateTagCategory_C|\Illuminate\Database\Eloquent\Collection|array $categories
+     * @return array
+     */
+    public function extracted_categories(\LaravelIdea\Helper\App\Models\_IH_TemplateTagCategory_C|\Illuminate\Database\Eloquent\Collection|array $categories): array
+    {
+        $organized = [];
+
+        foreach ($categories as $category) {
+            $organized[$category->name] = [
+                'category' => $category,
+                'tags' => $category->activeTemplateTags->map(function ($tag) {
+                    return [
+                        'id' => $tag->id,
+                        'tag_name' => $tag->tag_name,
+                        'display_tag' => $tag->display_tag,
+                        'display_name' => $tag->display_name,
+                        'description' => $tag->description,
+                        'data_type' => $tag->data_type,
+                        'sample_data' => $tag->sample_data,
+                        'json_path' => $tag->json_path,
+                    ];
+                }),
+            ];
+        }
+
+        return $organized;
     }
 }

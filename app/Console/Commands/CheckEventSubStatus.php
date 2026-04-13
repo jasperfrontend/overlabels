@@ -21,6 +21,9 @@ class CheckEventSubStatus extends Command
         $this->eventSubService = $eventSubService;
     }
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     public function handle()
     {
         $twitchId = $this->option('user-id');

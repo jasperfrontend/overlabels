@@ -100,7 +100,7 @@ class DefaultTemplateProviderService
                 Log::warning('Default HTML template file not found or not readable', [
                     'path' => $htmlPath,
                     'exists' => File::exists($htmlPath),
-                    'readable' => File::exists($htmlPath) ? File::isReadable($htmlPath) : false,
+                    'readable' => File::exists($htmlPath) && File::isReadable($htmlPath),
                 ]);
             }
 
@@ -110,7 +110,7 @@ class DefaultTemplateProviderService
                 Log::warning('Default CSS template file not found or not readable', [
                     'path' => $cssPath,
                     'exists' => File::exists($cssPath),
-                    'readable' => File::exists($cssPath) ? File::isReadable($cssPath) : false,
+                    'readable' => File::exists($cssPath) && File::isReadable($cssPath),
                 ]);
             }
 

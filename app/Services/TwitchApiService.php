@@ -363,6 +363,7 @@ class TwitchApiService
      * Fetch Twitch global + channel emotes using an app access token.
      * Returns an array of ['code' => string, 'url' => string] entries.
      * No user credentials required — app token (client credentials) is sufficient.
+     * @throws ConnectionException
      */
     public function getChannelEmotes(string $appToken, string $broadcasterId): array
     {

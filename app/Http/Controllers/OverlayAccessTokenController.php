@@ -6,6 +6,7 @@ use App\Models\OverlayAccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Random\RandomException;
 
 class OverlayAccessTokenController extends Controller
 {
@@ -41,6 +42,7 @@ class OverlayAccessTokenController extends Controller
 
     /**
      * Store a new token
+     * @throws RandomException
      */
     public function store(Request $request)
     {
@@ -123,24 +125,4 @@ class OverlayAccessTokenController extends Controller
         ]);
     }
 
-    /**
-     * Show token usage/logs
-     */
-    public function usage(Request $request, OverlayAccessToken $token)
-    {
-        // Ensure user owns this token
-        if ($token->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        $logs = $token->accessLogs()
-            ->orderBy('accessed_at', 'desc')
-            ->take(100)
-            ->get();
-
-        return Inertia::render('overlaytokens/usage', [
-            'token' => $token,
-            'logs' => $logs,
-        ]);
-    }
 }

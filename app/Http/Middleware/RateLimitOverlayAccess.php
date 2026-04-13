@@ -20,7 +20,7 @@ class RateLimitOverlayAccess
             ], 429);
         }
 
-        RateLimiter::hit($key, 60);
+        RateLimiter::hit($key);
 
         return $next($request);
     }

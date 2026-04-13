@@ -29,9 +29,9 @@ class AdminUserController extends Controller
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('twitch_id', 'like', "%{$search}%");
+                $q->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('twitch_id', 'like', "%$search%");
             });
         }
 
@@ -159,7 +159,7 @@ class AdminUserController extends Controller
             // Delete tags/categories that would conflict with existing ghost user rows,
             // then reassign the rest.
             $existingGhostTagKeys = TemplateTag::where('user_id', $ghost->id)
-                ->select('category_id', 'tag_name')
+                ->select('category_id')
                 ->get()
                 ->map(fn ($t) => $t->category_id.':'.$t->tag_name)
                 ->all();

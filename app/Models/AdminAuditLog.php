@@ -18,7 +18,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $ip_address
  * @property Carbon $created_at
  * @property-read User|null $admin
- *
  * @method static Builder<static>|AdminAuditLog newModelQuery()
  * @method static Builder<static>|AdminAuditLog newQuery()
  * @method static Builder<static>|AdminAuditLog query()
@@ -30,8 +29,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|AdminAuditLog whereMetadata($value)
  * @method static Builder<static>|AdminAuditLog whereTargetId($value)
  * @method static Builder<static>|AdminAuditLog whereTargetType($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperAdminAuditLog
  */
 class AdminAuditLog extends Model
 {

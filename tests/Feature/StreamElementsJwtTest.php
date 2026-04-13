@@ -101,7 +101,7 @@ test('save does not re-provision controls on subsequent saves', function () {
 test('save rejects missing jwt_token', function () {
     authenticatedStreamElementsUser();
 
-    $this->post('/settings/integrations/streamelements', [])
+    $this->post('/settings/integrations/streamelements')
         ->assertSessionHasErrors('jwt_token');
 });
 

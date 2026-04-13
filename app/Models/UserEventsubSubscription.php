@@ -23,7 +23,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $user
- *
  * @method static Builder<static>|UserEventsubSubscription newModelQuery()
  * @method static Builder<static>|UserEventsubSubscription newQuery()
  * @method static Builder<static>|UserEventsubSubscription query()
@@ -39,8 +38,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|UserEventsubSubscription whereUpdatedAt($value)
  * @method static Builder<static>|UserEventsubSubscription whereUserId($value)
  * @method static Builder<static>|UserEventsubSubscription whereVersion($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperUserEventsubSubscription
  */
 class UserEventsubSubscription extends Model
 {

@@ -231,7 +231,7 @@ test('webhook routes bypass ban check', function () {
     expect($request2->is('api/webhooks/*'))->toBeTrue();
 
     // Health check path exclusion
-    $request3 = Request::create('/api/eventsub-health-check', 'GET');
+    $request3 = Request::create('/api/eventsub-health-check');
     expect($request3->is('api/eventsub-health-check'))->toBeTrue();
 });
 
@@ -302,7 +302,7 @@ test('sessions page shows ban status flags', function () {
     $sessions = $page['props']['sessions']['data'];
     $sessionItem = collect($sessions)->firstWhere('id', 'test-session-status');
 
-    expect($sessionItem)->not->toBeNull();
-    expect((array) $sessionItem)->toHaveKeys(['is_user_banned', 'is_ip_banned']);
-    expect($sessionItem->is_user_banned)->toBeTrue();
+    expect($sessionItem)->not->toBeNull()
+        ->and((array)$sessionItem)->toHaveKeys(['is_user_banned', 'is_ip_banned'])
+        ->and($sessionItem->is_user_banned)->toBeTrue();
 });

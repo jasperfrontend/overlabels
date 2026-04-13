@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Random\RandomException;
 
 class OverlayControlController extends Controller
 {
@@ -146,6 +147,7 @@ class OverlayControlController extends Controller
 
     /**
      * Update a control's label, config, or sort_order. Key is immutable.
+     * @throws RandomException
      */
     public function update(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
     {
@@ -324,6 +326,7 @@ class OverlayControlController extends Controller
 
     /**
      * Handle timer-specific mutations.
+     * @throws RandomException
      */
     private function setTimerValue(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
     {

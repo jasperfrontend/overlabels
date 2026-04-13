@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 
 class MonitorEventSubHealth extends Command
 {
-    protected $signature = 'eventsub:monitor 
+    protected $signature = 'eventsub:monitor
                             {--fix : Automatically fix failed subscriptions}
                             {--force : Force renewal of all subscriptions}';
 
@@ -69,7 +69,7 @@ class MonitorEventSubHealth extends Command
 
                 if ($fix) {
                     $this->info('    → Setting up subscriptions...');
-                    SetupUserEventSubSubscriptions::dispatch($user, false);
+                    SetupUserEventSubSubscriptions::dispatch($user);
                 }
             }
 

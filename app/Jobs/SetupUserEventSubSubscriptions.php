@@ -30,6 +30,9 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
         $this->forceRecreate = $forceRecreate;
     }
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     public function handle(UserEventSubManager $manager): void
     {
         try {

@@ -50,7 +50,6 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $owner
  * @property-read Collection<int, OverlayTemplate> $targetStaticOverlays
  * @property-read int|null $target_static_overlays_count
- *
  * @method static Builder<static>|OverlayTemplate alert()
  * @method static OverlayTemplateFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayTemplate newModelQuery()
@@ -77,8 +76,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|OverlayTemplate whereUpdatedAt($value)
  * @method static Builder<static>|OverlayTemplate whereVersion($value)
  * @method static Builder<static>|OverlayTemplate whereViewCount($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperOverlayTemplate
  */
 class OverlayTemplate extends Model
 {

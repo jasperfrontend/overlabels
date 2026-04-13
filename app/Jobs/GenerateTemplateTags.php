@@ -15,7 +15,7 @@ class GenerateTemplateTags implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 300; // 5 minutes
+    public int $timeout = 300; // 5 minutes
 
     public function __construct(
         public User $user,
@@ -26,6 +26,7 @@ class GenerateTemplateTags implements ShouldQueue
 
     /**
      * Execute the job.
+     * @throws Exception
      */
     public function handle(
         TwitchApiService $twitchService,

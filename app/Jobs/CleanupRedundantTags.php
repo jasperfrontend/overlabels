@@ -26,6 +26,7 @@ class CleanupRedundantTags implements ShouldQueue
 
     /**
      * Execute the job.
+     * @throws Exception
      */
     public function handle(): void
     {

@@ -28,7 +28,6 @@ use Random\RandomException;
  * @property bool $source_managed
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
- *
  * @method static OverlayControlFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayControl newModelQuery()
  * @method static Builder<static>|OverlayControl newQuery()
@@ -46,8 +45,8 @@ use Random\RandomException;
  * @method static Builder<static>|OverlayControl whereUpdatedAt($value)
  * @method static Builder<static>|OverlayControl whereUserId($value)
  * @method static Builder<static>|OverlayControl whereValue($value)
- *
  * @mixin Eloquent
+ * @mixin IdeHelperOverlayControl
  */
 class OverlayControl extends Model
 {

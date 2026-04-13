@@ -7,7 +7,6 @@ use App\Models\UserEventsubSubscription;
 use DateMalformedStringException;
 use DateTime;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class UserEventSubManager
@@ -86,11 +85,6 @@ class UserEventSubManager
         // Determine webhook URL (production vs local)
         $webhookUrl = $this->getWebhookUrl();
 
-        Log::info("Setting up EventSub subscriptions for user {$user->id}", [
-            'twitch_id' => $user->twitch_id,
-            'webhook_url' => $webhookUrl,
-        ]);
-
         foreach (self::SUPPORTED_EVENTS as $eventType => $config) {
             // Check if subscription already exists
             $existing = UserEventsubSubscription::where('user_id', $user->id)
@@ -136,7 +130,7 @@ class UserEventSubManager
             if ($response && ! isset($response['error'])) {
                 // Store in database immediately (no transaction) so the challenge
                 // handler can find and update it before we finish the loop
-                $subscription = UserEventsubSubscription::create([
+                UserEventsubSubscription::create([
                     'user_id' => $user->id,
                     'twitch_subscription_id' => $response['data'][0]['id'] ?? uniqid(),
                     'event_type' => $eventType,
@@ -302,81 +296,24 @@ class UserEventSubManager
         return $status;
     }
 
-    /**
-     * Create a single subscription for a user
-     *
-     * @throws DateMalformedStringException
-     */
-    private function createSingleSubscription(User $user, string $eventType): bool
-    {
-        if (! isset(self::SUPPORTED_EVENTS[$eventType])) {
-            return false;
-        }
-
-        $appToken = $this->eventSubService->getAppAccessToken();
-        if (! $appToken) {
-            return false;
-        }
-
-        $config = self::SUPPORTED_EVENTS[$eventType];
-        $condition = $this->buildCondition($eventType, $user->twitch_id);
-
-        $payload = [
-            'type' => $eventType,
-            'version' => $config['version'],
-            'condition' => $condition,
-            'transport' => [
-                'method' => 'webhook',
-                'callback' => $this->getWebhookUrl(),
-                'secret' => $user->webhook_secret ?? config('app.twitch_webhook_secret'),
-            ],
-        ];
-
-        $response = $this->eventSubService->createSubscription($appToken, $payload);
-
-        if ($response && ! isset($response['error'])) {
-            UserEventsubSubscription::create([
-                'user_id' => $user->id,
-                'twitch_subscription_id' => $response['data'][0]['id'] ?? uniqid(),
-                'event_type' => $eventType,
-                'version' => $config['version'],
-                'status' => $response['data'][0]['status'] ?? 'pending',
-                'condition' => $condition,
-                'callback_url' => $this->getWebhookUrl(),
-                'twitch_created_at' => isset($response['data'][0]['created_at'])
-                    ? new DateTime($response['data'][0]['created_at'])
-                    : now(),
-                'last_verified_at' => now(),
-            ]);
-
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * Build condition array for an event type
      */
     private function buildCondition(string $eventType, string $twitchId): array
     {
-        switch ($eventType) {
-            case 'channel.follow':
-                return [
-                    'broadcaster_user_id' => $twitchId,
-                    'moderator_user_id' => $twitchId,
-                ];
-
-            case 'channel.raid':
-                return [
-                    'to_broadcaster_user_id' => $twitchId,
-                ];
-
-            default:
-                return [
-                    'broadcaster_user_id' => $twitchId,
-                ];
-        }
+        return match ($eventType) {
+            'channel.follow' => [
+                'broadcaster_user_id' => $twitchId,
+                'moderator_user_id' => $twitchId,
+            ],
+            'channel.raid' => [
+                'to_broadcaster_user_id' => $twitchId,
+            ],
+            default => [
+                'broadcaster_user_id' => $twitchId,
+            ],
+        };
     }
 
     /**
@@ -424,7 +361,7 @@ class UserEventSubManager
                 'webhook_callback_verification_failed',
                 'notification_failures_exceeded',
             ])->count(),
-            'subscriptions_by_type' => UserEventsubSubscription::select('event_type', DB::raw('count(*) as count'))
+            'subscriptions_by_type' => UserEventsubSubscription::select('event_type')
                 ->groupBy('event_type')
                 ->pluck('count', 'event_type'),
         ];

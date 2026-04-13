@@ -77,7 +77,7 @@ class GpsLoggerIntegrationController extends Controller
             ['speed_unit' => $validated['speed_unit'] ?? 'kmh'],
         );
 
-        $integration->enabled = $isNew ? true : (bool) ($validated['enabled'] ?? true);
+        $integration->enabled = $isNew || (bool)($validated['enabled'] ?? true);
         $integration->save();
 
         // Auto-provision controls on first connect

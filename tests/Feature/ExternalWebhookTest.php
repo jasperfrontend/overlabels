@@ -59,12 +59,12 @@ function postKofi(string $webhookToken, array $payload): TestResponse
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('returns 404 for unknown service', function () {
-    $this->postJson('/api/webhooks/unknown-service/some-token', [])
+    $this->postJson('/api/webhooks/unknown-service/some-token')
         ->assertStatus(404);
 });
 
 test('returns 404 when webhook_token does not match any integration', function () {
-    $this->postJson('/api/webhooks/kofi/00000000-0000-0000-0000-000000000000', [])
+    $this->postJson('/api/webhooks/kofi/00000000-0000-0000-0000-000000000000')
         ->assertStatus(404);
 });
 
@@ -84,7 +84,7 @@ test('returns 403 when verification token does not match', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('returns 200 and stores event for valid donation payload', function () {
-    [$user, $integration] = makeKofiIntegration('test-token');
+    [$user, $integration] = makeKofiIntegration();
 
     $transactionId = 'txn-'.fake()->uuid();
     $payload = kofiPayload(['kofi_transaction_id' => $transactionId]);

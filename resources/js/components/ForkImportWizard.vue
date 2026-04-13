@@ -150,7 +150,7 @@ function skip() {
       </div>
 
       <!-- All services connected -->
-      <div v-else-if="requiredServices.length > 0" class="flex gap-3 rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-foreground">
+      <div v-else-if="requiredServices && requiredServices.length > 0" class="flex gap-3 rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-foreground">
         <InfoIcon class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
         <div>
           <p>

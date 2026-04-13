@@ -12,13 +12,13 @@ use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
-use App\Http\Controllers\UserEventSubController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\User;
 use App\Services\TwitchApiService;
@@ -253,7 +253,7 @@ Route::get('/auth/callback/twitch', function () {
                 ]);
 
                 // Dispatch the job to setup EventSub subscriptions
-                SetupUserEventSubSubscriptions::dispatch($user, false);
+                SetupUserEventSubSubscriptions::dispatch($user);
 
             } catch (Exception $e) {
                 Log::warning('Failed to dispatch EventSub setup job', [
@@ -379,16 +379,9 @@ Route::middleware('auth.redirect')->group(function () {
         });
     });
 
-    // EventSub Management
-    Route::prefix('eventsub')->name('eventsub.')->group(function () {
-        Route::get('/', [UserEventSubController::class, 'index'])->name('index');
-        Route::post('/connect', [UserEventSubController::class, 'connect'])->name('connect');
-        Route::post('/disconnect', [UserEventSubController::class, 'disconnect'])->name('disconnect');
-        Route::post('/refresh', [UserEventSubController::class, 'refresh'])->name('refresh');
-        Route::post('/auto-connect', [UserEventSubController::class, 'toggleAutoConnect'])->name('auto-connect');
-        Route::get('/status', [UserEventSubController::class, 'status'])->name('status');
-        Route::get('/admin/stats', [UserEventSubController::class, 'adminStats'])->name('admin.stats');
-    });
+    // EventSub connect - called from settings/integrations/index.vue
+    Route::post('/eventsub/connect', [IntegrationController::class, 'connectEventSub'])
+        ->name('eventsub.connect');
 
     // Template tag generator interface
     Route::get('/tags', [TemplateTagController::class, 'index'])
@@ -409,10 +402,6 @@ Route::middleware('auth.redirect')->group(function () {
     // Clean up redundant _data_X_ tags
     Route::post('/template-tags/cleanup', [TemplateTagController::class, 'cleanupRedundantTags'])
         ->name('tags.cleanup');
-
-    // Export standardized tags for sharing
-    Route::get('/template-tags/export', [TemplateTagController::class, 'exportStandardTags'])
-        ->name('template.export');
 
     // Replay a historical event as an alert
     Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');

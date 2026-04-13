@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Random\RandomException;
 
 class StreamElementsIntegrationController extends Controller
 {
@@ -60,6 +61,7 @@ class StreamElementsIntegrationController extends Controller
      * JWT is issued from the user's StreamElements dashboard (Account > Channels > Show
      * secrets > JWT Token). We store it encrypted and reuse it for the Socket.IO
      * `authenticate` handshake.
+     * @throws RandomException
      */
     public function save(Request $request): RedirectResponse
     {

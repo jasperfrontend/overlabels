@@ -171,7 +171,7 @@ Route::get('/eventsub-health-check', function () {
             ->get();
 
         foreach ($usersNeedingSetup as $user) {
-            SetupUserEventSubSubscriptions::dispatch($user, false);
+            SetupUserEventSubSubscriptions::dispatch($user);
         }
 
         return response()->json([

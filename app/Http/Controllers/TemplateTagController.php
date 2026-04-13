@@ -361,28 +361,6 @@ class TemplateTagController extends Controller
         }
     }
 
-    /**
-     * Export standardized tags for sharing
-     */
-    public function exportStandardTags()
-    {
-        try {
-            $tags = $this->parser->getOrganizedTemplateTags();
-
-            $filename = 'template-tags-'.date('Y-m-d-H-i-s').'.json';
-
-            return response()->json($tags)
-                ->header('Content-Disposition', "attachment; filename=\"$filename\"");
-
-        } catch (Exception $e) {
-            Log::error('Error exporting template tags', ['error' => $e->getMessage()]);
-
-            return response()->json([
-                'error' => 'Failed to export template tags',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
 
     /**
      * Ensure all required data arrays exist to prevent "Undefined array key" errors
