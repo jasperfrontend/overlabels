@@ -259,7 +259,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             v-for="template in filteredTemplates"
             :key="template.id"
             :href="`/templates/${template.id}`"
-            class="group overflow-hidden rounded-lg border border-sidebar bg-card transition-all hover:border-violet-400 hover:shadow-lg dark:hover:border-violet-300"
+            class="group overflow-hidden rounded-lg border border-sidebar-border bg-card transition-all hover:border-violet-400"
           >
             <!-- Screenshot or placeholder -->
             <div class="aspect-video w-full overflow-hidden bg-muted">

@@ -151,7 +151,8 @@
     --sidebar-primary-foreground: hsl(0 0% 100%);
     --sidebar-accent: hsl(264 47.3% 14.4%);
     --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(245, 18%, 14%);
+    /*--sidebar-border: hsl(22 80% 42%);*/
+    --sidebar-border: hsl(263 43% 25%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
     --sidebar: hsl(240 5.9% 10%);
     --gradient-spot-1: #1d0b30;
@@ -167,7 +168,7 @@ html {scroll-behavior: smooth;}
         @apply border-border outline-ring/50;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-sidebar text-foreground;
     }
     .bg-page-gradient {
         background:

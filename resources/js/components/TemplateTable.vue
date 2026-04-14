@@ -96,7 +96,7 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
       :key="t.id"
       :class="[
         'group flex items-start justify-between gap-3 rounded-sm border ' +
-        'border-violet-300/30 bg-sidebar-accent hover:bg-background p-3 ' +
+        'border-sidebar-border bg-sidebar-accent hover:bg-background p-3 ' +
         'transition-all ease-in-out cursor-pointer hover:border-l-3 ' +
         'active:bg-violet-400/20 dark:active:bg-violet-600/30 duration-100',
         showEvent && firstEvent(t)

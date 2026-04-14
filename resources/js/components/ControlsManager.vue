@@ -159,7 +159,7 @@ function configSummary(ctrl: OverlayControl): string[] {
       No controls yet. Add one to get started.
     </div>
 
-    <Table v-else class="border border-sidebar-accent bg-background">
+    <Table v-else class="border border-sidebar bg-background">
       <TableHeader>
         <TableRow>
           <TableHead>Order</TableHead>

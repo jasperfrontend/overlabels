@@ -247,7 +247,7 @@ const serviceLabel: Record<string, string> = {
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
-            class="flex cursor-pointer items-center gap-4 rounded-sm border border-violet-300/30 hover:bg-sidebar p-4"
+            class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar-border hover:bg-sidebar p-4"
             :class="{
               'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
               'bg-background': !mapping.enabled || expandedEvent !== mapping.event_type,

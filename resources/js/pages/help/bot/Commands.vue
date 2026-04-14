@@ -100,7 +100,7 @@ const commands: BotCommandDoc[] = [
       </p>
     </div>
 
-    <div class="mb-6 rounded-lg border border-border bg-sidebar-accent/30 p-4 text-sm">
+    <div class="mb-6 rounded-lg border border-sidebar bg-sidebar p-4 text-sm">
       <p class="text-foreground">
         <strong>Permission tiers</strong> stack. A moderator can invoke any command tagged Moderator+, VIP+,
         Subscriber+, or Everyone. Broadcaster can invoke anything.
@@ -111,7 +111,7 @@ const commands: BotCommandDoc[] = [
       <div
         v-for="cmd in commands"
         :key="cmd.command"
-        class="rounded-lg border border-border p-5"
+        class="rounded-lg border border-sidebar p-5"
       >
         <div class="mb-3 flex flex-wrap items-center gap-3">
           <code class="rounded bg-muted px-2 py-1 font-mono text-base font-semibold">{{ cmd.command }}</code>
@@ -125,7 +125,7 @@ const commands: BotCommandDoc[] = [
 
         <p class="mb-4 text-sm text-foreground">{{ cmd.summary }}</p>
 
-        <div class="rounded-md border border-border bg-background/50 p-3 font-mono text-xs">
+        <div class="rounded-md border border-sidebar bg-background/50 p-3 font-mono text-xs">
           <div class="text-foreground">
             <span class="text-muted-foreground">viewer:</span> {{ cmd.example.chat }}
           </div>

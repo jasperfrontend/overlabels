@@ -283,9 +283,8 @@ function formatDate(iso: string | null): string {
         <div>
           <HeadingSmall
             title="Overlabels Bot"
-            description="Let the shared @overlabels Twitch account join your chat so viewers can drive your overlays with commands like !set and !increment."
+            description="Let the shared @overlabels Twitch account join your chat so you can use it to manage your overlay controls."
           />
-
           <div class="mt-4 rounded-lg border p-4">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
