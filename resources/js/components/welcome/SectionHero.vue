@@ -2,6 +2,7 @@
 
 import { ArrowRight } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
+import TwitchIcon from '@/components/TwitchIcon.vue';
 </script>
 
 <template>
@@ -10,7 +11,7 @@ import { Link } from '@inertiajs/vue3';
       <div class="mx-auto max-w-5xl">
 
         <h1 class="mb-6 text-5xl leading-[1.05] font-bold tracking-tight sm:text-6xl md:text-7xl">
-          Your overlay is a webpage.<br />
+          Your <TwitchIcon size="inline-block h-[0.85em] w-[0.85em] align-[-0.08em] mx-1" fill="#9146FF" /> overlay is a webpage.<br />
           <span class="text-sky-500">We make it reactive.</span>
         </h1>
 
