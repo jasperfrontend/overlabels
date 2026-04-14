@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import RekaToast from '@/components/RekaToast.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -62,11 +63,13 @@ const categoryTags = ref<Record<string, CategoryTag>>({});
 // Categories to exclude - array data that doesn't render in templates
 const HIDDEN_CATEGORIES = ['Other'];
 
-// Cache configuration
-const CACHE_KEY = 'template_tags_cache';
-const CACHE_VERSION_KEY = 'template_tags_cache_version';
+// Cache configuration - user-scoped so switching accounts doesn't inherit stale views
+const page = usePage();
+const userId = (page.props.auth as { user?: { id?: number | string } } | undefined)?.user?.id;
+const CACHE_KEY = userId ? `template_tags_cache_user_${userId}` : 'template_tags_cache_anon';
+const CACHE_VERSION_KEY = `${CACHE_KEY}_version`;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-const CURRENT_CACHE_VERSION = 'v1';
+const CURRENT_CACHE_VERSION = 'v2';
 
 interface CachedData {
   tags: Record<string, CategoryTag>;
@@ -145,17 +148,25 @@ function processTags(tags: Record<string, CategoryTag>): void {
 function useGetTemplateTags(): void {
   const cached = getCachedTags();
 
+  // Show cached data immediately, then revalidate in the background.
   if (cached) {
     processTags(cached.tags);
-    return;
   }
 
   axios
     .get<TagsResponse>(route('tags.api.all'))
     .then((response) => {
       const tags = response.data.tags;
-      setCachedTags(tags);
-      processTags(tags);
+      const isEmpty = !tags || Object.keys(tags).length === 0;
+
+      // Don't cache empty responses: during onboarding, tag generation runs async
+      // and an empty result would otherwise stick in localStorage for an hour.
+      if (!isEmpty) {
+        setCachedTags(tags);
+        processTags(tags);
+      } else if (!cached) {
+        processTags(tags ?? {});
+      }
     })
     .catch(() => {
       console.error('Error retrieving tags from api');

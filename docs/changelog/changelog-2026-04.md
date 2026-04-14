@@ -1,5 +1,25 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Fix: template tag list empty after onboarding
+
+- New accounts running through `OnboardingWizard` could land on `/templates/edit`
+  before the queued `GenerateTemplateTags` job finished. `TemplateTagsList.vue`
+  would hit `tags.api.all`, get `{ tags: {} }`, and cache that empty object in
+  localStorage under a global key for a full hour. Subsequent visits kept
+  showing "No tags available" even though the DB had tags and the live overlay
+  rendered them correctly (the renderer reads from the DB on every request, not
+  from the browser cache).
+- Three small fixes in `TemplateTagsList.vue`:
+  - User-scoped cache key (`template_tags_cache_user_{id}`) plus a version bump
+    to `v2` so old global-keyed caches are ignored. Prevents one user's cached
+    view from leaking to another account on the same browser.
+  - Don't cache empty responses - if the onboarding job hasn't populated the
+    user's categories yet, we no longer pin that emptiness in localStorage.
+  - Stale-while-revalidate on mount: if a cache exists, render it immediately,
+    but always re-fetch from the API and overwrite if the server has newer data.
+    Adds one background request per page load; removes the 1-hour "why are my
+    tags gone" window entirely.
+
 ## April 14th, 2026 - Bot: !enable / !disable / !toggle for boolean controls
 
 - Three new bot actions on the control pipeline: `enable` -> `'1'`, `disable` -> `'0'`,
