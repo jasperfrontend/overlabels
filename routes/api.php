@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ExternalWebhookController;
+use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotControlController;
@@ -61,6 +62,12 @@ Route::prefix('/overlay')->group(function () {
 Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
     ->name('tags.api.all')
     ->middleware('auth:sanctum');
+
+// Resolve the user's live Twitch tag values for the expression-builder preview.
+// Piggybacks on TwitchApiService's snapshot cache; typically responds in ms.
+Route::get('/expression/tags', [ExpressionTagController::class, 'index'])
+    ->name('api.expression.tags')
+    ->middleware(['auth:sanctum', 'throttle:60,1']);
 
 // Get job status for template tag operations
 Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'getJobStatus'])

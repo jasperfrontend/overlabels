@@ -1,5 +1,27 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Feat: live Twitch values in the expression preview
+
+- Builds on the mock-data preview from earlier today. The save-dialog now
+  fetches the user's real `t.*` tag map from a new endpoint when the
+  expression builder mounts, so previews show <em>actual</em> values -
+  `t.followers_total` reads 1523 instead of the 42 placeholder,
+  `t.channel_name` reads "JasperDiscovers" instead of "(channel_name)".
+- New endpoint: `GET /api/expression/tags`, handled by
+  `ExpressionTagController::index`. Calls the same
+  `TwitchApiService::getExtendedUserData` + `TemplateDataMapperService::mapForTemplate`
+  pipeline the overlay renderer uses, but with no template-allowlist, so it
+  returns every resolvable tag the user has. Auth via sanctum,
+  rate-limited 60/min.
+- Performance: because `getExtendedUserData` already caches Twitch snapshots,
+  the endpoint typically responds in tens of milliseconds. Cold (first call
+  after cache expiry) is a few hundred ms worth of Helix round-trips.
+- Preview watcher now reruns when either the expression text OR the live
+  tag map changes, with `{ immediate: true }` so the initial preview kicks
+  off before user input. Falls back to the shape-aware mocks
+  (`42` / timestamp / `false` / `(name)`) while the fetch is in flight or
+  for tags the response didn't include.
+
 ## April 15th, 2026 - UX: mock `t.*` values in the expression preview
 
 - Expression preview in the save dialog would show nothing when an expression

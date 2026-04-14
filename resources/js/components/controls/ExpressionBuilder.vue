@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
+import axios from 'axios';
 import jsep from 'jsep';
 import { Label } from '@/components/ui/label';
 import {
@@ -117,11 +118,25 @@ function validateFunctions(node: jsep.Expression): string | null {
   }
 }
 
+// Live Twitch tag values fetched from the API on modal mount. Populated once
+// per modal session; real values replace the fallback mocks below. Reactive
+// so the preview watcher re-runs when the fetch resolves.
+const liveTwitchTags = ref<Record<string, unknown> | null>(null);
+
+onMounted(async () => {
+  try {
+    const res = await axios.get<{ tags?: Record<string, unknown> }>(route('api.expression.tags'));
+    liveTwitchTags.value = res.data?.tags ?? {};
+  } catch {
+    // Fall back to mocks silently; this is only for preview, not for saving.
+    liveTwitchTags.value = {};
+  }
+});
+
 /**
- * Produce a plausible mock value for a `t.<name>` reference in the preview.
- * Real t.* values resolve server-side from the user's Twitch data; in the
- * modal we only need something non-empty that looks sensible for arithmetic
- * or string contexts.
+ * Produce a plausible mock value for a `t.<name>` reference in the preview
+ * when the live fetch hasn't resolved or didn't include this tag. Real t.*
+ * values come from `liveTwitchTags` whenever they're available.
  */
 function mockTwitchTag(name: string): unknown {
   if (/_is_/.test(name)) return false;
@@ -131,7 +146,7 @@ function mockTwitchTag(name: string): unknown {
   return `(${name})`;
 }
 
-watch(expressionText, (text) => {
+watch([expressionText, liveTwitchTags], ([text]) => {
   expressionError.value = '';
   expressionPreview.value = '';
   if (!text.trim()) return;
@@ -156,12 +171,15 @@ watch(expressionText, (text) => {
       mockData[key] = resolvePreviewValue(ctrl);
     }
 
-    // Mock any t.<name> references so the preview isn't empty for
-    // expressions that only read Twitch tags. Real values resolve on the
-    // overlay at render time; this is purely a UX hint in the modal.
+    // For every t.<name> reference, prefer the live server value; fall back
+    // to a shape-aware mock (or the previous placeholder) if the fetch is
+    // still pending or the tag is missing from the response.
+    const live = liveTwitchTags.value ?? {};
     for (const match of text.matchAll(/\bt\.([a-z][a-z0-9_]*)/g)) {
-      const key = `t:${match[1]}`;
-      if (mockData[key] === undefined) mockData[key] = mockTwitchTag(match[1]);
+      const tagName = match[1];
+      const key = `t:${tagName}`;
+      if (mockData[key] !== undefined) continue;
+      mockData[key] = live[tagName] !== undefined ? live[tagName] : mockTwitchTag(tagName);
     }
 
     const ctx = buildContext(mockData);
@@ -170,7 +188,7 @@ watch(expressionText, (text) => {
   } catch {
     expressionError.value = 'Invalid expression syntax.';
   }
-});
+}, { immediate: true });
 
 // Track cursor position so inserts land where the user last had focus
 const lastCursor = ref<number | null>(null);
