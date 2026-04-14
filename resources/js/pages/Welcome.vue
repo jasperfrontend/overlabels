@@ -710,7 +710,7 @@ const alertPipelineSteps = [
           </p>
 
           <!-- Integration tabs -->
-          <div class="mb-8 flex gap-0 overflow-x-auto border-b border-sidebar-accent">
+          <div class="mb-8 flex gap-0 overflow-hidden border-b border-sidebar-accent">
             <button
               v-for="service in (['kofi', 'streamlabs', 'streamelements'] as const)"
               :key="service"
