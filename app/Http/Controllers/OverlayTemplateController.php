@@ -429,14 +429,8 @@ class OverlayTemplateController extends Controller
             // somewhere in the HTML.
             $allowlist = (array) ($template->template_tags ?? []);
             foreach ($expressionControls as $exprCtrl) {
-                $expression = (string) ($exprCtrl['expression'] ?? '');
-                if ($expression === '') {
-                    continue;
-                }
-                if (preg_match_all('/\bt\.([A-Za-z_][A-Za-z0-9_]*)/', $expression, $matches)) {
-                    foreach ($matches[1] as $tagName) {
-                        $allowlist[] = $tagName;
-                    }
+                foreach (OverlayControl::extractTwitchTagReferences((string) ($exprCtrl['expression'] ?? '')) as $tagName) {
+                    $allowlist[] = $tagName;
                 }
             }
             $allowlist = array_values(array_unique($allowlist));

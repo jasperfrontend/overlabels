@@ -108,9 +108,10 @@ class OverlayControlController extends Controller
 
             $expression = $request->input('config.expression');
             $dependencies = OverlayControl::extractExpressionDependencies($expression);
+            $twitchRefs = OverlayControl::extractTwitchTagReferences($expression);
 
-            if (empty($dependencies)) {
-                abort(422, 'Expression must reference at least one control (e.g. c.my_control).');
+            if (empty($dependencies) && empty($twitchRefs)) {
+                abort(422, 'Expression must reference at least one control (c.my_control) or Twitch tag (t.followers_total).');
             }
 
             // Validate all referenced controls exist in scope
@@ -178,9 +179,10 @@ class OverlayControlController extends Controller
 
             $expression = $request->input('config.expression');
             $dependencies = OverlayControl::extractExpressionDependencies($expression);
+            $twitchRefs = OverlayControl::extractTwitchTagReferences($expression);
 
-            if (empty($dependencies)) {
-                abort(422, 'Expression must reference at least one control (e.g. c.my_control).');
+            if (empty($dependencies) && empty($twitchRefs)) {
+                abort(422, 'Expression must reference at least one control (c.my_control) or Twitch tag (t.followers_total).');
             }
 
             $available = OverlayControl::getAvailableControls(auth()->user(), $template->id, $control->id);

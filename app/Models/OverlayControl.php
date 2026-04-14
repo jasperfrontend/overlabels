@@ -284,6 +284,31 @@ class OverlayControl extends Model
     }
 
     /**
+     * Extract Twitch template-tag references from an expression string.
+     * Parses `t.<name>` patterns and returns the list of tag names.
+     *
+     * These are not controls; they're keys resolved against the user's
+     * `template_tags` table and live EventSub mutations. The renderer uses
+     * this list to widen its data allowlist so an expression can read a
+     * tag that isn't referenced in the HTML.
+     *
+     * Example:
+     *   "t.followers_total + t.subscribers_total" => ["followers_total", "subscribers_total"]
+     */
+    public static function extractTwitchTagReferences(string $expression): array
+    {
+        if ($expression === '') {
+            return [];
+        }
+
+        if (! preg_match_all('/\bt\.([a-z][a-z0-9_]*)/', $expression, $matches)) {
+            return [];
+        }
+
+        return array_values(array_unique($matches[1]));
+    }
+
+    /**
      * Get controls available as dependencies for expression controls.
      */
     public static function getAvailableControls(User $user, ?int $templateId, ?int $excludeId = null): Collection

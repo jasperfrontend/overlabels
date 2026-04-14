@@ -1,5 +1,23 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Fix: allow expressions that only reference `t.*` tags
+
+- The expression-control save path required at least one `c.*` dependency,
+  rejecting otherwise-valid formulas that only read Twitch template tags
+  (e.g. `t.channel_name`, `t.followers_total + t.subscribers_total`). Working
+  around it by adding a dummy text control named `channel_name` didn't help -
+  that control is reachable as `c.channel_name`, not `t.channel_name`.
+- `OverlayControl` gains `extractTwitchTagReferences(string)` - mirror of
+  `extractExpressionDependencies`, but matching `\bt\.([a-z][a-z0-9_]*)` and
+  returning the list of tag names.
+- `OverlayControlController::store` and `::update` now accept an expression if
+  it references <em>either</em> a control (`c.*`) or a Twitch tag (`t.*`).
+  The cycle detection and "does this control exist?" check still applies to
+  `c.*` dependencies only, because `t.*` values can't participate in cycles.
+  Error message updated to show both syntaxes.
+- `OverlayTemplateController::renderAuthenticated` DRY'd to call the new
+  helper instead of duplicating the regex inline.
+
 ## April 15th, 2026 - Fix: `t.*` actually resolves now
 
 - Shipping `t.*` earlier today left two silent failures in the pipeline:
