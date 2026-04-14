@@ -40,9 +40,14 @@ interface EventSubInfo {
   supported_events: EventSubEvent[];
 }
 
+interface BotInfo {
+  enabled: boolean;
+}
+
 const props = defineProps<{
   services: ServiceInfo[];
   eventsub: EventSubInfo;
+  bot: BotInfo;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -127,6 +132,22 @@ async function sendTestCheer() {
   } finally {
     testCheerLoading.value = false;
   }
+}
+
+const botLoading = ref(false);
+
+function toggleBot() {
+  botLoading.value = true;
+  router.patch(
+    '/settings/integrations/bot',
+    { enabled: !props.bot.enabled },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        botLoading.value = false;
+      },
+    },
+  );
 }
 
 async function connectEventSub() {
@@ -255,6 +276,36 @@ function formatDate(iso: string | null): string {
             >
               {{ testCheerMessage }}
             </p>
+          </div>
+        </div>
+
+        <!-- Overlabels Bot -->
+        <div>
+          <HeadingSmall
+            title="Overlabels Bot"
+            description="Let the shared @overlabels Twitch account join your chat so viewers can drive your overlays with commands like !set and !increment."
+          />
+
+          <div class="mt-4 rounded-lg border p-4">
+            <div class="flex items-center justify-between">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">Chat bot</span>
+                  <Badge v-if="props.bot.enabled" variant="default" class="bg-green-400 hover:bg-green-400">Enabled</Badge>
+                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">Disabled</Badge>
+                </div>
+                <p v-if="props.bot.enabled" class="text-sm">
+                  Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
+                </p>
+                <p v-else class="text-sm text-muted-foreground">
+                  Enable to have the bot join your channel. Default commands are seeded automatically the first time you enable it.
+                </p>
+              </div>
+
+              <Button variant="default" :disabled="botLoading" @click="toggleBot">
+                {{ props.bot.enabled ? 'Disable' : 'Enable' }}
+              </Button>
+            </div>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
@@ -45,5 +46,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/streamelements/test-mode', [StreamElementsIntegrationController::class, 'setTestMode'])->name('streamelements.test-mode');
         Route::post('/streamelements/seed-count', [StreamElementsIntegrationController::class, 'seedDonationCount'])->name('streamelements.seed-count');
         Route::delete('/streamelements', [StreamElementsIntegrationController::class, 'disconnect'])->name('streamelements.disconnect');
+
+        Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
     });
 });

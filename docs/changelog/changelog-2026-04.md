@@ -1,5 +1,28 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Bot enable toggle on integrations page
+
+- The `users.bot_enabled` column and `UserObserver` have existed since the initial bot plumbing
+  (April 13th), but there was no UI to flip the flag - you had to open tinker to opt in. First UI
+  surface now lives on `settings/integrations`, just below the Twitch alerts card and above the
+  external donation services.
+- New `App\Http\Controllers\Settings\BotSettingsController` with a single `setEnabled(Request)`
+  action that validates `enabled: bool` and writes to `$user->bot_enabled`. The observer already
+  handles seeding `BotCommand::DEFAULTS` on the false-to-true transition, so the controller
+  deliberately stays thin - one validated field update, back() response, no side effects.
+- Route: `PATCH /settings/integrations/bot` under the existing `auth.redirect` +
+  `settings.integrations.` prefix group. Named `settings.integrations.bot.enabled`.
+- `IntegrationController::index` now passes `bot.enabled` to the Inertia page alongside the
+  existing `services` and `eventsub` props.
+- Frontend: `settings/integrations/index.vue` gains a `BotInfo` prop, a `toggleBot()` handler
+  using `router.patch(..., { preserveScroll: true })`, and an "Overlabels Bot" card with an
+  Enable/Disable button. When enabled the copy prompts the streamer to run
+  `/mod overlabels` in their Twitch chat and test with `!ping` - the two steps that matter
+  for the bot to actually work in a given channel.
+- Deliberately not included: bot control panel page for editing per-command permission tiers
+  and cooldowns. That's the next step; this commit is just the on/off switch so streamers can
+  stop editing the DB by hand.
+
 ## April 14th, 2026 - Breaking: rename Ko-fi `kofis_received` to `donations_received`
 
 - When Ko-fi was the only external integration, its auto-provisioned counter was playfully called

@@ -61,6 +61,9 @@ class IntegrationController extends Controller
                     array_keys($eventLabels),
                 ),
             ],
+            'bot' => [
+                'enabled' => (bool) $user->bot_enabled,
+            ],
         ]);
     }
 
