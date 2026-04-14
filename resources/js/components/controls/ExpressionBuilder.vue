@@ -117,6 +117,20 @@ function validateFunctions(node: jsep.Expression): string | null {
   }
 }
 
+/**
+ * Produce a plausible mock value for a `t.<name>` reference in the preview.
+ * Real t.* values resolve server-side from the user's Twitch data; in the
+ * modal we only need something non-empty that looks sensible for arithmetic
+ * or string contexts.
+ */
+function mockTwitchTag(name: string): unknown {
+  if (/_is_/.test(name)) return false;
+  if (/(^|_)(total|count|points|bits|amount|peak|ms|viewers)(_|$)/.test(name)) return 42;
+  if (/_at$/.test(name)) return Math.floor(Date.now() / 1000);
+  if (/_(date|time|started_at)$/.test(name)) return Math.floor(Date.now() / 1000);
+  return `(${name})`;
+}
+
 watch(expressionText, (text) => {
   expressionError.value = '';
   expressionPreview.value = '';
@@ -140,6 +154,14 @@ watch(expressionText, (text) => {
     for (const ctrl of props.availableControls) {
       const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
       mockData[key] = resolvePreviewValue(ctrl);
+    }
+
+    // Mock any t.<name> references so the preview isn't empty for
+    // expressions that only read Twitch tags. Real values resolve on the
+    // overlay at render time; this is purely a UX hint in the modal.
+    for (const match of text.matchAll(/\bt\.([a-z][a-z0-9_]*)/g)) {
+      const key = `t:${match[1]}`;
+      if (mockData[key] === undefined) mockData[key] = mockTwitchTag(match[1]);
     }
 
     const ctx = buildContext(mockData);

@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - UX: mock `t.*` values in the expression preview
+
+- Expression preview in the save dialog would show nothing when an expression
+  only referenced Twitch tags, because the mock context was built from
+  available controls only. Now the preview scans the expression for
+  `t.<name>` references and injects a plausible placeholder based on the
+  tag's suffix - `42` for counters (`*_total`, `*_count`, `*_bits`, etc.),
+  a fresh Unix timestamp for `*_at` / `*_date`, `false` for `*_is_*`, and
+  the tag name in parens for anything else. Real values still resolve
+  server-side at render time; this is purely so the dialog preview stops
+  looking suspiciously empty.
+
 ## April 15th, 2026 - Fix: allow expressions that only reference `t.*` tags
 
 - The expression-control save path required at least one `c.*` dependency,
