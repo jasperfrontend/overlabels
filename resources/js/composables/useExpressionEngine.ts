@@ -84,20 +84,24 @@ function isNumericString(s: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Context builder: flat data.value -> nested { c: { ... } } with coercion
+// Context builder: flat data.value -> nested { c: { ... }, t: { ... } } with coercion
 // ---------------------------------------------------------------------------
 
-export function buildContext(data: Record<string, unknown>): Record<string, unknown> {
-  const c: Record<string, unknown> = Object.create(null);
+/**
+ * Extract every key in `data` that starts with `prefix`, strip the prefix, and
+ * build a nested object. Supports one level of `namespace:subKey` nesting
+ * (matching how `c:kofi:donations_received` expands to `c.kofi.donations_received`).
+ */
+function extractNamespace(data: Record<string, unknown>, prefix: string): Record<string, unknown> {
+  const ns: Record<string, unknown> = Object.create(null);
+  const prefixLen = prefix.length;
 
   for (const key in data) {
-    if (!key.startsWith('c:')) continue;
+    if (!key.startsWith(prefix)) continue;
 
-    const rawKey = key.slice(2); // strip "c:" prefix
-    const rawVal = data[key];
-    const val = coerceValue(rawVal);
+    const rawKey = key.slice(prefixLen);
+    const val = coerceValue(data[key]);
 
-    // Check for namespaced keys like "kofi:donations_received"
     const colonIdx = rawKey.indexOf(':');
     if (colonIdx !== -1) {
       const namespace = rawKey.slice(0, colonIdx);
@@ -105,27 +109,31 @@ export function buildContext(data: Record<string, unknown>): Record<string, unkn
 
       if (BLOCKED_PROPS.has(namespace) || BLOCKED_PROPS.has(subKey)) continue;
 
-      // If a scalar value already occupies this namespace (e.g., c:timer = "42"),
-      // don't clobber it with a namespace object from c:timer:running.
-      const existing = c[namespace];
+      // If a scalar already occupies this namespace, don't clobber it
+      // (e.g., "timer = 42" shouldn't get replaced by an object from "timer:running").
+      const existing = ns[namespace];
       if (existing !== undefined && existing !== null && typeof existing !== 'object') {
         continue;
       }
 
-      // Create or reuse the namespace object
       if (existing === undefined || existing === null) {
-        c[namespace] = Object.create(null);
+        ns[namespace] = Object.create(null);
       }
-      (c[namespace] as Record<string, unknown>)[subKey] = val;
+      (ns[namespace] as Record<string, unknown>)[subKey] = val;
     } else {
       if (BLOCKED_PROPS.has(rawKey)) continue;
-      // Overwrite any existing namespace object - scalar keys take priority
-      c[rawKey] = val;
+      // Scalar keys take priority - overwrite any existing namespace object.
+      ns[rawKey] = val;
     }
   }
 
+  return ns;
+}
+
+export function buildContext(data: Record<string, unknown>): Record<string, unknown> {
   const ctx: Record<string, unknown> = Object.create(null);
-  ctx['c'] = c;
+  ctx['c'] = extractNamespace(data, 'c:');
+  ctx['t'] = extractNamespace(data, 't:');
   ctx['PI'] = Math.PI;
   return ctx;
 }

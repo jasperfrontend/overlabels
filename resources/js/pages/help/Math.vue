@@ -85,10 +85,18 @@ const breadcrumbs: BreadcrumbItem[] = [
             The ternary <code>a ? b : c</code> is available, including nested form.
           </p>
 
-          <h3 class="mt-8 mb-2 text-lg font-semibold">Constants</h3>
+          <h3 class="mt-8 mb-2 text-lg font-semibold">Constants and namespaces</h3>
           <ul class="list-disc space-y-1 pl-6 text-foreground">
             <li><code>PI</code> - <MathEquation tex="\pi \approx 3.14159265" />. Identifier only, not <code>PI()</code>.</li>
+            <li><code>c.*</code> - your controls (<code>c.wins</code>, <code>c.kofi.donations_received</code>, etc.).</li>
+            <li><code>t.*</code> - live Twitch event tags fed by EventSub: <code>t.followers_total</code>,
+              <code>t.subscribers_total</code>, <code>t.last_cheer_bits</code>, <code>t.last_raid_from</code>,
+              and so on. Every tag that a <code>channel.*</code> rule mutates is readable here.</li>
           </ul>
+          <p class="mt-3 text-sm text-muted-foreground">
+            Rule of thumb: use <code>[[[tag]]]</code> in HTML (parsed once at render), <code>t.tag</code>
+            in expression controls (live and reactive). The two substrates never parse each other's syntax.
+          </p>
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Scalar math</h3>
           <div class="overflow-x-auto rounded-lg border border-sidebar">
@@ -412,14 +420,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">"Is this subscriber actually a gift?"</h3>
           <p class="mb-3 text-foreground">
-            Because <code>[[[subscribers_latest_is_gift]]]</code> is a boolean stamped by the
+            Because <code>t.subscribers_latest_is_gift</code> is a boolean stamped by the
             <code>channel.subscribe</code> EventSub rule, you can build sentiment directly:
           </p>
           <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Who to thank for the most recent sub</span><br />
-            c.subscribers_latest_is_gift<br />
-            &nbsp;&nbsp;? c.subscribers_latest_gifter_name + " gifted a sub to " + c.subscribers_latest_user_name<br />
-            &nbsp;&nbsp;: c.subscribers_latest_user_name + " just subscribed"
+            t.subscribers_latest_is_gift<br />
+            &nbsp;&nbsp;? t.subscribers_latest_gifter_name + " gifted a sub to " + t.subscribers_latest_user_name<br />
+            &nbsp;&nbsp;: t.subscribers_latest_user_name + " just subscribed"
           </div>
           <p class="mt-2 text-sm text-muted-foreground">
             The ternary is your friend. Chain them for switch-like behaviour:
@@ -427,24 +435,70 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
         </section>
 
-        <!-- 9. Mixing with template tags -->
+        <!-- 9. Live Twitch values: the t.* namespace -->
         <section class="mb-14" id="tags">
-          <h2 class="mb-4 text-2xl font-bold">9. Mixing with template tags</h2>
+          <h2 class="mb-4 text-2xl font-bold">9. Live Twitch values: the <code>t.*</code> namespace</h2>
           <p class="mb-3 text-foreground">
-            Static template tags interpolate <em>before</em> the overlay renders. Control expressions
-            evaluate <em>live</em>. You can combine them when the static tag is stable for the lifetime
-            of the render, like a username or a starting follower count.
+            The <code>t.*</code> namespace exposes every tag that EventSub mutates - follower totals,
+            the latest cheer user, peak raid viewers, the latest sub's gift flag, and so on - directly
+            in expressions. These are <em>live</em>: when a follow fires, <code>t.followers_total</code>
+            increments and any expression that reads it re-evaluates on the next tick.
+          </p>
+          <p class="mb-5 text-foreground">
+            The relationship to static <code>[[[tag]]]</code> syntax is simple: the same values that
+            appear under <code>[[[followers_total]]]</code> in your HTML also appear under
+            <code>t.followers_total</code> in expressions. HTML tags are resolved once at render;
+            expression values stay reactive forever.
           </p>
 
+          <h3 class="mt-4 mb-2 text-lg font-semibold">Progress to the next milestone</h3>
+          <p class="mb-2 text-foreground">
+            A horizontal progress bar that fills from 0 to 100 as your follower count approaches the
+            next thousand, then snaps back to zero and starts climbing again:
+          </p>
           <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
-            <span class="text-muted-foreground">// Progress toward the next 1,000-follower milestone</span><br />
-            <span class="text-muted-foreground">// [[[followers_total]]] is injected at render time</span><br />
-            clamp(0, ([[[followers_total]]] - floor([[[followers_total]]] / 1000) * 1000) / 10, 100)<br /><br />
-            <span class="text-muted-foreground">// Shout the channel name on every fourth second</span><br />
-            mod(floor(now()), 4) = 0 ? "[[[channel_name]]] is live!" : ""<br /><br />
-            <span class="text-muted-foreground">// Greet the latest follower with a fade-in over 2 s</span><br />
-            <span class="text-muted-foreground">// c:greet_opacity =&gt;</span><br />
-            clamp(0, (now() - c.followers_latest_date_at) / 2, 1)
+            <span class="text-muted-foreground">// c:milestone_pct -&gt;</span><br />
+            clamp(0, (t.followers_total - floor(t.followers_total / 1000) * 1000) / 10, 100)
+          </div>
+          <p class="mt-2 text-foreground">
+            That is <MathEquation tex="\text{pct} = \frac{F \bmod 1000}{10}" /> wearing a clamp guard.
+            Wire it into CSS: <code>style="width: [[[c:milestone_pct]]]%"</code>.
+          </p>
+
+          <h3 class="mt-8 mb-2 text-lg font-semibold">Fade in the latest follower's name</h3>
+          <p class="mb-2 text-foreground">
+            Every tag has an automatic <code>_at</code> Unix timestamp companion. Combine it with
+            <code>now()</code> and <code>clamp</code> to get a two-second fade-in on every new follow:
+          </p>
+          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+            <span class="text-muted-foreground">// c:greet_opacity -&gt;</span><br />
+            clamp(0, (now() - t.followers_latest_user_name_at) / 2, 1)
+          </div>
+
+          <h3 class="mt-8 mb-2 text-lg font-semibold">Greeting copy that switches on the event shape</h3>
+          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+            <span class="text-muted-foreground">// c:greet_text -&gt;</span><br />
+            t.subscribers_latest_is_gift<br />
+            &nbsp;&nbsp;? "Thanks " + t.subscribers_latest_gifter_name + " for gifting a sub to " + t.subscribers_latest_user_name + "!"<br />
+            &nbsp;&nbsp;: "Welcome " + t.subscribers_latest_user_name + "!"
+          </div>
+
+          <h3 class="mt-8 mb-2 text-lg font-semibold">Raid hype meter</h3>
+          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+            <span class="text-muted-foreground">// Scale from 0..1 based on peak raid size, saturating at 500 viewers</span><br />
+            <span class="text-muted-foreground">// c:raid_hype -&gt;</span><br />
+            clamp(0, t.last_raid_viewers_peak / 500, 1)<br /><br />
+            <span class="text-muted-foreground">// "who raided me" label, or empty if no raid yet</span><br />
+            <span class="text-muted-foreground">// c:raid_label -&gt;</span><br />
+            t.last_raid_from ? t.last_raid_from + " raided with " + t.last_raid_viewers_peak + " viewers" : ""
+          </div>
+
+          <div class="mt-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-4 text-sm text-foreground">
+            <strong class="font-semibold text-violet-400">Note:</strong>
+            <code>[[[tag]]]</code> syntax does not work inside expression strings -
+            expressions never reparse template-tag syntax, and template tags never evaluate expressions.
+            Use <code>t.tag</code> in expressions, <code>[[[tag]]]</code> in HTML. That separation is
+            how the engine stays secure.
           </div>
         </section>
 

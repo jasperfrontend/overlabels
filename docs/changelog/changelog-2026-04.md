@@ -1,5 +1,33 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Feat: `t.*` namespace in the expression engine
+
+- Expression controls can now read live Twitch event-tag values directly, with
+  no re-parsing of `[[[tag]]]` syntax inside expression strings. Use
+  <code>t.followers_total</code>, <code>t.subscribers_latest_user_name</code>,
+  <code>t.last_raid_viewers_peak</code>, and every other tag declared in
+  <code>useTwitchEventRules.ts</code>. The day-one "tags never reparse" invariant
+  holds: expressions never see `[[[...]]]` syntax, and template interpolation
+  never sees expression AST nodes.
+- Implementation is tiny. `buildContext()` in <code>useExpressionEngine.ts</code>
+  now runs a shared <code>extractNamespace()</code> helper against two prefixes -
+  <code>c:</code> (controls, unchanged) and <code>t:</code> (twitch, new). One
+  function, two prefixes, no duplicated nesting/collision logic.
+- Wiring lives in <code>OverlayRenderer.vue</code>:
+  - On mount, for every tag name declared in <code>EVENT_RULES</code>, seeds the
+    Pinia <code>eventStore.tags</code> with the server-side snapshot value (only
+    if Pinia's slot is empty), and mirrors that value into <code>data.value</code>
+    under <code>t:tag</code> so expressions can read it immediately.
+  - A deep watch on <code>eventStore.tags</code> mirrors every subsequent
+    mutation into <code>data.value[`t:${key}`]</code>. Follow fires, Pinia
+    increments, watch mirrors, every expression that references
+    <code>t.followers_total</code> re-evaluates on the next reactivity tick.
+- Help page (<code>/help/math</code>) updated: Section 1 now documents
+  <code>c.*</code> and <code>t.*</code> side-by-side, Section 9 is rewritten
+  around real live examples (milestone progress bar, latest-follower fade,
+  raid hype meter, sub/gift copy switch) instead of the aspirational
+  `[[[tag]]]`-inside-expression pseudocode that shipped yesterday.
+
 ## April 15th, 2026 - Help: the Math Engine page
 
 - New `/help/math` page and `help.math` route. Lives at

@@ -36,7 +36,21 @@ import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
+import { EVENT_RULES } from '@/composables/useTwitchEventRules';
 import { applyFormatter } from '@/utils/formatters';
+
+// Canonical set of tag names declared by EVENT_RULES. These are the "twitch"
+// (t.*) values exposed to the expression engine; other bare-keyed snapshot
+// values in data.value stay where they are.
+const TWITCH_TAG_NAMES: ReadonlySet<string> = (() => {
+  const names = new Set<string>();
+  for (const rules of Object.values(EVENT_RULES)) {
+    for (const rule of rules) {
+      if (rule && typeof rule.tag === 'string') names.add(rule.tag);
+    }
+  }
+  return names;
+})();
 
 interface AlertData {
   head: string;
@@ -334,6 +348,41 @@ onMounted(async () => {
 
     css.value = json.template.css ?? '';
     data.value = json.data ?? {};
+
+    // Seed the Twitch event store with any initial snapshot values for
+    // the known tag set, and mirror them into data.value under t:* so the
+    // expression engine can read them as t.followers_total, t.subscribers_total, etc.
+    const tSnapshot: Record<string, any> = {};
+    for (const tag of TWITCH_TAG_NAMES) {
+      const snapshotVal = data.value[tag];
+      if (snapshotVal === undefined) continue;
+      if (eventStore.tags[tag] === undefined) {
+        eventStore.tags[tag] = snapshotVal;
+      }
+      tSnapshot[`t:${tag}`] = eventStore.tags[tag];
+    }
+    if (Object.keys(tSnapshot).length > 0) {
+      data.value = { ...data.value, ...tSnapshot };
+    }
+
+    // Keep data.value[`t:*`] in sync with eventStore.tags mutations from EventSub.
+    watch(
+      () => ({ ...eventStore.tags }),
+      (newTags) => {
+        if (!data.value) return;
+        const patch: Record<string, any> = {};
+        for (const [k, v] of Object.entries(newTags)) {
+          const prefixedKey = `t:${k}`;
+          if (data.value[prefixedKey] !== v) {
+            patch[prefixedKey] = v;
+          }
+        }
+        if (Object.keys(patch).length > 0) {
+          data.value = { ...data.value, ...patch };
+        }
+      },
+      { deep: true },
+    );
 
     userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
