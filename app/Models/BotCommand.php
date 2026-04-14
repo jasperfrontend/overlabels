@@ -38,6 +38,9 @@ class BotCommand extends Model
         ['command' => 'increment', 'permission_level' => 'moderator'],
         ['command' => 'decrement', 'permission_level' => 'moderator'],
         ['command' => 'reset', 'permission_level' => 'broadcaster'],
+        ['command' => 'enable', 'permission_level' => 'moderator'],
+        ['command' => 'disable', 'permission_level' => 'moderator'],
+        ['command' => 'toggle', 'permission_level' => 'moderator'],
     ];
 
     /**

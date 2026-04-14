@@ -221,7 +221,7 @@ test('opting into the bot seeds the default command set', function () {
     $commands = BotCommand::where('user_id', $user->id)->pluck('command')->all();
 
     expect($commands)->toHaveCount(count(BotCommand::DEFAULTS))
-        ->and($commands)->toContain('control', 'set', 'increment', 'decrement', 'reset');
+        ->and($commands)->toContain('control', 'set', 'increment', 'decrement', 'reset', 'enable', 'disable', 'toggle');
 
     $setCommand = BotCommand::where('user_id', $user->id)->where('command', 'set')->first();
     expect($setCommand->permission_level)->toBe('moderator')
@@ -494,6 +494,67 @@ test('controls update rejects increment on text control', function () {
     $this->postJson(
         '/api/internal/bot/controls/streamer_a/message',
         ['action' => 'increment'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(422);
+});
+
+test('controls update enables a boolean control', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'show_cam', type: 'boolean', value: '0');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'enable'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJsonPath('value', '1');
+});
+
+test('controls update disables a boolean control', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'show_cam', type: 'boolean', value: '1');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'disable'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJsonPath('value', '0');
+});
+
+test('controls update toggles a boolean control', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'show_cam', type: 'boolean', value: '0');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'toggle'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJsonPath('value', '1');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'toggle'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJsonPath('value', '0');
+});
+
+test('controls update rejects enable on counter control', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'deaths', type: 'counter', value: '3');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/deaths',
+        ['action' => 'enable'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(422);
+});
+
+test('controls update rejects toggle on text control', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'message', type: 'text', value: 'hi');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/message',
+        ['action' => 'toggle'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(422);
 });

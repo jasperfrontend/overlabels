@@ -41,13 +41,14 @@ class BotControlController extends Controller
      * Apply a bot-driven write to all of a user's matching non-source-managed
      * controls and broadcast ControlValueUpdated for each.
      *
-     * Actions: set (requires value), increment, decrement, reset.
-     * increment/decrement/reset only valid for number|counter.
+     * Actions: set (requires value), increment, decrement, reset, enable,
+     * disable, toggle. increment/decrement/reset only valid for number|counter;
+     * enable/disable/toggle only valid for boolean.
      */
     public function update(Request $request, string $login, string $key): JsonResponse
     {
         $data = $request->validate([
-            'action' => 'required|string|in:set,increment,decrement,reset',
+            'action' => 'required|string|in:set,increment,decrement,reset,enable,disable,toggle',
             'value' => 'required_if:action,set|string',
             'amount' => 'nullable|numeric',
         ]);
@@ -64,10 +65,19 @@ class BotControlController extends Controller
         }
 
         $action = $data['action'];
+        $numericActions = ['increment', 'decrement', 'reset'];
+        $booleanActions = ['enable', 'disable', 'toggle'];
 
-        if ($action !== 'set' && ! $this->allNumeric($controls)) {
+        if (in_array($action, $numericActions, true) && ! $this->allNumeric($controls)) {
             return response()->json(
                 ['error' => "action '$action' requires a number or counter control"],
+                422,
+            );
+        }
+
+        if (in_array($action, $booleanActions, true) && ! $this->allBoolean($controls)) {
+            return response()->json(
+                ['error' => "action '$action' requires a boolean control"],
                 422,
             );
         }
@@ -81,6 +91,9 @@ class BotControlController extends Controller
                 'increment' => (string) ((float) ($control->value ?? 0) + $amount),
                 'decrement' => (string) ((float) ($control->value ?? 0) - $amount),
                 'reset' => (string) ((float) ($control->config['reset_value'] ?? 0)),
+                'enable' => '1',
+                'disable' => '0',
+                'toggle' => $control->value === '1' ? '0' : '1',
             };
 
             $control->update(['value' => $newValue]);
@@ -131,5 +144,10 @@ class BotControlController extends Controller
     private function allNumeric(Collection $controls): bool
     {
         return $controls->every(fn (OverlayControl $c) => in_array($c->type, ['number', 'counter']));
+    }
+
+    private function allBoolean(Collection $controls): bool
+    {
+        return $controls->every(fn (OverlayControl $c) => $c->type === 'boolean');
     }
 }

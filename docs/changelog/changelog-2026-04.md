@@ -1,5 +1,28 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Bot: !enable / !disable / !toggle for boolean controls
+
+- Three new bot actions on the control pipeline: `enable` -> `'1'`, `disable` -> `'0'`,
+  `toggle` -> flips current value. Only valid against `boolean` controls. Non-boolean
+  targets 422 with `"action 'X' requires a boolean control"`, mirroring the existing
+  numeric guard.
+- `BotControlController::update`:
+  - Validation enum expanded to `set,increment,decrement,reset,enable,disable,toggle`.
+  - New `allBoolean()` helper alongside `allNumeric()`.
+  - Match arms added for the three actions. `toggle` reads `$control->value` which is
+    always `'1'` or `'0'` for boolean controls (via `OverlayControl::sanitizeValue`).
+- `BotCommand::DEFAULTS` now includes `enable`, `disable`, `toggle` at `moderator` tier,
+  matching `set`. Same trust boundary: broadcaster and mods can flip state, VIPs and
+  below cannot.
+- Data migration `2026_04_14_220000_seed_boolean_bot_commands.php` loops
+  `bot_enabled=true` users and calls `BotCommand::seedDefaults($user)` so existing
+  opted-in streamers pick up the new commands without having to disable/re-enable.
+  Idempotent thanks to `firstOrCreate`.
+- Tests: happy paths for enable/disable/toggle, 422 guards for enable on counter and
+  toggle on text. The existing seeding tests use `count(BotCommand::DEFAULTS)` so they
+  auto-updated; only the one explicit `toContain(...)` assertion needed the three new
+  command names.
+
 ## April 14th, 2026 - Bot enable toggle on integrations page
 
 - The `users.bot_enabled` column and `UserObserver` have existed since the initial bot plumbing
