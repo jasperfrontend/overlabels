@@ -1,5 +1,28 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Help: the Math Engine page
+
+- New `/help/math` page and `help.math` route. Lives at
+  `resources/js/pages/help/Math.vue`, linked from the help hub with a new Sigma
+  icon card.
+- Documents every whitelisted primitive in `useExpressionEngine.ts` (operators,
+  constants, scalar math, arg-pair family), then walks through the classic
+  overlay-math patterns: sine-wave breathing, Lissajous pairs, sawtooth ramps
+  from `fract()`, the triangle-wave trick, modulo wheels for cyclic indexing,
+  and cross-service timestamp racing via `latest()`/`argmax()` with the
+  automatic `_at` companions.
+- Includes a step-by-step teardown of the shader-style pseudo-random one-liner
+  `floor(fract(sin(now() / 2) * 1000) * 9) + 1`, explaining why each layer
+  exists and how to vary the recipe for a d20, a 3-way rotator, or a stable
+  roll that only changes every N seconds.
+- Honest pitfalls section: expressions are reactive not scheduled (so
+  `sin(now())` alone does not animate), trig takes radians, no `**`/`sqrt`/
+  `exp`/`tan`, division by zero returns zero, and the arg-family functions
+  return an error string on odd argument counts.
+- New dep: `katex` + `@types/katex` for proper display-math typography on this
+  page. Loaded via a tiny `MathEquation.vue` wrapper and code-split by Inertia,
+  so only visitors to `/help/math` pay the ~86 KB gzip cost.
+
 ## April 14th, 2026 - Fix: template tag list empty after onboarding
 
 - New accounts running through `OnboardingWizard` could land on `/templates/edit`

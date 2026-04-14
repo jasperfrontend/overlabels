@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, SlidersHorizontal } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -26,6 +26,12 @@ const pages = [
     description: 'Format numbers, durations, currencies, and dates with pipe syntax. Locale-aware, zero dependencies.',
     href: '/help/formatting',
     icon: Pipette,
+  },
+  {
+    title: 'Math Engine',
+    description: 'Waves, modulo wheels, pseudo-random one-liners, timestamp racing - the math behind live overlays.',
+    href: '/help/math',
+    icon: Sigma,
   },
   {
     title: 'Twitch Chat Bot',

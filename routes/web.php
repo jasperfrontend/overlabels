@@ -60,6 +60,10 @@ Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
 })->name('help.formatting');
 
+Route::get('/help/math', function () {
+    return Inertia::render('help/Math');
+})->name('help.math');
+
 Route::get('/help/resources', function () {
     return Inertia::render('help/Resources');
 })->name('help.resources');
