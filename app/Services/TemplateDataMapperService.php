@@ -18,12 +18,12 @@ use Illuminate\Support\Facades\Log;
  */
 class TemplateDataMapperService
 {
-    private const NUMERIC_TAGS = [
+    private const array NUMERIC_TAGS = [
         'followers_total', 'followed_total', 'subscribers_total', 'subscribers_points',
         'user_view_count', 'goals_latest_target', 'goals_latest_current', 'channel_delay',
     ];
 
-    private const BOOLEAN_TAGS = [
+    private const array BOOLEAN_TAGS = [
         'channel_is_branded', 'subscribers_latest_is_gift',
     ];
 
@@ -212,7 +212,7 @@ class TemplateDataMapperService
             'user_type' => '',
             'user_broadcaster_type' => 'partner',
             'user_description' => 'Welcome to my awesome stream!',
-            'user_avatar' => 'https://static-cdn.jtvnw.net/user-default-pictures.png',
+            'user_avatar' => 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-300x300.png',
             'user_offline_banner' => '',
             'user_view_count' => '123,456',
             'user_email' => 'streamer@example.com',

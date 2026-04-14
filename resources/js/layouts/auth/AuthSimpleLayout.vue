@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import { Link } from '@inertiajs/vue3';
+import TwitchIcon from '@/components/TwitchIcon.vue';
 
 defineProps<{
     title?: string;
@@ -10,22 +9,20 @@ defineProps<{
 
 <template>
     <div class="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-        <div class="w-full max-w-sm">
-            <div class="flex flex-col gap-8">
-                <div class="flex flex-col items-center gap-4">
-                    <Link :href="route('home')" class="flex flex-col items-center gap-2 font-medium">
-                        <div class="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                            <AppLogoIcon class="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                        </div>
-                        <span class="sr-only">{{ title }}</span>
-                    </Link>
-                    <div class="space-y-2 text-center">
-                        <h1 class="text-xl font-medium">{{ title }}</h1>
-                        <p class="text-center text-sm text-muted-foreground">{{ description }}</p>
-                    </div>
-                </div>
-                <slot />
+        <div class="bg-sidebar p-8 rounded shadow-md transition-all hover:ring-2 hover:shadow ring-sidebar ring-offset-background">
+          <div class="space-y-2 flex flex-col items-center">
+            <div class="app-logo flex flex-col items-center">
+              <TwitchIcon class="size-10" />
             </div>
+            <h1 class="text-3xl font-medium">{{ title }}</h1>
+            <p class="text-sm text-foreground">{{ description }}</p>
+          </div>
+          <slot />
         </div>
+      <div class="text-sm text-muted-foreground text-center">
+        <div class="text-foreground mb-4">&copy; {{ new Date().getFullYear() }} Overlabels. All rights reserved.</div>
+        By connecting your Twitch account you agree to our <a href="/terms" target="_blank" class="underline hover:text-foreground">Terms of Service</a> and <a href="/privacy" target="_blank" class="underline hover:text-foreground">Privacy Policy</a>.<br>
+        You can remove Overlabels from your Twitch account at any time in your <a href="https://www.twitch.tv/settings/connections" target="_blank" class="underline hover:text-foreground">Twitch settings</a>.
+      </div>
     </div>
 </template>

@@ -58,7 +58,6 @@ use Illuminate\Support\Arr;
  * @method static Builder<static>|TemplateTag whereUserId($value)
  * @method static Builder<static>|TemplateTag whereVersion($value)
  * @mixin Eloquent
- * @mixin IdeHelperTemplateTag
  */
 class TemplateTag extends Model
 {

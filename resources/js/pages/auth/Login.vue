@@ -5,8 +5,8 @@ import { Head } from '@inertiajs/vue3';
 </script>
 
 <template>
-  <AuthBase title="Log in to your account" description="Use the button below to log in through Twitch">
-    <Head title="Log in" />
+  <AuthBase title="Connect with Twitch" description="Overlabels has been created for the Twitch community">
+    <Head title="Connect with Twitch" />
     <LoginSocial />
   </AuthBase>
 </template>

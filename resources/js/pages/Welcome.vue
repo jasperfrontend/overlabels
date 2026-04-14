@@ -698,9 +698,6 @@ const alertPipelineSteps = [
         <div class="mx-auto max-w-5xl">
           <div class="mb-4 flex items-center gap-3">
             <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Integrations</Badge>
-            <Badge class="border-emerald-500/40 bg-emerald-500/10 hover:border-emerald-500/40 hover:bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">
-              Now supports StreamElements!
-            </Badge>
           </div>
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Show donations from different sources.</h2>
           <p class="mb-12 max-w-2xl text-lg text-foreground">
