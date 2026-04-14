@@ -80,7 +80,7 @@ class BotControlController extends Controller
                 'set' => OverlayControl::sanitizeValue($control->type, $data['value']),
                 'increment' => (string) ((float) ($control->value ?? 0) + $amount),
                 'decrement' => (string) ((float) ($control->value ?? 0) - $amount),
-                'reset' => '0',
+                'reset' => (string) ((float) ($control->config['reset_value'] ?? 0)),
             };
 
             $control->update(['value' => $newValue]);
