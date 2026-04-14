@@ -349,17 +349,29 @@ onMounted(async () => {
     css.value = json.template.css ?? '';
     data.value = json.data ?? {};
 
-    // Seed the Twitch event store with any initial snapshot values for
-    // the known tag set, and mirror them into data.value under t:* so the
-    // expression engine can read them as t.followers_total, t.subscribers_total, etc.
+    // Mirror every Twitch template-tag value from the initial snapshot into the
+    // t:* namespace so expressions can read them as t.followers_total,
+    // t.channel_name, t.user_display_name, etc. The server allowlists tags via
+    // TemplateDataMapperService + template_tags table, so anything landing here
+    // is a legitimate scalar tag value to expose.
+    //
+    // Excluded: c:* (controls), t:* (already prefixed), user_twitch_id (meta),
+    // dotted keys like event.user_name (raw event fields, not tags), and any
+    // non-scalar values.
     const tSnapshot: Record<string, any> = {};
-    for (const tag of TWITCH_TAG_NAMES) {
-      const snapshotVal = data.value[tag];
-      if (snapshotVal === undefined) continue;
-      if (eventStore.tags[tag] === undefined) {
-        eventStore.tags[tag] = snapshotVal;
+    for (const [key, val] of Object.entries(data.value)) {
+      if (key.startsWith('c:')) continue;
+      if (key.startsWith('t:')) continue;
+      if (key === 'user_twitch_id') continue;
+      if (key.includes('.')) continue;
+      if (val === null || typeof val === 'object') continue;
+      tSnapshot[`t:${key}`] = val;
+
+      // For tags that EventSub mutates live, also seed the Pinia store so
+      // increment-on-follow / increment-on-sub start from the real count.
+      if (TWITCH_TAG_NAMES.has(key) && eventStore.tags[key] === undefined) {
+        eventStore.tags[key] = val;
       }
-      tSnapshot[`t:${tag}`] = eventStore.tags[tag];
     }
     if (Object.keys(tSnapshot).length > 0) {
       data.value = { ...data.value, ...tSnapshot };

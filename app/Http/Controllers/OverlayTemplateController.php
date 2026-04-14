@@ -360,13 +360,6 @@ class OverlayTemplateController extends Controller
                 $user->twitch_id
             );
 
-            // Map and prune via the single source of truth
-            $mapped = $this->mapper->mapForTemplate(
-                $twitchData,
-                $template->name,
-                $template->template_tags // allowlist: only tags the template actually uses
-            );
-
             // Record access
             $token->recordAccess(
                 $request->ip(),
@@ -428,6 +421,32 @@ class OverlayTemplateController extends Controller
                     ];
                 }
             }
+
+            // Expand the template-tag allowlist with any `t.<name>` references
+            // that appear in expression controls but not in the template HTML.
+            // Without this, an expression like `t.followers_total + t.subscribers_total`
+            // would resolve empty unless the same tags were also written as `[[[...]]]`
+            // somewhere in the HTML.
+            $allowlist = (array) ($template->template_tags ?? []);
+            foreach ($expressionControls as $exprCtrl) {
+                $expression = (string) ($exprCtrl['expression'] ?? '');
+                if ($expression === '') {
+                    continue;
+                }
+                if (preg_match_all('/\bt\.([A-Za-z_][A-Za-z0-9_]*)/', $expression, $matches)) {
+                    foreach ($matches[1] as $tagName) {
+                        $allowlist[] = $tagName;
+                    }
+                }
+            }
+            $allowlist = array_values(array_unique($allowlist));
+
+            // Map and prune via the single source of truth
+            $mapped = $this->mapper->mapForTemplate(
+                $twitchData,
+                $template->name,
+                $allowlist
+            );
 
             // Build final data: Twitch data + controls + Twitch ID
             $finalData = array_merge($mapped, $controlData, [

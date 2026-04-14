@@ -1,5 +1,33 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Fix: `t.*` actually resolves now
+
+- Shipping `t.*` earlier today left two silent failures in the pipeline:
+  - Server: `mapForTemplate` took its allowlist from `$template->template_tags`,
+    which is built from `[[[...]]]` occurrences in the HTML. An expression that
+    referenced `t.followers_total` without a matching `[[[followers_total]]]`
+    in the HTML would never receive a value - the server would simply not ship
+    it.
+  - Client: the seed loop in `OverlayRenderer.vue` was scoped to the ~14 tag
+    names declared in `EVENT_RULES`. Even if the server had shipped
+    `channel_name` or `user_display_name`, the mirror pass would ignore them
+    and `t:channel_name` would never land in `data.value`.
+- Server fix (`OverlayTemplateController::renderAuthenticated`): after
+  collecting `$expressionControls`, scan every expression string for
+  `\bt\.([A-Za-z_]\w*)` matches and union those names into the allowlist
+  passed to `mapForTemplate`. `not_t.fake` is safely ignored thanks to the
+  word boundary. `mapForTemplate` moved below the control loop so this unioned
+  list is what the mapper sees.
+- Client fix (`OverlayRenderer.vue`): the seed pass now iterates every bare
+  scalar key in the initial `json.data`, mirroring each into `t:*`. Excludes
+  `c:*`, already-prefixed `t:*`, the `user_twitch_id` meta key, dotted keys
+  (raw EventSub fields like `event.user_name`), and non-scalar values. Pinia
+  seeding stays scoped to `EVENT_RULES` so the live counter watch still only
+  fires on mutated tags.
+- Together: any tag that exists in the user's `template_tags` table can now be
+  read as `t.tag_name` in an expression, whether or not the template HTML also
+  references it.
+
 ## April 15th, 2026 - Feat: `t.*` namespace in the expression engine
 
 - Expression controls can now read live Twitch event-tag values directly, with
