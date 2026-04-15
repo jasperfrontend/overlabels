@@ -22,6 +22,29 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Refactor: ControlsManager replaces Table with Collapsible groups
+
+- `ControlsManager.vue` was still a wide shadcn `<Table>` with Order / Key /
+  Label / Type / Settings / Snippet / Actions columns. Overwhelming on
+  templates with many Controls, and visually out of step with
+  `ControlPanel.vue` and `TemplateTagsList.vue` which both use collapsible
+  groups.
+- Rewrote as filter bar + Collapse/Expand-all toggle + one `<Collapsible>`
+  per category, grouping user Controls by type (Counter, Timer, Number,
+  Text, Toggle, Expression, Date/Time) and service-managed Controls by
+  source (Twitch, Ko-fi, StreamElements, Streamlabs, GPSLogger). Per-group
+  expanded state persists to `localStorage` under
+  `controls_manager_expanded`, separate from `ControlPanel`'s key so the
+  two panels toggle independently.
+- Row layout adapted from `TemplateTable.vue`: bordered card, click or
+  Enter/Space to edit, hover reveals the snippet pill (desktop) plus
+  edit / duplicate / delete buttons. Source-managed rows get a lock pill
+  showing the service name and drop the duplicate action. All action
+  handlers use `@click.stop` so they don't bubble to the row's edit
+  handler.
+- Footer now references the lock icon instead of the old `*` footnote,
+  and the `N/50` counter stays in place.
+
 ## April 15th, 2026 - Fix: bot `!enable`/`!disable` on already-set booleans now errors
 
 - When a boolean Control was already `1` and chat ran `!enable <key>`, the
