@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 14th, 2026 - Gave Twitch Controls their own namespace c:twitch:controls
+
+- Twitch Controls are now stored in the database under the `c:twitch:controls` namespace.
+- Added a separate accordion dropdown for Twitch Controls in the `ControlPanel.vue`
+- Tested it by faking online state, then firing a fake Bits Cheers from the Integrations page.
+- The test resolved fine to the newly namespaced control `c:twitch:cheers_this_stream`.
+- I can't oversee the further implications of this change, but it's a good start.
+
+
 ## April 15th, 2026 - Fix: expression preview now shows real `t.*` values
 
 - The expression-builder preview was stuck on mock values (e.g.
