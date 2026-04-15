@@ -82,6 +82,18 @@ class BotControlController extends Controller
             );
         }
 
+        if (in_array($action, ['enable', 'disable'], true)) {
+            $target = $action === 'enable' ? '1' : '0';
+            if ($controls->every(fn (OverlayControl $c) => $c->value === $target)) {
+                $state = $action === 'enable' ? 'enabled' : 'disabled';
+
+                return response()->json(
+                    ['error' => "$key already $state"],
+                    409,
+                );
+            }
+        }
+
         $amount = isset($data['amount']) ? (float) $data['amount'] : 1.0;
         $applied = null;
 

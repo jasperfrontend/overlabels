@@ -520,6 +520,28 @@ test('controls update disables a boolean control', function () {
     )->assertOk()->assertJsonPath('value', '0');
 });
 
+test('controls update returns 409 when enabling an already-enabled boolean', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'show_cam', type: 'boolean', value: '1');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'enable'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(409)->assertJsonPath('error', 'show_cam already enabled');
+});
+
+test('controls update returns 409 when disabling an already-disabled boolean', function () {
+    $user = makeOptedInUser();
+    makeBotControl($user, 'show_cam', type: 'boolean', value: '0');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/show_cam',
+        ['action' => 'disable'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(409)->assertJsonPath('error', 'show_cam already disabled');
+});
+
 test('controls update toggles a boolean control', function () {
     $user = makeOptedInUser();
     makeBotControl($user, 'show_cam', type: 'boolean', value: '0');

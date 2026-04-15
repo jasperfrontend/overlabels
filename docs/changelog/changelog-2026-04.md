@@ -22,6 +22,21 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Fix: bot `!enable`/`!disable` on already-set booleans now errors
+
+- When a boolean Control was already `1` and chat ran `!enable <key>`, the
+  bot replied "<key> enabled", which was a lie - nothing changed. Same story
+  for `!disable` against a `0` value. Fixed in the Laravel API (bot is a
+  dumb relay per project rules) in `BotControlController::update()`: if
+  every matching control already sits at the target value, short-circuit
+  with `409 Conflict` and `{"error": "<key> already <enabled|disabled>"}`
+  so the bot relays the real state to chat.
+- Partial-state scenarios aren't blocked: if a user has the same key on
+  both a template-scoped and a user-scoped Control and they disagree, the
+  action still proceeds and flips only the ones that differ. `toggle`
+  untouched since it always changes state.
+- Two Pest tests cover the new 409 responses.
+
 ## April 15th, 2026 - Fix: boolean Control switch + realtime ControlPanel updates
 
 - `ControlFormModal.vue`: the Reka `<Switch>` used when creating a boolean
