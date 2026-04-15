@@ -54,21 +54,21 @@ const commands: BotCommandDoc[] = [
     },
   },
   {
-    command: '!increment',
+    command: '!increment [or] !inc',
     tier: 'moderator',
     summary: 'Add to a number or counter control. Amount defaults to 1.',
     example: {
-      chat: '!increment deaths',
+      chat: '!inc deaths',
       reply: '@mod deaths: 4',
     },
     notes: 'Accepts an optional amount: !increment deaths 3',
   },
   {
-    command: '!decrement',
+    command: '!decrement [or] !dec',
     tier: 'moderator',
     summary: 'Subtract from a number or counter control. Amount defaults to 1.',
     example: {
-      chat: '!decrement lives 1',
+      chat: '!dec lives 1',
       reply: '@mod lives: 2',
     },
   },
@@ -81,6 +81,33 @@ const commands: BotCommandDoc[] = [
       reply: '@broadcaster deaths: 0',
     },
   },
+  {
+    command: '!toggle', // enable/disable/toggle
+    tier: 'moderator',
+    summary: 'Toggle a boolean control.',
+    example: {
+      chat: '!toggle mute',
+      reply: '@mod mute: true',
+    },
+  },
+  {
+    command: '!enable',
+    tier: 'moderator',
+    summary: 'Enable a boolean control.',
+    example: {
+      chat: '!enable mute',
+      reply: '@mod mute: true',
+    },
+  },
+  {
+    command: '!disable',
+    tier: 'moderator',
+    summary: 'Disable a boolean control.',
+    example: {
+      chat: '!disable mute',
+      reply: '@mod mute: false',
+    },
+  }
 ];
 </script>
 
@@ -111,30 +138,29 @@ const commands: BotCommandDoc[] = [
       <div
         v-for="cmd in commands"
         :key="cmd.command"
-        class="rounded-lg border border-sidebar p-5"
+        class="rounded-lg bg-sidebar border border-sidebar p-5"
       >
         <div class="mb-3 flex flex-wrap items-center gap-3">
-          <code class="rounded bg-muted px-2 py-1 font-mono text-base font-semibold">{{ cmd.command }}</code>
+          <code class="rounded bg-card px-2 py-1 font-mono text-base font-semibold">{{ cmd.command }}</code>
           <span
             :class="tierClass[cmd.tier]"
-            class="rounded px-2 py-0.5 text-xs font-medium"
+            class="rounded px-2 py-0.5 text-md font-medium"
           >
             {{ tierLabel[cmd.tier] }}
           </span>
         </div>
 
         <p class="mb-4 text-sm text-foreground">{{ cmd.summary }}</p>
-
-        <div class="rounded-md border border-sidebar bg-background/50 p-3 font-mono text-xs">
+        <div class="rounded-md border border-sidebar bg-background/50 p-3 font-mono text-md">
           <div class="text-foreground">
-            <span class="text-muted-foreground">viewer:</span> {{ cmd.example.chat }}
+            <span class="text-muted-foreground">@{{ cmd.tier === "everyone" ? "chatter" : cmd.tier }}:</span> {{ cmd.example.chat }}
           </div>
           <div class="mt-1 text-foreground">
             <span class="text-muted-foreground">@overlabels:</span> {{ cmd.example.reply }}
           </div>
         </div>
 
-        <p v-if="cmd.notes" class="mt-3 text-xs text-muted-foreground">{{ cmd.notes }}</p>
+        <p v-if="cmd.notes" class="mt-3 text-md text-muted-foreground">{{ cmd.notes }}</p>
       </div>
     </div>
   </HelpLayout>

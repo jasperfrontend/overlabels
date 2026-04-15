@@ -47,7 +47,8 @@ const alertsNavItems: NavItem[] = [
   { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 
-const kitsNavItems: NavItem[] = [
+const learnNavItems: NavItem[] = [
+  { title: 'Learn Overlabels', href: route('help'), icon: BookOpen }
 ];
 
 const helpNavItems: NavItem[] = [
@@ -92,7 +93,7 @@ const adminNavItems: NavItem[] = [
     <SidebarContent>
       <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
       <NavMain v-if="user && alertsNavItems.length > 0" label="Alerts" :items="alertsNavItems" />
-      <NavMain v-if="user && kitsNavItems.length > 0" label="Kits" :items="kitsNavItems" />
+      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
