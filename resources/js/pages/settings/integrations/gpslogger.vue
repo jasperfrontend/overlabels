@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { computed, ref, onMounted } from 'vue';
+import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -82,9 +82,15 @@ function disconnect() {
   }
 }
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleString(userLocale.value);
 }
 </script>
 

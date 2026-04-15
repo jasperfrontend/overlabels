@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -177,9 +178,15 @@ async function connectEventSub() {
 }
 
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleString(userLocale.value);
 }
 </script>
 

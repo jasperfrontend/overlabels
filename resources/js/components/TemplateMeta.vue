@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
 
 const props = defineProps<{
   createdAt: string;
@@ -51,11 +57,11 @@ function copyTag(tag: string, event: MouseEvent) {
     <div class="grid grid-cols-2 gap-1 rounded-sm bg-background p-4 text-sm">
       <div>
         <span class="text-muted-foreground">Created:</span>
-        <span class="ml-2">{{ new Date(createdAt).toLocaleDateString() }}</span>
+        <span class="ml-2">{{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
       </div>
       <div>
         <span class="text-muted-foreground">Last updated:</span>
-        <span class="ml-2">{{ new Date(updatedAt).toLocaleDateString() }}</span>
+        <span class="ml-2">{{ new Date(updatedAt).toLocaleDateString(userLocale) }}</span>
       </div>
       <div>
         <span class="text-muted-foreground">Views:</span>

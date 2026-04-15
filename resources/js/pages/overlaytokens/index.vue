@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Modal from '@/components/Modal.vue';
@@ -101,8 +101,14 @@ const deleteToken = async (t: Token) => {
 //   router.visit(`/tokens/${t.id}/usage`);
 // };
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
 const formatDate = (date: string | null | undefined) =>
-  date ? new Date(date).toLocaleString() : '-';
+  date ? new Date(date).toLocaleString(userLocale.value) : '-';
 </script>
 
 <template>

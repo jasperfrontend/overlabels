@@ -22,6 +22,29 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Fix: sweep remaining user-facing dates onto the user locale contract
+
+- Follow-up to the earlier ControlPanel/ControlsManager locale fix. A
+  repo sweep turned up nine more user-facing spots still calling
+  `toLocaleString()` / `toLocaleDateString()` with no locale argument
+  (or, in the case of `kits/show.vue` and `KitCard.vue`, hardcoded
+  to `'en-US'`). Each one followed the same
+  `usePage().props.auth.user.locale` pattern we already use elsewhere
+  and got the same three-line `userLocale` computed + arg threading.
+- Fixed: `TemplateMeta.vue` (created/updated dates on template cards),
+  `KitCard.vue` + `kits/show.vue` (kit dates), `overlaytokens/index.vue`
+  (token created/last-used), and the five integration settings pages
+  (`gpslogger`, `index`, `kofi`, `streamelements`, `streamlabs`) which
+  all had a shared `formatDate()` last-event helper. The three donation
+  drivers also had a Number `toLocaleString()` on the "Starting count
+  set to X" line - fixed those too so Dutch users see `1.000` instead
+  of `1,000`.
+- Left intentionally alone: admin panel (raw timestamps are fine
+  there), `utils/formatters.ts` (its `DEFAULT_LOCALE` is the fallback
+  constant), `settings/Appearance.vue` (the `'en-US'` is the default
+  option value of the locale picker itself), and `help/Formatting.vue`
+  (the `en-US` strings are column headers in docs tables).
+
 ## April 15th, 2026 - Fix: ControlPanel + ControlsManager honor user locale for date formatting
 
 - Countto timer targets in `ControlPanel.vue` and both countto targets

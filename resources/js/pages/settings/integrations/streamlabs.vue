@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -80,9 +80,15 @@ function disconnect() {
   }
 }
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleString(userLocale.value);
 }
 </script>
 
@@ -201,7 +207,7 @@ function formatDate(iso: string | null): string {
             <!-- Already seeded — locked -->
             <template v-if="donationsSeedSet">
               <p class="text-muted-foreground text-sm">
-                Starting count set to <strong>{{ donationsSeedValue?.toLocaleString() }}</strong>.
+                Starting count set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong>.
                 Your <code
                 class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:streamlabs:donations_received]]]</code>
                 controls started from this value.
