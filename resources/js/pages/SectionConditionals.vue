@@ -59,7 +59,7 @@ import { Badge } from '@/components/ui/badge';
           </div>
         </div>
 
-        <div class="overflow-hidden rounded-sm">
+        <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
           <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
             <span class="font-mono text-xs text-muted-foreground">Language-aware overlay + milestone block</span>
           </div>

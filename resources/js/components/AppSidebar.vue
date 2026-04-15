@@ -7,6 +7,7 @@ import { Link } from '@inertiajs/vue3';
 import {
   Activity,
   Bell,
+  BotIcon,
   BookOpen,
   Brackets,
   FileText,
@@ -23,6 +24,7 @@ import {
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
+  Sigma,
   SlidersHorizontal,
   Users,
 } from 'lucide-vue-next';
@@ -55,7 +57,9 @@ const helpNavItems: NavItem[] = [
   { title: 'Help', href: '/help', icon: BookOpen },
   { title: 'Conditional Tags', href: '/help/conditionals', icon: Brackets },
   { title: 'Controls', href: '/help/controls', icon: SlidersHorizontal },
+  { title: 'Math Engine', href: '/help/math', icon: Sigma },
   { title: 'Formatting Pipes', href: '/help/formatting', icon: Pipette },
+  { title: 'Twitch Chat Bot', href: '/help/bot', icon: BotIcon },
   { title: 'Free Resources', href: '/help/resources', icon: BookOpen },
   { title: 'Why Ko-fi', href: '/help/why-kofi', icon: Heart },
   { title: 'Manifesto', href: '/help/manifesto', icon: FileText },

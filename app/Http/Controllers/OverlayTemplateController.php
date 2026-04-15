@@ -424,7 +424,7 @@ class OverlayTemplateController extends Controller
 
             // Expand the template-tag allowlist with any `t.<name>` references
             // that appear in expression controls but not in the template HTML.
-            // Without this, an expression like `t.followers_total + t.subscribers_total`
+            // Without this, an expression like `t.twitch.followers_total + t.twitch.subscribers_total`
             // would resolve empty unless the same tags were also written as `[[[...]]]`
             // somewhere in the HTML.
             $allowlist = (array) ($template->template_tags ?? []);

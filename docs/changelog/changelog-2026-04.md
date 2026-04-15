@@ -2,7 +2,7 @@
 
 ## April 14th, 2026 - Gave Twitch Controls their own namespace c:twitch:controls
 
-- Twitch Controls are now stored in the database under the `c:twitch:controls` namespace.
+- Twitch Controls are now usable in the frontend under the `c:twitch:x` namespace.
 - Added a separate accordion dropdown for Twitch Controls in the `ControlPanel.vue`
 - Tested it by faking online state, then firing a fake Bits Cheers from the Integrations page.
 - The test resolved fine to the newly namespaced control `c:twitch:cheers_this_stream`.
@@ -64,8 +64,7 @@
 - The expression save path in `OverlayControlController` required at least one
   `c.*` or `t.*` reference, rejecting pure-math formulas like
   `mod(floor(now() / 8), 3)` that are legitimately useful as scratchpad values
-  for other expressions to consume. Removed the check from both `store` (line
-  113) and `update` (line 184) along with the now-unused
+  for other expressions to consume. Removed the check from both `store` (line 113) and `update` (line 184) along with the now-unused
   `extractTwitchTagReferences` calls. Cycle detection and scope validation
   still run; the sandboxed AST evaluator remains the only thing that gets to
   touch the string.

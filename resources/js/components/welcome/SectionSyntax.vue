@@ -49,7 +49,7 @@ const syntaxTab = ref('static');
         </div>
 
         <div v-show="syntaxTab === 'static'">
-          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent">
+          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent max-w-3xl hover:max-w-full transition-all">
             <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
               <span class="font-mono text-xs text-muted-foreground">Overlay example — subscriber bar</span>
             </div>
@@ -85,7 +85,7 @@ const syntaxTab = ref('static');
         </div>
 
         <div v-show="syntaxTab === 'css'">
-          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent">
+          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent max-w-3xl hover:max-w-full transition-all">
             <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
                 <span
                   class="font-mono text-xs text-muted-foreground">overlay.css — live values can be used inside CSS</span>
@@ -120,7 +120,7 @@ const syntaxTab = ref('static');
         </div>
 
         <div v-show="syntaxTab === 'events'">
-          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent">
+          <div class="mb-4 overflow-hidden rounded-sm border border-sidebar-accent max-w-3xl hover:max-w-full transition-all">
             <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
               <span class="font-mono text-xs text-muted-foreground">Alert template — channel.follow</span>
             </div>
@@ -146,7 +146,7 @@ const syntaxTab = ref('static');
               </div>
             </div>
           </div>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-sm text-muted-foreground max-w-3xl">
             Event tags are merged with your static overlay data at render time. All static tags remain available
             inside alert templates. You're encouraged to mix them freely.
           </p>

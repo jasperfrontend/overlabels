@@ -61,7 +61,7 @@ const integrationConfigs = {
         </div>
 
         <!-- Unified integration card -->
-        <div class="mb-12 rounded-sm bg-card p-6">
+        <div class="mb-12 rounded-sm bg-card p-6 max-w-3xl hover:max-w-full transition-all">
           <div class="mb-4 flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
               <Heart v-if="integrationsTab === 'kofi'" class="h-5 w-5 text-sky-500" />
@@ -101,7 +101,7 @@ const integrationConfigs = {
         </div>
 
         <!-- Shared alert template example -->
-        <div class="overflow-hidden rounded-sm">
+        <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
           <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
             <span class="font-mono text-xs text-muted-foreground">One alert template works for all connected external donation services</span>
           </div>
@@ -151,7 +151,7 @@ const integrationConfigs = {
             Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all three donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, four pipes.</strong>
           </p>
 
-          <div class="overflow-hidden rounded-sm">
+          <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
             <div class="flex items-center gap-2 border-b border-sky-500/20 bg-sky-400/10 dark:bg-sky-950/20 px-4 py-2.5">
               <span class="font-mono text-xs text-sky-600 dark:text-sky-400">Two expression controls. The whole cross-service story.</span>
             </div>
@@ -180,7 +180,7 @@ const integrationConfigs = {
 
         <!-- Reverse subathon case study -->
         <div class="mt-16 border-t border-sidebar-accent pt-16">
-          <Badge class="mb-4 border-sky-500/40 bg-sky-500/10 hover:border-sky-500/40 hover:bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-500">
+          <Badge class="mb-4" variant="default">
             Case study
           </Badge>
           <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
@@ -193,7 +193,7 @@ const integrationConfigs = {
             Create three number controls: <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">c.donathon_timer</code> (starting seconds), <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">c.deduction_per_donation</code> (seconds to strip per donation), and <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-sm text-amber-700 dark:text-amber-400">c.total_donations</code> (a counter your alert template increments on every donation across every service). Then a single expression control does the rest:
           </p>
 
-          <div class="overflow-hidden rounded-sm">
+          <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
             <div class="flex items-center gap-2 border-b border-sky-500/20 bg-sky-400/10 dark:bg-sky-950/20 px-4 py-2.5">
               <span class="font-mono text-xs text-sky-600 dark:text-sky-400">One expression. The whole show.</span>
             </div>
@@ -210,7 +210,7 @@ const integrationConfigs = {
             <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-sky-500">clamp()</code> keeps the result between zero and the original timer so the clock can't go negative or somehow inflate. Pipe it through <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">|duration:hh:mm:ss</code> and you have a broadcast-ready countdown that reacts the instant any donation lands on any service.
           </p>
 
-          <div class="mt-8 max-w-3xl border-l-4 border-sky-500/40 bg-sky-500/5 px-5 py-4">
+          <div class="mt-8 border-l-4 border-sky-500/40 bg-sky-500/5 px-5 py-4">
             <p class="text-sm text-foreground">
               <strong>Btw</strong>: if you want a classic subathon that <em>adds</em> time on every donation, just swap the <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">-</code> for a <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs">+</code>. That's it. You're welcome &lt;3
             </p>

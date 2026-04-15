@@ -81,7 +81,7 @@ const controlTypes = [
         </div>
 
         <!-- Power combo -->
-        <div class="overflow-hidden rounded-sm ">
+        <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
           <div class="border-b border-sky-500/20 bg-sky-400/10 dark:bg-sky-950/20 px-4 py-2.5">
             <span class="font-mono text-xs text-sky-600 dark:text-sky-400">Power combo — boolean control + countdown timer + conditional class binding</span>
           </div>
@@ -105,7 +105,7 @@ const controlTypes = [
             <div><span class="text-sky-600 dark:text-sky-400">[[[endif]]]</span></div>
           </div>
         </div>
-        <p class="mt-3 text-sm text-muted-foreground">
+        <p class="mt-3 text-sm max-w-3xl text-muted-foreground">
           The timer ticks at 250ms resolution. The <code
           class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">danger</code>
           class applies

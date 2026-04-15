@@ -297,7 +297,7 @@ function formatDate(iso: string | null): string {
                   Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
                 </p>
                 <p v-else class="text-sm text-muted-foreground">
-                  Enable to have the bot join your channel. Default commands are seeded automatically the first time you enable it.
+                  Enable to have the bot join your channel. Default <a :href="route('help.bot.commands')" target="_blank" class="underline hover:text-foreground">bot commands</a> are enabled automatically the first time you enable it.
                 </p>
               </div>
 
