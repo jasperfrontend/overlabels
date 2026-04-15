@@ -312,7 +312,7 @@ const controlsCounter = computed(() => controls.value.length);
       </div>
 
       <!-- Count + collapse/expand-all -->
-      <div class="flex items-center text-xs text-muted-foreground">
+      <div class="mb-3 flex items-center text-xs text-muted-foreground">
         <span v-if="searchQuery">
           {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
         </span>
