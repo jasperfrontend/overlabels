@@ -157,6 +157,13 @@ const localValues = ref<Record<number, string>>({});
 const saving = ref<Record<number, boolean>>({});
 const timerIntervals = ref<Record<number, number>>({});
 const timerDisplays = ref<Record<number, string>>({});
+const invalidNumberInputs = ref<Record<number, boolean>>({});
+
+function onNumberInput(ctrl: OverlayControl, ev: Event) {
+  const input = ev.target as HTMLInputElement;
+  localValues.value[ctrl.id] = String(input.value);
+  invalidNumberInputs.value[ctrl.id] = Boolean(input.validity?.badInput);
+}
 
 function showMsg(msg: string, type: 'success' | 'error' = 'success') {
   toastMessage.value = msg;
@@ -191,16 +198,16 @@ function numberConstraintsText(ctrl: OverlayControl): string {
   return parts.join(' · ');
 }
 
-function isNumberOutOfRange(ctrl: OverlayControl): boolean {
+function isNumberOutOfRangeOrGarbage(ctrl: OverlayControl): boolean {
   if (ctrl.type !== 'number') return false;
+  if (invalidNumberInputs.value[ctrl.id]) return true;
   const raw = getLocalValue(ctrl);
   if (raw === '') return false;
   const num = Number(raw);
-  if (!Number.isFinite(num)) return false;
+  if (!Number.isFinite(num)) return true;
   const cfg = ctrl.config ?? {};
   if (cfg.min != null && num < Number(cfg.min)) return true;
   return cfg.max != null && num > Number(cfg.max);
-
 }
 
 function computeTimerDisplay(ctrl: OverlayControl): string {
@@ -415,7 +422,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             'p-6 transition-all duration-500 bg-sidebar',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-            !ctrl.source_managed && isNumberOutOfRange(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
+            !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
           ]">
             <div class="mb-2">
               <div class="flex items-center justify-between mb-4">
@@ -472,7 +479,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   :title="getLocalValue(ctrl) || 'Click to edit'"
                   :id="`cp-input-${ctrl.id}`"
                   :name="`cp-input-${ctrl.id}`"
-                  @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+                  @input="onNumberInput(ctrl, $event)"
                   type="number"
                   :min="ctrl.config?.min"
                   :max="ctrl.config?.max"
