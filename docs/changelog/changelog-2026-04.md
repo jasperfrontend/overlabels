@@ -22,6 +22,22 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Fix: ControlPanel + ControlsManager honor user locale for date formatting
+
+- Countto timer targets in `ControlPanel.vue` and both countto targets
+  and raw datetime values in `ControlsManager.vue` were calling
+  `toLocaleString()` with no arguments, so they defaulted to browser
+  locale. For a user with `users.locale = 'nl-NL'`, their own timer
+  showed `5/7/2026, 12:00:00 AM` instead of `7-5-2026 00:00:00` -
+  same bug, two places.
+- Both components now read `auth.user.locale` from the Inertia shared
+  props (already wired up in `HandleInertiaRequests:56`) via a
+  `userLocale` computed, and pass it into `toLocaleString(locale)`.
+  Fallback to `undefined` (browser default) if the field is empty so
+  nothing breaks for users without a locale set.
+- Matches the locale contract already in place for the overlay
+  renderer and appearance settings.
+
 ## April 15th, 2026 - Feat: Number Control cards show constraints + out-of-range warning
 
 - Number Controls in `ControlPanel.vue` now display a muted-foreground

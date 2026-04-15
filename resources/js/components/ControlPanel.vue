@@ -265,6 +265,14 @@ const twitchId = computed<string | null>(() => {
   const user = (page.props as any)?.auth?.user;
   return user?.twitch_id ? String(user.twitch_id) : null;
 });
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
+function formatCountToTarget(iso: string): string {
+  return new Date(iso).toLocaleString(userLocale.value);
+}
 
 let echoChannel: any = null;
 
@@ -529,7 +537,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
                 </div>
                 <template v-if="ctrl.config?.mode === 'countto'">
-                  <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? new Date(ctrl.config.target_datetime).toLocaleString() : 'no target set' }}</span>
+                  <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? formatCountToTarget(ctrl.config.target_datetime) : 'no target set' }}</span>
                 </template>
                 <div v-else class="flex gap-1.5">
                   <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">

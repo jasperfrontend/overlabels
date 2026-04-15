@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 import {
   PlusIcon,
   PencilIcon,
@@ -112,6 +113,12 @@ async function copySnippet(ctrl: OverlayControl) {
   }
 }
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+
 function configSummary(ctrl: OverlayControl): string[] {
   const cfg = ctrl.config ?? {};
   const parts: string[] = [];
@@ -125,12 +132,12 @@ function configSummary(ctrl: OverlayControl): string[] {
     const mode = cfg.mode === 'countto' ? 'Count to' : cfg.mode === 'countdown' ? 'Countdown' : 'Count up';
     parts.push(mode);
     if (cfg.mode === 'countdown' && cfg.base_seconds) parts.push(`${cfg.base_seconds}s`);
-    if (cfg.mode === 'countto' && cfg.target_datetime) parts.push(new Date(cfg.target_datetime).toLocaleString());
+    if (cfg.mode === 'countto' && cfg.target_datetime) parts.push(new Date(cfg.target_datetime).toLocaleString(userLocale.value));
   } else if (ctrl.type === 'expression') {
     const expr = cfg.expression;
     if (expr) parts.push(expr);
   } else if (ctrl.type === 'datetime' && ctrl.value) {
-    parts.push(new Date(ctrl.value).toLocaleString());
+    parts.push(new Date(ctrl.value).toLocaleString(userLocale.value));
   } else if (ctrl.value) {
     parts.push(ctrl.value);
   }
