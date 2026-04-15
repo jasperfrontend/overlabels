@@ -22,6 +22,25 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Fix: Enter in ControlPanel inputs now submits instead of toggling Collapsible
+
+- Since the ControlPanel rewrite wrapped value inputs in Reka Collapsible
+  groups, pressing Enter inside an input bubbled up to the Collapsible
+  root, which treats Enter/Space as a toggle. Result: Enter collapsed the
+  group instead of saving the value. Streamer muscle-memory broken.
+- Added `@keydown.enter.stop` on the text/number/datetime forms so the
+  Enter keydown stops at the form before reaching Collapsible.
+- Bonus fix: number and datetime inputs were never in a `<form>` - just
+  a `<div>` - so even without the Collapsible regression, Enter could
+  never have submitted anything. Wrapped both in proper
+  `<form @submit.prevent="saveTextValue(ctrl)">` so they behave like the
+  text control.
+- Removed the `@click="saveTextValue(ctrl)"` from the submit buttons now
+  that the form's `@submit.prevent` handler covers the same path -
+  otherwise Enter would have fired `saveTextValue` twice (synthesized
+  submit-button click + form submit event). Click-to-save still works
+  because the button is `type="submit"`.
+
 ## April 15th, 2026 - Refactor: ControlsManager replaces Table with Collapsible groups
 
 - `ControlsManager.vue` was still a wide shadcn `<Table>` with Order / Key /

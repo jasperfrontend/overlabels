@@ -420,7 +420,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
             <!-- Text control -->
             <template v-else-if="ctrl.type === 'text'">
-              <form @submit.prevent="saveTextValue(ctrl)" class="flex group gap-0">
+              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex group gap-0">
                 <input
                   type="text"
                   :id="`cp-input-${ctrl.id}`"
@@ -435,7 +435,6 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   type="submit"
                   class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
                   :disabled="saving[ctrl.id]"
-                  @click="saveTextValue(ctrl)"
                 >
                   <SaveIcon class="h-3.5 w-3.5" />
                 </button>
@@ -444,7 +443,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
             <!-- Number control -->
             <template v-else-if="ctrl.type === 'number'">
-              <div class="flex">
+              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex">
                 <input
                   :value="getLocalValue(ctrl)"
                   :title="getLocalValue(ctrl) || 'Click to edit'"
@@ -457,10 +456,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   :step="ctrl.config?.step ?? 1"
                   class="peer input-border flex-1"
                 />
-                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
                   <SaveIcon class="h-3.5 w-3.5" />
                 </button>
-              </div>
+              </form>
             </template>
 
             <!-- Counter control -->
@@ -550,7 +549,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
             <!-- Datetime control -->
             <template v-else-if="ctrl.type === 'datetime'">
-              <div class="flex gap-0">
+              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex gap-0">
                 <input
                   :value="getLocalValue(ctrl)"
                   @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
@@ -559,10 +558,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   type="datetime-local"
                   class="peer input-border flex-1"
                 />
-                <button class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]" @click="saveTextValue(ctrl)">
+                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
                   <SaveIcon class="h-3.5 w-3.5" />
                 </button>
-              </div>
+              </form>
             </template>
           </div>
             </div>
