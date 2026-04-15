@@ -124,11 +124,23 @@ function validateFunctions(node: jsep.Expression): string | null {
 const liveTwitchTags = ref<Record<string, unknown> | null>(null);
 
 onMounted(async () => {
+  const csrf = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
   try {
-    const res = await axios.get<{ tags?: Record<string, unknown> }>(route('api.expression.tags'));
+    const res = await axios.get<{ tags?: Record<string, unknown> }>(
+      route('api.expression.tags'),
+      {
+        withCredentials: true,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+        },
+      },
+    );
     liveTwitchTags.value = res.data?.tags ?? {};
-  } catch {
-    // Fall back to mocks silently; this is only for preview, not for saving.
+  } catch (err) {
+    // Fall back to mocks; preview still works, just with placeholder values.
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    console.warn(`[ExpressionBuilder] Live tag fetch failed${status ? ` (${status})` : ''}, falling back to mocks`, err);
     liveTwitchTags.value = {};
   }
 });
