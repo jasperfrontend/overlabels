@@ -30,7 +30,7 @@ function tagKey(ctrl: OverlayControl): string {
 }
 
 function isTwitchOffline(ctrl: OverlayControl): boolean {
-  return ctrl.source === 'steve' && ctrl.source_managed && !props.isLive;
+  return ctrl.source === 'twitch' && ctrl.source_managed && !props.isLive;
 }
 
 /** Group controls by category for organized display. */
