@@ -119,7 +119,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <tr><td class="px-4 py-2 font-mono">sin(x) / cos(x)</td><td class="px-4 py-2 text-foreground">Trig, x in <em>radians</em></td></tr>
                 <tr><td class="px-4 py-2 font-mono">fract(x)</td><td class="px-4 py-2 text-foreground">x &minus; floor(x). Always &isin; [0, 1)</td></tr>
                 <tr><td class="px-4 py-2 font-mono">mod(a, b)</td><td class="px-4 py-2 text-foreground">Floor-modulo (GLSL-style, not JS <code>%</code>)</td></tr>
-                <tr><td class="px-4 py-2 font-mono">now()</td><td class="px-4 py-2 text-foreground">Unix timestamp in seconds</td></tr>
+                <tr><td class="px-4 py-2 font-mono">now()</td><td class="px-4 py-2 text-foreground">Unix timestamp in seconds (integer)</td></tr>
+                <tr><td class="px-4 py-2 font-mono">now_ms()</td><td class="px-4 py-2 text-foreground">Unix timestamp in milliseconds - for sub-second animation</td></tr>
               </tbody>
             </table>
           </div>
@@ -508,13 +509,29 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="space-y-4">
             <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
-              <h3 class="mb-2 font-semibold text-amber-400">Expressions are reactive, not scheduled</h3>
-              <p>
-                An expression re-evaluates when any referenced control changes, not on a wall-clock interval.
-                <code>sin(now())</code> <em>alone</em> references nothing reactive, so it evaluates once and
-                sits there. If you want continuous motion driven by time, let CSS animate the visual part and
-                use expressions for the discrete state that changes on events. Or hook a ticker control
-                elsewhere in the overlay to force the cascade.
+              <h3 class="mb-2 font-semibold text-amber-400">Time resolution: <code>now()</code> vs <code>now_ms()</code></h3>
+              <p class="mb-2">
+                The engine runs a shared 250&nbsp;ms ticker that re-evaluates any expression containing
+                <code>now()</code> or <code>now_ms()</code>, so time-based formulas update on their own -
+                no heartbeat control needed. But the <em>source value</em> decides the resolution:
+              </p>
+              <ul class="list-disc space-y-1 pl-6">
+                <li>
+                  <code>now()</code> returns <em>integer</em> seconds. Even though the ticker fires 4&times; a
+                  second, <code>now()</code> returns the same number for four ticks in a row, so anything
+                  derived from it only visibly changes every 1&nbsp;s. Perfect for clocks, uptimes, banner
+                  rotations.
+                </li>
+                <li>
+                  <code>now_ms()</code> returns milliseconds. Use it when you want sub-second motion, e.g.
+                  <code>mod(floor(now_ms() / 250), 3)</code> to cycle 4&times; a second, or
+                  <code>sin(now_ms() / 500)</code> for a smooth ~3&nbsp;Hz wave.
+                </li>
+              </ul>
+              <p class="mt-3 text-sm text-muted-foreground">
+                For continuous visual motion (opacity pulses, CSS transforms) prefer CSS animations - they run
+                at the browser's frame rate. Use expressions for <em>discrete</em> time-driven state that other
+                parts of the overlay react to.
               </p>
             </div>
 

@@ -1,5 +1,21 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Feat: `now_ms()` + 250ms expression tick for sub-second math
+
+- New expression function `now_ms()` returning `Date.now()` (integer
+  milliseconds). Pairs with a tighter 250ms shared ticker in
+  `useExpressionEngine` so sub-second formulas like
+  `mod(floor(now_ms() / 250), 3)` or `sin(now_ms() / 500)` animate smoothly
+  without a CSS keyframe. `now()` stays integer-seconds to preserve the
+  timestamp contract with `_at` companions - existing expressions unchanged.
+- AST walker generalised to a `TIME_FUNCTIONS` set (currently `now`, `now_ms`)
+  so any call to either flags the expression as time-dependent and subscribes
+  it to the shared ticker.
+- Help page (`pages/help/Math.vue`): added `now_ms()` row to the function
+  table and replaced the outdated "expressions are reactive, not scheduled"
+  pitfall with an accurate explainer of integer-seconds vs millisecond
+  resolution and when to reach for each.
+
 ## April 15th, 2026 - Feat: time-based expressions self-tick at 1s
 
 - Expressions that call `now()` now re-evaluate every second on their own.

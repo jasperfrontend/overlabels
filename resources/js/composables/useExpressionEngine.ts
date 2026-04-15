@@ -196,7 +196,7 @@ export const SUPPORTED_FUNCTIONS = new Set([
   'argmax', 'argmin', 'latest', 'oldest',
   'max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
   'sin', 'cos', 'fract', 'mod',
-  'now',
+  'now', 'now_ms',
 ]);
 
 const FUNCTIONS: Record<string, FnImpl> = {
@@ -235,6 +235,8 @@ const FUNCTIONS: Record<string, FnImpl> = {
 
   // Time (Unix epoch seconds, matching _at companion values)
   now: () => Math.floor(Date.now() / 1000),
+  // Sub-second wall clock for animation; pairs with the 250ms expression ticker.
+  now_ms: () => Date.now(),
 };
 
 // ---------------------------------------------------------------------------
@@ -324,18 +326,22 @@ export function evaluate(node: jsep.Expression, ctx: Record<string, unknown>): u
 // AST inspection - detect time-dependent expressions
 // ---------------------------------------------------------------------------
 
+/** Function names whose presence flags an expression as time-dependent. */
+const TIME_FUNCTIONS = new Set(['now', 'now_ms']);
+
 /**
- * Walks the AST looking for a `now()` call. Expressions that use `now()` have
- * no reactive dependency of their own, so without a heartbeat they evaluate
- * once at register time and never again. The engine installs a shared 1s
- * ticker whenever at least one time-dependent expression is registered.
+ * Walks the AST looking for a call to any `TIME_FUNCTIONS` member. Expressions
+ * that use these have no reactive dependency of their own, so without a
+ * heartbeat they evaluate once at register time and never again. The engine
+ * installs a shared ticker whenever at least one time-dependent expression
+ * is registered.
  */
 function containsNowCall(node: jsep.Expression | null | undefined): boolean {
   if (!node) return false;
   switch (node.type) {
     case 'CallExpression': {
       const ce = node as jsep.CallExpression;
-      if (ce.callee.type === 'Identifier' && (ce.callee as jsep.Identifier).name === 'now') {
+      if (ce.callee.type === 'Identifier' && TIME_FUNCTIONS.has((ce.callee as jsep.Identifier).name)) {
         return true;
       }
       return ce.arguments.some(containsNowCall);
@@ -386,7 +392,7 @@ interface ExpressionEntry {
   timeDependent: boolean;
 }
 
-const TICK_INTERVAL_MS = 1000;
+const TICK_INTERVAL_MS = 250;
 
 export function useExpressionEngine(data: Ref<Record<string, any> | null | undefined>) {
   const registry = new Map<string, ExpressionEntry>();
