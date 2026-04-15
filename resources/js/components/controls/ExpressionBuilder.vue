@@ -127,7 +127,7 @@ onMounted(async () => {
   const csrf = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
   try {
     const res = await axios.get<{ tags?: Record<string, unknown> }>(
-      route('api.expression.tags'),
+      route('expression.tags'),
       {
         withCredentials: true,
         headers: {

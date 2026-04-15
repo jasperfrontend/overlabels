@@ -66,7 +66,7 @@ Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])
 // Resolve the user's live Twitch tag values for the expression-builder preview.
 // Piggybacks on TwitchApiService's snapshot cache; typically responds in ms.
 Route::get('/expression/tags', [ExpressionTagController::class, 'index'])
-    ->name('api.expression.tags')
+    ->name('expression.tags')
     ->middleware(['auth:sanctum', 'throttle:60,1']);
 
 // Get job status for template tag operations

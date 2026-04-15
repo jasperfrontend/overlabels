@@ -1,5 +1,18 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Fix: expression preview now shows real `t.*` values
+
+- The expression-builder preview was stuck on mock values (e.g.
+  `t.followers_total + t.subscribers_total` previewed as `84` instead of the
+  real `1525`). Root cause: the route that powers the live tag fetch was
+  named `api.expression.tags`, which matched the blanket `api.*` exclusion in
+  `config/ziggy.php`. Ziggy therefore never exposed it to the frontend, and
+  `route('api.expression.tags')` threw at runtime before any network request
+  was made - silently falling back to the shape-aware mocks.
+- Renamed the route to `expression.tags` (path unchanged at
+  `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
+  and `liveTwitchTags` populates with real Helix-sourced values.
+
 ## April 15th, 2026 - Feat: `now_ms()` + 250ms expression tick for sub-second math
 
 - New expression function `now_ms()` returning `Date.now()` (integer
