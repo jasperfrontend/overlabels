@@ -18,11 +18,12 @@ const SERVICE_LABELS: Record<string, string> = {
   streamelements: 'StreamElements',
   streamlabs: 'Streamlabs',
   gpslogger: 'GPSLogger',
+  twitch: 'Twitch',
 };
 
 /** Build the template tag key: c:source:key for external, c:key for twitch/user. */
 function tagKey(ctrl: OverlayControl): string {
-  if (ctrl.source && ctrl.source !== 'twitch') {
+  if (ctrl.source) {
     return `c:${ctrl.source}:${ctrl.key}`;
   }
   return `c:${ctrl.key}`;
@@ -43,7 +44,7 @@ const groupedControls = computed<ControlGroup[]>(() => {
   const userControls: Record<string, OverlayControl[]> = {};
 
   for (const ctrl of props.controls) {
-    if (ctrl.source && ctrl.source !== 'twitch' && SERVICE_LABELS[ctrl.source]) {
+    if (ctrl.source && SERVICE_LABELS[ctrl.source]) {
       if (!serviceGroups[ctrl.source]) serviceGroups[ctrl.source] = [];
       serviceGroups[ctrl.source].push(ctrl);
     } else {
