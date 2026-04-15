@@ -22,6 +22,25 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Feat: Number Control cards show constraints + out-of-range warning
+
+- Number Controls in `ControlPanel.vue` now display a muted-foreground
+  line under the input listing whatever constraints are configured -
+  `Min`, `Max`, `Step` (hidden when it's the default 1), `Reset`,
+  joined with middle-dots. Previously you had to remember the settings
+  or open the edit modal; entering `698` into a `min=0 max=9` control
+  looked like a save, but the server silently clamped back to `9` and
+  the overlay didn't update the way the streamer expected.
+- When the live-typed value falls outside `min`/`max`, the card picks
+  up the same red gradient (`bg-linear-to-br from-red-500/15 to-background`)
+  that a stopped timer uses, fading in/out with the card's existing
+  500ms transition. Purely visual - the server still authoritatively
+  sanitizes on save - but it makes the constraint breach immediately
+  obvious before the user hits Save.
+- New helpers `numberConstraintsText()` and `isNumberOutOfRange()` in
+  the component. The range check uses `getLocalValue()` so it reacts
+  as you type, not only after save.
+
 ## April 15th, 2026 - Fix: Enter in ControlPanel inputs now submits instead of toggling Collapsible
 
 - Since the ControlPanel rewrite wrapped value inputs in Reka Collapsible

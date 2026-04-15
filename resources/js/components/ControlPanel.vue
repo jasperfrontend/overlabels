@@ -181,6 +181,28 @@ function formatSeconds(secs: number): string {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
+function numberConstraintsText(ctrl: OverlayControl): string {
+  const cfg = ctrl.config ?? {};
+  const parts: string[] = [];
+  if (cfg.min != null) parts.push(`Min: ${cfg.min}`);
+  if (cfg.max != null) parts.push(`Max: ${cfg.max}`);
+  if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
+  if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
+  return parts.join(' · ');
+}
+
+function isNumberOutOfRange(ctrl: OverlayControl): boolean {
+  if (ctrl.type !== 'number') return false;
+  const raw = getLocalValue(ctrl);
+  if (raw === '') return false;
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return false;
+  const cfg = ctrl.config ?? {};
+  if (cfg.min != null && num < Number(cfg.min)) return true;
+  return cfg.max != null && num > Number(cfg.max);
+
+}
+
 function computeTimerDisplay(ctrl: OverlayControl): string {
   const cfg = ctrl.config ?? {};
   const mode = cfg.mode ?? 'countup';
@@ -393,6 +415,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
             'p-6 transition-all duration-500 bg-sidebar',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
             !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
+            !ctrl.source_managed && isNumberOutOfRange(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
           ]">
             <div class="mb-2">
               <div class="flex items-center justify-between mb-4">
@@ -460,6 +483,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
                   <SaveIcon class="h-3.5 w-3.5" />
                 </button>
               </form>
+              <p v-if="numberConstraintsText(ctrl)" class="mt-2 text-xs text-muted-foreground">
+                {{ numberConstraintsText(ctrl) }}
+              </p>
             </template>
 
             <!-- Counter control -->
