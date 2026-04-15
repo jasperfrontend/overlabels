@@ -1,16 +1,5 @@
 <script setup lang="ts">
-import LoginSocial from '@/components/LoginSocial.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { Badge } from '@/components/ui/badge';
-import {
-  AlertTriangle,
-  ArrowRight,
-  Zap,
-  GitFork,
-  Layers,
-  Code2,
-  Shield,
-} from 'lucide-vue-next';
+import { Head } from '@inertiajs/vue3';
 import WelcomeNavbar from '@/components/welcome/WelcomeNavbar.vue';
 import SectionHero from '@/components/welcome/SectionHero.vue';
 import SectionSyntax from '@/components/welcome/SectionSyntax.vue';
