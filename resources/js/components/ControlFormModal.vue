@@ -9,7 +9,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Combobox,
   ComboboxAnchor,
@@ -569,7 +568,15 @@ async function save() {
             <div v-if="form.type === 'boolean'" class="space-y-2">
               <Label>{{ isEditing ? 'Value' : 'Initial Value' }}</Label>
               <div class="flex items-center gap-3 pt-1">
-                <Switch v-model:checked="booleanValue" />
+                <label class="relative inline-flex cursor-pointer items-center">
+                  <input type="checkbox" v-model="booleanValue" class="peer sr-only" />
+                  <span
+                    class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none
+                    after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white
+                    after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600
+                    dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
+                  ></span>
+                </label>
                 <span class="text-sm text-muted-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
               </div>
               <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>

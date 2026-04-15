@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
+import { usePage } from '@inertiajs/vue3';
 import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
@@ -225,6 +226,49 @@ function stopTimerTick(id: number) {
 props.controls.forEach((ctrl) => {
   if (ctrl.type === 'timer') {
     startTimerTick(ctrl);
+  }
+});
+
+// Listen for external control updates (bot, Ko-fi, StreamElements, etc.) so the
+// panel reflects changes without a page reload.
+const page = usePage();
+const twitchId = computed<string | null>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.twitch_id ? String(user.twitch_id) : null;
+});
+
+let echoChannel: any = null;
+
+function broadcastKeyFor(ctrl: OverlayControl): string {
+  return ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
+}
+
+function handleControlUpdated(event: any) {
+  // User-scoped broadcasts arrive with empty overlay_slug - apply to all. Template-scoped must match this template.
+  if (event.overlay_slug && event.overlay_slug !== props.template.slug) return;
+
+  const match = props.controls.find((c) => broadcastKeyFor(c) === event.key);
+  if (!match) return;
+
+  if (event.type === 'timer' && event.timer_state) {
+    match.config = { ...(match.config ?? {}), ...event.timer_state };
+    startTimerTick(match);
+  } else {
+    match.value = event.value == null ? match.value : String(event.value);
+  }
+}
+
+onMounted(() => {
+  const echo = (window as any).Echo;
+  if (!echo || !twitchId.value) return;
+  echoChannel = echo.channel(`alerts.${twitchId.value}`);
+  echoChannel.listen('.control.updated', handleControlUpdated);
+});
+
+onBeforeUnmount(() => {
+  if (echoChannel) {
+    echoChannel.stopListening('.control.updated', handleControlUpdated);
+    echoChannel = null;
   }
 });
 

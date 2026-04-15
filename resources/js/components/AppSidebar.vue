@@ -39,7 +39,6 @@ const isAdmin = computed(() => page.props.isAdmin);
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
-  // { title: 'Dashboard', href: route('dashboard.index'), icon: House },
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
   { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
   { title: 'My kits', href: route('kits.index'), icon: LayoutGrid }

@@ -22,6 +22,27 @@
   `/api/expression/tags`). Ziggy picks it up, the fetch fires on modal open,
   and `liveTwitchTags` populates with real Helix-sourced values.
 
+## April 15th, 2026 - Fix: boolean Control switch + realtime ControlPanel updates
+
+- `ControlFormModal.vue`: the Reka `<Switch>` used when creating a boolean
+  Control did not remember its state and toggling it did nothing. Replaced
+  with the same native-checkbox-plus-Tailwind "fake switch" pattern already
+  used in `pages/events/index.vue`, so `booleanValue` now round-trips
+  correctly between create, edit, and save. Dropped the unused Switch import.
+- `ControlPanel.vue`: the panel used to only update when the user clicked a
+  button in it. External sources (the Twitch bot's `!toggle`/`!set`
+  commands, Ko-fi, StreamElements, Streamlabs) would change the stored
+  value but the UI stayed stale until a page reload. The panel now
+  subscribes to the same `alerts.{twitch_id}` Echo channel that
+  `OverlayRenderer.vue` uses, listens for `.control.updated`, and mutates
+  the matching local control by comparing `event.key` against each
+  control's `source ? "source:key" : "key"` broadcast key. Timer events
+  merge `timer_state` into `ctrl.config` and restart the tick; everything
+  else sets `ctrl.value` directly. Empty `overlay_slug` means user-scoped
+  and applies everywhere; a non-empty slug must match
+  `props.template.slug`. Listener is torn down on unmount via
+  `stopListening`.
+
 ## April 15th, 2026 - Feat: `now_ms()` + 250ms expression tick for sub-second math
 
 - New expression function `now_ms()` returning `Date.now()` (integer
