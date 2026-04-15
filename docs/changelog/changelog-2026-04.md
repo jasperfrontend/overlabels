@@ -1,5 +1,37 @@
 # CHANGELOG APRIL 2026
 
+## April 15th, 2026 - Feat: time-based expressions self-tick at 1s
+
+- Expressions that call `now()` now re-evaluate every second on their own.
+  Previously a pure-time formula like `mod(floor(now() / 8), 3)` evaluated
+  once at overlay load and then froze, because `watchEffect` had no reactive
+  dependency to trigger on. Streamers worked around this by adding a throwaway
+  random/counter control purely as a heartbeat. No more.
+- `useExpressionEngine` now walks the parsed AST at register time looking for
+  a `now()` call (recursing through binary, unary, conditional, member, and
+  nested call nodes). Expressions flagged time-dependent subscribe to a
+  shared `timeTick` ref, and a single `setInterval` ticks it at 1s while at
+  least one such expression is registered. Ref-counted: when the last
+  time-dependent expression unregisters, the interval clears.
+- Non-time expressions are unaffected - zero overhead, no interval, no extra
+  reactive read. Mixed expressions (e.g. `now() - c.stream_started_at`) get
+  both paths: ticker-driven re-eval every second, control-broadcast re-eval
+  the moment a referenced control changes.
+- Resolution choice: 1s is enough for clocks, uptimes, banner rotations, and
+  anything else streamers reasonably want to drive from `now()`. Sub-second
+  animation belongs in CSS/JS, not the expression engine.
+
+## April 15th, 2026 - Fix: allow expressions that don't reference anything
+
+- The expression save path in `OverlayControlController` required at least one
+  `c.*` or `t.*` reference, rejecting pure-math formulas like
+  `mod(floor(now() / 8), 3)` that are legitimately useful as scratchpad values
+  for other expressions to consume. Removed the check from both `store` (line
+  113) and `update` (line 184) along with the now-unused
+  `extractTwitchTagReferences` calls. Cycle detection and scope validation
+  still run; the sandboxed AST evaluator remains the only thing that gets to
+  touch the string.
+
 ## April 15th, 2026 - Feat: live Twitch values in the expression preview
 
 - Builds on the mock-data preview from earlier today. The save-dialog now

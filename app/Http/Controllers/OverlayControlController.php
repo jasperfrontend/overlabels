@@ -108,11 +108,6 @@ class OverlayControlController extends Controller
 
             $expression = $request->input('config.expression');
             $dependencies = OverlayControl::extractExpressionDependencies($expression);
-            $twitchRefs = OverlayControl::extractTwitchTagReferences($expression);
-
-            if (empty($dependencies) && empty($twitchRefs)) {
-                abort(422, 'Expression must reference at least one control (c.my_control) or Twitch tag (t.followers_total).');
-            }
 
             // Validate all referenced controls exist in scope
             $available = OverlayControl::getAvailableControls(auth()->user(), $template->id);
@@ -179,11 +174,6 @@ class OverlayControlController extends Controller
 
             $expression = $request->input('config.expression');
             $dependencies = OverlayControl::extractExpressionDependencies($expression);
-            $twitchRefs = OverlayControl::extractTwitchTagReferences($expression);
-
-            if (empty($dependencies) && empty($twitchRefs)) {
-                abort(422, 'Expression must reference at least one control (c.my_control) or Twitch tag (t.followers_total).');
-            }
 
             $available = OverlayControl::getAvailableControls(auth()->user(), $template->id, $control->id);
 
@@ -253,6 +243,7 @@ class OverlayControlController extends Controller
 
     /**
      * Mutate the value of a control at stream time.
+     * @throws RandomException
      */
     public function setValue(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
     {

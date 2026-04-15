@@ -12,7 +12,7 @@
  */
 
 import jsep from 'jsep';
-import { type Ref, watchEffect, type WatchStopHandle } from 'vue';
+import { ref, type Ref, watchEffect, type WatchStopHandle } from 'vue';
 
 // Blocked property names to prevent prototype pollution
 const BLOCKED_PROPS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -321,6 +321,45 @@ export function evaluate(node: jsep.Expression, ctx: Record<string, unknown>): u
 }
 
 // ---------------------------------------------------------------------------
+// AST inspection - detect time-dependent expressions
+// ---------------------------------------------------------------------------
+
+/**
+ * Walks the AST looking for a `now()` call. Expressions that use `now()` have
+ * no reactive dependency of their own, so without a heartbeat they evaluate
+ * once at register time and never again. The engine installs a shared 1s
+ * ticker whenever at least one time-dependent expression is registered.
+ */
+function containsNowCall(node: jsep.Expression | null | undefined): boolean {
+  if (!node) return false;
+  switch (node.type) {
+    case 'CallExpression': {
+      const ce = node as jsep.CallExpression;
+      if (ce.callee.type === 'Identifier' && (ce.callee as jsep.Identifier).name === 'now') {
+        return true;
+      }
+      return ce.arguments.some(containsNowCall);
+    }
+    case 'BinaryExpression': {
+      const be = node as jsep.BinaryExpression;
+      return containsNowCall(be.left) || containsNowCall(be.right);
+    }
+    case 'UnaryExpression':
+      return containsNowCall((node as jsep.UnaryExpression).argument);
+    case 'ConditionalExpression': {
+      const ce = node as jsep.ConditionalExpression;
+      return containsNowCall(ce.test) || containsNowCall(ce.consequent) || containsNowCall(ce.alternate);
+    }
+    case 'MemberExpression': {
+      const me = node as jsep.MemberExpression;
+      return containsNowCall(me.object) || (me.computed ? containsNowCall(me.property) : false);
+    }
+    default:
+      return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Stringify result for storage in data.value
 // ---------------------------------------------------------------------------
 
@@ -344,11 +383,31 @@ interface ExpressionEntry {
   expression: string;
   ast: jsep.Expression | null;
   stop: WatchStopHandle | null;
+  timeDependent: boolean;
 }
 
+const TICK_INTERVAL_MS = 1000;
 
 export function useExpressionEngine(data: Ref<Record<string, any> | null | undefined>) {
   const registry = new Map<string, ExpressionEntry>();
+
+  // Shared heartbeat for expressions that call `now()`. Read inside their
+  // watchEffect to establish a reactive dep; incremented by a single interval
+  // while at least one time-dependent expression is registered.
+  const timeTick = ref(0);
+  let tickInterval: ReturnType<typeof setInterval> | null = null;
+  let timeDependentCount = 0;
+
+  function ensureTickerRunning(): void {
+    if (tickInterval !== null) return;
+    tickInterval = setInterval(() => { timeTick.value++; }, TICK_INTERVAL_MS);
+  }
+
+  function stopTickerIfIdle(): void {
+    if (timeDependentCount > 0 || tickInterval === null) return;
+    clearInterval(tickInterval);
+    tickInterval = null;
+  }
 
   function registerExpression(key: string, expression: string): void {
     // Clean up any existing registration for this key
@@ -364,9 +423,19 @@ export function useExpressionEngine(data: Ref<Record<string, any> | null | undef
       console.warn(`[ExpressionEngine] Parse error for "${key}":`, e);
     }
 
+    const timeDependent = containsNowCall(ast);
+    if (timeDependent) {
+      timeDependentCount++;
+      ensureTickerRunning();
+    }
+
     // Set up reactive evaluation via watchEffect
     const stop = watchEffect(() => {
       if (!data.value || !ast) return;
+
+      // For time-dependent expressions, subscribe to the shared tick so the
+      // effect re-runs every second even without a data.value change.
+      if (timeDependent) void timeTick.value;
 
       // Reading data.value properties here registers Vue reactive dependencies.
       // When any referenced control changes, this effect re-runs automatically.
@@ -385,13 +454,16 @@ export function useExpressionEngine(data: Ref<Record<string, any> | null | undef
       }
     });
 
-    registry.set(key, { key, dataKey, expression, ast, stop });
+    registry.set(key, { key, dataKey, expression, ast, stop, timeDependent });
   }
 
   function unregisterExpression(key: string): void {
     const entry = registry.get(key);
-    if (entry?.stop) {
-      entry.stop();
+    if (!entry) return;
+    if (entry.stop) entry.stop();
+    if (entry.timeDependent) {
+      timeDependentCount--;
+      stopTickerIfIdle();
     }
     registry.delete(key);
   }
@@ -401,6 +473,11 @@ export function useExpressionEngine(data: Ref<Record<string, any> | null | undef
       if (entry.stop) entry.stop();
     }
     registry.clear();
+    timeDependentCount = 0;
+    if (tickInterval !== null) {
+      clearInterval(tickInterval);
+      tickInterval = null;
+    }
   }
 
   return {
