@@ -1,7 +1,9 @@
 import { createApp } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+// @ts-ignore
 import LiveMap from './LiveMap.vue';
+// @ts-ignore
 import SessionMap from './SessionMap.vue';
 import 'leaflet/dist/leaflet.css';
 
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       streamerName: config.streamerName,
       delay: config.delay,
       speedUnit: config.speedUnit,
+      isLive: config.isLive,
     }).mount(mount);
   } else if (config.type === 'session') {
     createApp(SessionMap, {

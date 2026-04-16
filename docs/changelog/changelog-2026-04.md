@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 16th, 2026 - Live map: soft offline state + safe-zone-aware liveness
+
+- Liveness check now also requires at least one `location_update` inside the active session. Previously the map would render centered on the last known position the moment a `session_start` event arrived, even if the user hadn't left their safe zone yet (the app suppresses location broadcasts inside the safe zone but still creates the session). This would leak the safe-zone area (e.g. the streamer's home).
+- Replaced the hard 404 with a soft in-page "Nobody broadcasting right now" panel. Dark theme, purple accent, styled like the 404 page but with a broadcast-off icon.
+- The page now transitions automatically: offline -> live when the first `location_update` arrives over WebSocket (via `overlabels-mobile:gps_lat` / `gps_lng` updates), and live -> offline when `session_end` fires (via `overlabels-mobile:gps_tracking = '0'`). Trail and marker are cleared on session end so the next session starts fresh.
+- The WebSocket connection is now established regardless of the delay setting so session-state transitions are detected in realtime even for delayed maps (delay still applies to displayed coordinates via polling).
+- `useMapWebSocket` now exposes a `trackingActive` ref fed by `gps_tracking` control updates.
+
 ## April 16th, 2026 - Live map requires active GPS session
 
 - `/map/{twitch_id}` now returns 404 unless there is an unfinished GPS session (a `session_start` event in `external_events` without a matching `session_end` for the same `session_id`).

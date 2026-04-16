@@ -9,6 +9,7 @@ const props = defineProps<{
   streamerName: string;
   delay: number;
   speedUnit: string;
+  isLive: boolean;
 }>();
 
 const zoom = ref(15);
@@ -16,12 +17,54 @@ const center = ref<[number, number]>([0, 0]);
 const trail = ref<[number, number][]>([]);
 const hasPosition = ref(false);
 const loading = ref(true);
+const isLive = ref(props.isLive);
 const mapRef = ref<InstanceType<typeof LMap> | null>(null);
 
 const MAX_TRAIL_POINTS = 200;
 
-// Fetch initial position from the API
+// Always subscribe to WebSocket. In delay mode we ignore the position values
+// for display (polling handles that), but we still use WebSocket signals to
+// flip live/offline state in realtime.
+const { position: wsPosition, connected, trackingActive } = useMapWebSocket(props.twitchId);
+
+// The position ref the map actually renders from.
+const position = ref<{ lat: number; lng: number; speed: number; bearing: number } | null>(null);
+
+// WebSocket lat/lng arrivals have two roles:
+// 1) Trigger: any lat/lng means a location_update fired, so the session left
+//    the safe zone (or was never in one) -> we're live.
+// 2) Display: only when delay === 0. When delay > 0 the coords are shown via
+//    the polling path to honor the configured delay.
+watch(wsPosition, (pos) => {
+  if (!pos) return;
+  isLive.value = true;
+  if (props.delay === 0) {
+    position.value = pos;
+  }
+});
+
+// session_end (gps_tracking = '0') flips back to offline and clears everything
+// so the next session starts fresh.
+watch(trackingActive, (active) => {
+  if (active === false) {
+    goOffline();
+  }
+});
+
+function goOffline() {
+  isLive.value = false;
+  position.value = null;
+  trail.value = [];
+  hasPosition.value = false;
+}
+
+// Initial position fetch - only when the server says we're live.
 onMounted(async () => {
+  if (!isLive.value) {
+    loading.value = false;
+    return;
+  }
+
   try {
     const res = await fetch(`/api/map/${props.twitchId}/position`);
     if (res.ok) {
@@ -33,28 +76,29 @@ onMounted(async () => {
       }
     }
   } catch {
-    // Silently fail - will pick up from WebSocket
+    // Silently fail - WebSocket will catch us up.
   } finally {
     loading.value = false;
   }
 });
 
-// WebSocket for real-time updates (only when delay is 0)
-const { position, connected } = props.delay === 0
-  ? useMapWebSocket(props.twitchId)
-  : { position: ref(null), connected: ref(false) };
-
-// Polling for delayed position
+// Polling for delayed position. Runs always; the callback early-exits when
+// not live so we don't render stale positions from before session_start.
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 if (props.delay > 0) {
   pollInterval = setInterval(async () => {
+    if (!isLive.value) return;
     try {
       const res = await fetch(`/api/map/${props.twitchId}/position`);
       if (res.ok) {
         const data = await res.json();
         if (data.position) {
-          const pos = { lat: data.position.lat, lng: data.position.lng, speed: data.position.speed, bearing: data.position.bearing };
-          position.value = pos;
+          position.value = {
+            lat: data.position.lat,
+            lng: data.position.lng,
+            speed: data.position.speed,
+            bearing: data.position.bearing,
+          };
         }
       }
     } catch {
@@ -102,12 +146,31 @@ const markerIcon = {
     <div class="map-header">
       <span class="map-logo">Overlabels</span>
       <span class="map-title">{{ streamerName }}'s live location</span>
-      <span v-if="delay > 0" class="map-delay">{{ delay }}s delay</span>
-      <span v-if="connected" class="map-status live">LIVE</span>
-      <span v-else-if="hasPosition" class="map-status">Connected</span>
+      <span v-if="delay > 0 && isLive" class="map-delay">{{ delay }}s delay</span>
+      <span v-if="isLive && connected" class="map-status live">LIVE</span>
+      <span v-else-if="isLive && hasPosition" class="map-status">Connected</span>
+      <span v-else class="map-status offline">OFFLINE</span>
     </div>
 
-    <div v-if="loading" class="map-loading">Loading map...</div>
+    <!-- Offline panel: shown when no active session with location data.
+         Flips to the live map automatically when the first location_update
+         arrives over WebSocket. -->
+    <div v-if="!isLive" class="map-offline">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+        <line x1="12" y1="20" x2="12.01" y2="20" />
+        <line x1="2" y1="2" x2="22" y2="22" />
+      </svg>
+      <h1>Nobody broadcasting right now</h1>
+      <p>This map will come to life as soon as {{ streamerName }} starts streaming GPS from outside their safe zone.</p>
+      <p class="map-offline-hint">
+        <small>Waiting for a signal. The page will update automatically when it arrives.</small>
+      </p>
+    </div>
+
+    <div v-else-if="loading" class="map-loading">Loading map...</div>
 
     <l-map
       v-else
@@ -195,6 +258,9 @@ const markerIcon = {
   color: #22c55e;
   animation: pulse 2s ease-in-out infinite;
 }
+.map-status.offline {
+  color: #737373;
+}
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -210,5 +276,43 @@ const markerIcon = {
 .map-leaflet {
   flex: 1;
   z-index: 0;
+}
+.map-offline {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  background: #2f2e42;
+  color: #eae9f6;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.map-offline svg {
+  width: 64px;
+  height: 64px;
+  display: block;
+  margin: 0 auto 1.25rem;
+  color: #b599f1;
+  stroke: #b599f1;
+  opacity: 0.85;
+}
+.map-offline h1 {
+  font-size: 28px;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+.map-offline p {
+  font-size: 16px;
+  margin: 0 0 8px;
+  max-width: 560px;
+  line-height: 1.5;
+}
+.map-offline-hint {
+  margin-top: 16px !important;
+  color: #a5a3c4;
+}
+@media (max-width: 640px) {
+  .map-offline h1 { font-size: 22px; }
+  .map-offline p { font-size: 14px; }
 }
 </style>

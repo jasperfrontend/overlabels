@@ -10,6 +10,9 @@ interface PositionUpdate {
 export function useMapWebSocket(twitchId: string) {
   const position = ref<PositionUpdate | null>(null);
   const connected = ref(false);
+  // null = unknown, true = session active, false = session ended.
+  // Fed by `overlabels-mobile:gps_tracking` control updates ('1'/'0').
+  const trackingActive = ref<boolean | null>(null);
 
   const echo = (window as any).Echo;
   let channel: any = null;
@@ -69,6 +72,9 @@ export function useMapWebSocket(twitchId: string) {
         case 'gps_bearing':
           pendingBearing = parseFloat(event.value);
           break;
+        case 'gps_tracking':
+          trackingActive.value = event.value === '1' || event.value === 1 || event.value === true;
+          break;
       }
     });
   }
@@ -80,5 +86,5 @@ export function useMapWebSocket(twitchId: string) {
     }
   });
 
-  return { position, connected };
+  return { position, connected, trackingActive };
 }

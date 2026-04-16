@@ -17,6 +17,7 @@
             streamerName: @json($streamerName),
             delay: @json($delay),
             speedUnit: @json($speedUnit),
+            isLive: @json($isLive),
         };
     </script>
 </body>
