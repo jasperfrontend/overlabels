@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 16th, 2026 - Live map requires active GPS session
+
+- `/map/{twitch_id}` now returns 404 unless there is an unfinished GPS session (a `session_start` event in `external_events` without a matching `session_end` for the same `session_id`).
+- Closes a potential location-doxxing vector: previously, after a stream ended the live map would remain stuck on the last broadcast position indefinitely. Now the map is only accessible while the user is actively broadcasting GPS.
+- `map_sharing_enabled` is still respected; the session check is additive.
+- Saved session maps (`/map/{twitch_id}/{session_id}`) are unaffected.
+
 ## April 16th, 2026 - Overlabels GPS integration (replaces GPSLogger)
 
 - New `overlabels-mobile` external service driver, cloned from the GPSLogger driver with its own controls namespace (`overlabels-mobile:gps_speed`, `overlabels-mobile:gps_lat`, `overlabels-mobile:gps_lng`, `overlabels-mobile:gps_distance`).
