@@ -32,7 +32,7 @@ class ExternalWebhookController extends Controller
      */
     public function show(string $service, string $webhookToken): View
     {
-        if ($service !== 'gpslogger') {
+        if (! in_array($service, ['gpslogger', 'overlabels-mobile'])) {
             abort(404);
         }
 
@@ -42,13 +42,25 @@ class ExternalWebhookController extends Controller
 
         $integration = ExternalIntegration::where('webhook_token', $webhookToken)
             ->where('service', $service)
-            ->exists();
+            ->first();
 
         if (! $integration) {
             abort(404);
         }
 
         $webhookUrl = url("/api/webhooks/{$service}/{$webhookToken}");
+
+        if ($service === 'overlabels-mobile') {
+            $credentials = $integration->getCredentialsDecrypted();
+            $token = $credentials['token'] ?? '';
+            $deepLink = 'overlabels://gps-setup?'
+                .http_build_query(['endpoint' => $webhookUrl, 'token' => $token]);
+
+            return view('webhook-landing-mobile', [
+                'webhookUrl' => $webhookUrl,
+                'deepLink' => $deepLink,
+            ]);
+        }
 
         return view('webhook-landing', ['webhookUrl' => $webhookUrl]);
     }

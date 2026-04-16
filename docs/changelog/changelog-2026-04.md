@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 16th, 2026 - Overlabels GPS integration (replaces GPSLogger)
+
+- New `overlabels-mobile` external service driver, cloned from the GPSLogger driver with its own controls namespace (`overlabels-mobile:gps_speed`, `overlabels-mobile:gps_lat`, `overlabels-mobile:gps_lng`, `overlabels-mobile:gps_distance`).
+- One-click connect with auto-generated authentication token - no manual token entry needed.
+- QR code on the settings page encodes an `overlabels://gps-setup?endpoint=...&token=...` deep link so the Overlabels GPS Android app configures itself in a single scan.
+- GET on the webhook URL (`/api/webhooks/overlabels-mobile/{token}`) shows a mobile-friendly landing page with an "Open in Overlabels GPS app" deep link button and manual setup fallback.
+- Regenerate Token action lets users rotate the shared secret and re-scan the QR.
+- Existing GPSLogger integration is untouched - both can coexist during migration.
+- 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
+
 ## April 14th, 2026 - Gave Twitch Controls their own namespace c:twitch:controls
 
 - Twitch Controls are now usable in the frontend under the `c:twitch:x` namespace.

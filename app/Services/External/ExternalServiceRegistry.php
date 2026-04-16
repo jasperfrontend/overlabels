@@ -5,6 +5,7 @@ namespace App\Services\External;
 use App\Contracts\ExternalServiceDriver;
 use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
+use App\Services\External\Drivers\OverlabelsMobileServiceDriver;
 use App\Services\External\Drivers\StreamElementsServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
 use InvalidArgumentException;
@@ -17,6 +18,7 @@ class ExternalServiceRegistry
     private static array $drivers = [
         'kofi' => KofiServiceDriver::class,
         'gpslogger' => GpsLoggerServiceDriver::class,
+        'overlabels-mobile' => OverlabelsMobileServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
         'streamelements' => StreamElementsServiceDriver::class,
     ];
