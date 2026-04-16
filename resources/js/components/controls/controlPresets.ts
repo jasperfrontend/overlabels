@@ -64,6 +64,7 @@ export const OVERLABELS_MOBILE_PRESETS: ServicePreset[] = [
   { key: 'gps_session_avg_speed', label: 'GPS Session Avg Speed (m/s)', type: 'number' },
   { key: 'gps_session_duration', label: 'GPS Session Duration (seconds)', type: 'number' },
   { key: 'gps_bearing', label: 'GPS Bearing (degrees)', type: 'number' },
+  { key: 'gps_accuracy', label: 'GPS Accuracy (meters)', type: 'number' },
   { key: 'gps_battery', label: 'Phone Battery (%)', type: 'number' },
   { key: 'gps_charging', label: 'Phone Charging', type: 'boolean' },
   { key: 'gps_tracking', label: 'GPS Tracking Active', type: 'boolean' },

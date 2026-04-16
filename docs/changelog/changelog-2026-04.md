@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - Expose GPS accuracy as a control
+
+- New `gps_accuracy` control on the overlabels-mobile integration. Value is the raw accuracy float in meters, the same field the app was already sending on every location ping (extracted as `event.accuracy` for alert templates but never provisioned as a control).
+- Enables conditional tags like `[[[if:c:overlabels-mobile:gps_accuracy < 60]]]reliable fix[[[endif]]]` so overlays can gate content on GPS quality.
+- Added to `getAutoProvisionedControls()`, `getControlUpdates()`, and `OVERLABELS_MOBILE_PRESETS`. Backfill migration (`2026_04_17_110000_backfill_overlabels_mobile_accuracy_control`) provisions the control for every existing integration.
+
 ## April 17th, 2026 - Category-aware preset search
 
 - The "Add Control" preset combobox (`ControlFormModal.vue`) now filters by category as well as item label. Typing "overla" finds every Overlabels Mobile preset, "elem" finds StreamElements, "labs" finds StreamLabs, "kofi" or "ko-fi" both match Ko-fi, etc.

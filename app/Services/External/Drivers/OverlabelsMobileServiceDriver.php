@@ -122,6 +122,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             ['key' => 'gps_lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
             ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km, cumulative)', 'value' => '0'],
             ['key' => 'gps_bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
+            ['key' => 'gps_accuracy', 'type' => 'number', 'label' => 'GPS Accuracy (meters)', 'value' => '0'],
             ['key' => 'gps_battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
             ['key' => 'gps_charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
             ['key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'GPS Tracking Active', 'value' => '0'],
@@ -152,6 +153,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;
         $speedMs = $raw['speed'] ?? $raw['spd'] ?? null;
         $bearing = $raw['bearing'] ?? null;
+        $accuracy = $raw['accuracy'] ?? $raw['acc'] ?? null;
         $battery = $raw['battery'] ?? null;
         $charging = $raw['charging'] ?? null;
 
@@ -172,6 +174,10 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         if ($bearing !== null) {
             $updates['gps_bearing'] = (string) round((float) $bearing, 1);
+        }
+
+        if ($accuracy !== null) {
+            $updates['gps_accuracy'] = (string) round((float) $accuracy, 1);
         }
 
         if ($battery !== null) {
