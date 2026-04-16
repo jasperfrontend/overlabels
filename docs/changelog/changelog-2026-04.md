@@ -3,8 +3,8 @@
 ## April 17th, 2026 - Category-aware preset search
 
 - The "Add Control" preset combobox (`ControlFormModal.vue`) now filters by category as well as item label. Typing "overla" finds every Overlabels Mobile preset, "elem" finds StreamElements, "labs" finds StreamLabs, "kofi" or "ko-fi" both match Ko-fi, etc.
-- Implementation: each `<ComboboxItem>` gets a `:text-value` composed of the preset label plus a bag of service search tokens (display name + common alternate spellings). Reka's Combobox filters against `text-value` when set, so the tokens are invisible to the user but match substring searches.
-- New `SERVICE_SEARCH_TOKENS` map and `presetSearchText()` helper live in `resources/js/utils/services.ts` alongside `SERVICE_LABELS`. Add a new service: one entry for label, one for tokens.
+- Implementation: Reka's default combobox filter is disabled (`ignore-filter`); a fuzzy subsequence matcher runs against a haystack of `preset.label + SERVICE_LABELS[source] + source` for each preset. The fuzzy matcher is the same style as fzf / VS Code quick-open - "kofi" matches "Ko-fi" because the characters appear in order even across the hyphen.
+- `fuzzyMatch()` and `presetHaystack()` live in `resources/js/utils/services.ts`. No curated alias list - everything derives from `SERVICE_LABELS` + the source key, so adding a new service is still a single edit.
 
 ## April 17th, 2026 - DRY up SERVICE_LABELS across frontend
 

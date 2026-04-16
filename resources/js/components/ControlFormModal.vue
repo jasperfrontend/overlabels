@@ -30,8 +30,9 @@ import {
   STREAMELEMENTS_PRESETS,
   TWITCH_PRESETS,
   getPresetsForSource,
+  type ServicePreset,
 } from '@/components/controls/controlPresets';
-import { presetSearchText } from '@/utils/services';
+import { fuzzyMatch, presetHaystack } from '@/utils/services';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
 const props = defineProps<{
@@ -103,12 +104,34 @@ function isPresetAlreadyAdded(source: string, key: string): boolean {
   );
 }
 
-const availableTwitchPresets = computed(() => TWITCH_PRESETS.filter((p) => !isPresetAlreadyAdded('twitch', p.key)));
-const availableKofiPresets = computed(() => KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key)));
-const availableGpsPresets = computed(() => GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key)));
-const availableOverlabelsMobilePresets = computed(() => OVERLABELS_MOBILE_PRESETS.filter((p) => !isPresetAlreadyAdded('overlabels-mobile', p.key)));
-const availableStreamLabsPresets = computed(() => STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key)));
-const availableStreamElementsPresets = computed(() => STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key)));
+// Current text in the ComboboxInput. Reka's default filter is disabled via
+// `ignore-filter` on the Combobox; we do fuzzy subsequence matching against
+// `label + service display name + source key` so typing "overla" finds every
+// Overlabels Mobile preset, "kofi" matches "Ko-fi", etc.
+const presetSearch = ref('');
+
+function matchesPresetSearch(source: string, preset: ServicePreset): boolean {
+  return fuzzyMatch(presetSearch.value.trim(), presetHaystack(source, preset.label));
+}
+
+const availableTwitchPresets = computed(() =>
+  TWITCH_PRESETS.filter((p) => !isPresetAlreadyAdded('twitch', p.key) && matchesPresetSearch('twitch', p)),
+);
+const availableKofiPresets = computed(() =>
+  KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key) && matchesPresetSearch('kofi', p)),
+);
+const availableGpsPresets = computed(() =>
+  GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key) && matchesPresetSearch('gpslogger', p)),
+);
+const availableOverlabelsMobilePresets = computed(() =>
+  OVERLABELS_MOBILE_PRESETS.filter((p) => !isPresetAlreadyAdded('overlabels-mobile', p.key) && matchesPresetSearch('overlabels-mobile', p)),
+);
+const availableStreamLabsPresets = computed(() =>
+  STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key) && matchesPresetSearch('streamlabs', p)),
+);
+const availableStreamElementsPresets = computed(() =>
+  STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key) && matchesPresetSearch('streamelements', p)),
+);
 
 watch(servicePresetKey, (combinedKey) => {
   if (!combinedKey) {
@@ -417,9 +440,10 @@ async function save() {
           <!-- Service Presets -->
           <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
-            <Combobox v-model="servicePresetKey" open-on-click open-on-focus>
+            <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
                 <ComboboxInput
+                  v-model="presetSearch"
                   :display-value="displayPresetValue"
                   placeholder="Search preset controls..."
                 />
@@ -435,7 +459,6 @@ async function save() {
                     v-for="preset in availableTwitchPresets"
                     :key="'twitch:' + preset.key"
                     :value="'twitch:' + preset.key"
-                    :text-value="presetSearchText('twitch', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -446,7 +469,6 @@ async function save() {
                     v-for="preset in availableKofiPresets"
                     :key="'kofi:' + preset.key"
                     :value="'kofi:' + preset.key"
-                    :text-value="presetSearchText('kofi', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -457,7 +479,6 @@ async function save() {
                     v-for="preset in availableGpsPresets"
                     :key="'gpslogger:' + preset.key"
                     :value="'gpslogger:' + preset.key"
-                    :text-value="presetSearchText('gpslogger', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -468,7 +489,6 @@ async function save() {
                     v-for="preset in availableOverlabelsMobilePresets"
                     :key="'overlabels-mobile:' + preset.key"
                     :value="'overlabels-mobile:' + preset.key"
-                    :text-value="presetSearchText('overlabels-mobile', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -479,7 +499,6 @@ async function save() {
                     v-for="preset in availableStreamLabsPresets"
                     :key="'streamlabs:' + preset.key"
                     :value="'streamlabs:' + preset.key"
-                    :text-value="presetSearchText('streamlabs', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -490,7 +509,6 @@ async function save() {
                     v-for="preset in availableStreamElementsPresets"
                     :key="'streamelements:' + preset.key"
                     :value="'streamelements:' + preset.key"
-                    :text-value="presetSearchText('streamelements', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

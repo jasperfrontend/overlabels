@@ -24,28 +24,29 @@ export function serviceLabel(source: string): string {
 }
 
 /**
- * Extra search tokens for each service, used to make category-style
- * filtering work in comboboxes. Typing "elem" should match StreamElements,
- * "overla" should match Overlabels Mobile, "kofi" or "ko-fi" both match, etc.
- * These are appended (invisibly) to the text-value that Reka's Combobox
- * filters against.
+ * Fuzzy subsequence matcher: returns true if every character in `needle`
+ * appears in `haystack` in order (not necessarily contiguous). Case-
+ * insensitive. This is the same matching style as fzf and VS Code's
+ * quick-open, which handles things like "kofi" matching "ko-fi" or
+ * "overla" matching "Overlabels Mobile" without any curated alias list.
  */
-export const SERVICE_SEARCH_TOKENS: Record<string, string> = {
-  kofi: 'Ko-fi kofi',
-  streamelements: 'StreamElements stream elements',
-  streamlabs: 'Streamlabs stream labs',
-  gpslogger: 'GPSLogger gps logger',
-  twitch: 'Twitch',
-  'overlabels-mobile': 'Overlabels Mobile overlabels mobile',
-};
+export function fuzzyMatch(needle: string, haystack: string): boolean {
+  if (!needle) return true;
+  const n = needle.toLowerCase();
+  const h = haystack.toLowerCase();
+  let i = 0;
+  for (let j = 0; j < h.length && i < n.length; j++) {
+    if (h[j] === n[i]) i++;
+  }
+  return i === n.length;
+}
 
 /**
- * Build the searchable text for a preset combobox item: the visible label
- * plus the service's display name and aliases. Used as `:text-value` on
- * `<ComboboxItem>` so "overla" finds every Overlabels Mobile preset even
- * though none of their labels contain the word.
+ * Haystack text for a service preset: the preset's own label plus the
+ * service's display name plus the raw source key. Used by callers that
+ * want to fuzzy-search presets against "category + item" in one go.
+ * Derived from SERVICE_LABELS — no curated alias list to maintain.
  */
-export function presetSearchText(source: string, label: string): string {
-  const tokens = SERVICE_SEARCH_TOKENS[source] ?? source;
-  return `${label} ${tokens}`;
+export function presetHaystack(source: string, label: string): string {
+  return `${label} ${serviceLabel(source)} ${source}`;
 }
