@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 16th, 2026 - Harden position API against chat shenanigans
+
+- Extracted the GPS liveness check into `App\Services\GpsLivenessService`.
+- `GET /api/map/{twitchId}/position` now returns `position: null` when the user is not broadcasting (no active session with a location_update), instead of the most recent historical ping. Previously a chatter could curl this endpoint directly and get the streamer's last-known position regardless of whether the stream was running, bypassing the frontend's offline panel.
+- Frontend-only `isLive` gating is a UX hint, not a security boundary; the server is now authoritative on both the page render path and the polling API.
+
 ## April 16th, 2026 - Live map: soft offline state + safe-zone-aware liveness
 
 - Liveness check now also requires at least one `location_update` inside the active session. Previously the map would render centered on the last known position the moment a `session_start` event arrived, even if the user hadn't left their safe zone yet (the app suppresses location broadcasts inside the safe zone but still creates the session). This would leak the safe-zone area (e.g. the streamer's home).

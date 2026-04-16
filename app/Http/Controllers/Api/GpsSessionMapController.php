@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\User;
+use App\Services\GpsLivenessService;
 use App\Services\RouteSimplifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class GpsSessionMapController extends Controller
 {
+    public function __construct(private GpsLivenessService $liveness) {}
+
     /**
      * GET /api/gps-sessions/{sessionId}/geojson
      * Authenticated - for the GPS Sessions dashboard page.
@@ -66,6 +69,19 @@ class GpsSessionMapController extends Controller
         $settings = $integration->settings ?? [];
         if (empty($settings['map_sharing_enabled'])) {
             return response()->json(['error' => 'Map sharing is not enabled.'], 403);
+        }
+
+        // Server-side liveness gate. The frontend also hides the map when
+        // offline, but any caller (curl, a chatter with devtools) can hit
+        // this endpoint directly, so we must gate here too. Without this,
+        // the endpoint would happily return the most recent ping from any
+        // past session — potentially doxxing the streamer's home.
+        if (! $this->liveness->isBroadcasting($user->id)) {
+            return response()->json([
+                'position' => null,
+                'speed_unit' => $settings['speed_unit'] ?? 'kmh',
+                'streamer_name' => $user->name,
+            ]);
         }
 
         $delay = (int) ($settings['map_delay_seconds'] ?? 0);
