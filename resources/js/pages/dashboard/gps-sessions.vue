@@ -6,7 +6,7 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2 } from 'lucide-vue-next';
+import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2, ExternalLink } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const SessionMapInline = defineAsyncComponent(() => import('@/components/SessionMapInline.vue'));
@@ -29,6 +29,8 @@ interface GpsSession {
 const props = defineProps<{
   sessions: GpsSession[];
   speedUnit: string;
+  mapSharingEnabled: boolean;
+  twitchId: string;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -257,6 +259,19 @@ function batteryColor(pct: number | null): string {
             <Button variant="outline" size="sm" @click="toggleMap(session.session_id)">
               <Map class="h-3.5 w-3.5 mr-1.5" />
               {{ expandedSessions.has(session.session_id) ? 'Hide map' : 'View map' }}
+            </Button>
+            <Button
+              v-if="mapSharingEnabled"
+              as="a"
+              :href="`/map/${twitchId}/${session.session_id}`"
+              target="_blank"
+              rel="noopener"
+              variant="outline"
+              size="sm"
+              title="Open this session on the public full-view map in a new tab"
+            >
+              <ExternalLink class="h-3.5 w-3.5 mr-1.5" />
+              Open full view
             </Button>
             <Button
               variant="outline"

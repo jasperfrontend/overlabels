@@ -19,13 +19,17 @@ class GpsSessionController extends Controller
             ->where('service', 'overlabels-mobile')
             ->first();
 
-        $speedUnit = ($integration?->settings ?? [])['speed_unit'] ?? 'kmh';
+        $settings = $integration?->settings ?? [];
+        $speedUnit = $settings['speed_unit'] ?? 'kmh';
+        $mapSharingEnabled = ! empty($settings['map_sharing_enabled']);
 
         $sessions = $this->aggregateSessions($user->id);
 
         return Inertia::render('dashboard/gps-sessions', [
             'sessions' => $sessions,
             'speedUnit' => $speedUnit,
+            'mapSharingEnabled' => $mapSharingEnabled,
+            'twitchId' => (string) $user->twitch_id,
         ]);
     }
 

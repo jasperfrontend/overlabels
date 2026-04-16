@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - Open session on public map from the dashboard
+
+- Each GPS session card on `/dashboard/gps-sessions` now has an "Open full view" button that opens `/map/{twitch_id}/{session_id}` in a new tab.
+- Only rendered when `map_sharing_enabled` is true on the user's overlabels-mobile integration. If the user hasn't opted into public maps, the button is absent - no accidental link from private dashboard to public URL.
+- `GpsSessionController::index` now threads `mapSharingEnabled` and `twitchId` into the page props.
+
 ## April 17th, 2026 - Expose GPS accuracy as a control
 
 - New `gps_accuracy` control on the overlabels-mobile integration. Value is the raw accuracy float in meters, the same field the app was already sending on every location ping (extracted as `event.accuracy` for alert templates but never provisioned as a control).
