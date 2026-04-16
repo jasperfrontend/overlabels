@@ -16,6 +16,7 @@
 - Session-id drift detection: if a `location_update` arrives with a session_id that doesn't match what we've been tracking (session_start lost, stale state, first deploy), the driver treats it as a fresh session and resets counters.
 - Backfill migration (`2026_04_17_100000_backfill_overlabels_mobile_session_controls`) provisions the four new controls for every existing overlabels-mobile integration. Idempotent via `firstOrCreate`.
 - `gps_distance` kept unchanged (cumulative across all pings, same as before). Label updated to "GPS Distance (km, cumulative)" so the per-session one is clearly the session-scoped counterpart.
+- Added the four new session controls to `OVERLABELS_MOBILE_PRESETS` so they appear in the ControlFormModal "Add Control" dropdown on static templates. The tags themselves already resolve against the auto-provisioned user-scoped rows, but the preset entries give the discoverability + read-only display cards in ControlsManager / ControlPanel.
 
 ## April 17th, 2026 - Distance and speed pipe formatters
 
