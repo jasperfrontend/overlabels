@@ -1,9 +1,7 @@
 import { createApp } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-// @ts-ignore
 import LiveMap from './LiveMap.vue';
-// @ts-ignore
 import SessionMap from './SessionMap.vue';
 import 'leaflet/dist/leaflet.css';
 

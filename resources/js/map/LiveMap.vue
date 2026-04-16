@@ -2,7 +2,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { LMap, LTileLayer, LMarker, LPolyline, LPopup } from '@vue-leaflet/vue-leaflet';
 import { useMapWebSocket } from './composables/useMapWebSocket';
-import type { PointExpression } from 'leaflet';
+import { Icon, type PointExpression } from 'leaflet';
 
 const props = defineProps<{
   twitchId: string;
@@ -140,13 +140,13 @@ function formatSpeed(ms: number): string {
 }
 
 const markerAnchor: PointExpression = [12, 41];
-const markerIcon = {
+const markerIcon = new Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41] as PointExpression,
+  iconSize: [25, 41],
   iconAnchor: markerAnchor,
-};
+});
 </script>
 
 <template>
