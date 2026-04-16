@@ -10,6 +10,12 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Migrate external_events JSON columns to jsonb
+
+- `raw_payload` and `normalized_payload` on `external_events` converted from `json` to `jsonb`.
+- Enables future deep queries on event data (e.g. route replay, top-speed analytics, filtering by coordinate range) using PostgreSQL's indexed `jsonb` operators.
+- Zero-downtime cast - existing rows are converted in-place.
+
 ## April 16th, 2026 - Add bearing, battery, charging controls to Overlabels GPS
 
 - Three new auto-provisioned controls: `gps_bearing` (degrees 0-360), `gps_battery` (percentage), `gps_charging` (boolean).
