@@ -203,6 +203,7 @@
                         <code>[[[c:overlabels-mobile:gps_bearing]]]</code>
                         <code>[[[c:overlabels-mobile:gps_battery]]]</code>
                         <code>[[[c:overlabels-mobile:gps_charging]]]</code>
+                        <code>[[[c:overlabels-mobile:gps_tracking]]]</code>
                     </div>
                 </li>
             </ol>

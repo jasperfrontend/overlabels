@@ -371,13 +371,13 @@ test('connect creates integration with auto-generated token and provisions contr
     $credentials = $integration->getCredentialsDecrypted();
     expect($credentials['token'])->toBeString()->toHaveLength(32);
 
-    // 7 controls should be auto-provisioned
+    // 8 controls should be auto-provisioned
     $controlCount = OverlayControl::where('user_id', $user->id)
         ->where('source', 'overlabels-mobile')
         ->where('source_managed', true)
         ->count();
 
-    expect($controlCount)->toBe(7);
+    expect($controlCount)->toBe(8);
 });
 
 test('disconnect removes integration and controls', function () {
@@ -436,4 +436,147 @@ test('GET webhook URL returns mobile landing page', function () {
 test('GET webhook URL returns 404 for unknown token', function () {
     $this->get('/api/webhooks/overlabels-mobile/00000000-0000-0000-0000-000000000000')
         ->assertStatus(404);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Session lifecycle
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('session_start sets gps_tracking to 1 and stores event', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
+    ]);
+
+    $sessionId = 'abc12345-def6-7890-abcd-ef1234567890';
+
+    postMobile($integration->webhook_token, [
+        'event' => 'session_start',
+        'session_id' => $sessionId,
+        'timestamp' => (string) time(),
+    ])->assertStatus(200)->assertJson(['status' => 'ok']);
+
+    $this->assertDatabaseHas('external_events', [
+        'user_id' => $user->id,
+        'service' => 'overlabels-mobile',
+        'event_type' => 'session_start',
+        'message_id' => "session_start_{$sessionId}",
+    ]);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_tracking',
+        'value' => '1',
+    ]);
+
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('session_end sets gps_tracking to 0 and stores event', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '1',
+    ]);
+
+    $sessionId = 'abc12345-def6-7890-abcd-ef1234567890';
+
+    postMobile($integration->webhook_token, [
+        'event' => 'session_end',
+        'session_id' => $sessionId,
+        'timestamp' => (string) time(),
+    ])->assertStatus(200)->assertJson(['status' => 'ok']);
+
+    $this->assertDatabaseHas('external_events', [
+        'user_id' => $user->id,
+        'service' => 'overlabels-mobile',
+        'event_type' => 'session_end',
+        'message_id' => "session_end_{$sessionId}",
+    ]);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_tracking',
+        'value' => '0',
+    ]);
+
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('session_start is deduplicated by session_id', function () {
+    [, $integration] = makeMobileIntegration();
+
+    $payload = [
+        'event' => 'session_start',
+        'session_id' => 'dedup-test-session',
+        'timestamp' => (string) time(),
+    ];
+
+    postMobile($integration->webhook_token, $payload)->assertJson(['status' => 'ok']);
+    postMobile($integration->webhook_token, $payload)->assertJson(['status' => 'duplicate']);
+});
+
+test('session events do not update GPS controls or accumulate distance', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+    ]);
+
+    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+        'key' => 'gps_distance', 'type' => 'number', 'label' => 'Distance', 'value' => '5.0',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+        'key' => 'gps_speed', 'type' => 'number', 'label' => 'Speed', 'value' => '30',
+    ]);
+
+    postMobile($integration->webhook_token, [
+        'event' => 'session_start',
+        'session_id' => 'no-gps-update-test',
+        'timestamp' => (string) time(),
+    ])->assertStatus(200);
+
+    // Distance and speed should NOT change
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_distance',
+        'value' => '5.0',
+    ]);
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_speed',
+        'value' => '30',
+    ]);
+});
+
+test('location_update with session_id stores it in payload', function () {
+    [$user, $integration] = makeMobileIntegration();
+
+    $sessionId = 'ride-session-uuid';
+    $ts = time();
+
+    postMobile($integration->webhook_token, array_merge(mobilePayload([
+        'timestamp' => $ts,
+        'serial' => '1',
+    ]), ['session_id' => $sessionId]))
+        ->assertStatus(200);
+
+    $event = \App\Models\ExternalEvent::where('user_id', $user->id)
+        ->where('message_id', "gps_{$ts}_1")
+        ->first();
+
+    expect($event->raw_payload['session_id'])->toBe($sessionId);
 });

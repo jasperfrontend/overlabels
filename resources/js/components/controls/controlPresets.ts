@@ -62,6 +62,7 @@ export const OVERLABELS_MOBILE_PRESETS: ServicePreset[] = [
   { key: 'gps_bearing', label: 'GPS Bearing (degrees)', type: 'number' },
   { key: 'gps_battery', label: 'Phone Battery (%)', type: 'number' },
   { key: 'gps_charging', label: 'Phone Charging', type: 'boolean' },
+  { key: 'gps_tracking', label: 'GPS Tracking Active', type: 'boolean' },
 ];
 
 export function getPresetsForSource(source: string): ServicePreset[] {

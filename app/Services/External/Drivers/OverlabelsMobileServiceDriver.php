@@ -34,24 +34,53 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     public function parseEventType(array $payload): ?string
     {
-        return 'location_update';
+        $event = $payload['event'] ?? null;
+
+        return match ($event) {
+            'session_start' => 'session_start',
+            'session_end' => 'session_end',
+            default => 'location_update',
+        };
     }
 
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
+        $sessionId = $payload['session_id'] ?? null;
+        $timestamp = $payload['timestamp'] ?? $payload['time'] ?? null;
+
+        if ($eventType === 'session_start' || $eventType === 'session_end') {
+            $messageId = $eventType.'_'.($sessionId ?? now()->timestamp);
+
+            $tags = [
+                'event.session_id' => (string) ($sessionId ?? ''),
+                'event.source' => 'Overlabels GPS',
+            ];
+
+            return new NormalizedExternalEvent(
+                service: 'overlabels-mobile',
+                eventType: $eventType,
+                messageId: $messageId,
+                fromName: null,
+                message: null,
+                amount: null,
+                currency: null,
+                templateTags: $tags,
+                raw: $payload,
+            );
+        }
+
+        // location_update
         $lat = $payload['latitude'] ?? $payload['lat'] ?? null;
         $lng = $payload['longitude'] ?? $payload['lng'] ?? $payload['lon'] ?? null;
         $speed = $payload['speed'] ?? $payload['spd'] ?? null;
         $altitude = $payload['altitude'] ?? $payload['alt'] ?? null;
         $accuracy = $payload['accuracy'] ?? $payload['acc'] ?? null;
-        $timestamp = $payload['timestamp'] ?? $payload['time'] ?? null;
         $serial = $payload['serial'] ?? $payload['ser'] ?? '0';
-
-        $messageId = 'gps_'.($timestamp ?? now()->timestamp).'_'.$serial;
-
         $bearing = $payload['bearing'] ?? null;
         $battery = $payload['battery'] ?? null;
         $charging = $payload['charging'] ?? null;
+
+        $messageId = 'gps_'.($timestamp ?? now()->timestamp).'_'.$serial;
 
         $tags = [
             'event.latitude' => (string) ($lat ?? ''),
@@ -62,6 +91,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             'event.bearing' => (string) ($bearing ?? ''),
             'event.battery' => (string) ($battery ?? ''),
             'event.charging' => (string) ($charging ?? ''),
+            'event.session_id' => (string) ($sessionId ?? ''),
             'event.source' => 'Overlabels GPS',
         ];
 
@@ -80,7 +110,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     public function getSupportedEventTypes(): array
     {
-        return ['location_update'];
+        return ['location_update', 'session_start', 'session_end'];
     }
 
     public function getAutoProvisionedControls(): array
@@ -93,15 +123,25 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             ['key' => 'gps_bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
             ['key' => 'gps_battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
             ['key' => 'gps_charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
+            ['key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'GPS Tracking Active', 'value' => '0'],
         ];
     }
 
     /**
-     * Return control updates for speed, lat, lng, bearing, battery, charging.
-     * Distance is handled separately in beforeControlUpdates().
+     * Return control updates for the given event.
+     * Session events only toggle gps_tracking. Location pings update GPS controls.
      */
     public function getControlUpdates(NormalizedExternalEvent $event): array
     {
+        if ($event->getEventType() === 'session_start') {
+            return ['gps_tracking' => '1'];
+        }
+
+        if ($event->getEventType() === 'session_end') {
+            return ['gps_tracking' => '0'];
+        }
+
+        // location_update
         $raw = $event->getRaw();
         $lat = $raw['latitude'] ?? $raw['lat'] ?? null;
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;
@@ -142,13 +182,18 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     /**
      * Calculate distance from previous position using haversine formula
-     * and add it as an incremental update.
+     * and add it as an incremental update. Skipped for session events.
      */
     public function beforeControlUpdates(
         ExternalIntegration $integration,
         NormalizedExternalEvent $event,
         array &$updates
     ): void {
+        // Session lifecycle events don't carry GPS coordinates
+        if ($event->getEventType() !== 'location_update') {
+            return;
+        }
+
         $raw = $event->getRaw();
         $lat = $raw['latitude'] ?? $raw['lat'] ?? null;
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;

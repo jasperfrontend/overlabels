@@ -204,6 +204,7 @@ function formatDate(iso: string | null): string {
               <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_bearing]]]</code>
               <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_battery]]]</code>
               <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_charging]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_tracking]]]</code>
             </div>
           </div>
         </div>

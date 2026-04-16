@@ -10,6 +10,16 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - GPS session lifecycle (session_start / session_end)
+
+- The `overlabels-mobile` driver now recognizes three event types via the `event` payload field: `session_start`, `session_end`, and `location_update` (default when absent, backward compatible).
+- `session_start` sets the new `gps_tracking` boolean control to `1`; `session_end` sets it to `0`. Overlays can use `[[[c:overlabels-mobile:gps_tracking]]]` to show/hide GPS widgets.
+- Session events are deduped on `session_start_{session_id}` / `session_end_{session_id}` - safe to retry.
+- Session events skip GPS control updates and distance accumulation (no coordinates to process).
+- Every `location_update` ping can carry `session_id` in the payload, stored in jsonb for grouping via `raw_payload->>'session_id'`.
+- No new database tables - sessions are inferred from the event stream.
+- 5 new tests covering start/stop lifecycle, dedup, control isolation, and session_id persistence.
+
 ## April 16th, 2026 - Migrate external_events JSON columns to jsonb
 
 - `raw_payload` and `normalized_payload` on `external_events` converted from `json` to `jsonb`.
