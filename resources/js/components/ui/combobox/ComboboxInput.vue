@@ -2,12 +2,15 @@
 import type { ComboboxInputProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ComboboxInput, useForwardProps } from 'reka-ui'
+import { ComboboxInput, useForwardPropsEmits } from 'reka-ui'
 import { cn } from '@/lib/utils'
 
 const props = defineProps<ComboboxInputProps & { class?: HTMLAttributes['class'] }>()
+const emits = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
 const delegated = reactiveOmit(props, 'class')
-const forwarded = useForwardProps(delegated)
+const forwarded = useForwardPropsEmits(delegated, emits)
 </script>
 
 <template>
