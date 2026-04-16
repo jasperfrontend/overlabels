@@ -155,7 +155,7 @@ class OverlayTemplate extends Model
 
         // Pattern to match [[[tag_name]]] and [[[tag_name|formatter:args]]] syntax
         // Pipe args allow word chars, dots, colons, hyphens, and spaces (for patterns like date:dd-MM-yyyy HH:mm)
-        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:]*?)(?:\|[a-zA-Z0-9_.:% -]+)?]]]/';
+        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:\-]*?)(?:\|[a-zA-Z0-9_.:% -]+)?]]]/';
 
         // Extract from HTML
         preg_match_all($pattern, $this->html ?? '', $htmlMatches);

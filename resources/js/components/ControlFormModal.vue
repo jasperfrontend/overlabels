@@ -25,6 +25,7 @@ import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
   KOFI_PRESETS,
   GPS_PRESETS,
+  OVERLABELS_MOBILE_PRESETS,
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
   TWITCH_PRESETS,
@@ -81,6 +82,9 @@ const showKofiPresets = computed(
 const showGpsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
 );
+const showOverlabelsMobilePresets = computed(
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('overlabels-mobile'),
+);
 const showStreamLabsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
 );
@@ -101,6 +105,7 @@ function isPresetAlreadyAdded(source: string, key: string): boolean {
 const availableTwitchPresets = computed(() => TWITCH_PRESETS.filter((p) => !isPresetAlreadyAdded('twitch', p.key)));
 const availableKofiPresets = computed(() => KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key)));
 const availableGpsPresets = computed(() => GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key)));
+const availableOverlabelsMobilePresets = computed(() => OVERLABELS_MOBILE_PRESETS.filter((p) => !isPresetAlreadyAdded('overlabels-mobile', p.key)));
 const availableStreamLabsPresets = computed(() => STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key)));
 const availableStreamElementsPresets = computed(() => STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key)));
 
@@ -409,7 +414,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus>
               <ComboboxAnchor>
@@ -449,6 +454,16 @@ async function save() {
                     v-for="preset in availableGpsPresets"
                     :key="'gpslogger:' + preset.key"
                     :value="'gpslogger:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showOverlabelsMobilePresets && availableOverlabelsMobilePresets.length">
+                  <ComboboxLabel>Overlabels GPS</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableOverlabelsMobilePresets"
+                    :key="'overlabels-mobile:' + preset.key"
+                    :value="'overlabels-mobile:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

@@ -193,8 +193,9 @@ const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
 
 // Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
-// Pipe args allow word chars, dots, colons, and hyphens (for date patterns like dd-MM-yyyy)
-const TAG_REGEX = /\[\[\[([\w.:]+)(?:\|([\w.:\- ]+))?]]]/g;
+// Tag key allows word chars, dots, colons, and hyphens (for service names like overlabels-mobile)
+// Pipe args allow word chars, dots, colons, hyphens, and spaces (for date patterns like dd-MM-yyyy HH:mm)
+const TAG_REGEX = /\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?]]]/g;
 
 // HTML-encode substituted tag values so donor-supplied strings (Ko-fi/StreamLabs/StreamElements
 // donor names and messages) can't break out of attribute or text context when the result is

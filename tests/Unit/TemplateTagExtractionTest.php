@@ -63,6 +63,26 @@ test('extractTemplateTags handles pipe args with spaces', function () {
     expect($tags)->toContain('c:datetime_thing');
 });
 
+test('extractTemplateTags handles hyphenated service names', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<span>[[[c:overlabels-mobile:gps_speed]]]</span>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)->toContain('c:overlabels-mobile:gps_speed');
+});
+
+test('extractTemplateTags handles hyphenated service names with pipe', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<span>[[[c:overlabels-mobile:gps_speed|round]]]</span>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)->toContain('c:overlabels-mobile:gps_speed');
+});
+
 test('extractTemplateTags handles mixed plain and piped tags', function () {
     $template = new OverlayTemplate;
     $template->html = '<div>[[[followers_total]]] [[[c:amount|currency:EUR]]] [[[channel_title]]]</div>';

@@ -10,6 +10,13 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Fix tag resolution for hyphenated service names
+
+- `TAG_REGEX` in `OverlayRenderer.vue` and PHP `extractTemplateTags()` in `OverlayTemplate.php` now include hyphens in the tag-key character class so `[[[c:overlabels-mobile:gps_speed]]]` (and any future hyphenated service) resolves correctly.
+- Added `overlabels-mobile` to `OverlayControl::RESERVED_KEYS` to prevent namespace collisions.
+- Added `OVERLABELS_MOBILE_PRESETS` to `controlPresets.ts` and wired into `ControlFormModal.vue` so the preset picker shows Overlabels GPS controls when the integration is connected.
+- Two new unit tests for hyphenated tag extraction (plain and with pipe formatter).
+
 ## April 14th, 2026 - Gave Twitch Controls their own namespace c:twitch:controls
 
 - Twitch Controls are now usable in the frontend under the `c:twitch:x` namespace.

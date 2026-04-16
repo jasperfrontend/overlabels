@@ -54,11 +54,19 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
 ];
 
+export const OVERLABELS_MOBILE_PRESETS: ServicePreset[] = [
+  { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
+  { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
+  { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
+  { key: 'gps_distance', label: 'GPS Distance (km)', type: 'number' },
+];
+
 export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
     case 'twitch': return TWITCH_PRESETS;
     case 'kofi': return KOFI_PRESETS;
     case 'gpslogger': return GPS_PRESETS;
+    case 'overlabels-mobile': return OVERLABELS_MOBILE_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
     case 'streamelements': return STREAMELEMENTS_PRESETS;
     default: return [];
