@@ -120,11 +120,15 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             ['key' => 'gps_speed', 'type' => 'number', 'label' => 'GPS Speed', 'value' => '0'],
             ['key' => 'gps_lat', 'type' => 'text', 'label' => 'GPS Latitude', 'value' => ''],
             ['key' => 'gps_lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
-            ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km)', 'value' => '0'],
+            ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km, cumulative)', 'value' => '0'],
             ['key' => 'gps_bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
             ['key' => 'gps_battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
             ['key' => 'gps_charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
             ['key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'GPS Tracking Active', 'value' => '0'],
+            ['key' => 'gps_session_distance', 'type' => 'number', 'label' => 'GPS Session Distance (km)', 'value' => '0'],
+            ['key' => 'gps_session_max_speed', 'type' => 'number', 'label' => 'GPS Session Max Speed (m/s)', 'value' => '0'],
+            ['key' => 'gps_session_avg_speed', 'type' => 'number', 'label' => 'GPS Session Avg Speed (m/s)', 'value' => '0'],
+            ['key' => 'gps_session_duration', 'type' => 'number', 'label' => 'GPS Session Duration (seconds)', 'value' => '0'],
         ];
     }
 
@@ -183,14 +187,39 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     /**
      * Calculate distance from previous position using haversine formula
-     * and add it as an incremental update. Skipped for session events.
+     * and maintain per-session running aggregates (distance, max/avg speed,
+     * duration) in integration.settings.
+     *
+     * Session aggregate controls store RAW values (m/s for speed, km for
+     * distance, seconds for duration) so templates can format with pipes
+     * against the user's locale.
      */
     public function beforeControlUpdates(
         ExternalIntegration $integration,
         NormalizedExternalEvent $event,
         array &$updates
     ): void {
-        // Session lifecycle events don't carry GPS coordinates
+        $settings = $integration->settings ?? [];
+
+        if ($event->getEventType() === 'session_start') {
+            $this->resetSessionState($integration, $settings, $event->getRaw()['session_id'] ?? null);
+            $updates['gps_session_distance'] = '0';
+            $updates['gps_session_max_speed'] = '0';
+            $updates['gps_session_avg_speed'] = '0';
+            $updates['gps_session_duration'] = '0';
+            return;
+        }
+
+        if ($event->getEventType() === 'session_end') {
+            // Freeze the final duration so overlays show the total session length
+            // even after pings stop arriving.
+            $startedAt = $settings['session_started_at_unix'] ?? null;
+            if ($startedAt !== null) {
+                $updates['gps_session_duration'] = (string) max(0, now()->timestamp - (int) $startedAt);
+            }
+            return;
+        }
+
         if ($event->getEventType() !== 'location_update') {
             return;
         }
@@ -205,33 +234,84 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         $lat = (float) $lat;
         $lng = (float) $lng;
+        $sessionId = $raw['session_id'] ?? null;
 
-        $settings = $integration->settings ?? [];
+        // If the incoming session_id doesn't match what we've been tracking
+        // (session_start lost, stale state, first deployment), treat this ping
+        // as the start of a fresh session.
+        $trackedSessionId = $settings['session_id'] ?? null;
+        if ($sessionId !== null && $trackedSessionId !== $sessionId) {
+            $this->resetSessionState($integration, $settings, $sessionId);
+            $trackedSessionId = $sessionId;
+        }
+
         $lastLat = $settings['last_lat'] ?? null;
         $lastLng = $settings['last_lng'] ?? null;
 
-        // Apply speed unit preference
+        // Honor the user's display-speed preference for gps_speed (legacy control).
         $speedUnit = $settings['speed_unit'] ?? 'kmh';
         if ($speedUnit === 'mph' && isset($updates['gps_speed'])) {
-            // Re-convert from km/h to mph
             $kmh = (float) $updates['gps_speed'];
             $updates['gps_speed'] = (string) round($kmh / 1.609344, 1);
         }
 
+        $deltaKm = 0.0;
         if ($lastLat !== null && $lastLng !== null) {
             $deltaKm = $this->haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
-
-            // Only add meaningful distance (> 1 meter) to filter GPS jitter
             if ($deltaKm > 0.001) {
                 $updates['gps_distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
+            } else {
+                $deltaKm = 0.0;
             }
         }
 
-        // Store current position for next calculation
+        // Per-session distance (replacement, not add — we hold the accumulator in settings).
+        $sessionDistanceKm = (float) ($settings['session_distance_km'] ?? 0.0) + $deltaKm;
+        $settings['session_distance_km'] = $sessionDistanceKm;
+        $updates['gps_session_distance'] = (string) round($sessionDistanceKm, 4);
+
+        // Speed stats in raw m/s.
+        $speedMsRaw = $raw['speed'] ?? $raw['spd'] ?? null;
+        if ($speedMsRaw !== null) {
+            $speedMs = (float) $speedMsRaw;
+            $maxMs = max((float) ($settings['session_max_speed_ms'] ?? 0.0), $speedMs);
+            $sumMs = (float) ($settings['session_speed_sum_ms'] ?? 0.0) + $speedMs;
+            $count = (int) ($settings['session_speed_count'] ?? 0) + 1;
+
+            $settings['session_max_speed_ms'] = $maxMs;
+            $settings['session_speed_sum_ms'] = $sumMs;
+            $settings['session_speed_count'] = $count;
+
+            $updates['gps_session_max_speed'] = (string) round($maxMs, 4);
+            $updates['gps_session_avg_speed'] = (string) round($sumMs / $count, 4);
+        }
+
+        // Duration in seconds since session_start.
+        $startedAt = (int) ($settings['session_started_at_unix'] ?? now()->timestamp);
+        $updates['gps_session_duration'] = (string) max(0, now()->timestamp - $startedAt);
+
         $integration->settings = array_merge($settings, [
             'last_lat' => $lat,
             'last_lng' => $lng,
         ]);
+        $integration->save();
+    }
+
+    /**
+     * Wipe all per-session running counters and stamp a new session_started_at.
+     * Leaves last_lat/last_lng alone — those drive the cumulative gps_distance.
+     */
+    private function resetSessionState(ExternalIntegration $integration, array &$settings, ?string $sessionId): void
+    {
+        $settings = array_merge($settings, [
+            'session_id' => $sessionId,
+            'session_started_at_unix' => now()->timestamp,
+            'session_distance_km' => 0.0,
+            'session_max_speed_ms' => 0.0,
+            'session_speed_sum_ms' => 0.0,
+            'session_speed_count' => 0,
+        ]);
+        $integration->settings = $settings;
         $integration->save();
     }
 

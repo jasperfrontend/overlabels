@@ -74,6 +74,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <li><a href="#currency" class="text-violet-400 hover:underline">currency - Currency Formatting</a></li>
             <li><a href="#duration" class="text-violet-400 hover:underline">duration - Time Durations</a></li>
             <li><a href="#date" class="text-violet-400 hover:underline">date - Date Formatting</a></li>
+            <li><a href="#distance" class="text-violet-400 hover:underline">distance - Distance with Unit Conversion</a></li>
+            <li><a href="#speed" class="text-violet-400 hover:underline">speed - Speed with Unit Conversion</a></li>
             <li><a href="#text" class="text-violet-400 hover:underline">uppercase / lowercase - Text Transforms</a></li>
             <li><a href="#locale" class="text-violet-400 hover:underline">Locale Settings</a></li>
             <li><a href="#css" class="text-violet-400 hover:underline">Pipes in CSS</a></li>
@@ -483,6 +485,124 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
         </div>
 
+        <!-- distance -->
+        <div class="mb-12" id="distance">
+          <h2 class="mb-6 text-2xl font-bold">
+            <code class="rounded bg-background px-2 py-1 font-mono text-2xl">|distance</code>
+            <span class="ml-2 text-lg font-normal text-muted-foreground">Distance with unit conversion</span>
+          </h2>
+
+          <div class="space-y-6">
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <p class="mb-4 text-foreground">
+                Formats a distance value with locale-aware number formatting and optional unit conversion.
+                The input is always assumed to be in <strong>kilometers</strong>. Pass the target unit as an
+                argument: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">km</code> for
+                kilometers (pass-through) or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">mi</code>
+                for miles.
+              </p>
+              <p class="mb-4 text-foreground">
+                The unit label is never appended. Add your own label in the template
+                if you want it: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:overlabels-mobile:gps_session_distance|distance:km]]] km</code>.
+              </p>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">Raw value (km)</th>
+                    <th class="pb-2 pr-4 font-semibold">en-US</th>
+                    <th class="pb-2 font-semibold">nl-NL</th>
+                  </tr>
+                  </thead>
+                  <tbody class="font-mono">
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_distance|distance:km]]]</td>
+                    <td class="py-2 pr-4">11.61</td>
+                    <td class="py-2 pr-4">11.61</td>
+                    <td class="py-2">11,61</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_distance|distance:mi]]]</td>
+                    <td class="py-2 pr-4">11.61</td>
+                    <td class="py-2 pr-4">7.21</td>
+                    <td class="py-2">7,21</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+              <p class="text-foreground">
+                <strong>Why km in, any unit out?</strong> Overlabels GPS controls store raw distance values in km
+                so your templates are the single source of truth for how distance is shown. Your locale handles
+                number formatting; the pipe arg handles unit choice.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- speed -->
+        <div class="mb-12" id="speed">
+          <h2 class="mb-6 text-2xl font-bold">
+            <code class="rounded bg-background px-2 py-1 font-mono text-2xl">|speed</code>
+            <span class="ml-2 text-lg font-normal text-muted-foreground">Speed with unit conversion</span>
+          </h2>
+
+          <div class="space-y-6">
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <p class="mb-4 text-foreground">
+                Formats a speed value with locale-aware number formatting and unit conversion. The input is
+                always assumed to be in <strong>meters per second</strong>. Pass the target unit:
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">kmh</code> for kilometers
+                per hour, or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">mph</code>
+                for miles per hour.
+              </p>
+              <p class="mb-4 text-foreground">
+                The unit label is not appended. Append it yourself if you want it shown.
+              </p>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">Raw value (m/s)</th>
+                    <th class="pb-2 pr-4 font-semibold">en-US</th>
+                    <th class="pb-2 font-semibold">nl-NL</th>
+                  </tr>
+                  </thead>
+                  <tbody class="font-mono">
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_max_speed|speed:kmh]]]</td>
+                    <td class="py-2 pr-4">15.5</td>
+                    <td class="py-2 pr-4">55.8</td>
+                    <td class="py-2">55,8</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_avg_speed|speed:mph]]]</td>
+                    <td class="py-2 pr-4">15.5</td>
+                    <td class="py-2 pr-4">34.7</td>
+                    <td class="py-2">34,7</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+              <p class="text-foreground">
+                <strong>Note:</strong> <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c:overlabels-mobile:gps_speed</code>
+                is a legacy control that's pre-converted server-side based on your speed_unit setting. The newer
+                per-session controls (<code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">gps_session_max_speed</code>,
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">gps_session_avg_speed</code>)
+                store raw m/s so the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|speed:</code>
+                pipe is required to render them.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- uppercase / lowercase -->
         <div class="mb-12" id="text">
           <h2 class="mb-6 text-2xl font-bold">
@@ -529,8 +649,10 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
               <p class="mb-4 text-foreground">
                 The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|number</code>,
-                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|currency</code>, and
-                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|date</code> formatters are all
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|currency</code>,
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|date</code>,
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|distance</code>, and
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|speed</code> formatters are all
                 locale-aware.
                 Your locale controls things like:
               </p>

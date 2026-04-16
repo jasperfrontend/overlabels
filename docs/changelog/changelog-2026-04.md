@@ -1,5 +1,22 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - Per-session GPS stats as controls
+
+- Four new auto-provisioned controls on the overlabels-mobile integration: `gps_session_distance`, `gps_session_max_speed`, `gps_session_avg_speed`, `gps_session_duration`. Values are raw (km for distance, m/s for speed, seconds for duration) so templates format them through pipes against the user's locale.
+- The driver's `beforeControlUpdates` now maintains per-session running state in `integration.settings` (`session_id`, `session_started_at_unix`, `session_distance_km`, `session_max_speed_ms`, `session_speed_sum_ms`, `session_speed_count`). State resets on `session_start`. Location updates accumulate. `session_end` freezes the final duration.
+- Avg speed is the arithmetic mean of per-ping speed samples (matches the GPS Sessions dashboard aggregation).
+- Max speed is a running max across the session's samples.
+- Session-id drift detection: if a `location_update` arrives with a session_id that doesn't match what we've been tracking (session_start lost, stale state, first deploy), the driver treats it as a fresh session and resets counters.
+- Backfill migration (`2026_04_17_100000_backfill_overlabels_mobile_session_controls`) provisions the four new controls for every existing overlabels-mobile integration. Idempotent via `firstOrCreate`.
+- `gps_distance` kept unchanged (cumulative across all pings, same as before). Label updated to "GPS Distance (km, cumulative)" so the per-session one is clearly the session-scoped counterpart.
+
+## April 17th, 2026 - Distance and speed pipe formatters
+
+- New `|distance:km` and `|distance:mi` pipes. Input assumed km; output is locale-formatted with up to 2 decimals. Unit label is NOT appended (add it in your template).
+- New `|speed:kmh` and `|speed:mph` pipes. Input assumed m/s; output is locale-formatted with 1 decimal. Unit label is NOT appended.
+- Both added to `/help/formatting` with examples and tables comparing en-US / nl-NL locale output.
+- Legacy `c:overlabels-mobile:gps_speed` stays pre-converted server-side based on the user's `speed_unit` setting. The new `gps_session_max_speed` / `gps_session_avg_speed` controls store raw m/s and require the new `|speed:` pipe to render.
+
 ## April 16th, 2026 - Genericize offline map page (no identity leaks)
 
 - Offline panel no longer mentions the streamer's name or their safe zone. Previous copy ("This map will come to life as soon as {name} starts streaming GPS from outside their safe zone.") confirmed three things on a bare URL visit: that the account exists on Overlabels, that the streamer has a safe zone configured, and by implication that they might currently be inside it. New copy is fully generic: "Nothing to show right now. This map will come to life as soon as a live stream begins broadcasting GPS."

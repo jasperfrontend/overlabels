@@ -18,6 +18,10 @@
  *   |date:FMT     — custom pattern (dd-MM-yyyy HH:mm, etc.)
  *   |number       — locale-aware number with thousands separators
  *   |number:N     — locale-aware number with N decimal places
+ *   |distance:km  — pass-through km, locale-formatted (input assumed km)
+ *   |distance:mi  — convert km to miles, locale-formatted (input assumed km)
+ *   |speed:kmh    — convert m/s to km/h, locale-formatted (input assumed m/s)
+ *   |speed:mph    — convert m/s to mph, locale-formatted (input assumed m/s)
  *   |uppercase    — text transform
  *   |lowercase    — text transform
  */
@@ -80,6 +84,10 @@ export function applyFormatter(rawValue: string, pipe: string, locale?: string):
       return formatDate(rawValue, args, loc);
     case 'number':
       return formatNumber(rawValue, args, loc);
+    case 'distance':
+      return formatDistance(rawValue, args, loc);
+    case 'speed':
+      return formatSpeed(rawValue, args, loc);
     case 'uppercase':
       return rawValue.toUpperCase();
     case 'lowercase':
@@ -264,4 +272,39 @@ function formatNumber(value: string, args?: string, locale?: string): string {
   }
 
   return new Intl.NumberFormat(locale, options).format(num);
+}
+
+/**
+ * Format a distance value. Input is assumed to be in kilometers.
+ * Target unit ("km" or "mi") is required.
+ * Output is locale-formatted number with up to 2 decimal places.
+ * The unit label is NOT appended — add it in your template if you want it.
+ */
+function formatDistance(value: string, args?: string, locale?: string): string {
+  const km = Number(value);
+  if (isNaN(km)) return value;
+  if (!args) return value;
+
+  const unit = args.toLowerCase();
+  const converted = unit === 'mi' ? km / 1.609344 : km;
+
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(converted);
+}
+
+/**
+ * Format a speed value. Input is assumed to be in meters per second.
+ * Target unit ("kmh" or "mph") is required.
+ * Output is locale-formatted number with 1 decimal place.
+ * The unit label is NOT appended — add it in your template if you want it.
+ */
+function formatSpeed(value: string, args?: string, locale?: string): string {
+  const ms = Number(value);
+  if (isNaN(ms)) return value;
+  if (!args) return value;
+
+  const unit = args.toLowerCase();
+  const kmh = ms * 3.6;
+  const converted = unit === 'mph' ? kmh / 1.609344 : kmh;
+
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(converted);
 }
