@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - DRY up SERVICE_LABELS across frontend
+
+- Extracted the `SERVICE_LABELS` display-name map into `resources/js/utils/services.ts` so `ControlPanel.vue`, `ControlsManager.vue`, and `ForkImportWizard.vue` all read from one source of truth.
+- Fixes a grouping bug where `overlabels-mobile` controls on the Controls tab (ControlsManager) fell into type-based groups ("Number", "Text") instead of the "Overlabels Mobile" collapsible, because that file's local copy of `SERVICE_LABELS` hadn't been updated when the service was added.
+- Also pulls the wizard's stale `'StreamLabs'` / `'GPS Logger'` labels into line with the canonical `'Streamlabs'` / `'GPSLogger'`, and adds the missing `twitch`, `streamelements`, and `overlabels-mobile` entries there.
+- New service integrations now only need one edit (the constants file) instead of three.
+
 ## April 17th, 2026 - Per-session GPS stats as controls
 
 - Four new auto-provisioned controls on the overlabels-mobile integration: `gps_session_distance`, `gps_session_max_speed`, `gps_session_avg_speed`, `gps_session_duration`. Values are raw (km for distance, m/s for speed, seconds for duration) so templates format them through pipes against the user's locale.

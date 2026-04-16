@@ -6,22 +6,13 @@ import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SERVICE_LABELS } from '@/utils/services';
 
 const props = defineProps<{
   template: OverlayTemplate;
   controls: OverlayControl[];
   isLive?: boolean;
 }>();
-
-/** Known external service sources and their display labels. */
-const SERVICE_LABELS: Record<string, string> = {
-  kofi: 'Ko-fi',
-  streamelements: 'StreamElements',
-  streamlabs: 'Streamlabs',
-  gpslogger: 'GPSLogger',
-  twitch: 'Twitch',
-  'overlabels-mobile': 'Overlabels Mobile',
-};
 
 /** Build the template tag key: c:source:key for external, c:key for twitch/user. */
 function tagKey(ctrl: OverlayControl): string {

@@ -19,6 +19,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
+import { SERVICE_LABELS } from '@/utils/services';
 
 const props = defineProps<{
   template: OverlayTemplate;
@@ -38,14 +39,6 @@ const copyingFrom = ref<OverlayControl | null>(null);
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error'>('success');
 const showToast = ref(false);
-
-const SERVICE_LABELS: Record<string, string> = {
-  kofi: 'Ko-fi',
-  streamelements: 'StreamElements',
-  streamlabs: 'Streamlabs',
-  gpslogger: 'GPSLogger',
-  twitch: 'Twitch',
-};
 
 function showMsg(msg: string, type: 'success' | 'error' = 'success') {
   toastMessage.value = msg;

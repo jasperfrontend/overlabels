@@ -14,12 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { InfoIcon } from 'lucide-vue-next';
-
-const SERVICE_LABELS: Record<string, string> = {
-  kofi: 'Ko-fi',
-  streamlabs: 'StreamLabs',
-  gpslogger: 'GPS Logger',
-};
+import { serviceLabel } from '@/utils/services';
 
 interface SourceControl {
   key: string;
@@ -66,10 +61,6 @@ const missingServices = computed(() =>
 );
 
 const hasControls = computed(() => props.sourceControls.length > 0);
-
-function serviceLabel(key: string): string {
-  return SERVICE_LABELS[key] ?? key;
-}
 
 watch(() => props.open, (open) => {
   if (open) {
