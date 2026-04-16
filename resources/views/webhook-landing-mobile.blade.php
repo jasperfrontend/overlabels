@@ -200,6 +200,9 @@
                         <code>[[[c:overlabels-mobile:gps_lat]]]</code>
                         <code>[[[c:overlabels-mobile:gps_lng]]]</code>
                         <code>[[[c:overlabels-mobile:gps_distance]]]</code>
+                        <code>[[[c:overlabels-mobile:gps_bearing]]]</code>
+                        <code>[[[c:overlabels-mobile:gps_battery]]]</code>
+                        <code>[[[c:overlabels-mobile:gps_charging]]]</code>
                     </div>
                 </li>
             </ol>

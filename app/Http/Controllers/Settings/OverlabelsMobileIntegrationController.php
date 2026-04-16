@@ -100,11 +100,9 @@ class OverlabelsMobileIntegrationController extends Controller
         $integration->enabled = $isNew || (bool) ($validated['enabled'] ?? true);
         $integration->save();
 
-        // Auto-provision controls on first connect
-        if ($isNew) {
-            $driver = ExternalServiceRegistry::driver('overlabels-mobile');
-            $this->controlService->provision($user, $driver);
-        }
+        // Auto-provision controls (idempotent - also picks up newly added controls for existing integrations)
+        $driver = ExternalServiceRegistry::driver('overlabels-mobile');
+        $this->controlService->provision($user, $driver);
 
         return back()->with('success', 'Overlabels GPS integration saved.');
     }

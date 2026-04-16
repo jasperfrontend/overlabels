@@ -154,6 +154,50 @@ test('updates speed, lat, lng controls on location update', function () {
     Event::assertDispatched(ControlValueUpdated::class);
 });
 
+test('updates bearing, battery, charging controls on location update', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    foreach (['gps_bearing', 'gps_battery', 'gps_charging', 'gps_lat', 'gps_lng'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+            'key' => $key,
+            'type' => $key === 'gps_charging' ? 'boolean' : ($key === 'gps_bearing' || $key === 'gps_battery' ? 'number' : 'text'),
+            'label' => $key,
+            'value' => '0',
+        ]);
+    }
+
+    postMobile($integration->webhook_token, mobilePayload([
+        'bearing' => '26',
+        'battery' => '54',
+        'charging' => '0',
+    ]))->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_bearing',
+        'value' => '26',
+    ]);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_battery',
+        'value' => '54',
+    ]);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'overlabels-mobile',
+        'key' => 'gps_charging',
+        'value' => '0',
+    ]);
+
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Distance accumulation
 // ──────────────────────────────────────────────────────────────────────────────
@@ -327,13 +371,13 @@ test('connect creates integration with auto-generated token and provisions contr
     $credentials = $integration->getCredentialsDecrypted();
     expect($credentials['token'])->toBeString()->toHaveLength(32);
 
-    // 4 controls should be auto-provisioned
+    // 7 controls should be auto-provisioned
     $controlCount = OverlayControl::where('user_id', $user->id)
         ->where('source', 'overlabels-mobile')
         ->where('source_managed', true)
         ->count();
 
-    expect($controlCount)->toBe(4);
+    expect($controlCount)->toBe(7);
 });
 
 test('disconnect removes integration and controls', function () {

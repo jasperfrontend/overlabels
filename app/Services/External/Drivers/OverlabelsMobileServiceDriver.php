@@ -49,12 +49,19 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         $messageId = 'gps_'.($timestamp ?? now()->timestamp).'_'.$serial;
 
+        $bearing = $payload['bearing'] ?? null;
+        $battery = $payload['battery'] ?? null;
+        $charging = $payload['charging'] ?? null;
+
         $tags = [
             'event.latitude' => (string) ($lat ?? ''),
             'event.longitude' => (string) ($lng ?? ''),
             'event.speed' => (string) ($speed ?? ''),
             'event.altitude' => (string) ($altitude ?? ''),
             'event.accuracy' => (string) ($accuracy ?? ''),
+            'event.bearing' => (string) ($bearing ?? ''),
+            'event.battery' => (string) ($battery ?? ''),
+            'event.charging' => (string) ($charging ?? ''),
             'event.source' => 'Overlabels GPS',
         ];
 
@@ -83,11 +90,14 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             ['key' => 'gps_lat', 'type' => 'text', 'label' => 'GPS Latitude', 'value' => ''],
             ['key' => 'gps_lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
             ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km)', 'value' => '0'],
+            ['key' => 'gps_bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
+            ['key' => 'gps_battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
+            ['key' => 'gps_charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
         ];
     }
 
     /**
-     * Return control updates for speed, lat, lng.
+     * Return control updates for speed, lat, lng, bearing, battery, charging.
      * Distance is handled separately in beforeControlUpdates().
      */
     public function getControlUpdates(NormalizedExternalEvent $event): array
@@ -96,6 +106,9 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         $lat = $raw['latitude'] ?? $raw['lat'] ?? null;
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;
         $speedMs = $raw['speed'] ?? $raw['spd'] ?? null;
+        $bearing = $raw['bearing'] ?? null;
+        $battery = $raw['battery'] ?? null;
+        $charging = $raw['charging'] ?? null;
 
         $updates = [];
 
@@ -110,6 +123,18 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         if ($speedMs !== null) {
             // Default conversion: m/s -> km/h
             $updates['gps_speed'] = (string) round((float) $speedMs * 3.6, 1);
+        }
+
+        if ($bearing !== null) {
+            $updates['gps_bearing'] = (string) round((float) $bearing, 1);
+        }
+
+        if ($battery !== null) {
+            $updates['gps_battery'] = (string) (int) $battery;
+        }
+
+        if ($charging !== null) {
+            $updates['gps_charging'] = (string) $charging;
         }
 
         return $updates;

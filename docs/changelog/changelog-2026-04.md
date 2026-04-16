@@ -10,6 +10,13 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Add bearing, battery, charging controls to Overlabels GPS
+
+- Three new auto-provisioned controls: `gps_bearing` (degrees 0-360), `gps_battery` (percentage), `gps_charging` (boolean).
+- Existing integrations pick up the new controls on next "Save changes" - provisioning is idempotent.
+- Template tags: `[[[c:overlabels-mobile:gps_bearing]]]`, `[[[c:overlabels-mobile:gps_battery]]]`, `[[[c:overlabels-mobile:gps_charging]]]`.
+- Presets, settings page, and landing page updated to show all 7 controls.
+
 ## April 16th, 2026 - Fix tag resolution for hyphenated service names
 
 - `TAG_REGEX` in `OverlayRenderer.vue` and PHP `extractTemplateTags()` in `OverlayTemplate.php` now include hyphens in the tag-key character class so `[[[c:overlabels-mobile:gps_speed]]]` (and any future hyphenated service) resolves correctly.
