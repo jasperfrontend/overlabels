@@ -10,6 +10,15 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - GPS Sessions page
+
+- New `/dashboard/gps-sessions` page showing per-session stats: duration, distance, avg/max speed, elevation range, battery start/end with delta, and ping count.
+- All numbers honor the user's locale setting (via `Intl.NumberFormat`) and speed unit preference (km/h or mph). Distance also converts to miles when mph is selected.
+- Session data aggregated from `external_events` jsonb using PostgreSQL `FILTER`, `array_agg`, and `BOOL_OR` - no new tables.
+- Distance computed per session via server-side haversine on ordered pings with 1m jitter filter.
+- `overlabels-mobile` events removed from the Recent Events stream to prevent GPS ping spam.
+- Sidebar nav link added under Alerts group.
+
 ## April 16th, 2026 - GPS session lifecycle (session_start / session_end)
 
 - The `overlabels-mobile` driver now recognizes three event types via the `event` payload field: `session_start`, `session_end`, and `location_update` (default when absent, backward compatible).

@@ -3,6 +3,7 @@
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
+use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\ExternalEventTemplateMappingController;
 use App\Http\Controllers\IntegrationSuggestionController;
@@ -91,6 +92,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::get('/dashboard/recents', [DashboardController::class, 'recentActivity'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.recents');
+
+Route::get('/dashboard/gps-sessions', [GpsSessionController::class, 'index'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.gps-sessions');
 
 Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
     ->middleware(['auth.redirect'])

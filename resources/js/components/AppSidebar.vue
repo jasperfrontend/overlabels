@@ -45,6 +45,7 @@ const mainNavItems: NavItem[] = [
 ];
 const alertsNavItems: NavItem[] = [
   { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
+  { title: 'GPS Sessions', href: route('dashboard.gps-sessions'), icon: Radio },
   { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 

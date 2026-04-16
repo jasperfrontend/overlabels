@@ -117,6 +117,7 @@ class DashboardController extends Controller
             ]);
 
         $externalEvents = ExternalEvent::where('user_id', $userId)
+            ->where('service', '!=', 'overlabels-mobile')
             ->latest()
             ->limit($limit)
             ->get()
