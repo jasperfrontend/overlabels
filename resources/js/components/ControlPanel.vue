@@ -20,6 +20,7 @@ const SERVICE_LABELS: Record<string, string> = {
   streamlabs: 'Streamlabs',
   gpslogger: 'GPSLogger',
   twitch: 'Twitch',
+  'overlabels-mobile': 'Overlabels Mobile',
 };
 
 /** Build the template tag key: c:source:key for external, c:key for twitch/user. */

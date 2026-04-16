@@ -87,7 +87,6 @@ use Mchev\Banhammer\Traits\Bannable;
  * @method static Builder<static>|User withoutTrashed()
  *
  * @mixin Eloquent
- * @mixin IdeHelperUser
  */
 class User extends Authenticatable
 {
