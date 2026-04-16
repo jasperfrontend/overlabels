@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - Category-aware preset search
+
+- The "Add Control" preset combobox (`ControlFormModal.vue`) now filters by category as well as item label. Typing "overla" finds every Overlabels Mobile preset, "elem" finds StreamElements, "labs" finds StreamLabs, "kofi" or "ko-fi" both match Ko-fi, etc.
+- Implementation: each `<ComboboxItem>` gets a `:text-value` composed of the preset label plus a bag of service search tokens (display name + common alternate spellings). Reka's Combobox filters against `text-value` when set, so the tokens are invisible to the user but match substring searches.
+- New `SERVICE_SEARCH_TOKENS` map and `presetSearchText()` helper live in `resources/js/utils/services.ts` alongside `SERVICE_LABELS`. Add a new service: one entry for label, one for tokens.
+
 ## April 17th, 2026 - DRY up SERVICE_LABELS across frontend
 
 - Extracted the `SERVICE_LABELS` display-name map into `resources/js/utils/services.ts` so `ControlPanel.vue`, `ControlsManager.vue`, and `ForkImportWizard.vue` all read from one source of truth.

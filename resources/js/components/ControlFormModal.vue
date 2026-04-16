@@ -31,6 +31,7 @@ import {
   TWITCH_PRESETS,
   getPresetsForSource,
 } from '@/components/controls/controlPresets';
+import { presetSearchText } from '@/utils/services';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
 const props = defineProps<{
@@ -434,6 +435,7 @@ async function save() {
                     v-for="preset in availableTwitchPresets"
                     :key="'twitch:' + preset.key"
                     :value="'twitch:' + preset.key"
+                    :text-value="presetSearchText('twitch', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -444,6 +446,7 @@ async function save() {
                     v-for="preset in availableKofiPresets"
                     :key="'kofi:' + preset.key"
                     :value="'kofi:' + preset.key"
+                    :text-value="presetSearchText('kofi', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -454,6 +457,7 @@ async function save() {
                     v-for="preset in availableGpsPresets"
                     :key="'gpslogger:' + preset.key"
                     :value="'gpslogger:' + preset.key"
+                    :text-value="presetSearchText('gpslogger', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -464,6 +468,7 @@ async function save() {
                     v-for="preset in availableOverlabelsMobilePresets"
                     :key="'overlabels-mobile:' + preset.key"
                     :value="'overlabels-mobile:' + preset.key"
+                    :text-value="presetSearchText('overlabels-mobile', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -474,6 +479,7 @@ async function save() {
                     v-for="preset in availableStreamLabsPresets"
                     :key="'streamlabs:' + preset.key"
                     :value="'streamlabs:' + preset.key"
+                    :text-value="presetSearchText('streamlabs', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
@@ -484,6 +490,7 @@ async function save() {
                     v-for="preset in availableStreamElementsPresets"
                     :key="'streamelements:' + preset.key"
                     :value="'streamelements:' + preset.key"
+                    :text-value="presetSearchText('streamelements', preset.label)"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
