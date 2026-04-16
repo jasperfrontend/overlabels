@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="/favicon.png" sizes="any">
-    <title>{{ $streamerName }}'s live location - Overlabels</title>
+    <title>{{ $isLive ? $streamerName . "'s live location" : 'Live location' }} - Overlabels</title>
     @vite('resources/js/map/app.ts')
 </head>
 <body style="margin:0;padding:0;overflow:hidden;">

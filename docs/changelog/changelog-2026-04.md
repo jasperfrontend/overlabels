@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 16th, 2026 - Genericize offline map page (no identity leaks)
+
+- Offline panel no longer mentions the streamer's name or their safe zone. Previous copy ("This map will come to life as soon as {name} starts streaming GPS from outside their safe zone.") confirmed three things on a bare URL visit: that the account exists on Overlabels, that the streamer has a safe zone configured, and by implication that they might currently be inside it. New copy is fully generic: "Nothing to show right now. This map will come to life as soon as a live stream begins broadcasting GPS."
+- Header title and `<title>` tag also swap to a generic "Live location" when offline, and switch to the streamer's name only once the map goes live (via `document.title` watcher).
+
 ## April 16th, 2026 - Harden position API against chat shenanigans
 
 - Extracted the GPS liveness check into `App\Services\GpsLivenessService`.

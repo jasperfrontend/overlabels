@@ -58,6 +58,15 @@ function goOffline() {
   hasPosition.value = false;
 }
 
+// Keep the tab title in sync with live state so a refreshed tab doesn't
+// keep showing the streamer's name after they've gone offline, and updates
+// to show it when a viewer is watching through a live transition.
+watch(isLive, (live) => {
+  document.title = live
+    ? `${props.streamerName}'s live location - Overlabels`
+    : 'Live location - Overlabels';
+});
+
 // Initial position fetch - only when the server says we're live.
 onMounted(async () => {
   if (!isLive.value) {
@@ -145,7 +154,7 @@ const markerIcon = {
     <!-- Header -->
     <div class="map-header">
       <span class="map-logo">Overlabels</span>
-      <span class="map-title">{{ streamerName }}'s live location</span>
+      <span class="map-title">{{ isLive ? streamerName + "'s live location" : 'Live location' }}</span>
       <span v-if="delay > 0 && isLive" class="map-delay">{{ delay }}s delay</span>
       <span v-if="isLive && connected" class="map-status live">LIVE</span>
       <span v-else-if="isLive && hasPosition" class="map-status">Connected</span>
@@ -163,8 +172,8 @@ const markerIcon = {
         <line x1="12" y1="20" x2="12.01" y2="20" />
         <line x1="2" y1="2" x2="22" y2="22" />
       </svg>
-      <h1>Nobody broadcasting right now</h1>
-      <p>This map will come to life as soon as {{ streamerName }} starts streaming GPS from outside their safe zone.</p>
+      <h1>Nothing to show right now</h1>
+      <p>This map will come to life as soon as a live stream begins broadcasting GPS.</p>
       <p class="map-offline-hint">
         <small>Waiting for a signal. The page will update automatically when it arrives.</small>
       </p>
