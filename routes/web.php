@@ -98,6 +98,10 @@ Route::get('/dashboard/gps-sessions', [GpsSessionController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.gps-sessions');
 
+Route::delete('/dashboard/gps-sessions/{sessionId}', [GpsSessionController::class, 'destroy'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.gps-sessions.destroy');
+
 Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.events');

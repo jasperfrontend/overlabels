@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from 'vue';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map } from 'lucide-vue-next';
+import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const SessionMapInline = defineAsyncComponent(() => import('@/components/SessionMapInline.vue'));
@@ -99,6 +100,37 @@ function batteryDelta(start: number | null, end: number | null): string {
   if (diff > 0) return `+${diff}%`;
   if (diff < 0) return `${diff}%`;
   return '0%';
+}
+
+const toastMessage = ref<string | null>(null);
+const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+const deleting = ref<string | null>(null);
+
+async function deleteSession(sessionId: string) {
+  if (!confirm('Delete this session and all its GPS data? This cannot be undone.')) return;
+  deleting.value = sessionId;
+  try {
+    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const res = await fetch(`/dashboard/gps-sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+      credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toastMessage.value = `Session deleted (${data.deleted} events removed).`;
+      toastType.value = 'success';
+      router.reload({ only: ['sessions'] });
+    } else {
+      toastMessage.value = data.error ?? 'Failed to delete session.';
+      toastType.value = 'error';
+    }
+  } catch {
+    toastMessage.value = 'Failed to delete session.';
+    toastType.value = 'error';
+  } finally {
+    deleting.value = null;
+  }
 }
 
 const expandedSessions = ref<Set<string>>(new Set());
@@ -220,11 +252,21 @@ function batteryColor(pct: number | null): string {
             </div>
           </div>
 
-          <!-- Map toggle -->
+          <!-- Actions -->
           <div class="flex items-center gap-2">
             <Button variant="outline" size="sm" @click="toggleMap(session.session_id)">
               <Map class="h-3.5 w-3.5 mr-1.5" />
               {{ expandedSessions.has(session.session_id) ? 'Hide map' : 'View map' }}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="text-destructive hover:text-destructive"
+              :disabled="deleting === session.session_id"
+              @click="deleteSession(session.session_id)"
+            >
+              <Trash2 class="h-3.5 w-3.5 mr-1.5" />
+              {{ deleting === session.session_id ? 'Deleting...' : 'Delete' }}
             </Button>
           </div>
 
@@ -236,5 +278,7 @@ function batteryColor(pct: number | null): string {
         </div>
       </div>
     </div>
+
+    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

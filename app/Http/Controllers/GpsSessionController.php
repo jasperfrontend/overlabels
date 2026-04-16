@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExternalIntegration;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -26,6 +27,30 @@ class GpsSessionController extends Controller
             'sessions' => $sessions,
             'speedUnit' => $speedUnit,
         ]);
+    }
+
+    /**
+     * DELETE /dashboard/gps-sessions/{sessionId}
+     * Remove all events for a given session.
+     */
+    public function destroy(string $sessionId): JsonResponse
+    {
+        $userId = auth()->id();
+
+        $deleted = DB::table('external_events')
+            ->where('service', 'overlabels-mobile')
+            ->where('user_id', $userId)
+            ->whereRaw("raw_payload->>'session_id' = ?", [$sessionId])
+            ->delete();
+
+        if ($deleted === 0) {
+            return response()->json(['error' => 'Session not found.'], 404);
+        }
+
+        // Clear cached GeoJSON for this session
+        \Illuminate\Support\Facades\Cache::forget("gps_session_geojson_{$userId}_{$sessionId}");
+
+        return response()->json(['status' => 'ok', 'deleted' => $deleted]);
     }
 
     /**

@@ -10,6 +10,13 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Delete GPS sessions
+
+- DELETE `/dashboard/gps-sessions/{sessionId}` removes all events (location_update, session_start, session_end) for the given session UUID, scoped to the authenticated user.
+- Clears the cached GeoJSON for the deleted session.
+- Delete button on each session card with confirmation dialog and RekaToast feedback.
+- Session list reloads automatically after deletion.
+
 ## April 16th, 2026 - Map integration (Leaflet + OpenStreetMap)
 
 ### Session maps
