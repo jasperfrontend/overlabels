@@ -65,6 +65,11 @@ class OverlabelsMobileIntegrationController extends Controller
                 'map_sharing_enabled' => $mapSharingEnabled,
                 'map_delay_seconds' => $mapDelaySeconds,
                 'map_url' => $mapUrl,
+                'safe_zone' => isset($settings['safe_zone_lat']) ? [
+                    'lat' => $settings['safe_zone_lat'],
+                    'lng' => $settings['safe_zone_lng'],
+                    'radius' => $settings['safe_zone_radius'],
+                ] : null,
             ] : [
                 'connected' => false,
                 'enabled' => false,
@@ -76,6 +81,7 @@ class OverlabelsMobileIntegrationController extends Controller
                 'map_sharing_enabled' => false,
                 'map_delay_seconds' => 0,
                 'map_url' => null,
+                'safe_zone' => null,
             ],
         ]);
     }
@@ -124,6 +130,26 @@ class OverlabelsMobileIntegrationController extends Controller
         $this->controlService->provision($user, $driver);
 
         return back()->with('success', 'Overlabels GPS integration saved.');
+    }
+
+    public function clearSafeZone(): JsonResponse
+    {
+        $user = auth()->user();
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'overlabels-mobile')
+            ->first();
+
+        if (! $integration) {
+            return response()->json(['error' => 'Not connected.'], 404);
+        }
+
+        $settings = $integration->settings ?? [];
+        unset($settings['safe_zone_lat'], $settings['safe_zone_lng'], $settings['safe_zone_radius']);
+        $integration->settings = $settings;
+        $integration->save();
+
+        return response()->json(['status' => 'ok']);
     }
 
     public function regenerateToken(): RedirectResponse

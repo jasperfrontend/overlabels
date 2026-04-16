@@ -114,6 +114,11 @@ class ExternalWebhookController extends Controller
             return response()->json(['status' => 'ignored', 'reason' => 'Unsupported event type.']);
         }
 
+        // 6b. Handle settings_sync (no event storage, no controls, no alerts)
+        if ($eventType === 'settings_sync') {
+            return $this->handleSettingsSync($integration, $payload);
+        }
+
         // 7. Normalize event
         $normalizedEvent = $driver->normalizeEvent($payload, $eventType);
 
@@ -163,6 +168,37 @@ class ExternalWebhookController extends Controller
 
         // 11. Update integration's last_received_at
         $integration->update(['last_received_at' => now()]);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Handle a settings_sync event from the mobile app.
+     * Persists safe zone (and future settings) into the integration's settings jsonb.
+     * Does NOT create an external_events row.
+     */
+    private function handleSettingsSync(ExternalIntegration $integration, array $payload): JsonResponse
+    {
+        $settings = $integration->settings ?? [];
+
+        // Safe zone
+        if (array_key_exists('safe_zone_lat', $payload)) {
+            $lat = $payload['safe_zone_lat'];
+            $lng = $payload['safe_zone_lng'] ?? null;
+            $radius = $payload['safe_zone_radius'] ?? null;
+
+            if ($lat === null || $lng === null || $radius === null) {
+                // Clear safe zone
+                unset($settings['safe_zone_lat'], $settings['safe_zone_lng'], $settings['safe_zone_radius']);
+            } else {
+                $settings['safe_zone_lat'] = (float) $lat;
+                $settings['safe_zone_lng'] = (float) $lng;
+                $settings['safe_zone_radius'] = (int) $radius;
+            }
+        }
+
+        $integration->settings = $settings;
+        $integration->save();
 
         return response()->json(['status' => 'ok']);
     }

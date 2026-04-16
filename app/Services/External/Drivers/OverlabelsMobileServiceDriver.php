@@ -39,6 +39,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         return match ($event) {
             'session_start' => 'session_start',
             'session_end' => 'session_end',
+            'settings_sync' => 'settings_sync',
             default => 'location_update',
         };
     }
@@ -110,7 +111,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     public function getSupportedEventTypes(): array
     {
-        return ['location_update', 'session_start', 'session_end'];
+        return ['location_update', 'session_start', 'session_end', 'settings_sync'];
     }
 
     public function getAutoProvisionedControls(): array

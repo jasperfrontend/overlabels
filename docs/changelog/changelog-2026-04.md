@@ -10,6 +10,13 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Safe zone support
+
+- New `settings_sync` event type for the overlabels-mobile driver. The Android app can POST `{"event": "settings_sync", "safe_zone_lat": ..., "safe_zone_lng": ..., "safe_zone_radius": ...}` to store the safe zone in the integration's settings jsonb. No `external_events` row is created.
+- Sending null values for the safe zone fields clears it.
+- Settings page shows the configured safe zone (lat, lng, radius) with a "Clear safe zone" button.
+- The actual GPS filtering happens app-side - the backend just stores and displays the config.
+
 ## April 16th, 2026 - Delete GPS sessions
 
 - DELETE `/dashboard/gps-sessions/{sessionId}` removes all events (location_update, session_start, session_end) for the given session UUID, scoped to the authenticated user.
