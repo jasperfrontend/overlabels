@@ -17,7 +17,7 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: ['resources/js/app.ts', 'resources/js/overlay/app.js'],
+            input: ['resources/js/app.ts', 'resources/js/overlay/app.js', 'resources/js/map/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
@@ -47,6 +47,7 @@ export default defineConfig({
                         '@codemirror/state'
                     ],
                     websocket: ['pusher-js', 'laravel-echo'],
+                    leaflet: ['leaflet'],
                 }
             }
         }

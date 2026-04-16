@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\ExternalEventController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\ExternalEventTemplateMappingController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
@@ -438,6 +439,10 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{id}', [TwitchEventController::class, 'destroy']);
     });
 });
+
+// Public map pages (no auth, opt-in via map_sharing_enabled)
+Route::get('/map/{twitchId}', [MapController::class, 'live'])->name('map.live');
+Route::get('/map/{twitchId}/{sessionId}', [MapController::class, 'session'])->name('map.session');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

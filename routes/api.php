@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ExternalWebhookController;
+use App\Http\Controllers\Api\GpsSessionMapController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
@@ -73,6 +74,20 @@ Route::get('/expression/tags', [ExpressionTagController::class, 'index'])
 Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'getJobStatus'])
     ->name('tags.api.jobs')
     ->middleware('auth:sanctum');
+
+// GPS session map endpoints
+Route::get('/gps-sessions/{sessionId}/geojson', [GpsSessionMapController::class, 'authenticatedGeoJson'])
+    ->middleware(['auth:sanctum', 'throttle:60,1']);
+
+// Public map API endpoints (no auth, checks map_sharing_enabled)
+Route::prefix('/map')->group(function () {
+    Route::get('/{twitchId}/position', [GpsSessionMapController::class, 'currentPosition'])
+        ->middleware(['throttle:60,1'])
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+    Route::get('/{twitchId}/{sessionId}/geojson', [GpsSessionMapController::class, 'publicSessionGeoJson'])
+        ->middleware(['throttle:30,1'])
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+});
 
 // Twitch webhook endpoint - must be accessible without authentication or CSRF
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])

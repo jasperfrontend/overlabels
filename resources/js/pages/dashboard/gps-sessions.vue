@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Gauge, Mountain, Battery, Radio } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+
+const SessionMapInline = defineAsyncComponent(() => import('@/components/SessionMapInline.vue'));
 
 interface GpsSession {
   session_id: string;
@@ -96,6 +99,18 @@ function batteryDelta(start: number | null, end: number | null): string {
   if (diff > 0) return `+${diff}%`;
   if (diff < 0) return `${diff}%`;
   return '0%';
+}
+
+const expandedSessions = ref<Set<string>>(new Set());
+
+function toggleMap(sessionId: string) {
+  if (expandedSessions.value.has(sessionId)) {
+    expandedSessions.value.delete(sessionId);
+  } else {
+    expandedSessions.value.add(sessionId);
+  }
+  // Force reactivity
+  expandedSessions.value = new Set(expandedSessions.value);
 }
 
 function batteryColor(pct: number | null): string {
@@ -204,6 +219,20 @@ function batteryColor(pct: number | null): string {
               <p class="text-sm font-medium text-foreground">{{ session.ping_count.toLocaleString(userLocale) }}</p>
             </div>
           </div>
+
+          <!-- Map toggle -->
+          <div class="flex items-center gap-2">
+            <Button variant="outline" size="sm" @click="toggleMap(session.session_id)">
+              <Map class="h-3.5 w-3.5 mr-1.5" />
+              {{ expandedSessions.has(session.session_id) ? 'Hide map' : 'View map' }}
+            </Button>
+          </div>
+
+          <!-- Inline map -->
+          <SessionMapInline
+            v-if="expandedSessions.has(session.session_id)"
+            :session-id="session.session_id"
+          />
         </div>
       </div>
     </div>

@@ -21,6 +21,9 @@ interface IntegrationData {
   last_received_at: string | null;
   speed_unit: string;
   has_token: boolean;
+  map_sharing_enabled: boolean;
+  map_delay_seconds: number;
+  map_url: string | null;
 }
 
 const props = defineProps<{
@@ -36,10 +39,13 @@ const breadcrumbItems: BreadcrumbItem[] = [
 const form = useForm({
   speed_unit: props.integration.speed_unit ?? 'kmh',
   enabled: props.integration.connected ? props.integration.enabled : true,
+  map_sharing_enabled: props.integration.map_sharing_enabled ?? false,
+  map_delay_seconds: props.integration.map_delay_seconds ?? 0,
 });
 
 const copied = ref(false);
 const copiedUrl = ref(false);
+const copiedMap = ref(false);
 const resetting = ref(false);
 const regenerating = ref(false);
 const qrDataUrl = ref<string | null>(null);
@@ -67,6 +73,14 @@ function copyWebhookUrl() {
   navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
     copiedUrl.value = true;
     setTimeout(() => (copiedUrl.value = false), 2000);
+  });
+}
+
+function copyMapUrl() {
+  if (!props.integration.map_url) return;
+  navigator.clipboard.writeText(props.integration.map_url).then(() => {
+    copiedMap.value = true;
+    setTimeout(() => (copiedMap.value = false), 2000);
   });
 }
 
@@ -226,6 +240,55 @@ function formatDate(iso: string | null): string {
               <option value="mph">mph</option>
             </select>
           </div>
+
+          <!-- Map Sharing -->
+          <template v-if="integration.connected">
+            <Separator />
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label for="map_sharing_enabled">Public live map</Label>
+                <p class="text-muted-foreground text-sm">
+                  Share your live GPS location on a public map page. Anyone with the link can see where you are while tracking is active.
+                </p>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input
+                    id="map_sharing_enabled"
+                    v-model="form.map_sharing_enabled"
+                    type="checkbox"
+                    class="rounded border-sidebar"
+                  />
+                  <span class="text-sm text-foreground">Enable public map</span>
+                </label>
+              </div>
+
+              <div v-if="form.map_sharing_enabled" class="space-y-2">
+                <Label for="map_delay_seconds">Location delay</Label>
+                <p class="text-muted-foreground text-sm">
+                  Add a delay to your public location for safety. Viewers see where you were, not where you are.
+                </p>
+                <select
+                  id="map_delay_seconds"
+                  v-model.number="form.map_delay_seconds"
+                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                >
+                  <option :value="0">No delay (real-time)</option>
+                  <option :value="60">1 minute</option>
+                  <option :value="120">2 minutes</option>
+                  <option :value="300">5 minutes</option>
+                </select>
+              </div>
+
+              <div v-if="integration.map_url" class="space-y-1">
+                <Label>Your public map URL</Label>
+                <div class="flex gap-2">
+                  <Input :model-value="integration.map_url" readonly class="font-mono text-sm" />
+                  <Button type="button" variant="outline" size="sm" @click="copyMapUrl">
+                    {{ copiedMap ? 'Copied!' : 'Copy' }}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </template>
 
           <!-- Last received -->
           <p v-if="integration.connected" class="text-muted-foreground text-sm">

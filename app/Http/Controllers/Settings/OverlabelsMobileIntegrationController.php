@@ -46,6 +46,13 @@ class OverlabelsMobileIntegrationController extends Controller
                 .http_build_query(['endpoint' => $webhookUrl, 'token' => $token]);
         }
 
+        $settings = $integration?->settings ?? [];
+        $mapSharingEnabled = ! empty($settings['map_sharing_enabled']);
+        $mapDelaySeconds = (int) ($settings['map_delay_seconds'] ?? 0);
+        $mapUrl = $mapSharingEnabled && $integration
+            ? url("/map/{$user->twitch_id}")
+            : null;
+
         return Inertia::render('settings/integrations/overlabels-mobile', [
             'integration' => $integration ? [
                 'connected' => true,
@@ -55,6 +62,9 @@ class OverlabelsMobileIntegrationController extends Controller
                 'last_received_at' => $integration->last_received_at?->toIso8601String(),
                 'speed_unit' => ($integration->settings ?? [])['speed_unit'] ?? 'kmh',
                 'has_token' => ! empty($token),
+                'map_sharing_enabled' => $mapSharingEnabled,
+                'map_delay_seconds' => $mapDelaySeconds,
+                'map_url' => $mapUrl,
             ] : [
                 'connected' => false,
                 'enabled' => false,
@@ -63,6 +73,9 @@ class OverlabelsMobileIntegrationController extends Controller
                 'last_received_at' => null,
                 'speed_unit' => 'kmh',
                 'has_token' => false,
+                'map_sharing_enabled' => false,
+                'map_delay_seconds' => 0,
+                'map_url' => null,
             ],
         ]);
     }
@@ -74,6 +87,8 @@ class OverlabelsMobileIntegrationController extends Controller
         $validated = $request->validate([
             'speed_unit' => 'nullable|string|in:kmh,mph',
             'enabled' => 'nullable|boolean',
+            'map_sharing_enabled' => 'nullable|boolean',
+            'map_delay_seconds' => 'nullable|integer|in:0,60,120,300',
         ]);
 
         $isNew = ! ExternalIntegration::where('user_id', $user->id)
@@ -94,7 +109,11 @@ class OverlabelsMobileIntegrationController extends Controller
 
         $integration->settings = array_merge(
             $integration->settings ?? [],
-            ['speed_unit' => $validated['speed_unit'] ?? 'kmh'],
+            [
+                'speed_unit' => $validated['speed_unit'] ?? 'kmh',
+                'map_sharing_enabled' => (bool) ($validated['map_sharing_enabled'] ?? false),
+                'map_delay_seconds' => (int) ($validated['map_delay_seconds'] ?? 0),
+            ],
         );
 
         $integration->enabled = $isNew || (bool) ($validated['enabled'] ?? true);

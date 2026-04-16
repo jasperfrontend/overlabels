@@ -10,6 +10,30 @@
 - Existing GPSLogger integration is untouched - both can coexist during migration.
 - 14 feature tests covering the full webhook pipeline, control updates, distance accumulation, speed conversion, token regeneration, and the landing page.
 
+## April 16th, 2026 - Map integration (Leaflet + OpenStreetMap)
+
+### Session maps
+- "View map" button on each GPS session card lazy-loads an inline Leaflet map showing the route as a purple polyline with green (start) and red (end) circle markers.
+- GeoJSON API endpoint (`/api/gps-sessions/{sessionId}/geojson`) with Ramer-Douglas-Peucker route simplification and caching for completed sessions.
+
+### Public live map
+- `/map/{twitch_id}` shows a full-screen live map updated via the existing Reverb WebSocket channel (`alerts.{twitch_id}`). Marker moves smoothly as GPS pings arrive, with a trailing polyline.
+- When a location delay is configured, the live map polls the position API instead of WebSocket, returning the position from N seconds ago.
+
+### Public session maps
+- `/map/{twitch_id}/{session_id}` shows a completed session's route on a full-screen map with auto-fitting bounds.
+
+### Privacy controls
+- "Public live map" toggle and "Location delay" dropdown (0/1/2/5 minutes) added to the Overlabels GPS settings page.
+- Map pages return 404 when map sharing is not enabled. All settings stored in the integration's jsonb settings column (no migration).
+- Public map URL shown with copy button when sharing is enabled.
+
+### Architecture
+- Standalone Vite entry point (`resources/js/map/app.ts`) following the overlay pattern: Blade template injects config into `window.__MAP__`, Vue mounts LiveMap or SessionMap component.
+- Leaflet code-split into its own chunk (~43KB gzipped). WebSocket reuses the existing `websocket` chunk.
+- `RouteSimplifier` service implements Ramer-Douglas-Peucker for server-side polyline simplification.
+- Tiles from OpenStreetMap (free, zero config). One-line switch to MapTiler for dark theme later.
+
 ## April 16th, 2026 - GPS Sessions page
 
 - New `/dashboard/gps-sessions` page showing per-session stats: duration, distance, avg/max speed, elevation range, battery start/end with delta, and ping count.
