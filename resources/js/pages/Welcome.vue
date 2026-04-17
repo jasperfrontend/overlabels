@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import WelcomeNavbar from '@/components/welcome/WelcomeNavbar.vue';
 import SectionHero from '@/components/welcome/SectionHero.vue';
 import SectionSyntax from '@/components/welcome/SectionSyntax.vue';
+import SectionPlayground from '@/components/welcome/SectionPlayground.vue';
 import SectionControls from '@/pages/SectionControls.vue';
 import SectionConditionals from '@/pages/SectionConditionals.vue';
 import SectionEvents from '@/pages/SectionEvents.vue';
@@ -52,6 +53,7 @@ import SectionFooter from '@/pages/SectionFooter.vue';
     <WelcomeNavbar />
     <SectionHero />
     <SectionSyntax />
+    <SectionPlayground />
     <SectionControls />
     <SectionConditionals />
     <SectionEvents />

@@ -1,6 +1,11 @@
 # CHANGELOG APRIL 2026
 
-## April 17th, 2026 - Open session on public map from the dashboard
+## April 17th, 2026 - Interactive tag playground on the marketing page
+
+- New `SectionPlayground.vue` between `SectionSyntax` and `SectionControls` on the Welcome page. CodeMirror editor on the left, live rendered preview on the right, and a strip of one-click tag chips + presets above.
+- Sample data comes from `TemplateDataMapperService::getSampleTemplateData()` - the same service that feeds real preview renders - passed through as an Inertia `sampleData` prop on the `/` route. Type `[[[channel_name]]]` on the marketing page and it resolves to `wilko_dj` in the preview, identical to what the authenticated editor does.
+- Extracted the tag parser out of `OverlayRenderer.vue` into `resources/js/utils/tagParser.ts` (`TAG_REGEX`, `encodeHtml`, `replaceTagsWithFormatting`) so the renderer and the marketing playground share one implementation. `replaceTagsWithFormatting` now takes `locale` as an explicit argument instead of closing over `userLocale`.
+- Conditionals are intentionally not part of the playground - the homepage demo stays focused on "type a tag, watch it resolve" without pulling the full expression engine onto the marketing page.
 
 - Each GPS session card on `/dashboard/gps-sessions` now has an "Open full view" button that opens `/map/{twitch_id}/{session_id}` in a new tab.
 - Only rendered when `map_sharing_enabled` is true on the user's overlabels-mobile integration. If the user hasn't opted into public maps, the button is absent - no accidental link from private dashboard to public URL.

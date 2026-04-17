@@ -3,12 +3,12 @@
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
-use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\ExternalEventController;
-use App\Http\Controllers\MapController;
 use App\Http\Controllers\ExternalEventTemplateMappingController;
+use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
+use App\Http\Controllers\MapController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
@@ -23,6 +23,7 @@ use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\User;
+use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
 use Illuminate\Http\Request;
@@ -34,8 +35,10 @@ use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
+Route::get('/', function (TemplateDataMapperService $mapper) {
+    return Inertia::render('Welcome', [
+        'sampleData' => $mapper->getSampleTemplateData(),
+    ]);
 })->name('home');
 
 Route::get('/privacy', function () {
