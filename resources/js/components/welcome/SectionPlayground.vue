@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { html as htmlLang } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
@@ -14,43 +14,104 @@ type SampleData = Record<string, string | number | boolean>;
 const page = usePage();
 const sampleData = computed<SampleData>(() => (page.props.sampleData as SampleData | undefined) ?? {});
 
-const STARTER = `<div class="card">
-  <img src="[[[user_avatar]]]" alt="avatar" class="avatar" />
+const STARTER = `<style>
+  .card {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+  .card img {
+    width: 64px;
+    height: 64px;
+    border-radius: 9999px;
+    object-fit: cover;
+    border: 2px solid rgba(16, 185, 129, 0.5);
+  }
+  .card h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.25rem; }
+  .card p { margin: 0 0 0.25rem; opacity: 0.85; font-size: 0.9rem; }
+  .card strong { color: rgb(16, 185, 129); }
+</style>
+<div class="card">
+  <img src="[[[user_avatar]]]" alt="avatar" />
   <div>
     <h2>[[[channel_name]]]</h2>
-    <p class="game">Playing [[[channel_game]]]</p>
-    <p class="title">[[[channel_title]]]</p>
-    <div class="stats">
+    <p>Playing [[[channel_game]]]</p>
+    <p>[[[channel_title]]]</p>
+    <p>
       <strong>[[[followers_total]]]</strong> followers
       &middot; <strong>[[[subscribers_total]]]</strong> subs
-    </div>
+    </p>
   </div>
 </div>`;
 
 const PRESETS: { label: string; snippet: string; blurb: string }[] = [
   {
     label: 'Channel card',
-    blurb: 'The basics: name, avatar, game, follower count.',
+    blurb: 'The basics: name, avatar, game, follower count. You write the CSS.',
     snippet: STARTER,
   },
   {
     label: 'Goal bar',
-    blurb: 'Pipe formatters turn a raw number into something readable.',
-    snippet: `<div class="goal">
+    blurb: 'Pipe formatters turn raw numbers into locale-aware output.',
+    snippet: `<style>
+  .goal {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+  }
+  .goal h3 { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; }
+  .goal .bar {
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.15);
+    overflow: hidden;
+    margin: 0.5rem 0;
+  }
+  .goal .fill { height: 100%; background: rgb(14, 165, 233); width: 62%; }
+  .goal p { opacity: 0.75; font-size: 0.9rem; margin: 0; }
+  .goal strong { color: rgb(14, 165, 233); }
+</style>
+<div class="goal">
+  <h3>[[[goals_latest_description]]]</h3>
+  <div class="bar"><div class="fill"></div></div>
   <p>
     <strong>[[[goals_latest_current|number]]]</strong>
     of <strong>[[[goals_latest_target|number]]]</strong> followers
   </p>
-  <p class="muted">[[[goals_latest_description]]]</p>
 </div>`,
   },
   {
     label: 'Latest follower',
     blurb: 'Any tag works anywhere in your HTML. No special syntax.',
-    snippet: `<div class="card">
+    snippet: `<style>
+  .thanks {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(236, 72, 153, 0.12));
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+  .thanks h3 { margin: 0 0 0.25rem; font-size: 1rem; font-weight: 500; opacity: 0.7; }
+  .thanks h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .thanks p { margin: 0; opacity: 0.7; font-size: 0.9rem; }
+</style>
+<div class="thanks">
   <h3>Thanks for the follow,</h3>
   <h1>[[[followers_latest_name]]]!</h1>
-  <p class="muted">You are follower #[[[followers_total]]]</p>
+  <p>Follower #[[[followers_total]]]</p>
 </div>`,
   },
 ];
@@ -108,13 +169,36 @@ const tagCount = computed(() => {
 const isDark = ref(false);
 let observer: MutationObserver | null = null;
 
+// Shadow-DOM preview: user <style> blocks are isolated from the rest of the page.
+const previewRoot = ref<HTMLDivElement | null>(null);
+let shadowMount: HTMLElement | null = null;
+
+const SHADOW_RESET = `:host { display: block; color: inherit; font-family: inherit; line-height: 1.5; }
+* { box-sizing: border-box; }`;
+
+function syncPreview() {
+  if (shadowMount) shadowMount.innerHTML = rendered.value;
+}
+
 onMounted(() => {
   isDark.value = document.documentElement.classList.contains('dark');
   observer = new MutationObserver(() => {
     isDark.value = document.documentElement.classList.contains('dark');
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  if (previewRoot.value) {
+    const root = previewRoot.value.attachShadow({ mode: 'open' });
+    const styleEl = document.createElement('style');
+    styleEl.textContent = SHADOW_RESET;
+    root.appendChild(styleEl);
+    shadowMount = document.createElement('div');
+    root.appendChild(shadowMount);
+    syncPreview();
+  }
 });
+
+watch(rendered, syncPreview);
 
 onUnmounted(() => {
   observer?.disconnect();
@@ -215,7 +299,7 @@ const extensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ? [on
               <Eye class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               <span class="font-mono text-xs text-emerald-600 dark:text-emerald-400">live preview - sample data</span>
             </div>
-            <div class="playground-preview h-[360px] overflow-auto p-5 text-foreground" v-html="rendered" />
+            <div ref="previewRoot" class="h-[360px] overflow-auto p-5 text-foreground" />
           </div>
         </div>
 
@@ -230,85 +314,3 @@ const extensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ? [on
   </section>
 </template>
 
-<style scoped>
-.playground-preview :deep(.card) {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-:global(.dark) .playground-preview :deep(.card) {
-  background: rgba(0, 0, 0, 0.25);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.playground-preview :deep(.avatar) {
-  width: 64px;
-  height: 64px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid rgba(16, 185, 129, 0.4);
-}
-
-.playground-preview :deep(h1) {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem;
-}
-
-.playground-preview :deep(h2) {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem;
-}
-
-.playground-preview :deep(h3) {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0 0 0.25rem;
-  opacity: 0.75;
-}
-
-.playground-preview :deep(p) {
-  margin: 0 0 0.25rem;
-}
-
-.playground-preview :deep(.game) {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.playground-preview :deep(.title) {
-  font-size: 0.875rem;
-  opacity: 0.7;
-}
-
-.playground-preview :deep(.stats) {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.playground-preview :deep(.muted) {
-  opacity: 0.65;
-  font-size: 0.875rem;
-}
-
-.playground-preview :deep(.goal) {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.25);
-}
-
-.playground-preview :deep(strong) {
-  color: rgb(16, 185, 129);
-}
-
-:global(.dark) .playground-preview :deep(strong) {
-  color: rgb(52, 211, 153);
-}
-</style>

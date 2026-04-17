@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 17th, 2026 - Playground preview isolated via Shadow DOM
+
+- The playground's live preview now mounts user output into a shadow root (`attachShadow({ mode: 'open' })`) so `<style>` blocks in the user's snippet can no longer leak CSS onto the marketing page.
+- Each preset now ships its own `<style>` block instead of relying on `:deep()` rules in the component. The starter Channel Card, Goal Bar, and Latest Follower presets all include scoped CSS, which is closer to how a real Overlabels template is authored anyway.
+- A tiny reset is injected into the shadow root so `color` and `font-family` inherit from the host and `* { box-sizing: border-box; }` holds by default.
+
 ## April 17th, 2026 - Interactive tag playground on the marketing page
 
 - New `SectionPlayground.vue` between `SectionSyntax` and `SectionControls` on the Welcome page. CodeMirror editor on the left, live rendered preview on the right, and a strip of one-click tag chips + presets above.
