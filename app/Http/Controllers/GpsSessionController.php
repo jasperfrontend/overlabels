@@ -88,7 +88,6 @@ class GpsSessionController extends Controller
                 AND user_id = ?
                 AND raw_payload->>'session_id' IS NOT NULL
             GROUP BY raw_payload->>'session_id'
-            HAVING COUNT(*) FILTER (WHERE event_type = 'location_update') > 0
             ORDER BY MIN(created_at) DESC
             LIMIT 50
         ", [$userId]);
