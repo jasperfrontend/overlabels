@@ -411,11 +411,14 @@ The overlay includes built-in resilience for the unpredictable environment of OB
 7. The overlay frontend receives the payload, checks alert targeting rules, and renders into the alert DOM node
 8. The configured transition plays, the alert displays for `duration_ms` milliseconds, then auto-dismisses
 
-### Script Tag Policy
+### Script/Embed/iFrame Tag Policy
 
-`<script>` tags are stripped from all template content - `head`, `html`, `css`, and meta fields - before storage.
-This is enforced client-side before form submission. External stylesheets, font libraries, icon libraries,
-and CDN-hosted CSS are all permitted. Inline scripts are not.
+`<script>`, `<embed>`, `<iframe>` and any other scary tag are stripped from all template content - `head`, `html`, 
+`css`, and meta fields - before storage. This is visualised client-side but also enforced server-side
+before form submission. External stylesheets, font libraries, icon libraries,
+and CDN-hosted CSS are all permitted. Inline scripts are not. Neither are embeds. This is to prevent
+XSS attacks and to prevent accidental embedding of malicious content. If you need to embed a third-party
+script, you're out of luck. Simple as that.
 
 ---
 
@@ -518,7 +521,7 @@ duration, and transitions out. No interaction required.
 | Backend           | Laravel 12, PHP 8.4                    |
 | Frontend          | Vue 3 (Composition API), TypeScript    |
 | Styling           | TailwindCSS v4                         |
-| UI Components     | Shadcn/Vue                             |
+| UI Components     | RekaUI/Shadcn/Vue                      |
 | Full-stack bridge | Inertia.js                             |
 | Real-time         | Laravel Reverb (self-hosted WebSocket) |
 | Code editor       | CodeMirror                             |
@@ -582,6 +585,18 @@ The copying system exists because good design compounds –
 every overlay that exists is a starting point for the next one.
 
 Overlabels overlays are free forever, for anyone, anytime. No paywalls. No tiers. No limits.
+
+### If everything is free, how do you keep Overlabels sustainable?
+Good question. First and foremost: Overlabels' footprint is actually rather small. The whole backend
+is hosted on a few instances and the total hosting costs are negligible. In fact, the monthly fee
+for my PhpStorm licence is more expensive than the cost of hosting Overlabels itself.
+
+### But that still doesn't explain how you plan on making Overlabels sustainable?
+Don't worry. I have plans ❤. For now, Overlabels is small and easy to maintain.
+
+Of course you're free to send me a [Ko-fi](https://ko-fi.com/jasperfromoverlabels) or 
+[StreamElements](https://streamelements.com/jasperdiscovers/tip) tip if you like what I do! Be sure to mention
+this README somewhere in your tip so I can link your support back to Overlabels.
 
 ---
 
