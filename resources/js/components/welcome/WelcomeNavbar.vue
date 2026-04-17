@@ -25,6 +25,7 @@ const mobileMenuOpen = ref(false);
         </Link>
         <div class="hidden text-foreground items-center gap-6 lg:flex">
           <a href="#tags" class="text-sm hover:text-sky-500">Tags</a>
+          <a href="#playground" class="text-sm hover:text-sky-500">Playground</a>
           <a href="#controls"
              class="text-sm hover:text-sky-500">Controls</a>
           <a href="#conditionals" class="text-sm hover:text-sky-500">Conditionals</a>
@@ -71,6 +72,7 @@ const mobileMenuOpen = ref(false);
         <a
           v-for="item in [
               { href: '#tags', label: 'Tags' },
+              { href: '#playground', label: 'Playground' },
               { href: '#controls', label: 'Controls' },
               { href: '#conditionals', label: 'Conditionals' },
               { href: '#events', label: 'Events' },
