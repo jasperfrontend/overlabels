@@ -502,11 +502,13 @@ public display or embedding without authentication.
 
 ## Adding to OBS
 
-1. Generate a token in your Overlabels dashboard
-2. Copy your static overlay URL: `https://overlabels.com/overlay/{slug}#your_token`
-3. Add it as a **Browser Source** in OBS
-4. Set the source dimensions to match your canvas (typically 1920x1080)
-5. Your overlay is live
+1. Generate a static overlay in Overlabels. Every alert template requires a static overlay to render into.
+2. A big "Add to OBS" button appears in the template viewer. Click it and a secure overlay URL is copied to your 
+   clipboard. You can also drag the button directly into OBS and it will generate a Browser Source with perfect 
+   defaults for you. This is the recommended way to add an overlay to OBS
+3. If you want to manually add a browser source, copy the URL and paste it into a new Browser Source in OBS.
+4. Set the source dimensions to match your canvas (typically 1920x1080).
+5. Your overlay is live!
 
 When a Twitch event fires - a follow, a sub, a raid - or an external event arrives - a Ko-fi donation, a
 StreamLabs tip&hellip; The alert template renders over the static overlay, transitions in, displays for the configured
@@ -533,7 +535,7 @@ duration, and transitions out. No interaction required.
 
 ## Self-Hosting
 
-No single support is provided when you self-host Overlabels. The following instructions are for development and testing.
+**No support is provided when you self-host Overlabels.** The following instructions are for development and testing.
 
 ```bash
 git clone https://github.com/jasperfrontend/overlabels
@@ -578,13 +580,24 @@ For local development, use [ngrok](https://ngrok.com) or a similar tunnel.
 Overlabels is built on one assumption: streamers who can write a `<div>` should not be locked out of good
 overlays by proprietary tools.
 
-The triple-bracket syntax exists because simplicity is different from limitation. The Controls system
-exists because overlays should respond to a streamer's intent, not just Twitch's event stream.
-External integrations exist because a streamer's ecosystem extends beyond Twitch.
-The copying system exists because good design compounds –
-every overlay that exists is a starting point for the next one.
+- The triple-bracket syntax exists because simplicity is different from limitation. 
+- The Controls system exists because overlays should respond to a streamer's intent, not just Twitch's event stream.
+- External integrations exist because a streamer's ecosystem extends beyond Twitch.
+- The copying system exists because good design compounds. Every overlay that exists is a starting point for the next 
+  one.
+- Overlabels overlays are free forever, for anyone, anytime. No paywalls. No tiers. Loose limits.
 
-Overlabels overlays are free forever, for anyone, anytime. No paywalls. No tiers. No limits.
+## Limitations of the Overlabels service
+- You can create up to 1000 overlays per account.
+- Each overlay can have up to 50 Controls.
+- We do not offer asset hosting.
+- Any script, iframe, embed is stripped from your overlay templates before saving.
+
+## Limitations of the (NEW) Android GPS location app
+> [!NOTE]
+> The Android GPS Location app is still in active development and not ready for release just yet. 
+- You can only use the app to display a single location.
+- You can only send GPS location data to Overlabels every 5–60 seconds (user setting).
 
 ### If everything is free, how do you keep Overlabels sustainable?
 Good question. First and foremost: Overlabels' footprint is actually rather small. The whole backend
