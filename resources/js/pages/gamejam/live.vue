@@ -109,7 +109,7 @@ function readableVote(vote: string | null): string {
   if (vote === 'a') return 'attack';
   if (vote.startsWith('a:')) return `attack slot ${vote.slice(2)}`;
   if (vote.startsWith('p:')) {
-    const arrows: Record<string, string> = { left: '<-', right: '->', up: '^', down: 'v' };
+    const arrows: Record<string, string> = { left: '←', right: '→', up: '↑', down: '↓' };
     const parts = vote.slice(2).split(':');
     const dir = parts[0];
     const steps = parts[1] ? parseInt(parts[1], 10) : 1;
@@ -569,7 +569,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-rows: repeat(9, var(--tile));
   gap: 0;
-  border: 2px solid #2a2a2e;
+  border: none;
 }
 .grid-row {
   display: grid;
