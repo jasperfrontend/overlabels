@@ -19,15 +19,30 @@ class GameStateChanged implements ShouldBroadcast
 
     public function __construct(Game $game)
     {
-        $game->loadMissing('user', 'joiners');
+        $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots');
 
         $this->broadcasterId = (string) $game->user->twitch_id;
-        $this->snapshot = [
+        $this->snapshot = self::snapshotFor($game);
+    }
+
+    public static function snapshotFor(Game $game): array
+    {
+        $game->loadMissing('joiners', 'hiddenTiles', 'doors', 'hidingSpots');
+
+        return [
             'game' => [
                 'id' => $game->id,
                 'status' => $game->status,
                 'current_round' => $game->current_round,
+                'current_room' => $game->current_room,
                 'player_hp' => $game->player_hp,
+                'player_x' => $game->player_x,
+                'player_y' => $game->player_y,
+                'player_hiding_this_round' => $game->player_hiding_this_round,
+                'weapon_slot_1' => $game->weapon_slot_1,
+                'weapon_slot_2' => $game->weapon_slot_2,
+                'weapon_slot_1_uses' => $game->weapon_slot_1_uses,
+                'wears_iron_fists' => $game->wears_iron_fists,
                 'round_duration_seconds' => $game->round_duration_seconds,
                 'round_started_at' => $game->round_started_at?->toISOString(),
                 'last_resolved_action' => $game->last_resolved_action,
@@ -47,6 +62,37 @@ class GameStateChanged implements ShouldBroadcast
                     'blocks_remaining' => $j->blocks_remaining,
                 ])
                 ->all(),
+            'world' => [
+                'hidden_tiles' => $game->hiddenTiles
+                    ->where('room', $game->current_room)
+                    ->values()
+                    ->map(fn ($t) => [
+                        'x' => $t->x,
+                        'y' => $t->y,
+                        'content' => $t->revealed_at_round !== null ? $t->content : null,
+                        'revealed_at_round' => $t->revealed_at_round,
+                    ])
+                    ->all(),
+                'doors' => $game->doors
+                    ->where('room', $game->current_room)
+                    ->values()
+                    ->map(fn ($d) => [
+                        'x' => $d->x,
+                        'y' => $d->y,
+                        'state' => $d->state,
+                        'turns_remaining' => $d->turns_remaining,
+                    ])
+                    ->all(),
+                'hiding_spots' => $game->hidingSpots
+                    ->where('room', $game->current_room)
+                    ->values()
+                    ->map(fn ($s) => [
+                        'x' => $s->x,
+                        'y' => $s->y,
+                        'open_sides' => $s->open_sides,
+                    ])
+                    ->all(),
+            ],
         ];
     }
 

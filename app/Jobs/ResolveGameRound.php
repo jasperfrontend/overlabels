@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\GameStateChanged;
 use App\Models\Game;
 use App\Models\GameJoiner;
+use App\Services\Gamejam\ActionApplier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,7 @@ class ResolveGameRound implements ShouldQueue
 
     public function handle(): void
     {
-        $game = Game::with('joiners')->find($this->gameId);
+        $game = Game::with(['joiners', 'hiddenTiles', 'doors', 'hidingSpots'])->find($this->gameId);
         if (! $game || $game->status !== Game::STATUS_RUNNING) {
             return;
         }
@@ -57,9 +58,10 @@ class ResolveGameRound implements ShouldQueue
                 || $j->last_vote_round < $game->current_round,
         );
 
-        DB::transaction(function () use ($game, $tally, $winner, $slackers) {
-            $hpLoss = 0;
+        $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers) {
+            app(ActionApplier::class)->apply($game, $winner);
 
+            $hpLoss = 0;
             foreach ($slackers as $joiner) {
                 $newBlocks = $joiner->blocks_remaining - 1;
                 if ($newBlocks <= 0) {
@@ -82,21 +84,36 @@ class ResolveGameRound implements ShouldQueue
                 ->where('joined_round', '<=', $game->current_round)
                 ->update(['status' => GameJoiner::STATUS_ACTIVE]);
 
-            $game->update([
-                'current_round' => $game->current_round + 1,
-                'player_hp' => max(1, $game->player_hp - $hpLoss),
-                'round_started_at' => now(),
+            $ended = $game->status !== Game::STATUS_RUNNING;
+            $newPlayerHp = $ended
+                ? $game->player_hp
+                : max(1, $game->player_hp - $hpLoss);
+
+            $update = [
+                'player_hp' => $newPlayerHp,
                 'last_resolved_action' => $winner,
                 'last_resolved_tally' => $tally,
                 'last_resolved_at' => now(),
-            ]);
+            ];
+
+            if (! $ended) {
+                $update['current_round'] = $game->current_round + 1;
+                $update['round_started_at'] = now();
+                $update['player_hiding_this_round'] = false;
+            }
+
+            $game->update($update);
+
+            return $ended;
         });
 
         $game->refresh();
         GameStateChanged::dispatch($game);
 
-        self::dispatch($game->id, $game->current_round)
-            ->delay(now()->addSeconds($game->round_duration_seconds));
+        if (! $gameEnded) {
+            self::dispatch($game->id, $game->current_round)
+                ->delay(now()->addSeconds($game->round_duration_seconds));
+        }
     }
 
     /**

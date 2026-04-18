@@ -6,6 +6,7 @@ use App\Events\GameStateChanged;
 use App\Jobs\ResolveGameRound;
 use App\Models\Game;
 use App\Models\User;
+use App\Services\Gamejam\RoomSeeder;
 use Illuminate\Console\Command;
 
 class GamejamStart extends Command
@@ -39,6 +40,9 @@ class GamejamStart extends Command
             'round_duration_seconds' => $duration,
             'round_started_at' => now(),
         ]);
+
+        app(RoomSeeder::class)->seedRoom1($game);
+        $game->refresh();
 
         GameStateChanged::dispatch($game);
 
