@@ -255,6 +255,8 @@ For this to dispatch, the four commands must be registered in the channel's bot 
 
 2: DE-sword durability: it has endless durability, confirmed.
 
-3: Player exit tile per room: Exit tiles are fixed on row 1, column 5 like this Zelda level ([screenshot](https://cdn.mobygames.com/50df8784-ab83-11ed-81e3-02420a000199.webp))
+3: Player exit tile per room: Exit tiles are fixed on row 1, column 5 like this Zelda level [screenshot](https://cdn.mobygames.com/50df8784-ab83-11ed-81e3-02420a000199.webp). Do watch out: this Zelda level uses an event 
+amount of tiles, so the door is divided over two tiles because there's no mid tile because they used 12 blocks. We 
+use 11 blocks in our game, so the door is always on tile (1,5).
 
 4: Broadcast payload shape: as suggested: start with full snapshot for simplicity. Should be fine.
