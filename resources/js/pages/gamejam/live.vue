@@ -82,6 +82,7 @@ const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: []
 const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
+const debugEnabledLive = ref(props.debugEnabled);
 const connected = ref(false);
 const now = ref(Date.now());
 const attackFlashTiles = ref<Set<string>>(new Set());
@@ -359,6 +360,9 @@ onMounted(() => {
   }
 
   channel = echo.channel(`gamejam.${props.broadcasterId}`);
+  channel.listen('.gamejam.debug', (payload: { enabled: boolean }) => {
+    debugEnabledLive.value = payload.enabled;
+  });
   channel.listen(
     '.gamejam.state',
     (
@@ -402,7 +406,10 @@ onUnmounted(() => {
   document.documentElement.classList.remove('gamejam-fullbleed');
   if (tickInterval) clearInterval(tickInterval);
   if (attackFlashTimeout) clearTimeout(attackFlashTimeout);
-  if (channel) channel.stopListening('.gamejam.state');
+  if (channel) {
+    channel.stopListening('.gamejam.state');
+    channel.stopListening('.gamejam.debug');
+  }
 });
 </script>
 
@@ -542,7 +549,7 @@ onUnmounted(() => {
           </ul>
         </div>
 
-        <div v-if="debugEnabled" class="debug-panel">
+        <div v-if="debugEnabledLive" class="debug-panel">
           <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
           <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
             <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>

@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Gamejam: debug panel flips live without a page reload
+
+- `gamejam:debug on/off/toggle` now broadcasts a `GamejamDebugToggled` event on the existing `gamejam.{broadcasterId}` Reverb channel after writing the cache. `live.vue` binds `.gamejam.debug` on the same channel it already uses for `.gamejam.state`, so the panel appears/disappears immediately - no refresh, no session reload.
+- Frontend-side the `debugEnabled` Inertia prop is still read once on mount to seed a local `debugEnabledLive` ref; the listener mutates that ref on every broadcast. Template gate is `v-if="debugEnabledLive"`. `stopListening('.gamejam.debug')` is paired with the existing unmount cleanup so the binding doesn't leak across SPA navigations.
+
 ## April 18th, 2026 - Gamejam: `php artisan gamejam:debug` toggles the live-board debug panel
 
 - New artisan command `gamejam:debug {on|off|toggle} {login?}` flips a per-broadcaster cache flag that gates the temporary tile-class debug panel on the live board. Default broadcaster when no login is passed: the user with an active game (latest by updated_at), falling back to the first bot-enabled user - mirrors the `gamejam:start` resolve convention.

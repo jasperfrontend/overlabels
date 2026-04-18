@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\GamejamDebugToggled;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -43,6 +44,8 @@ class GamejamDebug extends Command
         } else {
             Cache::forget($key);
         }
+
+        GamejamDebugToggled::dispatch((string) $user->twitch_id, $next);
 
         $label = $next ? 'ON' : 'OFF';
         $this->info("Gamejam debug panel is now {$label} for {$user->name}.");
