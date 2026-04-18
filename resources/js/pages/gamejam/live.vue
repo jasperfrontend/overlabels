@@ -110,8 +110,11 @@ function readableVote(vote: string | null): string {
   if (vote.startsWith('a:')) return `attack slot ${vote.slice(2)}`;
   if (vote.startsWith('p:')) {
     const arrows: Record<string, string> = { left: '<-', right: '->', up: '^', down: 'v' };
-    const dir = vote.slice(2);
-    return `${arrows[dir] ?? ''} ${dir}`.trim();
+    const parts = vote.slice(2).split(':');
+    const dir = parts[0];
+    const steps = parts[1] ? parseInt(parts[1], 10) : 1;
+    const base = `${arrows[dir] ?? ''} ${dir}`.trim();
+    return steps > 1 ? `${base} x${steps}` : base;
   }
   return vote;
 }

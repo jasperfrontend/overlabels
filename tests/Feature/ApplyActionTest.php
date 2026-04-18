@@ -197,6 +197,89 @@ test('walking onto a bomb damages the player and can lose the game', function ()
     Bus::assertNotDispatched(ResolveGameRound::class);
 });
 
+test('multi-step winning p:up:3 moves the player three tiles', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9]);
+    voter($game, 'p:up:3');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(5)->and($game->player_y)->toBe(6);
+});
+
+test('multi-step move stops at the grid edge without wrapping', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 3]);
+    voter($game, 'p:up:8');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_y)->toBe(1);
+});
+
+test('multi-step move stops at a closed door and progresses it once', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 4]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'p:up:5');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($game->player_y)->toBe(2)
+        ->and($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1);
+});
+
+test('multi-step move wins immediately on reaching an open exit door', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 5]);
+    GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_OPEN,
+        'turns_remaining' => null,
+    ]);
+    voter($game, 'p:up:8');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_WON)
+        ->and($game->player_y)->toBe(1);
+});
+
+test('multi-step move stops when a mid-path bomb kills the player', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_hp' => 1, 'player_x' => 5, 'player_y' => 9]);
+    GameHiddenTile::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 7,
+        'content' => GameHiddenTile::CONTENT_BOMB,
+    ]);
+    voter($game, 'p:up:5');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_LOST)
+        ->and($game->player_y)->toBe(7);
+});
+
 test('hide is cleared on the following round', function () {
     Bus::fake();
     $game = makeWorldGame(['player_hiding_this_round' => true]);

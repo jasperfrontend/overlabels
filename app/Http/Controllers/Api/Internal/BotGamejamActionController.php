@@ -20,6 +20,7 @@ class BotGamejamActionController extends Controller
             'username' => 'required|string',
             'action' => 'required|string|in:join,vote_move,vote_hide,vote_attack',
             'direction' => 'nullable|string|in:up,down,left,right',
+            'steps' => 'nullable|integer|min:1|max:8',
             'weapon_slot' => 'nullable|integer|in:1,2',
         ]);
 
@@ -39,7 +40,10 @@ class BotGamejamActionController extends Controller
 
         return match ($data['action']) {
             'join' => $this->handleJoin($game, $data),
-            'vote_move' => $this->handleVote($game, $data, "p:{$data['direction']}"),
+            'vote_move' => $this->handleVote($game, $data, $this->encodeMoveVote(
+                $data['direction'],
+                (int) ($data['steps'] ?? 1),
+            )),
             'vote_hide' => $this->handleVote($game, $data, 'h'),
             'vote_attack' => $this->handleVote(
                 $game,
@@ -47,6 +51,11 @@ class BotGamejamActionController extends Controller
                 isset($data['weapon_slot']) ? "a:{$data['weapon_slot']}" : 'a',
             ),
         };
+    }
+
+    private function encodeMoveVote(string $direction, int $steps): string
+    {
+        return $steps > 1 ? "p:{$direction}:{$steps}" : "p:{$direction}";
     }
 
     private function handleJoin(Game $game, array $data): JsonResponse

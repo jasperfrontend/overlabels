@@ -15,7 +15,10 @@ class ActionApplier
         }
 
         if (str_starts_with($action, 'p:')) {
-            $this->move($game, substr($action, 2));
+            $parts = explode(':', substr($action, 2));
+            $direction = $parts[0];
+            $steps = isset($parts[1]) ? max(1, (int) $parts[1]) : 1;
+            $this->move($game, $direction, $steps);
 
             return;
         }
@@ -29,7 +32,7 @@ class ActionApplier
         // a, a:1, a:2 - no-op for room 1 (no zombies yet)
     }
 
-    private function move(Game $game, string $direction): void
+    private function move(Game $game, string $direction, int $steps = 1): void
     {
         $delta = match ($direction) {
             'up' => [0, -1],
@@ -43,12 +46,25 @@ class ActionApplier
             return;
         }
 
+        for ($i = 0; $i < $steps; $i++) {
+            if (! $this->stepOnce($game, $delta)) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * Advance one tile. Returns true if the next step should be attempted,
+     * false if the momentum is spent (wall, door interaction, game end).
+     */
+    private function stepOnce(Game $game, array $delta): bool
+    {
         $targetX = $game->player_x + $delta[0];
         $targetY = $game->player_y + $delta[1];
 
         if ($targetX < RoomSeeder::GRID_MIN || $targetX > RoomSeeder::GRID_MAX
             || $targetY < RoomSeeder::GRID_MIN || $targetY > RoomSeeder::GRID_MAX) {
-            return;
+            return false;
         }
 
         $door = $game->doors->first(fn (GameDoor $d) => $d->room === $game->current_room
@@ -59,16 +75,18 @@ class ActionApplier
             if ($door->state !== GameDoor::STATE_OPEN) {
                 $this->progressDoor($door);
 
-                return;
+                return false;
             }
 
             $game->update(['player_x' => $targetX, 'player_y' => $targetY]);
 
             if ($this->isExitDoor($game, $targetX, $targetY)) {
                 $game->update(['status' => Game::STATUS_WON]);
+
+                return false;
             }
 
-            return;
+            return true;
         }
 
         $game->update(['player_x' => $targetX, 'player_y' => $targetY]);
@@ -81,6 +99,8 @@ class ActionApplier
         if ($tile) {
             $this->revealTile($game, $tile);
         }
+
+        return $game->status === Game::STATUS_RUNNING;
     }
 
     private function progressDoor(GameDoor $door): void

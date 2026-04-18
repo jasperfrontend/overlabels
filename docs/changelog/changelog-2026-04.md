@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Multi-step movement votes
+
+- Chat can now vote `!p up 2` to move the player up to 8 tiles in one round. Encoding: `p:dir` for a single step (backward-compatible), `p:dir:N` for N >= 2. Bot-side parser needs to forward `steps` in the action payload.
+- `BotGamejamActionController` validates `steps` as `integer|min:1|max:8` and encodes the vote via a tiny `encodeMoveVote()` helper so the 1-step case stays `p:dir` on the wire.
+- `ActionApplier::move()` iterates `stepOnce()` and short-circuits on any interaction: wall bumps, closed/opening doors (which still progress once), open exit doors (win), and bomb-kill mid-path (loss) all halt remaining steps. One vote = one "turn" of momentum.
+- `live.vue` readable-vote formatter shows `^ up x3` for multi-step votes; single-step renders unchanged.
+- Tests: 5 new `ApplyActionTest` cases (3-tile move, edge-stop, door-stop, exit-win, mid-path bomb kill) plus 3 new `BotGamejamActionTest` cases (encoding with/without suffix, out-of-range validation).
+
 ## April 17th, 2026 - Playground preview isolated via Shadow DOM
 
 - The playground's live preview now mounts user output into a shadow root (`attachShadow({ mode: 'open' })`) so `<style>` blocks in the user's snippet can no longer leak CSS onto the marketing page.

@@ -203,6 +203,61 @@ test('active joiner can vote_move and the vote is stored as a string', function 
         ->and($joiner->blocks_remaining)->toBe(3);
 });
 
+test('vote_move with steps=1 stores the vote without a step suffix', function () {
+    $user = makeGamejamUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 2,
+    ]);
+    $joiner = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '42',
+        'username' => 'Girly456',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+    ]);
+
+    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 1]))
+        ->assertOk();
+
+    expect($joiner->fresh()->current_vote)->toBe('p:up');
+});
+
+test('vote_move with steps>=2 stores the vote with a step suffix', function () {
+    $user = makeGamejamUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 2,
+    ]);
+    $joiner = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '42',
+        'username' => 'Girly456',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+    ]);
+
+    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'right', 'steps' => 3]))
+        ->assertOk();
+
+    expect($joiner->fresh()->current_vote)->toBe('p:right:3');
+});
+
+test('vote_move rejects steps outside the 1-8 range', function () {
+    $user = makeGamejamUser();
+    Game::create(['user_id' => $user->id, 'status' => Game::STATUS_RUNNING]);
+
+    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 9]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['steps']);
+
+    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 0]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['steps']);
+});
+
 test('vote_hide stores h with no args', function () {
     $user = makeGamejamUser();
     $game = Game::create(['user_id' => $user->id, 'status' => Game::STATUS_RUNNING, 'current_round' => 3]);
