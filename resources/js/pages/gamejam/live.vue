@@ -114,6 +114,13 @@ const grouped = computed(() => ({
   inactive: joiners.value.filter((j) => j.status === 'inactive'),
 }));
 
+const blocks = computed(() => {
+  return (blocksRemaining: number) => {
+    const MAX_BLOCKS = 3;
+    return Array.from({ length: MAX_BLOCKS }, (_, i) => i < blocksRemaining ? 'filled' : 'empty');
+  };
+});
+
 function readableVote(vote: string | null): string {
   if (!vote) return '-';
   if (vote === 'h') return 'hide';
@@ -137,12 +144,14 @@ function tileAt(x: number, y: number) {
   const door = world.value.doors.find((d) => d.x === x && d.y === y) ?? null;
   const hidingSpot = world.value.hiding_spots.find((s) => s.x === x && s.y === y) ?? null;
   const hiddenTile = world.value.hidden_tiles.find((t) => t.x === x && t.y === y) ?? null;
-  return { player, door, hidingSpot, hiddenTile };
+  const blocker = world.value.blockers.find((b) => b.x === x && b.y === y) ?? null;
+  return { player, door, hidingSpot, hiddenTile, blocker };
 }
 
 function tileGlyph(x: number, y: number): string {
-  const { player, door, hiddenTile } = tileAt(x, y);
+  const { player, door, hiddenTile, blocker } = tileAt(x, y);
   if (player) return 'P';
+  if (blocker) return '#';
   if (door) {
     if (door.state === 'open') return 'D.';
     if (door.state === 'opening') return 'D-';
@@ -171,9 +180,10 @@ function tileGlyph(x: number, y: number): string {
 }
 
 function tileClasses(x: number, y: number): string[] {
-  const { player, door, hidingSpot, hiddenTile } = tileAt(x, y);
+  const { player, door, hidingSpot, hiddenTile, blocker } = tileAt(x, y);
   const classes: string[] = [];
   if (player) classes.push('tile-player');
+  if (blocker) classes.push('tile-blocker');
   if (door) classes.push(`tile-door tile-door-${door.state}`);
   if (hidingSpot) classes.push('tile-hiding');
   if (hiddenTile) {
@@ -341,7 +351,17 @@ onUnmounted(() => {
               <div class="name">{{ j.username }} <span class="vote">{{ readableVote(j.current_vote) }}</span></div>
               <div class="meta">
                 <span class="joiner-joined">Joined in round {{ j.joined_round }}</span>
-                <span class="joiner-energy">Energy: {{ j.blocks_remaining }}</span>
+                <span class="joiner-energy">
+                  Energy:
+                  <span class="blocks-visual">
+                    <span
+                      v-for="(state, i) in blocks(j.blocks_remaining)"
+                      :key="i"
+                      class="block"
+                      :class="state"
+                    ></span>
+                  </span>
+                </span>
                 <span v-if="j.last_vote_round" class="joiner-exited">Last played in round {{ j.last_vote_round }}</span>
               </div>
             </li>
@@ -575,7 +595,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.7rem;
   border-radius: 4px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.15rem;
 }
 .joiner.dim { opacity: 0.5; }
@@ -666,6 +686,14 @@ onUnmounted(() => {
   background: #2a1f1a;
   outline: 2px dashed #6b4226;
   outline-offset: -4px;
+}
+.tile-blocker {
+  background: repeating-linear-gradient(45deg, #3a3a3a 0 8px, #555 8px 16px);
+  box-shadow: inset 0 0 0 2px #222;
+}
+.tile-blocker .glyph {
+  color: #ddd;
+  text-shadow: 0 1px 2px #000;
 }
 .tile-door { background: #2b2b19; }
 .tile-door .glyph { color: #e0c860; }
