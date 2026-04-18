@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
+import { ShieldAlert } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
   { title: 'Twitch Bot', href: '/help/bot' },
   { title: 'Commands', href: '/help/bot/commands' },
 ];
+
+const STORAGE_KEY = 'help.bot.commands.controlsWarningAck';
+const iUnderstand = ref(
+  typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) === '1',
+);
+watch(iUnderstand, (value) => {
+  if (typeof localStorage === 'undefined') return;
+  if (value) localStorage.setItem(STORAGE_KEY, '1');
+  else localStorage.removeItem(STORAGE_KEY);
+});
 
 type Tier = 'everyone' | 'subscriber' | 'vip' | 'moderator' | 'broadcaster';
 
@@ -120,6 +132,70 @@ const commands: BotCommandDoc[] = [
   >
     <div class="mb-8">
       <h1 class="mb-4 text-4xl font-bold">Bot Commands</h1>
+
+      <div class="mb-8 rounded-lg border border-amber-500 bg-amber-500/20 p-5" v-if="!iUnderstand">
+        <h2 class="mb-2 font-semibold text-xl text-amber-500">
+          <ShieldAlert class="mr-2 inline-block h-5 w-5" />
+          Control commands are OFF by default - you must opt in per channel
+        </h2>
+        <p class="mb-3 text-foreground">
+          As of April 2026, every command on this page that reads or writes a control (everything except the
+          two below) is gated behind a per-channel controls-access flag. The default is <strong>off</strong>.
+          Until you flip it on, the bot will ignore <code>!control</code>, <code>!set</code>,
+          <code>!increment</code>, <code>!decrement</code>, <code>!reset</code>, <code>!enable</code>,
+          <code>!disable</code>, and <code>!toggle</code> entirely - it won't even acknowledge them in chat.
+        </p>
+        <p class="mb-3 text-foreground">
+          To turn control commands on for your channel, type this in your own chat:
+        </p>
+        <div class="mb-3 rounded-md border border-sidebar bg-background/50 p-3 font-mono text-md">
+          <div class="text-foreground">
+            <span class="text-sky-400">@broadcaster:</span> !enablecontrols
+          </div>
+          <div class="mt-1 text-foreground">
+            <span class="text-amber-400">@overlabels:</span> chat control commands are now enabled
+          </div>
+        </div>
+        <p class="mb-3 text-foreground">
+          To turn them back off:
+        </p>
+        <div class="rounded-md border border-sidebar bg-background/50 p-3 font-mono text-md">
+          <div class="text-foreground">
+            <span class="text-sky-400">@broadcaster:</span> !disablecontrols
+          </div>
+          <div class="mt-1 text-foreground">
+            <span class="text-amber-400">@overlabels:</span> chat control commands are now disabled
+          </div>
+        </div>
+        <p class="mt-3 text-md text-foreground">
+          Both commands are <strong>broadcaster only</strong>. Your mods and viewers cannot flip the switch.
+          Leave the flag off if your channel is doing something chat-interactive where you don't want viewers
+          poking at your counters or booleans. Flip it on when you want mods or yourself to drive overlay state
+          from chat.
+        </p>
+        <p class="mt-3 text-md text-foreground">
+          <button class="btn btn-primary cursor-pointer" @click="iUnderstand = true">
+            I understand, let's go!
+          </button>
+        </p>
+      </div>
+
+      <div
+        v-else
+        class="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm"
+      >
+        <p class="text-foreground">
+          <ShieldAlert class="mr-1 inline-block h-4 w-4 text-amber-500" />
+          Bot commands not working? Type <code>!enablecontrols</code> in your chat (broadcaster only).
+        </p>
+        <button
+          class="cursor-pointer text-sm text-amber-500 underline hover:text-amber-400"
+          @click="iUnderstand = false"
+        >
+          Show details
+        </button>
+      </div>
+
       <p class="text-lg text-foreground">
         These are the commands the @overlabels bot ships with. Every command targets one of your controls by
         its key. Service-managed controls (Ko-fi, StreamLabs, StreamElements counters) are intentionally
