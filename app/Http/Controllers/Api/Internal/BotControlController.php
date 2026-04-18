@@ -24,6 +24,10 @@ class BotControlController extends Controller
             return response()->json(['error' => 'channel not found'], 404);
         }
 
+        if (! $user->getBotSetting('controls_enabled', false)) {
+            return response()->json(['reply' => null], 403);
+        }
+
         $control = $this->userControlsQuery($user, $key)->first();
         if (! $control) {
             return response()->json(['error' => 'control not found'], 404);
@@ -56,6 +60,10 @@ class BotControlController extends Controller
         $user = $this->resolveUser($login);
         if (! $user) {
             return response()->json(['error' => 'channel not found'], 404);
+        }
+
+        if (! $user->getBotSetting('controls_enabled', false)) {
+            return response()->json(['reply' => null], 403);
         }
 
         $controls = $this->userControlsQuery($user, $key)->with('template')->get();

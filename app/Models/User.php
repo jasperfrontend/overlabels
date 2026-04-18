@@ -117,6 +117,7 @@ class User extends Authenticatable
         'locale',
         'is_system_user',
         'bot_enabled',
+        'bot_settings',
     ];
 
     /**
@@ -147,9 +148,23 @@ class User extends Authenticatable
             'eventsub_auto_connect' => 'boolean',
             'onboarded_at' => 'datetime',
             'twitch_data' => 'array',
+            'bot_settings' => 'array',
             'password' => 'hashed',
             'is_system_user' => 'boolean',
         ];
+    }
+
+    public function getBotSetting(string $key, mixed $default = null): mixed
+    {
+        return $this->bot_settings[$key] ?? $default;
+    }
+
+    public function setBotSetting(string $key, mixed $value): void
+    {
+        $settings = $this->bot_settings ?? [];
+        $settings[$key] = $value;
+        $this->bot_settings = $settings;
+        $this->save();
     }
 
     public function isAdmin(): bool

@@ -199,10 +199,11 @@ test('tokens store encrypts tokens at rest', function () {
 // Helpers (Phase 2)
 // ──────────────────────────────────────────────────────────────────────────────
 
-function makeOptedInUser(string $login = 'streamer_a', bool $enabled = true): User
+function makeOptedInUser(string $login = 'streamer_a', bool $enabled = true, bool $controlsEnabled = true): User
 {
     return User::factory()->create([
         'bot_enabled' => $enabled,
+        'bot_settings' => ['controls_enabled' => $controlsEnabled],
         'twitch_data' => ['login' => $login],
         'twitch_id' => (string) fake()->unique()->randomNumber(9),
     ]);
@@ -651,4 +652,115 @@ test('outbox does not return already-sent messages', function () {
         ->json('messages');
 
     expect($response)->toBe([]);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Controls-access gate (controls_enabled flag)
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('controls show returns 403 silently when controls_enabled is off', function () {
+    $user = makeOptedInUser(controlsEnabled: false);
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'deaths',
+        'label' => 'Deaths',
+        'type' => 'counter',
+        'value' => '7',
+        'source_managed' => false,
+    ]);
+
+    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+        ->assertStatus(403)
+        ->assertExactJson(['reply' => null]);
+});
+
+test('controls update returns 403 silently when controls_enabled is off', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = makeOptedInUser(controlsEnabled: false);
+    $control = makeBotControl($user, 'deaths', value: '3');
+
+    $this->postJson(
+        '/api/internal/bot/controls/streamer_a/deaths',
+        ['action' => 'increment'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(403)->assertExactJson(['reply' => null]);
+
+    expect($control->fresh()->value)->toBe('3');
+    Event::assertNotDispatched(ControlValueUpdated::class);
+});
+
+test('controls show works when bot_settings is null (defaults to disabled)', function () {
+    $user = User::factory()->create([
+        'bot_enabled' => true,
+        'bot_settings' => null,
+        'twitch_data' => ['login' => 'streamer_a'],
+    ]);
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'deaths',
+        'type' => 'counter',
+        'value' => '0',
+        'source_managed' => false,
+    ]);
+
+    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+        ->assertStatus(403);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Controls-access settings endpoint
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('controls-access returns 403 without secret', function () {
+    $this->postJson('/api/internal/bot/settings/streamer_a/controls-access', ['enabled' => true])
+        ->assertStatus(403);
+});
+
+test('controls-access returns 404 with null reply for unknown channel', function () {
+    $this->postJson(
+        '/api/internal/bot/settings/nobody/controls-access',
+        ['enabled' => true],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(404)->assertExactJson(['reply' => null]);
+});
+
+test('controls-access validates enabled boolean', function () {
+    makeOptedInUser();
+
+    $this->postJson(
+        '/api/internal/bot/settings/streamer_a/controls-access',
+        ['enabled' => 'yes'],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertStatus(422)->assertJsonValidationErrors(['enabled']);
+});
+
+test('controls-access enables the flag and returns confirmation reply', function () {
+    $user = makeOptedInUser(controlsEnabled: false);
+
+    $this->postJson(
+        '/api/internal/bot/settings/streamer_a/controls-access',
+        ['enabled' => true],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJson([
+        'reply' => 'chat control commands are now enabled',
+    ]);
+
+    expect($user->fresh()->getBotSetting('controls_enabled'))->toBeTrue();
+});
+
+test('controls-access disables the flag and returns confirmation reply', function () {
+    $user = makeOptedInUser(controlsEnabled: true);
+
+    $this->postJson(
+        '/api/internal/bot/settings/streamer_a/controls-access',
+        ['enabled' => false],
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJson([
+        'reply' => 'chat control commands are now disabled',
+    ]);
+
+    expect($user->fresh()->getBotSetting('controls_enabled'))->toBeFalse();
 });
