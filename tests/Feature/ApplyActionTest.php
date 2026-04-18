@@ -138,7 +138,7 @@ test('bumping an opening door does not advance it', function () {
         ->and($door->turns_remaining)->toBe(1);
 });
 
-test('walking onto an open exit door wins the game and stops the tick loop', function () {
+test('walking through an open exit door in rooms 1-4 advances to the next room and reseeds', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 2]);
     GameDoor::create([
@@ -148,6 +148,37 @@ test('walking onto an open exit door wins the game and stops the tick loop', fun
         'y' => 1,
         'state' => GameDoor::STATE_OPEN,
         'turns_remaining' => null,
+        'is_exit' => true,
+    ]);
+    voter($game, 'p:up');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_RUNNING)
+        ->and($game->current_room)->toBe(2)
+        ->and($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(9);
+
+    // Room 2 should have its own freshly-seeded exit door.
+    $room2Exit = GameDoor::where('game_id', $game->id)
+        ->where('room', 2)
+        ->where('is_exit', true)
+        ->first();
+    expect($room2Exit)->not->toBeNull();
+});
+
+test('walking through an open exit door in room 5 wins the game and stops the tick loop', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 2, 'current_room' => 5]);
+    GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 5,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_OPEN,
+        'turns_remaining' => null,
+        'is_exit' => true,
     ]);
     voter($game, 'p:up');
 
@@ -158,6 +189,23 @@ test('walking onto an open exit door wins the game and stops the tick loop', fun
         ->and($game->player_y)->toBe(1);
 
     Bus::assertNotDispatched(ResolveGameRound::class);
+});
+
+test('a blocker tile blocks player movement like a wall', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 5]);
+    \App\Models\GameBlocker::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 4,
+    ]);
+    voter($game, 'p:up');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(5)->and($game->player_y)->toBe(5);
 });
 
 test('walking onto an hp_restore tile heals the player by payload amount', function () {
@@ -243,16 +291,17 @@ test('multi-step move stops at a closed door without progressing it', function (
         ->and($door->turns_remaining)->toBe(2);
 });
 
-test('multi-step move wins immediately on reaching an open exit door', function () {
+test('multi-step move wins immediately on reaching the room 5 exit door', function () {
     Bus::fake();
-    $game = makeWorldGame(['player_x' => 5, 'player_y' => 5]);
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 5, 'current_room' => 5]);
     GameDoor::create([
         'game_id' => $game->id,
-        'room' => 1,
+        'room' => 5,
         'x' => 5,
         'y' => 1,
         'state' => GameDoor::STATE_OPEN,
         'turns_remaining' => null,
+        'is_exit' => true,
     ]);
     voter($game, 'p:up:8');
 
@@ -606,16 +655,18 @@ test('player can win by opening a closed door with attack then walking through n
     $game = makeWorldGame([
         'player_x' => 5,
         'player_y' => 2,
+        'current_room' => 5,
         'weapon_slot_1' => Game::WEAPON_FISTS,
         'weapon_slot_2' => Game::WEAPON_DE_SWORD,
     ]);
     GameDoor::create([
         'game_id' => $game->id,
-        'room' => 1,
+        'room' => 5,
         'x' => 5,
         'y' => 1,
         'state' => GameDoor::STATE_CLOSED,
         'turns_remaining' => 2,
+        'is_exit' => true,
     ]);
     $joiner = voter($game, 'a:2');
 

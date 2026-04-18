@@ -3,6 +3,7 @@
 namespace App\Services\Gamejam;
 
 use App\Models\Game;
+use App\Models\GameBlocker;
 use App\Models\GameDoor;
 use App\Models\GameHiddenTile;
 
@@ -73,6 +74,14 @@ class ActionApplier
             return false;
         }
 
+        $blocker = $game->blockers->first(fn (GameBlocker $b) => $b->room === $game->current_room
+            && $b->x === $targetX
+            && $b->y === $targetY);
+
+        if ($blocker) {
+            return false;
+        }
+
         $door = $game->doors->first(fn (GameDoor $d) => $d->room === $game->current_room
             && $d->x === $targetX
             && $d->y === $targetY);
@@ -83,8 +92,12 @@ class ActionApplier
 
         $game->update(['player_x' => $targetX, 'player_y' => $targetY]);
 
-        if ($door && $this->isExitDoor($game, $targetX, $targetY)) {
-            $game->update(['status' => Game::STATUS_WON]);
+        if ($door && $door->is_exit) {
+            if ($game->current_room >= 5) {
+                $game->update(['status' => Game::STATUS_WON]);
+            } else {
+                app(RoomSeeder::class)->advanceTo($game, $game->current_room + 1);
+            }
 
             return false;
         }
@@ -186,12 +199,6 @@ class ActionApplier
                 $game->update(['status' => Game::STATUS_LOST]);
             }
         }
-    }
-
-    private function isExitDoor(Game $game, int $x, int $y): bool
-    {
-        // Room 1 exit is top-middle; treat any door on the top row as an exit for now.
-        return $y === 1;
     }
 
     private function revealTile(Game $game, GameHiddenTile $tile): void
