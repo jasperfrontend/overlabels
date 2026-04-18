@@ -22,7 +22,7 @@ const chestItems: ChestItem[] = [
   },
   {
     name: 'Destruction sword',
-    effect: 'Fills weapon slot 2 permanently, 2 damage per hit. Cast with !a:2.',
+    effect: 'Fills weapon slot 2 permanently, 2 damage per hit. Cast with !a 2.',
     tone: 'good',
   },
   {
@@ -70,14 +70,9 @@ const commands: Command[] = [
     example: '!h',
   },
   {
-    command: '!a',
-    summary: 'Propose attacking with weapon slot 1 (fists by default). Hits every closed door in the 3x3 around the player, diagonals included.',
-    example: '!a',
-  },
-  {
-    command: '!a:2',
-    summary: 'Attack with weapon slot 2 (destruction sword, if you have one). Deals 2 damage per hit instead of 1.',
-    example: '!a:2',
+    command: '!a [slot]',
+    summary: 'Propose attacking. Defaults to slot 1 (fists, or regular sword if you picked one up). !a 2 uses slot 2 (destruction sword, if you have one) which deals 2 damage per hit instead of 1. Hits every closed door in the 3x3 around the player, diagonals included.',
+    example: '!a 2',
   },
   {
     command: '!s',
@@ -242,7 +237,7 @@ const chestClass: Record<ChestItem['tone'], string> = {
       </p>
       <p>
         A <strong>destruction sword</strong> fills slot 2 and never expires. 2 damage per hit, no HP cost. Cast
-        it with <code class="rounded bg-sidebar px-1">!a:2</code> when you want to blow through a tough door.
+        it with <code class="rounded bg-sidebar px-1">!a 2</code> when you want to blow through a tough door.
       </p>
       <p class="text-muted-foreground text-sm">
         All attacks are AoE - the weapon you choose determines the damage, but the shape is always the 3x3 around
