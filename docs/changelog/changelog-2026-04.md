@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - AoE flash feedback on attack resolve
+
+- When an `!a` action is the winning vote, the 8 tiles around the player briefly pulse red in `gamejam/live.vue` so viewers can see exactly which tiles the attack covered. Duration ~900ms, then the flash fades.
+- Client-derived from `last_resolved_action` + `player_x/y` in the incoming snapshot; no new server fields. The attack doesn't move the player, so the player position in the just-resolved snapshot is the position at which the attack happened.
+- Re-triggered on every new `last_resolved_at`, so back-to-back attacks across rounds each get their own pulse. An initial page load with a pre-existing "last action was attack" does not flash - we only animate on a newly-arrived timestamp.
+
 ## April 18th, 2026 - Doors open via attack, not by walking into them
 
 - `!p` no longer progresses closed or opening doors - bumping them now halts movement the same way a wall does. Opening a closed door is exclusively an `!a` action, which matches the GDD: doors are obstacles, not reverse-proxies for the move command.

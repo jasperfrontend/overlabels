@@ -76,9 +76,14 @@ const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
 const connected = ref(false);
 const now = ref(Date.now());
+const attackFlashTiles = ref<Set<string>>(new Set());
 
 let channel: any = null;
 let tickInterval: ReturnType<typeof setInterval> | null = null;
+let attackFlashTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastFlashedResolvedAt: string | null = props.snapshot?.game?.last_resolved_at ?? null;
+
+const ATTACK_FLASH_MS = 900;
 
 const GRID_SIZE = 9;
 const rows = Array.from({ length: GRID_SIZE }, (_, i) => i + 1);
@@ -167,7 +172,44 @@ function tileClasses(x: number, y: number): string[] {
   if (hiddenTile) {
     classes.push(hiddenTile.revealed_at_round === null ? 'tile-hidden' : 'tile-revealed');
   }
+  if (attackFlashTiles.value.has(`${x},${y}`)) classes.push('tile-attack-flash');
   return classes;
+}
+
+function triggerAttackFlash(px: number, py: number) {
+  const tiles = new Set<string>();
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      if (dx === 0 && dy === 0) continue;
+      const tx = px + dx;
+      const ty = py + dy;
+      if (tx < 1 || tx > GRID_SIZE || ty < 1 || ty > GRID_SIZE) continue;
+      tiles.add(`${tx},${ty}`);
+    }
+  }
+
+  if (attackFlashTimeout) {
+    clearTimeout(attackFlashTimeout);
+    attackFlashTimeout = null;
+  }
+  attackFlashTiles.value = new Set();
+
+  requestAnimationFrame(() => {
+    attackFlashTiles.value = tiles;
+    attackFlashTimeout = setTimeout(() => {
+      attackFlashTiles.value = new Set();
+      attackFlashTimeout = null;
+    }, ATTACK_FLASH_MS);
+  });
+}
+
+function maybeFlashAttack(g: GamePayload) {
+  const action = g.last_resolved_action;
+  if (action !== 'a' && !action?.startsWith('a:')) return;
+  if (!g.last_resolved_at || g.last_resolved_at === lastFlashedResolvedAt) return;
+  if (g.player_x === null || g.player_y === null) return;
+  lastFlashedResolvedAt = g.last_resolved_at;
+  triggerAttackFlash(g.player_x, g.player_y);
 }
 
 onMounted(() => {
@@ -189,12 +231,14 @@ onMounted(() => {
     game.value = payload.game;
     joiners.value = payload.joiners;
     world.value = payload.world ?? emptyWorld;
+    maybeFlashAttack(payload.game);
   });
 });
 
 onUnmounted(() => {
   document.documentElement.classList.remove('gamejam-fullbleed');
   if (tickInterval) clearInterval(tickInterval);
+  if (attackFlashTimeout) clearTimeout(attackFlashTimeout);
   if (channel) channel.stopListening('.gamejam.state');
 });
 </script>
@@ -623,6 +667,24 @@ onUnmounted(() => {
 .tile-player .glyph {
   color: #fff;
   text-shadow: 0 0 10px #4f8ef7;
+}
+
+.tile-attack-flash {
+  animation: attackFlash 0.9s ease-out;
+}
+@keyframes attackFlash {
+  0% {
+    background: #7a2b2b;
+    box-shadow: inset 0 0 24px rgba(255, 140, 90, 0.9);
+  }
+  40% {
+    background: #5a2424;
+    box-shadow: inset 0 0 16px rgba(255, 140, 90, 0.55);
+  }
+  100% {
+    background: inherit;
+    box-shadow: none;
+  }
 }
 
 .grid-empty {
