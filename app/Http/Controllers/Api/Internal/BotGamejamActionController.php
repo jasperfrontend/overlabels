@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Internal;
 
+use App\Events\GameStateChanged;
 use App\Http\Controllers\Controller;
 use App\Models\Game;
 use App\Models\GameJoiner;
@@ -50,17 +51,14 @@ class BotGamejamActionController extends Controller
 
     private function handleJoin(Game $game, array $data): JsonResponse
     {
-        return DB::transaction(function () use ($game, $data) {
+        $accepted = DB::transaction(function () use ($game, $data) {
             $joiner = GameJoiner::where('game_id', $game->id)
                 ->where('twitch_user_id', $data['twitch_user_id'])
                 ->lockForUpdate()
                 ->first();
 
             if ($joiner && in_array($joiner->status, [GameJoiner::STATUS_PENDING, GameJoiner::STATUS_ACTIVE], true)) {
-                return response()->json([
-                    'accepted' => false,
-                    'reply' => "you're already in - HP pool at {$game->player_hp}",
-                ], 200);
+                return false;
             }
 
             if ($joiner && $joiner->status === GameJoiner::STATUS_INACTIVE) {
@@ -87,11 +85,23 @@ class BotGamejamActionController extends Controller
 
             $game->increment('player_hp');
 
-            return response()->json([
-                'accepted' => true,
-                'reply' => "joined the raid - HP pool now {$game->fresh()->player_hp}",
-            ], 200);
+            return true;
         });
+
+        if (! $accepted) {
+            return response()->json([
+                'accepted' => false,
+                'reply' => "you're already in - HP pool at {$game->player_hp}",
+            ], 200);
+        }
+
+        $game->refresh();
+        GameStateChanged::dispatch($game);
+
+        return response()->json([
+            'accepted' => true,
+            'reply' => "joined the raid - HP pool now {$game->player_hp}",
+        ], 200);
     }
 
     private function handleVote(Game $game, array $data, string $vote): JsonResponse
@@ -126,6 +136,8 @@ class BotGamejamActionController extends Controller
             'last_vote_round' => $game->current_round,
             'blocks_remaining' => 3,
         ]);
+
+        GameStateChanged::dispatch($game);
 
         return response()->json([
             'accepted' => true,

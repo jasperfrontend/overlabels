@@ -22,6 +22,7 @@ use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Jobs\SetupUserEventSubSubscriptions;
+use App\Models\Game;
 use App\Models\User;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
@@ -40,6 +41,51 @@ Route::get('/', function (TemplateDataMapperService $mapper) {
         'sampleData' => $mapper->getSampleTemplateData(),
     ]);
 })->name('home');
+
+// gamejam routes
+Route::get('/gamejam', function () {
+    return Inertia::render('gamejam/index');
+})->name('gamejam');
+
+Route::get('/gamejam/live/{login}', function (string $login) {
+    $login = strtolower($login);
+
+    $user = User::where('bot_enabled', true)
+        ->whereNotNull('twitch_data')
+        ->get()
+        ->first(fn (User $u) => strtolower($u->twitch_data['login'] ?? '') === $login);
+
+    abort_unless($user, 404);
+
+    $game = Game::activeFor($user);
+
+    return Inertia::render('gamejam/live', [
+        'broadcasterId' => (string) $user->twitch_id,
+        'broadcasterLogin' => $login,
+        'snapshot' => $game ? [
+            'game' => [
+                'id' => $game->id,
+                'status' => $game->status,
+                'current_round' => $game->current_round,
+                'player_hp' => $game->player_hp,
+                'round_started_at' => $game->round_started_at?->toISOString(),
+            ],
+            'joiners' => $game->joiners()
+                ->orderBy('joined_round')
+                ->get()
+                ->map(fn ($j) => [
+                    'twitch_user_id' => $j->twitch_user_id,
+                    'username' => $j->username,
+                    'status' => $j->status,
+                    'joined_round' => $j->joined_round,
+                    'current_vote' => $j->current_vote,
+                    'last_vote_round' => $j->last_vote_round,
+                    'blocks_remaining' => $j->blocks_remaining,
+                ])
+                ->all(),
+        ] : null,
+    ]);
+})->where('login', '[a-z0-9_]+')->name('gamejam.live');
 
 Route::get('/privacy', function () {
     return Inertia::render('Privacy');
