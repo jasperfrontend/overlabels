@@ -41,6 +41,10 @@ class BotCommand extends Model
         ['command' => 'enable', 'permission_level' => 'moderator'],
         ['command' => 'disable', 'permission_level' => 'moderator'],
         ['command' => 'toggle', 'permission_level' => 'moderator'],
+        ['command' => 'join', 'permission_level' => 'everyone'],
+        ['command' => 'p', 'permission_level' => 'everyone'],
+        ['command' => 'h', 'permission_level' => 'everyone'],
+        ['command' => 'a', 'permission_level' => 'everyone'],
     ];
 
     /**
