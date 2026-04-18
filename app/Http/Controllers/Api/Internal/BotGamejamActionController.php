@@ -141,7 +141,7 @@ class BotGamejamActionController extends Controller
 
         return response()->json([
             'accepted' => true,
-            'reply' => null,
+            'reply' => 'ok',
         ], 200);
     }
 
