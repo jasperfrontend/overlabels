@@ -350,6 +350,20 @@ test('hide with no hiding spots in the current room is a no-op', function () {
         ->and($game->player_hiding_this_round)->toBeFalse();
 });
 
+test('stay resolves without moving, hiding, or attacking', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 7, 'player_hp' => 4]);
+    voter($game, 's');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(7)
+        ->and($game->player_hp)->toBe(4)
+        ->and($game->player_hiding_this_round)->toBeFalse();
+});
+
 test('fist attack on closed door progresses it and takes 1 HP from the player', function () {
     Bus::fake();
     $game = makeWorldGame([

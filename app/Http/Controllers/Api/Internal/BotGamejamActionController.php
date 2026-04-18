@@ -18,14 +18,18 @@ class BotGamejamActionController extends Controller
         $data = $request->validate([
             'twitch_user_id' => 'required|string',
             'username' => 'required|string',
-            'action' => 'required|string|in:join,vote_move,vote_hide,vote_attack',
+            'action' => 'required|string|in:join,vote_move,vote_hide,vote_attack,vote_stay',
             'direction' => 'nullable|string|in:up,down,left,right',
-            'steps' => 'nullable|integer|min:1|max:8',
+            'steps' => 'nullable|integer',
             'weapon_slot' => 'nullable|integer|in:1,2',
         ]);
 
         if ($data['action'] === 'vote_move' && empty($data['direction'])) {
             return response()->json(['reply' => 'direction required'], 422);
+        }
+
+        if ($data['action'] === 'vote_move' && isset($data['steps']) && ($data['steps'] < 1 || $data['steps'] > 3)) {
+            return response()->json(['reply' => 'steps must be between 1 and 3'], 422);
         }
 
         $user = $this->resolveUser($login);
@@ -45,6 +49,7 @@ class BotGamejamActionController extends Controller
                 (int) ($data['steps'] ?? 1),
             )),
             'vote_hide' => $this->handleVote($game, $data, 'h'),
+            'vote_stay' => $this->handleVote($game, $data, 's'),
             'vote_attack' => $this->handleVote(
                 $game,
                 $data,

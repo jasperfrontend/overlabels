@@ -245,17 +245,17 @@ test('vote_move with steps>=2 stores the vote with a step suffix', function () {
     expect($joiner->fresh()->current_vote)->toBe('p:right:3');
 });
 
-test('vote_move rejects steps outside the 1-8 range', function () {
+test('vote_move rejects steps outside the 1-3 range with a friendly reply', function () {
     $user = makeGamejamUser();
     Game::create(['user_id' => $user->id, 'status' => Game::STATUS_RUNNING]);
 
-    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 9]))
+    gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 4]))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['steps']);
+        ->assertExactJson(['reply' => 'steps must be between 1 and 3']);
 
     gamejamPost(baseBody(['action' => 'vote_move', 'direction' => 'up', 'steps' => 0]))
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['steps']);
+        ->assertExactJson(['reply' => 'steps must be between 1 and 3']);
 });
 
 test('vote_hide stores h with no args', function () {
@@ -269,6 +269,19 @@ test('vote_hide stores h with no args', function () {
     gamejamPost(baseBody(['action' => 'vote_hide']))->assertOk();
 
     expect(GameJoiner::first()->current_vote)->toBe('h');
+});
+
+test('vote_stay stores s so it participates in the tally', function () {
+    $user = makeGamejamUser();
+    $game = Game::create(['user_id' => $user->id, 'status' => Game::STATUS_RUNNING, 'current_round' => 3]);
+    GameJoiner::create([
+        'game_id' => $game->id, 'twitch_user_id' => '42', 'username' => 'Girly456',
+        'status' => GameJoiner::STATUS_ACTIVE, 'joined_round' => 1,
+    ]);
+
+    gamejamPost(baseBody(['action' => 'vote_stay']))->assertOk();
+
+    expect(GameJoiner::first()->current_vote)->toBe('s');
 });
 
 test('vote_attack without a slot stores a; with a slot stores a:n', function () {

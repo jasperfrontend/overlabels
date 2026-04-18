@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Gamejam polish: !p step range, !s stay, friendly step-range error
+
+- `!p <dir> N` is now limited to 1-3 steps (was 1-8). `!p up 4` returns a 422 with `{reply: "steps must be between 1 and 3"}` that the bot relays verbatim to chat - previously any `steps` over the cap fell through Laravel's default validation JSON, which the bot renders as "something went wrong". The range check now runs after loose integer validation so the error is shaped for chat relay.
+- `!s` (stay) is now properly wired end-to-end. The pre-existing short-circuit in the controller returned `{reply: "ok"}` before the game/joiner lookup, so the vote never got stored and never participated in the tally - effectively `!s` did nothing on the wire, not just at resolve. Now routed through `handleVote` with `'s'` encoding; `ActionApplier` falls through cleanly on unrecognized actions, giving `s` the correct "player stays put" semantics.
+- `live.vue` readable-vote formatter now renders `'s'` as "stay" in the joiner sidebar and tally entries.
+- Tests: controller step-range test re-pointed at values 4 and 0 (was 9 and 0) and now asserts the exact `{reply: ...}` shape. Added `vote_stay stores s` bot controller test and `stay resolves without moving, hiding, or attacking` apply-action test.
+
 ## April 18th, 2026 - !h teleports player to nearest hiding spot, hiding flag survives into snapshot
 
 - `ActionApplier::hide()` used to only flip `player_hiding_this_round = true` if the player was already standing on the hiding tile - otherwise it was a no-op. Per the GDD "Auto-moves player toward nearest hiding spot", `!h` now relocates the player to the nearest hiding spot in the current room (Manhattan distance) and sets the hiding flag in one step.

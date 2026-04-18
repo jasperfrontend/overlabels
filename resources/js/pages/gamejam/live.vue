@@ -111,6 +111,7 @@ const grouped = computed(() => ({
 function readableVote(vote: string | null): string {
   if (!vote) return '-';
   if (vote === 'h') return 'hide';
+  if (vote === 's') return 'stay';
   if (vote === 'a') return 'attack';
   if (vote.startsWith('a:')) return `attack slot ${vote.slice(2)}`;
   if (vote.startsWith('p:')) {
