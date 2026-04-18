@@ -52,7 +52,28 @@ class ResolveGameRound implements ShouldQueue
 
         $winner = $this->pickWinner($tally);
 
-        DB::transaction(function () use ($game, $tally, $winner) {
+        $slackers = $activeJoiners->filter(
+            fn (GameJoiner $j) => $j->last_vote_round === null
+                || $j->last_vote_round < $game->current_round,
+        );
+
+        DB::transaction(function () use ($game, $tally, $winner, $slackers) {
+            $hpLoss = 0;
+
+            foreach ($slackers as $joiner) {
+                $newBlocks = $joiner->blocks_remaining - 1;
+                if ($newBlocks <= 0) {
+                    $joiner->update([
+                        'blocks_remaining' => 0,
+                        'status' => GameJoiner::STATUS_INACTIVE,
+                        'hp_contributed' => false,
+                    ]);
+                    $hpLoss++;
+                } else {
+                    $joiner->update(['blocks_remaining' => $newBlocks]);
+                }
+            }
+
             GameJoiner::where('game_id', $game->id)
                 ->update(['current_vote' => null]);
 
@@ -63,6 +84,7 @@ class ResolveGameRound implements ShouldQueue
 
             $game->update([
                 'current_round' => $game->current_round + 1,
+                'player_hp' => max(1, $game->player_hp - $hpLoss),
                 'round_started_at' => now(),
                 'last_resolved_action' => $winner,
                 'last_resolved_tally' => $tally,

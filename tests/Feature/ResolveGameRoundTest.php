@@ -212,6 +212,172 @@ test('no-ops when the game has ended', function () {
     Bus::assertNothingDispatched();
 });
 
+test('decrements blocks_remaining for active joiners who did not vote', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 4,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    $voter = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '1',
+        'username' => 'Voter',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => 'p:left',
+        'last_vote_round' => 4,
+        'blocks_remaining' => 3,
+    ]);
+
+    $slacker = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '2',
+        'username' => 'Slacker',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => null,
+        'last_vote_round' => 2,
+        'blocks_remaining' => 3,
+    ]);
+
+    (new ResolveGameRound($game->id, 4))->handle();
+
+    expect($voter->fresh()->blocks_remaining)->toBe(3)
+        ->and($slacker->fresh()->blocks_remaining)->toBe(2)
+        ->and($slacker->fresh()->status)->toBe(GameJoiner::STATUS_ACTIVE);
+});
+
+test('decrements blocks for active joiners who have never voted', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 2,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    $lurker = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '1',
+        'username' => 'Lurker',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => null,
+        'last_vote_round' => null,
+        'blocks_remaining' => 3,
+    ]);
+
+    (new ResolveGameRound($game->id, 2))->handle();
+
+    expect($lurker->fresh()->blocks_remaining)->toBe(2);
+});
+
+test('flips joiner to inactive and refunds HP when blocks hit zero', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 3,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    $quitter = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '1',
+        'username' => 'Quitter',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => null,
+        'last_vote_round' => 1,
+        'blocks_remaining' => 1,
+        'hp_contributed' => true,
+    ]);
+
+    (new ResolveGameRound($game->id, 3))->handle();
+
+    $quitter->refresh();
+    expect($quitter->status)->toBe(GameJoiner::STATUS_INACTIVE)
+        ->and($quitter->blocks_remaining)->toBe(0)
+        ->and($quitter->hp_contributed)->toBeFalse()
+        ->and($game->fresh()->player_hp)->toBe(4);
+});
+
+test('floors player HP at 1 when mass leave would otherwise kill', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 3,
+        'player_hp' => 2,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    foreach (['1', '2', '3'] as $uid) {
+        GameJoiner::create([
+            'game_id' => $game->id,
+            'twitch_user_id' => $uid,
+            'username' => "user_{$uid}",
+            'status' => GameJoiner::STATUS_ACTIVE,
+            'joined_round' => 1,
+            'current_vote' => null,
+            'last_vote_round' => 1,
+            'blocks_remaining' => 1,
+            'hp_contributed' => true,
+        ]);
+    }
+
+    (new ResolveGameRound($game->id, 3))->handle();
+
+    expect($game->fresh()->player_hp)->toBe(1);
+});
+
+test('does not decrement blocks for pending joiners being promoted', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 2,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    $newbie = GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '1',
+        'username' => 'Newbie',
+        'status' => GameJoiner::STATUS_PENDING,
+        'joined_round' => 2,
+        'blocks_remaining' => 3,
+    ]);
+
+    (new ResolveGameRound($game->id, 2))->handle();
+
+    $newbie->refresh();
+    expect($newbie->status)->toBe(GameJoiner::STATUS_ACTIVE)
+        ->and($newbie->blocks_remaining)->toBe(3);
+});
+
 test('schedules the next tick after resolving', function () {
     Bus::fake();
 
