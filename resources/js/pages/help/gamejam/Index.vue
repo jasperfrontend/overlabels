@@ -21,7 +21,7 @@ const chestItems: ChestItem[] = [
     tone: 'good',
   },
   {
-    name: 'Destruction sword',
+    name: 'Double-edged sword',
     effect: 'Fills weapon slot 2 permanently, 2 damage per hit. Cast with !a 2.',
     tone: 'good',
   },
@@ -71,7 +71,7 @@ const commands: Command[] = [
   },
   {
     command: '!a [slot]',
-    summary: 'Propose attacking. Defaults to slot 1 (fists, or regular sword if you picked one up). !a 2 uses slot 2 (destruction sword, if you have one) which deals 2 damage per hit instead of 1. Hits every closed door in the 3x3 around the player, diagonals included.',
+    summary: 'Propose attacking. Defaults to slot 1 (fists, or regular sword if you picked one up). !a 2 uses slot 2 (double-edged sword, if you have one) which deals 2 damage per hit instead of 1. Reaches the 8 tiles around the player (horizontal, vertical, and diagonal - everything except the tile you stand on), so you have to be adjacent to the exit door to damage it.',
     example: '!a 2',
   },
   {
@@ -114,7 +114,7 @@ const chestClass: Record<ChestItem['tone'], string> = {
         <li>Each round, vote with one of the commands below. You cannot vote the same round you joined.</li>
         <li>Every round, every active player loses 1 energy block. Voting resets your energy back to 3.</li>
         <li>Miss enough rounds and you go inactive. The shared HP pool loses 1 when that happens.</li>
-        <li>Attack closed doors to open them. Walk through the exit to advance. Clear room 5 to win.</li>
+        <li>Attack doors to open them. Walk through an open exit door to advance. Clear room 5 to win.</li>
       </ul>
     </div>
 
@@ -190,18 +190,27 @@ const chestClass: Record<ChestItem['tone'], string> = {
     </h2>
     <div class="mb-10 space-y-3 text-foreground">
       <p>
-        The dungeon has <strong>5 rooms</strong>. Each room has walls, blockers, hidden tiles, some doors, and
-        one <strong>exit door</strong>. The goal of a room is to walk onto the exit tile. Step on it and the
-        game advances to the next room. Step onto the exit in room 5 and you win the raid.
+        The dungeon has <strong>5 rooms</strong> on a 9x9 grid. Each room has the player spawn at the bottom,
+        the <strong>exit door</strong> at the top (always the same tile), plus hidden chest tiles scattered
+        around. Room 5 also has pillars you cannot walk through. The only door in any room is the exit.
       </p>
       <p>
-        Doors can be <strong>closed</strong>, <strong>opening</strong>, or <strong>open</strong>. Players cannot
-        walk through closed or opening doors. To open a door, you attack it.
+        The exit door starts <strong>closed</strong>. You cannot walk through it. To pass, you have to attack it
+        until it opens, then walk onto its tile. Walking through the open exit in rooms 1 to 4 advances you to
+        the next room. Walking through the open exit in room 5 wins the raid.
       </p>
       <p>
-        <code class="rounded bg-sidebar px-1">!a</code> hits every closed or opening door in the 3x3 area around
-        the player - all 8 neighbouring tiles, diagonals included. One attack can chip away at several doors at
-        once, which matters when rooms have clusters of them.
+        Doors have three states: <strong>closed</strong>, <strong>opening</strong>, and <strong>open</strong>.
+        A movement vote into a closed or opening door tile does nothing - you simply do not move onto it.
+        Multi-step moves (e.g. <code class="rounded bg-sidebar px-1">!p up 3</code>) stop on the last walkable
+        tile before the door.
+      </p>
+      <p>
+        <code class="rounded bg-sidebar px-1">!a</code> hits the exit door if it is one of the 8 tiles around
+        the player - horizontal, vertical, and diagonal neighbours (everything except the tile you stand on).
+        Each room's exit has its own HP: room 1 needs 2 fist-damage hits to open, room 2 needs 3, room 3 needs
+        3, room 4 needs 4, room 5 needs 5. The double-edged sword does 2 damage per hit, which cuts that in
+        half.
       </p>
     </div>
 
@@ -236,7 +245,7 @@ const chestClass: Record<ChestItem['tone'], string> = {
         costs no HP. When the 10 uses are spent, slot 1 reverts to fists.
       </p>
       <p>
-        A <strong>destruction sword</strong> fills slot 2 and never expires. 2 damage per hit, no HP cost. Cast
+        A <strong>double-edged sword</strong> fills slot 2 and never expires. 2 damage per hit, no HP cost. Cast
         it with <code class="rounded bg-sidebar px-1">!a 2</code> when you want to blow through a tough door.
       </p>
       <p class="text-muted-foreground text-sm">
@@ -265,7 +274,7 @@ const chestClass: Record<ChestItem['tone'], string> = {
 
     <h2 id="winning" class="mb-4 text-2xl font-bold">How a run ends</h2>
     <ul class="list-disc space-y-2 pl-6 text-foreground">
-      <li><strong>Win:</strong> the player walks onto the exit tile in room 5.</li>
+      <li><strong>Win:</strong> the player opens the exit door in room 5 and walks through it.</li>
       <li><strong>Lose:</strong> the HP pool hits 0 from a bomb or a bare-fist punch.</li>
       <li>
         <strong>Streamer ended:</strong> the broadcaster can end the game at any time. The overlay closes and
