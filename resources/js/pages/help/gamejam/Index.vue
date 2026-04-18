@@ -112,6 +112,7 @@ const chestClass: Record<ChestItem['tone'], string> = {
       <ul class="list-disc space-y-1 pl-6 text-foreground">
         <li>Type <code class="rounded bg-background/40 px-1">!join</code> in chat to enter the raid.</li>
         <li>Each round, vote with one of the commands below. You cannot vote the same round you joined.</li>
+        <li>You can change your <code class="rounded bg-background/40 px-1">!vote</code> as many times as you like before the next game tick.</li>
         <li>Every round, every active player loses 1 energy block. Voting resets your energy back to 3.</li>
         <li>Miss enough rounds and you go inactive. The shared HP pool loses 1 when that happens.</li>
         <li>Attack doors to open them. Walk through an open exit door to advance. Clear room 5 to win.</li>
