@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Help page for Chat Castle + `!castlehelp` bot command
+
+- New `/help/gamejam` page walks viewers through the whole raid: every command (`!join`, `!p <dir> [steps]`, `!h`, `!a`, `!a:2`, `!s`), how the tick works, energy-block mechanics (3 blocks, -1 per skipped round, voting resets to 3, 0 = inactive + pool -1 HP, `!join` to rejoin), room progression (5 rooms, exit tile advances, room 5 = win), chest contents (regular sword, DE sword, iron fists, HP restore, bomb, empty), weapon costs, and the shared HP pool. Copy mirrors `ActionApplier` and `BotGamejamActionController` mechanics exactly so it does not drift from the code.
+- Public page - no auth, no plan - uses the existing `HelpLayout` pattern and lives under the main help hub (new card added with the `Swords` icon).
+- New bot command `!castlehelp` (tier: everyone). Added to `BotCommand::DEFAULTS` and backfilled to all opted-in streamers via `seed_castlehelp_bot_command` so existing channels get the row without a re-seed. Bot-side handler still needs to land in `overlabels-bot` - thin reply with the canonical URL.
+
 ## April 18th, 2026 - Gamejam: debug panel flips live without a page reload
 
 - `gamejam:debug on/off/toggle` now broadcasts a `GamejamDebugToggled` event on the existing `gamejam.{broadcasterId}` Reverb channel after writing the cache. `live.vue` binds `.gamejam.debug` on the same channel it already uses for `.gamejam.state`, so the panel appears/disappears immediately - no refresh, no session reload.

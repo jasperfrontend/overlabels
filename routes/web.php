@@ -117,6 +117,10 @@ Route::get('/help/bot/commands', function () {
     return Inertia::render('help/bot/Commands');
 })->name('help.bot.commands');
 
+Route::get('/help/gamejam', function () {
+    return Inertia::render('help/gamejam/Index');
+})->name('help.gamejam');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');

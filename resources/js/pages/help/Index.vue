@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -38,6 +38,12 @@ const pages = [
     description: 'The @overlabels bot joins your channel so viewers and mods can change controls from chat.',
     href: '/help/bot',
     icon: Bot,
+  },
+  {
+    title: 'Chat Castle',
+    description: 'Chat-driven dungeon raid. Commands, rounds, energy blocks, chest contents, and how to not lose the HP pool.',
+    href: '/help/gamejam',
+    icon: Swords,
   },
   {
     title: 'Free Resources',
