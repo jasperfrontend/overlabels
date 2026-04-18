@@ -33,6 +33,7 @@ class RoomSeeder
             'y' => 1,
             'state' => GameDoor::STATE_CLOSED,
             'turns_remaining' => 2,
+            'is_exit' => true,
         ]);
 
         GameHidingSpot::create([
@@ -40,7 +41,6 @@ class RoomSeeder
             'room' => 1,
             'x' => 3,
             'y' => 5,
-            'open_sides' => [],
         ]);
 
         GameHiddenTile::create([

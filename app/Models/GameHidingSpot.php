@@ -12,14 +12,12 @@ class GameHidingSpot extends Model
         'room',
         'x',
         'y',
-        'open_sides',
     ];
 
     protected $casts = [
         'room' => 'integer',
         'x' => 'integer',
         'y' => 'integer',
-        'open_sides' => 'array',
     ];
 
     public function game(): BelongsTo

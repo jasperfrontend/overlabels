@@ -19,7 +19,7 @@ class GameStateChanged implements ShouldBroadcast
 
     public function __construct(Game $game)
     {
-        $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots');
+        $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers');
 
         $this->broadcasterId = (string) $game->user->twitch_id;
         $this->snapshot = self::snapshotFor($game);
@@ -27,7 +27,7 @@ class GameStateChanged implements ShouldBroadcast
 
     public static function snapshotFor(Game $game): array
     {
-        $game->loadMissing('joiners', 'hiddenTiles', 'doors', 'hidingSpots');
+        $game->loadMissing('joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers');
 
         return [
             'game' => [
@@ -81,6 +81,7 @@ class GameStateChanged implements ShouldBroadcast
                         'y' => $d->y,
                         'state' => $d->state,
                         'turns_remaining' => $d->turns_remaining,
+                        'is_exit' => $d->is_exit,
                     ])
                     ->all(),
                 'hiding_spots' => $game->hidingSpots
@@ -89,7 +90,14 @@ class GameStateChanged implements ShouldBroadcast
                     ->map(fn ($s) => [
                         'x' => $s->x,
                         'y' => $s->y,
-                        'open_sides' => $s->open_sides,
+                    ])
+                    ->all(),
+                'blockers' => $game->blockers
+                    ->where('room', $game->current_room)
+                    ->values()
+                    ->map(fn ($b) => [
+                        'x' => $b->x,
+                        'y' => $b->y,
                     ])
                     ->all(),
             ],

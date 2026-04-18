@@ -43,18 +43,24 @@ interface DoorPayload {
   y: number;
   state: 'closed' | 'opening' | 'open';
   turns_remaining: number | null;
+  is_exit: boolean;
 }
 
 interface HidingSpotPayload {
   x: number;
   y: number;
-  open_sides: string[];
+}
+
+interface BlockerPayload {
+  x: number;
+  y: number;
 }
 
 interface WorldPayload {
   hidden_tiles: HiddenTilePayload[];
   doors: DoorPayload[];
   hiding_spots: HidingSpotPayload[];
+  blockers: BlockerPayload[];
 }
 
 interface Snapshot {
@@ -69,7 +75,7 @@ const props = defineProps<{
   snapshot: Snapshot | null;
 }>();
 
-const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: [] };
+const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: [], blockers: [] };
 
 const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
@@ -176,6 +182,8 @@ function tileClasses(x: number, y: number): string[] {
   if (attackFlashTiles.value.has(`${x},${y}`)) classes.push('tile-attack-flash');
   return classes;
 }
+
+
 
 function triggerAttackFlash(px: number, py: number) {
   const tiles = new Set<string>();
@@ -330,15 +338,14 @@ onUnmounted(() => {
           <h2>Active <span class="count">{{ grouped.active.length }}</span></h2>
           <ul>
             <li v-for="j in grouped.active" :key="j.twitch_user_id" class="joiner">
-              <div class="name">{{ j.username }}</div>
-              <div class="vote">{{ readableVote(j.current_vote) }}</div>
+              <div class="name">{{ j.username }} <span class="vote">{{ readableVote(j.current_vote) }}</span></div>
               <div class="meta">
-                <span>r{{ j.joined_round }}</span>
-                <span>blocks: {{ j.blocks_remaining }}</span>
-                <span v-if="j.last_vote_round">last: r{{ j.last_vote_round }}</span>
+                <span class="joiner-joined">Joined in round {{ j.joined_round }}</span>
+                <span class="joiner-energy">Energy: {{ j.blocks_remaining }}</span>
+                <span v-if="j.last_vote_round" class="joiner-exited">Last played in round {{ j.last_vote_round }}</span>
               </div>
             </li>
-            <li v-if="!grouped.active.length" class="placeholder">no active voters</li>
+            <li v-if="!grouped.active.length" class="placeholder">no active players right now</li>
           </ul>
         </div>
 
@@ -346,10 +353,9 @@ onUnmounted(() => {
           <h2>Pending <span class="count">{{ grouped.pending.length }}</span></h2>
           <ul>
             <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner">
-              <div class="name">{{ j.username }}</div>
-              <div class="vote dim">joined r{{ j.joined_round }}</div>
+              <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
             </li>
-            <li v-if="!grouped.pending.length" class="placeholder">nobody waiting</li>
+            <li v-if="!grouped.pending.length" class="placeholder">no players waiting right now</li>
           </ul>
         </div>
 
@@ -357,10 +363,9 @@ onUnmounted(() => {
           <h2>Inactive <span class="count">{{ grouped.inactive.length }}</span></h2>
           <ul>
             <li v-for="j in grouped.inactive" :key="j.twitch_user_id" class="joiner dim">
-              <div class="name">{{ j.username }}</div>
-              <div class="vote">left at r{{ j.last_vote_round ?? j.joined_round }}</div>
+              <div class="name">{{ j.username }} <span class="vote">left at r{{ j.last_vote_round ?? j.joined_round }}</span></div>
             </li>
-            <li v-if="!grouped.inactive.length" class="placeholder">none</li>
+            <li v-if="!grouped.inactive.length" class="placeholder">no inactive players right now</li>
           </ul>
         </div>
       </section>
@@ -583,6 +588,11 @@ onUnmounted(() => {
   font-size: 0.7rem;
   color: #888;
 }
+.joiner .meta .joiner-joined { color: #2a9d90; }
+.joiner .meta .joiner-exited { color: #888; }
+.joiner .meta .joiner-energy { color: #2a9d90; }
+
+
 .placeholder {
   color: #555;
   font-style: italic;

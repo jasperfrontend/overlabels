@@ -5,30 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class GameDoor extends Model
+class GameBlocker extends Model
 {
-    public const string STATE_CLOSED = 'closed';
-
-    public const string STATE_OPENING = 'opening';
-
-    public const string STATE_OPEN = 'open';
-
     protected $fillable = [
         'game_id',
         'room',
         'x',
         'y',
-        'state',
-        'turns_remaining',
-        'is_exit',
     ];
 
     protected $casts = [
         'room' => 'integer',
         'x' => 'integer',
         'y' => 'integer',
-        'turns_remaining' => 'integer',
-        'is_exit' => 'boolean',
     ];
 
     public function game(): BelongsTo

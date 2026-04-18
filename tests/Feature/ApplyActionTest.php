@@ -300,7 +300,6 @@ test('hide teleports the player to the nearest hiding spot and sets the hiding f
         'room' => 1,
         'x' => 3,
         'y' => 5,
-        'open_sides' => [],
     ]);
     voter($game, 'h');
 
@@ -320,14 +319,12 @@ test('hide picks the nearest spot by manhattan distance when multiple exist', fu
         'room' => 1,
         'x' => 3,
         'y' => 5,
-        'open_sides' => [],
     ]);
     GameHidingSpot::create([
         'game_id' => $game->id,
         'room' => 1,
         'x' => 8,
         'y' => 8,
-        'open_sides' => [],
     ]);
     voter($game, 'h');
 

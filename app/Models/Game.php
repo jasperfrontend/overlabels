@@ -83,6 +83,11 @@ class Game extends Model
         return $this->hasMany(GameHidingSpot::class);
     }
 
+    public function blockers(): HasMany
+    {
+        return $this->hasMany(GameBlocker::class);
+    }
+
     public static function activeFor(User $user): ?self
     {
         return static::where('user_id', $user->id)
