@@ -507,23 +507,22 @@ onUnmounted(() => {
         <div class="joiners-group">
           <h2>Active <span class="count">{{ grouped.active.length }}</span></h2>
           <ul>
-            <li v-for="j in grouped.active" :key="j.twitch_user_id" class="joiner">
-              <div class="name">{{ j.username }} <span class="vote">{{ readableVote(j.current_vote) }}</span></div>
-              <div class="meta">
-                <span class="joiner-joined">Joined in round {{ j.joined_round }}</span>
-                <span class="joiner-energy">
-                  Energy:
-                  <span class="blocks-visual">
-                    <span
-                      v-for="(state, i) in blocks(j.blocks_remaining)"
-                      :key="i"
-                      class="block"
-                      :class="state"
-                    ></span>
-                  </span>
-                </span>
-                <span v-if="j.last_vote_round" class="joiner-exited">Last played in round {{ j.last_vote_round }}</span>
-              </div>
+            <li
+              v-for="j in grouped.active"
+              :key="j.twitch_user_id"
+              class="joiner"
+              :title="`Joined r${j.joined_round}${j.last_vote_round ? `, last vote r${j.last_vote_round}` : ''}`"
+            >
+              <span class="name">{{ j.username }}</span>
+              <span class="vote">{{ readableVote(j.current_vote) }}</span>
+              <span class="energy" :aria-label="`${j.blocks_remaining} of 3 energy`">
+                <span
+                  v-for="(state, i) in blocks(j.blocks_remaining)"
+                  :key="i"
+                  class="pip"
+                  :class="state"
+                ></span>
+              </span>
             </li>
             <li v-if="!grouped.active.length" class="placeholder">no active players right now</li>
           </ul>
@@ -797,29 +796,62 @@ onUnmounted(() => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
 }
 .joiner {
   background: #242424;
-  padding: 0.5rem 0.7rem;
-  border-radius: 4px;
+  padding: 0.3rem 0.55rem;
+  border-radius: 3px;
   display: flex;
   flex-direction: row;
-  gap: 0.15rem;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 .joiner.dim { opacity: 0.5; }
-.joiner .name { font-weight: 600; font-size: 0.9rem; }
-.joiner .vote { font-size: 0.85rem; color: #2a9d90; }
-.joiner .vote.dim { color: #888; }
-.joiner .meta {
-  display: flex;
-  gap: 0.7rem;
-  font-size: 0.7rem;
-  color: #888;
+.joiner .name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
 }
-.joiner .meta .joiner-joined { color: #2a9d90; }
-.joiner .meta .joiner-exited { color: #888; }
-.joiner .meta .joiner-energy { color: #2a9d90; }
+.joiner .vote {
+  color: #2a9d90;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.joiner .vote.dim,
+.joiner .dim { color: #888; }
+.joiner .energy {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.joiner .pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.joiner .pip.filled {
+  background: #2a9d90;
+  box-shadow: 0 0 4px rgba(42, 157, 144, 0.6);
+}
+.joiner .pip.empty {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+}
 
 
 .placeholder {
@@ -1117,15 +1149,6 @@ onUnmounted(() => {
 }
 .audio-unlock-button:hover {
   background: #36bfb0;
-}
-
-.block {
-  width: 30px;
-  height: 30px;
-  background: #222;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  margin-right: 10px;
 }
 
 @media (max-width: 1600px) {
