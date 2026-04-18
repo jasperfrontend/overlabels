@@ -8,6 +8,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class GameStateChanged implements ShouldBroadcast
 {
@@ -17,12 +18,15 @@ class GameStateChanged implements ShouldBroadcast
 
     public array $snapshot;
 
+    public int $dispatchedAtMs;
+
     public function __construct(Game $game)
     {
         $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers');
 
         $this->broadcasterId = (string) $game->user->twitch_id;
         $this->snapshot = self::snapshotFor($game);
+        $this->dispatchedAtMs = (int) (microtime(true) * 1000);
     }
 
     public static function snapshotFor(Game $game): array
@@ -113,9 +117,20 @@ class GameStateChanged implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
+        $broadcastStartMs = (int) (microtime(true) * 1000);
+
+        Log::info('gamejam.broadcast.serialize', [
+            'broadcaster_id' => $this->broadcasterId,
+            'dispatched_at_ms' => $this->dispatchedAtMs,
+            'broadcast_start_ms' => $broadcastStartMs,
+            'queue_to_broadcast_ms' => $broadcastStartMs - $this->dispatchedAtMs,
+        ]);
+
         return [
             ...$this->snapshot,
             'updated_at' => now()->timestamp,
+            'dispatched_at_ms' => $this->dispatchedAtMs,
+            'broadcast_start_ms' => $broadcastStartMs,
         ];
     }
 

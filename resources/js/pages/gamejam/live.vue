@@ -246,12 +246,43 @@ onMounted(() => {
   }
 
   channel = echo.channel(`gamejam.${props.broadcasterId}`);
-  channel.listen('.gamejam.state', (payload: Snapshot & { updated_at: number }) => {
-    game.value = payload.game;
-    joiners.value = payload.joiners;
-    world.value = payload.world ?? emptyWorld;
-    maybeFlashAttack(payload.game);
-  });
+  channel.listen(
+    '.gamejam.state',
+    (
+      payload: Snapshot & {
+        updated_at: number;
+        dispatched_at_ms?: number;
+        broadcast_start_ms?: number;
+      },
+    ) => {
+      const receivedAtMs = Date.now();
+      const applyStartMs = receivedAtMs;
+
+      game.value = payload.game;
+      joiners.value = payload.joiners;
+      world.value = payload.world ?? emptyWorld;
+      maybeFlashAttack(payload.game);
+
+      const applyEndMs = Date.now();
+
+      console.info('[gamejam.snapshot.received]', {
+        round: payload.game.current_round,
+        status: payload.game.status,
+        dispatched_at_ms: payload.dispatched_at_ms ?? null,
+        broadcast_start_ms: payload.broadcast_start_ms ?? null,
+        received_at_ms: receivedAtMs,
+        handler_to_broadcast_ms:
+          payload.dispatched_at_ms && payload.broadcast_start_ms
+            ? payload.broadcast_start_ms - payload.dispatched_at_ms
+            : null,
+        broadcast_to_client_ms: payload.broadcast_start_ms
+          ? receivedAtMs - payload.broadcast_start_ms
+          : null,
+        end_to_end_ms: payload.dispatched_at_ms ? receivedAtMs - payload.dispatched_at_ms : null,
+        apply_duration_ms: applyEndMs - applyStartMs,
+      });
+    },
+  );
 });
 
 onUnmounted(() => {

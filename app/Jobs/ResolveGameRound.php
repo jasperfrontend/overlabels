@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ResolveGameRound implements ShouldQueue
 {
@@ -32,6 +33,8 @@ class ResolveGameRound implements ShouldQueue
 
     public function handle(): void
     {
+        $handlerStartMs = (int) (microtime(true) * 1000);
+
         $game = Game::with(['joiners', 'hiddenTiles', 'doors', 'hidingSpots'])->find($this->gameId);
         if (! $game || $game->status !== Game::STATUS_RUNNING) {
             return;
@@ -40,6 +43,18 @@ class ResolveGameRound implements ShouldQueue
         if ($game->current_round !== $this->expectedRound) {
             return;
         }
+
+        $scheduledForMs = $game->round_started_at
+            ? (int) ($game->round_started_at->timestamp * 1000) + ($game->round_duration_seconds * 1000)
+            : null;
+
+        Log::info('gamejam.resolve.started', [
+            'game_id' => $game->id,
+            'round' => $this->expectedRound,
+            'scheduled_for_ms' => $scheduledForMs,
+            'started_at_ms' => $handlerStartMs,
+            'queue_lag_ms' => $scheduledForMs !== null ? $handlerStartMs - $scheduledForMs : null,
+        ]);
 
         $activeJoiners = $game->joiners
             ->where('status', GameJoiner::STATUS_ACTIVE);
@@ -57,6 +72,8 @@ class ResolveGameRound implements ShouldQueue
             fn (GameJoiner $j) => $j->last_vote_round === null
                 || $j->last_vote_round < $game->current_round,
         );
+
+        $txnStartMs = (int) (microtime(true) * 1000);
 
         $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers) {
             if ($game->player_hiding_this_round) {
@@ -110,8 +127,24 @@ class ResolveGameRound implements ShouldQueue
             return $ended;
         });
 
+        $txnEndMs = (int) (microtime(true) * 1000);
+
         $game->refresh();
+        $preDispatchMs = (int) (microtime(true) * 1000);
+
         GameStateChanged::dispatch($game);
+
+        $postDispatchMs = (int) (microtime(true) * 1000);
+
+        Log::info('gamejam.resolve.finished', [
+            'game_id' => $game->id,
+            'round' => $this->expectedRound,
+            'txn_duration_ms' => $txnEndMs - $txnStartMs,
+            'refresh_duration_ms' => $preDispatchMs - $txnEndMs,
+            'dispatch_call_ms' => $postDispatchMs - $preDispatchMs,
+            'total_handler_ms' => $postDispatchMs - $handlerStartMs,
+            'game_ended' => $gameEnded,
+        ]);
 
         if (! $gameEnded) {
             self::dispatch($game->id, $game->current_round)
