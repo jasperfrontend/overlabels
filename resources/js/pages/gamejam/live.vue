@@ -1119,6 +1119,15 @@ onUnmounted(() => {
   background: #36bfb0;
 }
 
+.block {
+  width: 30px;
+  height: 30px;
+  background: #222;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+}
+
 @media (max-width: 1600px) {
   .live-board {
     grid-template-columns: 1fr;
