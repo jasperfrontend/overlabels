@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - !h teleports player to nearest hiding spot, hiding flag survives into snapshot
+
+- `ActionApplier::hide()` used to only flip `player_hiding_this_round = true` if the player was already standing on the hiding tile - otherwise it was a no-op. Per the GDD "Auto-moves player toward nearest hiding spot", `!h` now relocates the player to the nearest hiding spot in the current room (Manhattan distance) and sets the hiding flag in one step.
+- Found a pre-existing bug along the way: `ResolveGameRound` was clearing `player_hiding_this_round = false` in the same update that bumps `current_round`, which meant the hiding flag never appeared as true in any broadcast snapshot - the resolver's own tail-end update always clobbered what `ActionApplier::hide()` had just set. Moved the clear to the *start* of the next resolve instead, so the snapshot after a hide-round correctly shows `player_hiding_this_round = true` for the UI animation, and the flag is cleared at the top of the following resolve before that round's action runs.
+- Tests: added 3 new `ApplyActionTest` cases (single-spot teleport + hiding flag, manhattan tie-breaker with multiple spots, no-op when no spots in current room). Existing `hide is cleared on the following round` test continues to pass since the new "clear at top of next resolve" has the same observable end-state.
+
 ## April 18th, 2026 - AoE flash feedback on attack resolve
 
 - When an `!a` action is the winning vote, the 8 tiles around the player briefly pulse red in `gamejam/live.vue` so viewers can see exactly which tiles the attack covered. Duration ~900ms, then the flash fades.

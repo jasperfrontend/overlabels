@@ -59,6 +59,10 @@ class ResolveGameRound implements ShouldQueue
         );
 
         $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers) {
+            if ($game->player_hiding_this_round) {
+                $game->update(['player_hiding_this_round' => false]);
+            }
+
             app(ActionApplier::class)->apply($game, $winner);
 
             $hpLoss = 0;
@@ -99,7 +103,6 @@ class ResolveGameRound implements ShouldQueue
             if (! $ended) {
                 $update['current_round'] = $game->current_round + 1;
                 $update['round_started_at'] = now();
-                $update['player_hiding_this_round'] = false;
             }
 
             $game->update($update);

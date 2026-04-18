@@ -292,6 +292,64 @@ test('hide is cleared on the following round', function () {
     expect($game->fresh()->player_hiding_this_round)->toBeFalse();
 });
 
+test('hide teleports the player to the nearest hiding spot and sets the hiding flag', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9]);
+    GameHidingSpot::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 3,
+        'y' => 5,
+        'open_sides' => [],
+    ]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(3)
+        ->and($game->player_y)->toBe(5)
+        ->and($game->player_hiding_this_round)->toBeTrue();
+});
+
+test('hide picks the nearest spot by manhattan distance when multiple exist', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 7, 'player_y' => 7]);
+    GameHidingSpot::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 3,
+        'y' => 5,
+        'open_sides' => [],
+    ]);
+    GameHidingSpot::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 8,
+        'y' => 8,
+        'open_sides' => [],
+    ]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(8)->and($game->player_y)->toBe(8);
+});
+
+test('hide with no hiding spots in the current room is a no-op', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(9)
+        ->and($game->player_hiding_this_round)->toBeFalse();
+});
+
 test('fist attack on closed door progresses it and takes 1 HP from the player', function () {
     Bus::fake();
     $game = makeWorldGame([

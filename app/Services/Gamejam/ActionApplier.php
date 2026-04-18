@@ -228,14 +228,18 @@ class ActionApplier
 
     private function hide(Game $game): void
     {
-        $onSpot = $game->hidingSpots->contains(
-            fn ($s) => $s->room === $game->current_room
-                && $s->x === $game->player_x
-                && $s->y === $game->player_y
-        );
-
-        if ($onSpot) {
-            $game->update(['player_hiding_this_round' => true]);
+        $spots = $game->hidingSpots->where('room', $game->current_room);
+        if ($spots->isEmpty()) {
+            return;
         }
+
+        $nearest = $spots->sortBy(fn ($s) => abs($s->x - $game->player_x) + abs($s->y - $game->player_y))
+            ->first();
+
+        $game->update([
+            'player_x' => $nearest->x,
+            'player_y' => $nearest->y,
+            'player_hiding_this_round' => true,
+        ]);
     }
 }
