@@ -194,6 +194,10 @@ onUnmounted(() => {
           <li v-if="!grouped.inactive.length" class="placeholder">none</li>
         </ul>
       </section>
+      <section class="col">
+        <h2>Props</h2>
+        <pre>{{ snapshot }}</pre>
+      </section>
     </div>
   </div>
 </template>
