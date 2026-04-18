@@ -94,7 +94,7 @@ test('walking onto the regular sword tile equips weapon slot 1', function () {
         ->and($game->hiddenTiles()->first()->revealed_at_round)->toBe(1);
 });
 
-test('bumping a closed door progresses it without moving the player', function () {
+test('bumping a closed door stops movement without progressing it', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 2]);
     $door = GameDoor::create([
@@ -112,11 +112,11 @@ test('bumping a closed door progresses it without moving the player', function (
     $game->refresh();
     $door->refresh();
     expect($game->player_y)->toBe(2)
-        ->and($door->state)->toBe(GameDoor::STATE_OPENING)
-        ->and($door->turns_remaining)->toBe(1);
+        ->and($door->state)->toBe(GameDoor::STATE_CLOSED)
+        ->and($door->turns_remaining)->toBe(2);
 });
 
-test('bumping an opening door finishes opening it', function () {
+test('bumping an opening door does not advance it', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 2]);
     $door = GameDoor::create([
@@ -131,9 +131,11 @@ test('bumping an opening door finishes opening it', function () {
 
     (new ResolveGameRound($game->id, 1))->handle();
 
+    $game->refresh();
     $door->refresh();
-    expect($door->state)->toBe(GameDoor::STATE_OPEN)
-        ->and($door->turns_remaining)->toBeNull();
+    expect($game->player_y)->toBe(2)
+        ->and($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1);
 });
 
 test('walking onto an open exit door wins the game and stops the tick loop', function () {
@@ -219,7 +221,7 @@ test('multi-step move stops at the grid edge without wrapping', function () {
     expect($game->player_y)->toBe(1);
 });
 
-test('multi-step move stops at a closed door and progresses it once', function () {
+test('multi-step move stops at a closed door without progressing it', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 4]);
     $door = GameDoor::create([
@@ -237,8 +239,8 @@ test('multi-step move stops at a closed door and progresses it once', function (
     $game->refresh();
     $door->refresh();
     expect($game->player_y)->toBe(2)
-        ->and($door->state)->toBe(GameDoor::STATE_OPENING)
-        ->and($door->turns_remaining)->toBe(1);
+        ->and($door->state)->toBe(GameDoor::STATE_CLOSED)
+        ->and($door->turns_remaining)->toBe(2);
 });
 
 test('multi-step move wins immediately on reaching an open exit door', function () {
@@ -288,4 +290,273 @@ test('hide is cleared on the following round', function () {
     (new ResolveGameRound($game->id, 1))->handle();
 
     expect($game->fresh()->player_hiding_this_round)->toBeFalse();
+});
+
+test('fist attack on closed door progresses it and takes 1 HP from the player', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'player_hp' => 5,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1)
+        ->and($game->player_hp)->toBe(4);
+});
+
+test('fist attack with iron fists progresses the door without self-damage', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'player_hp' => 5,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'wears_iron_fists' => true,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1)
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('fist attack on door can kill the player and end the game', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'player_hp' => 1,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+    ]);
+    GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_LOST)
+        ->and($game->player_hp)->toBe(0);
+
+    Bus::assertNotDispatched(ResolveGameRound::class);
+});
+
+test('regular sword attack on door progresses it and consumes 1 use', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
+        'weapon_slot_1_uses' => 10,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a:1');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1)
+        ->and($game->weapon_slot_1)->toBe(Game::WEAPON_REGULAR_SWORD)
+        ->and($game->weapon_slot_1_uses)->toBe(9);
+});
+
+test('regular sword attack on door breaks the sword when uses hit 0', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
+        'weapon_slot_1_uses' => 1,
+    ]);
+    GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a:1');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->weapon_slot_1)->toBe(Game::WEAPON_FISTS)
+        ->and($game->weapon_slot_1_uses)->toBeNull();
+});
+
+test('de-sword attack opens a closed door instantly', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'weapon_slot_2' => Game::WEAPON_DE_SWORD,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a:2');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_OPEN)
+        ->and($door->turns_remaining)->toBeNull()
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('attack on slot 2 with empty slot is a no-op', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'weapon_slot_2' => null,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a:2');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_CLOSED)
+        ->and($door->turns_remaining)->toBe(2)
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('attack reaches a diagonally adjacent door via AoE', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 4,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'wears_iron_fists' => true,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($door->turns_remaining)->toBe(1);
+});
+
+test('attack does not reach a door two tiles away', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 3,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+    ]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $door->refresh();
+    expect($door->state)->toBe(GameDoor::STATE_CLOSED)
+        ->and($door->turns_remaining)->toBe(2)
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('player can win by opening a closed door with attack then walking through next round', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 2,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'weapon_slot_2' => Game::WEAPON_DE_SWORD,
+    ]);
+    GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+    ]);
+    $joiner = voter($game, 'a:2');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $joiner->update(['current_vote' => 'p:up', 'last_vote_round' => 2]);
+
+    (new ResolveGameRound($game->id, 2))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_WON)
+        ->and($game->player_y)->toBe(1);
 });

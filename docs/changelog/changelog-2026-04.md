@@ -1,5 +1,17 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Doors open via attack, not by walking into them
+
+- `!p` no longer progresses closed or opening doors - bumping them now halts movement the same way a wall does. Opening a closed door is exclusively an `!a` action, which matches the GDD: doors are obstacles, not reverse-proxies for the move command.
+- `!a` gained a 3x3 AoE around the player (8 surrounding tiles, excluding the player's own tile). Any closed/opening door sitting anywhere in that ring gets hit. This sidesteps the "player can be left, right, or below the door" geometry: the attack always lands as long as the player is adjacent (orthogonal or diagonal).
+- Door damage is weapon-dependent:
+  - DE-sword (`!a 2`): 2 damage per hit - instantly opens a fresh `turns_remaining=2` door. Free of charge (DE-sword has no durability per the GDD).
+  - Regular sword (`!a` or `!a 1` with sword equipped): 1 damage per hit, consumes 1 `weapon_slot_1_uses`. When uses hit 0 the sword breaks and slot 1 reverts to fists.
+  - Fists (`!a` with no sword): 1 damage per hit, costs 1 HP of self-damage. If `wears_iron_fists` is true, the self-damage is negated. Hitting a door with fists at 1 HP ends the game.
+- Cost/self-damage applies once per attack action, not once per door hit - relevant later when multiple doors or zombies can share an AoE.
+- `ActionApplier::progressDoor()` is gone; replaced by `damageDoor(GameDoor, int $damage)` so DE-sword's 2-damage case is just a parameter.
+- Tests: 10 new attack cases cover each weapon x door interaction, AoE reach (adjacent + diagonal, miss at 2 tiles), and an end-to-end DE-sword-then-walk win. Three existing tests were updated: closed/opening-door bumps now assert no progression, and the multi-step version does the same.
+
 ## April 18th, 2026 - Multi-step movement votes
 
 - Chat can now vote `!p up 2` to move the player up to 8 tiles in one round. Encoding: `p:dir` for a single step (backward-compatible), `p:dir:N` for N >= 2. Bot-side parser needs to forward `steps` in the action payload.

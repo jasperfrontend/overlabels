@@ -29,7 +29,13 @@ class ActionApplier
             return;
         }
 
-        // a, a:1, a:2 - no-op for room 1 (no zombies yet)
+        if ($action === 'a' || str_starts_with($action, 'a:')) {
+            $slot = null;
+            if (str_starts_with($action, 'a:')) {
+                $slot = (int) substr($action, 2);
+            }
+            $this->attack($game, $slot);
+        }
     }
 
     private function move(Game $game, string $direction, int $steps = 1): void
@@ -55,7 +61,7 @@ class ActionApplier
 
     /**
      * Advance one tile. Returns true if the next step should be attempted,
-     * false if the momentum is spent (wall, door interaction, game end).
+     * false if the momentum is spent (wall, closed door, game end).
      */
     private function stepOnce(Game $game, array $delta): bool
     {
@@ -71,25 +77,21 @@ class ActionApplier
             && $d->x === $targetX
             && $d->y === $targetY);
 
-        if ($door) {
-            if ($door->state !== GameDoor::STATE_OPEN) {
-                $this->progressDoor($door);
-
-                return false;
-            }
-
-            $game->update(['player_x' => $targetX, 'player_y' => $targetY]);
-
-            if ($this->isExitDoor($game, $targetX, $targetY)) {
-                $game->update(['status' => Game::STATUS_WON]);
-
-                return false;
-            }
-
-            return true;
+        if ($door && $door->state !== GameDoor::STATE_OPEN) {
+            return false;
         }
 
         $game->update(['player_x' => $targetX, 'player_y' => $targetY]);
+
+        if ($door && $this->isExitDoor($game, $targetX, $targetY)) {
+            $game->update(['status' => Game::STATUS_WON]);
+
+            return false;
+        }
+
+        if ($door) {
+            return true;
+        }
 
         $tile = $game->hiddenTiles->first(fn (GameHiddenTile $t) => $t->room === $game->current_room
             && $t->x === $targetX
@@ -103,9 +105,51 @@ class ActionApplier
         return $game->status === Game::STATUS_RUNNING;
     }
 
-    private function progressDoor(GameDoor $door): void
+    private function attack(Game $game, ?int $slot): void
     {
-        $newTurns = ($door->turns_remaining ?? 1) - 1;
+        $weapon = $this->resolveAttackWeapon($game, $slot);
+        if ($weapon === null) {
+            return;
+        }
+
+        $doorsHit = $game->doors->filter(function (GameDoor $d) use ($game) {
+            if ($d->room !== $game->current_room) {
+                return false;
+            }
+            if ($d->state === GameDoor::STATE_OPEN) {
+                return false;
+            }
+            $dx = abs($d->x - $game->player_x);
+            $dy = abs($d->y - $game->player_y);
+
+            return $dx <= 1 && $dy <= 1 && ! ($dx === 0 && $dy === 0);
+        });
+
+        if ($doorsHit->isEmpty()) {
+            return;
+        }
+
+        $damage = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
+
+        foreach ($doorsHit as $door) {
+            $this->damageDoor($door, $damage);
+        }
+
+        $this->applyAttackCost($game, $weapon);
+    }
+
+    private function resolveAttackWeapon(Game $game, ?int $slot): ?string
+    {
+        if ($slot === 2) {
+            return $game->weapon_slot_2;
+        }
+
+        return $game->weapon_slot_1 ?? Game::WEAPON_FISTS;
+    }
+
+    private function damageDoor(GameDoor $door, int $damage): void
+    {
+        $newTurns = ($door->turns_remaining ?? 1) - $damage;
         if ($newTurns <= 0) {
             $door->update([
                 'state' => GameDoor::STATE_OPEN,
@@ -116,6 +160,31 @@ class ActionApplier
                 'state' => GameDoor::STATE_OPENING,
                 'turns_remaining' => $newTurns,
             ]);
+        }
+    }
+
+    private function applyAttackCost(Game $game, string $weapon): void
+    {
+        if ($weapon === Game::WEAPON_REGULAR_SWORD) {
+            $uses = max(0, ($game->weapon_slot_1_uses ?? 0) - 1);
+            if ($uses === 0) {
+                $game->update([
+                    'weapon_slot_1' => Game::WEAPON_FISTS,
+                    'weapon_slot_1_uses' => null,
+                ]);
+            } else {
+                $game->update(['weapon_slot_1_uses' => $uses]);
+            }
+
+            return;
+        }
+
+        if ($weapon === Game::WEAPON_FISTS && ! $game->wears_iron_fists) {
+            $newHp = $game->player_hp - 1;
+            $game->update(['player_hp' => $newHp]);
+            if ($newHp <= 0) {
+                $game->update(['status' => Game::STATUS_LOST]);
+            }
         }
     }
 
