@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Fix: !s never reached BotCommand::DEFAULTS, silently dropped for new streamers
+
+- `BotCommand::DEFAULTS` now includes `['command' => 's', 'permission_level' => 'everyone']` so streamers opting into the bot after this change get the full gamejam command set seeded automatically.
+- Backfill migration `backfill_stay_bot_command` runs `firstOrCreate` per opted-in user so existing streamers who missed the original !s rollout pick it up.
+- Previously: `!s` routed fine on the backend controller, but the bot's `commandMap.lookup(login, 's')` returned null because no `bot_commands` row existed, so the bot silently ignored the message. The only reason it appeared to work on the one test channel was a manually-inserted row that never got productionized.
+
 ## April 18th, 2026 - Gamejam: quieter vote handlers + bot mentions for newly-inactive players
 
 - `BotGamejamActionController::handleVote` now returns `{reply: null}` on accepted votes. The bot's `silentOnSuccess: true` branch kicks in and skips the "ok" reply, so `!p`, `!a`, `!h`, `!s` no longer spam chat with "ok" after every vote. Players can watch the live board to see their action landed. With 50+ players each voting every round that noise was the dominant chat signal.

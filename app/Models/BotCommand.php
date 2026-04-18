@@ -45,6 +45,7 @@ class BotCommand extends Model
         ['command' => 'p', 'permission_level' => 'everyone'],
         ['command' => 'h', 'permission_level' => 'everyone'],
         ['command' => 'a', 'permission_level' => 'everyone'],
+        ['command' => 's', 'permission_level' => 'everyone'],
     ];
 
     /**
