@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotControlController;
 use App\Http\Controllers\Api\Internal\BotGamejamActionController;
+use App\Http\Controllers\Api\Internal\BotOutboxController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
 use App\Http\Controllers\Api\RailwayWebhookController;
 use App\Http\Controllers\ExpressionTagController;
@@ -171,6 +172,7 @@ Route::prefix('/internal/bot')
             ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
         Route::post('/gamejam/action/{login}', [BotGamejamActionController::class, 'handle'])
             ->where('login', '[a-z0-9_]+');
+        Route::get('/outbox', [BotOutboxController::class, 'index']);
     });
 
 // Railway deployment webhook - triggers version update broadcast

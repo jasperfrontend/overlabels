@@ -2,6 +2,7 @@
 
 use App\Events\GameStateChanged;
 use App\Jobs\ResolveGameRound;
+use App\Models\BotChatOutbox;
 use App\Models\Game;
 use App\Models\GameJoiner;
 use App\Models\User;
@@ -376,6 +377,82 @@ test('does not decrement blocks for pending joiners being promoted', function ()
     $newbie->refresh();
     expect($newbie->status)->toBe(GameJoiner::STATUS_ACTIVE)
         ->and($newbie->blocks_remaining)->toBe(3);
+});
+
+test('enqueues bot mention for joiners flipped to inactive', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 3,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    foreach (['alice', 'bob'] as $i => $username) {
+        GameJoiner::create([
+            'game_id' => $game->id,
+            'twitch_user_id' => (string) ($i + 1),
+            'username' => $username,
+            'status' => GameJoiner::STATUS_ACTIVE,
+            'joined_round' => 1,
+            'current_vote' => null,
+            'last_vote_round' => 1,
+            'blocks_remaining' => 1,
+            'hp_contributed' => true,
+        ]);
+    }
+
+    // A slacker with blocks > 1 should NOT be mentioned yet.
+    GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '3',
+        'username' => 'still_in',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => null,
+        'last_vote_round' => 2,
+        'blocks_remaining' => 3,
+    ]);
+
+    (new ResolveGameRound($game->id, 3))->handle();
+
+    $row = BotChatOutbox::where('user_id', $user->id)->first();
+    expect($row)->not->toBeNull()
+        ->and($row->message)->toBe('@alice, @bob you became inactive due to lack of input. Type !join if you want to play again next round!')
+        ->and($row->sent_at)->toBeNull();
+});
+
+test('does not enqueue mention when nobody flipped to inactive', function () {
+    Bus::fake();
+
+    $user = makeResolverUser();
+    $game = Game::create([
+        'user_id' => $user->id,
+        'status' => Game::STATUS_RUNNING,
+        'current_round' => 2,
+        'player_hp' => 5,
+        'round_duration_seconds' => 30,
+        'round_started_at' => now(),
+    ]);
+
+    GameJoiner::create([
+        'game_id' => $game->id,
+        'twitch_user_id' => '1',
+        'username' => 'lurker',
+        'status' => GameJoiner::STATUS_ACTIVE,
+        'joined_round' => 1,
+        'current_vote' => null,
+        'last_vote_round' => null,
+        'blocks_remaining' => 3,
+    ]);
+
+    (new ResolveGameRound($game->id, 2))->handle();
+
+    expect(BotChatOutbox::count())->toBe(0);
 });
 
 test('schedules the next tick after resolving', function () {

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Events\GameStateChanged;
+use App\Models\BotChatOutbox;
 use App\Models\Game;
 use App\Models\GameJoiner;
 use App\Services\Gamejam\ActionApplier;
@@ -75,7 +76,9 @@ class ResolveGameRound implements ShouldQueue
 
         $txnStartMs = (int) (microtime(true) * 1000);
 
-        $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers) {
+        $newlyInactiveUsernames = [];
+
+        $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers, &$newlyInactiveUsernames) {
             if ($game->player_hiding_this_round) {
                 $game->update(['player_hiding_this_round' => false]);
             }
@@ -92,6 +95,7 @@ class ResolveGameRound implements ShouldQueue
                         'hp_contributed' => false,
                     ]);
                     $hpLoss++;
+                    $newlyInactiveUsernames[] = $joiner->username;
                 } else {
                     $joiner->update(['blocks_remaining' => $newBlocks]);
                 }
@@ -130,6 +134,15 @@ class ResolveGameRound implements ShouldQueue
         $txnEndMs = (int) (microtime(true) * 1000);
 
         $game->refresh();
+
+        if (! empty($newlyInactiveUsernames)) {
+            $mentions = implode(', ', array_map(fn ($u) => '@'.$u, $newlyInactiveUsernames));
+            BotChatOutbox::create([
+                'user_id' => $game->user_id,
+                'message' => $mentions.' you became inactive due to lack of input. Type !join if you want to play again next round!',
+            ]);
+        }
+
         $preDispatchMs = (int) (microtime(true) * 1000);
 
         GameStateChanged::dispatch($game);

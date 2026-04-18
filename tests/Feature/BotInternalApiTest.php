@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\ControlValueUpdated;
+use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
 use App\Models\BotToken;
 use App\Models\OverlayControl;
@@ -600,4 +601,54 @@ test('controls update cannot touch source-managed controls', function () {
     )->assertStatus(404);
 
     expect(OverlayControl::where('user_id', $user->id)->first()->value)->toBe('50');
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Outbox endpoint
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('outbox returns 403 without secret', function () {
+    $this->getJson('/api/internal/bot/outbox')->assertStatus(403);
+});
+
+test('outbox returns unsent messages and marks them sent', function () {
+    $user = User::factory()->create([
+        'bot_enabled' => true,
+        'twitch_data' => ['login' => 'StreamerA'],
+    ]);
+
+    BotChatOutbox::create([
+        'user_id' => $user->id,
+        'message' => '@alice you became inactive due to lack of input. Type !join if you want to play again next round!',
+    ]);
+
+    $response = $this->getJson('/api/internal/bot/outbox', ['X-Internal-Secret' => 'test-bot-secret'])
+        ->assertOk()
+        ->json('messages');
+
+    expect($response)->toHaveCount(1)
+        ->and($response[0]['channel_login'])->toBe('streamera')
+        ->and($response[0]['message'])->toContain('@alice');
+
+    expect(BotChatOutbox::whereNull('sent_at')->count())->toBe(0)
+        ->and(BotChatOutbox::whereNotNull('sent_at')->count())->toBe(1);
+});
+
+test('outbox does not return already-sent messages', function () {
+    $user = User::factory()->create([
+        'bot_enabled' => true,
+        'twitch_data' => ['login' => 'streamer_a'],
+    ]);
+
+    BotChatOutbox::create([
+        'user_id' => $user->id,
+        'message' => 'already sent',
+        'sent_at' => now(),
+    ]);
+
+    $response = $this->getJson('/api/internal/bot/outbox', ['X-Internal-Secret' => 'test-bot-secret'])
+        ->assertOk()
+        ->json('messages');
+
+    expect($response)->toBe([]);
 });

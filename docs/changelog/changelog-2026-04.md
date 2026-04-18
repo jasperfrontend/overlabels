@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Gamejam: quieter vote handlers + bot mentions for newly-inactive players
+
+- `BotGamejamActionController::handleVote` now returns `{reply: null}` on accepted votes. The bot's `silentOnSuccess: true` branch kicks in and skips the "ok" reply, so `!p`, `!a`, `!h`, `!s` no longer spam chat with "ok" after every vote. Players can watch the live board to see their action landed. With 50+ players each voting every round that noise was the dominant chat signal.
+- End-of-round: `ResolveGameRound` now collects the usernames of every joiner whose `blocks_remaining` dropped to 0 (i.e., got flipped to inactive this tick) and enqueues a single `@alice, @bob, @cindy you became inactive due to lack of input. Type !join if you want to play again next round!` message into a new `bot_chat_outbox` table. The bot polls `GET /api/internal/bot/outbox` every 2 seconds, posts each message to the referenced channel, and the outbox row is marked `sent_at` in the same transaction that claims it (SELECT-lock + bulk UPDATE) so two concurrent polls can't double-send.
+- Transport rationale: bot currently only reads from Twitch EventSub and makes outbound HTTP calls - it has no pusher-js / Reverb client. Rather than pull in a websocket stack just for this one message type, we reused the existing pull model. The 1-2s polling lag is fine because the mention fires between rounds.
+- Bot changes: `createBot()` now tracks `channelsByLogin` so `sendToChannel(login, text)` can find the right broadcaster context for a given outbox row. Poller lives in `index.js` with a mutex flag (`outboxPolling`) so a slow fetch can't stack up overlapping polls.
+- Tests: `ResolveGameRoundTest` gets `enqueues bot mention for joiners flipped to inactive` (asserts exact message format, verifies only blocks-hit-zero slackers get mentioned, not blocks-decremented-but-still-alive ones) and `does not enqueue mention when nobody flipped to inactive`. `BotInternalApiTest` gets three outbox cases: 403 without secret, claim-and-mark-sent, and skips already-sent rows.
+
 ## April 18th, 2026 - Gamejam: room progression (1-5) with reseeded layouts per room
 
 - The room-1 exit door no longer ends the game. Stepping through any room's open exit door now runs `RoomSeeder::advanceTo($game, current_room + 1)`, which seeds a fresh layout for the new room and teleports the player to that room's spawn at (5, 9). Only the room-5 exit sets `STATUS_WON`, so a full run is now 5 rooms. HP and weapons carry over between rooms (they don't reset at each boundary - that's the progression incentive).
