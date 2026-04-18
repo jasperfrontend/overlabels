@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { floorFor, themeFor, type RoomTheme } from './themes';
 
 interface GamePayload {
   id: number;
@@ -136,6 +137,26 @@ function readableVote(vote: string | null): string {
     return steps > 1 ? `${base} x${steps}` : base;
   }
   return vote;
+}
+
+const theme = computed<RoomTheme>(() => themeFor(game.value?.current_room ?? 1));
+
+function spriteFor(x: number, y: number): string | null {
+  const t = tileAt(x, y);
+  const th = theme.value;
+  if (t.player) return th.player;
+  if (t.blocker) return th.blocker;
+  if (t.door) {
+    if (t.door.is_exit) return th.door.exit;
+    return th.door[t.door.state];
+  }
+  if (t.hiddenTile) {
+    if (t.hiddenTile.revealed_at_round === null) return th.hidden;
+    const content = t.hiddenTile.content as keyof RoomTheme['pickups'] | null;
+    return content ? th.pickups[content] ?? null : null;
+  }
+  if (t.hidingSpot) return th.hidingSpot;
+  return null;
 }
 
 function tileAt(x: number, y: number) {
@@ -435,9 +456,11 @@ onUnmounted(() => {
             :key="`${x}-${y}`"
             class="tile"
             :class="tileClasses(x, y)"
+            :style="{ backgroundImage: `url('${floorFor(theme, x, y)}')` }"
             :data-x="x"
             :data-y="y"
           >
+            <img v-if="spriteFor(x, y)" :src="spriteFor(x, y)!" class="sprite" alt="" />
             <span class="glyph">{{ tileGlyph(x, y) }}</span>
             <span class="coords">{{ x }},{{ y }}</span>
           </div>
@@ -686,19 +709,34 @@ onUnmounted(() => {
   height: var(--tile);
   box-sizing: border-box;
   border: 1px solid #1a1a1f;
-  background: #15151a;
+  background: #15151a center / cover no-repeat;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
 }
+.tile .sprite {
+  position: absolute;
+  inset: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  object-fit: contain;
+  pointer-events: none;
+  image-rendering: pixelated;
+  z-index: 1;
+}
 .tile .glyph {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #eee;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(238, 238, 238, 0.55);
   text-transform: uppercase;
   letter-spacing: -0.02em;
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .tile .coords {
   position: absolute;
