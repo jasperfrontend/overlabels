@@ -6,7 +6,11 @@ interface GamePayload {
   status: 'waiting' | 'running' | 'won' | 'lost';
   current_round: number;
   player_hp: number;
+  round_duration_seconds: number;
   round_started_at: string | null;
+  last_resolved_action: string | null;
+  last_resolved_tally: Record<string, number> | null;
+  last_resolved_at: string | null;
 }
 
 interface JoinerPayload {
@@ -34,8 +38,23 @@ const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const connected = ref(false);
 const lastUpdate = ref<number | null>(null);
+const now = ref(Date.now());
 
 let channel: any = null;
+let tickInterval: ReturnType<typeof setInterval> | null = null;
+
+const secondsUntilNextTick = computed(() => {
+  if (!game.value?.round_started_at || game.value.status !== 'running') return null;
+  const started = new Date(game.value.round_started_at).getTime();
+  const deadline = started + game.value.round_duration_seconds * 1000;
+  return Math.max(0, Math.ceil((deadline - now.value) / 1000));
+});
+
+const lastResolvedTallyEntries = computed(() => {
+  const tally = game.value?.last_resolved_tally;
+  if (!tally) return [];
+  return Object.entries(tally).sort((a, b) => b[1] - a[1]);
+});
 
 function readableVote(vote: string | null): string {
   if (!vote) return '-';
@@ -58,6 +77,7 @@ const grouped = computed(() => ({
 
 onMounted(() => {
   document.documentElement.classList.add('gamejam-fullbleed');
+  tickInterval = setInterval(() => (now.value = Date.now()), 250);
 
   const echo = (window as any).Echo;
   if (!echo) return;
@@ -79,6 +99,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.documentElement.classList.remove('gamejam-fullbleed');
+  if (tickInterval) clearInterval(tickInterval);
   if (channel) channel.stopListening('.gamejam.state');
 });
 </script>
@@ -114,6 +135,26 @@ onUnmounted(() => {
         {{ connected ? 'live' : 'offline' }}
       </div>
     </header>
+
+    <section v-if="game" class="resolver-row">
+      <div class="resolver-card countdown">
+        <span class="label">Next tick</span>
+        <span class="value" :class="{ urgent: (secondsUntilNextTick ?? 99) < 5 }">
+          {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}s` : '-' }}
+        </span>
+        <span class="sub">round of {{ game.round_duration_seconds }}s</span>
+      </div>
+      <div class="resolver-card resolved">
+        <span class="label">Last round resolved</span>
+        <span class="value">{{ game.last_resolved_action ? readableVote(game.last_resolved_action) : 'nothing yet' }}</span>
+        <div v-if="lastResolvedTallyEntries.length" class="tally">
+          <span v-for="[action, count] in lastResolvedTallyEntries" :key="action" class="tally-entry">
+            {{ readableVote(action) }}: <b>{{ count }}</b>
+          </span>
+        </div>
+        <span v-else class="sub">no votes were cast</span>
+      </div>
+    </section>
 
     <div v-if="game" class="columns">
       <section class="col">
@@ -256,6 +297,52 @@ onUnmounted(() => {
   border-radius: 3px;
   color: #ccc;
 }
+.resolver-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+}
+.resolver-card {
+  background: #1a1a1a;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.resolver-card .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.05em;
+}
+.resolver-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a9d90;
+}
+.resolver-card.countdown .value {
+  font-variant-numeric: tabular-nums;
+  color: #4f8ef7;
+}
+.resolver-card.countdown .value.urgent {
+  color: #ff5a5a;
+}
+.resolver-card .sub {
+  font-size: 0.75rem;
+  color: #666;
+}
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #bbb;
+}
+.tally-entry b {
+  color: #2a9d90;
+}
 .columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -328,6 +415,9 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
   .board-header {
+    grid-template-columns: 1fr;
+  }
+  .resolver-row {
     grid-template-columns: 1fr;
   }
   .stats {

@@ -68,7 +68,11 @@ Route::get('/gamejam/live/{login}', function (string $login) {
                 'status' => $game->status,
                 'current_round' => $game->current_round,
                 'player_hp' => $game->player_hp,
+                'round_duration_seconds' => $game->round_duration_seconds,
                 'round_started_at' => $game->round_started_at?->toISOString(),
+                'last_resolved_action' => $game->last_resolved_action,
+                'last_resolved_tally' => $game->last_resolved_tally,
+                'last_resolved_at' => $game->last_resolved_at?->toISOString(),
             ],
             'joiners' => $game->joiners()
                 ->orderBy('joined_round')

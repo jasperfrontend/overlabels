@@ -22,13 +22,20 @@ class Game extends Model
         'status',
         'current_round',
         'player_hp',
+        'round_duration_seconds',
         'round_started_at',
+        'last_resolved_action',
+        'last_resolved_tally',
+        'last_resolved_at',
     ];
 
     protected $casts = [
         'current_round' => 'integer',
         'player_hp' => 'integer',
+        'round_duration_seconds' => 'integer',
         'round_started_at' => 'datetime',
+        'last_resolved_tally' => 'array',
+        'last_resolved_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
