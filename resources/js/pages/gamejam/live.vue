@@ -74,6 +74,7 @@ const props = defineProps<{
   broadcasterId: string;
   broadcasterLogin: string;
   snapshot: Snapshot | null;
+  debugEnabled: boolean;
 }>();
 
 const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: [], blockers: [] };
@@ -541,7 +542,7 @@ onUnmounted(() => {
           </ul>
         </div>
 
-        <div class="debug-panel">
+        <div v-if="debugEnabled" class="debug-panel">
           <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
           <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
             <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>

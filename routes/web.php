@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\GamejamDebug;
 use App\Events\GameStateChanged;
 use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
@@ -64,6 +65,7 @@ Route::get('/gamejam/live/{login}', function (string $login) {
         'broadcasterId' => (string) $user->twitch_id,
         'broadcasterLogin' => $login,
         'snapshot' => $game ? GameStateChanged::snapshotFor($game) : null,
+        'debugEnabled' => GamejamDebug::isEnabledFor($user),
     ]);
 })->where('login', '[a-z0-9_]+')->name('gamejam.live');
 

@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Gamejam: `php artisan gamejam:debug` toggles the live-board debug panel
+
+- New artisan command `gamejam:debug {on|off|toggle} {login?}` flips a per-broadcaster cache flag that gates the temporary tile-class debug panel on the live board. Default broadcaster when no login is passed: the user with an active game (latest by updated_at), falling back to the first bot-enabled user - mirrors the `gamejam:start` resolve convention.
+- Storage is `Cache::forever('gamejam.debug.{twitch_id}', true)` / `Cache::forget(...)`; no DB migration, no `.env` restart, flips immediately on the next page render.
+- Single source of truth: `GamejamDebug::cacheKey(User)` and `GamejamDebug::isEnabledFor(User)` are static helpers imported by the live route, so the command and the controller never disagree on the key shape.
+- `live.vue` gains a `debugEnabled: boolean` Inertia prop and wraps the debug panel in `v-if="debugEnabled"`. When off, the panel is not rendered at all - no leftover orange border, no JSON dump of tile state.
+
 ## April 18th, 2026 - Gamejam: autoplay gate on the live overlay
 
 - Browsers (Chrome/Edge/Firefox) block audio until a user gesture on the page, and the gamejam guy runs `gamejam/live.vue` as a bare tab with no prior interaction. Without a gate, the first sound effect the game tries to play is silently dropped, and subsequent ones may or may not recover depending on the browser's policy escalation. Added a detection layer that reads `document.autoplayPolicy` in `onMounted()` and flips `needsAudioUnlock` when the policy is `disallowed` or `allowed-muted`. If the API is undefined (Safari / older Chromium), we also show the gate - one extra click beats a silent failure.
