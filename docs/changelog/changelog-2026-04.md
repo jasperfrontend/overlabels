@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 18th, 2026 - Gamejam: autoplay gate on the live overlay
+
+- Browsers (Chrome/Edge/Firefox) block audio until a user gesture on the page, and the gamejam guy runs `gamejam/live.vue` as a bare tab with no prior interaction. Without a gate, the first sound effect the game tries to play is silently dropped, and subsequent ones may or may not recover depending on the browser's policy escalation. Added a detection layer that reads `document.autoplayPolicy` in `onMounted()` and flips `needsAudioUnlock` when the policy is `disallowed` or `allowed-muted`. If the API is undefined (Safari / older Chromium), we also show the gate - one extra click beats a silent failure.
+- On click, `unlockAudio()` instantiates (or reuses) an `AudioContext` (with `webkitAudioContext` fallback), calls `resume()` if it's in the `suspended` state, then plays a 1-sample zero-amplitude buffer so the browser marks the context as gesture-initiated. The overlay hides in `finally` so even a thrown error on older browsers still dismisses the UI. The `audioCtx` lives at script scope for the page lifetime, so any future sound-effect code in `live.vue` can reuse the same unlocked context - no second gesture needed.
+- UI: fixed-position modal centered over the whole viewport (z-index 9999, backdrop-blur, dimmed background), panel with a short explanation ("Your browser is preventing this overlay from playing sound until you interact with the page.") and a prominent teal button. Single click dismisses. Copy uses hyphens, not em dashes.
+
 ## April 18th, 2026 - Per-channel controls-access gate for the Twitch bot
 
 - All controls-manipulation chat commands (`!control`, `!set`, `!increment`, `!decrement`, `!reset`, `!enable`, `!disable`, `!toggle`) are now gated behind a per-user `controls_enabled` flag. Default is **off** - a streamer opting into the bot no longer automatically exposes their controls to chat. The flag is flipped via two new broadcaster-only commands: `!enablecontrols` and `!disablecontrols`.

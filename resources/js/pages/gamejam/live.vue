@@ -84,6 +84,8 @@ const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
 const connected = ref(false);
 const now = ref(Date.now());
 const attackFlashTiles = ref<Set<string>>(new Set());
+const needsAudioUnlock = ref(false);
+let audioCtx: AudioContext | null = null;
 
 let channel: any = null;
 let tickInterval: ReturnType<typeof setInterval> | null = null;
@@ -243,6 +245,38 @@ function triggerAttackFlash(px: number, py: number) {
   });
 }
 
+function checkAutoplayPolicy() {
+  const policy = (document as Document & { autoplayPolicy?: string }).autoplayPolicy;
+  if (policy === undefined) {
+    needsAudioUnlock.value = true;
+    return;
+  }
+  needsAudioUnlock.value = policy === 'disallowed' || policy === 'allowed-muted';
+}
+
+async function unlockAudio() {
+  try {
+    const Ctor =
+      (window as unknown as { AudioContext?: typeof AudioContext }).AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!audioCtx && Ctor) audioCtx = new Ctor();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+    if (audioCtx) {
+      const buffer = audioCtx.createBuffer(1, 1, 22050);
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioCtx.destination);
+      source.start(0);
+    }
+  } catch (err) {
+    console.warn('[gamejam.audio.unlock]', err);
+  } finally {
+    needsAudioUnlock.value = false;
+  }
+}
+
 function maybeFlashAttack(g: GamePayload) {
   const action = g.last_resolved_action;
   if (action !== 'a' && !action?.startsWith('a:')) return;
@@ -254,6 +288,7 @@ function maybeFlashAttack(g: GamePayload) {
 
 onMounted(() => {
   document.documentElement.classList.add('gamejam-fullbleed');
+  checkAutoplayPolicy();
   tickInterval = setInterval(() => (now.value = Date.now()), 250);
 
   const echo = (window as any).Echo;
@@ -316,6 +351,15 @@ onUnmounted(() => {
 
 <template>
   <div class="live-board">
+    <div v-if="needsAudioUnlock" class="audio-unlock-overlay">
+      <div class="audio-unlock-panel">
+        <h2>Audio is blocked</h2>
+        <p>Your browser is preventing this overlay from playing sound until you interact with the page.</p>
+        <button type="button" class="audio-unlock-button" @click="unlockAudio">
+          Click to enable audio
+        </button>
+      </div>
+    </div>
     <aside class="sidebar">
       <header class="side-header">
         <div class="title">
@@ -798,6 +842,53 @@ onUnmounted(() => {
 .grid-empty {
   color: #555;
   font-style: italic;
+}
+
+.audio-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 10, 14, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.audio-unlock-panel {
+  background: #15151a;
+  border: 1px solid #2a2a32;
+  border-radius: 10px;
+  padding: 2rem 2.5rem;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.audio-unlock-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+  color: #eee;
+}
+.audio-unlock-panel p {
+  margin: 0 0 1.25rem;
+  color: #aaa;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.audio-unlock-button {
+  cursor: pointer;
+  background: #2a9d90;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+.audio-unlock-button:hover {
+  background: #36bfb0;
 }
 
 @media (max-width: 1600px) {
