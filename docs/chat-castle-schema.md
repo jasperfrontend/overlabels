@@ -238,8 +238,23 @@ For this to dispatch, the four commands must be registered in the channel's bot 
 ---
 
 ## Open questions
+1. Late-join zombie spawn chance per room: numeric defaults TBD. 
+2. DE-sword durability: GDD says "does not break" - modeled as null `weapon_slot_1_uses` for DE-sword in slot 2. (Slot 2 uses column not needed until a second breakable weapon exists.)
+3. Player exit tile per room: fixed coordinate or any edge tile? 
+4. Broadcast payload shape: full snapshot vs. diff - start with full snapshot for simplicity, optimise later if bandwidth matters.
 
-- Late-join zombie spawn chance per room: numeric defaults TBD.
-- DE-sword durability: GDD says "does not break" - modeled as null `weapon_slot_1_uses` for DE-sword in slot 2. (Slot 2 uses column not needed until a second breakable weapon exists.)
-- Player exit tile per room: fixed coordinate or any edge tile?
-- Broadcast payload shape: full snapshot vs. diff - start with full snapshot for simplicity, optimise later if bandwidth matters.
+## Answers to open questions
+1: Late-join zombie spawn chance per room:
+- Room 1: 0%. There's no late join on room 1.
+- Room 2: 2%. Slight chance, but not too much. Should be fun if it happens.
+- Room 3: 20%. Room 3 is where you find the DE-sword. Put that sword to use on the potential zombie that spawns one 
+  in five of the time.
+- Room 4: 50%. Room 4 is where you find the Iron Fists. You now also possess the DE-sword, so you can use it to kill 
+  the zombie that spawns 50% of times.
+- Room 5: 0%. Room 5 is where you find the boss. No late join zombies spawn here.
+
+2: DE-sword durability: it has endless durability, confirmed.
+
+3: Player exit tile per room: Exit tiles are fixed on row 1, column 5 like this Zelda level ([screenshot](https://cdn.mobygames.com/50df8784-ab83-11ed-81e3-02420a000199.webp))
+
+4: Broadcast payload shape: as suggested: start with full snapshot for simplicity. Should be fine.
