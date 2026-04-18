@@ -98,6 +98,34 @@ const GRID_SIZE = 9;
 const rows = Array.from({ length: GRID_SIZE }, (_, i) => i + 1);
 const cols = Array.from({ length: GRID_SIZE }, (_, i) => i + 1);
 
+const debugInput = ref('');
+const debugInspected = computed<{ x: number; y: number } | null>(() => {
+  const match = debugInput.value.match(/^\s*(\d+)\s*,\s*(\d+)\s*$/);
+  if (!match) return null;
+  const x = parseInt(match[1], 10);
+  const y = parseInt(match[2], 10);
+  if (x < 1 || x > GRID_SIZE || y < 1 || y > GRID_SIZE) return null;
+  return { x, y };
+});
+
+function debugTileState(x: number, y: number) {
+  const t = tileAt(x, y);
+  return {
+    player: t.player ? { hp: t.player.player_hp, hiding: t.player.player_hiding_this_round } : null,
+    blocker: !!t.blocker,
+    hidingSpot: !!t.hidingSpot,
+    door: t.door
+      ? { state: t.door.state, is_exit: t.door.is_exit, turns_remaining: t.door.turns_remaining }
+      : null,
+    hiddenTile: t.hiddenTile
+      ? { content: t.hiddenTile.content, revealed_at_round: t.hiddenTile.revealed_at_round }
+      : null,
+    glyph: tileGlyph(x, y) || '(none)',
+    floor: floorFor(theme.value, x, y),
+    sprite: spriteFor(x, y) ?? '(none)',
+  };
+}
+
 const secondsUntilNextTick = computed(() => {
   if (!game.value?.round_started_at || game.value.status !== 'running') return null;
   const started = new Date(game.value.round_started_at).getTime();
@@ -202,17 +230,45 @@ function tileGlyph(x: number, y: number): string {
   return '';
 }
 
+const PICKUP_CLASSES: Record<string, string> = {
+  regular_sword: 'pickup-sword',
+  de_sword: 'pickup-de-sword',
+  iron_fists: 'pickup-iron-fists',
+  bomb: 'pickup-bomb',
+  hp_restore: 'pickup-hp',
+  zombie_spawn: 'pickup-zombie',
+};
+
+const LOW_HP_THRESHOLD = 1;
+
 function tileClasses(x: number, y: number): string[] {
   const { player, door, hidingSpot, hiddenTile, blocker } = tileAt(x, y);
   const classes: string[] = [];
-  if (player) classes.push('tile-player');
-  if (blocker) classes.push('tile-blocker');
-  if (door) classes.push(`tile-door tile-door-${door.state}`);
-  if (hidingSpot) classes.push('tile-hiding');
-  if (hiddenTile) {
-    classes.push(hiddenTile.revealed_at_round === null ? 'tile-hidden' : 'tile-revealed');
+
+  if (player) classes.push('has-player');
+  if (blocker) classes.push('has-blocker');
+  if (hidingSpot) classes.push('has-hiding');
+  if (door) {
+    classes.push('has-door', `door-${door.state}`);
+    if (door.is_exit) classes.push('door-exit');
   }
-  if (attackFlashTiles.value.has(`${x},${y}`)) classes.push('tile-attack-flash');
+  if (hiddenTile) {
+    if (hiddenTile.revealed_at_round === null) {
+      classes.push('has-hidden', 'reveal-hidden');
+    } else {
+      classes.push('has-pickup');
+      const pickup = hiddenTile.content ? PICKUP_CLASSES[hiddenTile.content] : null;
+      if (pickup) classes.push(pickup);
+    }
+  }
+
+  if (player && game.value) {
+    if (game.value.player_hiding_this_round) classes.push('player-hiding');
+    if (game.value.player_hp <= LOW_HP_THRESHOLD) classes.push('player-low-hp');
+  }
+
+  if (attackFlashTiles.value.has(`${x},${y}`)) classes.push('fx-attack');
+
   return classes;
 }
 
@@ -484,6 +540,53 @@ onUnmounted(() => {
             <li v-if="!grouped.inactive.length" class="placeholder">no inactive players right now</li>
           </ul>
         </div>
+
+        <div class="debug-panel">
+          <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
+          <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
+            <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>
+            <div class="debug-classes">
+              <span
+                v-for="c in tileClasses(game.player_x, game.player_y)"
+                :key="c"
+                class="debug-class"
+              >{{ c }}</span>
+              <span v-if="!tileClasses(game.player_x, game.player_y).length" class="debug-empty">
+                (no classes)
+              </span>
+            </div>
+            <pre class="debug-state">{{ debugTileState(game.player_x, game.player_y) }}</pre>
+          </div>
+          <div v-else class="debug-empty">player not on board</div>
+
+          <h2>Debug: inspect any tile</h2>
+          <input
+            v-model="debugInput"
+            class="debug-input"
+            type="text"
+            placeholder="x,y (e.g. 5,9)"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+          <div v-if="debugInspected" class="debug-block">
+            <div class="debug-coords">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
+            <div class="debug-classes">
+              <span
+                v-for="c in tileClasses(debugInspected.x, debugInspected.y)"
+                :key="c"
+                class="debug-class"
+              >{{ c }}</span>
+              <span
+                v-if="!tileClasses(debugInspected.x, debugInspected.y).length"
+                class="debug-empty"
+              >(no classes)</span>
+            </div>
+            <pre class="debug-state">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
+          </div>
+          <div v-else-if="debugInput" class="debug-empty">
+            invalid coords (use x,y with 1-{{ GRID_SIZE }})
+          </div>
+        </div>
       </section>
 
       <div v-else class="empty-state">
@@ -716,6 +819,93 @@ onUnmounted(() => {
   font-style: italic;
   font-size: 0.8rem;
 }
+
+.debug-panel {
+  background: #1a1410;
+  border: 1px dashed #b0823d;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.debug-panel h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #e0a060;
+  margin: 0.25rem 0 0.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.debug-panel h2:first-child { margin-top: 0; }
+.debug-tag {
+  font-size: 0.6rem;
+  padding: 0.05rem 0.35rem;
+  background: #b0823d;
+  color: #1a1410;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+.debug-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.debug-coords {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: #e0a060;
+  font-weight: 700;
+}
+.debug-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.debug-class {
+  background: #2a2018;
+  color: #ffd9a8;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  border: 1px solid #3a2a1a;
+}
+.debug-empty {
+  color: #666;
+  font-style: italic;
+  font-size: 0.75rem;
+}
+.debug-state {
+  margin: 0;
+  background: #0f0a08;
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #c8c0b8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.debug-input {
+  background: #0f0a08;
+  border: 1px solid #3a2a1a;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  color: #ffd9a8;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+.debug-input:focus {
+  outline: none;
+  border-color: #b0823d;
+}
 .empty-state {
   color: #888;
   font-size: 0.9rem;
@@ -790,41 +980,71 @@ onUnmounted(() => {
   color: #3a3a42;
   font-variant-numeric: tabular-nums;
 }
-.tile-hidden {
-  background: #1c1c26;
-}
-.tile-hidden .glyph { color: #5a5a6e; }
-.tile-revealed { background: #202028; }
-.tile-hiding {
-  background: #2a1f1a;
+/* ---- has-* axis: what's on the tile ---- */
+.has-hidden { background-color: #1c1c26; }
+.has-hidden .glyph { color: #5a5a6e; }
+.has-pickup { background-color: #202028; }
+.has-hiding {
+  background-color: #2a1f1a;
   outline: 2px dashed #6b4226;
   outline-offset: -4px;
 }
-.tile-blocker {
+.has-blocker {
   background: repeating-linear-gradient(45deg, #3a3a3a 0 8px, #555 8px 16px);
   box-shadow: inset 0 0 0 2px #222;
 }
-.tile-blocker .glyph {
+.has-blocker .glyph {
   color: #ddd;
   text-shadow: 0 1px 2px #000;
 }
-.tile-door { background: #2b2b19; }
-.tile-door .glyph { color: #e0c860; }
-.tile-door-open { background: #2b3a1a; }
-.tile-door-open .glyph { color: #9ce04c; }
-.tile-player {
-  background: #1a2a4a !important;
+.has-door { background-color: #2b2b19; }
+.has-door .glyph { color: #e0c860; }
+.has-player {
+  background-color: #1a2a4a !important;
   box-shadow: inset 0 0 18px rgba(79, 142, 247, 0.45);
 }
-.tile-player .glyph {
+.has-player .glyph {
   color: #fff;
   text-shadow: 0 0 10px #4f8ef7;
 }
 
-.tile-attack-flash {
-  animation: attackFlash 0.9s ease-out;
+/* ---- door-* substate ---- */
+.door-closed { /* hook: add shake/glow anticipation here */ }
+.door-opening { /* hook: mid-open visuals */ }
+.door-open {
+  background-color: #2b3a1a;
 }
-@keyframes attackFlash {
+.door-open .glyph { color: #9ce04c; }
+.door-exit { /* hook: mark the room-ending door differently (e.g. outlined gold) */ }
+
+/* ---- pickup-* (revealed tile contents) ---- */
+.pickup-sword { /* hook */ }
+.pickup-de-sword { /* hook */ }
+.pickup-iron-fists { /* hook */ }
+.pickup-bomb { /* hook: pulse red so chat knows to avoid */ }
+.pickup-hp { /* hook: soft green glow to signal "good" */ }
+.pickup-zombie { /* hook: danger pattern */ }
+
+/* ---- reveal-* (hidden -> shown FX) ---- */
+.reveal-hidden { /* hook: subtle idle pulse on unrevealed tiles */ }
+.reveal-shown { /* hook: short-lived class on the frame a tile reveals */ }
+
+/* ---- player-* modifiers ---- */
+.player-hiding { /* hook: dampen the blue glow, add concealment effect */ }
+.player-low-hp { /* hook: red pulse on the player tile when HP <= 1 */ }
+
+/* ---- vote-* (not wired yet; add when we thread votes into tiles) ---- */
+.vote-target-attack { /* hook: tile is inside a pending attack AoE */ }
+.vote-target-move { /* hook: tile the winning move vote points at */ }
+.vote-heat-1 { /* hook: low interest */ }
+.vote-heat-2 { /* hook */ }
+.vote-heat-3 { /* hook */ }
+.vote-heat-4 { /* hook */ }
+.vote-heat-5 { /* hook: high interest */ }
+
+/* ---- fx-* short-lived animations ---- */
+.fx-attack { animation: fxAttack 0.9s ease-out; }
+@keyframes fxAttack {
   0% {
     background: #7a2b2b;
     box-shadow: inset 0 0 24px rgba(255, 140, 90, 0.9);
