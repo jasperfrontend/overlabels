@@ -1331,8 +1331,8 @@ onUnmounted(() => {
   color: red;
 }
 .pickup-hp {
-  border-color: purple;
-  color: purple;
+  border-color: green;
+  color: green;
 }
 .pickup-zombie {
   border-color: orange;

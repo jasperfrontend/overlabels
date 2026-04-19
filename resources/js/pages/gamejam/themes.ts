@@ -141,12 +141,12 @@ const GRAVEYARD: RoomTheme = {
     exit:    '/tile-icons/Objects/Sign (1).png',
   },
   pickups: {
-    regular_sword: '/tile-icons/Objects/Sign (2).png',
-    de_sword:      '/tile-icons/Objects/Sign (3).png',
-    iron_fists:    '/tile-icons/Objects/Scarecrow.png',
-    bomb:          '/tile-icons/Objects/Barrel (1).png',
-    hp_restore:    '/tile-icons/Objects/Pumpkin (1).png',
-    zombie_spawn:  '/tile-icons/Objects/Tombstone (2).png',
+    regular_sword: '/tile-icons/pixel/sword-default.png',
+    de_sword:      '/tile-icons/pixel/sword-de.png',
+    iron_fists:    '/tile-icons/pixel/sword-default.png',
+    bomb:          '/tile-icons/pixel/bomb.png',
+    hp_restore:    '/tile-icons/pixel/apple.png',
+    zombie_spawn:  '/tile-icons/pixel/zombie-spawn.png',
   },
 };
 
