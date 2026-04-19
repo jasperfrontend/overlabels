@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Clock, RefreshCw } from 'lucide-vue-next';
@@ -14,6 +14,13 @@ defineProps<{
 
 const replayingId = ref<number | null>(null);
 const confirmingId = ref<number | null>(null);
+
+const getEventStatus = computed(() => (event: UnifiedEvent) => {
+  const status = event?.event_data?.status;
+  if (status === 'fulfilled') return { class: 'text-green-400', label: 'Complete' };
+  if (status === 'unfulfilled') return { class: 'text-red-400', label: 'Refunded' };
+  return { class: 'hidden', label: '' };
+});
 
 function openConfirm(event: UnifiedEvent) {
   if (!canReplay(event) || replayingId.value === event.id) return;
@@ -182,6 +189,11 @@ function relativeTime(iso: string): string {
               <Clock class="h-3 w-3" />
               <span>{{ relativeTime(event.created_at) }}</span>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
+
+              <span :class="getEventStatus(event).class">
+                {{ getEventStatus(event).label }}
+              </span>
+
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ _ide_helper_models.php
 /storage/*.key
 /storage/pail
 /vendor
+/docs/downloads
 .claude
 .env
 .env.local

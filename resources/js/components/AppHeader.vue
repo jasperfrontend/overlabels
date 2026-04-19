@@ -77,7 +77,7 @@ const rightNavItems: NavItem[] = [
             <SheetContent side="left" class="w-75 p-6">
               <SheetTitle class="sr-only">Navigation Menu</SheetTitle>
               <SheetHeader class="flex justify-start text-left">
-                <AppLogoIcon class="size-6 fill-current text-black dark:text-white" />
+                <AppLogoIcon className="hi" class="size-6 fill-current text-black dark:text-white" />
               </SheetHeader>
               <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                 <nav class="-mx-3 space-y-1">

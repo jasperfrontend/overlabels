@@ -56,6 +56,11 @@ const eventCommands = [
     label: 'Channel Points Redemption',
     description: 'Simulates a channel point redemption',
   },
+  {
+    type: 'channel.channel_points_custom_reward_redemption.update',
+    label: 'Channel Points Redemption Update',
+    description: 'Simulates a channel point redemption update',
+  },
 ];
 
 function getCommand(eventType: string): string {

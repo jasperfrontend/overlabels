@@ -332,18 +332,20 @@ onMounted(async () => {
     // dotted keys like event.user_name (raw event fields, not tags), and any
     // non-scalar values.
     const tSnapshot: Record<string, any> = {};
-    for (const [key, val] of Object.entries(data.value)) {
-      if (key.startsWith('c:')) continue;
-      if (key.startsWith('t:')) continue;
-      if (key === 'user_twitch_id') continue;
-      if (key.includes('.')) continue;
-      if (val === null || typeof val === 'object') continue;
-      tSnapshot[`t:${key}`] = val;
+    if (data.value && typeof data.value === 'object') {
+      for (const [key, val] of Object.entries(data.value)) {
+        if (key.startsWith('c:')) continue;
+        if (key.startsWith('t:')) continue;
+        if (key === 'user_twitch_id') continue;
+        if (key.includes('.')) continue;
+        if (val === null || typeof val === 'object') continue;
+        tSnapshot[`t:${key}`] = val;
 
-      // For tags that EventSub mutates live, also seed the Pinia store so
-      // increment-on-follow / increment-on-sub start from the real count.
-      if (TWITCH_TAG_NAMES.has(key) && eventStore.tags[key] === undefined) {
-        eventStore.tags[key] = val;
+        // For tags that EventSub mutates live, also seed the Pinia store so
+        // increment-on-follow / increment-on-sub start from the real count.
+        if (TWITCH_TAG_NAMES.has(key) && eventStore.tags[key] === undefined) {
+          eventStore.tags[key] = val;
+        }
       }
     }
     if (Object.keys(tSnapshot).length > 0) {

@@ -18,6 +18,7 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
   'stream.online':           { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
   'stream.offline':          { dot: 'bg-red-500', border: 'hover:border-l-red-500' },
   'channel.channel_points_custom_reward_redemption.add': { dot: 'bg-cyan-500', border: 'hover:border-l-cyan-500' },
+  'channel.channel_points_custom_reward_redemption.update': { dot: 'bg-cyan-500', border: 'hover:border-l-cyan-500' },
   'channel.follow':          { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
 };
 
