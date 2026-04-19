@@ -209,7 +209,15 @@ class ActionApplier
 
         $newHp = max(0, $target->hp - $damage);
         if ($newHp <= 0) {
-            $target->update(['hp' => 0, 'active' => false]);
+            // Freeze prev_x/prev_y to the death tile so the corpse doesn't
+            // re-animate from its previous-tick position on every broadcast;
+            // the body just stays where it fell.
+            $target->update([
+                'hp' => 0,
+                'active' => false,
+                'prev_x' => $target->x,
+                'prev_y' => $target->y,
+            ]);
             $this->advancePlayerTowardKill($game, $target);
         } else {
             $target->update(['hp' => $newHp]);

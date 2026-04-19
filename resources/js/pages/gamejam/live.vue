@@ -70,6 +70,7 @@ interface ZombiePayload {
   damage: number;
   kind: 'regular' | 'weakling' | 'boss';
   brain_state: 'drifting' | 'chasing';
+  active: boolean;
 }
 
 interface WorldPayload {
@@ -525,6 +526,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+
   <div class="live-board">
     <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
       <!-- @todo: remove ! above -->
@@ -567,20 +569,32 @@ onUnmounted(() => {
         <pre>{{ joiners }}</pre>
       </section>
 
-      <!-- Weapons -->
-      <section v-if="game" class="bg-[url(/tile-icons/Tile/ui/bg_tile_1.png)] p-4 flex justify-around items-center medievalsharp-regular">
+      <!-- Weapons bg-[url(/tile-icons/Tile/ui/bg_tile_1.png)]  -->
+      <section v-if="game" class="p-4 flex justify-around items-center medievalsharp-regular">
         <div class="weapon text-center p-2">
           <span class="text-yellow-400">Weapon</span>
-          <span class="value">
-            {{ capitalise(game.weapon_slot_1) }}
-            <span v-if="game.weapon_slot_1_uses !== null">({{ game.weapon_slot_1_uses }})</span>
-          </span>
+          <div class="value text-center">
+            <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/fist.png" class="size-16 m-auto" alt="watermelon">
+            <img v-else src="/tile-icons/pixel/sword-default.png" class="size-16 m-auto" alt="sword">
+            <span v-if="game.weapon_slot_1_uses">({{ game.weapon_slot_1_uses }})</span>
+
+            <div v-if="game.weapon_slot_1_uses"
+              class="relative py-2 w-full h-4 overflow-hidden bg-red-400 bg-auto bg-repeat"
+              role="progressbar"
+            >
+              <span
+                class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400 bg-auto bg-repeat"
+                :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
+              ></span>
+            </div>
+
+          </div>
         </div>
-        <div class="weapon text-center p-2" v-if="!game.weapon_slot_2">
+        <div class="weapon text-center p-2" v-if="game.weapon_slot_2">
           <span class="text-yellow-400">Double-Edged Sword</span>
           <span class="value">Unlocked! Use <code>!a 2</code> to attack</span>
         </div>
-        <div class="weapon text-center p-2" v-if="!game.wears_iron_fists">
+        <div class="weapon text-center p-2" v-if="game.wears_iron_fists">
           <span class="text-yellow-400">Iron Fists</span>
           <span class="value">Equipped!</span>
         </div>
@@ -608,11 +622,11 @@ onUnmounted(() => {
 
       <section v-if="game" class="resolver-row">
         <div class="bg-olive-800 p-4 text-center medievalsharp-regular">
-          <span class="text-olive-400">Next tick in</span>
+          <span class="text-olive-400">Next round in</span>
           <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">
             {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}
           </div>
-          <span class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per tick</span>
+          <span class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</span>
         </div>
         <div class="bg-olive-800 p-4 flex flex-col resolved medievalsharp-regular">
           <span class="text-olive-400">Last Twitch chat vote</span>
@@ -696,7 +710,7 @@ onUnmounted(() => {
         <div class="medievalsharp-regular text-sm" v-if="grouped.inactive.length > 0">
           <h2 class="anthon-sc text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
 
-          <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 gap-2 p-1 rounded-sm m-0.5">
+          <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 mt-0.5">
             <div class="bg-card flex gap-2 p-1">
               <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide text-foreground">{{ j.username }}</div>
               <div class="ml-auto text-yellow-400/50 tracking-wide">r{{ j.last_vote_round ?? j.joined_round }}</div>
@@ -755,9 +769,9 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <div v-else class="empty-state">
-        No active game. Run
-        <code>php artisan gamejam:start {{ broadcasterLogin }}</code>
+      <div v-else class="bg-card text-3xl text-foreground p-4 medievalsharp-regular">
+        No active game.
+        Hopefully {{ broadcasterLogin }} starts a new game of Chat Castle soon!
       </div>
     </aside>
 
@@ -783,11 +797,15 @@ onUnmounted(() => {
             v-for="z in world.zombies"
             :key="z.id"
             class="zombie"
-            :class="[`zombie-${z.kind}`, `zombie-${z.brain_state}`, `facing-${zombieViews[z.id]?.facing ?? z.facing}`]"
+            :class="[
+              `zombie-${z.kind}`,
+              z.active ? `zombie-${z.brain_state}` : 'zombie-dead',
+              `facing-${zombieViews[z.id]?.facing ?? z.facing}`,
+            ]"
             :style="zombieStyle(z)"
           >
             <span class="zombie-body"></span>
-            <span class="zombie-hp">{{ z.hp }}/{{ z.max_hp }}</span>
+            <span v-if="z.active" class="zombie-hp">{{ z.hp }}/{{ z.max_hp }}</span>
           </div>
         </div>
       </div>
@@ -919,41 +937,15 @@ onUnmounted(() => {
   grid-template-columns: auto 1fr;
   gap: 0.75rem;
 }
-.resolver-card {
-  background: #1a1a1a;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-.resolver-card .label {
-  font-size: 1rem;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 0.05em;
-}
-.resolver-card .value {
-  color: #2a9d90;
-}
+
+
 .resolver-card.countdown .value {
   font-variant-numeric: tabular-nums;
 }
 .resolver-card.countdown .value.urgent {
   color: #ff5a5a;
 }
-.resolver-card .sub {
-  font-size: 0.75rem;
-  color: #666;
-}
-.tally {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.9rem;
-  margin-top: 0.2rem;
-  font-size: 0.8rem;
-  color: #bbb;
-}
+
 .tally-entry b { color: #2a9d90; }
 
 .joiners-col {
@@ -963,11 +955,7 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
 }
-.joiners-group {
-  background: #1a1a1a;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-}
+
 .joiners-group h2 {
   font-size: 1rem;
   text-transform: uppercase;
@@ -1199,6 +1187,22 @@ onUnmounted(() => {
 .zombie-weakling .zombie-body {
   background: radial-gradient(circle at 35% 30%, #cbd67a 0%, #6b7526 60%, #2c3010 100%);
   opacity: 0.85;
+}
+.zombie-dead {
+  z-index: 3;
+}
+.zombie-dead .zombie-body {
+  background: radial-gradient(circle at 35% 30%, #4a4a4a 0%, #2a2a2a 60%, #111 100%);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(0, 0, 0, 0.6);
+  border-color: rgba(0, 0, 0, 0.6);
+  opacity: 0.55;
+  transform: rotate(80deg);
+  animation: none;
+}
+.zombie-dead .zombie-body::after {
+  background: #3a1a1a;
+  box-shadow: none;
+  opacity: 0.7;
 }
 .zombie .zombie-hp {
   position: absolute;

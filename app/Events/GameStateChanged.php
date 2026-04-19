@@ -106,7 +106,6 @@ class GameStateChanged implements ShouldBroadcastNow
                     ->all(),
                 'zombies' => $game->zombies
                     ->where('room', $game->current_room)
-                    ->where('active', true)
                     ->values()
                     ->map(fn ($z) => [
                         'id' => $z->id,
@@ -120,6 +119,7 @@ class GameStateChanged implements ShouldBroadcastNow
                         'damage' => $z->damage,
                         'kind' => $z->kind,
                         'brain_state' => $z->brain_state,
+                        'active' => $z->active,
                     ])
                     ->all(),
             ],
