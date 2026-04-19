@@ -377,7 +377,6 @@ class ActionApplier
         $game->update([
             'player_x' => $nearest->x,
             'player_y' => $nearest->y,
-            'player_hiding_this_round' => true,
         ]);
     }
 }

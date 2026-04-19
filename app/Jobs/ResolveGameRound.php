@@ -80,11 +80,6 @@ class ResolveGameRound implements ShouldQueue
         $newlyInactiveUsernames = [];
 
         $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers, &$newlyInactiveUsernames) {
-            $wasHidingFromLastRound = $game->player_hiding_this_round;
-            if ($wasHidingFromLastRound) {
-                $game->update(['player_hiding_this_round' => false]);
-            }
-
             $bumpedZombieIds = app(ActionApplier::class)->apply($game, $winner);
 
             if ($game->status === Game::STATUS_RUNNING) {
@@ -92,6 +87,22 @@ class ResolveGameRound implements ShouldQueue
                 // or killed zombies; reload world collections so the resolver
                 // sees the current room's zombies/blockers/hiding spots.
                 $game->load('zombies', 'blockers', 'hidingSpots');
+
+                // Derive the hiding flag from the player's final position
+                // rather than the vote. Standing on a hiding spot counts as
+                // hidden even if the player didn't re-vote !h this tick;
+                // otherwise zombies would re-acquire the player next tick
+                // just because the old flag was reset.
+                $onHidingSpot = $game->hidingSpots
+                    ->where('room', $game->current_room)
+                    ->where('x', $game->player_x)
+                    ->where('y', $game->player_y)
+                    ->isNotEmpty();
+
+                if ($game->player_hiding_this_round !== $onHidingSpot) {
+                    $game->update(['player_hiding_this_round' => $onHidingSpot]);
+                }
+
                 app(ZombieTurnResolver::class)->resolve($game, $bumpedZombieIds);
             }
 

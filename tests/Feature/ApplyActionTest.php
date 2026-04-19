@@ -362,6 +362,43 @@ test('hide is cleared on the following round', function () {
     expect($game->fresh()->player_hiding_this_round)->toBeFalse();
 });
 
+test('player standing on a hiding spot stays hidden on the next tick without re-voting hide', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 3, 'player_y' => 5, 'player_hiding_this_round' => true]);
+    GameHidingSpot::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 3,
+        'y' => 5,
+    ]);
+    voter($game, 's');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(3)
+        ->and($game->player_y)->toBe(5)
+        ->and($game->player_hiding_this_round)->toBeTrue();
+});
+
+test('player standing on a hiding spot stays hidden on the next tick even with no vote', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 3, 'player_y' => 5, 'player_hiding_this_round' => true]);
+    GameHidingSpot::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 3,
+        'y' => 5,
+    ]);
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(3)
+        ->and($game->player_y)->toBe(5)
+        ->and($game->player_hiding_this_round)->toBeTrue();
+});
+
 test('hide teleports the player to the nearest hiding spot and sets the hiding flag', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 9]);
