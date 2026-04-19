@@ -337,7 +337,7 @@ const zombies: Zombie[] = [
         </p>
       </div>
 
-      <div class="rounded-lg border border-sidebar bg-sidebar/40 p-5">
+      <div id="diagram" class="rounded-lg border border-sidebar bg-sidebar/40 p-5">
         <p class="mb-3 text-sm font-semibold">What "orthogonally adjacent" actually means</p>
         <div class="flex flex-wrap items-start gap-6">
           <div class="grid w-fit grid-cols-9 gap-0.5" aria-hidden="true">
@@ -391,7 +391,8 @@ const zombies: Zombie[] = [
         Practical read: "two tiles away" is not safe distance. If you vote
         <code class="rounded bg-card px-1">!p up</code> toward a zombie two north, you end up one
         tile south of it - and the zombie steps onto the tile between you on its turn. You take the
-        hit. To actually dodge, move perpendicular, put a pillar between you, or kill it first.
+        hit. To actually dodge, move perpendicular, put a pillar between you, or kill it first from a
+        diagonal angle so you don't get hit. <a href="#diagram" class="text-violet-400 hover:underline">See diagram above</a> for a visual.
       </p>
 
       <h3 id="zombies-kill" class="mt-6 text-lg font-semibold">Killing zombies</h3>
