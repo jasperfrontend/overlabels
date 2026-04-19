@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
-import { Swords, Heart, Clock, Dices, DoorOpen, Skull } from 'lucide-vue-next';
+import { Swords, Heart, Clock, Dices, DoorOpen, Skull, Ghost } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -86,6 +86,22 @@ const chestClass: Record<ChestItem['tone'], string> = {
   neutral: 'border-sidebar bg-sidebar/40',
   bad: 'border-rose-500/40 bg-rose-500/5',
 };
+
+interface Zombie {
+  room: string;
+  count: string;
+  hp: number;
+  damage: number;
+  notes: string;
+}
+
+const zombies: Zombie[] = [
+  { room: 'Room 1', count: '1 regular', hp: 3, damage: 1, notes: 'Spawns at least 3 tiles from the player.' },
+  { room: 'Room 2', count: '1 regular', hp: 4, damage: 2, notes: 'Starts to bite.' },
+  { room: 'Room 3', count: '1 regular', hp: 6, damage: 3, notes: 'Harder to two-shot with a regular sword.' },
+  { room: 'Room 4', count: '4 regulars', hp: 8, damage: 4, notes: 'Four at once on a 9x9 grid - tight quarters.' },
+  { room: 'Room 5', count: '1 boss', hp: 30, damage: 4, notes: 'Sits dead-centre. The four corner tiles are HP restores - worth grabbing before the fight.' },
+];
 </script>
 
 <template>
@@ -116,6 +132,9 @@ const chestClass: Record<ChestItem['tone'], string> = {
         <li>Every round, every active player loses 1 energy block. Voting resets your energy back to 3.</li>
         <li>Miss enough rounds and you go inactive. The shared HP pool loses 1 when that happens.</li>
         <li>Attack doors to open them. Walk through an open exit door to advance. Clear room 5 to win.</li>
+        <li>Every room has zombies. Fight them (<code class="rounded bg-background/40 px-1">!a</code>),
+          dodge them (<code class="rounded bg-background/40 px-1">!p</code>), or hide from them
+          (<code class="rounded bg-background/40 px-1">!h</code>). Details further down.</li>
       </ul>
     </div>
 
@@ -154,7 +173,17 @@ const chestClass: Record<ChestItem['tone'], string> = {
     </p>
     <ol class="mb-10 list-decimal space-y-2 pl-6 text-foreground">
       <li>Every active player who voted has their vote tallied.</li>
-      <li>The action with the most votes is applied (ties are broken deterministically).</li>
+      <li>
+        <strong>The winning action is applied.</strong> Movement into a zombie's tile stops you
+        and takes that zombie's damage (a <em>bump</em>). Attacks hit the nearest zombie in reach
+        if there is one, otherwise fall back to the exit door's 3x3 AoE.
+      </li>
+      <li>
+        <strong>Zombies take their turn.</strong> Each one re-checks line of sight, chases if it
+        can see you or drifts if it cannot, then moves one tile. After every zombie has moved, any
+        zombie orthogonally adjacent to you deals its damage (multiple stack). A zombie that
+        already bumped you in step 2 is skipped here - it cannot double-hit you in the same tick.
+      </li>
       <li>Every active player's energy drops by 1. Voting any time during the round sets it back to 3.</li>
       <li>Players whose energy hits 0 flip to inactive - see below.</li>
       <li>Pending joiners (people who just joined this round) are promoted to active.</li>
@@ -212,6 +241,139 @@ const chestClass: Record<ChestItem['tone'], string> = {
         Each room's exit has its own HP: room 1 needs 2 fist-damage hits to open, room 2 needs 3, room 3 needs
         3, room 4 needs 4, room 5 needs 5. The double-edged sword does 2 damage per hit, which cuts that in
         half.
+      </p>
+    </div>
+
+    <h2 id="zombies" class="mb-4 flex items-center gap-2 text-2xl font-bold">
+      <Ghost class="h-6 w-6 text-violet-400" />
+      Zombies
+    </h2>
+    <div class="mb-10 space-y-4 text-foreground">
+      <p>
+        Every room has zombies. Rooms 1 to 4 have regular zombies; room 5 has a single boss. Each
+        room escalates: more HP, more damage per hit, and in room 4 there are four of them at once.
+      </p>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="z in zombies"
+          :key="z.room"
+          class="rounded-lg border border-sidebar bg-sidebar p-4"
+        >
+          <h3 class="mb-1 font-semibold">{{ z.room }}</h3>
+          <p class="text-sm text-foreground">{{ z.count }} - {{ z.hp }} HP, {{ z.damage }} damage per hit</p>
+          <p class="mt-1 text-xs text-muted-foreground">{{ z.notes }}</p>
+        </div>
+      </div>
+
+      <h3 id="zombies-brain" class="mt-6 text-lg font-semibold">How zombies see and move</h3>
+      <p>
+        Every tick, each zombie picks one of two states based on whether it can currently see you:
+      </p>
+      <ul class="list-disc space-y-2 pl-6">
+        <li>
+          <strong>Line of sight</strong> is a straight line from the zombie to the player. Pillars
+          (the solid blocks in room 5 and the occasional blocker tile) are <em>opaque</em> - they
+          block both movement and sight. A pillar between you and a zombie breaks line of sight
+          completely.
+        </li>
+        <li>
+          <strong>Hiding</strong> (via <code class="rounded bg-sidebar px-1">!h</code>) makes you
+          fully invisible. Zombies flip to drifting the moment you are on a hiding spot, even if
+          the map between you is wide open. They do not steer toward hiding tiles.
+        </li>
+      </ul>
+      <ul class="list-disc space-y-2 pl-6">
+        <li>
+          <strong>Chasing</strong> - zombie has sight of you: it steps 1 tile toward you on the axis
+          with the bigger gap. If that step is blocked (pillar, another zombie, or your tile - it
+          will not step onto the player), it tries the other axis. If both are blocked, it stays put
+          for the tick.
+        </li>
+        <li>
+          <strong>Drifting</strong> - zombie does not have sight of you: it tries to step in its
+          current facing direction. If that is blocked it rotates clockwise (up → right → down →
+          left → up) and tries again, up to four attempts. If every direction is blocked, it stays
+          put for the tick.
+        </li>
+      </ul>
+
+      <h3 id="zombies-damage" class="mt-6 text-lg font-semibold">How a zombie actually hits you</h3>
+      <p>
+        This is where it pays to understand <a href="#tick" class="underline">the tick</a>. Zombie
+        damage arrives in one of two ways, at two different moments inside the same tick:
+      </p>
+      <div class="rounded-lg border border-rose-500/40 bg-rose-500/5 p-5">
+        <p class="mb-2 font-semibold text-rose-300">1. Bump damage (during your action, step 2 of the tick)</p>
+        <p class="text-sm">
+          If the winning vote is <code class="rounded bg-sidebar px-1">!p</code> into a zombie's
+          tile, you <em>do not move</em> and you take that zombie's damage instantly. Multi-step
+          moves stop on the bump, so <code class="rounded bg-sidebar px-1">!p up 3</code> toward a
+          zombie two tiles north walks one tile and bumps on the second attempt - one bump, one
+          hit's worth of damage, you stop early.
+        </p>
+      </div>
+      <div class="rounded-lg border border-rose-500/40 bg-rose-500/5 p-5">
+        <p class="mb-2 font-semibold text-rose-300">2. Adjacency damage (after the zombies move, step 3 of the tick)</p>
+        <p class="text-sm">
+          Once every zombie has finished its turn, every zombie that ends up <strong>orthogonally
+          adjacent</strong> to you (directly up, down, left, or right - diagonals do not count)
+          deals its damage. Multiple adjacent zombies stack. This is how a zombie that was one tile
+          away at the start of the tick still hits you even if nobody bumped - it walks up to you
+          on its turn, and the game checks adjacency after.
+        </p>
+      </div>
+      <p>
+        A zombie that already dealt bump damage in step 2 is <strong>skipped</strong> in step 3 -
+        the game will not double-hit you with the same zombie inside one tick.
+      </p>
+      <p>
+        <strong>Hiding caveat:</strong> zombies cannot see you while you are in a hiding spot, so
+        they stop chasing. They can still drift into the tile next to yours on their own, and if
+        they do, the adjacency hit <strong>doubles</strong>: a room-1 zombie (1 dmg) hits for 2, a
+        room-4 zombie (4 dmg) hits for 8. Hiding is only actually safe if nothing nearby can
+        stumble into you. If everyone is busy elsewhere and no zombie ends up next to you this
+        tick, hiding instead gives the party <strong>+1 HP</strong>.
+      </p>
+      <p class="text-sm text-muted-foreground">
+        Practical read: "two tiles away" is not safe distance. If you vote
+        <code class="rounded bg-card px-1">!p up</code> toward a zombie two north, you end up one
+        tile south of it - and the zombie steps onto the tile between you on its turn. You take the
+        hit. To actually dodge, move perpendicular, put a pillar between you, or kill it first.
+      </p>
+
+      <h3 id="zombies-kill" class="mt-6 text-lg font-semibold">Killing zombies</h3>
+      <p>
+        <code class="rounded bg-sidebar px-1">!a</code> always hits the nearest zombie in reach
+        first - only if there is no zombie in reach does the attack fall back to the exit door's
+        3x3 AoE. Reach depends on the weapon:
+      </p>
+      <ul class="list-disc space-y-1 pl-6">
+        <li>
+          <strong>Fists</strong> and <strong>regular sword</strong>: reach 1 tile, orthogonal only
+          (up, down, left, right). No diagonals.
+        </li>
+        <li>
+          <strong>Double-edged sword</strong> (<code class="rounded bg-sidebar px-1">!a 2</code>):
+          reach 2 tiles measured as Manhattan distance. That is the eight orthogonal and diagonal
+          neighbours plus the four straight-line tiles two steps out.
+        </li>
+      </ul>
+      <p>
+        Damage per hit against a zombie: fists <strong>2</strong>, regular sword <strong>3</strong>,
+        double-edged sword <strong>4</strong>. (Those numbers are higher than their damage against
+        doors, where fists/regular do 1 and the double-edged does 2 - so swords feel dramatically
+        better in a fight than on a door.)
+      </p>
+      <p>
+        When your attack kills a zombie, you automatically <strong>step one tile toward it</strong>
+        on the axis with the bigger gap, no extra move vote needed. If the zombie was right next to
+        you, that means you step onto its now-empty tile.
+      </p>
+      <p class="text-sm text-muted-foreground">
+        Fists still cost 1 HP per swing whether you attack a zombie, a door, or the empty air.
+        Iron fists removes that cost permanently. The regular sword consumes 1 use per swing
+        regardless of target; the double-edged sword never expires.
       </p>
     </div>
 

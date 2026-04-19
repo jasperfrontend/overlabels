@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 19th, 2026 - `/help/gamejam` documents zombie behaviour + tick ordering
+
+- Help page had zero references to zombies; it predates the zombie implementation by a few days. Added a full "Zombies" section between "Rooms, doors, and the exit" and "What is in the chests" so the natural reading order is geography → enemies → loot → combat → consequences.
+- New content covers: per-room zombie matrix (counts, HP, damage, flavour note), the two-state brain (chasing vs drifting) with the exact rules for each - including the clockwise drift rotation and the "cannot step onto the player tile" guard that makes chasing zombies stall-and-hit instead of walk-through.
+- The core clarification the user asked for: a dedicated "How a zombie actually hits you" block that calls out the two distinct damage moments inside one tick - <strong>bump damage</strong> during step 2 (your action resolves into a zombie tile, you stop and take the hit) and <strong>adjacency damage</strong> during step 3 (after every zombie has moved, each orthogonal neighbour of the player deals damage). The same-zombie skip rule is called out explicitly so players understand bumps cannot double-hit.
+- Updated the existing "The tick" ordered list to mention the zombie turn as its own explicit step (previously the list was silent about zombies). This keeps the zombie section's tick-step references pointing at visible anchors on the same page.
+- Added a "Killing zombies" sub-block with reach math (fists/regular = reach 1 orthogonal; double-edged = Manhattan 2), zombie damage-per-hit (fists 2, regular 3, DE 4 - higher than the door damage numbers in the existing weapons section, which is why a sword feels so much better in a fight), and the kill-and-advance behaviour. Explicit footer reminds the reader that fists still cost 1 HP per swing and the regular sword still consumes a use when you connect on a zombie.
+- Hiding caveat called out in plain language: hiding breaks line of sight completely, zombies drift instead of chase, BUT adjacency damage doubles if a drifting zombie stumbles into the tile next to you - so hiding is only actually safe when nothing is close enough to blunder in. Standalone "+1 HP if you survive the tick untouched" is mentioned here rather than buried.
+- No changes to `help/Index.vue` (Chat Castle card description still accurate at the headline level).
+
 ## April 19th, 2026 - Chat Castle: fix zombies still chasing hiding players
 
 - `ZombieTurnResolver::hasLineOfSight` had a dead-code hiding-spot check: it tried to mark an interior Bresenham tile opaque if that tile was also the endpoint (player position), but `array_slice` on the Bresenham path already excludes endpoints, so the match could never fire. Net effect: hiding did nothing for LoS and zombies continued to chase hiding players as if they were out in the open.
