@@ -14,7 +14,7 @@ function render() {
   if (!el.value) return;
   try {
     katex.render(props.tex, el.value, {
-      displayMode: !!props.display,
+      displayMode: props.display,
       throwOnError: false,
       output: 'html',
     });

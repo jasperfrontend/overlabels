@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import { floorFor, themeFor, type RoomTheme } from './themes';
 
 interface GamePayload {
@@ -97,6 +98,10 @@ const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: []
 const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
+
+const capitalise = computed(() => {
+  return (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+});
 
 interface ZombieView {
   x: number;
@@ -231,20 +236,31 @@ const blocks = computed(() => {
   };
 });
 
-function readableVote(vote: string | null): string {
+const voteArrowIcons: Record<string, Component> = {
+  left: ArrowLeft,
+  right: ArrowRight,
+  up: ArrowUp,
+  down: ArrowDown,
+};
+
+function voteIcon(vote: string | null): Component | null {
+  if (!vote || !vote.startsWith('p:')) return null;
+  const dir = vote.slice(2).split(':')[0];
+  return voteArrowIcons[dir] ?? null;
+}
+
+function voteIconCount(vote: string | null): number {
+  if (!vote || !vote.startsWith('p:')) return 0;
+  return parseInt(vote.slice(2).split(':')[1] ?? '1', 10);
+}
+
+function voteLabel(vote: string | null): string {
   if (!vote) return '-';
   if (vote === 'h') return 'hide';
   if (vote === 's') return 'stay';
   if (vote === 'a') return 'attack';
   if (vote.startsWith('a:')) return `attack slot ${vote.slice(2)}`;
-  if (vote.startsWith('p:')) {
-    const arrows: Record<string, string> = { left: '←', right: '→', up: '↑', down: '↓' };
-    const parts = vote.slice(2).split(':');
-    const dir = parts[0];
-    const steps = parts[1] ? parseInt(parts[1], 10) : 1;
-    const base = `${arrows[dir] ?? ''} ${dir}`.trim();
-    return steps > 1 ? `${base} x${steps}` : base;
-  }
+  if (vote.startsWith('p:')) return '';
   return vote;
 }
 
@@ -523,60 +539,57 @@ onUnmounted(() => {
     <aside class="sidebar">
       <header class="flex justify-between gap-2">
         <div class="flex flex-col gap-0">
-          <h1 class="text-3xl font-bold anthon-sc">Chat Castle</h1>
+          <h1 class="text-3xl medievalsharp-regular">Chat Castle</h1>
           <span class="text-muted-foreground text-[15px]">@{{ broadcasterLogin }}</span>
         </div>
         <div>
 
           <!-- Game Status -->
-          <section v-if="game" class="flex text-center gap-10 anthon-sc">
+          <section v-if="game" class="flex text-center gap-10 medievalsharp-regular">
             <div class="flex flex-col gap-0">
-              <span class="text-muted-foreground uppercase">Status</span>
-              <span class="py-0.5 px-2 rounded-sm uppercase font-bold" :class="`status-${game.status}`">{{ game.status }}</span>
+              <span class="text-olive-400">Status</span>
+              <span class="py-0.5 px-2 capitalize font-bold">{{ game.status }}</span>
             </div>
             <div class="flex flex-col gap-0">
-              <span class="text-muted-foreground uppercase">Round</span>
-              <span class="py-0.5 px-2 rounded-sm uppercase font-bold">{{ game.current_round }}</span>
+              <span class="text-olive-400">Round</span>
+              <span class="py-0.5 px-2 capitalize font-bold">{{ game.current_round }}</span>
             </div>
             <div class="flex flex-col gap-0">
-              <span class="text-muted-foreground uppercase">Players</span>
-              <span class="py-0.5 px-2 rounded-sm uppercase font-bold">{{ joiners.length }}</span>
+              <span class="text-olive-400">Players</span>
+              <span class="py-0.5 px-2 capitalize font-bold">{{ joiners.length }}</span>
             </div>
           </section>
 
         </div>
-        <div class="conn bg-sidebar-accent py-0.5 px-3 rounded-sm" :class="{ on: connected }">
-          <span class="dot size-3"></span>
-          <span class="text-lg">{{ connected ? 'live' : 'offline' }}</span>
-        </div>
+
       </header>
       <section class="stats-row" v-if="debugEnabledLive">
         <pre>{{ joiners }}</pre>
       </section>
 
       <!-- Weapons -->
-      <section v-if="game" class="bg-[url(/tile-icons/Tile/ui/bg_tile_1.png)] p-4 rounded-sm flex justify-around items-center">
-        <div class="weapon p-2">
-          <span class="anthon-sc">Slot 1</span>
+      <section v-if="game" class="bg-[url(/tile-icons/Tile/ui/bg_tile_1.png)] p-4 flex justify-around items-center medievalsharp-regular">
+        <div class="weapon text-center p-2">
+          <span class="text-yellow-400">Weapon</span>
           <span class="value">
-            {{ game.weapon_slot_1 }}
-            <small v-if="game.weapon_slot_1_uses !== null">({{ game.weapon_slot_1_uses }})</small>
+            {{ capitalise(game.weapon_slot_1) }}
+            <span v-if="game.weapon_slot_1_uses !== null">({{ game.weapon_slot_1_uses }})</span>
           </span>
         </div>
-        <div class="weapon p-2">
-          <span class="anthon-sc">Slot 2</span>
-          <span class="value">{{ game.weapon_slot_2 ?? '-' }}</span>
+        <div class="weapon text-center p-2" v-if="!game.weapon_slot_2">
+          <span class="text-yellow-400">Double-Edged Sword</span>
+          <span class="value">Unlocked! Use <code>!a 2</code> to attack</span>
         </div>
-        <div class="weapon p-2">
-          <span class="anthon-sc">Iron Fists</span>
-          <span class="value">{{ game.wears_iron_fists ? 'yes' : 'no' }}</span>
+        <div class="weapon text-center p-2" v-if="!game.wears_iron_fists">
+          <span class="text-yellow-400">Iron Fists</span>
+          <span class="value">Equipped!</span>
         </div>
       </section>
 
       <!-- Health Bar -->
       <section v-if="game">
         <div
-          class="relative py-2 w-full overflow-hidden rounded bg-[url(/tile-icons/Tile/progress/bl.png)] bg-auto bg-repeat"
+          class="relative py-2 w-full overflow-hidden bg-[url(/tile-icons/Tile/progress/bl.png)] bg-auto bg-repeat"
           role="progressbar"
           :aria-valuenow="game.player_hp"
           aria-valuemin="0"
@@ -586,7 +599,7 @@ onUnmounted(() => {
             class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-[url(/tile-icons/Tile/progress/g.png)] bg-auto bg-repeat"
             :style="{ width: gamePeakHp > 0 ? `${Math.min(100, (game.player_hp / gamePeakHp) * 100)}%` : '0%' }"
           ></span>
-          <span class="macondo-sc relative z-10 flex h-full items-center justify-center text-3xl font-bold tracking-wide text-white">
+          <span class="medievalsharp-regular relative z-10 flex h-full items-center justify-center text-3xl font-bold tracking-wide text-white">
             {{ game.player_hp }} / {{ gamePeakHp }}
           </span>
         </div>
@@ -594,71 +607,102 @@ onUnmounted(() => {
 
 
       <section v-if="game" class="resolver-row">
-        <div class="resolver-card countdown">
-          <span class="anthon-sc">Next round in</span>
-          <span class="value anthon-sc" :class="{ urgent: (secondsUntilNextTick ?? 99) < 5 }">
-            {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}s` : '-' }}
-          </span>
-          <span class="text-sm text-muted-foreground">Rounds are {{ game.round_duration_seconds }} seconds</span>
+        <div class="bg-olive-800 p-4 text-center medievalsharp-regular">
+          <span class="text-olive-400">Next tick in</span>
+          <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">
+            {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}
+          </div>
+          <span class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per tick</span>
         </div>
-        <div class="resolver-card resolved">
-          <span class="anthon-sc">Last Twitch chat vote</span>
-          <span class="value anthon-sc">{{game.last_resolved_action ? readableVote(game.last_resolved_action) : 'nothing yet'}}</span>
-          <div v-if="lastResolvedTallyEntries.length" class="tally">
+        <div class="bg-olive-800 p-4 flex flex-col resolved medievalsharp-regular">
+          <span class="text-olive-400">Last Twitch chat vote</span>
+          <span class="text-teal-400 text-8xl flex items-center justify-center gap-2">
+            <template v-if="game.last_resolved_action">
+              <component
+                v-for="i in voteIconCount(game.last_resolved_action)"
+                :is="voteIcon(game.last_resolved_action)"
+                :key="i"
+                class="h-24 w-24"
+              />
+              <span v-if="voteLabel(game.last_resolved_action)">{{ voteLabel(game.last_resolved_action) }}</span>
+            </template>
+            <template v-else>nothing yet</template>
+          </span>
+          <div v-if="lastResolvedTallyEntries.length" class="mt-4 text-lg">
             <span
               v-for="[action, count] in lastResolvedTallyEntries"
               :key="action"
-              class="tally-entry text-sm text-muted-foreground"
+              class="tally-entry medievalsharp-regular text-sm inline-flex items-center gap-1"
             >
-              {{ readableVote(action) }}: <b>{{ count }}</b>
+              <component
+                v-for="i in voteIconCount(action)"
+                :is="voteIcon(action)"
+                :key="i"
+                class="h-4 w-4"
+              />
+              <span v-if="voteLabel(action)">{{ voteLabel(action) }}</span>
+              <span>: <strong class="text-teal-400">{{ count }}</strong></span>
             </span>
           </div>
-          <span v-else class="text-sm text-muted-foreground">no votes cast</span>
+          <span v-else class="text-sm text-muted-foreground medievalsharp-regular">no votes cast</span>
         </div>
       </section>
 
       <section v-if="game" class="joiners-col">
-        <div class="">
-          <h2 class="anthon-sc text-lg text-white">Active: <span class="count">{{ grouped.active.length }} player{{ grouped.active.length !== 1 ? 's' : '' }}</span></h2>
+        <div class="medievalsharp-regular">
+          <h2 class="text-lg text-white">Active: <span class="count">{{ grouped.active.length }} player{{ grouped.active.length !== 1 ? 's' : '' }}</span></h2>
           <ul>
             <li
               v-for="j in grouped.active"
               :key="j.twitch_user_id"
-              class="joiner"
-              :title="`Joined r${j.joined_round}${j.last_vote_round ? `, last vote r${j.last_vote_round}` : ''}`"
+              class="joiner flex items-center gap-2 p-1 pl-2 my-0.5 w-full bg-olive-800 medievalsharp-regular"
             >
-              <span class="name">{{ j.username }}</span>
-              <span class="vote">{{ readableVote(j.current_vote) }}</span>
-              <div class="flex ml-auto gap-2" :aria-label="`${j.blocks_remaining} of 3 energy`">
+              <div class="text-teal-400 bg-card p-1 w-25 px-3 flex items-center justify-center gap-1">
+                <component
+                  v-for="i in voteIconCount(j.current_vote)"
+                  :is="voteIcon(j.current_vote)"
+                  :key="i"
+                  class="h-4 w-4"
+                />
+                <span v-if="voteLabel(j.current_vote)">{{ voteLabel(j.current_vote) }}</span>
+              </div>
+              <div class="name">{{ j.username }}</div>
+              <div class="flex ml-auto items-center mr-2 gap-2">
                 <span class="-mt-0.5 anthon-sc">Energy:</span>
                 <span
                   v-for="(state, i) in blocks(j.blocks_remaining)"
                   :key="i"
-                  class="pip"
                   :class="state"
-                ></span>
+                >
+                  <ShieldCheck class="fill-emerald-600" v-if="state === 'filled'" />
+                  <ShieldOff v-else />
+                </span>
               </div>
             </li>
             <li v-if="!grouped.active.length" class="placeholder">no active players right now</li>
           </ul>
         </div>
 
-        <div class="">
+        <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">
           <h2 class="anthon-sc text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
           <ul>
-            <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner">
+            <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner medievalsharp-regular">
               <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
             </li>
             <li v-if="!grouped.pending.length" class="text-sm text-muted-foreground">no players waiting right now</li>
           </ul>
         </div>
 
-        <div class="anthon-sc text-sm">
+        <div class="medievalsharp-regular text-sm" v-if="grouped.inactive.length > 0">
           <h2 class="anthon-sc text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
-          <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="flex flex-wrap bg-card p-2 rounded-sm mb-0.5">
-            <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide">{{ j.username }}</div>
-            <div class="ml-auto text-muted-foreground tracking-wide">left at round {{ j.last_vote_round ?? j.joined_round }}</div>
+
+          <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 gap-2 p-1 rounded-sm m-0.5">
+            <div class="bg-card flex gap-2 p-1">
+              <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide text-foreground">{{ j.username }}</div>
+              <div class="ml-auto text-yellow-400/50 tracking-wide">r{{ j.last_vote_round ?? j.joined_round }}</div>
+            </div>
           </div>
+
           <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
         </div>
 
@@ -753,17 +797,21 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Anton+SC&family=Macondo+Swash+Caps&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton+SC&family=Macondo+Swash+Caps&family=MedievalSharp&display=swap');
 
 .macondo-sc {
   font-family: 'Macondo Swash Caps', cursive;
   font-weight: 400;
   font-style: normal;
 }
+
+.medievalsharp-regular,
 .anthon-sc {
-  font-family: 'Anton SC', sans-serif;
+  font-family: "MedievalSharp", cursive;
   font-weight: 400;
+  font-style: normal;
 }
+
 .live-board {
   min-height: 100vh;
   display: grid;
@@ -815,8 +863,8 @@ onUnmounted(() => {
   background: #555;
 }
 .conn.on .dot {
-  background: #e8db0b;
-  box-shadow: 0 0 8px #e8db0b;
+  background: #63e80b;
+  box-shadow: 0 0 8px #63e80b;
 }
 
 .stats-row,
@@ -886,13 +934,10 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
 }
 .resolver-card .value {
-  font-size: 1.25rem;
-  font-weight: 700;
   color: #2a9d90;
 }
 .resolver-card.countdown .value {
   font-variant-numeric: tabular-nums;
-  color: #4f8ef7;
 }
 .resolver-card.countdown .value.urgent {
   color: #ff5a5a;
@@ -941,42 +986,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.2rem;
 }
-.joiner {
-  background: #242424;
-  padding: 0.3rem 0.55rem;
-  border-radius: 3px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-size: 1rem;
-  line-height: 1.2;
-}
-.joiner.dim { opacity: 0.5; }
-.joiner .name {
-  font-weight: 600;
-  font-size: 1.5rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 0 1 auto;
-}
-.joiner .vote {
-  background: #000;
-  color: #2a9d90;
-  white-space: nowrap;
-  font-size: 1.5rem;
-  min-width: 0;
-  padding: .2rem;
-  border-radius: 5px;
-  overflow: hidden;
-  font-weight: bold;
-  text-overflow: ellipsis;
-}
-.joiner .vote.dim,
-.joiner .dim { color: #888; }
+
 .joiner .energy {
   display: inline-flex;
   gap: 3px;
@@ -986,17 +996,17 @@ onUnmounted(() => {
 .joiner .pip {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: 0;
   display: inline-block;
   transition: background 0.2s, box-shadow 0.2s;
 }
 .joiner .pip.filled {
-  background: #c69217;
-  box-shadow: 0 0 4px rgba(198, 146, 23, .15);
+  background: #88ff84;
+  box-shadow: 0 0 4px rgb(76 151 73);
 }
 .joiner .pip.empty {
   background: transparent;
-  border: 1px solid #3a3a3a;
+  border: 1px solid #4c9749;
 }
 
 
