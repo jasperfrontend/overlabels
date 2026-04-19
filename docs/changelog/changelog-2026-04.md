@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 19th, 2026 - `/help/gamejam` diagram for "orthogonally adjacent"
+
+- Added a small 9x9 CSS-grid diagram inline in the Zombies > "How a zombie actually hits you" section, sitting between the adjacency-damage callout and the same-zombie skip rule. Player in the centre (violet with ring), the four orthogonal tiles filled rose ("hits you"), the four diagonals dashed rose ("does not hit"), rest of the grid neutral. Legend to the right of the grid at desktop width, wraps below on mobile via `flex-wrap`. Small caption under the grid explains the word itself ("orthogonal = on a right-angle axis") for readers who, like the author, had not encountered it before today.
+- `adjacencyTiles` computed inline from `Array.from({length: 81})` using `(col-4, row-4)` deltas - one `v-for` covers the whole grid, no 81 hand-written divs. `aria-hidden` on the grid so screen readers skip the decorative pixels and get the legend instead.
+
 ## April 19th, 2026 - `/help/gamejam` documents zombie behaviour + tick ordering
 
 - Help page had zero references to zombies; it predates the zombie implementation by a few days. Added a full "Zombies" section between "Rooms, doors, and the exit" and "What is in the chests" so the natural reading order is geography → enemies → loot → combat → consequences.

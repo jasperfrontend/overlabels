@@ -95,6 +95,19 @@ interface Zombie {
   notes: string;
 }
 
+type AdjacencyTile = 'player' | 'hit' | 'miss' | 'empty';
+
+const adjacencyTiles: AdjacencyTile[] = Array.from({ length: 81 }, (_, i) => {
+  const col = i % 9;
+  const row = Math.floor(i / 9);
+  const dx = col - 4;
+  const dy = row - 4;
+  if (dx === 0 && dy === 0) return 'player';
+  if ((dx === 0 && Math.abs(dy) === 1) || (dy === 0 && Math.abs(dx) === 1)) return 'hit';
+  if (Math.abs(dx) === 1 && Math.abs(dy) === 1) return 'miss';
+  return 'empty';
+});
+
 const zombies: Zombie[] = [
   { room: 'Room 1', count: '1 regular', hp: 3, damage: 1, notes: 'Spawns at least 3 tiles from the player.' },
   { room: 'Room 2', count: '1 regular', hp: 4, damage: 2, notes: 'Starts to bite.' },
@@ -323,6 +336,45 @@ const zombies: Zombie[] = [
           on its turn, and the game checks adjacency after.
         </p>
       </div>
+
+      <div class="rounded-lg border border-sidebar bg-sidebar/40 p-5">
+        <p class="mb-3 text-sm font-semibold">What "orthogonally adjacent" actually means</p>
+        <div class="flex flex-wrap items-start gap-6">
+          <div class="grid w-fit grid-cols-9 gap-0.5" aria-hidden="true">
+            <div
+              v-for="(tile, i) in adjacencyTiles"
+              :key="i"
+              class="h-6 w-6 rounded-sm"
+              :class="{
+                'border border-sidebar/60 bg-background/40': tile === 'empty',
+                'bg-violet-500/80 ring-2 ring-violet-300': tile === 'player',
+                'bg-rose-500/80': tile === 'hit',
+                'border-2 border-dashed border-rose-500/60 bg-rose-500/10': tile === 'miss',
+              }"
+            />
+          </div>
+          <ul class="min-w-[12rem] flex-1 space-y-3 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="inline-block h-4 w-4 shrink-0 rounded-sm bg-violet-500/80 ring-2 ring-violet-300"></span>
+              You
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="inline-block h-4 w-4 shrink-0 rounded-sm bg-rose-500/80"></span>
+              A zombie on any of these four tiles <strong>hits you</strong>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="inline-block h-4 w-4 shrink-0 rounded-sm border-2 border-dashed border-rose-500/60 bg-rose-500/10"></span>
+              A zombie on these four diagonal tiles does <strong>not</strong> hit you this tick
+            </li>
+          </ul>
+        </div>
+        <p class="mt-3 text-xs text-muted-foreground">
+          Orthogonal just means "on a right-angle axis": up, down, left, right. Diagonals are a
+          tile away but their centres are further (by the Pythagorean diagonal of one tile), and
+          the zombie cannot land a punch across the corner.
+        </p>
+      </div>
+
       <p>
         A zombie that already dealt bump damage in step 2 is <strong>skipped</strong> in step 3 -
         the game will not double-hit you with the same zombie inside one tick.
