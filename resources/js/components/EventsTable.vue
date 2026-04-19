@@ -25,7 +25,7 @@ function confirmAndReplay(event: UnifiedEvent) {
   replay(event);
 }
 
-const nonReplayableTypes = ['stream.online', 'stream.offline'];
+const nonReplayableTypes = ['stream.online', 'stream.offline', 'channel.channel_points_custom_reward_redemption.update'];
 
 function canReplay(event: UnifiedEvent): boolean {
   if (event.source !== 'twitch') return true;
@@ -57,6 +57,7 @@ const twitchEventLabels: Record<string, string> = {
   'channel.cheer': 'Cheered',
   'channel.raid': 'Raided',
   'channel.channel_points_custom_reward_redemption.add': 'Redeemed',
+  'channel.channel_points_custom_reward_redemption.update': 'Updated Redemption',
   'stream.online': 'Stream Online',
   'stream.offline': 'Stream Offline',
 };
@@ -73,6 +74,9 @@ const externalEventLabels: Record<string, Record<string, string>> = {
     subscription: 'Subscribed through Streamlabs',
     shop_order: 'Ordered something from the Streamlabs shop',
     commission: 'Ordered a Commission through Streamlabs',
+  },
+  streamelements: {
+    donation: 'Donated through StreamElements',
   }
 };
 
@@ -115,6 +119,8 @@ function details(event: UnifiedEvent): string | null {
     case 'channel.raid':
       return d.viewers ? `${d.viewers} viewers` : null;
     case 'channel.channel_points_custom_reward_redemption.add':
+      return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
+    case 'channel.channel_points_custom_reward_redemption.update':
       return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
     default:
       return null;
