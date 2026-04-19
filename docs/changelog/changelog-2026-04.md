@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 19th, 2026 - Chat Castle: fix zombies still chasing hiding players
+
+- `ZombieTurnResolver::hasLineOfSight` had a dead-code hiding-spot check: it tried to mark an interior Bresenham tile opaque if that tile was also the endpoint (player position), but `array_slice` on the Bresenham path already excludes endpoints, so the match could never fire. Net effect: hiding did nothing for LoS and zombies continued to chase hiding players as if they were out in the open.
+- Fix: short-circuit `hasLineOfSight` to `false` whenever `$playerHiding` is true. Matches the game's simplification ("you're either on a hiding spot and the zombie cannot see you, or you're not"). Removed the unreachable interior-hiding-spot check. Non-hiding LoS queries (used by the "safe hide → +1 HP" gate to confirm a zombie has no clear sightline at all) still run the full Bresenham + blocker check.
+- Zombies still double damage when they end up adjacent to a hiding player (GDD "caught while hiding" rule) - that path doesn't use LoS, just Manhattan-1 adjacency - so the "truly scary" edge case remains: if a zombie drifts into you while you're in a hiding spot, you take 2x damage.
+- Tests: replaced the now-impossible `hide with zombie in line of sight doubles damage taken` case with two tighter cases: `zombie drifts instead of chasing a hiding player in clear line of sight` (asserts brain_state stays drifting and the zombie moves by its facing, not toward the player) and `adjacent zombie doubles damage against a hiding player` (zombie trapped by blockers next to the hiding spot, can't drift away, deals 2x damage on its turn). 41 tests pass in ApplyActionTest.
+
 ## April 19th, 2026 - Chat Castle: zombies
 
 - Full zombie integration per the GDD's "Zombie behaviour v2": zombies now spawn per room, hold state between rounds, chase the player when LoS is open, drift clockwise against walls when it isn't, and deal damage on adjacency and on player-initiated bumps. Bosses (room 5) and weaklings share the same pipeline and differ only in kind/stats.

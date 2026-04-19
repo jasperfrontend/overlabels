@@ -849,11 +849,38 @@ test('an adjacent zombie attacks the player in the zombie turn phase', function 
         ->and($game->player_hp)->toBe(4);
 });
 
-test('hide with zombie in line of sight doubles damage taken', function () {
+test('zombie drifts instead of chasing a hiding player in clear line of sight', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 6]);
     GameHidingSpot::create(['game_id' => $game->id, 'room' => 1, 'x' => 5, 'y' => 8]);
-    makeZombie($game, ['x' => 5, 'y' => 6, 'damage' => 2, 'prev_x' => 5, 'prev_y' => 6]);
+    $zombie = makeZombie($game, [
+        'x' => 5,
+        'y' => 6,
+        'damage' => 2,
+        'facing' => GameZombie::FACING_RIGHT,
+        'prev_x' => 5,
+        'prev_y' => 6,
+    ]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $zombie->refresh();
+    $game->refresh();
+    expect($zombie->brain_state)->toBe(GameZombie::STATE_DRIFTING)
+        ->and($zombie->x)->toBe(6)
+        ->and($zombie->y)->toBe(6)
+        ->and($game->player_hp)->toBe(6);
+});
+
+test('adjacent zombie doubles damage against a hiding player', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 6]);
+    GameHidingSpot::create(['game_id' => $game->id, 'room' => 1, 'x' => 5, 'y' => 8]);
+    GameBlocker::create(['game_id' => $game->id, 'room' => 1, 'x' => 3, 'y' => 8]);
+    GameBlocker::create(['game_id' => $game->id, 'room' => 1, 'x' => 4, 'y' => 7]);
+    GameBlocker::create(['game_id' => $game->id, 'room' => 1, 'x' => 4, 'y' => 9]);
+    makeZombie($game, ['x' => 4, 'y' => 8, 'damage' => 2, 'prev_x' => 4, 'prev_y' => 8]);
     voter($game, 'h');
 
     (new ResolveGameRound($game->id, 1))->handle();

@@ -118,9 +118,9 @@ class ZombieTurnResolver
 
     /**
      * Pure-function LoS check from (x0,y0) to (x1,y1). Blockers are opaque.
-     * Hiding spots are opaque only when the player is hiding on them (per the
-     * handoff rule), modelled here for completeness even though the endpoint
-     * exclusion means it rarely fires in the single-player scenario.
+     * A hiding player is fully invisible: the hiding-spot tile they stand on
+     * blocks LoS as the endpoint itself, so any zombie query short-circuits
+     * to false regardless of Bresenham interior.
      */
     public function hasLineOfSight(
         int $x0,
@@ -131,6 +131,10 @@ class ZombieTurnResolver
         Collection $hidingSpots,
         bool $playerHiding,
     ): bool {
+        if ($playerHiding) {
+            return false;
+        }
+
         $points = $this->lineTiles($x0, $y0, $x1, $y1);
         if (count($points) <= 2) {
             return true;
@@ -141,13 +145,6 @@ class ZombieTurnResolver
             foreach ($blockers as $b) {
                 if ($b->x === $px && $b->y === $py) {
                     return false;
-                }
-            }
-            if ($playerHiding) {
-                foreach ($hidingSpots as $s) {
-                    if ($s->x === $px && $s->y === $py && $s->x === $x1 && $s->y === $y1) {
-                        return false;
-                    }
                 }
             }
         }
