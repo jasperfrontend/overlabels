@@ -2,10 +2,12 @@
 
 use App\Jobs\ResolveGameRound;
 use App\Models\Game;
+use App\Models\GameBlocker;
 use App\Models\GameDoor;
 use App\Models\GameHiddenTile;
 use App\Models\GameHidingSpot;
 use App\Models\GameJoiner;
+use App\Models\GameZombie;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
@@ -34,6 +36,25 @@ function makeWorldGame(array $overrides = []): Game
         'weapon_slot_1' => Game::WEAPON_FISTS,
         'round_duration_seconds' => 30,
         'round_started_at' => now(),
+    ], $overrides));
+}
+
+function makeZombie(Game $game, array $overrides = []): GameZombie
+{
+    return GameZombie::create(array_merge([
+        'game_id' => $game->id,
+        'room' => $game->current_room,
+        'x' => 5,
+        'y' => 5,
+        'prev_x' => 5,
+        'prev_y' => 5,
+        'facing' => GameZombie::FACING_RIGHT,
+        'hp' => 4,
+        'max_hp' => 4,
+        'damage' => 1,
+        'kind' => GameZombie::KIND_REGULAR,
+        'brain_state' => GameZombie::STATE_DRIFTING,
+        'active' => true,
     ], $overrides));
 }
 
@@ -679,4 +700,181 @@ test('player can win by opening a closed door with attack then walking through n
     $game->refresh();
     expect($game->status)->toBe(Game::STATUS_WON)
         ->and($game->player_y)->toBe(1);
+});
+
+test('bumping into a zombie does not move the player and deals zombie damage', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 5]);
+    $zombie = makeZombie($game, ['x' => 5, 'y' => 8, 'damage' => 2, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'p:up');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    $zombie->refresh();
+    expect($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(9)
+        ->and($game->player_hp)->toBe(3)
+        ->and($zombie->active)->toBeTrue();
+});
+
+test('bumping into a zombie with lethal damage ends the game', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 2]);
+    makeZombie($game, ['x' => 5, 'y' => 8, 'damage' => 3, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'p:up');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->status)->toBe(Game::STATUS_LOST)
+        ->and($game->player_hp)->toBe(0);
+});
+
+test('fist attack on adjacent zombie deals 2 damage and costs 1 HP', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 5, 'weapon_slot_1' => Game::WEAPON_FISTS]);
+    $zombie = makeZombie($game, ['x' => 5, 'y' => 8, 'hp' => 6, 'max_hp' => 6, 'damage' => 0, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $zombie->refresh();
+    $game->refresh();
+    expect($zombie->hp)->toBe(4)
+        ->and($zombie->active)->toBeTrue()
+        ->and($game->player_hp)->toBe(4);
+});
+
+test('regular sword attack deals 3 damage and consumes one use', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 9,
+        'player_hp' => 5,
+        'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
+        'weapon_slot_1_uses' => 4,
+    ]);
+    $zombie = makeZombie($game, ['x' => 5, 'y' => 8, 'hp' => 8, 'max_hp' => 8, 'damage' => 0, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $zombie->refresh();
+    $game->refresh();
+    expect($zombie->hp)->toBe(5)
+        ->and($zombie->active)->toBeTrue()
+        ->and($game->weapon_slot_1)->toBe(Game::WEAPON_REGULAR_SWORD)
+        ->and($game->weapon_slot_1_uses)->toBe(3)
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('de-sword reaches a zombie two tiles away and deals 4 damage', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 9,
+        'player_hp' => 5,
+        'weapon_slot_1' => Game::WEAPON_FISTS,
+        'weapon_slot_2' => Game::WEAPON_DE_SWORD,
+    ]);
+    $zombie = makeZombie($game, ['x' => 5, 'y' => 7, 'hp' => 8, 'max_hp' => 8, 'damage' => 0, 'prev_x' => 5, 'prev_y' => 7]);
+    voter($game, 'a:2');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $zombie->refresh();
+    $game->refresh();
+    expect($zombie->hp)->toBe(4)
+        ->and($zombie->active)->toBeTrue()
+        ->and($game->weapon_slot_2)->toBe(Game::WEAPON_DE_SWORD)
+        ->and($game->player_hp)->toBe(5);
+});
+
+test('killing a zombie with an adjacent attack advances the player onto its tile', function () {
+    Bus::fake();
+    $game = makeWorldGame([
+        'player_x' => 5,
+        'player_y' => 9,
+        'player_hp' => 5,
+        'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
+        'weapon_slot_1_uses' => 2,
+    ]);
+    $zombie = makeZombie($game, ['x' => 5, 'y' => 8, 'hp' => 2, 'max_hp' => 6, 'damage' => 0, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $zombie->refresh();
+    $game->refresh();
+    expect($zombie->hp)->toBe(0)
+        ->and($zombie->active)->toBeFalse()
+        ->and($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(8);
+});
+
+test('fist attack falls back to the door AoE when no zombie is in reach', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 2, 'player_hp' => 5]);
+    $door = GameDoor::create([
+        'game_id' => $game->id,
+        'room' => 1,
+        'x' => 5,
+        'y' => 1,
+        'state' => GameDoor::STATE_CLOSED,
+        'turns_remaining' => 2,
+        'is_exit' => true,
+    ]);
+    voter($game, 'a');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $door->refresh();
+    $game->refresh();
+    expect($door->turns_remaining)->toBe(1)
+        ->and($door->state)->toBe(GameDoor::STATE_OPENING)
+        ->and($game->player_hp)->toBe(4);
+});
+
+test('an adjacent zombie attacks the player in the zombie turn phase', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 5]);
+    makeZombie($game, ['x' => 5, 'y' => 8, 'damage' => 1, 'prev_x' => 5, 'prev_y' => 8]);
+    voter($game, 'p:left');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(4)
+        ->and($game->player_hp)->toBe(4);
+});
+
+test('hide with zombie in line of sight doubles damage taken', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 6]);
+    GameHidingSpot::create(['game_id' => $game->id, 'room' => 1, 'x' => 5, 'y' => 8]);
+    makeZombie($game, ['x' => 5, 'y' => 6, 'damage' => 2, 'prev_x' => 5, 'prev_y' => 6]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_x)->toBe(5)
+        ->and($game->player_y)->toBe(8)
+        ->and($game->player_hp)->toBe(2);
+});
+
+test('hide fully occluded by a blocker restores 1 HP', function () {
+    Bus::fake();
+    $game = makeWorldGame(['player_x' => 5, 'player_y' => 9, 'player_hp' => 3]);
+    GameHidingSpot::create(['game_id' => $game->id, 'room' => 1, 'x' => 5, 'y' => 8]);
+    GameBlocker::create(['game_id' => $game->id, 'room' => 1, 'x' => 5, 'y' => 5]);
+    makeZombie($game, ['x' => 5, 'y' => 1, 'damage' => 3, 'prev_x' => 5, 'prev_y' => 1]);
+    voter($game, 'h');
+
+    (new ResolveGameRound($game->id, 1))->handle();
+
+    $game->refresh();
+    expect($game->player_y)->toBe(8)
+        ->and($game->player_hp)->toBe(4);
 });

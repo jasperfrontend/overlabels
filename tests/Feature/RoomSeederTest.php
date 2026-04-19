@@ -3,7 +3,9 @@
 use App\Models\Game;
 use App\Models\GameBlocker;
 use App\Models\GameDoor;
+use App\Models\GameHiddenTile;
 use App\Models\GameHidingSpot;
+use App\Models\GameZombie;
 use App\Models\User;
 use App\Services\Gamejam\RoomSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -90,6 +92,93 @@ test('advanceTo preserves weapons and HP across rooms', function () {
         ->and($game->weapon_slot_1_uses)->toBe(4)
         ->and($game->weapon_slot_2)->toBe(Game::WEAPON_DE_SWORD)
         ->and($game->wears_iron_fists)->toBeTrue();
+});
+
+test('seedRoom1 spawns exactly one regular zombie with 3 HP and 1 damage at least 3 tiles from spawn', function () {
+    $game = makeSeederGame();
+
+    app(RoomSeeder::class)->advanceTo($game, 1);
+
+    $zombies = GameZombie::where('game_id', $game->id)->where('room', 1)->get();
+    expect($zombies)->toHaveCount(1);
+
+    $z = $zombies->first();
+    expect($z->hp)->toBe(3)
+        ->and($z->max_hp)->toBe(3)
+        ->and($z->damage)->toBe(1)
+        ->and($z->kind)->toBe(GameZombie::KIND_REGULAR)
+        ->and($z->brain_state)->toBe(GameZombie::STATE_DRIFTING)
+        ->and($z->facing)->toBe(GameZombie::FACING_RIGHT)
+        ->and($z->active)->toBeTrue()
+        ->and($z->prev_x)->toBe($z->x)
+        ->and($z->prev_y)->toBe($z->y)
+        ->and(abs($z->x - 5) + abs($z->y - 9))->toBeGreaterThanOrEqual(3);
+});
+
+test('seedRoom2 spawns one regular zombie with 4 HP and 2 damage', function () {
+    $game = makeSeederGame();
+
+    app(RoomSeeder::class)->advanceTo($game, 2);
+
+    $zombies = GameZombie::where('game_id', $game->id)->where('room', 2)->get();
+    expect($zombies)->toHaveCount(1);
+    expect($zombies->first()->hp)->toBe(4)
+        ->and($zombies->first()->damage)->toBe(2);
+});
+
+test('seedRoom3 spawns one regular zombie with 6 HP and 3 damage', function () {
+    $game = makeSeederGame();
+
+    app(RoomSeeder::class)->advanceTo($game, 3);
+
+    $zombies = GameZombie::where('game_id', $game->id)->where('room', 3)->get();
+    expect($zombies)->toHaveCount(1);
+    expect($zombies->first()->hp)->toBe(6)
+        ->and($zombies->first()->damage)->toBe(3);
+});
+
+test('seedRoom4 spawns four regular zombies with 8 HP and 4 damage', function () {
+    $game = makeSeederGame();
+
+    app(RoomSeeder::class)->advanceTo($game, 4);
+
+    $zombies = GameZombie::where('game_id', $game->id)->where('room', 4)->get();
+    expect($zombies)->toHaveCount(4);
+    foreach ($zombies as $z) {
+        expect($z->hp)->toBe(8)
+            ->and($z->damage)->toBe(4)
+            ->and($z->kind)->toBe(GameZombie::KIND_REGULAR);
+    }
+});
+
+test('seedRoom5 spawns a single boss with 30 HP and 4 damage at the centre and 4 corner HP restores', function () {
+    $game = makeSeederGame();
+
+    app(RoomSeeder::class)->advanceTo($game, 5);
+
+    $zombies = GameZombie::where('game_id', $game->id)->where('room', 5)->get();
+    expect($zombies)->toHaveCount(1);
+
+    $boss = $zombies->first();
+    expect($boss->kind)->toBe(GameZombie::KIND_BOSS)
+        ->and($boss->hp)->toBe(30)
+        ->and($boss->damage)->toBe(4)
+        ->and($boss->x)->toBe(5)
+        ->and($boss->y)->toBe(5);
+
+    $corners = GameHiddenTile::where('game_id', $game->id)
+        ->where('room', 5)
+        ->where('content', GameHiddenTile::CONTENT_HP_RESTORE)
+        ->get()
+        ->map(fn ($t) => [$t->x, $t->y])
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($corners)->toContain([1, 1])
+        ->and($corners)->toContain([9, 1])
+        ->and($corners)->toContain([1, 9])
+        ->and($corners)->toContain([9, 9]);
 });
 
 test('seedRoom1 resets weapons back to bare fists', function () {

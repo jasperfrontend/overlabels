@@ -6,13 +6,28 @@ use App\Models\Game;
 use App\Models\GameBlocker;
 use App\Models\GameDoor;
 use App\Models\GameHiddenTile;
+use App\Models\GameZombie;
 
 class ActionApplier
 {
-    public function apply(Game $game, ?string $action): void
+    /**
+     * Zombies that attacked the player via a movement bump this tick. Returned
+     * from apply() so the caller can pass them to the zombie-turn resolver,
+     * which skips them in the adjacency-attack phase to avoid double-hitting.
+     *
+     * @var array<int>
+     */
+    private array $bumpedZombieIds = [];
+
+    /**
+     * @return array<int> ids of zombies that hit the player via a bump this tick
+     */
+    public function apply(Game $game, ?string $action): array
     {
+        $this->bumpedZombieIds = [];
+
         if ($action === null) {
-            return;
+            return $this->bumpedZombieIds;
         }
 
         if (str_starts_with($action, 'p:')) {
@@ -21,13 +36,13 @@ class ActionApplier
             $steps = isset($parts[1]) ? max(1, (int) $parts[1]) : 1;
             $this->move($game, $direction, $steps);
 
-            return;
+            return $this->bumpedZombieIds;
         }
 
         if ($action === 'h') {
             $this->hide($game);
 
-            return;
+            return $this->bumpedZombieIds;
         }
 
         if ($action === 'a' || str_starts_with($action, 'a:')) {
@@ -37,6 +52,8 @@ class ActionApplier
             }
             $this->attack($game, $slot);
         }
+
+        return $this->bumpedZombieIds;
     }
 
     private function move(Game $game, string $direction, int $steps = 1): void
@@ -79,6 +96,17 @@ class ActionApplier
             && $b->y === $targetY);
 
         if ($blocker) {
+            return false;
+        }
+
+        $zombie = $game->zombies->first(fn (GameZombie $z) => $z->active
+            && $z->room === $game->current_room
+            && $z->x === $targetX
+            && $z->y === $targetY);
+
+        if ($zombie) {
+            $this->applyZombieBump($game, $zombie);
+
             return false;
         }
 
@@ -125,6 +153,12 @@ class ActionApplier
             return;
         }
 
+        if ($this->attackNearestZombie($game, $weapon)) {
+            $this->applyAttackCost($game, $weapon);
+
+            return;
+        }
+
         $doorsHit = $game->doors->filter(function (GameDoor $d) use ($game) {
             if ($d->room !== $game->current_room) {
                 return false;
@@ -142,13 +176,110 @@ class ActionApplier
             return;
         }
 
-        $damage = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
+        $doorDamage = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
 
         foreach ($doorsHit as $door) {
-            $this->damageDoor($door, $damage);
+            $this->damageDoor($door, $doorDamage);
         }
 
         $this->applyAttackCost($game, $weapon);
+    }
+
+    private function attackNearestZombie(Game $game, string $weapon): bool
+    {
+        $reach = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
+
+        $candidates = $game->zombies
+            ->filter(fn (GameZombie $z) => $z->active
+                && $z->room === $game->current_room
+                && (abs($z->x - $game->player_x) + abs($z->y - $game->player_y)) <= $reach)
+            ->sortBy(fn (GameZombie $z) => abs($z->x - $game->player_x) + abs($z->y - $game->player_y))
+            ->values();
+
+        $target = $candidates->first();
+        if (! $target) {
+            return false;
+        }
+
+        $damage = match ($weapon) {
+            Game::WEAPON_DE_SWORD => 4,
+            Game::WEAPON_REGULAR_SWORD => 3,
+            default => 2,
+        };
+
+        $newHp = max(0, $target->hp - $damage);
+        if ($newHp <= 0) {
+            $target->update(['hp' => 0, 'active' => false]);
+            $this->advancePlayerTowardKill($game, $target);
+        } else {
+            $target->update(['hp' => $newHp]);
+        }
+
+        return true;
+    }
+
+    /**
+     * On a kill, the player moves 1 tile toward the zombie's former position
+     * per the GDD. If adjacent, the player steps onto the zombie's now-empty
+     * tile; otherwise they close the gap by one tile on the greater axis.
+     * No-op if the intermediate tile is blocked.
+     */
+    private function advancePlayerTowardKill(Game $game, GameZombie $target): void
+    {
+        $dx = $target->x - $game->player_x;
+        $dy = $target->y - $game->player_y;
+
+        if ($dx === 0 && $dy === 0) {
+            return;
+        }
+
+        if (abs($dx) >= abs($dy)) {
+            $stepX = $dx === 0 ? 0 : ($dx > 0 ? 1 : -1);
+            $stepY = 0;
+        } else {
+            $stepX = 0;
+            $stepY = $dy === 0 ? 0 : ($dy > 0 ? 1 : -1);
+        }
+
+        $nx = $game->player_x + $stepX;
+        $ny = $game->player_y + $stepY;
+
+        if ($nx < RoomSeeder::GRID_MIN || $nx > RoomSeeder::GRID_MAX
+            || $ny < RoomSeeder::GRID_MIN || $ny > RoomSeeder::GRID_MAX) {
+            return;
+        }
+
+        $blockerOnPath = $game->blockers->first(fn (GameBlocker $b) => $b->room === $game->current_room
+            && $b->x === $nx
+            && $b->y === $ny);
+        if ($blockerOnPath) {
+            return;
+        }
+
+        $otherZombie = $game->zombies->first(fn (GameZombie $z) => $z->active
+            && $z->id !== $target->id
+            && $z->room === $game->current_room
+            && $z->x === $nx
+            && $z->y === $ny);
+        if ($otherZombie) {
+            return;
+        }
+
+        $game->update(['player_x' => $nx, 'player_y' => $ny]);
+    }
+
+    private function applyZombieBump(Game $game, GameZombie $zombie): void
+    {
+        $this->bumpedZombieIds[] = $zombie->id;
+
+        $newHp = $game->player_hp - $zombie->damage;
+        if ($newHp <= 0) {
+            $game->update(['player_hp' => 0, 'status' => Game::STATUS_LOST]);
+
+            return;
+        }
+
+        $game->update(['player_hp' => $newHp]);
     }
 
     private function resolveAttackWeapon(Game $game, ?int $slot): ?string

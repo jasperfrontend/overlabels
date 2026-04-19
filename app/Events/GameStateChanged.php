@@ -22,7 +22,7 @@ class GameStateChanged implements ShouldBroadcastNow
 
     public function __construct(Game $game)
     {
-        $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers');
+        $game->loadMissing('user', 'joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
         $this->broadcasterId = (string) $game->user->twitch_id;
         $this->snapshot = self::snapshotFor($game);
@@ -31,7 +31,7 @@ class GameStateChanged implements ShouldBroadcastNow
 
     public static function snapshotFor(Game $game): array
     {
-        $game->loadMissing('joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers');
+        $game->loadMissing('joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
         return [
             'game' => [
@@ -102,6 +102,24 @@ class GameStateChanged implements ShouldBroadcastNow
                     ->map(fn ($b) => [
                         'x' => $b->x,
                         'y' => $b->y,
+                    ])
+                    ->all(),
+                'zombies' => $game->zombies
+                    ->where('room', $game->current_room)
+                    ->where('active', true)
+                    ->values()
+                    ->map(fn ($z) => [
+                        'id' => $z->id,
+                        'x' => $z->x,
+                        'y' => $z->y,
+                        'prev_x' => $z->prev_x,
+                        'prev_y' => $z->prev_y,
+                        'facing' => $z->facing,
+                        'hp' => $z->hp,
+                        'max_hp' => $z->max_hp,
+                        'damage' => $z->damage,
+                        'kind' => $z->kind,
+                        'brain_state' => $z->brain_state,
                     ])
                     ->all(),
             ],

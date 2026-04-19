@@ -88,6 +88,11 @@ class Game extends Model
         return $this->hasMany(GameBlocker::class);
     }
 
+    public function zombies(): HasMany
+    {
+        return $this->hasMany(GameZombie::class);
+    }
+
     public static function activeFor(User $user): ?self
     {
         return static::where('user_id', $user->id)

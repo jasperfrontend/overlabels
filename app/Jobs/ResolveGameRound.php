@@ -7,6 +7,7 @@ use App\Models\BotChatOutbox;
 use App\Models\Game;
 use App\Models\GameJoiner;
 use App\Services\Gamejam\ActionApplier;
+use App\Services\Gamejam\ZombieTurnResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -36,7 +37,7 @@ class ResolveGameRound implements ShouldQueue
     {
         $handlerStartMs = (int) (microtime(true) * 1000);
 
-        $game = Game::with(['joiners', 'hiddenTiles', 'doors', 'hidingSpots'])->find($this->gameId);
+        $game = Game::with(['joiners', 'hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies'])->find($this->gameId);
         if (! $game || $game->status !== Game::STATUS_RUNNING) {
             return;
         }
@@ -79,11 +80,20 @@ class ResolveGameRound implements ShouldQueue
         $newlyInactiveUsernames = [];
 
         $gameEnded = DB::transaction(function () use ($game, $tally, $winner, $slackers, &$newlyInactiveUsernames) {
-            if ($game->player_hiding_this_round) {
+            $wasHidingFromLastRound = $game->player_hiding_this_round;
+            if ($wasHidingFromLastRound) {
                 $game->update(['player_hiding_this_round' => false]);
             }
 
-            app(ActionApplier::class)->apply($game, $winner);
+            $bumpedZombieIds = app(ActionApplier::class)->apply($game, $winner);
+
+            if ($game->status === Game::STATUS_RUNNING) {
+                // The player action may have advanced to a new room (via exit)
+                // or killed zombies; reload world collections so the resolver
+                // sees the current room's zombies/blockers/hiding spots.
+                $game->load('zombies', 'blockers', 'hidingSpots');
+                app(ZombieTurnResolver::class)->resolve($game, $bumpedZombieIds);
+            }
 
             $hpLoss = 0;
             foreach ($slackers as $joiner) {
