@@ -6,6 +6,7 @@ use App\Events\GameStateChanged;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Console\Command;
+use App\Models\BotChatOutbox;
 
 class GamejamEnd extends Command
 {
@@ -37,6 +38,11 @@ class GamejamEnd extends Command
         GameStateChanged::dispatch($game);
 
         $this->info("Ended game id={$game->id} for {$user->name} with status {$status}.");
+
+        BotChatOutbox::create([
+            'user_id' => $user->id,
+            'message' => "Game #$game->id ended! The result: $status."
+        ]);
 
         return self::SUCCESS;
     }

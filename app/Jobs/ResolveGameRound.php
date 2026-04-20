@@ -179,7 +179,12 @@ class ResolveGameRound implements ShouldQueue
             'total_handler_ms' => $postDispatchMs - $handlerStartMs,
             'game_ended' => $gameEnded,
         ]);
-
+        if ($gameEnded) {
+            BotChatOutbox::create([
+                'user_id' => $game->user_id,
+                'message' => "The game has ended at round $this->expectedRound."
+            ]);
+        }
         if (! $gameEnded) {
             self::dispatch($game->id, $game->current_round)
                 ->delay(now()->addSeconds($game->round_duration_seconds));
