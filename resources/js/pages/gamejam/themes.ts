@@ -1,6 +1,22 @@
+export interface RoomCell {
+  bg?: string;
+  overlay?: string;
+  trigger?: { sound?: string };
+}
+
+export interface RoomFile {
+  room?: number;
+  tileset: string;
+  width: number;
+  height: number;
+  cells: (RoomCell | null)[][];
+  version: number;
+}
+
 export interface RoomLayout {
-  grid: string;
-  tiles: Record<string, string>;
+  grid?: string;
+  tiles?: Record<string, string>;
+  cells?: (RoomCell | null)[][];
 }
 
 export interface RoomTheme {
@@ -15,6 +31,48 @@ export interface RoomTheme {
     'regular_sword' | 'de_sword' | 'iron_fists' | 'bomb' | 'hp_restore' | 'zombie_spawn',
     string
   >;
+}
+
+export interface TileOptions {
+  player: string;
+  blocker: string;
+  hidingSpot: string;
+  hidden: string;
+  door: {
+    closed: string;
+    opening: string;
+    open: string;
+    exit: string;
+  };
+  pickups: {
+    regular_sword: string;
+    de_sword: string;
+    iron_fists: string;
+    bomb: string;
+    hp_restore: string;
+    zombie_spawn: string;
+  };
+}
+
+const tileOptions: TileOptions = {
+  player: '/tile-icons/Objects/Scarecrow.png',
+  blocker: '/tile-icons/Objects/Tombstone (1).png',
+  hidingSpot: '/tile-icons/Objects/Coffin.png',
+  hidden: '/tile-icons/Objects/Crate.png',
+  door: {
+    closed:  '/tile-icons/Objects/Coffin.png',
+    opening: '/tile-icons/Objects/Coffin.png',
+    open:    '/tile-icons/Objects/Dirt.png',
+    exit:    '/tile-icons/Objects/Sign (1).png',
+  },
+  pickups: {
+    regular_sword: '/tile-icons/pixel/128x128/sword-default.png',
+    de_sword:      '/tile-icons/pixel/128x128/sword-de.png',
+    iron_fists:    '/tile-icons/pixel/128x128/sword-default.png',
+    bomb:          '/tile-icons/pixel/128x128/bomb.png',
+    hp_restore:    '/tile-icons/pixel/128x128/apple.png',
+    zombie_spawn:  '/tile-icons/pixel/128x128/zombie-spawn.png',
+  },
 }
 
 const tilesObject: Record<string, string> = {
@@ -130,45 +188,45 @@ const GRAVEYARD: RoomTheme = {
     `,
     tiles: tilesObject,
   },
-  player: '/tile-icons/Objects/Scarecrow.png',
-  blocker: '/tile-icons/Objects/Tombstone (1).png',
-  hidingSpot: '/tile-icons/Objects/Coffin.png',
-  hidden: '/tile-icons/Objects/Crate.png',
+  player: tileOptions.player,
+  blocker: tileOptions.blocker,
+  hidingSpot: tileOptions.hidingSpot,
+  hidden: tileOptions.hidden,
   door: {
-    closed:  '/tile-icons/Objects/Coffin.png',
-    opening: '/tile-icons/Objects/Coffin.png',
-    open:    '/tile-icons/Objects/Dirt.png',
-    exit:    '/tile-icons/Objects/Sign (1).png',
+    closed: tileOptions.door.closed,
+    opening: tileOptions.door.opening,
+    open: tileOptions.door.open,
+    exit: tileOptions.door.exit,
   },
   pickups: {
-    regular_sword: '/tile-icons/pixel/sword-default.png',
-    de_sword:      '/tile-icons/pixel/sword-de.png',
-    iron_fists:    '/tile-icons/pixel/sword-default.png',
-    bomb:          '/tile-icons/pixel/bomb.png',
-    hp_restore:    '/tile-icons/pixel/apple.png',
-    zombie_spawn:  '/tile-icons/pixel/zombie-spawn.png',
+    regular_sword: tileOptions.pickups.regular_sword,
+    de_sword: tileOptions.pickups.de_sword,
+    iron_fists: tileOptions.pickups.iron_fists,
+    bomb: tileOptions.pickups.bomb,
+    hp_restore: tileOptions.pickups.hp_restore,
+    zombie_spawn: tileOptions.pickups.zombie_spawn,
   },
 };
 
 const CRYPT: RoomTheme = {
   floor: Array.from({ length: 20 }, (_, i) => `/tile-icons/Tile/Tile (${i + 21}).png`),
-  player: '/tile-icons/Objects/Sekeleton (2).png',
-  blocker: '/tile-icons/Objects/Stone (1).png',
-  hidingSpot: '/tile-icons/Objects/Bush (2).png',
-  hidden: '/tile-icons/Objects/Crate.png',
+  player: tileOptions.player,
+  blocker: tileOptions.blocker,
+  hidingSpot: tileOptions.hidingSpot,
+  hidden: tileOptions.hidden,
   door: {
-    closed:  '/tile-icons/Objects/Tombstone (3).png',
-    opening: '/tile-icons/Objects/Tombstone (4).png',
-    open:    '/tile-icons/Objects/Dirt.png',
-    exit:    '/tile-icons/Objects/Sign (4).png',
+    closed: tileOptions.door.closed,
+    opening: tileOptions.door.opening,
+    open: tileOptions.door.open,
+    exit: tileOptions.door.exit,
   },
   pickups: {
-    regular_sword: '/tile-icons/Objects/Sign (5).png',
-    de_sword:      '/tile-icons/Objects/Sign (2).png',
-    iron_fists:    '/tile-icons/Objects/Scarecrow.png',
-    bomb:          '/tile-icons/Objects/Barrel (2).png',
-    hp_restore:    '/tile-icons/Objects/Pumpkin (2).png',
-    zombie_spawn:  '/tile-icons/Objects/Tombstone (5).png',
+    regular_sword: tileOptions.pickups.regular_sword,
+    de_sword: tileOptions.pickups.de_sword,
+    iron_fists: tileOptions.pickups.iron_fists,
+    bomb: tileOptions.pickups.bomb,
+    hp_restore: tileOptions.pickups.hp_restore,
+    zombie_spawn: tileOptions.pickups.zombie_spawn,
   },
 };
 
@@ -179,8 +237,28 @@ export const THEMES: Record<number, RoomTheme> = {
 
 export const DEFAULT_THEME = GRAVEYARD;
 
+// Painted rooms authored via /dev/room-builder. Loaded at build time via Vite's
+// static glob; Vite HMR re-imports on save so painting is immediately live in dev.
+const paintedRoomModules = import.meta.glob<{ default: RoomFile }>('../../rooms/*.json', { eager: true });
+const PAINTED_ROOMS: Record<number, RoomFile> = {};
+for (const [path, mod] of Object.entries(paintedRoomModules)) {
+  const match = path.match(/\/(\d+)\.json$/);
+  if (!match) continue;
+  const n = parseInt(match[1], 10);
+  PAINTED_ROOMS[n] = { ...mod.default, room: n };
+}
+
 export function themeFor(room: number): RoomTheme {
-  return THEMES[room] ?? DEFAULT_THEME;
+  const base = THEMES[room] ?? DEFAULT_THEME;
+  const painted = PAINTED_ROOMS[room];
+  if (!painted) return base;
+  return {
+    ...base,
+    layout: {
+      ...(base.layout ?? {}),
+      cells: painted.cells,
+    },
+  };
 }
 
 function parseGrid(grid: string): string[] {
@@ -188,7 +266,14 @@ function parseGrid(grid: string): string[] {
 }
 
 export function floorFor(theme: RoomTheme, x: number, y: number): string {
-  if (theme.layout) {
+  // Painted cells (from the room builder) take precedence when the author
+  // has assigned a bg. Unpainted cells fall through to the ASCII grid or
+  // the hash-based random floor so partial maps still render.
+  if (theme.layout?.cells) {
+    const cell = theme.layout.cells[y - 1]?.[x - 1];
+    if (cell?.bg) return cell.bg;
+  }
+  if (theme.layout?.grid && theme.layout?.tiles) {
     const rows = parseGrid(theme.layout.grid);
     const char = rows[y - 1]?.[x - 1];
     const tile = char ? theme.layout.tiles[char] : undefined;

@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Chat Castle: painted rooms now render in live.vue
+
+- Follow-up to the room builder commit. The painted JSON was sitting unused at `resources/js/rooms/{N}.json`. Wired it into `themes.ts` so the game actually renders what the author painted.
+- Added `RoomCell` and `RoomFile` TS types alongside the existing `RoomLayout`. `RoomLayout` now has `grid` and `tiles` as optional (were required) plus a new optional `cells` field, so the existing GRAVEYARD ASCII-grid layout stays valid and painted rooms layer on top without a breaking rewrite.
+- `themes.ts` eagerly loads all `resources/js/rooms/*.json` via `import.meta.glob('../../rooms/*.json', { eager: true })` and builds a `PAINTED_ROOMS` lookup keyed by room number (parsed from the filename, so filename is the source of truth even if the JSON omits the `room` field). Vite HMR re-imports on save, so painting in the builder reflects in the running game without a manual reload.
+- `themeFor(room)` now merges the painted cells into the returned theme's `layout.cells` if a JSON room exists for that number.
+- `floorFor(theme, x, y)` gets a new top-precedence branch: if a painted cell has `bg`, use it. If the cell exists but has no `bg` (author hasn't painted it yet), fall through to the ASCII grid layout (if any), then the hash-based random floor. This lets the author paint partial rooms without breaking unpainted cells.
+- Production build passes (15.4s), vue-tsc clean, ESLint clean. Did not click through a live game to visually confirm the painted tiles render - user will observe on next live session.
+
 ## April 20th, 2026 - Chat Castle: dev-only room builder (paint + save)
 
 - The existing `themes.ts` had tile layouts stored as an ASCII-grid string where each char (letters, numbers, punctuation) mapped to a PNG path via a large flat `tilesObject` lookup. One room in, already unmaintainable: to place even a single tile the author had to scroll to the lookup table, find the char that corresponded to the wanted edge/corner variant, then come back and remember which char meant what. Four more rooms to go with their own tilesets made the trend obvious - the grid string had zero semantic content, just pixel hashes.
