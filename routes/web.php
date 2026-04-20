@@ -16,6 +16,7 @@ use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\RoomBuilderController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\TemplateTagController;
@@ -48,6 +49,8 @@ Route::get('/', function (TemplateDataMapperService $mapper) {
 Route::get('/gamejam', function () {
     return Inertia::render('gamejam/index');
 })->name('gamejam');
+
+// eventually place the route here that renders all active rooms in the gamejam
 
 Route::get('/gamejam/live/{login}', function (string $login) {
     $login = strtolower($login);
@@ -120,6 +123,13 @@ Route::get('/help/bot/commands', function () {
 Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');
 })->name('help.gamejam');
+
+// Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
+Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-builder.')->group(function () {
+    Route::get('/{room}', [RoomBuilderController::class, 'show'])->where('room', '[0-9]+')->name('show');
+    Route::get('/{room}/assets', [RoomBuilderController::class, 'assets'])->where('room', '[0-9]+')->name('assets');
+    Route::post('/{room}', [RoomBuilderController::class, 'save'])->where('room', '[0-9]+')->name('save');
+});
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])

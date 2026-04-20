@@ -1,0 +1,394 @@
+{
+    "tileset": "room-1",
+    "width": 11,
+    "height": 11,
+    "version": 1,
+    "cells": [
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (12).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (14).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (14).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (14).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (14).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (15).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (8).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (16).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (6).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (74).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (10).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (54).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (4).png"
+            }
+        ],
+        [
+            {
+                "bg": "/rooms/1/tiles/Tile (13).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (5).png"
+            },
+            {
+                "bg": "/rooms/1/tiles/Tile (14).png"
+            }
+        ]
+    ],
+    "room": 1
+}

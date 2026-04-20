@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Chat Castle: dev-only room builder (paint + save)
+
+- The existing `themes.ts` had tile layouts stored as an ASCII-grid string where each char (letters, numbers, punctuation) mapped to a PNG path via a large flat `tilesObject` lookup. One room in, already unmaintainable: to place even a single tile the author had to scroll to the lookup table, find the char that corresponded to the wanted edge/corner variant, then come back and remember which char meant what. Four more rooms to go with their own tilesets made the trend obvious - the grid string had zero semantic content, just pixel hashes.
+- Considered autotiling (paint grass/dirt/water codes, code picks the transition tile from a neighbor bitmask) and Tiled editor (industry-standard visual tool, JSON export). User rejected external-tool dependency, went with a self-hosted visual builder. Autotiling left on the table for later.
+- Built `/dev/room-builder/{room}` at `app/Http/Controllers/RoomBuilderController.php` + `resources/js/pages/gamejam/builder.vue`. Left sidebar is a tile palette reading from `public/rooms/{room}/tiles/` via a manifest endpoint; right side is a paintable grid. Click a tile, click/drag cells, hit Save - JSON is written straight to `resources/js/rooms/{room}.json` and git is the undo stack.
+- Triple-gated for safety: Laravel `admin.role` middleware + explicit `abort_unless(app()->environment('local'), 404)` in every action + asset-path allowlist (`/rooms/...` only, no `..` traversal) on the save action. Non-admins and non-local envs both 404.
+- JSON shape is layered-ready (`cells[y][x] = { bg, overlay?, trigger?: { sound? } }`) so overlays and entry-triggered sounds slot in without a breaking rewrite. v1 UI only paints `bg`; the other layers are reserved fields.
+- Scaffolded `public/rooms/1/{tiles,objects,sounds}/` with a README pointing users at the expected folder layout. `resources/js/rooms/` created with `.gitkeep`.
+- Scope intentionally kept to "paint cells and save" per the go-ahead. No undo, no floodfill, no multi-select, no rotate/flip, no overlay editing, no sound triggers. Drag-to-paint kept because cell-by-cell clicking on an 11x11 grid would have been miserable. Wiring the JSON output into `live.vue` is the next step.
+
 ## April 20th, 2026 - Donation drivers: decode HTML entities in donor name and message
 
 - Bug caught during StreamElements mock tip: a donation message containing `i haven&#39;t been here` rendered exactly like that in `[[[c:streamelements:latest_donation_message]]]` output. Same dirty string was stored in `external_events.normalized_payload` and in the `latest_donation_message` control value.
