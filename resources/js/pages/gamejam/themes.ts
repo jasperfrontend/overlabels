@@ -58,7 +58,7 @@ const tileOptions: TileOptions = {
   player: '/tile-icons/Objects/Scarecrow.png',
   blocker: '/tile-icons/Objects/Tombstone (1).png',
   hidingSpot: '/tile-icons/Objects/Coffin.png',
-  hidden: '/tile-icons/Objects/Crate.png',
+  hidden: '/tile-icons/pixel/128x128/chest.png',
   door: {
     closed:  '/tile-icons/Objects/Coffin.png',
     opening: '/tile-icons/Objects/Coffin.png',

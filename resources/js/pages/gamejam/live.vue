@@ -256,7 +256,7 @@ function voteLabel(vote: string | null): string {
   if (vote === 'h') return 'hide';
   if (vote === 's') return 'stay';
   if (vote === 'a') return 'attack';
-  if (vote.startsWith('a:')) return `attack slot ${vote.slice(2)}`;
+  if (vote.startsWith('a:')) return `att ${vote.slice(2)}`;
   if (vote.startsWith('p:')) return '';
   return vote;
 }
@@ -524,8 +524,7 @@ onUnmounted(() => {
 <template>
 
   <div class="live-board">
-    <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
-      <!-- @todo: remove ! above -->
+    <div v-if="needsAudioUnlock" class="audio-unlock-overlay">
       <div class="audio-unlock-panel">
         <h2>Audio is blocked</h2>
         <p>Your browser is preventing this overlay from playing sound until you interact with the page.</p>
@@ -535,93 +534,88 @@ onUnmounted(() => {
       </div>
     </div>
     <aside class="sidebar">
-      <header class="flex justify-between gap-2">
-        <div class="flex flex-col gap-0">
-          <h1 class="text-3xl medievalsharp-regular">Chat Castle</h1>
-          <span class="text-muted-foreground text-[15px]">@{{ broadcasterLogin }}</span>
-        </div>
-        <div>
 
-          <!-- Game Status -->
-          <section v-if="game" class="flex text-center gap-10 medievalsharp-regular">
-            <div class="flex flex-col gap-0">
-              <span class="text-olive-400">Status</span>
-              <span class="py-0.5 px-2 capitalize font-bold">{{ game.status }}</span>
-            </div>
-            <div class="flex flex-col gap-0">
-              <span class="text-olive-400">Round</span>
-              <span class="py-0.5 px-2 capitalize font-bold">{{ game.current_round }}</span>
-            </div>
-            <div class="flex flex-col gap-0">
-              <span class="text-olive-400">Player{{ joiners.length !== 1 ? 's' : null }}</span>
-              <span class="py-0.5 px-2 capitalize font-bold">{{ joiners.length }}</span>
-            </div>
-          </section>
-
-        </div>
-
-      </header>
       <section class="stats-row" v-if="debugEnabledLive">
         <pre>{{ joiners }}</pre>
       </section>
 
-      <section v-if="game" class="p-4 flex justify-around items-center medievalsharp-regular">
-        <div class="weapon text-center p-2">
-          <span class="text-yellow-400">Use: !a</span>
-          <div class="value text-center">
-            <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/128x128/fist.png" class="size-16 m-auto" alt="fists">
-            <img v-else src="/tile-icons/pixel/128x128/sword-default.png" class="size-16 m-auto" alt="sword">
-            <span v-if="game.weapon_slot_1_uses">({{ game.weapon_slot_1_uses }})</span>
+      <section v-if="game" class="flex justify-between medievalsharp-regular">
+        <div class="flex shrink grow-0 gap-1">
+          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50">
+            <span class="text-yellow-400">Weapon</span>
+            <div class="value text-center">
+              <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/128x128/fist.png" class="size-12 m-auto" alt="fists">
+              <img v-else src="/tile-icons/pixel/128x128/sword-default.png" class="size-12 m-auto" alt="sword">
 
-            <div v-if="game.weapon_slot_1_uses"
-              class="relative py-2 w-full h-4 overflow-hidden bg-red-400 bg-auto bg-repeat"
-              role="progressbar"
-            >
-              <span
-                class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400 bg-auto bg-repeat"
-                :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
-              ></span>
+              <div v-if="game.weapon_slot_1_uses"
+                class="relative w-full h-2.5 mt-2 overflow-hidden bg-red-400/50 bg-auto bg-repeat"
+                role="progressbar"
+              >
+                <span
+                  class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400/50 bg-auto bg-repeat"
+                  :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
+                >
+                            <span class="medievalsharp-regular relative z-10 flex pt-0.5 h-full items-center justify-center text-xs font-bold tracking-wide text-white">
+            {{ game.weapon_slot_1_uses }} / 10
+          </span>
+                </span>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="!game.weapon_slot_2">
+            <span class="text-yellow-400">Unlocked</span>
+            <div class="value text-center">
+              <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-12 m-auto" alt="sword-de">
+              <div class="text-sm pt-1">Infinite</div>
+            </div>
+          </div>
+
+          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="!game.wears_iron_fists">
+            <span class="text-yellow-400">Iron Fists</span>
+            <div class="value text-center">
+              <img src="/tile-icons/pixel/128x128/iron-fist.png" class="size-12 m-auto" alt="iron-fist">
+              <div class="text-sm pt-1">Infinite</div>
             </div>
           </div>
         </div>
 
-        <div class="weapon text-center p-2" v-if="game.weapon_slot_2">
-          <span class="text-yellow-400 font-sans">Use: !a 2</span>
-          <div class="value text-center">
-            <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-16 m-auto" alt="watermelon">
-            <span>(infinite)</span>
+        <!-- Game Status -->
+        <div class="flex">
+          <section v-if="game" class="flex text-center medievalsharp-regular gap-1">
 
-            <div v-if="game.weapon_slot_1_uses"
-                 class="relative py-2 w-full h-4 overflow-hidden bg-red-400 bg-auto bg-repeat"
-                 role="progressbar"
-            >
-              <span
-                class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400 bg-auto bg-repeat"
-                :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
-              ></span>
+            <div class="flex flex-col gap-0 p-2 justify-between">
+              <span class="text-olive-400">Round</span>
+              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ game.current_round }}</span>
             </div>
-          </div>
+            <div class="flex flex-col gap-0 p-2 justify-between">
+              <span class="text-olive-400">Room</span>
+              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ game.current_room }}</span>
+            </div>
+            <div class="flex flex-col gap-0 p-2 justify-between">
+              <span class="text-olive-400">Player{{ joiners.length !== 1 ? 's' : null }}</span>
+              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ joiners.length }}</span>
+            </div>
+          </section>
         </div>
-        <div class="weapon text-center p-2" v-if="game.wears_iron_fists">
-          <span class="text-yellow-400">Iron Fists</span>
-          <span class="value">Equipped!</span>
-        </div>
+
       </section>
 
       <!-- Health Bar -->
       <section v-if="game">
         <div
-          class="relative py-2 w-full overflow-hidden bg-[url(/tile-icons/Tile/progress/bl.png)] bg-auto bg-repeat"
+          class="relative w-full overflow-hidden bg-red-400/50"
           role="progressbar"
           :aria-valuenow="game.player_hp"
           aria-valuemin="0"
           :aria-valuemax="gamePeakHp"
         >
           <span
-            class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-[url(/tile-icons/Tile/progress/g.png)] bg-auto bg-repeat"
+            class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400/50"
             :style="{ width: gamePeakHp > 0 ? `${Math.min(100, (game.player_hp / gamePeakHp) * 100)}%` : '0%' }"
           ></span>
-          <span class="medievalsharp-regular relative z-10 flex h-full items-center justify-center text-3xl font-bold tracking-wide text-white">
+          <span class="medievalsharp-regular relative z-10 flex pt-0.5 h-full items-center justify-center text-2xl font-bold tracking-wide text-white">
             {{ game.player_hp }} / {{ gamePeakHp }}
           </span>
         </div>
@@ -629,16 +623,16 @@ onUnmounted(() => {
 
 
       <section v-if="game" class="resolver-row">
+
         <div class="bg-olive-800 p-4 text-center medievalsharp-regular">
           <span class="text-olive-400">Next round in</span>
-          <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">
-            {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}
-          </div>
+          <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
           <span class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</span>
         </div>
-        <div class="bg-olive-800 p-4 flex flex-col resolved medievalsharp-regular">
+
+        <div class="bg-olive-800 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
           <span class="text-olive-400">Last Twitch chat vote</span>
-          <span class="text-teal-400 text-8xl flex items-center justify-center gap-2">
+          <div class="text-teal-400 text-8xl flex items-center justify-center gap-2">
             <template v-if="game.last_resolved_action">
               <component
                 v-for="i in voteIconCount(game.last_resolved_action)"
@@ -649,12 +643,12 @@ onUnmounted(() => {
               <span v-if="voteLabel(game.last_resolved_action)">{{ voteLabel(game.last_resolved_action) }}</span>
             </template>
             <template v-else>nothing yet</template>
-          </span>
-          <div v-if="lastResolvedTallyEntries.length" class="mt-4 text-lg">
+          </div>
+          <div v-if="lastResolvedTallyEntries.length" class="mt-4 mb-4 text-lg">
             <span
               v-for="[action, count] in lastResolvedTallyEntries"
               :key="action"
-              class="tally-entry medievalsharp-regular text-sm inline-flex items-center gap-1"
+              class="tally-entry medievalsharp-regular text-olive-400 text-sm inline-flex items-center gap-1"
             >
               <component
                 v-for="i in voteIconCount(action)"
@@ -666,7 +660,7 @@ onUnmounted(() => {
               <span>: <strong class="text-teal-400">{{ count }}</strong></span>
             </span>
           </div>
-          <span v-else class="text-sm text-muted-foreground medievalsharp-regular">no votes cast</span>
+          <div v-else class="text-sm mt-4 text-olive-400 medievalsharp-regular">no votes cast</div>
         </div>
       </section>
 
@@ -677,7 +671,7 @@ onUnmounted(() => {
             <li
               v-for="j in grouped.active"
               :key="j.twitch_user_id"
-              class="joiner flex items-center gap-2 p-1 pl-2 my-0.5 w-full bg-olive-800 medievalsharp-regular"
+              class="joiner flex items-center gap-2 pl-1 my-0.5 w-full bg-olive-800 medievalsharp-regular"
             >
               <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
                 <component
@@ -686,17 +680,16 @@ onUnmounted(() => {
                   :key="i"
                   class="h-4 w-4"
                 />
-                <span v-if="voteLabel(j.current_vote)">{{ voteLabel(j.current_vote) }}</span>
+                <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
               </div>
               <div class="name">{{ j.username }}</div>
-              <div class="flex ml-auto items-center mr-2 gap-2">
-                <span class="-mt-0.5 anthon-sc">Energy:</span>
+              <div class="flex ml-auto items-center mr-2 gap-1">
                 <span
                   v-for="(state, i) in blocks(j.blocks_remaining)"
                   :key="i"
                   :class="state"
                 >
-                  <ShieldCheck class="fill-emerald-600" v-if="state === 'filled'" />
+                  <ShieldCheck class="fill-teal-600 size-5" v-if="state === 'filled'" />
                   <ShieldOff v-else />
                 </span>
               </div>
@@ -855,10 +848,10 @@ onUnmounted(() => {
 }
 
 .sidebar {
-  padding: 1.25rem 1.5rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 10px;
   overflow-y: auto;
   max-height: 100vh;
 }
@@ -1304,31 +1297,44 @@ onUnmounted(() => {
 .pickup-sword {
   border-color: blue;
   color: blue;
+  box-shadow: inset 0 0 30px #00f, 0 0 30px #00f;
 }
 .pickup-de-sword {
-  border-color: yellow;
-  color: yellow;
+  border-color: rgba(0,255,255, .75);
+  box-shadow: inset 0 0 30px rgba(0,255,255, .75), 0 0 30px rgba(0,255,255, .75);
 }
 .pickup-iron-fists {
   border-color: chartreuse;
   color: chartreuse;
+  box-shadow: inset 0 0 30px #0f0, 0 0 30px #0f0;
 }
 .pickup-bomb {
   border-color: red;
   color: red;
+  box-shadow: inset 0 0 30px #f00, 0 0 30px #f00;
 }
 .pickup-hp {
   border-color: green;
   color: green;
+  box-shadow: inset 0 0 30px greenyellow, 0 0 30px greenyellow;
 }
 .pickup-zombie {
   border-color: orange;
   color: orange;
+  box-shadow: inset 0 0 30px #ffa500, 0 0 30px #ffa500;
 }
 
 /* ---- reveal-* (hidden -> shown FX) ---- */
-.reveal-hidden { /* hook: subtle idle pulse on unrevealed tiles */ }
-.reveal-shown { /* hook: short-lived class on the frame a tile reveals */ }
+.reveal-hidden {
+  /* hook: subtle idle pulse on unrevealed tiles */
+  animation: unrevealedIdlePulse 5s ease-in-out infinite alternate;
+}
+.reveal-shown {
+  /* hook: short-lived class on the frame a tile reveals */
+  border-color: #4f8ef7;
+  color: #4f8ef7;
+  box-shadow: inset 0 0 30px #4f8ef7, 0 0 30px #4f8ef7;
+}
 
 /* ---- player-* modifiers ---- */
 .player-hiding { /* hook: dampen the blue glow, add concealment effect */ }
@@ -1357,6 +1363,17 @@ onUnmounted(() => {
   100% {
     background: inherit;
     box-shadow: none;
+  }
+}
+
+@keyframes unrevealedIdlePulse {
+  0% {
+    border-color: rgba(247,143,79, .5);
+    box-shadow: inset 0 0 30px rgba(247,143,79, .15), 0 0 30px rgba(247,143,79,.15);
+  }
+  100% {
+    border-color: rgba(247,143,79, .5);
+    box-shadow: inset 0 0 30px rgba(247,143,79, .5), 0 0 30px rgba(247,143,79,.5);
   }
 }
 
