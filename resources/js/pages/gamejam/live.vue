@@ -1246,6 +1246,7 @@ onUnmounted(() => {
   animation-duration: 0.45s;
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
   animation-fill-mode: both;
+  animation-iteration-count: 1;
 }
 .zombie.zombie-lunge-stationary.facing-up .zombie-body { animation-name: zombieLungeUp; }
 .zombie.zombie-lunge-stationary.facing-down .zombie-body { animation-name: zombieLungeDown; }
