@@ -55,8 +55,8 @@ class StreamLabsServiceDriver implements ExternalServiceDriver
     {
         $msg = $payload['message'][0] ?? [];
 
-        $fromName = $msg['from'] ?? $msg['name'] ?? null;
-        $message = $msg['message'] ?? null;
+        $fromName = $this->decodeHtml($msg['from'] ?? $msg['name'] ?? null);
+        $message = $this->decodeHtml($msg['message'] ?? null);
         $amount = $msg['amount'] ?? null;
         $currency = $msg['currency'] ?? null;
         $formattedAmount = $msg['formatted_amount'] ?? $msg['formattedAmount'] ?? null;
@@ -92,6 +92,22 @@ class StreamLabsServiceDriver implements ExternalServiceDriver
     public function getSupportedEventTypes(): array
     {
         return ['donation'];
+    }
+
+    /**
+     * Defensive: widget-rendered donation platforms (StreamElements, and
+     * StreamLabs from the same ecosystem) sometimes emit donor names and
+     * messages with pre-encoded HTML entities. Decode once at the driver
+     * boundary so plain-text consumers (control values, alert broadcasts)
+     * see clean UTF-8.
+     */
+    private function decodeHtml(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**

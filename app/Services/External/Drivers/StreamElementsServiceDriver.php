@@ -54,8 +54,8 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
         $data = $payload['data'] ?? [];
-        $fromName = $data['displayName'] ?? $data['username'] ?? null;
-        $message = $data['message'] ?? null;
+        $fromName = $this->decodeHtml($data['displayName'] ?? $data['username'] ?? null);
+        $message = $this->decodeHtml($data['message'] ?? null);
         $amount = isset($data['amount']) ? (string) $data['amount'] : null;
         $currency = $data['currency'] ?? null;
 
@@ -89,6 +89,21 @@ class StreamElementsServiceDriver implements ExternalServiceDriver
     public function getSupportedEventTypes(): array
     {
         return ['donation'];
+    }
+
+    /**
+     * StreamElements sends tip messages and donor names with HTML-encoded
+     * entities (e.g. apostrophes as `&#39;`). Decode once at the driver
+     * boundary so normalized payload, control values, and alert broadcasts
+     * all see clean UTF-8.
+     */
+    private function decodeHtml(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**

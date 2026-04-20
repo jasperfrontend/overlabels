@@ -61,8 +61,8 @@ class KofiServiceDriver implements ExternalServiceDriver
      */
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
-        $fromName = $payload['from_name'] ?? null;
-        $message = $payload['message'] ?? null;
+        $fromName = $this->decodeHtml($payload['from_name'] ?? null);
+        $message = $this->decodeHtml($payload['message'] ?? null);
         $amount = $payload['amount'] ?? null;
         $currency = $payload['currency'] ?? null;
         $messageId = $payload['kofi_transaction_id'] ?? (string) Str::uuid();
@@ -98,6 +98,20 @@ class KofiServiceDriver implements ExternalServiceDriver
     public function getSupportedEventTypes(): array
     {
         return ['donation', 'subscription', 'shop_order', 'commission'];
+    }
+
+    /**
+     * Defensive decode: Ko-fi's public docs show plain UTF-8 text, but mirroring
+     * the StreamElements/StreamLabs driver behavior here costs nothing when the
+     * input is already clean and shields us from surprise payload changes.
+     */
+    private function decodeHtml(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**

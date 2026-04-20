@@ -116,6 +116,28 @@ test('normalizeEvent handles empty data array', function () {
     expect($event->getAmount())->toBeNull();
 });
 
+test('normalizeEvent decodes HTML entities from message and donor name', function () {
+    $payload = [
+        '_id' => 'id_html',
+        'type' => 'tip',
+        'data' => [
+            'username' => 'floris',
+            'displayName' => 'Floris &amp; Co',
+            'amount' => 7.5,
+            'message' => 'i haven&#39;t been here &lt;3',
+            'currency' => 'EUR',
+            'tipId' => 'tip_html',
+        ],
+    ];
+
+    $event = $this->driver->normalizeEvent($payload, 'donation');
+
+    expect($event->getMessage())->toBe("i haven't been here <3");
+    expect($event->getFromName())->toBe('Floris & Co');
+    expect($event->getTemplateTags()['event.message'])->toBe("i haven't been here <3");
+    expect($event->getTemplateTags()['event.from_name'])->toBe('Floris & Co');
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // getAutoProvisionedControls
 // ──────────────────────────────────────────────────────────────────────────────

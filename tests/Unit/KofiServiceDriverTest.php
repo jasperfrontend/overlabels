@@ -87,6 +87,24 @@ test('normalizeEvent falls back to uuid when kofi_transaction_id missing', funct
     expect($event->getMessageId())->toBeString()->not()->toBeEmpty();
 });
 
+test('normalizeEvent decodes HTML entities from message and donor name', function () {
+    $payload = [
+        'type' => 'Donation',
+        'kofi_transaction_id' => 'tx_html',
+        'from_name' => 'Floris &amp; Co',
+        'message' => 'i haven&#39;t been here &lt;3',
+        'amount' => '7.50',
+        'currency' => 'EUR',
+    ];
+
+    $event = $this->driver->normalizeEvent($payload, 'donation');
+
+    expect($event->getMessage())->toBe("i haven't been here <3");
+    expect($event->getFromName())->toBe('Floris & Co');
+    expect($event->getTemplateTags()['event.message'])->toBe("i haven't been here <3");
+    expect($event->getTemplateTags()['event.from_name'])->toBe('Floris & Co');
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // getAutoProvisionedControls
 // ──────────────────────────────────────────────────────────────────────────────

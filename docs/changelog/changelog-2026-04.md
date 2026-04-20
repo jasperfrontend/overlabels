@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Donation drivers: decode HTML entities in donor name and message
+
+- Bug caught during StreamElements mock tip: a donation message containing `i haven&#39;t been here` rendered exactly like that in `[[[c:streamelements:latest_donation_message]]]` output. Same dirty string was stored in `external_events.normalized_payload` and in the `latest_donation_message` control value.
+- Root cause: StreamElements sends tip `message` and `displayName` with HTML entities pre-encoded (`&#39;`, `&amp;`, `&lt;`). Their dashboard/widgets re-render as HTML so users never notice, but our plain-text consumers (control values + alert broadcasts) leak the entities straight through.
+- Fix at the driver boundary in `StreamElementsServiceDriver::normalizeEvent`: `message` and `displayName`/`username` pass through a private `decodeHtml()` helper using `html_entity_decode(..., ENT_QUOTES | ENT_HTML5, 'UTF-8')`. Raw payload intentionally left untouched so the audit trail still reflects exactly what StreamElements sent.
+- Mirrored the same decode to `StreamLabsServiceDriver` (same widget-rendered ecosystem, likely has the same habit) and `KofiServiceDriver` (docs show plain UTF-8, so this is a defensive no-op for them but keeps all three donation-family drivers uniform - if Ko-fi ever changes their encoding, no second round of debugging).
+- Unit tests added to each of the three driver suites covering `&#39;`, `&amp;`, `&lt;` in both `message` and donor-name fields. 74 tests pass across Kofi/StreamLabs/StreamElements unit + feature suites. Existing dirty rows already in the DB are not back-populated; fix applies to new events from here on.
+
 ## April 20th, 2026 - Chat Castle: dead zombies stay as corpses on the playfield
 
 - Problem from live play: when the player attacked and killed a zombie, the zombie vanished from the broadcast payload and `advancePlayerTowardKill` popped the player one tile toward the (now-invisible) death spot. Visually this read as an unexplained teleport - no cause-and-effect linking the attack to the player movement. Player reported it as a bug (thought the attack AoE was being "shoved" back into bounds).
