@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Chat Castle: zombies lunge into their damage-dealing tile
+
+- Visual issue observed in live play: when a zombie drifted to the tile directly adjacent to the player, the damage was applied pre-movement (per design) but the zombie was still mid-drift through the tween. Readers saw a zombie "one tile away" losing the player a heart with no contact, because the linear drift across the full round duration had not visually landed yet. The underlying resolver order is correct and deliberate, so the fix is purely presentational.
+- Backend: added `lunged_this_turn` boolean to `game_zombies` (migration + `$fillable`/`$casts`). `ZombieTurnResolver::resolve` clears the flag on every zombie in the current room at the top of the turn, and flips it to `true` only when the zombie contributed to adjacency damage AND actually moved this turn (`prev_x/y !== x/y`). Zombies that were already adjacent last round and stood still keep drifting normally - no ghost lunge-in-place. Bumped zombies (already skipped for adjacency damage) are unaffected. `GameStateChanged::snapshotFor` includes the flag in the broadcast payload.
+- Frontend: extended `ZombiePayload` and `ZombieView` with the new flag. `syncZombieViews` uses a 180ms `cubic-bezier(0.2, 0.8, 0.3, 1)` ease-out tween for lunging zombies instead of the usual full-round linear drift. Non-lunging zombies in the same broadcast keep their slow drift untouched - only the attacker snaps forward, which reads as a lash-out instead of a creep.
+- All 13 gamejam-adjacent tests still pass; ESLint clean on `live.vue`. No gameplay logic changed.
+
 ## April 20th, 2026 - Chat Castle: painted rooms now render in live.vue
 
 - Follow-up to the room builder commit. The painted JSON was sitting unused at `resources/js/rooms/{N}.json`. Wired it into `themes.ts` so the game actually renders what the author painted.

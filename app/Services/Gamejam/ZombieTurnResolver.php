@@ -37,6 +37,7 @@ class ZombieTurnResolver
         foreach ($zombies as $z) {
             $z->prev_x = $z->x;
             $z->prev_y = $z->y;
+            $z->lunged_this_turn = false;
         }
 
         $blockers = $game->blockers->where('room', $game->current_room)->values();
@@ -101,6 +102,15 @@ class ZombieTurnResolver
                 $anyZombieSeesHidingPlayer = true;
             }
             $totalDamage += $damage;
+
+            // Flag for frontend: if this zombie moved into its damage-dealing
+            // position this turn, play a fast lunge animation instead of the
+            // slow linear drift so the attack lines up visually with the hit.
+            $moved = $z->prev_x !== $z->x || $z->prev_y !== $z->y;
+            if ($moved) {
+                $z->lunged_this_turn = true;
+                $z->save();
+            }
         }
 
         $newHp = $game->player_hp - $totalDamage;

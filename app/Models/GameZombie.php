@@ -39,6 +39,7 @@ class GameZombie extends Model
         'kind',
         'brain_state',
         'active',
+        'lunged_this_turn',
     ];
 
     protected $casts = [
@@ -51,6 +52,7 @@ class GameZombie extends Model
         'max_hp' => 'integer',
         'damage' => 'integer',
         'active' => 'boolean',
+        'lunged_this_turn' => 'boolean',
     ];
 
     public function game(): BelongsTo

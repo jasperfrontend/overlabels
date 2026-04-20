@@ -71,6 +71,7 @@ interface ZombiePayload {
   kind: 'regular' | 'weakling' | 'boss';
   brain_state: 'drifting' | 'chasing';
   active: boolean;
+  lunged_this_turn: boolean;
 }
 
 interface WorldPayload {
@@ -106,14 +107,20 @@ interface ZombieView {
   facing: ZombiePayload['facing'];
   animating: boolean;
   duration: number;
+  lunging: boolean;
 }
 
 const zombieViews = ref<Record<number, ZombieView>>({});
+
+const LUNGE_DURATION_S = 0.18;
+const LUNGE_EASING = 'cubic-bezier(0.2, 0.8, 0.3, 1)';
 
 function syncZombieViews(list: ZombiePayload[], duration: number) {
   // Snap each zombie to its prev position with no transition, then on the
   // next frame animate to the current position over the full round duration.
   // This keeps the crossing animation in lockstep with the round timer.
+  // Zombies flagged lunged_this_turn get a short ease-out tween instead,
+  // so their attack reads as a lash-out rather than a slow drift.
   const snap: Record<number, ZombieView> = {};
   for (const z of list) {
     snap[z.id] = {
@@ -122,6 +129,7 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
       facing: z.facing,
       animating: false,
       duration,
+      lunging: z.lunged_this_turn,
     };
   }
   zombieViews.value = snap;
@@ -134,7 +142,8 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
         y: z.y,
         facing: z.facing,
         animating: true,
-        duration,
+        duration: z.lunged_this_turn ? LUNGE_DURATION_S : duration,
+        lunging: z.lunged_this_turn,
       };
     }
     zombieViews.value = anim;
@@ -145,8 +154,9 @@ function zombieStyle(z: ZombiePayload) {
   const view = zombieViews.value[z.id];
   const x = view?.x ?? z.x;
   const y = view?.y ?? z.y;
+  const easing = view?.lunging ? LUNGE_EASING : 'linear';
   const transition = view?.animating
-    ? `transform ${view.duration}s linear`
+    ? `transform ${view.duration}s ${easing}`
     : 'none';
   return {
     transform: `translate(calc(${x} * var(--tile)), calc(${y} * var(--tile)))`,
@@ -524,7 +534,8 @@ onUnmounted(() => {
 <template>
 
   <div class="live-board">
-    <div v-if="needsAudioUnlock" class="audio-unlock-overlay">
+    <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
+      <!-- @todo: Remove ! above after you're done here. -->
       <div class="audio-unlock-panel">
         <h2>Audio is blocked</h2>
         <p>Your browser is preventing this overlay from playing sound until you interact with the page.</p>
@@ -564,7 +575,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="!game.weapon_slot_2">
+          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="game.weapon_slot_2">
             <span class="text-yellow-400">Unlocked</span>
             <div class="value text-center">
               <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-12 m-auto" alt="sword-de">
@@ -572,7 +583,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="!game.wears_iron_fists">
+          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="game.wears_iron_fists">
             <span class="text-yellow-400">Iron Fists</span>
             <div class="value text-center">
               <img src="/tile-icons/pixel/128x128/iron-fist.png" class="size-12 m-auto" alt="iron-fist">
@@ -627,12 +638,12 @@ onUnmounted(() => {
         <div class="bg-olive-800 p-4 text-center medievalsharp-regular">
           <span class="text-olive-400">Next round in</span>
           <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
-          <span class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</span>
+          <div class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</div>
         </div>
 
         <div class="bg-olive-800 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
           <span class="text-olive-400">Last Twitch chat vote</span>
-          <div class="text-teal-400 text-8xl flex items-center justify-center gap-2">
+          <div class="text-teal-400 text-8xl mt-1.5 flex items-center justify-center gap-2">
             <template v-if="game.last_resolved_action">
               <component
                 v-for="i in voteIconCount(game.last_resolved_action)"
@@ -660,7 +671,7 @@ onUnmounted(() => {
               <span>: <strong class="text-teal-400">{{ count }}</strong></span>
             </span>
           </div>
-          <div v-else class="text-sm mt-4 text-olive-400 medievalsharp-regular">no votes cast</div>
+          <div v-else class="text-sm text-olive-400 medievalsharp-regular">Nobody has voted yet - <span class="text-yellow-400">!join</span> in chat to play.</div>
         </div>
       </section>
 

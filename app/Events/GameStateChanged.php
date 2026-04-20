@@ -120,6 +120,7 @@ class GameStateChanged implements ShouldBroadcastNow
                         'kind' => $z->kind,
                         'brain_state' => $z->brain_state,
                         'active' => $z->active,
+                        'lunged_this_turn' => $z->lunged_this_turn,
                     ])
                     ->all(),
             ],
