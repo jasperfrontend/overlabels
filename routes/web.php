@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\ExternalEventTemplateMappingController;
+use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
@@ -49,6 +50,13 @@ Route::get('/', function (TemplateDataMapperService $mapper) {
 Route::get('/gamejam', function () {
     return Inertia::render('gamejam/index');
 })->name('gamejam');
+
+Route::middleware(['auth.redirect'])->prefix('gamejam/admin')->name('gamejam.admin.')->group(function () {
+    Route::get('/', [GamejamAdminController::class, 'index'])->name('index');
+    Route::post('/start', [GamejamAdminController::class, 'start'])->name('start');
+    Route::post('/end', [GamejamAdminController::class, 'end'])->name('end');
+    Route::post('/debug/toggle', [GamejamAdminController::class, 'toggleDebug'])->name('debug.toggle');
+});
 
 // eventually place the route here that renders all active rooms in the gamejam
 

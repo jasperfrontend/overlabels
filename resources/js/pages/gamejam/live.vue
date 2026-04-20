@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import { floorFor, themeFor, type RoomTheme } from './themes';
+import GameResultBanner from '@/components/gamejam/GameResultBanner.vue';
 
 interface GamePayload {
   id: number;
@@ -117,16 +118,10 @@ const zombieViews = ref<Record<number, ZombieView>>({});
 const LUNGE_DURATION_S = 0.18;
 const LUNGE_EASING = 'cubic-bezier(0.2, 0.8, 0.3, 1)';
 
-function lungeModeFor(z: ZombiePayload, prev: ZombieView | undefined): LungeMode {
+function lungeModeFor(z: ZombiePayload): LungeMode {
   if (!z.lunged_this_turn) return 'none';
   const moved = z.prev_x !== z.x || z.prev_y !== z.y;
-  if (moved) return 'moving';
-  // Stationary attack: only play the keyframe on the opening beat of an
-  // engagement. If this zombie was already lunging last turn (moving or
-  // stationary), the player already knows they're being attacked; repeating
-  // the wind-up-and-thrust every tick reads as the zombie humping them.
-  if (prev && prev.lungeMode !== 'none') return 'none';
-  return 'stationary';
+  return moved ? 'moving' : 'stationary';
 }
 
 function syncZombieViews(list: ZombiePayload[], duration: number) {
@@ -137,8 +132,9 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
   // slow drift; stationary lunging zombies keep their tile position but
   // get a wind-up + shoot-over-edge keyframe animation on the inner body.
   // The snap-then-rAF pattern also retriggers the CSS keyframe animation
-  // each turn (class is removed on snap, re-added on anim).
-  const prior = zombieViews.value;
+  // each turn (class is removed on snap, re-added on anim). The keyframe
+  // itself is bounded by animation-iteration-count: 1 in CSS, so each
+  // retrigger plays exactly one bounce regardless of tick cadence.
   const snap: Record<number, ZombieView> = {};
   for (const z of list) {
     snap[z.id] = {
@@ -155,7 +151,7 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
   requestAnimationFrame(() => {
     const anim: Record<number, ZombieView> = {};
     for (const z of list) {
-      const mode = lungeModeFor(z, prior[z.id]);
+      const mode = lungeModeFor(z);
       anim[z.id] = {
         x: z.x,
         y: z.y,
@@ -556,6 +552,28 @@ onUnmounted(() => {
 
 <template>
 
+  <Teleport to="body" v-if="game?.status !== 'running' && game?.status === 'won' || game?.status === 'lost'">
+    <div
+      class="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+    >
+      <GameResultBanner
+        v-if="game?.status === 'won'"
+        :status="game.status"
+        title="Congratulations"
+        description="You have defeated the zombie infestation and the castle is saved"
+        footnote="This game is over now. Thank you for playing"
+      />
+
+      <GameResultBanner
+        v-if="game?.status === 'lost'"
+        :status="game.status"
+        title="Well that sucks"
+        description="The zombies have eaten you alive&hellip;"
+        footnote="This game is over now. Thank you for playing"
+      />
+    </div>
+  </Teleport>
+
   <div class="live-board">
     <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
       <!-- @todo: Remove ! above after you're done here. -->
@@ -570,7 +588,7 @@ onUnmounted(() => {
     <aside class="sidebar">
 
       <section class="stats-row" v-if="debugEnabledLive">
-        <pre>{{ joiners }}</pre>
+        <pre>{{ game }}</pre>
       </section>
 
       <section v-if="game" class="flex justify-between medievalsharp-regular">
@@ -733,7 +751,7 @@ onUnmounted(() => {
         </div>
 
         <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">
-          <h2 class="anthon-sc text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
+          <h2 class="medievalsharp-regular text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
           <ul>
             <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner medievalsharp-regular">
               <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
@@ -743,7 +761,7 @@ onUnmounted(() => {
         </div>
 
         <div class="medievalsharp-regular text-sm" v-if="grouped.inactive.length > 0">
-          <h2 class="anthon-sc text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
+          <h2 class="medievalsharp-regular text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
 
           <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 mt-0.5">
             <div class="bg-card flex gap-2 p-1">
@@ -853,17 +871,10 @@ onUnmounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
-.medievalsharp-regular,
-.anthon-sc {
+.medievalsharp-regular {
   font-family: "MedievalSharp", cursive;
   font-weight: 400;
   font-style: normal;
-}
-.font-inherit {
-  font-family: inherit;
-}
-.font-sans {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 .live-board {
