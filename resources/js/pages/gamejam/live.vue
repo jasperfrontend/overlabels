@@ -117,9 +117,16 @@ const zombieViews = ref<Record<number, ZombieView>>({});
 const LUNGE_DURATION_S = 0.18;
 const LUNGE_EASING = 'cubic-bezier(0.2, 0.8, 0.3, 1)';
 
-function lungeModeFor(z: ZombiePayload): LungeMode {
+function lungeModeFor(z: ZombiePayload, prev: ZombieView | undefined): LungeMode {
   if (!z.lunged_this_turn) return 'none';
-  return z.prev_x === z.x && z.prev_y === z.y ? 'stationary' : 'moving';
+  const moved = z.prev_x !== z.x || z.prev_y !== z.y;
+  if (moved) return 'moving';
+  // Stationary attack: only play the keyframe on the opening beat of an
+  // engagement. If this zombie was already lunging last turn (moving or
+  // stationary), the player already knows they're being attacked; repeating
+  // the wind-up-and-thrust every tick reads as the zombie humping them.
+  if (prev && prev.lungeMode !== 'none') return 'none';
+  return 'stationary';
 }
 
 function syncZombieViews(list: ZombiePayload[], duration: number) {
@@ -131,6 +138,7 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
   // get a wind-up + shoot-over-edge keyframe animation on the inner body.
   // The snap-then-rAF pattern also retriggers the CSS keyframe animation
   // each turn (class is removed on snap, re-added on anim).
+  const prior = zombieViews.value;
   const snap: Record<number, ZombieView> = {};
   for (const z of list) {
     snap[z.id] = {
@@ -147,7 +155,7 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
   requestAnimationFrame(() => {
     const anim: Record<number, ZombieView> = {};
     for (const z of list) {
-      const mode = lungeModeFor(z);
+      const mode = lungeModeFor(z, prior[z.id]);
       anim[z.id] = {
         x: z.x,
         y: z.y,

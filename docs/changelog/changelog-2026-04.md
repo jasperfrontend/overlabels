@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Chat Castle: stationary lunge fires once per engagement
+
+- Follow-up to the stationary lunge commit, same day. The keyframe animation correctly retriggered every turn - but since an adjacent zombie attacks every turn, the zombie would pull back, thrust past the tile edge, settle, repeat... for as long as the player stood still. User described it, accurately, as the zombie humping the player to death. The wind-up-and-lash-out motif is right for the opening beat of an engagement; it is very wrong as a loop.
+- Fix is frontend-only in `lungeModeFor`. `syncZombieViews` now captures `zombieViews.value` before overwriting it with the snap phase, and passes the prior view into `lungeModeFor`. Stationary lunges only fire if the zombie's previous `lungeMode` was `'none'` (fresh engagement). If the prior mode was `'moving'` or `'stationary'`, the engagement is already visually established - the pulsing idle animation plus the player's falling HP bar carry the ongoing-attack reading, no new thrust needed.
+- Moving lunges are unchanged and always fire: if the zombie moved, the attack is visibly at a new spot, so the short ease-out tween always makes sense.
+- Reset behavior is implicit. If the player moves away, the zombie becomes non-adjacent and `lunged_this_turn` flips to `false` on the server. Next turn the frontend sees `lungeMode: 'none'`, and whenever the zombie re-engages, the prior state is `'none'` again - so the opening lunge fires fresh. No extra backend state needed; the existing flag plus last-frame comparison is enough.
+- Edge case accepted: reloading the page mid-engagement will replay the stationary lunge once, because `prior[z.id]` is undefined. Acceptable - reload is already disruptive and a single extra lunge frame is a small cost.
+- ESLint clean, all 13 zombie tests still pass.
+
 ## April 20th, 2026 - Chat Castle: stationary zombies wind up and lash out
 
 - Follow-up to the earlier lunge commit. That one only fired for zombies that *moved* into their adjacency. A zombie already adjacent to the player on the previous tick would deal damage with no visual cue at all - just the pulsing idle loop while the HP bar dropped. User wanted a distinct animation for that case: elastic wind-up in the opposite direction, lunge forward past the tile edge, then settle back.
