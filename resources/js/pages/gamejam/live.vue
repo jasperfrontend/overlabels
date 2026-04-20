@@ -100,10 +100,6 @@ const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
 
-const capitalise = computed(() => {
-  return (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-});
-
 interface ZombieView {
   x: number;
   y: number;
@@ -557,7 +553,7 @@ onUnmounted(() => {
               <span class="py-0.5 px-2 capitalize font-bold">{{ game.current_round }}</span>
             </div>
             <div class="flex flex-col gap-0">
-              <span class="text-olive-400">Players</span>
+              <span class="text-olive-400">Player{{ joiners.length !== 1 ? 's' : null }}</span>
               <span class="py-0.5 px-2 capitalize font-bold">{{ joiners.length }}</span>
             </div>
           </section>
@@ -569,13 +565,12 @@ onUnmounted(() => {
         <pre>{{ joiners }}</pre>
       </section>
 
-      <!-- Weapons bg-[url(/tile-icons/Tile/ui/bg_tile_1.png)]  -->
       <section v-if="game" class="p-4 flex justify-around items-center medievalsharp-regular">
         <div class="weapon text-center p-2">
-          <span class="text-yellow-400">Weapon</span>
+          <span class="text-yellow-400">Use: !a</span>
           <div class="value text-center">
-            <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/fist.png" class="size-16 m-auto" alt="watermelon">
-            <img v-else src="/tile-icons/pixel/sword-default.png" class="size-16 m-auto" alt="sword">
+            <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/128x128/fist.png" class="size-16 m-auto" alt="fists">
+            <img v-else src="/tile-icons/pixel/128x128/sword-default.png" class="size-16 m-auto" alt="sword">
             <span v-if="game.weapon_slot_1_uses">({{ game.weapon_slot_1_uses }})</span>
 
             <div v-if="game.weapon_slot_1_uses"
@@ -587,12 +582,25 @@ onUnmounted(() => {
                 :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
               ></span>
             </div>
-
           </div>
         </div>
+
         <div class="weapon text-center p-2" v-if="game.weapon_slot_2">
-          <span class="text-yellow-400">Double-Edged Sword</span>
-          <span class="value">Unlocked! Use <code>!a 2</code> to attack</span>
+          <span class="text-yellow-400 font-sans">Use: !a 2</span>
+          <div class="value text-center">
+            <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-16 m-auto" alt="watermelon">
+            <span>(infinite)</span>
+
+            <div v-if="game.weapon_slot_1_uses"
+                 class="relative py-2 w-full h-4 overflow-hidden bg-red-400 bg-auto bg-repeat"
+                 role="progressbar"
+            >
+              <span
+                class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400 bg-auto bg-repeat"
+                :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
+              ></span>
+            </div>
+          </div>
         </div>
         <div class="weapon text-center p-2" v-if="game.wears_iron_fists">
           <span class="text-yellow-400">Iron Fists</span>
@@ -671,7 +679,7 @@ onUnmounted(() => {
               :key="j.twitch_user_id"
               class="joiner flex items-center gap-2 p-1 pl-2 my-0.5 w-full bg-olive-800 medievalsharp-regular"
             >
-              <div class="text-teal-400 bg-card p-1 w-25 px-3 flex items-center justify-center gap-1">
+              <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
                 <component
                   v-for="i in voteIconCount(j.current_vote)"
                   :is="voteIcon(j.current_vote)"
@@ -815,19 +823,19 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Anton+SC&family=Macondo+Swash+Caps&family=MedievalSharp&display=swap');
-
-.macondo-sc {
-  font-family: 'Macondo Swash Caps', cursive;
-  font-weight: 400;
-  font-style: normal;
-}
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
 .medievalsharp-regular,
 .anthon-sc {
   font-family: "MedievalSharp", cursive;
   font-weight: 400;
   font-style: normal;
+}
+.font-inherit {
+  font-family: inherit;
+}
+.font-sans {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 .live-board {
@@ -855,27 +863,12 @@ onUnmounted(() => {
   max-height: 100vh;
 }
 
-.side-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 .title h1 {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
 }
-.title .login {
-  color: #888;
-  font-size: 0.9rem;
-}
-.conn {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: #888;
-  font-size: 0.8rem;
-}
+
 .conn .dot {
   border-radius: 50%;
   background: #555;
@@ -899,13 +892,7 @@ onUnmounted(() => {
   flex-direction: column;
   min-width: 60px;
 }
-.stat .label,
-.weapon .label {
-  font-size: 1rem;
-  text-transform: uppercase;
-  color: #888;
-  letter-spacing: 0.05em;
-}
+
 .stat .value,
 .weapon .value {
   font-size: 1.25rem;

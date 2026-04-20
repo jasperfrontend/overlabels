@@ -10,7 +10,7 @@ _ide_helper_models.php
 /storage/*.key
 /storage/pail
 /vendor
-/docs/downloads
+/docs/*
 .claude
 .env
 .env.local
@@ -42,3 +42,10 @@ yarn-error.log
 /.env.testing
 /nul
 /backup.sql
+/docs/app-specifications.txt
+/docs/chat_castle_gdd_v2.html
+/docs/data-1776350278629.csv
+/docs/data-1776367217151.csv
+/docs/gamejam-handoff-2026-04-18.md
+/docs/gpsdata-1776348006372.csv
+/docs/gpslogger-backend-contract.md
