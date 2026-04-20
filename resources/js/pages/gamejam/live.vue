@@ -101,13 +101,15 @@ const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
 
+type LungeMode = 'none' | 'moving' | 'stationary';
+
 interface ZombieView {
   x: number;
   y: number;
   facing: ZombiePayload['facing'];
   animating: boolean;
   duration: number;
-  lunging: boolean;
+  lungeMode: LungeMode;
 }
 
 const zombieViews = ref<Record<number, ZombieView>>({});
@@ -115,12 +117,20 @@ const zombieViews = ref<Record<number, ZombieView>>({});
 const LUNGE_DURATION_S = 0.18;
 const LUNGE_EASING = 'cubic-bezier(0.2, 0.8, 0.3, 1)';
 
+function lungeModeFor(z: ZombiePayload): LungeMode {
+  if (!z.lunged_this_turn) return 'none';
+  return z.prev_x === z.x && z.prev_y === z.y ? 'stationary' : 'moving';
+}
+
 function syncZombieViews(list: ZombiePayload[], duration: number) {
   // Snap each zombie to its prev position with no transition, then on the
   // next frame animate to the current position over the full round duration.
   // This keeps the crossing animation in lockstep with the round timer.
-  // Zombies flagged lunged_this_turn get a short ease-out tween instead,
-  // so their attack reads as a lash-out rather than a slow drift.
+  // Lunging zombies that moved get a short ease-out tween instead of the
+  // slow drift; stationary lunging zombies keep their tile position but
+  // get a wind-up + shoot-over-edge keyframe animation on the inner body.
+  // The snap-then-rAF pattern also retriggers the CSS keyframe animation
+  // each turn (class is removed on snap, re-added on anim).
   const snap: Record<number, ZombieView> = {};
   for (const z of list) {
     snap[z.id] = {
@@ -129,7 +139,7 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
       facing: z.facing,
       animating: false,
       duration,
-      lunging: z.lunged_this_turn,
+      lungeMode: 'none',
     };
   }
   zombieViews.value = snap;
@@ -137,13 +147,14 @@ function syncZombieViews(list: ZombiePayload[], duration: number) {
   requestAnimationFrame(() => {
     const anim: Record<number, ZombieView> = {};
     for (const z of list) {
+      const mode = lungeModeFor(z);
       anim[z.id] = {
         x: z.x,
         y: z.y,
         facing: z.facing,
         animating: true,
-        duration: z.lunged_this_turn ? LUNGE_DURATION_S : duration,
-        lunging: z.lunged_this_turn,
+        duration: mode === 'moving' ? LUNGE_DURATION_S : duration,
+        lungeMode: mode,
       };
     }
     zombieViews.value = anim;
@@ -154,7 +165,7 @@ function zombieStyle(z: ZombiePayload) {
   const view = zombieViews.value[z.id];
   const x = view?.x ?? z.x;
   const y = view?.y ?? z.y;
-  const easing = view?.lunging ? LUNGE_EASING : 'linear';
+  const easing = view?.lungeMode === 'moving' ? LUNGE_EASING : 'linear';
   const transition = view?.animating
     ? `transform ${view.duration}s ${easing}`
     : 'none';
@@ -162,6 +173,10 @@ function zombieStyle(z: ZombiePayload) {
     transform: `translate(calc(${x} * var(--tile)), calc(${y} * var(--tile)))`,
     transition,
   };
+}
+
+function zombieLungeClass(z: ZombiePayload): string {
+  return zombieViews.value[z.id]?.lungeMode === 'stationary' ? 'zombie-lunge-stationary' : '';
 }
 const debugEnabledLive = ref(props.debugEnabled);
 const connected = ref(false);
@@ -813,6 +828,7 @@ onUnmounted(() => {
               `zombie-${z.kind}`,
               z.active ? `zombie-${z.brain_state}` : 'zombie-dead',
               `facing-${zombieViews[z.id]?.facing ?? z.facing}`,
+              zombieLungeClass(z),
             ]"
             :style="zombieStyle(z)"
           >
@@ -1213,6 +1229,45 @@ onUnmounted(() => {
 .zombie.facing-down .zombie-body::after { top: auto; bottom: 15%; left: 50%; transform: translateX(-50%); }
 .zombie.facing-left .zombie-body::after { top: 50%; left: 15%; transform: translateY(-50%); }
 .zombie.facing-right .zombie-body::after { top: 50%; left: auto; right: 15%; transform: translateY(-50%); }
+
+/* Stationary lunge: zombie was already adjacent and attacked without moving.
+   Winds up by pulling back, shoots forward past the tile edge, then bounces
+   back to rest. Per-facing keyframes so the body translates toward the
+   player. Duration is short (~450ms) so it never overlaps into the next tick. */
+.zombie.zombie-lunge-stationary .zombie-body {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
+  animation-fill-mode: both;
+}
+.zombie.zombie-lunge-stationary.facing-up .zombie-body { animation-name: zombieLungeUp; }
+.zombie.zombie-lunge-stationary.facing-down .zombie-body { animation-name: zombieLungeDown; }
+.zombie.zombie-lunge-stationary.facing-left .zombie-body { animation-name: zombieLungeLeft; }
+.zombie.zombie-lunge-stationary.facing-right .zombie-body { animation-name: zombieLungeRight; }
+
+@keyframes zombieLungeUp {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(12%); }
+  60%  { transform: translateY(-45%); }
+  100% { transform: translateY(0); }
+}
+@keyframes zombieLungeDown {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-12%); }
+  60%  { transform: translateY(45%); }
+  100% { transform: translateY(0); }
+}
+@keyframes zombieLungeLeft {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(12%); }
+  60%  { transform: translateX(-45%); }
+  100% { transform: translateX(0); }
+}
+@keyframes zombieLungeRight {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-12%); }
+  60%  { transform: translateX(45%); }
+  100% { transform: translateX(0); }
+}
 .grid-row {
   display: grid;
   grid-template-columns: repeat(11, var(--tile));

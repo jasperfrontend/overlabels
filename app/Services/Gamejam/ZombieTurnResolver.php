@@ -103,14 +103,14 @@ class ZombieTurnResolver
             }
             $totalDamage += $damage;
 
-            // Flag for frontend: if this zombie moved into its damage-dealing
-            // position this turn, play a fast lunge animation instead of the
-            // slow linear drift so the attack lines up visually with the hit.
-            $moved = $z->prev_x !== $z->x || $z->prev_y !== $z->y;
-            if ($moved) {
-                $z->lunged_this_turn = true;
-                $z->save();
-            }
+            // Flag for frontend: this zombie attacked the player this turn.
+            // Force facing toward the player so the lunge animation aims at
+            // the hit. Movers get a fast travel-lunge; stationary attackers
+            // get a wind-up + shoot-over-edge + settle animation on the client.
+            $z->facing = $this->facingToward($z->x, $z->y, $game->player_x, $game->player_y)
+                ?? $z->facing;
+            $z->lunged_this_turn = true;
+            $z->save();
         }
 
         $newHp = $game->player_hp - $totalDamage;
@@ -210,6 +210,20 @@ class ZombieTurnResolver
             }
             $facing = $this->rotateRight($facing);
         }
+    }
+
+    private function facingToward(int $fromX, int $fromY, int $toX, int $toY): ?string
+    {
+        $dx = $toX - $fromX;
+        $dy = $toY - $fromY;
+
+        return match (true) {
+            $dx === 1 && $dy === 0 => GameZombie::FACING_RIGHT,
+            $dx === -1 && $dy === 0 => GameZombie::FACING_LEFT,
+            $dx === 0 && $dy === 1 => GameZombie::FACING_DOWN,
+            $dx === 0 && $dy === -1 => GameZombie::FACING_UP,
+            default => null,
+        };
     }
 
     private function step(int $x, int $y, string $facing): array

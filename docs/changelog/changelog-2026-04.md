@@ -1,5 +1,13 @@
 # CHANGELOG APRIL 2026
 
+## April 20th, 2026 - Chat Castle: stationary zombies wind up and lash out
+
+- Follow-up to the earlier lunge commit. That one only fired for zombies that *moved* into their adjacency. A zombie already adjacent to the player on the previous tick would deal damage with no visual cue at all - just the pulsing idle loop while the HP bar dropped. User wanted a distinct animation for that case: elastic wind-up in the opposite direction, lunge forward past the tile edge, then settle back.
+- Backend: dropped the `$moved` gate in `ZombieTurnResolver` so every adjacency-damage contributor gets `lunged_this_turn = true`. Added `facingToward()` helper and force `$z->facing` toward the player at attack time - stationary adjacent zombies weren't reliably facing the player (chase/drift only update facing on a successful move), so without this the lash-out could aim the wrong way. Bumped zombies still skip (they already hit via `ActionApplier`).
+- Frontend: `lungeMode: 'none' | 'moving' | 'stationary'` replaces the simple boolean on `ZombieView`. Moving lunges keep the short ease-out tween; stationary lunges leave the outer tile transform alone and play a 450ms keyframe animation on the inner `.zombie-body`. Four direction-specific `@keyframes` (up/down/left/right) translate the body to +12% (wind-up, opposite to facing), then to -45% (past the tile edge toward the player), then back to 0. Specificity beats `.zombie-chasing`'s pulse loop during the animation; the pulse resumes naturally when the class is removed next tick.
+- Snap-then-rAF pattern in `syncZombieViews` retriggers the CSS animation each turn: snap sets `lungeMode: 'none'` (removing the class), rAF sets the real mode (adding it back), which is what CSS needs to re-fire a keyframe animation with the same name.
+- All 13 gamejam tests still pass, ESLint clean.
+
 ## April 20th, 2026 - Chat Castle: zombies lunge into their damage-dealing tile
 
 - Visual issue observed in live play: when a zombie drifted to the tile directly adjacent to the player, the damage was applied pre-movement (per design) but the zombie was still mid-drift through the tween. Readers saw a zombie "one tile away" losing the player a heart with no contact, because the linear drift across the full round duration had not visually landed yet. The underlying resolver order is correct and deliberate, so the fix is purely presentational.
