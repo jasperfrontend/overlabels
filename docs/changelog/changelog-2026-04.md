@@ -1,5 +1,9 @@
 # CHANGELOG APRIL 2026
 
+## April 22nd, 2026 - Scope banner copy no longer lies about the session
+
+- The banner claimed "Reauthorizing takes a few seconds and does not sign you out." In practice the Twitch -> callback round trip does appear to drop the Laravel session for some users (DB state update succeeds, but the browser lands on a logged-out overlabels.com and has to relog manually). Until that session loss is root-caused, honest copy is better than confident-sounding copy - the updated string warns users they may need to log in again and reassures them the new permissions persist regardless.
+
 ## April 21st, 2026 - Twitch EventSub: hype train, charity, goals, polls, predictions
 
 - Added 17 new EventSub types in five families: hype train (begin/progress/end), charity campaigns (donate/start/progress/stop), channel goals (begin/progress/end), polls (begin/progress/end), predictions (begin/progress/lock/end). `UserEventSubManager::SUPPORTED_EVENTS` gained a `required_scope` field per entry and is now the single source of truth for which scope a given event needs; `setupUserSubscriptions()` skips (and buckets under `skipped_missing_scope`) any event whose scope the user hasn't granted, so Twitch 403s don't pollute the `failed` bucket.

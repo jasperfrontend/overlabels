@@ -37,7 +37,7 @@ const featureList = computed(() => {
   >
     <span>
       Twitch needs to re-confirm permissions to unlock new alert types ({{ featureList }}).
-      Reauthorizing takes a few seconds and does not sign you out.
+      You'll bounce through Twitch and may need to log in again afterward - your new permissions stick regardless.
     </span>
     <a
       href="/auth/redirect/twitch?reauth=1"
