@@ -61,6 +61,7 @@ class TwitchTokenService
                     'access_token' => $data['access_token'],
                     'refresh_token' => $data['refresh_token'] ?? $refreshToken,
                     'expires_in' => $data['expires_in'] ?? 3600,
+                    'scope' => $data['scope'] ?? null,
                 ];
             }
 
@@ -114,12 +115,34 @@ class TwitchTokenService
             return false;
         }
 
-        // Update the user with new tokens
-        $user->update([
+        $updates = [
             'access_token' => $tokenData['access_token'],
             'refresh_token' => $tokenData['refresh_token'],
             'token_expires_at' => now()->addSeconds($tokenData['expires_in']),
-        ]);
+        ];
+
+        // Capture granted scopes when Twitch returns them. Twitch always includes
+        // scope on refresh, but guard anyway - absent response shouldn't clobber
+        // stored scopes (which would falsely trigger the stale-scope banner).
+        if (isset($tokenData['scope'])) {
+            $newScopes = TwitchScopeService::sanitizeScopeList($tokenData['scope']);
+            $updates['twitch_scopes'] = $newScopes;
+
+            // Warn when scopes shrink - the banner will start showing and the
+            // user may wonder why; a log line makes it traceable.
+            $priorScopes = $user->twitch_scopes ?? [];
+            if (is_array($priorScopes)) {
+                $dropped = array_diff($priorScopes, $newScopes);
+                if (! empty($dropped)) {
+                    Log::warning('Twitch scopes shrunk on refresh', [
+                        'user_id' => $user->id,
+                        'dropped' => array_values($dropped),
+                    ]);
+                }
+            }
+        }
+
+        $user->update($updates);
 
         Log::info('Successfully refreshed token for user', ['user_id' => $user->id]);
 

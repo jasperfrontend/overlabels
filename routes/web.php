@@ -30,6 +30,7 @@ use App\Models\Game;
 use App\Models\User;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
+use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -221,16 +222,14 @@ Route::get('/auth/redirect/twitch', function (Request $request) {
     /** @var AbstractProvider $driver */
     $driver = Socialite::driver('twitch');
 
-    return $driver->scopes([
-        'user:read:email',            // To get email
-        'user:read:follows',          // Who they follow
-        'user:read:subscriptions',    // (requires Partner status)
-        'channel:read:subscriptions', // Who is subscribed to them
-        'channel:read:redemptions',   // Channel point stuff
-        'channel:read:goals',         // Follower/sub goals
-        'channel:moderate',           // Required for some EventSub actions
-        'moderator:read:followers',   // Channel follower details
-    ])->redirect();
+    // ?reauth=1 forces Twitch to show the consent screen again even when the
+    // user has previously authorized - required for picking up new scopes
+    // that weren't in the original grant (hype train, polls, etc.).
+    if ($request->query('reauth') === '1') {
+        $driver->with(['force_verify' => 'true']);
+    }
+
+    return $driver->scopes(TwitchScopeService::REQUIRED_SCOPES)->redirect();
 });
 
 // Refresh Twitch token endpoint
@@ -250,7 +249,7 @@ Route::post('/auth/refresh/twitch', function () {
     return response()->json(['error' => 'Failed to refresh token', 'requires_reauth' => true], 401);
 })->middleware('auth')->name('auth.refresh.twitch');
 
-Route::get('/auth/callback/twitch', function () {
+Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) {
     try {
         $twitchUser = Socialite::driver('twitch')->user();
 
@@ -269,6 +268,14 @@ Route::get('/auth/callback/twitch', function () {
             $user->restore();
         }
 
+        // Socialite returns approvedScopes from the token response - use the
+        // shared sanitizer to normalize (Twitch mixes array and space-string).
+        $approvedScopes = TwitchScopeService::sanitizeScopeList($twitchUser->approvedScopes ?? []);
+
+        // Remember pre-reauth missing-scope state so we can auto-dispatch
+        // resubscribe if this login unlocks new event types for the user.
+        $priorMissingScopes = $user ? $scopeService->getMissingScopes($user) : TwitchScopeService::REQUIRED_SCOPES;
+
         if (! $user) {
             // Create a new user if not found
             $user = User::create([
@@ -280,6 +287,7 @@ Route::get('/auth/callback/twitch', function () {
                 'refresh_token' => $twitchUser->refreshToken ?? null,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                'twitch_scopes' => $approvedScopes ?: null,
                 'email_verified_at' => now(),
                 'password' => bcrypt(Str::random(32)),
                 'webhook_secret' => bin2hex(random_bytes(32)),
@@ -298,6 +306,13 @@ Route::get('/auth/callback/twitch', function () {
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
                 'twitch_data' => array_merge($twitchUser->user, $extendedData),
             ];
+
+            // Only overwrite twitch_scopes when Socialite actually gave us a list -
+            // empty array on the initial response is ambiguous and we'd rather
+            // keep the prior stored set than blank it out.
+            if (! empty($approvedScopes)) {
+                $updateData['twitch_scopes'] = $approvedScopes;
+            }
 
             // Backfill webhook_secret for users created before per-user secrets
             if (! $user->webhook_secret) {
@@ -318,13 +333,24 @@ Route::get('/auth/callback/twitch', function () {
             return redirect('/banned');
         }
 
-        // Auto-setup EventSub subscriptions for new users or users who have auto-connect enabled
-        if (($isNewUser || $user->eventsub_auto_connect) && ! $user->eventsub_connected_at) {
+        $currentMissingScopes = $scopeService->getMissingScopes($user);
+        $scopesJustUnlocked = ! empty(array_diff($priorMissingScopes, $currentMissingScopes));
+
+        // Auto-setup EventSub subscriptions for new users, users who have
+        // auto-connect enabled but aren't connected yet, or users whose
+        // reauth just unlocked new scopes (setupUserSubscriptions is
+        // idempotent - it skips already-enabled subscriptions).
+        $shouldSetup = $isNewUser
+            || ($user->eventsub_auto_connect && ! $user->eventsub_connected_at)
+            || ($scopesJustUnlocked && $user->eventsub_auto_connect);
+
+        if ($shouldSetup) {
             try {
                 Log::info('Dispatching EventSub setup for user', [
                     'user_id' => $user->id,
                     'twitch_id' => $user->twitch_id,
                     'is_new_user' => $isNewUser,
+                    'scopes_just_unlocked' => $scopesJustUnlocked,
                 ]);
 
                 // Dispatch the job to setup EventSub subscriptions

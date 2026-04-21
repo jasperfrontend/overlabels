@@ -5,6 +5,7 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LockdownBanner from '@/components/LockdownBanner.vue';
+import ScopeUpdateBanner from '@/components/ScopeUpdateBanner.vue';
 import VersionBanner from '@/components/VersionBanner.vue';
 import type { BreadcrumbItemType } from '@/types';
 
@@ -24,6 +25,7 @@ withDefaults(defineProps<Props>(), {
       <VersionBanner />
       <LockdownBanner />
       <ImpersonationBanner />
+      <ScopeUpdateBanner />
       <AppSidebarHeader :breadcrumbs="breadcrumbs" />
       <slot />
     </AppContent>

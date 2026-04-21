@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Services\LockdownService;
+use App\Services\TwitchScopeService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -85,6 +86,19 @@ class HandleInertiaRequests extends Middleware
                         ? $state->currentSession->started_at->toISOString()
                         : null,
                 ];
+            },
+            'twitchScope' => function () use ($request) {
+                $user = $request->user();
+                if (! $user || ! $user->twitch_id) {
+                    return null;
+                }
+
+                $missing = app(TwitchScopeService::class)->getMissingScopes($user);
+                if (empty($missing)) {
+                    return null;
+                }
+
+                return ['missing' => $missing];
             },
             'impersonating' => function () use ($request) {
                 $targetId = $request->session()->get('impersonating_user_id');
