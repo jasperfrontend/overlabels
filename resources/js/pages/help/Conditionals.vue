@@ -846,6 +846,27 @@ const cards: EventCard[] = [
 
   // === Ko-fi ===
   {
+    id: 'kofi-controls',
+    family: 'kofi',
+    title: 'Ko-fi Auto-provisioned Controls',
+    subtitle: 'Six controls are created on connect and kept up to date with every donation, subscription, shop order, or commission',
+    dot: 'bg-orange-400',
+    cols: [
+      {
+        heading: 'Use in any template with the [[[c:kofi:key]]] syntax',
+        tags: [
+          { tag: '[[[c:kofi:donations_received]]]', desc: 'Total count of Ko-fi events received (counter)' },
+          { tag: '[[[c:kofi:latest_donor_name]]]', desc: 'Name of the most recent supporter' },
+          { tag: '[[[c:kofi:latest_donation_amount]]]', desc: 'Amount of the most recent payment' },
+          { tag: '[[[c:kofi:latest_donation_message]]]', desc: 'Message from the most recent supporter' },
+          { tag: '[[[c:kofi:latest_donation_currency]]]', desc: 'Currency of the most recent payment (e.g. USD)' },
+          { tag: '[[[c:kofi:total_received]]]', desc: 'Running total of all Ko-fi amounts (session)' },
+        ],
+      },
+    ],
+    note: { kind: 'info', text: 'Ko-fi, StreamLabs, and StreamElements share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:kofi:, c:streamlabs:, c:streamelements:) and the template keeps working.' },
+  },
+  {
     id: 'kofi-all',
     family: 'kofi',
     title: 'All Ko-fi Events',
@@ -921,6 +942,7 @@ const cards: EventCard[] = [
         ],
       },
     ],
+    note: { kind: 'info', text: 'StreamLabs, Ko-fi, and StreamElements share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:streamlabs:, c:kofi:, c:streamelements:) and the template keeps working.' },
   },
   {
     id: 'streamlabs-donation',
@@ -971,6 +993,7 @@ const cards: EventCard[] = [
         ],
       },
     ],
+    note: { kind: 'info', text: 'StreamElements, Ko-fi, and StreamLabs share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:streamelements:, c:kofi:, c:streamlabs:) and the template keeps working.' },
   },
   {
     id: 'streamelements-donation',

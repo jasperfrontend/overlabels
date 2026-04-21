@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 22nd, 2026 - Document Ko-fi's shared control schema on the conditionals page
+
+- Ko-fi, StreamLabs, and StreamElements auto-provision the exact same six control keys (`donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`). Previously the conditionals page documented the `[[[c:streamlabs:...]]]` and `[[[c:streamelements:...]]]` variants but not the `[[[c:kofi:...]]]` equivalents, even though they have been valid since the integration shipped. Added a Ko-fi Auto-provisioned Controls card to the conditionals page that mirrors the StreamLabs and StreamElements ones.
+- All three control cards now carry a cross-reference info note calling out the unified schema: streamers can swap the prefix (`c:kofi:`, `c:streamlabs:`, `c:streamelements:`) without editing anything else, so the same alert template works across all three donation services.
+
 ## April 22nd, 2026 - Conditionals help page: filter bar + full EventSub + StreamElements coverage
 
 - The `/help/conditionals` page had two problems at once: it was a 729-line static HTML wall with no way to narrow it down, and it hadn't kept up with the recent EventSub expansion or the StreamElements integration. Rewrote it as a data-driven Vue page (~30 event/integration cards in an array, rendered in a loop) with a search input and a row of family filter chips across the top (same filter pattern as `ControlsManager.vue` and the new `/testing` page). Each chip shows the family's card count and highlights when active; clicking a chip or typing in the search box narrows the visible set live.
