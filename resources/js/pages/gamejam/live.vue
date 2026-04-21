@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ShieldCheck, ShieldOff } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, CircleDot, CircleDashed, ShieldCheck, ShieldOff } from 'lucide-vue-next';
 import { floorFor, themeFor, type RoomTheme } from './themes';
 import GameResultBanner from '@/components/gamejam/GameResultBanner.vue';
+import GameStatusCard from '@/components/gamejam/GameStatusCard.vue';
+import GameWeaponCard from '@/components/gamejam/GameWeaponCard.vue';
 
 interface GamePayload {
   id: number;
@@ -600,79 +602,64 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
+
     <aside class="sidebar">
 
-      <section class="stats-row" v-if="debugEnabledLive">
-        <pre>{{ game }}</pre>
-      </section>
-
+      <!-- Game Inventory -->
       <section v-if="game" class="flex justify-between medievalsharp-regular">
         <div class="flex shrink grow-0 gap-1">
-          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50">
-            <span class="text-yellow-400">Weapon I</span>
-            <div class="value text-center">
-              <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/128x128/fist.png" class="size-12 m-auto" alt="fists">
-              <img v-else src="/tile-icons/pixel/128x128/sword-default.png" class="size-12 m-auto" alt="sword">
-
-              <div v-if="game.weapon_slot_1_uses"
-                class="relative w-full h-2.5 mt-2 overflow-hidden bg-red-400/50 bg-auto bg-repeat"
-                role="progressbar"
-              >
-                <span
-                  class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400/50 bg-auto bg-repeat"
-                  :style="{ width: 10 > 0 ? `${Math.min(100, (game.weapon_slot_1_uses / 10) * 100)}%` : '0%' }"
-                >
-                            <span class="medievalsharp-regular relative z-10 flex pt-0.5 h-full items-center justify-center text-xs font-bold tracking-wide text-white">
-            {{ game.weapon_slot_1_uses }} / 10
-          </span>
-                </span>
-
-              </div>
-            </div>
-          </div>
-
-          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50" v-if="game.weapon_slot_2">
-            <span class="text-yellow-400">Weapon II</span>
-            <div class="value text-center">
-              <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-12 m-auto" alt="sword-de">
-              <div class="text-sm pt-1">Infinite &bull; !a 2</div>
-            </div>
-          </div>
-
-          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50" v-if="game.wears_iron_fists">
-            <span class="text-yellow-400">Iron Fists</span>
-            <div class="value text-center">
-              <img src="/tile-icons/pixel/128x128/iron-fist.png" class="size-12 m-auto" alt="iron-fist">
-              <div class="text-sm pt-1">Infinite &bull; auto</div>
-            </div>
-          </div>
+          <GameWeaponCard
+            v-if="game.weapon_slot_1 === 'fists'"
+            title="Weapon I"
+            image-url="/tile-icons/pixel/128x128/fist.png"
+            image-url-alt="fists"
+            description="Fists &bull; !a"
+          />
+          <GameWeaponCard
+            v-if="game.weapon_slot_1 === 'regular_sword'"
+            title="Weapon I"
+            image-url="/tile-icons/pixel/128x128/sword-default.png"
+            image-url-alt="sword-default"
+            :weapon-uses="game.weapon_slot_1_uses"
+          />
+          <GameWeaponCard
+            v-if="game.weapon_slot_2"
+            title="Weapon II"
+            image-url="/tile-icons/pixel/128x128/sword-de.png"
+            image-url-alt="sword-de"
+            description="Infinite &bull; !a 2"
+          />
+          <GameWeaponCard
+            v-if="game.wears_iron_fists"
+            title="Iron Fists"
+            image-url="/tile-icons/pixel/128x128/iron-fist.png"
+            image-url-alt="iron-fist"
+            description="Infinite &bull; auto"
+          />
         </div>
-
         <!-- Game Status -->
         <div class="flex">
           <section v-if="game" class="flex text-center medievalsharp-regular gap-1">
-
-            <div class="flex flex-col gap-0 p-2 justify-between">
-              <span class="text-olive-400">Round</span>
-              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ game.current_round }}</span>
-            </div>
-            <div class="flex flex-col gap-0 p-2 justify-between">
-              <span class="text-olive-400">Room</span>
-              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ game.current_room }}</span>
-            </div>
-            <div class="flex flex-col gap-0 p-2 justify-between">
-              <span class="text-olive-400">Player{{ joiners.length !== 1 ? 's' : null }}</span>
-              <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ joiners.length }}</span>
-            </div>
+            <GameStatusCard
+              title="Round"
+              :description="game.current_round"
+            />
+            <GameStatusCard
+            title="Room"
+            :description="game.current_room"
+            />
+            <GameStatusCard
+            :title="`Player${joiners.length !== 1 ? 's' : ''}`"
+            :description="joiners.length"
+            />
           </section>
         </div>
-
       </section>
 
       <!-- Health Bar -->
       <section v-if="game">
         <div
-          class="relative w-full overflow-hidden bg-red-400/50"
+          class="relative w-full overflow-hidden bg-red-400/50 border border-olive-500/50"
           role="progressbar"
           :aria-valuenow="game.player_hp"
           aria-valuemin="0"
@@ -688,158 +675,159 @@ onUnmounted(() => {
         </div>
       </section>
 
+      <div class="flex">
+        <div class="w-[40%]">
+          <section v-if="game" class="flex flex-col gap-2.5">
 
-      <section v-if="game" class="resolver-row">
+            <div class="bg-olive-800 border border-olive-500/50 p-4 text-center medievalsharp-regular">
+              <span class="text-olive-400">Next round in</span>
+              <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
+              <div class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</div>
+            </div>
 
-        <div class="bg-olive-800 border border-olive-500/50 p-4 text-center medievalsharp-regular">
-          <span class="text-olive-400">Next round in</span>
-          <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
-          <div class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</div>
-        </div>
-
-        <div class="bg-olive-800 border border-olive-500/50 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
-          <span class="text-olive-400">Last Twitch chat vote</span>
-          <div class="text-teal-400 text-8xl mt-1.5 flex items-center justify-center gap-2">
-            <template v-if="game.last_resolved_action">
-              <component
-                v-for="i in voteIconCount(game.last_resolved_action)"
-                :is="voteIcon(game.last_resolved_action)"
-                :key="i"
-                class="h-24 w-24"
-              />
-              <span v-if="voteLabel(game.last_resolved_action)">{{ voteLabel(game.last_resolved_action) }}</span>
-            </template>
-            <template v-else>nothing yet</template>
-          </div>
-          <div v-if="lastResolvedTallyEntries.length" class="mt-4 mb-4 text-lg">
-            <span
-              v-for="[action, count] in lastResolvedTallyEntries"
-              :key="action"
-              class="tally-entry medievalsharp-regular text-olive-400 text-sm inline-flex items-center gap-1"
-            >
-              <component
-                v-for="i in voteIconCount(action)"
-                :is="voteIcon(action)"
-                :key="i"
-                class="h-4 w-4"
-              />
-              <span v-if="voteLabel(action)">{{ voteLabel(action) }}</span>
-              <span>: <strong class="text-teal-400">{{ count }}</strong></span>
-            </span>
-          </div>
-          <div v-else class="text-sm text-olive-400 medievalsharp-regular">Nobody has voted yet - <span class="text-yellow-400">!join</span> in chat to play.</div>
-        </div>
-      </section>
-
-      <section v-if="game" class="joiners-col mt-4">
-        <div class="medievalsharp-regular">
-          <h2 class="text-lg text-white">Active: <span class="count">{{ grouped.active.length }} player{{ grouped.active.length !== 1 ? 's' : '' }}</span></h2>
-          <ul>
-            <li
-              v-for="j in grouped.active"
-              :key="j.twitch_user_id"
-              class="joiner flex items-center gap-2 pl-1 my-0.5 w-full bg-olive-800 border border-olive-500/50 medievalsharp-regular"
-            >
-              <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
-                <component
-                  v-for="i in voteIconCount(j.current_vote)"
-                  :is="voteIcon(j.current_vote)"
-                  :key="i"
-                  class="h-4 w-4"
-                />
-                <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
+            <div class="bg-olive-800 border border-olive-500/50 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
+              <span class="text-olive-400">Last Twitch chat vote</span>
+              <div class="text-teal-400 text-8xl my-2 flex items-center justify-center gap-2">
+                <template v-if="game.last_resolved_action">
+                  <component
+                    v-for="i in voteIconCount(game.last_resolved_action)"
+                    :is="voteIcon(game.last_resolved_action)"
+                    :key="i"
+                    class="h-24 w-24"
+                  />
+                  <span v-if="voteLabel(game.last_resolved_action)">{{ voteLabel(game.last_resolved_action) }}</span>
+                </template>
+                <template v-else>-</template>
               </div>
-              <div class="name">{{ j.username }}</div>
-              <div class="flex ml-auto items-center mr-2 gap-1">
+              <div v-if="lastResolvedTallyEntries.length" class="mt-4 mb-4 text-lg">
                 <span
-                  v-for="(state, i) in blocks(j.blocks_remaining)"
-                  :key="i"
-                  :class="state"
+                  v-for="[action, count] in lastResolvedTallyEntries"
+                  :key="action"
+                  class="tally-entry medievalsharp-regular text-olive-400 text-sm inline-flex items-center gap-1"
                 >
-                  <ShieldCheck class="fill-teal-600 size-5" v-if="state === 'filled'" />
-                  <ShieldOff class="size-5" v-else />
+                  <component
+                    v-for="i in voteIconCount(action)"
+                    :is="voteIcon(action)"
+                    :key="i"
+                    class="h-4 w-4"
+                  />
+                  <span v-if="voteLabel(action)">{{ voteLabel(action) }}</span>
+                  <span>: <strong class="text-teal-400">{{ count }}</strong></span>
                 </span>
               </div>
-            </li>
-            <li v-if="!grouped.active.length" class="placeholder">no active players right now</li>
-          </ul>
-        </div>
-
-        <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">
-          <h2 class="medievalsharp-regular text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
-          <ul>
-            <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner medievalsharp-regular">
-              <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
-            </li>
-            <li v-if="!grouped.pending.length" class="text-sm text-muted-foreground">no players waiting right now</li>
-          </ul>
-        </div>
-
-        <div class="medievalsharp-regular text-sm" v-if="grouped.inactive.length > 0">
-          <h2 class="medievalsharp-regular text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
-
-          <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 mt-0.5">
-            <div class="bg-card flex gap-2 p-1">
-              <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide text-foreground">{{ j.username }}</div>
-              <div class="ml-auto text-yellow-400/50 tracking-wide">r{{ j.last_vote_round ?? j.joined_round }}</div>
             </div>
-          </div>
 
-          <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
-        </div>
+            <div class="medievalsharp-regular text-sm mt-4" v-if="grouped.inactive.length > 0">
+              <h2 class="medievalsharp-regular text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
 
-        <div v-if="debugEnabledLive" class="debug-panel">
-          <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
-          <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
-            <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>
-            <div class="debug-classes">
+              <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 mt-0.5">
+                <div class="bg-card flex gap-2 p-1">
+                  <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide text-foreground">{{ j.username }}</div>
+                  <div class="ml-auto text-yellow-400/50 tracking-wide">r{{ j.last_vote_round ?? j.joined_round }}</div>
+                </div>
+              </div>
+
+              <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
+            </div>
+
+          </section>
+        </div> <!-- grid col 1 -->
+
+        <div class="w-[60%]">
+          <section v-if="game" class="pt-0 gap-2 ml-2">
+            <div class="medievalsharp-regular">
+              <ul>
+                <li
+                  v-for="j in grouped.active"
+                  :key="j.twitch_user_id"
+                  class="joiner flex items-center gap-2 pl-1 w-full bg-olive-800 border border-olive-500/50 medievalsharp-regular"
+                >
+                  <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
+                    <component
+                      v-for="i in voteIconCount(j.current_vote)"
+                      :is="voteIcon(j.current_vote)"
+                      :key="i"
+                      class="h-4 w-4"
+                    />
+                    <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
+                  </div>
+                  <div class="name">{{ j.username }}</div>
+                  <div class="flex ml-auto items-center mr-2 gap-1">
+                    <span
+                      v-for="(state, i) in blocks(j.blocks_remaining)"
+                      :key="i"
+                      :class="state"
+                    >
+                      <CircleDot class="fill-teal-600 size-3" v-if="state === 'filled'" />
+                      <CircleDashed class="size-3" v-else />
+                    </span>
+                  </div>
+                </li>
+                <li v-if="!grouped.active.length" class="text-xl text-olive-400">no active players right now. Type <span class="text-yellow-400">!join</span> in chat.</li>
+              </ul>
+            </div>
+
+            <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">
+              <h2 class="medievalsharp-regular text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
+              <ul>
+                <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner medievalsharp-regular">
+                  <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
+                </li>
+                <li v-if="!grouped.pending.length" class="text-sm text-muted-foreground">no players waiting right now</li>
+              </ul>
+            </div>
+
+
+            <div v-if="debugEnabledLive" class="debug-panel">
+              <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
+              <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
+                <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>
+                <div class="debug-classes">
               <span
                 v-for="c in tileClasses(game.player_x, game.player_y)"
                 :key="c"
                 class="debug-class"
               >{{ c }}</span>
-              <span v-if="!tileClasses(game.player_x, game.player_y).length" class="debug-empty">
+                  <span v-if="!tileClasses(game.player_x, game.player_y).length" class="debug-empty">
                 (no classes)
               </span>
-            </div>
-            <pre class="debug-state">{{ debugTileState(game.player_x, game.player_y) }}</pre>
-          </div>
-          <div v-else class="debug-empty">player not on board</div>
+                </div>
+                <pre class="debug-state">{{ debugTileState(game.player_x, game.player_y) }}</pre>
+              </div>
+              <div v-else class="debug-empty">player not on board</div>
 
-          <h2>Debug: inspect any tile</h2>
-          <input
-            v-model="debugInput"
-            class="debug-input"
-            type="text"
-            placeholder="x,y (e.g. 5,9)"
-            inputmode="numeric"
-            autocomplete="off"
-          />
-          <div v-if="debugInspected" class="debug-block">
-            <div class="debug-coords">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
-            <div class="debug-classes">
+              <h2>Debug: inspect any tile</h2>
+              <input
+                v-model="debugInput"
+                class="debug-input"
+                type="text"
+                placeholder="x,y (e.g. 5,9)"
+                inputmode="numeric"
+                autocomplete="off"
+              />
+              <div v-if="debugInspected" class="debug-block">
+                <div class="debug-coords">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
+                <div class="debug-classes">
               <span
                 v-for="c in tileClasses(debugInspected.x, debugInspected.y)"
                 :key="c"
                 class="debug-class"
               >{{ c }}</span>
-              <span
-                v-if="!tileClasses(debugInspected.x, debugInspected.y).length"
-                class="debug-empty"
-              >(no classes)</span>
+                  <span
+                    v-if="!tileClasses(debugInspected.x, debugInspected.y).length"
+                    class="debug-empty"
+                  >(no classes)</span>
+                </div>
+                <pre class="debug-state">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
+              </div>
+              <div v-else-if="debugInput" class="debug-empty">
+                invalid coords (use x,y with 1-{{ GRID_SIZE }})
+              </div>
             </div>
-            <pre class="debug-state">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
-          </div>
-          <div v-else-if="debugInput" class="debug-empty">
-            invalid coords (use x,y with 1-{{ GRID_SIZE }})
-          </div>
-        </div>
-      </section>
-
-      <div v-else class="bg-card text-3xl text-foreground p-4 medievalsharp-regular">
-        No active game.
-        Hopefully {{ broadcasterLogin }} starts a new game of Chat Castle soon!
+          </section>
+        </div> <!-- grid col 2 -->
       </div>
+
     </aside>
 
     <main class="grid-area relative">
@@ -970,11 +958,6 @@ onUnmounted(() => {
 .status-won { background: #4f8ef7; color: #fff; }
 .status-lost { background: #7a2b2b; color: #fff; }
 
-.resolver-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.75rem;
-}
 
 
 .resolver-card.countdown .value {
