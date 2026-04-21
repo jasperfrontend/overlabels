@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
 import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
@@ -45,17 +44,6 @@ const FAMILY_LABELS: Record<EventFamily, string> = {
   predictions: 'Predictions',
 };
 
-const FAMILY_ORDER: EventFamily[] = [
-  'basic',
-  'channel_points',
-  'stream',
-  'hype_train',
-  'charity',
-  'goals',
-  'polls',
-  'predictions',
-];
-
 const eventCommands: EventCommand[] = [
   { type: 'channel.follow', label: 'New Follower', description: 'Someone follows your channel', family: 'basic' },
   { type: 'channel.subscribe', label: 'New Subscription', description: 'A new sub (paid or prime)', family: 'basic' },
@@ -64,18 +52,8 @@ const eventCommands: EventCommand[] = [
   { type: 'channel.cheer', label: 'Bits Cheer', description: 'A viewer cheers with bits', family: 'basic' },
   { type: 'channel.raid', label: 'Raid', description: 'An incoming raid from another channel', family: 'basic' },
 
-  {
-    type: 'channel.channel_points_custom_reward_redemption.add',
-    label: 'Channel Points Redemption',
-    description: 'A viewer redeems a custom reward',
-    family: 'channel_points',
-  },
-  {
-    type: 'channel.channel_points_custom_reward_redemption.update',
-    label: 'Redemption Updated',
-    description: 'A moderator fulfills/cancels a redemption',
-    family: 'channel_points',
-  },
+  { type: 'channel.channel_points_custom_reward_redemption.add', label: 'Channel Points Redemption', description: 'A viewer redeems a custom reward', family: 'channel_points' },
+  { type: 'channel.channel_points_custom_reward_redemption.update', label: 'Redemption Updated', description: 'A moderator fulfills/cancels a redemption', family: 'channel_points' },
 
   { type: 'stream.online', label: 'Stream Online', description: 'Stream goes live', family: 'stream' },
   { type: 'stream.offline', label: 'Stream Offline', description: 'Stream ends', family: 'stream' },
@@ -104,47 +82,31 @@ const eventCommands: EventCommand[] = [
 ];
 
 const searchQuery = ref('');
+const showCommand = ref(false);
 const copiedCommand = ref<string | null>(null);
 
-function realCommand(eventType: string): string {
+function commandFor(eventType: string): string {
   return `twitch event trigger ${eventType} --transport=webhook -F ${props.webhookUrl} -s ${props.webhookSecret} --to-user ${props.twitchId} --from-user 1234567`;
 }
 
-const REDACTED_SECRET = '•'.repeat(12);
-
-function displayCommand(eventType: string): string {
-  return `twitch event trigger ${eventType} --transport=webhook -F ${props.webhookUrl} -s ${REDACTED_SECRET} --to-user ${props.twitchId} --from-user 1234567`;
-}
-
 async function copyCommand(eventType: string) {
-  await navigator.clipboard.writeText(realCommand(eventType));
+  await navigator.clipboard.writeText(commandFor(eventType));
   copiedCommand.value = eventType;
   setTimeout(() => {
     if (copiedCommand.value === eventType) copiedCommand.value = null;
   }, 2000);
 }
 
-const filteredGrouped = computed<{ family: EventFamily; label: string; events: EventCommand[] }[]>(() => {
+const filteredEvents = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
-  const groups = FAMILY_ORDER.map((family) => ({
-    family,
-    label: FAMILY_LABELS[family],
-    events: eventCommands
-      .filter((e) => e.family === family)
-      .filter((e) => {
-        if (!query) return true;
-        return (
-          e.label.toLowerCase().includes(query) ||
-          e.type.toLowerCase().includes(query) ||
-          e.description.toLowerCase().includes(query) ||
-          FAMILY_LABELS[family].toLowerCase().includes(query)
-        );
-      }),
-  }));
-  return groups.filter((g) => g.events.length > 0);
+  if (!query) return eventCommands;
+  return eventCommands.filter((e) =>
+    e.label.toLowerCase().includes(query) ||
+    e.type.toLowerCase().includes(query) ||
+    e.description.toLowerCase().includes(query) ||
+    FAMILY_LABELS[e.family].toLowerCase().includes(query)
+  );
 });
-
-const totalVisible = computed(() => filteredGrouped.value.reduce((s, g) => s + g.events.length, 0));
 </script>
 
 <template>
@@ -159,18 +121,17 @@ const totalVisible = computed(() => filteredGrouped.value.reduce((s, g) => s + g
       </div>
 
       <p class="max-w-4xl text-sm text-foreground">
-        Use the
+        Click any event to copy its
         <a
           href="https://dev.twitch.tv/docs/cli/"
           target="_blank"
           rel="noopener"
-          class="inline-flex items-center gap-1 cursor-pointer text-purple-400 hover:underline"
+          class="inline-flex cursor-pointer items-center gap-1 text-purple-400 hover:underline"
         >
           Twitch CLI
           <ExternalLink class="h-3 w-3" />
         </a>
-        to trigger test events against your webhook. Clicking <strong>Copy</strong> puts the full unredacted command on your clipboard;
-        what you see on screen has the webhook secret masked.
+        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account.
       </p>
 
       <div class="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-950/20 p-3 text-sm text-amber-300">
@@ -183,64 +144,57 @@ const totalVisible = computed(() => filteredGrouped.value.reduce((s, g) => s + g
         Complete onboarding to get a personal secret.
       </div>
 
-      <!-- Filter -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="relative flex-1">
           <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
           <input
             v-model="searchQuery"
-            placeholder="Filter triggers... (label, event type, family)"
+            placeholder="Filter events..."
             class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
           />
         </div>
+        <label class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" v-model="showCommand" class="cursor-pointer" />
+          Show command
+        </label>
       </div>
 
-      <div class="flex items-center text-xs text-muted-foreground">
-        <span v-if="searchQuery">
-          {{ totalVisible }} trigger{{ totalVisible !== 1 ? 's' : '' }} in {{ filteredGrouped.length }} famil{{ filteredGrouped.length !== 1 ? 'ies' : 'y' }}
-        </span>
-        <span v-else>
-          {{ eventCommands.length }} triggers across {{ FAMILY_ORDER.length }} families
-        </span>
+      <div class="text-xs text-muted-foreground">
+        {{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}
       </div>
 
-      <div v-if="searchQuery && filteredGrouped.length === 0" class="py-8 text-center">
-        <p class="text-sm text-muted-foreground">No triggers match "{{ searchQuery }}"</p>
+      <div v-if="filteredEvents.length === 0" class="py-8 text-center text-sm text-muted-foreground">
+        No events match "{{ searchQuery }}"
       </div>
 
-      <div class="space-y-5">
-        <section v-for="group in filteredGrouped" :key="group.family" class="space-y-1.5">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {{ group.label }} <span class="font-normal">({{ group.events.length }})</span>
-          </h2>
-          <div class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
-            <div
-              v-for="event in group.events"
-              :key="event.type"
-              class="flex flex-col gap-1.5 px-3 py-2 sm:flex-row sm:items-center sm:gap-4"
-            >
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span class="text-sm font-medium">{{ event.label }}</span>
-                  <code class="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-purple-300">{{ event.type }}</code>
-                </div>
-                <p class="text-xs text-muted-foreground">{{ event.description }}</p>
-                <pre class="mt-1 overflow-x-auto rounded bg-slate-950 px-2 py-1 font-mono text-[11px] text-green-300 select-none">{{ displayCommand(event.type) }}</pre>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="h-7 shrink-0 cursor-pointer gap-1.5 text-xs"
-                @click="copyCommand(event.type)"
-              >
-                <Check v-if="copiedCommand === event.type" class="h-3.5 w-3.5 text-green-400" />
-                <Copy v-else class="h-3.5 w-3.5" />
-                {{ copiedCommand === event.type ? 'Copied' : 'Copy' }}
-              </Button>
+      <ul v-else class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
+        <li
+          v-for="event in filteredEvents"
+          :key="event.type"
+          class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
+          @click="copyCommand(event.type)"
+        >
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="text-sm font-medium">{{ event.label }}</span>
+              <code class="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-purple-300">{{ event.type }}</code>
+              <span class="text-[10px] text-muted-foreground">{{ FAMILY_LABELS[event.family] }}</span>
             </div>
+            <p class="text-xs text-muted-foreground">{{ event.description }}</p>
+            <input
+              v-if="showCommand"
+              :value="commandFor(event.type)"
+              readonly
+              class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-300"
+              @click.stop="copyCommand(event.type)"
+            />
           </div>
-        </section>
-      </div>
+          <div class="shrink-0 text-xs text-muted-foreground">
+            <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
+            <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
+          </div>
+        </li>
+      </ul>
 
       <div class="space-y-2 pb-8 text-sm text-muted-foreground">
         <p>
