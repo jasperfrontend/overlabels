@@ -10,6 +10,9 @@ export interface RoomFile {
   width: number;
   height: number;
   cells: (RoomCell | null)[][];
+  filter?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
   version: number;
 }
 
@@ -17,6 +20,9 @@ export interface RoomLayout {
   grid?: string;
   tiles?: Record<string, string>;
   cells?: (RoomCell | null)[][];
+  filter?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
 }
 
 export interface RoomTheme {
@@ -257,6 +263,9 @@ export function themeFor(room: number): RoomTheme {
     layout: {
       ...(base.layout ?? {}),
       cells: painted.cells,
+      filter: painted.filter,
+      overlayColor: painted.overlayColor,
+      overlayOpacity: painted.overlayOpacity,
     },
   };
 }

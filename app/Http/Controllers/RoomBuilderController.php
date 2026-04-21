@@ -88,6 +88,14 @@ class RoomBuilderController extends Controller
             'cells.*.*.overlay' => ['nullable', 'string', 'max:512'],
             'cells.*.*.trigger' => ['nullable', 'array'],
             'cells.*.*.trigger.sound' => ['nullable', 'string', 'max:512'],
+            // Room-level visual layer settings. Filter is a CSS filter string
+            // (e.g. "hue-rotate(180deg) saturate(1.2)"), overlayColor is a hex
+            // color, overlayOpacity is a 0-1 float. All optional; empty/zero
+            // means "no extra layer". Regex whitelists just the chars needed
+            // for CSS filter functions so nothing can inject other rules.
+            'filter' => ['nullable', 'string', 'max:256', 'regex:/^[a-zA-Z0-9\s\(\)%,\.\-]*$/'],
+            'overlayColor' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/'],
+            'overlayOpacity' => ['nullable', 'numeric', 'min:0', 'max:1'],
             'version' => ['required', Rule::in([1])],
         ]);
 

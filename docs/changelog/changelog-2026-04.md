@@ -1,5 +1,14 @@
 # CHANGELOG APRIL 2026
 
+## April 21st, 2026 - Chat Castle: room builder gets a CSS filter + overlay layer
+
+- Author-controlled recoloring for painted rooms. The original nudge was noticing that slapping `filter: hue-rotate(180deg)` on the builder's grid wrapper instantly gave the room a completely different palette. Rather than committing to a single filter, expose it as room-level state so each room can opt into its own mood without new tile assets.
+- Three new inputs in the builder sidebar under Paint/Erase: a free-form CSS Filter string (e.g. `hue-rotate(180deg) saturate(1.2)`), a color picker for an overlay tint, and an opacity slider for that tint. Preview updates live while typing, both in the left-hand tile browser and on the grid canvas, so the author sees the same thing the player will see.
+- `RoomBuilderController::save` picks up three optional top-level fields (`filter`, `overlayColor`, `overlayOpacity`) and persists them into `resources/js/rooms/{N}.json`. Filter is validated with a whitelist regex that only allows the characters CSS filter functions need - no quotes, semicolons, or braces - so nothing authored in the builder can escape into other CSS rules. Color is `#rrggbb`/`#rrggbbaa` hex only, opacity is clamped 0-1.
+- `themes.ts` threads the new fields from the painted JSON through `themeFor()` onto `RoomTheme.layout`. `live.vue` reads them into CSS custom properties on `.grid` (`--room-filter`, `--room-overlay-color`, `--room-overlay-opacity`).
+- Rendering uses a two-layer split inside every `.tile` so items stay untinted. `.tile::before` paints the floor image with the filter applied; `.tile::after` paints the overlay color with the opacity. Sprites, glyphs, coords, and the separate `.zombies-layer` sit above both pseudo-elements with higher z-indices, so the filter only recolors the floor - the player scarecrow, pickups, and zombies render in their original palette. Floor image URL moved from `background-image` on `.tile` into a `--tile-floor` CSS var so `::before` can consume it without duplicating the inline style.
+- Empty filter string and zero opacity both short-circuit to `none` / fully transparent, so rooms authored before this change keep rendering identically. The overlay `<div>` in the builder is `v-if="overlayOpacity > 0"` for the same reason - no empty tinted div when it isn't being used.
+
 ## April 20th, 2026 - Chat Castle: web control panel at /gamejam/admin
 
 - The three `gamejam:*` artisan commands (start, end, debug toggle) worked fine for me running locally, but every other bot-enabled streamer needed to ping me to start or end a game. The goal of the panel is to remove that dependency - streamers should be able to run their own session without shelling into anything.

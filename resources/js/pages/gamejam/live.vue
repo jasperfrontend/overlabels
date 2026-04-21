@@ -292,6 +292,21 @@ function voteLabel(vote: string | null): string {
 
 const theme = computed<RoomTheme>(() => themeFor(game.value?.current_room ?? 1));
 
+// Room-level visual layer (CSS filter + colored overlay) authored in the
+// builder. Exposed to CSS as custom properties on .grid so .tile::before
+// (floor + filter) and .tile::after (overlay) can read them. Items that sit
+// above these layers (sprites, glyphs, zombies) are unaffected because they
+// live in children/siblings with higher z-index.
+const gridLayerStyle = computed(() => {
+  const layout = theme.value.layout;
+  return {
+    '--tile': 'calc(1080px / 11)',
+    '--room-filter': layout?.filter || 'none',
+    '--room-overlay-color': layout?.overlayColor ?? 'transparent',
+    '--room-overlay-opacity': String(layout?.overlayOpacity ?? 0),
+  } as Record<string, string>;
+});
+
 function spriteFor(dx: number, dy: number): string | null {
   if (toGame(dx) === null || toGame(dy) === null) return null;
   const t = tileAt(dx, dy);
@@ -829,14 +844,14 @@ onUnmounted(() => {
     </aside>
 
     <main class="grid-area">
-      <div v-if="game" class="grid" :style="{ '--tile': 'calc(1080px / 11)' }">
+      <div v-if="game" class="grid" :style="gridLayerStyle">
         <div v-for="y in rows" :key="`row-${y}`" class="grid-row">
           <div
             v-for="x in cols"
             :key="`${x}-${y}`"
             class="tile"
             :class="tileClasses(x, y)"
-            :style="{ backgroundImage: `url('${floorFor(theme, x, y)}')` }"
+            :style="{ '--tile-floor': `url('${floorFor(theme, x, y)}')` }"
             :data-x="x"
             :data-y="y"
           >
@@ -1304,13 +1319,40 @@ onUnmounted(() => {
   height: var(--tile);
   box-sizing: border-box;
   border: 1px solid #15151a;
-  background: #15151a center / cover no-repeat;
+  background-color: #15151a;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
   @apply: rounded-sm;
+}
+/* Floor layer: painted tile image with the room-level CSS filter applied.
+   Lives on ::before so sprites, glyphs, zombies and everything else inside
+   .tile sit visually above it and are not affected by the filter. */
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--tile-floor, none);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: var(--room-filter, none);
+  z-index: 0;
+  pointer-events: none;
+}
+/* Overlay color layer: sits above the floor but below any item. Opacity is
+   driven by the room-level --room-overlay-opacity var; when 0 (the default)
+   this layer is fully transparent and free for the compositor to skip. */
+.tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--room-overlay-color, transparent);
+  opacity: var(--room-overlay-opacity, 0);
+  z-index: 1;
+  pointer-events: none;
 }
 .tile .sprite {
   position: absolute;
@@ -1320,7 +1362,7 @@ onUnmounted(() => {
   object-fit: contain;
   pointer-events: none;
   image-rendering: pixelated;
-  z-index: 1;
+  z-index: 2;
 }
 .tile .glyph {
   font-size: 1rem;
@@ -1331,7 +1373,7 @@ onUnmounted(() => {
   position: absolute;
   top: 4px;
   left: 6px;
-  z-index: 2;
+  z-index: 3;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .tile .coords {
@@ -1341,6 +1383,7 @@ onUnmounted(() => {
   font-size: 0.65rem;
   color: #3a3a42;
   font-variant-numeric: tabular-nums;
+  z-index: 3;
 }
 /* ---- has-* axis: what's on the tile ---- */
 .has-hidden { background-color: #1c1c26; }

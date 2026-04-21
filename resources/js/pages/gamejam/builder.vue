@@ -18,6 +18,9 @@ interface RoomFile {
   width: number;
   height: number;
   cells: (RoomCell | null)[][];
+  filter?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
   version: 1;
 }
 
@@ -43,6 +46,9 @@ const props = defineProps<{
 const tileset = ref(props.roomFile?.tileset ?? `room-${props.room}`);
 const width = ref(props.roomFile?.width ?? props.defaultWidth);
 const height = ref(props.roomFile?.height ?? props.defaultHeight);
+const filter = ref(props.roomFile?.filter ?? '');
+const overlayColor = ref(props.roomFile?.overlayColor ?? '#000000');
+const overlayOpacity = ref(props.roomFile?.overlayOpacity ?? 0);
 
 function makeEmptyGrid(w: number, h: number): (RoomCell | null)[][] {
   return Array.from({ length: h }, () => Array.from({ length: w }, () => null));
@@ -137,6 +143,9 @@ async function save() {
       width: width.value,
       height: height.value,
       cells: cells.value,
+      filter: filter.value || undefined,
+      overlayColor: overlayOpacity.value > 0 ? overlayColor.value : undefined,
+      overlayOpacity: overlayOpacity.value > 0 ? overlayOpacity.value : undefined,
       version: 1,
     };
     const res = await fetch(`/dev/room-builder/${props.room}`, {
@@ -180,6 +189,19 @@ const paintedCount = computed(() => {
 });
 
 const totalCells = computed(() => width.value * height.value);
+
+// Styles applied to every tile-floor <img> so the filter affects only the
+// painted floor, not any item layer that will later sit above it. Kept as a
+// computed style object rather than a scoped CSS var so the preview updates
+// immediately while typing into the filter input.
+const floorImgStyle = computed(() => ({
+  filter: filter.value || 'none',
+}));
+
+const overlayLayerStyle = computed(() => ({
+  backgroundColor: overlayColor.value,
+  opacity: String(overlayOpacity.value),
+}));
 </script>
 
 <template>
@@ -274,6 +296,44 @@ const totalCells = computed(() => width.value * height.value);
           </Button>
         </div>
 
+        <div class="flex flex-col gap-2 px-4 py-3 border-b border-border">
+          <div class="flex flex-col gap-1">
+            <Label for="filter-input" class="text-xs">CSS Filter</Label>
+            <Input
+              id="filter-input"
+              v-model="filter"
+              placeholder="hue-rotate(180deg)"
+              class="text-xs"
+              @update:model-value="dirty = true"
+            />
+          </div>
+          <div class="flex items-end gap-2">
+            <div class="flex flex-col gap-1">
+              <Label for="overlay-color-input" class="text-xs">Overlay color</Label>
+              <Input
+                id="overlay-color-input"
+                v-model="overlayColor"
+                type="color"
+                class="w-16 h-8 p-0.5 cursor-pointer"
+                @update:model-value="dirty = true"
+              />
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+              <Label for="overlay-opacity-input" class="text-xs">Opacity ({{ overlayOpacity.toFixed(2) }})</Label>
+              <input
+                id="overlay-opacity-input"
+                v-model.number="overlayOpacity"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                class="w-full cursor-pointer"
+                @input="dirty = true"
+              />
+            </div>
+          </div>
+        </div>
+
         <div class="flex-1 overflow-y-auto p-3">
           <div v-if="manifest.tiles.length === 0" class="text-xs text-foreground p-2 leading-relaxed">
             No tiles yet. Drop PNGs into
@@ -290,7 +350,17 @@ const totalCells = computed(() => width.value * height.value);
               :title="asset.name"
               @click="selectedAsset = asset.path; eraseMode = false"
             >
-              <img :src="asset.path" :alt="asset.name" class="w-full h-full object-cover pixelated" />
+              <img
+                :src="asset.path"
+                :alt="asset.name"
+                class="w-full h-full object-cover pixelated"
+                :style="floorImgStyle"
+              />
+              <div
+                v-if="overlayOpacity > 0"
+                class="pointer-events-none absolute inset-0"
+                :style="overlayLayerStyle"
+              ></div>
             </button>
           </div>
         </div>
@@ -307,35 +377,46 @@ const totalCells = computed(() => width.value * height.value);
         @mouseup="stopPaint"
         @mouseleave="stopPaint"
       >
-        <div
-          class="grid gap-0 border border-border shadow-sm"
-          :style="{
-            gridTemplateColumns: `repeat(${width}, ${cellSize}px)`,
-            gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
-          }"
-        >
+        <div class="relative">
           <div
-            v-for="(row, y) in cells"
-            :key="`r-${y}`"
-            style="display: contents"
+            class="grid gap-0 border border-border shadow-sm"
+            :style="{
+              gridTemplateColumns: `repeat(${width}, ${cellSize}px)`,
+              gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
+            }"
           >
             <div
-              v-for="(cell, x) in row"
-              :key="`c-${x}-${y}`"
-              class="relative border border-border/40 bg-muted/40 hover:ring-1 hover:ring-primary cursor-pointer"
-              :style="{ width: `${cellSize}px`, height: `${cellSize}px` }"
-              :title="`(${x + 1}, ${y + 1})${cell?.bg ? ' ' + cell.bg : ''}`"
-              @mousedown="onCellMouseDown($event, x, y)"
-              @mouseenter="onCellMouseEnter(x, y)"
+              v-for="(row, y) in cells"
+              :key="`r-${y}`"
+              style="display: contents"
             >
-              <img
-                v-if="cell?.bg"
-                :src="cell.bg"
-                alt=""
-                class="absolute inset-0 w-full h-full object-cover pixelated pointer-events-none"
-              />
+              <div
+                v-for="(cell, x) in row"
+                :key="`c-${x}-${y}`"
+                class="relative border border-border/40 bg-muted/40 hover:ring-1 hover:ring-primary cursor-pointer"
+                :style="{ width: `${cellSize}px`, height: `${cellSize}px` }"
+                :title="`(${x + 1}, ${y + 1})${cell?.bg ? ' ' + cell.bg : ''}`"
+                @mousedown="onCellMouseDown($event, x, y)"
+                @mouseenter="onCellMouseEnter(x, y)"
+              >
+                <img
+                  v-if="cell?.bg"
+                  :src="cell.bg"
+                  alt=""
+                  class="absolute inset-0 w-full h-full object-cover pixelated pointer-events-none"
+                  :style="floorImgStyle"
+                />
+              </div>
             </div>
           </div>
+          <!-- Overlay color layer sits above floor tiles but below any future
+               item layer (sprites, zombies, etc.). Grid covers the full inner
+               area, so inset-0 on the relative wrapper matches exactly. -->
+          <div
+            v-if="overlayOpacity > 0"
+            class="pointer-events-none absolute inset-0"
+            :style="overlayLayerStyle"
+          ></div>
         </div>
       </main>
     </div>
