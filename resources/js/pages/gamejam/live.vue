@@ -608,8 +608,8 @@ onUnmounted(() => {
 
       <section v-if="game" class="flex justify-between medievalsharp-regular">
         <div class="flex shrink grow-0 gap-1">
-          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50">
-            <span class="text-yellow-400">Weapon</span>
+          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50">
+            <span class="text-yellow-400">Weapon I</span>
             <div class="value text-center">
               <img v-if="game.weapon_slot_1 === 'fists'" src="/tile-icons/pixel/128x128/fist.png" class="size-12 m-auto" alt="fists">
               <img v-else src="/tile-icons/pixel/128x128/sword-default.png" class="size-12 m-auto" alt="sword">
@@ -631,19 +631,19 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="game.weapon_slot_2">
-            <span class="text-yellow-400">Unlocked</span>
+          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50" v-if="game.weapon_slot_2">
+            <span class="text-yellow-400">Weapon II</span>
             <div class="value text-center">
               <img src="/tile-icons/pixel/128x128/sword-de.png" class="size-12 m-auto" alt="sword-de">
-              <div class="text-sm pt-1">Infinite</div>
+              <div class="text-sm pt-1">Infinite &bull; !a 2</div>
             </div>
           </div>
 
-          <div class="weapon text-center p-2 w-30 h-30 bg-olive-700/50" v-if="game.wears_iron_fists">
+          <div class="weapon text-center p-2 pt-1 w-35 h-30 bg-olive-700/50 border border-olive-500/50" v-if="game.wears_iron_fists">
             <span class="text-yellow-400">Iron Fists</span>
             <div class="value text-center">
               <img src="/tile-icons/pixel/128x128/iron-fist.png" class="size-12 m-auto" alt="iron-fist">
-              <div class="text-sm pt-1">Infinite</div>
+              <div class="text-sm pt-1">Infinite &bull; auto</div>
             </div>
           </div>
         </div>
@@ -691,13 +691,13 @@ onUnmounted(() => {
 
       <section v-if="game" class="resolver-row">
 
-        <div class="bg-olive-800 p-4 text-center medievalsharp-regular">
+        <div class="bg-olive-800 border border-olive-500/50 p-4 text-center medievalsharp-regular">
           <span class="text-olive-400">Next round in</span>
           <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
           <div class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</div>
         </div>
 
-        <div class="bg-olive-800 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
+        <div class="bg-olive-800 border border-olive-500/50 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
           <span class="text-olive-400">Last Twitch chat vote</span>
           <div class="text-teal-400 text-8xl mt-1.5 flex items-center justify-center gap-2">
             <template v-if="game.last_resolved_action">
@@ -731,14 +731,14 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <section v-if="game" class="joiners-col">
+      <section v-if="game" class="joiners-col mt-4">
         <div class="medievalsharp-regular">
           <h2 class="text-lg text-white">Active: <span class="count">{{ grouped.active.length }} player{{ grouped.active.length !== 1 ? 's' : '' }}</span></h2>
           <ul>
             <li
               v-for="j in grouped.active"
               :key="j.twitch_user_id"
-              class="joiner flex items-center gap-2 pl-1 my-0.5 w-full bg-olive-800 medievalsharp-regular"
+              class="joiner flex items-center gap-2 pl-1 my-0.5 w-full bg-olive-800 border border-olive-500/50 medievalsharp-regular"
             >
               <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
                 <component
@@ -757,7 +757,7 @@ onUnmounted(() => {
                   :class="state"
                 >
                   <ShieldCheck class="fill-teal-600 size-5" v-if="state === 'filled'" />
-                  <ShieldOff v-else />
+                  <ShieldOff class="size-5" v-else />
                 </span>
               </div>
             </li>
@@ -786,36 +786,6 @@ onUnmounted(() => {
           </div>
 
           <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
-        </div>
-
-        <div class="medievalsharp-regular bg-olive-700/10 text-sm mt-4 p-4">
-          <h2 class="text-3xl mb-3">Chat Commands</h2>
-          <div class="border-t border-white/10">
-            <dl class="divide-y divide-white/10">
-              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
-                <dt class="font-medium text-yellow-400 font-sans">!join</dt>
-                <dd>Joins the game. 1 round cooldown.</dd>
-              </div>
-              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
-                <dt class="font-medium text-yellow-400 font-sans">!s</dt>
-                <dd>Stay. Don't move the player.</dd>
-              </div>
-              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
-                <dt class="font-medium text-yellow-400 font-sans">!h</dt>
-                <dd>Hide. Teleport to nearest hiding spot.</dd>
-              </div>
-              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
-                <dt class="font-medium text-yellow-400 font-sans">!a [1,2]</dt>
-                <dd>Attack with weapon 1 2. 3x3 AoE.<br>
-                  <span class="text-yellow-400 font-sans">!a or !a 2</span></dd>
-              </div>
-              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
-                <dt class="font-medium text-yellow-400 font-sans">!p &lt;direction&gt; [1,2,3]</dt>
-                <dd>Move the player in the given direction.<br>
-                  <span class="text-yellow-400 font-sans">!p up 3</span></dd>
-              </div>
-            </dl>
-          </div>
         </div>
 
         <div v-if="debugEnabledLive" class="debug-panel">
@@ -872,7 +842,14 @@ onUnmounted(() => {
       </div>
     </aside>
 
-    <main class="grid-area">
+    <main class="grid-area relative">
+      <div class="medievalsharp-regular bg-olive-700/90 border-t border-r border-olive-500 text-sm p-1 absolute bottom-0 left-0 z-9999">
+        !join - join the game<br>
+        !p up {3} - move player 1-3 blocks up/down/left/right.<br>
+        !a or !a2 - attack with weapon 1 or 2<br>
+        !h - teleport to hiding<br>
+        !s - stay. do nothing.
+      </div>
       <div v-if="game" class="grid" :style="gridLayerStyle">
         <div v-for="y in rows" :key="`row-${y}`" class="grid-row">
           <div
