@@ -283,11 +283,14 @@ function voteIconCount(vote: string | null): number {
 }
 
 function voteLabel(vote: string | null): string {
+  let weaponchoice = '';
   if (!vote) return '-';
   if (vote === 'h') return 'hide';
   if (vote === 's') return 'stay';
   if (vote === 'a') return 'attack';
-  if (vote.startsWith('a:')) return `attack ${vote.slice(2)}`;
+  if (vote.slice(2) === '1') weaponchoice = 'I';
+  if (vote.slice(2) === '2') weaponchoice = 'II';
+  if (vote.startsWith('a:')) return `wpn ${weaponchoice}`;
   if (vote.startsWith('p:')) return '';
   return vote;
 }
@@ -383,7 +386,7 @@ const PICKUP_CLASSES: Record<string, string> = {
   zombie_spawn: 'pickup-zombie',
 };
 
-const LOW_HP_THRESHOLD = 1;
+const LOW_HP_THRESHOLD = 5;
 
 function tileClasses(dx: number, dy: number): string[] {
   const x = toGame(dx);
@@ -419,8 +422,6 @@ function tileClasses(dx: number, dy: number): string[] {
 
   return classes;
 }
-
-
 
 function triggerAttackFlash(px: number, py: number) {
   const tiles = new Set<string>();
@@ -571,6 +572,7 @@ onUnmounted(() => {
 
   <Teleport to="body" v-if="game?.status !== 'running' && game?.status === 'won' || game?.status === 'lost'">
     <div
+      v-if="!debugEnabledLive"
       class="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-sm"
     >
       <GameResultBanner
@@ -686,7 +688,7 @@ onUnmounted(() => {
             </div>
 
             <div class="bg-olive-800 border border-olive-500/50 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
-              <span class="text-olive-400">Last Twitch chat vote</span>
+              <span class="text-olive-400 text-center">Last Twitch chat vote</span>
               <div class="text-teal-400 text-8xl my-2 flex items-center justify-center gap-2">
                 <template v-if="game.last_resolved_action">
                   <component
@@ -699,7 +701,7 @@ onUnmounted(() => {
                 </template>
                 <template v-else>-</template>
               </div>
-              <div v-if="lastResolvedTallyEntries.length" class="mt-4 mb-4 text-lg">
+              <div v-if="lastResolvedTallyEntries.length" class="mb-2 text-lg">
                 <span
                   v-for="[action, count] in lastResolvedTallyEntries"
                   :key="action"
@@ -742,12 +744,12 @@ onUnmounted(() => {
                   :key="j.twitch_user_id"
                   class="joiner flex items-center gap-2 pl-1 w-full bg-olive-800 border border-olive-500/50 medievalsharp-regular"
                 >
-                  <div class="text-teal-400 bg-card p-1 w-25 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
+                  <div class="text-teal-400 bg-card p-1 w-25 fade-in-5 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
                     <component
                       v-for="i in voteIconCount(j.current_vote)"
                       :is="voteIcon(j.current_vote)"
                       :key="i"
-                      class="h-4 w-4"
+                      class="h-4 w-4 fade-in-5"
                     />
                     <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
                   </div>
@@ -778,51 +780,60 @@ onUnmounted(() => {
             </div>
 
 
-            <div v-if="debugEnabledLive" class="debug-panel">
-              <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
-              <div v-if="game.player_x !== null && game.player_y !== null" class="debug-block">
-                <div class="debug-coords">({{ game.player_x }}, {{ game.player_y }})</div>
-                <div class="debug-classes">
-              <span
-                v-for="c in tileClasses(game.player_x, game.player_y)"
-                :key="c"
-                class="debug-class"
-              >{{ c }}</span>
-                  <span v-if="!tileClasses(game.player_x, game.player_y).length" class="debug-empty">
-                (no classes)
-              </span>
-                </div>
-                <pre class="debug-state">{{ debugTileState(game.player_x, game.player_y) }}</pre>
-              </div>
-              <div v-else class="debug-empty">player not on board</div>
+            <div v-if="debugEnabledLive" class="bg-[#1a1410] border border-dashed border-[#b0823d] rounded-md px-4 py-3 flex flex-col gap-2">
 
-              <h2>Debug: inspect any tile</h2>
+              <h2 class="text-[0.75rem] uppercase tracking-[0.05em] text-[#e0a060] mt-1 mb-[0.1rem] first:mt-0 flex items-center gap-[0.4rem]">
+                Debug: player tile
+                <span class="text-[0.6rem] py-[0.05rem] px-[0.35rem] bg-[#b0823d] text-[#1a1410] rounded-[3px] tracking-[0.05em]">temp</span>
+              </h2>
+
+              <div v-if="game.player_x !== null && game.player_y !== null" class="flex flex-col gap-[0.4rem]">
+                <div class="font-mono text-[0.85rem] text-[#e0a060] font-bold">({{ game.player_x }}, {{ game.player_y }})</div>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="c in tileClasses(game.player_x, game.player_y)"
+                    :key="c"
+                    class="bg-[#2a2018] text-[#ffd9a8] font-mono text-[0.72rem] py-[0.1rem] px-[0.4rem] rounded-[3px] border border-[#3a2a1a]"
+                  >{{ c }}</span>
+                              <span v-if="!tileClasses(game.player_x, game.player_y).length" class="text-[#666] italic text-[0.75rem]">
+                    (no classes)
+                  </span>
+                </div>
+                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-[180px] overflow-y-auto">{{ debugTileState(game.player_x, game.player_y) }}</pre>
+              </div>
+              <div v-else class="text-[#666] italic text-[0.75rem]">player not on board</div>
+
+              <h2 class="text-[0.75rem] uppercase tracking-[0.05em] text-[#e0a060] mt-1 mb-[0.1rem] first:mt-0 flex items-center gap-[0.4rem]">
+                Debug: inspect any tile
+              </h2>
               <input
                 v-model="debugInput"
-                class="debug-input"
+                class="bg-[#0f0a08] border border-[#3a2a1a] rounded px-[0.6rem] py-[0.4rem] text-[#ffd9a8] font-mono text-[0.85rem] w-full focus:outline-none focus:border-[#b0823d]"
                 type="text"
                 placeholder="x,y (e.g. 5,9)"
                 inputmode="numeric"
                 autocomplete="off"
               />
-              <div v-if="debugInspected" class="debug-block">
-                <div class="debug-coords">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
-                <div class="debug-classes">
-              <span
-                v-for="c in tileClasses(debugInspected.x, debugInspected.y)"
-                :key="c"
-                class="debug-class"
-              >{{ c }}</span>
+
+              <div v-if="debugInspected" class="flex flex-col gap-[0.4rem]">
+                <div class="font-mono text-[0.85rem] text-[#e0a060] font-bold">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="c in tileClasses(debugInspected.x, debugInspected.y)"
+                    :key="c"
+                    class="bg-[#2a2018] text-[#ffd9a8] font-mono text-[0.72rem] py-[0.1rem] px-[0.4rem] rounded-[3px] border border-[#3a2a1a]"
+                  >{{ c }}</span>
                   <span
                     v-if="!tileClasses(debugInspected.x, debugInspected.y).length"
-                    class="debug-empty"
+                    class="text-[#666] italic text-[0.75rem]"
                   >(no classes)</span>
                 </div>
-                <pre class="debug-state">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
+                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-[180px] overflow-y-auto">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
               </div>
-              <div v-else-if="debugInput" class="debug-empty">
+              <div v-else-if="debugInput" class="text-[#666] italic text-[0.75rem]">
                 invalid coords (use x,y with 1-{{ GRID_SIZE }})
               </div>
+
             </div>
           </section>
         </div> <!-- grid col 2 -->
@@ -831,7 +842,7 @@ onUnmounted(() => {
     </aside>
 
     <main class="grid-area relative">
-      <div class="medievalsharp-regular bg-olive-700/90 border-t border-r border-olive-500 text-sm p-1 absolute bottom-0 left-0 z-9999">
+      <div v-if="game" class="medievalsharp-regular bg-olive-700/90 border-t border-r border-olive-500 text-sm p-1 absolute bottom-0 left-0 z-9999">
         !join - join the game<br>
         !p up {3} - move player 1-3 blocks up/down/left/right.<br>
         !a or !a2 - attack with weapon 1 or 2<br>
@@ -917,48 +928,10 @@ onUnmounted(() => {
   margin: 0;
 }
 
-.stats-row,
-.weapons-row {
-  display: flex;
-  gap: 1rem;
-  background: #1a1a1a;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-}
-.stat,
-.weapon {
-  display: flex;
-  flex-direction: column;
-  min-width: 60px;
-}
-
-.stat .value,
-.weapon .value {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-.weapon .value small {
-  font-size: 0.75rem;
-  color: #888;
-  font-weight: 400;
-}
-.stat .value.hp {
-  color: #ff5a5a;
-}
-.stat .status {
-  font-size: 0.9rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  align-self: flex-start;
-}
 .status-running { background: #2a9d90; color: #fff; }
 .status-waiting { background: #b0823d; color: #fff; }
 .status-won { background: #4f8ef7; color: #fff; }
 .status-lost { background: #7a2b2b; color: #fff; }
-
-
 
 .resolver-card.countdown .value {
   font-variant-numeric: tabular-nums;
@@ -968,162 +941,6 @@ onUnmounted(() => {
 }
 
 .tally-entry b { color: #2a9d90; }
-
-.joiners-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex: 1;
-  min-height: 0;
-}
-
-.joiners-group h2 {
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #aaa;
-  margin: 0 0 0.5rem;
-  display: flex;
-  justify-content: space-between;
-}
-.joiners-group h2 .count { color: #2a9d90; font-weight: 700; }
-.joiners-group ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.joiner .energy {
-  display: inline-flex;
-  gap: 3px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.joiner .pip {
-  width: 16px;
-  height: 16px;
-  border-radius: 0;
-  display: inline-block;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-.joiner .pip.filled {
-  background: #88ff84;
-  box-shadow: 0 0 4px rgb(76 151 73);
-}
-.joiner .pip.empty {
-  background: transparent;
-  border: 1px solid #4c9749;
-}
-
-
-.placeholder {
-  color: #555;
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
-.debug-panel {
-  background: #1a1410;
-  border: 1px dashed #b0823d;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.debug-panel h2 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #e0a060;
-  margin: 0.25rem 0 0.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.debug-panel h2:first-child { margin-top: 0; }
-.debug-tag {
-  font-size: 0.6rem;
-  padding: 0.05rem 0.35rem;
-  background: #b0823d;
-  color: #1a1410;
-  border-radius: 3px;
-  letter-spacing: 0.05em;
-}
-.debug-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.debug-coords {
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
-  color: #e0a060;
-  font-weight: 700;
-}
-.debug-classes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-.debug-class {
-  background: #2a2018;
-  color: #ffd9a8;
-  font-family: ui-monospace, monospace;
-  font-size: 0.72rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  border: 1px solid #3a2a1a;
-}
-.debug-empty {
-  color: #666;
-  font-style: italic;
-  font-size: 0.75rem;
-}
-.debug-state {
-  margin: 0;
-  background: #0f0a08;
-  border-radius: 4px;
-  padding: 0.5rem 0.6rem;
-  font-family: ui-monospace, monospace;
-  font-size: 0.7rem;
-  color: #c8c0b8;
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 180px;
-  overflow-y: auto;
-}
-.debug-input {
-  background: #0f0a08;
-  border: 1px solid #3a2a1a;
-  border-radius: 4px;
-  padding: 0.4rem 0.6rem;
-  color: #ffd9a8;
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-.debug-input:focus {
-  outline: none;
-  border-color: #b0823d;
-}
-.empty-state {
-  color: #888;
-  font-size: 0.9rem;
-  padding: 1rem;
-  background: #1a1a1a;
-  border-radius: 6px;
-}
-.empty-state code {
-  background: #0e0e10;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  color: #ccc;
-}
 
 .grid-area {
   display: flex;
@@ -1188,6 +1005,7 @@ onUnmounted(() => {
   from { transform: scale(1); }
   to { transform: scale(1.08); }
 }
+
 .zombie-boss {
   width: calc(var(--tile) * 1.3);
   height: calc(var(--tile) * 1.3);
