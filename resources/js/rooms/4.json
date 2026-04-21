@@ -2,6 +2,9 @@
     "tileset": "room-4",
     "width": 11,
     "height": 11,
+    "filter": "invert() grayscale(.3)",
+    "overlayColor": "#09b7ea",
+    "overlayOpacity": 0.17,
     "version": 1,
     "cells": [
         [

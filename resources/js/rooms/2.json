@@ -2,6 +2,9 @@
     "tileset": "room-2",
     "width": 11,
     "height": 11,
+    "filter": "hue-rotate(200deg)",
+    "overlayColor": "#f01bf5",
+    "overlayOpacity": 0.26,
     "version": 1,
     "cells": [
         [

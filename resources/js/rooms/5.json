@@ -2,6 +2,7 @@
     "tileset": "room-5",
     "width": 11,
     "height": 11,
+    "filter": "invert(20%) sepia(10%) hue-rotate(300deg)",
     "version": 1,
     "cells": [
         [
