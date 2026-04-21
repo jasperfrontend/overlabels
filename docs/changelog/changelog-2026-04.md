@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 22nd, 2026 - Testing page covers the full EventSub arsenal
+
+- The `/testing` page predated the EventSub expansion and only listed 8 triggers. Bumped to 27: the original 8 (follow/sub/gift/resub/cheer/raid + stream online/offline + the two channel-points redemption variants) plus the 17 new hype train / charity / goals / polls / predictions types added yesterday. Each trigger carries the exact `twitch event trigger` command a streamer can paste into the CLI, pre-filled with their webhook URL, their per-user webhook secret, and their Twitch ID.
+- Grouped by family (Basic, Channel Points, Stream, Hype Train, Charity, Goals, Polls, Predictions) with a collapsible section per group. Added a search filter bar at the top (same pattern as `ControlsManager.vue`'s Filter Controls) that matches against label, event type, description, and family name - 27 triggers is a lot to eyeball.
+- UI compacted: each trigger is one row with label + event-type code chip + description + the pre-formatted command + a copy button. Removed the blur-and-reveal-on-hover treatment from the old page; instead the webhook secret is rendered as bullets (`••••••••••••`) on screen and `select-none` blocks text selection, while the clipboard still gets the real unredacted command. Added a warning strip at the top reminding streamers not to paste these commands into a terminal while on-camera - the displayed bullets are cosmetic, the real secret lives on the clipboard.
+
 ## April 22nd, 2026 - Scope banner copy no longer lies about the session
 
 - The banner claimed "Reauthorizing takes a few seconds and does not sign you out." In practice the Twitch -> callback round trip does appear to drop the Laravel session for some users (DB state update succeeds, but the browser lands on a logged-out overlabels.com and has to relog manually). Until that session loss is root-caused, honest copy is better than confident-sounding copy - the updated string warns users they may need to log in again and reassures them the new permissions persist regardless.
