@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property-read string $event_type_display
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
+ *
  * @method static Builder<static>|EventTemplateMapping newModelQuery()
  * @method static Builder<static>|EventTemplateMapping newQuery()
  * @method static Builder<static>|EventTemplateMapping query()
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|EventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|EventTemplateMapping whereUserId($value)
+ *
  * @mixin Eloquent
  * @mixin IdeHelperEventTemplateMapping
  */
@@ -72,6 +74,28 @@ class EventTemplateMapping extends Model
         'channel.channel_points_custom_reward_redemption.add' => 'Channel Points Redemption',
         'stream.online' => 'Stream Online',
         'stream.offline' => 'Stream Offline',
+        // Hype train
+        'channel.hype_train.begin' => 'Hype Train Started',
+        'channel.hype_train.progress' => 'Hype Train Progress',
+        'channel.hype_train.end' => 'Hype Train Ended',
+        // Charity campaigns
+        'channel.charity_campaign.donate' => 'Charity Donation',
+        'channel.charity_campaign.start' => 'Charity Campaign Started',
+        'channel.charity_campaign.progress' => 'Charity Campaign Progress',
+        'channel.charity_campaign.stop' => 'Charity Campaign Ended',
+        // Goals
+        'channel.goal.begin' => 'Channel Goal Started',
+        'channel.goal.progress' => 'Channel Goal Progress',
+        'channel.goal.end' => 'Channel Goal Ended',
+        // Polls
+        'channel.poll.begin' => 'Poll Started',
+        'channel.poll.progress' => 'Poll Progress',
+        'channel.poll.end' => 'Poll Ended',
+        // Predictions
+        'channel.prediction.begin' => 'Prediction Started',
+        'channel.prediction.progress' => 'Prediction Progress',
+        'channel.prediction.lock' => 'Prediction Locked',
+        'channel.prediction.end' => 'Prediction Ended',
     ];
 
     /**

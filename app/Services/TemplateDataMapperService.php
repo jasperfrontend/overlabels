@@ -28,6 +28,26 @@ class TemplateDataMapperService
     ];
 
     /**
+     * Event payload list fields to flatten by index into event.{field}.{i}.{key}.
+     * Twitch caps polls at 5 choices and predictions at 10 outcomes; hype train
+     * top_contributions is unbounded but practically short, so cap at 3.
+     */
+    private const array INDEXED_LIST_FIELDS = [
+        'top_contributions' => 3,
+        'choices' => 5,
+        'outcomes' => 10,
+    ];
+
+    /**
+     * Charity/hype-train payloads use {value, decimal_places, currency} money objects.
+     * We emit event.{field}.formatted alongside the raw fields so templates aren't
+     * stuck with minor-unit integers.
+     */
+    private const array MONEY_FIELDS = [
+        'amount', 'target_amount', 'current_amount', 'total', 'last_contribution',
+    ];
+
+    /**
      * MASTER MAPPING - Single source of truth for all template tag mappings
      * Format: 'json_path' => 'template_tag_name'
      * This is used by BOTH JsonTemplateParserService AND template parsing
@@ -402,6 +422,27 @@ class TemplateDataMapperService
                     'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
                     'event.reward_id', 'event.reward.title', 'event.reward.prompt', 'event.reward.cost',
                     'event.user_input', 'event.status', 'event.redeemed_at',
+                    // Hype train
+                    'event.level', 'event.progress', 'event.goal', 'event.started_at', 'event.expires_at',
+                    'event.ended_at', 'event.cooldown_ends_at',
+                    'event.top_contributions.count',
+                    'event.top_contributions.0.user_name', 'event.top_contributions.0.type', 'event.top_contributions.0.total',
+                    'event.last_contribution.user_name', 'event.last_contribution.type', 'event.last_contribution.total',
+                    // Charity
+                    'event.charity_name', 'event.charity_description', 'event.charity_logo', 'event.charity_website',
+                    'event.amount.value', 'event.amount.decimal_places', 'event.amount.currency', 'event.amount.formatted',
+                    'event.current_amount.formatted', 'event.target_amount.formatted', 'event.stopped_at',
+                    // Goals
+                    'event.description', 'event.current_amount', 'event.target_amount', 'event.is_achieved',
+                    // Polls
+                    'event.title', 'event.choices.count',
+                    'event.choices.0.title', 'event.choices.0.votes', 'event.choices.0.channel_points_votes', 'event.choices.0.bits_votes',
+                    'event.bits_voting.is_enabled', 'event.bits_voting.amount_per_vote',
+                    'event.channel_points_voting.is_enabled', 'event.channel_points_voting.amount_per_vote',
+                    // Predictions
+                    'event.winning_outcome_id', 'event.outcomes.count',
+                    'event.outcomes.0.title', 'event.outcomes.0.color', 'event.outcomes.0.users', 'event.outcomes.0.channel_points',
+                    'event.locks_at',
                 ],
             ],
         ];
@@ -566,19 +607,85 @@ class TemplateDataMapperService
                 if ($key === 'tier') {
                     $mapped[$tagName] = $value; // Keep raw value for backward compatibility
                     $mapped['event.tier_display'] = $this->formatTier($value); // Add formatted version
+
+                    continue;
                 }
+
+                // Indexed flattening for lists of objects (poll choices, prediction
+                // outcomes, hype train top_contributions). Without this they end up
+                // JSON-encoded by formatValueForTemplate, which templates can't use.
+                if (isset(self::INDEXED_LIST_FIELDS[$key]) && is_array($value) && array_is_list($value)) {
+                    $cap = self::INDEXED_LIST_FIELDS[$key];
+                    $mapped[$tagName.'.count'] = count($value);
+                    foreach (array_slice($value, 0, $cap) as $i => $item) {
+                        if (is_array($item) && ! array_is_list($item)) {
+                            foreach ($item as $itemKey => $itemValue) {
+                                $nestedTag = $tagName.'.'.$i.'.'.$itemKey;
+                                if (is_array($itemValue) && ! array_is_list($itemValue)) {
+                                    // Money objects inside list items (e.g. outcome.channel_points)
+                                    foreach ($itemValue as $mKey => $mValue) {
+                                        $mapped[$nestedTag.'.'.$mKey] = $this->formatValueForTemplate($mValue, $nestedTag.'.'.$mKey);
+                                    }
+                                    if (in_array($itemKey, self::MONEY_FIELDS, true)) {
+                                        $mapped[$nestedTag.'.formatted'] = $this->formatMoneyObject($itemValue);
+                                    }
+                                } else {
+                                    $mapped[$nestedTag] = $this->formatValueForTemplate($itemValue, $nestedTag);
+                                }
+                            }
+                        } else {
+                            $mapped[$tagName.'.'.$i] = $this->formatValueForTemplate($item, $tagName.'.'.$i);
+                        }
+                    }
+
+                    continue;
+                }
+
                 // Handle nested objects (flatten them)
-                elseif (is_array($value) && ! array_is_list($value)) {
+                if (is_array($value) && ! array_is_list($value)) {
                     foreach ($value as $nestedKey => $nestedValue) {
                         $mapped['event.'.$key.'.'.$nestedKey] = $this->formatValueForTemplate($nestedValue, 'event.'.$key.'.'.$nestedKey);
                     }
-                } else {
-                    $mapped[$tagName] = $this->formatValueForTemplate($value, $tagName);
+
+                    // Derived formatted money string for charity amount objects.
+                    if (in_array($key, self::MONEY_FIELDS, true)) {
+                        $mapped[$tagName.'.formatted'] = $this->formatMoneyObject($value);
+                    }
+
+                    continue;
                 }
+
+                $mapped[$tagName] = $this->formatValueForTemplate($value, $tagName);
             }
         }
 
         return $mapped;
+    }
+
+    /**
+     * Convert a Twitch money object {value, decimal_places, currency} into a
+     * human-readable string. Twitch stores monetary amounts as integers in the
+     * currency's minor units - templates would footgun without this.
+     */
+    private function formatMoneyObject(array $money): string
+    {
+        $value = $money['value'] ?? null;
+        $decimals = $money['decimal_places'] ?? 2;
+        $currency = $money['currency'] ?? '';
+
+        if (! is_numeric($value)) {
+            return '';
+        }
+
+        $amount = (float) $value / (10 ** (int) $decimals);
+        $formatted = number_format($amount, (int) $decimals);
+        $symbols = ['USD' => '$', 'EUR' => '€', 'GBP' => '£', 'JPY' => '¥'];
+
+        if (isset($symbols[$currency])) {
+            return $symbols[$currency].$formatted;
+        }
+
+        return trim($currency.' '.$formatted);
     }
 
     /**
@@ -625,6 +732,64 @@ class TemplateDataMapperService
             'event.user_input' => 'User input for the reward',
             'event.status' => 'Redemption status',
             'event.redeemed_at' => 'When the reward was redeemed',
+
+            // Hype Train
+            'event.level' => 'Hype train level',
+            'event.total' => 'Hype train total bits-equivalent contributions',
+            'event.progress' => 'Progress toward next level',
+            'event.goal' => 'Hype train next-level goal',
+            'event.started_at' => 'Hype train start time',
+            'event.expires_at' => 'Hype train expiration time',
+            'event.ended_at' => 'Hype train end time',
+            'event.cooldown_ends_at' => 'When cooldown finishes (hype train end)',
+            'event.top_contributions.count' => 'Number of top contributors (hype train)',
+            'event.top_contributions.0.user_name' => 'Top contributor 1 display name',
+            'event.top_contributions.0.type' => 'Top contributor 1 contribution type (bits / subscription)',
+            'event.top_contributions.0.total' => 'Top contributor 1 amount',
+            'event.last_contribution.user_name' => 'Most recent contributor name',
+            'event.last_contribution.type' => 'Most recent contribution type',
+            'event.last_contribution.total' => 'Most recent contribution amount',
+
+            // Charity
+            'event.charity_name' => 'Charity name',
+            'event.charity_description' => 'Charity description',
+            'event.charity_logo' => 'Charity logo URL',
+            'event.charity_website' => 'Charity website',
+            'event.amount.value' => 'Donation amount (minor units)',
+            'event.amount.decimal_places' => 'Donation amount decimal places',
+            'event.amount.currency' => 'Donation currency code',
+            'event.amount.formatted' => 'Donation amount (formatted with currency)',
+            'event.current_amount.formatted' => 'Campaign raised so far (formatted)',
+            'event.target_amount.formatted' => 'Campaign target (formatted)',
+            'event.stopped_at' => 'When the charity campaign ended',
+
+            // Goals
+            'event.description' => 'Goal / poll / prediction description',
+            'event.type' => 'Event type / goal type (follower, subscription, etc.)',
+            'event.current_amount' => 'Current goal progress',
+            'event.target_amount' => 'Goal target',
+            'event.is_achieved' => 'Whether goal was reached when it ended',
+
+            // Polls
+            'event.title' => 'Poll / prediction title',
+            'event.choices.count' => 'Number of poll choices',
+            'event.choices.0.title' => 'Poll choice 1 title',
+            'event.choices.0.votes' => 'Poll choice 1 total votes',
+            'event.choices.0.channel_points_votes' => 'Poll choice 1 channel points votes',
+            'event.choices.0.bits_votes' => 'Poll choice 1 bits votes (deprecated by Twitch)',
+            'event.bits_voting.is_enabled' => 'Whether bits voting is on (deprecated)',
+            'event.bits_voting.amount_per_vote' => 'Bits per vote (deprecated)',
+            'event.channel_points_voting.is_enabled' => 'Whether channel-points voting is on',
+            'event.channel_points_voting.amount_per_vote' => 'Channel points per vote',
+
+            // Predictions
+            'event.winning_outcome_id' => 'ID of winning prediction outcome',
+            'event.outcomes.count' => 'Number of prediction outcomes',
+            'event.outcomes.0.title' => 'Prediction outcome 1 title',
+            'event.outcomes.0.color' => 'Prediction outcome 1 color (blue / pink)',
+            'event.outcomes.0.users' => 'Prediction outcome 1 number of predictors',
+            'event.outcomes.0.channel_points' => 'Prediction outcome 1 total channel points wagered',
+            'event.locks_at' => 'When the prediction locks',
         ];
     }
 

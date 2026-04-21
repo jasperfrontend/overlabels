@@ -13,49 +13,151 @@ class UserEventSubManager
 {
     private TwitchEventSubService $eventSubService;
 
+    private TwitchScopeService $scopeService;
+
     // Define which events we support
-    private const array SUPPORTED_EVENTS = [
+    public const array SUPPORTED_EVENTS = [
         'channel.follow' => [
             'version' => '2',
             'condition_keys' => ['broadcaster_user_id', 'moderator_user_id'],
+            'required_scope' => 'moderator:read:followers',
         ],
         'channel.subscribe' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:subscriptions',
         ],
         'channel.subscription.gift' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:subscriptions',
         ],
         'channel.subscription.message' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:subscriptions',
         ],
         'channel.raid' => [
             'version' => '1',
             'condition_keys' => ['to_broadcaster_user_id'],
+            'required_scope' => null,
         ],
         'channel.channel_points_custom_reward_redemption.add' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:redemptions',
         ],
         'channel.channel_points_custom_reward_redemption.update' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:redemptions',
         ],
         'stream.online' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => null,
         ],
         'stream.offline' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => null,
+        ],
+        // Hype train
+        'channel.hype_train.begin' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:hype_train',
+        ],
+        'channel.hype_train.progress' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:hype_train',
+        ],
+        'channel.hype_train.end' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:hype_train',
+        ],
+        // Charity campaigns
+        'channel.charity_campaign.donate' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:charity',
+        ],
+        'channel.charity_campaign.start' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:charity',
+        ],
+        'channel.charity_campaign.progress' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:charity',
+        ],
+        'channel.charity_campaign.stop' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:charity',
+        ],
+        // Goals
+        'channel.goal.begin' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:goals',
+        ],
+        'channel.goal.progress' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:goals',
+        ],
+        'channel.goal.end' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:goals',
+        ],
+        // Polls
+        'channel.poll.begin' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:polls',
+        ],
+        'channel.poll.progress' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:polls',
+        ],
+        'channel.poll.end' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:polls',
+        ],
+        // Predictions
+        'channel.prediction.begin' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:predictions',
+        ],
+        'channel.prediction.progress' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:predictions',
+        ],
+        'channel.prediction.lock' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:predictions',
+        ],
+        'channel.prediction.end' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'channel:read:predictions',
         ],
     ];
 
-    public function __construct(TwitchEventSubService $eventSubService)
+    public function __construct(TwitchEventSubService $eventSubService, TwitchScopeService $scopeService)
     {
         $this->eventSubService = $eventSubService;
+        $this->scopeService = $scopeService;
     }
 
     /**
@@ -74,6 +176,7 @@ class UserEventSubManager
             'created' => [],
             'failed' => [],
             'existing' => [],
+            'skipped_missing_scope' => [],
         ];
 
         // Get app access token (required for webhooks)
@@ -94,6 +197,16 @@ class UserEventSubManager
 
             if ($existing) {
                 $results['existing'][] = $eventType;
+
+                continue;
+            }
+
+            // Skip events whose required scope the user hasn't granted - lets the
+            // scope banner drive the relog rather than polluting failed bucket
+            // with Twitch 403s.
+            $requiredScope = $config['required_scope'] ?? null;
+            if ($requiredScope && ! $this->scopeService->hasScope($user, $requiredScope)) {
+                $results['skipped_missing_scope'][] = $eventType;
 
                 continue;
             }
@@ -296,7 +409,6 @@ class UserEventSubManager
         return $status;
     }
 
-
     /**
      * Build condition array for an event type
      */
@@ -341,6 +453,23 @@ class UserEventSubManager
             'channel.raid' => 'Raid received',
             'channel.channel_points_custom_reward_redemption.add' => 'Channel points redeemed',
             'channel.channel_points_custom_reward_redemption.update' => 'Channel points redemption updated',
+            'channel.hype_train.begin' => 'Hype train started',
+            'channel.hype_train.progress' => 'Hype train progress',
+            'channel.hype_train.end' => 'Hype train ended',
+            'channel.charity_campaign.donate' => 'Charity donation received',
+            'channel.charity_campaign.start' => 'Charity campaign started',
+            'channel.charity_campaign.progress' => 'Charity campaign progress',
+            'channel.charity_campaign.stop' => 'Charity campaign ended',
+            'channel.goal.begin' => 'Channel goal started',
+            'channel.goal.progress' => 'Channel goal progress',
+            'channel.goal.end' => 'Channel goal ended',
+            'channel.poll.begin' => 'Poll started',
+            'channel.poll.progress' => 'Poll progress',
+            'channel.poll.end' => 'Poll ended',
+            'channel.prediction.begin' => 'Prediction started',
+            'channel.prediction.progress' => 'Prediction progress',
+            'channel.prediction.lock' => 'Prediction locked',
+            'channel.prediction.end' => 'Prediction ended',
         ];
 
         // Only return labels for events that are actually in SUPPORTED_EVENTS

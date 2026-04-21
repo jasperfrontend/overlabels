@@ -410,6 +410,13 @@ class TwitchEventSubController extends Controller
                     $this->twitchService->clearGoalsCaches($broadcasterId);
                     break;
 
+                case 'channel.goal.begin':
+                case 'channel.goal.progress':
+                case 'channel.goal.end':
+                    // Goal updates - keep goals cache fresh
+                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    break;
+
                 case 'stream.online':
                 case 'stream.offline':
                     // Stream status change - might want to refresh channel info
