@@ -285,7 +285,7 @@ function voteLabel(vote: string | null): string {
   if (vote === 'h') return 'hide';
   if (vote === 's') return 'stay';
   if (vote === 'a') return 'attack';
-  if (vote.startsWith('a:')) return `att ${vote.slice(2)}`;
+  if (vote.startsWith('a:')) return `attack ${vote.slice(2)}`;
   if (vote.startsWith('p:')) return '';
   return vote;
 }
@@ -788,6 +788,35 @@ onUnmounted(() => {
           <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
         </div>
 
+        <div class="medievalsharp-regular bg-olive-700/10 text-sm mt-4 p-4">
+          <h2 class="text-3xl mb-3">Chat Commands</h2>
+          <div class="border-t border-white/10">
+            <dl class="divide-y divide-white/10">
+              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
+                <dt class="font-medium text-yellow-400 font-sans">!join</dt>
+                <dd>Joins the game. 1 round cooldown.</dd>
+              </div>
+              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
+                <dt class="font-medium text-yellow-400 font-sans">!s</dt>
+                <dd>Stay. Don't move the player.</dd>
+              </div>
+              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
+                <dt class="font-medium text-yellow-400 font-sans">!h</dt>
+                <dd>Hide. Teleport to nearest hiding spot.</dd>
+              </div>
+              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
+                <dt class="font-medium text-yellow-400 font-sans">!a [1,2]</dt>
+                <dd>Attack with weapon 1 2. 3x3 AoE.<br>
+                  <span class="text-yellow-400 font-sans">!a or !a 2</span></dd>
+              </div>
+              <div class="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0 items-center-safe">
+                <dt class="font-medium text-yellow-400 font-sans">!p &lt;direction&gt; [1,2,3]</dt>
+                <dd>Move the player in the given direction.<br>
+                  <span class="text-yellow-400 font-sans">!p up 3</span></dd>
+              </div>
+            </dl>
+          </div>
+        </div>
 
         <div v-if="debugEnabledLive" class="debug-panel">
           <h2>Debug: player tile <span class="debug-tag">temp</span></h2>
@@ -921,15 +950,6 @@ onUnmounted(() => {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-}
-
-.conn .dot {
-  border-radius: 50%;
-  background: #555;
-}
-.conn.on .dot {
-  background: #63e80b;
-  box-shadow: 0 0 8px #63e80b;
 }
 
 .stats-row,
@@ -1325,7 +1345,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
-  @apply: rounded-sm;
 }
 /* Floor layer: painted tile image with the room-level CSS filter applied.
    Lives on ::before so sprites, glyphs, zombies and everything else inside
@@ -1479,26 +1498,20 @@ onUnmounted(() => {
 .vote-heat-5 { /* hook: high interest */ }
 
 /* ---- fx-* short-lived animations ---- */
-.fx-attack { animation: fxAttack 0.9s ease-out; }
+.fx-attack { animation: fxAttack 1s ease-out; }
 @keyframes fxAttack {
-  0% {
-    background: #7a2b2b;
-    box-shadow: inset 0 0 24px rgba(255, 140, 90, 0.9);
-  }
-  40% {
-    background: #5a2424;
-    box-shadow: inset 0 0 16px rgba(255, 140, 90, 0.55);
-  }
-  100% {
-    background: inherit;
-    box-shadow: none;
-  }
+  0%   { zoom: 1;    rotate: 0deg;   opacity: 1;   filter: brightness(1); }
+  5%   { zoom: 1.15;                 opacity: 1;   filter: brightness(4) saturate(0%); }
+  15%  { zoom: 0.9;  rotate: 12deg;  opacity: 0.8; filter: brightness(0.5) saturate(200%) hue-rotate(30deg); }
+  35%  { zoom: 0.7;  rotate: -8deg;  opacity: 0.4; filter: brightness(0.3) saturate(300%); }
+  60%  { zoom: 0.75; rotate: 5deg;   opacity: 0.6; }
+  100% { zoom: 1;    rotate: 0deg;   opacity: 1;   filter: brightness(1) saturate(100%); }
 }
 
 @keyframes unrevealedIdlePulse {
   0% {
-    border-color: rgba(247,143,79, .5);
-    box-shadow: inset 0 0 30px rgba(247,143,79, .15), 0 0 30px rgba(247,143,79,.15);
+    border-color: rgba(247,143,79, 1);
+    box-shadow: inset 0 0 10px rgba(247,143,79, .15), 0 0 30px rgba(247,143,79,.15);
   }
   100% {
     border-color: rgba(247,143,79, .5);
