@@ -44,6 +44,17 @@ const FAMILY_LABELS: Record<EventFamily, string> = {
   predictions: 'Predictions',
 };
 
+const FAMILY_ORDER: EventFamily[] = [
+  'basic',
+  'channel_points',
+  'stream',
+  'hype_train',
+  'charity',
+  'goals',
+  'polls',
+  'predictions',
+];
+
 const eventCommands: EventCommand[] = [
   { type: 'channel.follow', label: 'New Follower', description: 'Someone follows your channel', family: 'basic' },
   { type: 'channel.subscribe', label: 'New Subscription', description: 'A new sub (paid or prime)', family: 'basic' },
@@ -57,6 +68,7 @@ const eventCommands: EventCommand[] = [
 
   { type: 'stream.online', label: 'Stream Online', description: 'Stream goes live', family: 'stream' },
   { type: 'stream.offline', label: 'Stream Offline', description: 'Stream ends', family: 'stream' },
+  { type: 'channel.update', label: 'Stream Info Updated', description: 'Title, category, or content labels change', family: 'stream' },
 
   { type: 'channel.hype_train.begin', label: 'Hype Train Started', description: 'A hype train kicks off', family: 'hype_train' },
   { type: 'channel.hype_train.progress', label: 'Hype Train Progress', description: 'New contribution lands during an active train', family: 'hype_train' },
@@ -107,6 +119,16 @@ const filteredEvents = computed(() => {
     FAMILY_LABELS[e.family].toLowerCase().includes(query)
   );
 });
+
+const filteredGrouped = computed<{ family: EventFamily; label: string; events: EventCommand[] }[]>(() => {
+  return FAMILY_ORDER
+    .map((family) => ({
+      family,
+      label: FAMILY_LABELS[family],
+      events: filteredEvents.value.filter((e) => e.family === family),
+    }))
+    .filter((g) => g.events.length > 0);
+});
 </script>
 
 <template>
@@ -131,7 +153,7 @@ const filteredEvents = computed(() => {
           Twitch CLI
           <ExternalLink class="h-3 w-3" />
         </a>
-        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account.
+        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account. You'll need the CLI installed and <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> run once first.
       </p>
 
       <div class="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-950/20 p-3 text-sm text-amber-300">
@@ -167,41 +189,42 @@ const filteredEvents = computed(() => {
         No events match "{{ searchQuery }}"
       </div>
 
-      <ul v-else class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
-        <li
-          v-for="event in filteredEvents"
-          :key="event.type"
-          class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
-          @click="copyCommand(event.type)"
-        >
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span class="text-sm font-medium">{{ event.label }}</span>
-              <code class="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-purple-300">{{ event.type }}</code>
-              <span class="text-[10px] text-muted-foreground">{{ FAMILY_LABELS[event.family] }}</span>
-            </div>
-            <p class="text-xs text-muted-foreground">{{ event.description }}</p>
-            <input
-              v-if="showCommand"
-              :value="commandFor(event.type)"
-              readonly
-              class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-300"
-              @click.stop="copyCommand(event.type)"
-            />
-          </div>
-          <div class="shrink-0 text-xs text-muted-foreground">
-            <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
-            <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
-          </div>
-        </li>
-      </ul>
+      <div v-else class="space-y-5">
+        <section v-for="group in filteredGrouped" :key="group.family" class="space-y-1.5">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {{ group.label }} <span class="font-normal">({{ group.events.length }})</span>
+          </h2>
+          <ul class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
+            <li
+              v-for="event in group.events"
+              :key="event.type"
+              class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
+              @click="copyCommand(event.type)"
+            >
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span class="text-sm font-medium">{{ event.label }}</span>
+                  <code class="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-purple-300">{{ event.type }}</code>
+                </div>
+                <p class="text-xs text-muted-foreground">{{ event.description }}</p>
+                <input
+                  v-if="showCommand"
+                  :value="commandFor(event.type)"
+                  readonly
+                  class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-300"
+                  @click.stop="copyCommand(event.type)"
+                />
+              </div>
+              <div class="shrink-0 text-xs text-muted-foreground">
+                <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
+                <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
+              </div>
+            </li>
+          </ul>
+        </section>
+      </div>
 
-      <div class="space-y-2 pb-8 text-sm text-muted-foreground">
-        <p>
-          <strong>Prerequisites:</strong> Install the
-          <a href="https://dev.twitch.tv/docs/cli/" target="_blank" rel="noopener" class="cursor-pointer text-purple-400 hover:underline">Twitch CLI</a> and run
-          <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> first.
-        </p>
+      <div class="pb-8 text-sm text-muted-foreground">
         <p>
           Full event reference:
           <a

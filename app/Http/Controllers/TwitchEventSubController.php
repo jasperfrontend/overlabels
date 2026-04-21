@@ -49,7 +49,6 @@ class TwitchEventSubController extends Controller
         $this->streamStateMachine = $streamStateMachine;
     }
 
-
     /**
      * Connect to EventSub (create subscriptions)
      */
@@ -338,7 +337,6 @@ class TwitchEventSubController extends Controller
         }
     }
 
-
     /**
      * Verify that the webhook came from Twitch
      */
@@ -419,7 +417,8 @@ class TwitchEventSubController extends Controller
 
                 case 'stream.online':
                 case 'stream.offline':
-                    // Stream status change - might want to refresh channel info
+                case 'channel.update':
+                    // Stream status or info change - refresh channel info
                     $this->twitchService->clearChannelInfoCaches($broadcasterId);
                     break;
 

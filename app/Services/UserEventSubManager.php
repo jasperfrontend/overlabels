@@ -62,6 +62,11 @@ class UserEventSubManager
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => null,
         ],
+        'channel.update' => [
+            'version' => '2',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => null,
+        ],
         // Hype train
         'channel.hype_train.begin' => [
             'version' => '1',
@@ -446,6 +451,7 @@ class UserEventSubManager
         $labels = [
             'stream.online' => 'Stream goes live',
             'stream.offline' => 'Stream goes offline',
+            'channel.update' => 'Stream info updated (title, category)',
             'channel.follow' => 'New follower',
             'channel.subscribe' => 'Subscription',
             'channel.subscription.gift' => 'Gifted subscription',

@@ -74,6 +74,7 @@ class EventTemplateMapping extends Model
         'channel.channel_points_custom_reward_redemption.add' => 'Channel Points Redemption',
         'stream.online' => 'Stream Online',
         'stream.offline' => 'Stream Offline',
+        'channel.update' => 'Stream Info Updated',
         // Hype train
         'channel.hype_train.begin' => 'Hype Train Started',
         'channel.hype_train.progress' => 'Hype Train Progress',

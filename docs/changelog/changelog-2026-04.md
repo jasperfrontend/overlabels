@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 22nd, 2026 - Add channel.update (stream info change) EventSub
+
+- `channel.update` v2 fires whenever the streamer edits their title, category, language, or content-classification labels. A lot of streamers want a subtle "now playing $game" chyron the moment the category changes mid-stream, and this is the EventSub type that backs it. Registered in `UserEventSubManager::SUPPORTED_EVENTS` with `required_scope => null` (the event is public broadcaster info, no Twitch scope to gate on) - meaning every already-connected user picks it up for free on the next setup pass.
+- Wired through the same event-type-agnostic path everything else uses: added the label ("Stream Info Updated"), slotted it into `EventTemplateMapping::EVENT_TYPES` so the builder page renders it under Twitch Events, and extended `refreshCachesForEvent()` to clear the channel-info cache alongside the existing `stream.online` / `stream.offline` branch (so the next render of `[[[stream.title]]]` etc. hits fresh Helix data instead of a stale snapshot).
+- `/testing` page gained a `channel.update` entry in the Stream family so streamers can fire the CLI trigger (`twitch event trigger stream-change`) to see the alert flow. Existing `eventsub:backfill-goals` command is already generic - re-run it on deploy and every connected user gets the new subscription without needing to reauthorize.
+
 ## April 22nd, 2026 - Testing page covers the full EventSub arsenal
 
 - The `/testing` page predated the EventSub expansion and only listed 8 triggers. Bumped to 27: the original 8 (follow/sub/gift/resub/cheer/raid + stream online/offline + the two channel-points redemption variants) plus the 17 new hype train / charity / goals / polls / predictions types added yesterday. Each trigger carries the exact `twitch event trigger` command a streamer can paste into the CLI, pre-filled with their webhook URL, their per-user webhook secret, and their Twitch ID.
