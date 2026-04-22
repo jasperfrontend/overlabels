@@ -15,7 +15,7 @@ class TwitchApiService
     private string $baseUrl = 'https://api.twitch.tv/helix';
 
     // Cache keys mapping for different data types
-    private const CACHE_KEYS = [
+    private const array CACHE_KEYS = [
         'user' => 'twitch_user_info_',
         'channel' => 'twitch_channel_info_',
         'followed_channels' => 'twitch_followed_channels_',
@@ -157,16 +157,55 @@ class TwitchApiService
     }
 
     /**
+     * Batch-fetch user info for up to 100 IDs per Helix call. Returns a map
+     * keyed by Twitch user id for O(1) lookup during enrichment.
+     *
+     * @param  array<int, string>  $userIds
+     * @return array<string, array<string, mixed>>
+     *
+     * @throws Exception
+     */
+    public function getUsersInfo(string $accessToken, array $userIds): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('strval', $userIds), fn ($id) => $id !== '')));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $map = [];
+
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $response = $this->makeApiRequest(
+                $accessToken,
+                'users',
+                ['id' => $chunk],
+                'batch get user info'
+            );
+
+            foreach ($response['data'] ?? [] as $user) {
+                if (isset($user['id'])) {
+                    $map[(string) $user['id']] = $user;
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * @throws Exception
      */
     public function getFollowedChannels(string $accessToken, string $userId, int $first = 20): ?array
     {
-        return $this->makeApiRequest(
+        $response = $this->makeApiRequest(
             $accessToken,
             'channels/followed',
             ['user_id' => $userId, 'first' => $first],
             'get followed channels'
         );
+
+        return $this->enrichWithProfileImages($accessToken, $response, ['broadcaster_id']);
     }
 
     /**
@@ -183,12 +222,14 @@ class TwitchApiService
             return null;
         }
 
-        return $this->makeApiRequest(
+        $response = $this->makeApiRequest(
             $accessToken,
             'channels/followers',
             ['broadcaster_id' => $channelInfo['broadcaster_id'], 'first' => $first],
             'get channel followers'
         );
+
+        return $this->enrichWithProfileImages($accessToken, $response, ['user_id']);
     }
 
     /**
@@ -196,12 +237,66 @@ class TwitchApiService
      */
     public function getChannelSubscribers(string $accessToken, string $userId, int $first = 20): ?array
     {
-        return $this->makeApiRequest(
+        $response = $this->makeApiRequest(
             $accessToken,
             'subscriptions',
             ['broadcaster_id' => $userId, 'first' => $first],
             'get subscribers'
         );
+
+        return $this->enrichWithProfileImages($accessToken, $response, ['user_id', 'gifter_id']);
+    }
+
+    /**
+     * Decorate each row in a Helix paginated response with the `profile_image_url`
+     * of whichever Twitch user the row references. `$idFields` lists the row keys
+     * that hold a user id (e.g. `broadcaster_id`, `user_id`, `gifter_id`). For
+     * each present field an `<field_prefix>_profile_image_url` entry is added,
+     * where the prefix is the part before `_id` (e.g. `broadcaster`, `user`,
+     * `gifter`). Empty string ids are skipped so ungifted subs stay clean.
+     *
+     * @param  array<int, string>  $idFields
+     *
+     * @throws Exception
+     */
+    private function enrichWithProfileImages(string $accessToken, ?array $response, array $idFields): ?array
+    {
+        if (! is_array($response) || empty($response['data']) || ! is_array($response['data'])) {
+            return $response;
+        }
+
+        $ids = [];
+        foreach ($response['data'] as $row) {
+            foreach ($idFields as $field) {
+                $id = $row[$field] ?? null;
+                if (is_string($id) && $id !== '') {
+                    $ids[] = $id;
+                }
+            }
+        }
+
+        if (empty($ids)) {
+            return $response;
+        }
+
+        $users = $this->getUsersInfo($accessToken, $ids);
+
+        foreach ($response['data'] as &$row) {
+            foreach ($idFields as $field) {
+                $id = $row[$field] ?? null;
+                $prefix = str_ends_with($field, '_id') ? substr($field, 0, -3) : $field;
+                $targetKey = $prefix.'_profile_image_url';
+
+                if (is_string($id) && $id !== '' && isset($users[$id]['profile_image_url'])) {
+                    $row[$targetKey] = $users[$id]['profile_image_url'];
+                } else {
+                    $row[$targetKey] = '';
+                }
+            }
+        }
+        unset($row);
+
+        return $response;
     }
 
     /**
@@ -363,6 +458,7 @@ class TwitchApiService
      * Fetch Twitch global + channel emotes using an app access token.
      * Returns an array of ['code' => string, 'url' => string] entries.
      * No user credentials required — app token (client credentials) is sufficient.
+     *
      * @throws ConnectionException
      */
     public function getChannelEmotes(string $appToken, string $broadcasterId): array
