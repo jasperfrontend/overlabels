@@ -681,6 +681,8 @@ const cards: EventCard[] = [
         heading: 'Choices',
         tags: [
           { tag: '[[[event.choices.count]]]', desc: 'How many choices' },
+          { tag: '[[[event.choices.total_votes]]]', desc: 'Total votes across all choices (use as denominator for progress bars)' },
+          { tag: '[[[event.choices.total_channel_points_votes]]]', desc: 'Total channel-points votes across all choices' },
           { tag: '[[[event.choices.0.title]]]', desc: 'First choice title' },
           { tag: '[[[event.choices.0.votes]]]', desc: 'First choice total votes' },
           { tag: '[[[event.choices.0.channel_points_votes]]]', desc: 'Channel-points votes for #0' },
@@ -711,6 +713,7 @@ const cards: EventCard[] = [
         heading: 'Final Choices',
         tags: [
           { tag: '[[[event.choices.count]]]', desc: 'How many choices' },
+          { tag: '[[[event.choices.total_votes]]]', desc: 'Final total votes across all choices' },
           { tag: '[[[event.choices.0.title]]]', desc: 'First choice title' },
           { tag: '[[[event.choices.0.votes]]]', desc: 'First choice final vote count' },
           { tag: '[[[event.choices.1.title]]]', desc: 'Second choice title (also .2 to .4)' },
@@ -771,6 +774,8 @@ const cards: EventCard[] = [
         heading: 'Outcomes',
         tags: [
           { tag: '[[[event.outcomes.count]]]', desc: 'How many outcomes' },
+          { tag: '[[[event.outcomes.total_users]]]', desc: 'Total predictors across all outcomes' },
+          { tag: '[[[event.outcomes.total_channel_points]]]', desc: 'Total channel points wagered across all outcomes' },
           { tag: '[[[event.outcomes.0.title]]]', desc: 'First outcome title' },
           { tag: '[[[event.outcomes.0.color]]]', desc: '"blue" or "pink"' },
           { tag: '[[[event.outcomes.0.users]]]', desc: 'Number of predictors on #0' },
@@ -800,6 +805,8 @@ const cards: EventCard[] = [
         heading: 'Final Outcomes',
         tags: [
           { tag: '[[[event.outcomes.count]]]', desc: 'How many outcomes' },
+          { tag: '[[[event.outcomes.total_users]]]', desc: 'Total predictors across all outcomes' },
+          { tag: '[[[event.outcomes.total_channel_points]]]', desc: 'Total channel points wagered across all outcomes' },
           { tag: '[[[event.outcomes.0.title]]]', desc: 'First outcome title' },
           { tag: '[[[event.outcomes.0.users]]]', desc: 'Final predictor count on #0' },
           { tag: '[[[event.outcomes.0.channel_points]]]', desc: 'Final channel points on #0' },
@@ -830,6 +837,8 @@ const cards: EventCard[] = [
         heading: 'Final Outcomes',
         tags: [
           { tag: '[[[event.outcomes.count]]]', desc: 'How many outcomes' },
+          { tag: '[[[event.outcomes.total_users]]]', desc: 'Final total predictors across all outcomes' },
+          { tag: '[[[event.outcomes.total_channel_points]]]', desc: 'Final total channel points wagered' },
           { tag: '[[[event.outcomes.0.title]]]', desc: 'First outcome title' },
           { tag: '[[[event.outcomes.0.users]]]', desc: 'Final predictor count on #0' },
           { tag: '[[[event.outcomes.0.channel_points]]]', desc: 'Final channel points on #0' },

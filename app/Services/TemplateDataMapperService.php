@@ -524,11 +524,13 @@ class TemplateDataMapperService
                     'event.description', 'event.current_amount', 'event.target_amount', 'event.is_achieved',
                     // Polls
                     'event.title', 'event.choices.count',
+                    'event.choices.total_votes', 'event.choices.total_channel_points_votes', 'event.choices.total_bits_votes',
                     'event.choices.0.title', 'event.choices.0.votes', 'event.choices.0.channel_points_votes', 'event.choices.0.bits_votes',
                     'event.bits_voting.is_enabled', 'event.bits_voting.amount_per_vote',
                     'event.channel_points_voting.is_enabled', 'event.channel_points_voting.amount_per_vote',
                     // Predictions
                     'event.winning_outcome_id', 'event.outcomes.count',
+                    'event.outcomes.total_users', 'event.outcomes.total_channel_points',
                     'event.outcomes.0.title', 'event.outcomes.0.color', 'event.outcomes.0.users', 'event.outcomes.0.channel_points',
                     'event.locks_at',
                 ],
@@ -705,6 +707,28 @@ class TemplateDataMapperService
                 if (isset(self::INDEXED_LIST_FIELDS[$key]) && is_array($value) && array_is_list($value)) {
                     $cap = self::INDEXED_LIST_FIELDS[$key];
                     $mapped[$tagName.'.count'] = count($value);
+
+                    // Sum numeric fields across ALL items (before the cap) so
+                    // templates can use true aggregates as denominators for
+                    // progress bars / percentages. Polls get total_votes +
+                    // total_channel_points_votes + total_bits_votes, predictions
+                    // get total_users + total_channel_points, hype trains get
+                    // total_total on top_contributions.
+                    $sums = [];
+                    foreach ($value as $item) {
+                        if (! is_array($item) || array_is_list($item)) {
+                            continue;
+                        }
+                        foreach ($item as $itemKey => $itemValue) {
+                            if (is_numeric($itemValue)) {
+                                $sums[$itemKey] = ($sums[$itemKey] ?? 0) + $itemValue;
+                            }
+                        }
+                    }
+                    foreach ($sums as $subkey => $sum) {
+                        $mapped[$tagName.'.total_'.$subkey] = $sum + 0;
+                    }
+
                     foreach (array_slice($value, 0, $cap) as $i => $item) {
                         if (is_array($item) && ! array_is_list($item)) {
                             foreach ($item as $itemKey => $itemValue) {
@@ -861,6 +885,9 @@ class TemplateDataMapperService
             // Polls
             'event.title' => 'Poll / prediction title',
             'event.choices.count' => 'Number of poll choices',
+            'event.choices.total_votes' => 'Sum of votes across all choices (use as denominator for progress bars)',
+            'event.choices.total_channel_points_votes' => 'Sum of channel-points votes across all choices',
+            'event.choices.total_bits_votes' => 'Sum of bits votes across all choices (deprecated by Twitch)',
             'event.choices.0.title' => 'Poll choice 1 title',
             'event.choices.0.votes' => 'Poll choice 1 total votes',
             'event.choices.0.channel_points_votes' => 'Poll choice 1 channel points votes',
@@ -873,6 +900,8 @@ class TemplateDataMapperService
             // Predictions
             'event.winning_outcome_id' => 'ID of winning prediction outcome',
             'event.outcomes.count' => 'Number of prediction outcomes',
+            'event.outcomes.total_users' => 'Sum of predictors across all outcomes',
+            'event.outcomes.total_channel_points' => 'Sum of channel points wagered across all outcomes',
             'event.outcomes.0.title' => 'Prediction outcome 1 title',
             'event.outcomes.0.color' => 'Prediction outcome 1 color (blue / pink)',
             'event.outcomes.0.users' => 'Prediction outcome 1 number of predictors',
