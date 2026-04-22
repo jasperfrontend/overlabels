@@ -1,0 +1,30 @@
+# FrankenPHP Caddyfile for Overlabels (Laravel 12)
+#
+# kamal-proxy terminates TLS, forwards plain HTTP to this server on :80.
+# SERVER_NAME=:80 makes Caddy listen on plain HTTP without trying to provision
+# its own LE cert (kamal-proxy already did).
+
+{
+	{$CADDY_GLOBAL_OPTIONS}
+	frankenphp
+	order php_server before file_server
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$SERVER_NAME::80} {
+	root * /app/public
+	encode zstd br gzip
+
+	# Pass real client IP from kamal-proxy
+	header_up X-Real-IP {http.request.remote.host}
+
+	log {
+		output stderr
+		format console
+	}
+
+	php_server
+}

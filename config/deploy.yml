@@ -1,0 +1,220 @@
+# Kamal 2 deploy config for Overlabels (Laravel 12 + Reverb + Postgres + Redis)
+#
+# Single Linode Shared 4 GB VM in Frankfurt (eu-central). One Docker image
+# (built from the repo root Dockerfile) drives four roles: web, queue,
+# scheduler, reverb. Postgres/Redis run as accessories on the same host.
+# StreamLabs and StreamElements listeners are accessories built from
+# Dockerfile.streamlabs-listener / Dockerfile.streamelements-listener and
+# pushed to GHCR by the deploy workflow.
+#
+# Replace <VM_IP> with the Linode public IP once the VM is provisioned.
+
+service: overlabels
+image: ghcr.io/jasperfrontend/overlabels
+
+servers:
+  web:
+    hosts:
+      - <VM_IP>
+    proxy:
+      ssl: true
+      host: overlabels.com
+      app_port: 80
+      healthcheck:
+        interval: 5
+        path: /up
+        timeout: 5
+    env:
+      clear:
+        ROLE: web
+        ENTRYPOINT_RUN_MIGRATIONS: "1"
+        SERVER_NAME: ":80"
+
+  queue:
+    hosts:
+      - <VM_IP>
+    cmd: php artisan queue:work --verbose --tries=3 --timeout=300 --sleep=3 --max-jobs=1000 --max-time=3600
+    env:
+      clear:
+        ROLE: queue
+        ENTRYPOINT_SKIP_CACHE: "0"
+
+  scheduler:
+    hosts:
+      - <VM_IP>
+    cmd: bash -c 'while true; do php artisan schedule:run --no-interaction --verbose; sleep 60; done'
+    env:
+      clear:
+        ROLE: scheduler
+        ENTRYPOINT_SKIP_CACHE: "0"
+
+  reverb:
+    hosts:
+      - <VM_IP>
+    cmd: php artisan reverb:start --host=0.0.0.0 --port=8080
+    proxy:
+      ssl: true
+      host: ws.overlabels.com
+      app_port: 8080
+      healthcheck:
+        interval: 10
+        path: /
+        timeout: 5
+      # Long drain so in-flight WebSocket frames have a chance to flush during deploy
+      buffering:
+        requests: false
+        responses: false
+    env:
+      clear:
+        ROLE: reverb
+        ENTRYPOINT_SKIP_CACHE: "1"
+
+# Pull base + push deploys via GitHub Container Registry
+registry:
+  server: ghcr.io
+  username: jasperfrontend
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# SSH user provisioned on the VM (NOT root)
+ssh:
+  user: deploy
+
+builder:
+  arch: amd64
+  # Build locally on a beefy dev box; remote build on a 4 GB VM is painfully slow
+  remote: false
+  cache:
+    type: gha
+
+# Shared environment (everything not in `secrets` is plaintext on the host)
+env:
+  clear:
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_URL: https://overlabels.com
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: info
+
+    DB_CONNECTION: pgsql
+    DB_HOST: overlabels-postgres
+    DB_PORT: "5432"
+    DB_DATABASE: overlabels
+    DB_USERNAME: overlabels
+
+    SESSION_DRIVER: database
+    SESSION_DOMAIN: .overlabels.com
+    SESSION_SECURE_COOKIE: "true"
+
+    QUEUE_CONNECTION: database
+    CACHE_STORE: redis
+    BROADCAST_CONNECTION: reverb
+    FILESYSTEM_DISK: local
+
+    REDIS_HOST: overlabels-redis
+    REDIS_PORT: "6379"
+
+    REVERB_HOST: ws.overlabels.com
+    REVERB_PORT: "443"
+    REVERB_SCHEME: https
+    REVERB_SERVER_HOST: 0.0.0.0
+    REVERB_SERVER_PORT: "8080"
+    REVERB_SCALING_ENABLED: "false"
+
+    VITE_REVERB_HOST: ws.overlabels.com
+    VITE_REVERB_PORT: "443"
+    VITE_REVERB_SCHEME: https
+
+    TELESCOPE_ENABLED: "false"
+    TRUSTED_PROXIES: "*"
+
+  secret:
+    - APP_KEY
+    - DB_PASSWORD
+
+    - REVERB_APP_ID
+    - REVERB_APP_KEY
+    - REVERB_APP_SECRET
+    - VITE_REVERB_APP_KEY
+
+    - TWITCH_CLIENT_ID
+    - TWITCH_CLIENT_SECRET
+    - TWITCH_WEBHOOK_SECRET
+
+    - TWITCHBOT_CLIENT_ID
+    - TWITCHBOT_CLIENT_SECRET
+    - TWITCHBOT_LISTENER_SECRET
+
+    - STREAMLABS_CLIENT_ID
+    - STREAMLABS_CLIENT_SECRET
+    - STREAMLABS_LISTENER_SECRET
+
+    - STREAMELEMENTS_LISTENER_SECRET
+
+    - CLOUDINARY_URL
+
+    - INTEGRATION_SUGGESTION_WEBHOOK_URL
+    - SIGNUP_NOTIFICATION_EMAIL
+
+aliases:
+  console: app exec --interactive --reuse "php artisan tinker"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  migrate: app exec "php artisan migrate --force"
+
+accessories:
+  postgres:
+    image: postgres:16-alpine
+    host: <VM_IP>
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: overlabels
+        POSTGRES_DB: overlabels
+        # Conservative tuning for a shared 4 GB box
+        POSTGRES_INITDB_ARGS: "--data-checksums"
+      secret:
+        - POSTGRES_PASSWORD
+    files:
+      - docker/postgres-tuning.conf:/etc/postgresql/conf.d/tuning.conf
+    directories:
+      - data:/var/lib/postgresql/data
+    cmd: postgres -c config_file=/var/lib/postgresql/data/postgresql.conf -c "include_dir=/etc/postgresql/conf.d"
+    options:
+      memory: 768m
+      restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    host: <VM_IP>
+    port: "127.0.0.1:6379:6379"
+    cmd: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru --save ""
+    directories:
+      - redis-data:/data
+    options:
+      memory: 256m
+      restart: unless-stopped
+
+  streamlabs-listener:
+    image: ghcr.io/jasperfrontend/overlabels-streamlabs-listener
+    host: <VM_IP>
+    env:
+      clear:
+        APP_URL: https://overlabels.com
+      secret:
+        - STREAMLABS_LISTENER_SECRET
+    options:
+      memory: 128m
+      restart: unless-stopped
+
+  streamelements-listener:
+    image: ghcr.io/jasperfrontend/overlabels-streamelements-listener
+    host: <VM_IP>
+    env:
+      clear:
+        APP_URL: https://overlabels.com
+      secret:
+        - STREAMELEMENTS_LISTENER_SECRET
+    options:
+      memory: 128m
+      restart: unless-stopped

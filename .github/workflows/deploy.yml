@@ -1,0 +1,101 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Ruby (for Kamal)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+
+      - name: Install Kamal
+        run: gem install kamal --no-document
+
+      # Build & push the listener images first (small, fast). Kamal's app build
+      # comes next inside `kamal deploy`.
+      - name: Build & push streamlabs-listener
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.streamlabs-listener
+          push: true
+          tags: |
+            ghcr.io/jasperfrontend/overlabels-streamlabs-listener:latest
+            ghcr.io/jasperfrontend/overlabels-streamlabs-listener:${{ github.sha }}
+          cache-from: type=gha,scope=streamlabs-listener
+          cache-to: type=gha,mode=max,scope=streamlabs-listener
+
+      - name: Build & push streamelements-listener
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.streamelements-listener
+          push: true
+          tags: |
+            ghcr.io/jasperfrontend/overlabels-streamelements-listener:latest
+            ghcr.io/jasperfrontend/overlabels-streamelements-listener:${{ github.sha }}
+          cache-from: type=gha,scope=streamelements-listener
+          cache-to: type=gha,mode=max,scope=streamelements-listener
+
+      # Kamal deploy: builds + pushes the main app image, rolls all roles.
+      # The deploy SSH key + registry password are pulled from secrets.
+      - name: Kamal deploy
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          SSH_PRIVATE_KEY: ${{ secrets.KAMAL_SSH_PRIVATE_KEY }}
+          # Laravel + Reverb secrets that Kamal needs to inject into containers
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          REVERB_APP_ID: ${{ secrets.REVERB_APP_ID }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          REVERB_APP_SECRET: ${{ secrets.REVERB_APP_SECRET }}
+          VITE_REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          TWITCH_WEBHOOK_SECRET: ${{ secrets.TWITCH_WEBHOOK_SECRET }}
+          TWITCHBOT_CLIENT_ID: ${{ secrets.TWITCHBOT_CLIENT_ID }}
+          TWITCHBOT_CLIENT_SECRET: ${{ secrets.TWITCHBOT_CLIENT_SECRET }}
+          TWITCHBOT_LISTENER_SECRET: ${{ secrets.TWITCHBOT_LISTENER_SECRET }}
+          STREAMLABS_CLIENT_ID: ${{ secrets.STREAMLABS_CLIENT_ID }}
+          STREAMLABS_CLIENT_SECRET: ${{ secrets.STREAMLABS_CLIENT_SECRET }}
+          STREAMLABS_LISTENER_SECRET: ${{ secrets.STREAMLABS_LISTENER_SECRET }}
+          STREAMELEMENTS_LISTENER_SECRET: ${{ secrets.STREAMELEMENTS_LISTENER_SECRET }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          INTEGRATION_SUGGESTION_WEBHOOK_URL: ${{ secrets.INTEGRATION_SUGGESTION_WEBHOOK_URL }}
+          SIGNUP_NOTIFICATION_EMAIL: ${{ secrets.SIGNUP_NOTIFICATION_EMAIL }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          kamal deploy --skip-push=false

@@ -16,6 +16,7 @@ _ide_helper_models.php
 .claude
 .env
 .env.local
+.kamal/secrets
 /database/sql/starter-seed.sql
 .env.backup
 backup-*.sql

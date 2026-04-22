@@ -8,7 +8,7 @@ let commitHash = 'dev';
 try {
     commitHash = execSync('git rev-parse --short HEAD').toString().trim();
 } catch {
-    commitHash = (process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
+    commitHash = (process.env.APP_COMMIT_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
 }
 
 export default defineConfig({

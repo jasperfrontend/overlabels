@@ -1,6 +1,57 @@
-node_modules
-.env
 .git
+.gitignore
+.gitattributes
+.github
+
+# Dependencies (rebuilt inside the image)
+node_modules
+vendor
+
+# Local env / state
+.env
+.env.*
+!.env.example
+.kamal/secrets
+
+# IDE / editor noise
+.idea
+.vscode
+.zed
+.fleet
+.nova
+.phpstorm.meta.php
+.phpactor.json
 __history
+resources/js/rooms/__history
+
+# Caches & generated artefacts
 bootstrap/cache/packages.php
 bootstrap/cache/services.php
+bootstrap/cache/*.php
+bootstrap/ssr
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/logs/*
+storage/pail
+storage/*.key
+.phpunit.cache
+.phpunit.result.cache
+public/build
+public/hot
+public/storage
+
+# Test fixtures + dev-only docs
+tests
+docs
+_ide_helper.php
+_ide_helper_models.php
+
+# Backup dumps that occasionally land in the repo root
+backup-*.sql
+backup.sql
+tmp_screenshot.png
+parse_tags.js
+nul
+"public/css classes.txt"
