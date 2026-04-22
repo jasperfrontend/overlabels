@@ -4,7 +4,7 @@
     "height": 11,
     "filter": "hue-rotate(225deg)",
     "overlayColor": "#000000",
-    "overlayOpacity": 0.5,
+    "overlayOpacity": 0.36,
     "version": 1,
     "cells": [
         [
@@ -59,7 +59,7 @@
                 "bg": "/rooms/5/tiles/tile_53.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_53.png"
+                "bg": "/rooms/5/tiles/empty.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_52.png"

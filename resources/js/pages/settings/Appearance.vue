@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
-
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { type BreadcrumbItem } from '@/types';
 import type { AppPageProps } from '@/types';
 import { getDefaultCurrency } from '@/utils/formatters';
-
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 
@@ -24,6 +22,8 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage<AppPageProps>();
 const locale = ref(page.props.auth.user.locale ?? 'en-US');
+const showConfirmation = ref(false);
+const confirmationTitle = ref('');
 
 const LOCALES = [
   { value: 'en-US', label: 'English (US)' },
@@ -40,9 +40,21 @@ const LOCALES = [
 
 function updateLocale(newLocale: string) {
   locale.value = newLocale;
-  router.patch(route('settings.locale'), { locale: newLocale }, {
-    preserveScroll: true
-  });
+  showConfirmation.value = false; // close any previous confirmation first
+  try {
+    router.patch(route('settings.locale'), { locale: newLocale }, {
+      preserveScroll: true
+    });
+  } catch (error) {
+    showConfirmation.value = true;
+    confirmationTitle.value = 'Locale updated failed. Please try again. If the error persists, log out and back in again.';
+  } finally {
+    showConfirmation.value = true;
+    confirmationTitle.value = `locale updated to ${newLocale}`;
+    setTimeout(() => {
+      showConfirmation.value = false;
+    }, 5000)
+  }
 }
 
 // Format examples based on current locale
@@ -90,6 +102,7 @@ function exampleDate(): string {
 
       <div class="space-y-6">
         <HeadingSmall title="Formatting locale" description="Controls how numbers, currencies, and dates are formatted in your overlays." />
+
         <div class="space-y-3">
           <select
             :value="locale"
@@ -105,6 +118,12 @@ function exampleDate(): string {
             <span>Currency: <strong class="text-foreground">{{ exampleCurrency() }}</strong></span>
             <span>Date: <strong class="text-foreground">{{ exampleDate() }}</strong></span>
           </div>
+        </div>
+        <div
+          v-if="showConfirmation"
+          class="w-auto inline-flex p-1 gap-2 items-center rounded-sm"
+        >
+          <p class="text-sm text-green-600 dark:text-green-300">{{ confirmationTitle }}</p>
         </div>
       </div>
     </SettingsLayout>

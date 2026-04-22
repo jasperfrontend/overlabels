@@ -33,16 +33,16 @@ const DEFAULT_LOCALE = 'en-US';
  * Used when |currency pipe has no explicit currency code argument.
  */
 const LOCALE_CURRENCY_MAP: Record<string, string> = {
-  'en-US': 'USD',
-  'en-GB': 'GBP',
-  'nl-NL': 'EUR',
-  'nl-BE': 'EUR',
-  'de-DE': 'EUR',
-  'fr-FR': 'EUR',
-  'es-ES': 'EUR',
-  'pt-BR': 'BRL',
-  'ja-JP': 'JPY',
-  'ko-KR': 'KRW',
+  'en-US': '$',
+  'en-GB': '£',
+  'nl-NL': '€',
+  'nl-BE': '€',
+  'de-DE': '€',
+  'fr-FR': '€',
+  'es-ES': '€',
+  'pt-BR': 'R$',
+  'ja-JP': '¥',
+  'ko-KR': '₩',
 };
 
 export function getDefaultCurrency(locale: string): string {
