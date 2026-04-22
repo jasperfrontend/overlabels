@@ -89,8 +89,16 @@ export interface User {
     updated_at: string;
     role: 'user' | 'admin';
     locale?: string;
+    foreach_caps?: ForeachCaps;
     is_system_user: boolean;
     deleted_at: string | null;
+}
+
+export interface ForeachCaps {
+    subscribers: number;
+    goals: number;
+    followers: number;
+    followed: number;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

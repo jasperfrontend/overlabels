@@ -439,7 +439,9 @@ class OverlayTemplateController extends Controller
             $mapped = $this->mapper->mapForTemplate(
                 $twitchData,
                 $template->name,
-                $allowlist
+                $allowlist,
+                null,
+                $user->foreachCaps()
             );
 
             // Build final data: Twitch data + controls + Twitch ID
@@ -502,7 +504,7 @@ class OverlayTemplateController extends Controller
         $template = $request->user()->overlayTemplates()->create($validated);
 
         // Extract and store template tags
-        $template->template_tags = $template->extractTemplateTags();
+        $template->template_tags = $template->extractTemplateTags($request->user()->foreachCaps());
         $template->save();
 
         // For Inertia requests, redirect to the show page
@@ -543,7 +545,7 @@ class OverlayTemplateController extends Controller
 
         // Re-extract template tags if content changed
         if (isset($validated['html']) || isset($validated['css']) || isset($validated['js'])) {
-            $template->template_tags = $template->extractTemplateTags();
+            $template->template_tags = $template->extractTemplateTags($request->user()->foreachCaps());
             $template->save();
         }
 

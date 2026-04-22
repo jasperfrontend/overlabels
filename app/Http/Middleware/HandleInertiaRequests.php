@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                     'onboarded_at',
                     'role',
                     'locale',
+                    'foreach_caps',
                 ]) : null,
             ],
             'ziggy' => [

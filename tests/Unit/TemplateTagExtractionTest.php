@@ -166,3 +166,45 @@ test('extractTemplateTags expands alias references in conditional branches insid
         ->toContain('event.choices.0.title')
         ->toContain('event.choices.4.votes');
 });
+
+test('extractTemplateTags expands user-scope subscribers foreach using provided caps', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:subscribers as s]]]<li>[[[s.user_name]]]</li>[[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags(['subscribers' => 3, 'goals' => 3, 'followers' => 5, 'followed' => 5]);
+
+    expect($tags)
+        ->toContain('subscribers.count')
+        ->toContain('subscribers.0.user_name')
+        ->toContain('subscribers.1.user_name')
+        ->toContain('subscribers.2.user_name')
+        ->not->toContain('subscribers.3.user_name');
+});
+
+test('extractTemplateTags expands channel_followers foreach using provided caps', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:channel_followers as f]]]<li>[[[f.user_name]]]</li>[[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags(['subscribers' => 10, 'goals' => 3, 'followers' => 4, 'followed' => 5]);
+
+    expect($tags)
+        ->toContain('channel_followers.count')
+        ->toContain('channel_followers.0.user_name')
+        ->toContain('channel_followers.3.user_name')
+        ->not->toContain('channel_followers.4.user_name');
+});
+
+test('extractTemplateTags event caps are fixed regardless of user caps', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:event.choices as c]]][[[c.title]]][[[endforeach]]]';
+    $template->css = '';
+
+    // Even with a huge user cap, event.choices stays at Twitch's 5-choice limit.
+    $tags = $template->extractTemplateTags(['subscribers' => 50, 'goals' => 50, 'followers' => 50, 'followed' => 50]);
+
+    expect($tags)
+        ->toContain('event.choices.4.title')
+        ->not->toContain('event.choices.5.title');
+});

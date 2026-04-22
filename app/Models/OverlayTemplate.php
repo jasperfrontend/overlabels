@@ -147,10 +147,16 @@ class OverlayTemplate extends Model
     }
 
     /**
-     * Extract template tags from HTML/CSS
+     * Extract template tags from HTML/CSS.
+     *
+     * @param  array<string,int>|null  $caps  Per-user foreach caps keyed by
+     *         preference key (subscribers, goals, followers, followed). When
+     *         null, the owner's foreachCaps() are used; falls back to defaults
+     *         if no owner is loaded.
      */
-    public function extractTemplateTags(): array
+    public function extractTemplateTags(?array $caps = null): array
     {
+        $caps = $caps ?? $this->owner?->foreachCaps() ?? [];
         $tags = [];
 
         // Pattern to match [[[tag_name]]] and [[[tag_name|formatter:args]]] syntax
@@ -177,8 +183,9 @@ class OverlayTemplate extends Model
         // (`event.choices.0.title`). Expand each loop to the concrete indexed
         // data keys so the template-data mapper includes them in the response.
         $foreachAliases = [];
+        $effectiveCaps = $this->buildEffectiveForeachCaps($caps);
         foreach ([$this->html ?? '', $this->css ?? ''] as $source) {
-            [$expandedTags, $aliasesInSource] = $this->extractForeachTags($source);
+            [$expandedTags, $aliasesInSource] = $this->extractForeachTags($source, $effectiveCaps);
             $tags = array_merge($tags, $expandedTags);
             $foreachAliases = array_merge($foreachAliases, $aliasesInSource);
         }
@@ -208,10 +215,10 @@ class OverlayTemplate extends Model
     }
 
     /**
-     * Caps for Twitch event list fields, matching TemplateDataMapperService.
-     * Drives how many concrete indexed tags a foreach iterable expands to.
+     * Hard caps for Twitch event list fields - these match Twitch's own limits
+     * and the INDEXED_LIST_FIELDS in TemplateDataMapperService. Not user-configurable.
      */
-    private const FOREACH_LIST_CAPS = [
+    private const FOREACH_EVENT_CAPS = [
         'choices' => 5,
         'outcomes' => 10,
         'top_contributions' => 3,
@@ -220,13 +227,39 @@ class OverlayTemplate extends Model
     private const FOREACH_DEFAULT_CAP = 10;
 
     /**
+     * Build a lookup keyed by the final dotted segment of the iterable
+     * (e.g. `event.choices` -> `choices`, `subscribers` -> `subscribers`) to
+     * the cap that should apply. Merges event caps (hardcoded) with user-scope
+     * caps from preferences so one lookup covers both.
+     *
+     * @param  array<string,int>  $userCaps  Keyed by user preference key
+     *         (subscribers, goals, followers, followed).
+     */
+    private function buildEffectiveForeachCaps(array $userCaps): array
+    {
+        $effective = self::FOREACH_EVENT_CAPS;
+
+        foreach (\App\Services\TemplateDataMapperService::userScopeIterables() as $prefKey => $spec) {
+            $cap = (int) ($userCaps[$prefKey] ?? $spec['default_cap']);
+            $alias = $spec['alias'];
+            // The last segment of the alias is what extractForeachTags keys on
+            // (e.g. `channel_followers` -> `channel_followers`).
+            $segments = explode('.', $alias);
+            $effective[end($segments)] = $cap;
+        }
+
+        return $effective;
+    }
+
+    /**
      * Expand each `[[[foreach:X as Y]]] ... [[[endforeach]]]` block into the
      * concrete data keys its body references. Returns [$expandedTags, $aliases]
      * so the caller can also strip the scope-local aliases from the final list.
      *
+     * @param  array<string,int>  $effectiveCaps  Result of buildEffectiveForeachCaps.
      * @return array{0: string[], 1: string[]}
      */
-    private function extractForeachTags(string $content): array
+    private function extractForeachTags(string $content, array $effectiveCaps): array
     {
         $expanded = [];
         $aliases = [];
@@ -271,10 +304,10 @@ class OverlayTemplate extends Model
             $subkeys = array_unique($subkeys);
 
             // Determine cap for this iterable. Use the last dotted segment
-            // (e.g. `event.choices` -> `choices`) to key into FOREACH_LIST_CAPS.
+            // (e.g. `event.choices` -> `choices`) to key into effective caps.
             $segments = explode('.', $iterable);
             $last = end($segments);
-            $cap = self::FOREACH_LIST_CAPS[$last] ?? self::FOREACH_DEFAULT_CAP;
+            $cap = $effectiveCaps[$last] ?? self::FOREACH_DEFAULT_CAP;
 
             for ($i = 0; $i < $cap; $i++) {
                 if (empty($subkeys)) {

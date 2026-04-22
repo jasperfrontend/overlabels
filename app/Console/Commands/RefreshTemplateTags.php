@@ -45,7 +45,9 @@ class RefreshTemplateTags extends Command
             $this->info("Filtering by ID: $id");
         }
 
-        $templates = $query->get();
+        // Eager-load owner so extractTemplateTags() can read per-user foreach caps
+        // without triggering a DB roundtrip per template.
+        $templates = $query->with('owner')->get();
         $count = $templates->count();
 
         if ($count === 0) {

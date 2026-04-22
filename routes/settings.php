@@ -7,6 +7,7 @@ use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\OverlabelsMobileIntegrationController;
 use App\Http\Controllers\Settings\StreamElementsIntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,10 +18,26 @@ Route::middleware('auth.redirect')->group(function () {
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);
-        $request->user()->update(['locale' => $request->input('locale')]);
+        $request->user()->setPreference('locale', $request->input('locale'))->save();
 
         return back();
     })->name('settings.locale');
+
+    Route::patch('/settings/foreach-caps', function (Request $request) {
+        $rules = [];
+        foreach (array_keys(User::PREFERENCE_DEFAULTS['foreach_caps']) as $key) {
+            $rules[$key] = 'required|integer|min:1|max:'.User::FOREACH_CAP_MAX;
+        }
+        $validated = $request->validate($rules);
+
+        $user = $request->user();
+        foreach ($validated as $key => $value) {
+            $user->setPreference("foreach_caps.$key", (int) $value);
+        }
+        $user->save();
+
+        return back();
+    })->name('settings.foreach-caps');
 
     // External Integrations
     Route::prefix('settings/integrations')->name('settings.integrations.')->group(function () {

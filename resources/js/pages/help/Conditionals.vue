@@ -1233,6 +1233,74 @@ function clearFilter() {
                 Loops can be nested, and you can use <code>[[[if:...]]]</code> inside a loop body (as shown above).
                 Non-scoped tokens like <code>[[[event.title]]]</code> still work inside the body.
               </p>
+
+              <h4 class="mt-6 mb-3 text-lg font-semibold">Iterable collections</h4>
+              <p class="mb-3 text-foreground">
+                These are the collections you can put on the right-hand side of <code>[[[foreach:X as Y]]]</code>.
+                Event collections follow Twitch's own limits. User-scope collections obey the caps on your
+                <Link :href="route('settings.appearance')" class="underline hover:no-underline">Appearance settings page</Link>
+                (hard maximum 50 per loop).
+              </p>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-sidebar text-left">
+                      <th class="py-2 pr-4 font-semibold">Iterable</th>
+                      <th class="py-2 pr-4 font-semibold">Scope</th>
+                      <th class="py-2 pr-4 font-semibold">Cap source</th>
+                      <th class="py-2 font-semibold">Use in alert or static?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>event.choices</code></td>
+                      <td class="py-2 pr-4">Poll alert</td>
+                      <td class="py-2 pr-4">5 (Twitch limit)</td>
+                      <td class="py-2">Alert</td>
+                    </tr>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>event.outcomes</code></td>
+                      <td class="py-2 pr-4">Prediction alert</td>
+                      <td class="py-2 pr-4">10 (Twitch limit)</td>
+                      <td class="py-2">Alert</td>
+                    </tr>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>event.top_contributions</code></td>
+                      <td class="py-2 pr-4">Hype train alert</td>
+                      <td class="py-2 pr-4">3 (fixed)</td>
+                      <td class="py-2">Alert</td>
+                    </tr>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>subscribers</code></td>
+                      <td class="py-2 pr-4">User (channel)</td>
+                      <td class="py-2 pr-4">Appearance settings (default 10)</td>
+                      <td class="py-2">Static</td>
+                    </tr>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>goals</code></td>
+                      <td class="py-2 pr-4">User (channel)</td>
+                      <td class="py-2 pr-4">Appearance settings (default 3)</td>
+                      <td class="py-2">Static</td>
+                    </tr>
+                    <tr class="border-b border-sidebar">
+                      <td class="py-2 pr-4"><code>channel_followers</code></td>
+                      <td class="py-2 pr-4">User (channel)</td>
+                      <td class="py-2 pr-4">Appearance settings (default 5)</td>
+                      <td class="py-2">Static</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 pr-4"><code>followed_channels</code></td>
+                      <td class="py-2 pr-4">User (channel)</td>
+                      <td class="py-2 pr-4">Appearance settings (default 5)</td>
+                      <td class="py-2">Static</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-3 text-sm text-foreground">
+                Inside a loop, use <code>[[[alias.count]]]</code> on the iterable itself to get the total (untruncated) count.
+                For example, <code>[[[subscribers.count]]]</code> shows the real subscriber total even if your cap is 10.
+              </p>
             </div>
           </div>
         </div>

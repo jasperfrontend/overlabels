@@ -39,6 +39,35 @@ class TemplateDataMapperService
     ];
 
     /**
+     * User-scope list fields that [[[foreach:alias as item]]] can iterate over.
+     * Each entry maps a preference cap key to a source path in the Twitch payload
+     * and the template-facing alias. Caps come from User::foreachCaps() — the
+     * value here is only the fallback when no user caps are provided.
+     */
+    private const array INDEXED_USER_SCOPE_FIELDS = [
+        'subscribers' => ['source' => 'subscribers.data', 'alias' => 'subscribers', 'default_cap' => 10],
+        'goals' => ['source' => 'goals.data', 'alias' => 'goals', 'default_cap' => 3],
+        'followers' => ['source' => 'channel_followers.data', 'alias' => 'channel_followers', 'default_cap' => 5],
+        'followed' => ['source' => 'followed_channels.data', 'alias' => 'followed_channels', 'default_cap' => 5],
+    ];
+
+    /**
+     * Public so callers (extractTemplateTags, settings defaults) can reuse the
+     * same alias -> default-cap mapping without reaching into private state.
+     *
+     * @return array<string, array{alias: string, default_cap: int}>
+     */
+    public static function userScopeIterables(): array
+    {
+        $out = [];
+        foreach (self::INDEXED_USER_SCOPE_FIELDS as $key => $spec) {
+            $out[$key] = ['alias' => $spec['alias'], 'default_cap' => $spec['default_cap']];
+        }
+
+        return $out;
+    }
+
+    /**
      * Charity/hype-train payloads use {value, decimal_places, currency} money objects.
      * We emit event.{field}.formatted alongside the raw fields so templates aren't
      * stuck with minor-unit integers.
@@ -189,9 +218,13 @@ class TemplateDataMapperService
 
     /**
      * Transform Twitch API data structure into template-friendly flat structure
-     * This uses the same mappings as getStandardizedTagName for consistency
+     * This uses the same mappings as getStandardizedTagName for consistency.
+     *
+     * @param  array|null  $caps  Per-user foreach caps (subscribers, goals,
+     *                            followers, followed). When null, default caps
+     *                            from INDEXED_USER_SCOPE_FIELDS are used.
      */
-    public function mapTwitchDataForTemplates(array $twitchData, string $overlayName): array
+    public function mapTwitchDataForTemplates(array $twitchData, string $overlayName, ?array $caps = null): array
     {
         $mappings = $this->getTemplateMappings();
         $templateData = [
@@ -212,7 +245,62 @@ class TemplateDataMapperService
             }
         }
 
+        // Emit indexed flat keys for user-scope iterables so [[[foreach:subscribers as s]]]
+        // has something to resolve. Runs after the scalar mapping so [[[subscribers_latest_*]]]
+        // still works alongside [[[foreach:subscribers as s]]][[[s.*]]][[[endforeach]]].
+        $templateData = array_merge(
+            $templateData,
+            $this->buildUserScopeIndexedKeys($twitchData, $caps)
+        );
+
         return $templateData;
+    }
+
+    /**
+     * Build indexed flat keys for the 4 user-scope arrays (subscribers, goals,
+     * followers, followed) based on per-user caps. Returns entries like:
+     *   subscribers.count        => N
+     *   subscribers.0.user_name  => "..."
+     *   subscribers.1.user_name  => "..."
+     *
+     * `count` is the raw count from the Twitch payload, not capped. Items are
+     * sliced to the cap. Existing "single latest" flat keys (subscribers_latest_*)
+     * are emitted separately by the scalar mapping.
+     */
+    private function buildUserScopeIndexedKeys(array $twitchData, ?array $caps): array
+    {
+        $out = [];
+
+        foreach (self::INDEXED_USER_SCOPE_FIELDS as $key => $spec) {
+            $cap = (int) ($caps[$key] ?? $spec['default_cap']);
+            $cap = max(1, $cap);
+
+            $list = $this->getNestedValue($twitchData, $spec['source']);
+            if (! is_array($list) || ! array_is_list($list)) {
+                $out[$spec['alias'].'.count'] = 0;
+
+                continue;
+            }
+
+            $out[$spec['alias'].'.count'] = count($list);
+
+            foreach (array_slice($list, 0, $cap) as $i => $item) {
+                if (! is_array($item) || array_is_list($item)) {
+                    $out[$spec['alias'].'.'.$i] = $this->formatValueForTemplate($item, $spec['alias'].'.'.$i);
+
+                    continue;
+                }
+
+                foreach ($item as $subKey => $subValue) {
+                    $tag = $spec['alias'].'.'.$i.'.'.$subKey;
+                    $out[$tag] = is_array($subValue)
+                        ? $this->formatValueForTemplate($subValue, $tag)
+                        : $this->formatValueForTemplate($subValue, $tag);
+                }
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -451,10 +539,10 @@ class TemplateDataMapperService
     /*
      *  Helper methods for template mapping to map and prune to a template’s tags in one call.
      */
-    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null, ?array $eventData = null): array
+    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null, ?array $eventData = null, ?array $caps = null): array
     {
         // Map the full Twitch dataset to your flat tag structure
-        $all = $this->mapTwitchDataForTemplates($twitchData, $overlayName);
+        $all = $this->mapTwitchDataForTemplates($twitchData, $overlayName, $caps);
 
         // If event data is provided, add event.* tags
         if ($eventData) {

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type ForeachCaps } from '@/types';
 import type { AppPageProps } from '@/types';
 import { getDefaultCurrency } from '@/utils/formatters';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -20,10 +20,24 @@ const breadcrumbItems: BreadcrumbItem[] = [
   }
 ];
 
+const FOREACH_CAP_MAX = 50;
+const FOREACH_CAP_DEFAULTS: ForeachCaps = {
+  subscribers: 10,
+  goals: 3,
+  followers: 5,
+  followed: 5,
+};
+
 const page = usePage<AppPageProps>();
 const locale = ref(page.props.auth.user.locale ?? 'en-US');
+const foreachCaps = reactive<ForeachCaps>({
+  ...FOREACH_CAP_DEFAULTS,
+  ...(page.props.auth.user.foreach_caps ?? {}),
+});
 const showConfirmation = ref(false);
 const confirmationTitle = ref('');
+const foreachSaving = ref(false);
+const foreachConfirmation = ref('');
 
 const LOCALES = [
   { value: 'en-US', label: 'English (US)' },
@@ -88,6 +102,42 @@ function exampleDate(): string {
     return 'Apr 5, 2026';
   }
 }
+
+const FOREACH_CAP_FIELDS: { key: keyof ForeachCaps; label: string; hint: string }[] = [
+  { key: 'subscribers', label: 'Subscribers', hint: 'Items available in [[[foreach:subscribers as s]]]' },
+  { key: 'goals', label: 'Goals', hint: 'Items available in [[[foreach:goals as g]]]' },
+  { key: 'followers', label: 'Followers', hint: 'Items available in [[[foreach:channel_followers as f]]]' },
+  { key: 'followed', label: 'Followed channels', hint: 'Items available in [[[foreach:followed_channels as f]]]' },
+];
+
+function clampCap(value: number | string): number {
+  const n = typeof value === 'string' ? parseInt(value, 10) : value;
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(1, Math.min(FOREACH_CAP_MAX, Math.trunc(n)));
+}
+
+function saveForeachCaps() {
+  for (const field of FOREACH_CAP_FIELDS) {
+    foreachCaps[field.key] = clampCap(foreachCaps[field.key]);
+  }
+
+  foreachSaving.value = true;
+  foreachConfirmation.value = '';
+
+  router.patch(route('settings.foreach-caps'), { ...foreachCaps }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      foreachConfirmation.value = 'Foreach loop limits updated.';
+      setTimeout(() => { foreachConfirmation.value = ''; }, 5000);
+    },
+    onError: () => {
+      foreachConfirmation.value = 'Saving failed. Values must be 1 to 50.';
+    },
+    onFinish: () => {
+      foreachSaving.value = false;
+    },
+  });
+}
 </script>
 
 <template>
@@ -124,6 +174,45 @@ function exampleDate(): string {
           class="w-auto inline-flex p-1 gap-2 items-center rounded-sm"
         >
           <p class="text-sm text-green-600 dark:text-green-300">{{ confirmationTitle }}</p>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <HeadingSmall
+          title="Foreach loop limits"
+          description="How many items each [[[foreach:...]]] loop expands to in your overlays. Hard maximum is 50 per loop."
+        />
+
+        <div class="grid gap-4 sm:grid-cols-2 max-w-xl">
+          <div v-for="field in FOREACH_CAP_FIELDS" :key="field.key" class="space-y-1">
+            <label :for="`cap-${field.key}`" class="text-sm text-foreground">
+              {{ field.label }}
+            </label>
+            <input
+              :id="`cap-${field.key}`"
+              v-model.number="foreachCaps[field.key]"
+              type="number"
+              min="1"
+              :max="FOREACH_CAP_MAX"
+              :placeholder="String(FOREACH_CAP_DEFAULTS[field.key])"
+              class="input-border h-10 w-full rounded-sm px-3"
+            />
+            <p class="text-xs text-muted-foreground">{{ field.hint }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            :disabled="foreachSaving"
+            class="cursor-pointer rounded-sm border border-border bg-primary px-4 h-10 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            @click="saveForeachCaps"
+          >
+            {{ foreachSaving ? 'Saving...' : 'Save loop limits' }}
+          </button>
+          <p v-if="foreachConfirmation" class="text-sm text-green-600 dark:text-green-300">
+            {{ foreachConfirmation }}
+          </p>
         </div>
       </div>
     </SettingsLayout>

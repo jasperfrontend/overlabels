@@ -38,6 +38,8 @@ use Mchev\Banhammer\Traits\Bannable;
  * @property Carbon|null $onboarded_at
  * @property string|null $webhook_secret
  * @property string $role
+ * @property array<string, mixed> $preferences
+ * @property-read string $locale
  * @property bool $is_system_user
  * @property Carbon|null $deleted_at
  * @property-read Collection<int, AdminAuditLog> $adminAuditLogs
@@ -115,11 +117,33 @@ class User extends Authenticatable
         'onboarded_at',
         'webhook_secret',
         'role',
-        'locale',
+        'preferences',
         'is_system_user',
         'bot_enabled',
         'bot_settings',
     ];
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['locale', 'foreach_caps'];
+
+    /**
+     * Default values for preference keys, used by preference() as the fallback
+     * when a key is missing from the jsonb column. Keep this as the single
+     * source of truth for defaults.
+     */
+    public const array PREFERENCE_DEFAULTS = [
+        'locale' => 'en-US',
+        'foreach_caps' => [
+            'subscribers' => 10,
+            'goals' => 3,
+            'followers' => 5,
+            'followed' => 5,
+        ],
+    ];
+
+    public const int FOREACH_CAP_MAX = 50;
 
     /**
      * The attributes that should be hidden for serialization.
@@ -151,6 +175,7 @@ class User extends Authenticatable
             'twitch_data' => 'array',
             'twitch_scopes' => 'array',
             'bot_settings' => 'array',
+            'preferences' => 'array',
             'password' => 'hashed',
             'is_system_user' => 'boolean',
         ];
@@ -167,6 +192,70 @@ class User extends Authenticatable
         $settings[$key] = $value;
         $this->bot_settings = $settings;
         $this->save();
+    }
+
+    /**
+     * Read a preference by dot-notated key. Falls back to PREFERENCE_DEFAULTS,
+     * then to the explicit $default.
+     */
+    public function preference(string $key, mixed $default = null): mixed
+    {
+        $value = data_get($this->preferences ?? [], $key);
+
+        if ($value !== null) {
+            return $value;
+        }
+
+        $fallback = data_get(self::PREFERENCE_DEFAULTS, $key);
+
+        return $fallback ?? $default;
+    }
+
+    /**
+     * Write a preference by dot-notated key. Does not persist — caller saves.
+     */
+    public function setPreference(string $key, mixed $value): self
+    {
+        $preferences = $this->preferences ?? [];
+        data_set($preferences, $key, $value);
+        $this->preferences = $preferences;
+
+        return $this;
+    }
+
+    /**
+     * Locale accessor — reads from preferences->locale, falls back to en-US.
+     * Kept as a top-level attribute (via $appends) so frontend callers like
+     * page.props.auth.user.locale keep working unchanged after the migration.
+     */
+    public function getLocaleAttribute(): string
+    {
+        return (string) $this->preference('locale', 'en-US');
+    }
+
+    /**
+     * Per-user foreach caps merged with defaults and clamped to FOREACH_CAP_MAX.
+     */
+    public function foreachCaps(): array
+    {
+        $defaults = self::PREFERENCE_DEFAULTS['foreach_caps'];
+        $stored = (array) ($this->preference('foreach_caps') ?? []);
+        $merged = array_merge($defaults, array_intersect_key($stored, $defaults));
+
+        foreach ($merged as $key => $value) {
+            $merged[$key] = max(1, min(self::FOREACH_CAP_MAX, (int) $value));
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Accessor exposing foreachCaps() as a top-level attribute so Inertia shares
+     * and $user->only(['foreach_caps']) pick it up without extra plumbing.
+     */
+    public function getForeachCapsAttribute(): array
+    {
+        return $this->foreachCaps();
     }
 
     public function isAdmin(): bool
