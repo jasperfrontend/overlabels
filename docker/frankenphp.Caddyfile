@@ -18,9 +18,6 @@
 	root * /app/public
 	encode zstd br gzip
 
-	# Pass real client IP from kamal-proxy
-	header_up X-Real-IP {http.request.remote.host}
-
 	log {
 		output stderr
 		format console
