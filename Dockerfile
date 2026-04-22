@@ -79,6 +79,13 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 
 EXPOSE 80 443 443/udp
 
+# FrankenPHP base image has a HEALTHCHECK that probes Caddy's admin endpoint
+# on :2019 - only makes sense for the web role. Non-web roles (queue,
+# scheduler, reverb) run php CLI processes with no Caddy admin listener and
+# would be stuck in "unhealthy" forever. kamal-proxy does its own HTTP probe
+# of the web role via /up, which is the check that actually matters.
+HEALTHCHECK NONE
+
 ENTRYPOINT ["docker-entrypoint"]
 
 # Default CMD - the web role. Other Kamal roles override this with their own cmd.

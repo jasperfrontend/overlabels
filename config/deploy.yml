@@ -7,7 +7,7 @@
 # Dockerfile.streamlabs-listener / Dockerfile.streamelements-listener and
 # pushed to GHCR by the deploy workflow.
 #
-# Replace <VM_IP> with the Linode public IP once the VM is provisioned.
+# Replace 172.235.171.209 with the Linode public IP once the VM is provisioned.
 
 service: overlabels
 image: jasperfrontend/overlabels
@@ -15,7 +15,7 @@ image: jasperfrontend/overlabels
 servers:
   web:
     hosts:
-      - <VM_IP>
+      - 172.235.171.209
     proxy:
       ssl: true
       host: overlabels.com
@@ -32,7 +32,7 @@ servers:
 
   queue:
     hosts:
-      - <VM_IP>
+      - 172.235.171.209
     cmd: php artisan queue:work --verbose --tries=3 --timeout=300 --sleep=3 --max-jobs=1000 --max-time=3600
     env:
       clear:
@@ -41,7 +41,7 @@ servers:
 
   scheduler:
     hosts:
-      - <VM_IP>
+      - 172.235.171.209
     cmd: bash -c 'while true; do php artisan schedule:run --no-interaction --verbose; sleep 60; done'
     env:
       clear:
@@ -50,7 +50,7 @@ servers:
 
   reverb:
     hosts:
-      - <VM_IP>
+      - 172.235.171.209
     cmd: php artisan reverb:start --host=0.0.0.0 --port=8080
     proxy:
       ssl: true
@@ -93,8 +93,14 @@ env:
     APP_ENV: production
     APP_DEBUG: "false"
     APP_URL: https://overlabels.com
+    APP_NAME: Overlabels
+    APP_FORCE_HTTPS: "true"
     LOG_CHANNEL: stderr
     LOG_LEVEL: info
+
+    # OAuth redirect URIs - hard-coded for clarity (services.php has APP_URL fallbacks)
+    TWITCH_REDIRECT_URI: https://overlabels.com/auth/callback/twitch
+    TWITCHBOT_REDIRECT_URI: https://overlabels.com/auth/twitchbot/callback
 
     DB_CONNECTION: pgsql
     DB_HOST: overlabels-postgres
@@ -165,27 +171,36 @@ aliases:
 accessories:
   postgres:
     image: postgres:16-alpine
-    host: <VM_IP>
+    host: 172.235.171.209
     port: "127.0.0.1:5432:5432"
     env:
       clear:
         POSTGRES_USER: overlabels
         POSTGRES_DB: overlabels
-        # Conservative tuning for a shared 4 GB box
         POSTGRES_INITDB_ARGS: "--data-checksums"
       secret:
         - POSTGRES_PASSWORD
-    files:
-      - docker/postgres-tuning.conf:/etc/postgresql/conf.d/tuning.conf
     directories:
       - data:/var/lib/postgresql/data
-    cmd: postgres -c config_file=/var/lib/postgresql/data/postgresql.conf -c "include_dir=/etc/postgresql/conf.d"
+    # Conservative tuning for a shared 4 GB box (passed via -c flags so we
+    # don't need to mount a postgresql.conf or use include_dir)
+    cmd: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c work_mem=8MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=50
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
     options:
       memory: 768m
 
   redis:
     image: redis:7-alpine
-    host: <VM_IP>
+    host: 172.235.171.209
     port: "127.0.0.1:6379:6379"
     cmd: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru --save ""
     directories:
@@ -194,8 +209,8 @@ accessories:
       memory: 256m
 
   streamlabs-listener:
-    image: jasperfrontend/overlabels-streamlabs-listener
-    host: <VM_IP>
+    image: ghcr.io/jasperfrontend/overlabels-streamlabs-listener:latest
+    host: 172.235.171.209
     env:
       clear:
         APP_URL: https://overlabels.com
@@ -205,8 +220,8 @@ accessories:
       memory: 128m
 
   streamelements-listener:
-    image: jasperfrontend/overlabels-streamelements-listener
-    host: <VM_IP>
+    image: ghcr.io/jasperfrontend/overlabels-streamelements-listener:latest
+    host: 172.235.171.209
     env:
       clear:
         APP_URL: https://overlabels.com
