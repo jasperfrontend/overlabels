@@ -86,6 +86,15 @@ builder:
   remote: false
   cache:
     type: gha
+  # Vite needs these at npm-build time. They get inlined into the JS bundle
+  # and shipped to clients - that's by design (the Reverb app key is the
+  # client-facing identifier; channel auth uses server-issued tokens).
+  args:
+    VITE_APP_NAME: Overlabels
+    VITE_REVERB_APP_KEY: wecfzfxnwrfjyu1taehi
+    VITE_REVERB_HOST: ws.overlabels.com
+    VITE_REVERB_PORT: "443"
+    VITE_REVERB_SCHEME: https
 
 # Shared environment (everything not in `secrets` is plaintext on the host)
 env:

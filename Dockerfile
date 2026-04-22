@@ -7,6 +7,22 @@ WORKDIR /app
 ARG APP_COMMIT_SHA=dev
 ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
 
+# Vite reads VITE_* from the build environment and inlines them into the JS
+# bundle. Without these, the client gets `undefined` for the Reverb app key
+# and Echo throws "You must pass your app key when you instantiate Pusher".
+# These values are public (clients see them in the bundle), so passing them
+# as build args (not BuildKit secrets) is correct.
+ARG VITE_APP_NAME=Overlabels
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT=443
+ARG VITE_REVERB_SCHEME=https
+ENV VITE_APP_NAME=${VITE_APP_NAME} \
+    VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY} \
+    VITE_REVERB_HOST=${VITE_REVERB_HOST} \
+    VITE_REVERB_PORT=${VITE_REVERB_PORT} \
+    VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME}
+
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
