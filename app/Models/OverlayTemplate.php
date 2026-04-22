@@ -165,20 +165,130 @@ class OverlayTemplate extends Model
         preg_match_all($pattern, $this->css ?? '', $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
-        // NEW: Extract tags from conditional statements
+        // Extract tags from conditional statements
         $conditionalTags = $this->extractConditionalTags($this->html ?? '');
         $tags = array_merge($tags, $conditionalTags);
 
         $conditionalTags = $this->extractConditionalTags($this->css ?? '');
         $tags = array_merge($tags, $conditionalTags);
 
-        // Remove transformation suffixes and return unique tags with re-indexed array
-        $uniqueTags = array_unique(array_map(function ($tag) {
+        // Foreach loops reference scoped aliases inside the body
+        // (e.g. `[[[choice.title]]]`) rather than the real flat keys
+        // (`event.choices.0.title`). Expand each loop to the concrete indexed
+        // data keys so the template-data mapper includes them in the response.
+        $foreachAliases = [];
+        foreach ([$this->html ?? '', $this->css ?? ''] as $source) {
+            [$expandedTags, $aliasesInSource] = $this->extractForeachTags($source);
+            $tags = array_merge($tags, $expandedTags);
+            $foreachAliases = array_merge($foreachAliases, $aliasesInSource);
+        }
+        $foreachAliases = array_unique($foreachAliases);
+
+        // Remove transformation suffixes
+        $tags = array_map(function ($tag) {
             return explode('|', $tag)[0];
-        }, $tags));
+        }, $tags);
+
+        // Drop scope-local tokens (alias.*, loop.*) - they never correspond to
+        // real data keys, so they'd otherwise pollute the template_tags list.
+        $tags = array_filter($tags, function (string $tag) use ($foreachAliases) {
+            if ($tag === 'loop' || str_starts_with($tag, 'loop.')) {
+                return false;
+            }
+            foreach ($foreachAliases as $alias) {
+                if ($tag === $alias || str_starts_with($tag, $alias.'.')) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         // Re-index the array to ensure it's saved as a JSON array, not object
-        return array_values($uniqueTags);
+        return array_values(array_unique($tags));
+    }
+
+    /**
+     * Caps for Twitch event list fields, matching TemplateDataMapperService.
+     * Drives how many concrete indexed tags a foreach iterable expands to.
+     */
+    private const FOREACH_LIST_CAPS = [
+        'choices' => 5,
+        'outcomes' => 10,
+        'top_contributions' => 3,
+    ];
+
+    private const FOREACH_DEFAULT_CAP = 10;
+
+    /**
+     * Expand each `[[[foreach:X as Y]]] ... [[[endforeach]]]` block into the
+     * concrete data keys its body references. Returns [$expandedTags, $aliases]
+     * so the caller can also strip the scope-local aliases from the final list.
+     *
+     * @return array{0: string[], 1: string[]}
+     */
+    private function extractForeachTags(string $content): array
+    {
+        $expanded = [];
+        $aliases = [];
+
+        // Non-nested match is fine here - we only need to discover the
+        // (iterable, alias, body) tuple. The frontend handles actual nesting.
+        $pattern = '/\[\[\[foreach:\s*([a-zA-Z0-9_.:\-]+)\s+as\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*]]](.*?)\[\[\[endforeach]]]/s';
+
+        if (! preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+            return [$expanded, $aliases];
+        }
+
+        foreach ($matches as $m) {
+            $iterable = $m[1];
+            $alias = $m[2];
+            $body = $m[3];
+            $aliases[] = $alias;
+
+            // `iterable.count` is emitted by the data mapper for INDEXED_LIST_FIELDS
+            $expanded[] = $iterable.'.count';
+
+            $subkeys = [];
+
+            // Body tokens: [[[alias]]] or [[[alias.sub.path]]] (with optional pipe)
+            $bodyPattern = '/\[\[\['.preg_quote($alias, '/').'(?:\.([a-zA-Z0-9_.:\-]+))?(?:\|[^]]+)?]]]/';
+            if (preg_match_all($bodyPattern, $body, $bodyMatches, PREG_SET_ORDER)) {
+                foreach ($bodyMatches as $bm) {
+                    if (! empty($bm[1])) {
+                        $subkeys[] = $bm[1];
+                    }
+                }
+            }
+
+            // Conditionals referencing the alias: [[[if:alias.sub = ...]]]
+            $condPattern = '/\[\[\[(?:if|elseif):\s*'.preg_quote($alias, '/').'\.([a-zA-Z0-9_.]+)/';
+            if (preg_match_all($condPattern, $body, $condMatches, PREG_SET_ORDER)) {
+                foreach ($condMatches as $cm) {
+                    $subkeys[] = $cm[1];
+                }
+            }
+
+            $subkeys = array_unique($subkeys);
+
+            // Determine cap for this iterable. Use the last dotted segment
+            // (e.g. `event.choices` -> `choices`) to key into FOREACH_LIST_CAPS.
+            $segments = explode('.', $iterable);
+            $last = end($segments);
+            $cap = self::FOREACH_LIST_CAPS[$last] ?? self::FOREACH_DEFAULT_CAP;
+
+            for ($i = 0; $i < $cap; $i++) {
+                if (empty($subkeys)) {
+                    // Scalar iterable (uncommon but possible)
+                    $expanded[] = $iterable.'.'.$i;
+                    continue;
+                }
+                foreach ($subkeys as $sk) {
+                    $expanded[] = $iterable.'.'.$i.'.'.$sk;
+                }
+            }
+        }
+
+        return [$expanded, $aliases];
     }
 
     /**

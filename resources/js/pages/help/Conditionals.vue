@@ -1205,6 +1205,35 @@ function clearFilter() {
   [[[endif]]]
 [[[endif]]]</pre>
             </div>
+
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+              <h3 class="mb-4 text-xl font-semibold">Foreach Loops</h3>
+              <p class="mb-4 text-foreground">
+                Repeat a block of markup for every item in a list. Use this for poll choices, prediction outcomes, hype-train
+                contributors - anything where the server sends indexed entries (<code>event.choices.0.title</code>,
+                <code>event.choices.1.title</code>, ...) plus a <code>.count</code>.
+              </p>
+              <p class="mb-4 text-foreground">
+                Inside the loop body you can reference the current item through the alias you named after <code>as</code>,
+                plus these loop metadata tokens:
+              </p>
+              <ul class="mb-4 ml-6 list-disc text-foreground">
+                <li><code>[[[loop.index]]]</code> - zero-based iteration index</li>
+                <li><code>[[[loop.first]]]</code> / <code>[[[loop.last]]]</code> - booleans, handy with <code>[[[if:...]]]</code></li>
+                <li><code>[[[loop.count]]]</code> - total number of items</li>
+              </ul>
+              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+  [[[foreach:event.choices as choice]]]
+    &lt;li class="[[[if:loop.first]]]first[[[endif]]]"&gt;
+      [[[loop.index]]]. [[[choice.title]]] - [[[choice.votes]]] votes
+    &lt;/li&gt;
+  [[[endforeach]]]
+&lt;/ul&gt;</pre>
+              <p class="mt-4 text-sm text-foreground">
+                Loops can be nested, and you can use <code>[[[if:...]]]</code> inside a loop body (as shown above).
+                Non-scoped tokens like <code>[[[event.title]]]</code> still work inside the body.
+              </p>
+            </div>
           </div>
         </div>
 

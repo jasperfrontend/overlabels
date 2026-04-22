@@ -197,7 +197,7 @@ function parseSource(source: string | null | undefined, encode: boolean = true):
   let result = source;
 
   if (data.value && typeof data.value === 'object') {
-    result = processTemplate(result, data.value);
+    result = processTemplate(result, data.value, { locale: userLocale.value, encode });
     result = replaceTagsWithFormatting(result, data.value, userLocale.value, encode);
   }
 
@@ -249,7 +249,7 @@ const compiledAlertHtml = computed(() => {
   }
 
   // First process conditional logic, then replace tags with formatting
-  html = processTemplate(html, alertData);
+  html = processTemplate(html, alertData, { locale: userLocale.value, encode: true });
   html = replaceTagsWithFormatting(html, alertData, userLocale.value);
 
   return html;

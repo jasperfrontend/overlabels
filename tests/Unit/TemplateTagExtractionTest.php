@@ -96,3 +96,73 @@ test('extractTemplateTags handles mixed plain and piped tags', function () {
         ->toContain('channel_title')
         ->toContain('c:timer');
 });
+
+test('extractTemplateTags expands foreach iterables to concrete indexed keys', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<ul>[[[foreach:event.choices as choice]]]<li>[[[choice.title]]]</li>[[[endforeach]]]</ul>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    // `choices` has a cap of 5 in the data mapper
+    expect($tags)
+        ->toContain('event.choices.count')
+        ->toContain('event.choices.0.title')
+        ->toContain('event.choices.1.title')
+        ->toContain('event.choices.2.title')
+        ->toContain('event.choices.3.title')
+        ->toContain('event.choices.4.title');
+});
+
+test('extractTemplateTags drops scope-local alias and loop tokens', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<ul>[[[foreach:event.choices as choice]]]<li>[[[loop.index]]]. [[[choice.title]]]</li>[[[endforeach]]]</ul>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)
+        ->not->toContain('choice.title')
+        ->not->toContain('loop.index')
+        ->not->toContain('loop');
+});
+
+test('extractTemplateTags captures multiple foreach sub-keys in body', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:event.outcomes as outcome]]]<span>[[[outcome.title]]] [[[outcome.color]]]</span>[[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)
+        ->toContain('event.outcomes.count')
+        ->toContain('event.outcomes.0.title')
+        ->toContain('event.outcomes.9.title')
+        ->toContain('event.outcomes.0.color')
+        ->toContain('event.outcomes.9.color');
+});
+
+test('extractTemplateTags preserves non-scoped tokens inside foreach body', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:event.choices as choice]]]<li>[[[choice.title]]] ([[[event.title]]])</li>[[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)
+        ->toContain('event.title')
+        ->toContain('event.choices.0.title');
+});
+
+test('extractTemplateTags expands alias references in conditional branches inside foreach', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:event.choices as choice]]][[[if:choice.votes > 0]]][[[choice.title]]][[[endif]]][[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)
+        ->toContain('event.choices.0.votes')
+        ->toContain('event.choices.0.title')
+        ->toContain('event.choices.4.votes');
+});
