@@ -58,7 +58,7 @@ servers:
       app_port: 8080
       healthcheck:
         interval: 10
-        path: /
+        path: /up
         timeout: 5
       # Long drain so in-flight WebSocket frames have a chance to flush during deploy
       buffering:
