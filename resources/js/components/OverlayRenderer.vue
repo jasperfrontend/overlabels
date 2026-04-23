@@ -22,9 +22,12 @@
   <div v-else ref="staticContainer" />
 
   <!-- Dynamic Alert Overlay -->
+  <!-- Alert contents are morphed too, so live-updating alerts (e.g. poll.progress
+       firing alert.triggered repeatedly) reuse data-key'd children instead of
+       replacing them on every payload. -->
   <transition :name="activeTransitionName" @leave="onAlertLeave">
     <div v-if="!error && currentAlert" class="alert-overlay">
-      <div v-html="compiledAlertHtml" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
+      <div ref="alertContainer" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
     </div>
   </transition>
 </template>
@@ -241,6 +244,10 @@ watchEffect(
   { flush: 'post' },
 );
 
+// Alert overlay gets the same treatment below, once compiledAlertHtml is
+// declared (see after the alert section).
+const alertContainer = ref<HTMLElement | null>(null);
+
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
   if (existing) existing.remove();
@@ -287,6 +294,28 @@ const compiledAlertHtml = computed(() => {
 
   return html;
 });
+
+// Live-updating alert templates (poll progress, hype train) receive repeated
+// `alert.triggered` events with the same template + new data while the
+// wrapping <transition> stays mounted. Morph the alert content so data-key'd
+// children survive those updates - otherwise their CSS transitions have no
+// from-state and the DOM console flashes the whole subtree on every tick.
+watchEffect(
+  () => {
+    const html = compiledAlertHtml.value;
+    const el = alertContainer.value;
+    if (!el) return;
+
+    const template = document.createElement('div');
+    template.innerHTML = html;
+
+    morphdom(el, template, {
+      childrenOnly: true,
+      getNodeKey: getMorphNodeKey,
+    });
+  },
+  { flush: 'post' },
+);
 
 // Alert management functions
 function showAlert(alertData: AlertData) {
