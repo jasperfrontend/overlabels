@@ -12,6 +12,7 @@ import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucid
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
+import { compileTailwindCss } from '@/utils/compileTailwind';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
@@ -23,6 +24,7 @@ const form = useForm({
   head: '',
   html: '',
   css: '',
+  compiled_css: '',
   type: 'static',
   is_public: true
 });
@@ -46,7 +48,7 @@ const showToast = ref(false);
 
 const { register } = useKeyboardShortcuts();
 
-const submitForm = () => {
+const submitForm = async () => {
   const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
@@ -61,6 +63,12 @@ const submitForm = () => {
     toastType.value = 'warning';
     showToast.value = true;
   }
+
+  form.compiled_css = await compileTailwindCss({
+    html: form.html,
+    head: form.head,
+    css: form.css,
+  });
 
   form.post(route('templates.store'));
 };

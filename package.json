@@ -40,6 +40,8 @@
         "@mkody/twitch-emoticons": "^2.9.6",
         "@tailwindcss/vite": "^4.1.1",
         "@types/katex": "^0.16.8",
+        "@unocss/core": "^66.6.8",
+        "@unocss/preset-wind3": "^66.6.8",
         "@vitejs/plugin-vue": "^5.2.1",
         "@vue-leaflet/vue-leaflet": "^0.10.1",
         "@vueuse/core": "^12.8.2",

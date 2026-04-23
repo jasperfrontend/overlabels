@@ -49,6 +49,7 @@ class ExternalEventController extends Controller
             transitionOut: $mapping->transition_out ?? 'fade',
             broadcasterId: $user->twitch_id,
             targetOverlaySlugs: $targetSlugs,
+            alertTemplateSlug: $template->slug,
         ));
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';

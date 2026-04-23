@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\FunSlugGenerationService;
+use App\Services\TemplateDataMapperService;
 use Database\Factories\OverlayTemplateFactory;
 use Eloquent;
 use Exception;
@@ -50,6 +51,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $owner
  * @property-read Collection<int, OverlayTemplate> $targetStaticOverlays
  * @property-read int|null $target_static_overlays_count
+ *
  * @method static Builder<static>|OverlayTemplate alert()
  * @method static OverlayTemplateFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayTemplate newModelQuery()
@@ -76,6 +78,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|OverlayTemplate whereUpdatedAt($value)
  * @method static Builder<static>|OverlayTemplate whereVersion($value)
  * @method static Builder<static>|OverlayTemplate whereViewCount($value)
+ *
  * @mixin Eloquent
  * @mixin IdeHelperOverlayTemplate
  */
@@ -97,6 +100,7 @@ class OverlayTemplate extends Model
         'head',
         'html',
         'css',
+        'compiled_css',
         'js',
         'is_public',
         'version',
@@ -150,9 +154,9 @@ class OverlayTemplate extends Model
      * Extract template tags from HTML/CSS.
      *
      * @param  array<string,int>|null  $caps  Per-user foreach caps keyed by
-     *         preference key (subscribers, goals, followers, followed). When
-     *         null, the owner's foreachCaps() are used; falls back to defaults
-     *         if no owner is loaded.
+     *                                        preference key (subscribers, goals, followers, followed). When
+     *                                        null, the owner's foreachCaps() are used; falls back to defaults
+     *                                        if no owner is loaded.
      */
     public function extractTemplateTags(?array $caps = null): array
     {
@@ -207,6 +211,7 @@ class OverlayTemplate extends Model
                     return false;
                 }
             }
+
             return true;
         });
 
@@ -233,13 +238,13 @@ class OverlayTemplate extends Model
      * caps from preferences so one lookup covers both.
      *
      * @param  array<string,int>  $userCaps  Keyed by user preference key
-     *         (subscribers, goals, followers, followed).
+     *                                       (subscribers, goals, followers, followed).
      */
     private function buildEffectiveForeachCaps(array $userCaps): array
     {
         $effective = self::FOREACH_EVENT_CAPS;
 
-        foreach (\App\Services\TemplateDataMapperService::userScopeIterables() as $prefKey => $spec) {
+        foreach (TemplateDataMapperService::userScopeIterables() as $prefKey => $spec) {
             $cap = (int) ($userCaps[$prefKey] ?? $spec['default_cap']);
             $alias = $spec['alias'];
             // The last segment of the alias is what extractForeachTags keys on
@@ -313,6 +318,7 @@ class OverlayTemplate extends Model
                 if (empty($subkeys)) {
                     // Scalar iterable (uncommon but possible)
                     $expanded[] = $iterable.'.'.$i;
+
                     continue;
                 }
                 foreach ($subkeys as $sk) {

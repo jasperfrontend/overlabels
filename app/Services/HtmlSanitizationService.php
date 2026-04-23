@@ -85,7 +85,7 @@ class HtmlSanitizationService
      */
     public static function sanitizeTemplateFields(array $validated): array
     {
-        $fieldsToSanitize = ['html', 'head', 'css', 'description'];
+        $fieldsToSanitize = ['html', 'head', 'css', 'compiled_css', 'description'];
 
         foreach ($fieldsToSanitize as $field) {
             if (isset($validated[$field])) {

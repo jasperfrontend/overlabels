@@ -449,14 +449,41 @@ class OverlayTemplateController extends Controller
                 'user_twitch_id' => $user->twitch_id,
             ]);
 
+            // Preload compiled_css for every alert template owned by this user that
+            // could fire on this static overlay (no targeting = fires everywhere, or
+            // explicitly targets this overlay). Shipped once on overlay mount so the
+            // per-alert Reverb payload stays slim - AlertTriggered carries only a slug
+            // reference and this map resolves it client-side.
+            $alertCssPreload = [];
+            if ($template->type === 'static') {
+                $alertTemplates = OverlayTemplate::query()
+                    ->select(['id', 'slug', 'compiled_css'])
+                    ->where('owner_id', $user->id)
+                    ->where('type', 'alert')
+                    ->whereNotNull('compiled_css')
+                    ->where('compiled_css', '!=', '')
+                    ->with(['targetStaticOverlays:id'])
+                    ->get();
+
+                foreach ($alertTemplates as $alertTemplate) {
+                    $targetIds = $alertTemplate->targetStaticOverlays->pluck('id')->all();
+                    $firesHere = empty($targetIds) || in_array($template->id, $targetIds, true);
+                    if ($firesHere) {
+                        $alertCssPreload[$alertTemplate->slug] = $alertTemplate->compiled_css;
+                    }
+                }
+            }
+
             // Directly return JSON as a response so frontend can handle rendering
             return response()->json([
                 'template' => [
                     'head' => $template->head,
                     'html' => $template->html,
                     'css' => $template->css,
+                    'compiled_css' => $template->compiled_css,
                     'tags' => $template->template_tags,
                 ],
+                'alert_css_preload' => $alertCssPreload,
                 'meta' => [
                     'name' => $template->name,
                     'slug' => $template->slug,
@@ -495,6 +522,7 @@ class OverlayTemplateController extends Controller
             'head' => 'nullable|string',
             'html' => 'present|nullable|string',
             'css' => 'nullable|string',
+            'compiled_css' => 'nullable|string',
             'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
         ]);
@@ -535,6 +563,7 @@ class OverlayTemplateController extends Controller
             'head' => 'nullable|string',
             'html' => 'sometimes|nullable|string',
             'css' => 'nullable|string',
+            'compiled_css' => 'nullable|string',
             'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
         ]);

@@ -33,6 +33,7 @@ import {
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
+import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import {
@@ -112,6 +113,7 @@ const form = useForm({
   head: props?.template?.head || '',
   html: props?.template?.html || '',
   css: props?.template?.css || '',
+  compiled_css: props?.template?.compiled_css || '',
   is_public: props?.template?.is_public
 });
 
@@ -196,7 +198,7 @@ const openExternalLink = (link: any, target: string) => window.open(link, target
 const suggestionModalOpen = ref(false);
 const showSuggestionLink = ref(false);
 
-const submitForm = () => {
+const submitForm = async () => {
   // Check if embeddable elements were present before sanitization
   const rawHtml = `${form.head} ${form.html} ${form.css}`;
   const hadEmbeds = /<iframe\b|<embed\b|<object\b/i.test(rawHtml);
@@ -209,6 +211,12 @@ const submitForm = () => {
     css: form.css
   });
   Object.assign(form, sanitized);
+
+  form.compiled_css = await compileTailwindCss({
+    html: form.html,
+    head: form.head,
+    css: form.css,
+  });
 
   form.put(route('templates.update', props.template), {
     preserveScroll: true,

@@ -63,6 +63,7 @@ interface AlertData {
   head: string;
   html: string;
   css: string;
+  compiledCss: string;
   data: Record<string, any>;
   duration: number;
   transitionIn: string;
@@ -89,6 +90,11 @@ const props = defineProps<{
 const head = ref<string | null>(null);
 const rawHtml = ref<string>('');
 const css = ref<string>('');
+const compiledCssRaw = ref<string>('');
+// Alert template compiled CSS preload: { slug: compiled_css }. Populated once
+// on overlay mount; consulted when alerts fire so the WebSocket payload can
+// carry a slug reference instead of a (potentially chonky) CSS blob per event.
+const alertCssPreload = ref<Record<string, string>>({});
 const data = ref<Record<string, any> | undefined>(undefined);
 const userLocale = ref<string>('en-US');
 const error = ref('');
@@ -258,6 +264,25 @@ function injectStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
+// Utility CSS (Tailwind-compatible, compiled from the template's class usage)
+// is injected before the user's own `css` so user-authored rules can override
+// the generated utilities when they clash.
+function injectCompiledStyle(styleString: string) {
+  const existing = document.getElementById('overlay-compiled-style');
+  if (existing) existing.remove();
+  if (!styleString) return;
+
+  const style = document.createElement('style');
+  style.id = 'overlay-compiled-style';
+  style.textContent = styleString;
+  const userStyle = document.getElementById('overlay-style');
+  if (userStyle && userStyle.parentNode) {
+    userStyle.parentNode.insertBefore(style, userStyle);
+  } else {
+    document.head.appendChild(style);
+  }
+}
+
 function injectHead(headString: string | null) {
   if (!headString) return;
 
@@ -325,7 +350,9 @@ function showAlert(alertData: AlertData) {
     alertTimeout.value = null;
   }
 
-  // Inject alert CSS
+  // Inject alert CSS. Compiled (utility) CSS goes first so the author's inline
+  // alert CSS can override it when rules collide.
+  injectAlertCompiledStyle(alertData.compiledCss);
   if (alertData.css) {
     injectAlertStyle(alertData.css);
   }
@@ -363,6 +390,25 @@ function injectAlertStyle(styleString: string) {
   document.head.appendChild(style);
 }
 
+// Compiled utility CSS for an alert template, resolved from the preload map
+// and injected before the user's inline alert CSS so author-written rules win
+// on conflicts. Mirrors `injectCompiledStyle` for the static overlay.
+function injectAlertCompiledStyle(styleString: string) {
+  const existing = document.getElementById('alert-compiled-style');
+  if (existing) existing.remove();
+  if (!styleString) return;
+
+  const style = document.createElement('style');
+  style.id = 'alert-compiled-style';
+  style.textContent = styleString;
+  const userAlertStyle = document.getElementById('alert-style');
+  if (userAlertStyle && userAlertStyle.parentNode) {
+    userAlertStyle.parentNode.insertBefore(style, userAlertStyle);
+  } else {
+    document.head.appendChild(style);
+  }
+}
+
 const onAlertLeave = () => {
   eventStore.clearOverlayTriggers();
 };
@@ -382,6 +428,8 @@ onMounted(async () => {
     templateTags.value = Array.isArray(json.template.tags) ? json.template.tags : [];
 
     css.value = json.template.css ?? '';
+    compiledCssRaw.value = json.template.compiled_css ?? '';
+    alertCssPreload.value = json.alert_css_preload ?? {};
     data.value = json.data ?? {};
 
     // Mirror every Twitch template-tag value from the initial snapshot into the
@@ -472,6 +520,7 @@ onMounted(async () => {
     }
 
     injectStyle(compiledCss.value);
+    injectCompiledStyle(compiledCssRaw.value);
     injectHead(head.value);
 
     document.title = json.meta?.name || 'Overlay';
@@ -638,10 +687,18 @@ function handleAlertTriggered(event: any) {
     ...processedData,
   };
 
+  // Compiled utility CSS is not inlined on the broadcast - we look it up in
+  // the preload map by alert_template_slug. Miss case (brand-new alert created
+  // mid-session, not yet in the map) falls back to empty string, which still
+  // renders correctly with only the author's inline CSS.
+  const alertSlug: string | undefined = alertData.alert_template_slug;
+  const compiledCss = alertSlug ? (alertCssPreload.value[alertSlug] ?? '') : '';
+
   showAlert({
     head: alertData.head,
     html: alertData.html,
     css: alertData.css,
+    compiledCss,
     data: mergedData,
     duration: alertData.duration,
     transitionIn: alertData.transition_in || 'fade',

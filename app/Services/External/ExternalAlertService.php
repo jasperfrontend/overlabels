@@ -47,6 +47,7 @@ class ExternalAlertService
                 transitionOut: $mapping->transition_out ?? 'fade',
                 broadcasterId: $user->twitch_id,
                 targetOverlaySlugs: $targetSlugs,
+                alertTemplateSlug: $template->slug,
             ));
 
             Log::info("External alert dispatched for user {$user->id}", [

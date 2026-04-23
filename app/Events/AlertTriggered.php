@@ -28,6 +28,8 @@ class AlertTriggered implements ShouldBroadcast
 
     public ?array $targetOverlaySlugs;
 
+    public ?string $alertTemplateSlug;
+
     /**
      * Create a new event instance.
      */
@@ -39,7 +41,8 @@ class AlertTriggered implements ShouldBroadcast
         string $transitionIn,
         string $transitionOut,
         string $broadcasterId,
-        ?array $targetOverlaySlugs = null
+        ?array $targetOverlaySlugs = null,
+        ?string $alertTemplateSlug = null
     ) {
         $this->html = $html;
         $this->css = $css;
@@ -49,6 +52,7 @@ class AlertTriggered implements ShouldBroadcast
         $this->transitionOut = $transitionOut;
         $this->broadcasterId = $broadcasterId;
         $this->targetOverlaySlugs = $targetOverlaySlugs;
+        $this->alertTemplateSlug = $alertTemplateSlug;
     }
 
     /**
@@ -78,6 +82,11 @@ class AlertTriggered implements ShouldBroadcast
                 'transition_out' => $this->transitionOut,
                 'timestamp' => now()->timestamp,
                 'target_overlay_slugs' => $this->targetOverlaySlugs,
+                // Reference to the alert template's compiled utility CSS. The
+                // overlay preloads a { slug: compiled_css } map on mount so we
+                // keep this broadcast payload small even when the template
+                // carries a large utility stylesheet.
+                'alert_template_slug' => $this->alertTemplateSlug,
             ],
         ];
     }

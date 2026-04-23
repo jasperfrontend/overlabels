@@ -557,7 +557,8 @@ class TwitchEventSubController extends Controller
                 $mapping->transition_in,
                 $mapping->transition_out,
                 $user->twitch_id,
-                $targetSlugs
+                $targetSlugs,
+                $mapping->template->slug,
             ));
 
         } catch (Exception $e) {
