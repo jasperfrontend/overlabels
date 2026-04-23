@@ -53,6 +53,7 @@
         "leaflet": "^1.9.4",
         "lodash": "^4.18.1",
         "lucide-vue-next": "^0.577.0",
+        "morphdom": "^2.7.8",
         "pinia": "^3.0.3",
         "qrcode": "^1.5.4",
         "reka-ui": "^2.9.2",

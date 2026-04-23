@@ -16,7 +16,10 @@
   <div v-if="error" class="error">{{ error }}</div>
 
   <!-- Static Overlay Content -->
-  <div v-else v-html="compiledHtml" />
+  <!-- Rendered via morphdom so existing DOM nodes are preserved across data updates.
+       Give repeated elements a [[[choice.id]]] (or similar stable value) in data-key
+       to unlock CSS transitions on foreach-rendered children. -->
+  <div v-else ref="staticContainer" />
 
   <!-- Dynamic Alert Overlay -->
   <transition :name="activeTransitionName" @leave="onAlertLeave">
@@ -27,7 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from 'vue';
+import morphdom from 'morphdom';
 import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
@@ -207,6 +211,35 @@ function parseSource(source: string | null | undefined, encode: boolean = true):
 const compiledHtml = computed(() => parseSource(rawHtml.value, true));
 const compiledCss = computed(() => parseSource(css.value, false));
 watch(compiledCss, (newCss) => injectStyle(newCss));
+
+// Template ref for the static overlay container. morphdom patches its children
+// in place rather than replacing innerHTML wholesale, so any element with a
+// stable `data-key` (or `id`) survives re-renders - CSS transitions on those
+// elements then have a real from-state to animate from.
+const staticContainer = ref<HTMLElement | null>(null);
+
+function getMorphNodeKey(node: Node): string | undefined {
+  if (node.nodeType !== 1) return undefined;
+  const el = node as Element;
+  return el.getAttribute('data-key') || el.id || undefined;
+}
+
+watchEffect(
+  () => {
+    const html = compiledHtml.value;
+    const el = staticContainer.value;
+    if (!el) return;
+
+    const template = document.createElement('div');
+    template.innerHTML = html;
+
+    morphdom(el, template, {
+      childrenOnly: true,
+      getNodeKey: getMorphNodeKey,
+    });
+  },
+  { flush: 'post' },
+);
 
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
