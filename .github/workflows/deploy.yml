@@ -99,6 +99,23 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+          # Kamal 2 reads secrets from .kamal/secrets (gitignored locally).
+          # Generate it from the step env so Kamal can source it at deploy time.
+          mkdir -p .kamal
+          {
+            for v in KAMAL_REGISTRY_PASSWORD APP_KEY DB_PASSWORD POSTGRES_PASSWORD \
+                     REVERB_APP_ID REVERB_APP_KEY REVERB_APP_SECRET VITE_REVERB_APP_KEY \
+                     TWITCH_CLIENT_ID TWITCH_CLIENT_SECRET TWITCH_WEBHOOK_SECRET \
+                     TWITCHBOT_CLIENT_ID TWITCHBOT_CLIENT_SECRET TWITCHBOT_LISTENER_SECRET \
+                     STREAMLABS_CLIENT_ID STREAMLABS_CLIENT_SECRET STREAMLABS_LISTENER_SECRET \
+                     STREAMELEMENTS_LISTENER_SECRET CLOUDINARY_URL \
+                     INTEGRATION_SUGGESTION_WEBHOOK_URL SIGNUP_NOTIFICATION_EMAIL \
+                     DEPLOY_WEBHOOK_SECRET; do
+              printf '%s=%q\n' "$v" "${!v}"
+            done
+          } > .kamal/secrets
+
           kamal deploy --skip-push=false
 
       - name: Notify app of successful deploy
