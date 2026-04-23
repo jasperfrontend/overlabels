@@ -171,6 +171,8 @@ env:
     - INTEGRATION_SUGGESTION_WEBHOOK_URL
     - SIGNUP_NOTIFICATION_EMAIL
 
+    - DEPLOY_WEBHOOK_SECRET
+
 aliases:
   console: app exec --interactive --reuse "php artisan tinker"
   shell: app exec --interactive --reuse "bash"

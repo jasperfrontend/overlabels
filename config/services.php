@@ -44,8 +44,8 @@ return [
         'listener_secret' => env('TWITCHBOT_LISTENER_SECRET'),
     ],
 
-    'railway' => [
-        'webhook_secret' => env('RAILWAY_WEBHOOK_SECRET'),
+    'deploy' => [
+        'webhook_secret' => env('DEPLOY_WEBHOOK_SECRET'),
     ],
 
     'integration_suggestions' => [

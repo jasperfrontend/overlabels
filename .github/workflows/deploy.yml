@@ -93,9 +93,18 @@ jobs:
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           INTEGRATION_SUGGESTION_WEBHOOK_URL: ${{ secrets.INTEGRATION_SUGGESTION_WEBHOOK_URL }}
           SIGNUP_NOTIFICATION_EMAIL: ${{ secrets.SIGNUP_NOTIFICATION_EMAIL }}
+          DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
           kamal deploy --skip-push=false
+
+      - name: Notify app of successful deploy
+        env:
+          DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+        run: |
+          curl -fsS -X POST "https://overlabels.com/api/webhooks/deploy/${DEPLOY_WEBHOOK_SECRET}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"sha\":\"${{ github.sha }}\"}"

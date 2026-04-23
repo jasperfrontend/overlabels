@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
-use App\Http\Controllers\Api\RailwayWebhookController;
+use App\Http\Controllers\Api\DeployWebhookController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
@@ -178,11 +178,11 @@ Route::prefix('/internal/bot')
             ->where('login', '[a-z0-9_]+');
     });
 
-// Railway deployment webhook - triggers version update broadcast
-Route::post('/webhooks/railway/{token}', [RailwayWebhookController::class, 'handle'])
+// Deploy webhook - called by GH Actions after a successful kamal deploy
+Route::post('/webhooks/deploy/{token}', [DeployWebhookController::class, 'handle'])
     ->middleware(['throttle:10,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
-    ->name('webhooks.railway');
+    ->name('webhooks.deploy');
 
 // External service webhooks - no auth/CSRF, rate-limited
 Route::get('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::class, 'show'])
