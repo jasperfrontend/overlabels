@@ -28,6 +28,7 @@ import {
   OVERLABELS_MOBILE_PRESETS,
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
+  FOURTHWALL_PRESETS,
   TWITCH_PRESETS,
   getPresetsForSource,
   type ServicePreset,
@@ -93,6 +94,9 @@ const showStreamLabsPresets = computed(
 const showStreamElementsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamelements'),
 );
+const showFourthwallPresets = computed(
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('fourthwall'),
+);
 const showTwitchPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static',
 );
@@ -131,6 +135,9 @@ const availableStreamLabsPresets = computed(() =>
 );
 const availableStreamElementsPresets = computed(() =>
   STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key) && matchesPresetSearch('streamelements', p)),
+);
+const availableFourthwallPresets = computed(() =>
+  FOURTHWALL_PRESETS.filter((p) => !isPresetAlreadyAdded('fourthwall', p.key) && matchesPresetSearch('fourthwall', p)),
 );
 
 watch(servicePresetKey, (combinedKey) => {
@@ -438,7 +445,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
@@ -509,6 +516,16 @@ async function save() {
                     v-for="preset in availableStreamElementsPresets"
                     :key="'streamelements:' + preset.key"
                     :value="'streamelements:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showFourthwallPresets && availableFourthwallPresets.length">
+                  <ComboboxLabel>Fourthwall</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableFourthwallPresets"
+                    :key="'fourthwall:' + preset.key"
+                    :value="'fourthwall:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

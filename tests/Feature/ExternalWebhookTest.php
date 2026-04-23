@@ -157,3 +157,141 @@ test('ignored event type does not update controls', function () {
 
     Event::assertNotDispatched(ControlValueUpdated::class);
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Fourthwall - HMAC-signed JSON, different verification model from Ko-fi
+// ──────────────────────────────────────────────────────────────────────────────
+
+function makeFourthwallIntegration(string $webhookSecret = 'fw-hmac-secret'): array
+{
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'fourthwall',
+        'enabled' => true,
+        'credentials' => Crypt::encryptString(json_encode([
+            'access_token' => 'fw-access',
+            'refresh_token' => 'fw-refresh',
+            'expires_at' => now()->addHour()->toIso8601String(),
+            'webhook_id' => 'wh_abc',
+            'webhook_secret' => $webhookSecret,
+        ])),
+    ]);
+
+    return [$user, $integration];
+}
+
+function fourthwallSamplePayload(string $donationId = 'don_Kpcjx4HIQ1e4bTIOjX9CsA'): array
+{
+    return [
+        'id' => '00aa4abd-5778-4199-8161-0b49b2f212e5',
+        'webhookId' => '00aa4abd-5778-4199-8161-0b49b2f212e5',
+        'shopId' => 'sh_test',
+        'type' => 'DONATION',
+        'apiVersion' => 'V1',
+        'createdAt' => '2020-08-13T09:05:36.939+00:00',
+        'testMode' => false,
+        'data' => [
+            'id' => $donationId,
+            'shopId' => 'sh_test',
+            'status' => 'OPEN',
+            'email' => 'supporter@fourthwall.com',
+            'amounts' => ['total' => ['value' => 10, 'currency' => 'USD']],
+            'createdAt' => '2020-08-13T09:05:36.939Z',
+            'updatedAt' => '2020-08-13T09:05:36.939Z',
+            'username' => 'Johnny123',
+            'message' => 'Sample message',
+        ],
+    ];
+}
+
+function postFourthwall(string $webhookToken, array $payload, string $secret = 'fw-hmac-secret'): TestResponse
+{
+    $body = json_encode($payload);
+    $signature = base64_encode(hash_hmac('sha256', $body, $secret, true));
+
+    return test()->call(
+        'POST',
+        "/api/webhooks/fourthwall/{$webhookToken}",
+        [],
+        [],
+        [],
+        [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_FOURTHWALL_HMAC_SHA256' => $signature,
+        ],
+        $body,
+    );
+}
+
+test('fourthwall webhook returns 200 and stores event on valid HMAC', function () {
+    [$user, $integration] = makeFourthwallIntegration();
+
+    $donationId = 'don_'.fake()->uuid();
+    $payload = fourthwallSamplePayload($donationId);
+
+    postFourthwall($integration->webhook_token, $payload)
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ok']);
+
+    $this->assertDatabaseHas('external_events', [
+        'user_id' => $user->id,
+        'service' => 'fourthwall',
+        'event_type' => 'donation',
+        'message_id' => $donationId,
+    ]);
+});
+
+test('fourthwall webhook returns 403 when HMAC signature is wrong', function () {
+    [, $integration] = makeFourthwallIntegration('real-secret');
+
+    // Sign with the wrong secret
+    postFourthwall($integration->webhook_token, fourthwallSamplePayload(), 'wrong-secret')
+        ->assertStatus(403);
+});
+
+test('fourthwall webhook deduplicates on data.id across retries', function () {
+    [, $integration] = makeFourthwallIntegration();
+    $payload = fourthwallSamplePayload('don_dup_001');
+
+    postFourthwall($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'ok']);
+    postFourthwall($integration->webhook_token, $payload)->assertStatus(200)->assertJson(['status' => 'duplicate']);
+});
+
+test('fourthwall webhook increments donations_received control', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeFourthwallIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'fourthwall', [
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Donations', 'value' => '0',
+    ]);
+
+    postFourthwall($integration->webhook_token, fourthwallSamplePayload())->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id,
+        'source' => 'fourthwall',
+        'key' => 'donations_received',
+        'value' => '1',
+    ]);
+
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('fourthwall webhook ignores unsupported event types without updating controls', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [, $integration] = makeFourthwallIntegration();
+
+    $payload = fourthwallSamplePayload();
+    $payload['type'] = 'ORDER_PLACED';
+
+    postFourthwall($integration->webhook_token, $payload)
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ignored']);
+
+    Event::assertNotDispatched(ControlValueUpdated::class);
+});

@@ -3,6 +3,7 @@
 namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
+use App\Services\External\Drivers\FourthwallServiceDriver;
 use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 use App\Services\External\Drivers\OverlabelsMobileServiceDriver;
@@ -21,6 +22,7 @@ class ExternalServiceRegistry
         'overlabels-mobile' => OverlabelsMobileServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
         'streamelements' => StreamElementsServiceDriver::class,
+        'fourthwall' => FourthwallServiceDriver::class,
     ];
 
     /**

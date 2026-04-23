@@ -40,6 +40,15 @@ export const STREAMELEMENTS_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'StreamElements Total Received (session)', type: 'number' },
 ];
 
+export const FOURTHWALL_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'Fourthwall Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Fourthwall Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Fourthwall Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Fourthwall Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Fourthwall Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Fourthwall Total Received (session)', type: 'number' },
+];
+
 export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
@@ -78,6 +87,7 @@ export function getPresetsForSource(source: string): ServicePreset[] {
     case 'overlabels-mobile': return OVERLABELS_MOBILE_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
     case 'streamelements': return STREAMELEMENTS_PRESETS;
+    case 'fourthwall': return FOURTHWALL_PRESETS;
     default: return [];
   }
 }

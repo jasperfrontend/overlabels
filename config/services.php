@@ -37,6 +37,14 @@ return [
         'listener_secret' => env('STREAMELEMENTS_LISTENER_SECRET'),
     ],
 
+    'fourthwall' => [
+        'client_id' => env('FW_CLIENT_ID'),
+        'client_secret' => env('FW_CLIENT_SECRET'),
+        'auth_url' => env('FW_AUTH_URL'),
+        'redirect_url' => env('FW_REDIRECT_URL'),
+        'api_base' => env('FW_API_BASE', 'https://api.fourthwall.com'),
+    ],
+
     'twitchbot' => [
         'client_id' => env('TWITCHBOT_CLIENT_ID'),
         'client_secret' => env('TWITCHBOT_CLIENT_SECRET'),

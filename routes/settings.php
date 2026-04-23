@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\BotSettingsController;
+use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
@@ -71,6 +72,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/streamelements/test-mode', [StreamElementsIntegrationController::class, 'setTestMode'])->name('streamelements.test-mode');
         Route::post('/streamelements/seed-count', [StreamElementsIntegrationController::class, 'seedDonationCount'])->name('streamelements.seed-count');
         Route::delete('/streamelements', [StreamElementsIntegrationController::class, 'disconnect'])->name('streamelements.disconnect');
+
+        Route::get('/fourthwall', [FourthwallIntegrationController::class, 'show'])->name('fourthwall.show');
+        Route::get('/fourthwall/redirect', [FourthwallIntegrationController::class, 'redirect'])->name('fourthwall.redirect');
+        Route::patch('/fourthwall/test-mode', [FourthwallIntegrationController::class, 'setTestMode'])->name('fourthwall.test-mode');
+        Route::post('/fourthwall/seed-count', [FourthwallIntegrationController::class, 'seedDonationCount'])->name('fourthwall.seed-count');
+        Route::delete('/fourthwall', [FourthwallIntegrationController::class, 'disconnect'])->name('fourthwall.disconnect');
 
         Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
     });

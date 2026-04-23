@@ -18,6 +18,7 @@ use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RoomBuilderController;
+use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\TemplateTagController;
@@ -399,6 +400,11 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
 Route::get('/auth/callback/streamlabs', [StreamLabsIntegrationController::class, 'callback'])
     ->middleware('auth.redirect')
     ->name('auth.callback.streamlabs');
+
+// Fourthwall OAuth callback (path matches FW_REDIRECT_URL registered with the app)
+Route::get('/auth/redirect/fw', [FourthwallIntegrationController::class, 'callback'])
+    ->middleware('auth.redirect')
+    ->name('auth.callback.fourthwall');
 
 Route::post('/logout', function () {
     Auth::logout();
