@@ -56,19 +56,6 @@ function replay(event: UnifiedEvent) {
   );
 }
 
-const twitchEventLabels: Record<string, string> = {
-  'channel.follow': 'Followed',
-  'channel.subscribe': 'Subscribed',
-  'channel.subscription.gift': 'Gifted Sub',
-  'channel.subscription.message': 'Resubbed',
-  'channel.cheer': 'Cheered',
-  'channel.raid': 'Raided',
-  'channel.channel_points_custom_reward_redemption.add': 'Redeemed',
-  'channel.channel_points_custom_reward_redemption.update': 'Updated Redemption',
-  'stream.online': 'Stream Online',
-  'stream.offline': 'Stream Offline',
-};
-
 const externalEventLabels: Record<string, Record<string, string>> = {
   kofi: {
     donation: 'Donated through Ko-fi',
@@ -89,7 +76,7 @@ const externalEventLabels: Record<string, Record<string, string>> = {
 
 function label(event: UnifiedEvent): string {
   if (event.source === 'twitch') {
-    return twitchEventLabels[event.event_type] ?? event.event_type;
+    return event.label ?? event.event_type;
   }
   return externalEventLabels[event.source]?.[event.event_type] ?? `${event.source}: ${event.event_type}`;
 }

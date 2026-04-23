@@ -2,6 +2,7 @@ export interface UnifiedEvent {
   id: number;
   source: string;
   event_type: string;
+  label?: string | null;
   created_at: string;
   event_data?: Record<string, unknown> | null;
   normalized_payload?: Record<string, unknown> | null;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
@@ -111,6 +112,7 @@ class DashboardController extends Controller
                 'id' => $e->id,
                 'source' => 'twitch',
                 'event_type' => $e->event_type,
+                'label' => EventTemplateMapping::EVENT_TYPES[$e->event_type] ?? $e->event_type,
                 'created_at' => $e->created_at->toIso8601String(),
                 'event_data' => $e->event_data,
                 'normalized_payload' => null,
