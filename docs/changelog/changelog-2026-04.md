@@ -1,5 +1,9 @@
 # CHANGELOG APRIL 2026
 
+## April 23rd, 2026 - Bump GH Actions past the Node 20 deprecation
+
+- The deploy workflow's post-run log kept printing a deprecation warning for `actions/checkout@v4`, `docker/build-push-action@v5`, `docker/login-action@v3`, and `docker/setup-buildx-action@v3` all running on Node 20. GitHub's timeline: June 2nd 2026 forces Node 24 on the runner, September 16th 2026 removes Node 20 entirely. Deploys still work today but either deadline could surface action-side breakage if the maintainers of any of these haven't shipped a Node 24 build under the current tag. Bumped `actions/checkout@v4` → `@v5` and both `docker/build-push-action@v5` → `@v6` - those were the two flagged actions with a major-version bump required. The two `docker/*@v3` floating tags pick up Node 24 internals as their maintainers cut v3 minor releases, so no tag change needed there - the warning will stop firing once those minor releases publish on GitHub's side.
+
 ## April 23rd, 2026 - "Why Overlabels" help page + TW3 tab in the code editor
 
 - New `/help/why-overlabels` page, wired into the help index above the nuts-and-bolts docs. Written for coders, not "pleb marketing" - leads with the third-party data normalization pitch, walks through `latest()` across four donation sources, shows an Expression Control that sums Ko-fi + StreamLabs + StreamElements + (Twitch Bits / 100) into a single USD number, unpacks the seven Control types, demos `[[[if:followers_total]]]`, and ends on the "data is ugly, that's why we have formatters" angle with the mandatory `0.1 + 0.2 = 0.30000000000000004` rant. Each section links deeper: `/help/controls`, `/help/conditionals`, `/help/formatting`, `/help/math`, `/kits`. Closing CTA is "bro, god knows" because it survived the editing pass and nothing else fit as well.

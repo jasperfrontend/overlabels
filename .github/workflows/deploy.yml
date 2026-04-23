@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -43,7 +43,7 @@ jobs:
       # Build & push the listener images first (small, fast). Kamal's app build
       # comes next inside `kamal deploy`.
       - name: Build & push streamlabs-listener
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.streamlabs-listener
@@ -55,7 +55,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=streamlabs-listener
 
       - name: Build & push streamelements-listener
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.streamelements-listener
