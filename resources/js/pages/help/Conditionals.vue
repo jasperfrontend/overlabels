@@ -1215,7 +1215,7 @@ function clearFilter() {
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="foreach-loops">
               <h3 class="mb-4 text-xl font-semibold">Foreach Loops</h3>
               <p class="mb-4 text-foreground">
                 Repeat a block of markup for every item in a list. Use this for poll choices, prediction outcomes, hype-train

@@ -2,13 +2,19 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
 ];
 
 const pages = [
+  {
+    title: 'Why Overlabels',
+    description: 'The pitch, for coders. Third-party data normalization, math on any value, Expression Controls, and why this thing is a bit special.',
+    href: '/help/why-overlabels',
+    icon: Sparkles,
+  },
   {
     title: 'Conditional and Event Tags',
     description: 'If/else logic, comparisons, event data tags, and integration tags for Ko-fi and StreamLabs.',

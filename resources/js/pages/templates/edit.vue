@@ -59,6 +59,7 @@ interface Props {
     head: string;
     html: string;
     css: string;
+    compiled_css: string | null;
     is_public: boolean;
     slug: string;
     type: 'static' | 'alert';

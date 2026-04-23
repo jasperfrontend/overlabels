@@ -117,6 +117,10 @@ Route::get('/help/why-kofi', function () {
     return Inertia::render('help/WhyKofi');
 })->name('help.why-kofi');
 
+Route::get('/help/why-overlabels', function () {
+    return Inertia::render('help/WhyOverlabels');
+})->name('help.why-overlabels');
+
 Route::get('/help/manifesto', function () {
     return Inertia::render('help/Manifesto');
 })->name('help.manifesto');
