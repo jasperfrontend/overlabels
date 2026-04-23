@@ -94,6 +94,7 @@ jobs:
           INTEGRATION_SUGGESTION_WEBHOOK_URL: ${{ secrets.INTEGRATION_SUGGESTION_WEBHOOK_URL }}
           SIGNUP_NOTIFICATION_EMAIL: ${{ secrets.SIGNUP_NOTIFICATION_EMAIL }}
           DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          APP_COMMIT_SHA: ${{ github.sha }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519

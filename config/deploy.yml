@@ -95,6 +95,7 @@ builder:
     VITE_REVERB_HOST: ws.overlabels.com
     VITE_REVERB_PORT: "443"
     VITE_REVERB_SCHEME: https
+    APP_COMMIT_SHA: <%= ENV['APP_COMMIT_SHA'] || 'dev' %>
 
 # Shared environment (everything not in `secrets` is plaintext on the host)
 env:
