@@ -80,29 +80,38 @@ const fuse = new Fuse(entries, {
   includeScore: true,
 });
 
-const PLACEHOLDER_PREFIX = 'OVHELPTAGPH';
+// Rewrite Obsidian-style [[slug]] wikilinks to real help-reference URLs.
+// Operates on segments that are NOT inside a fenced code block and NOT inside
+// an inline code span, so backticked content (e.g. `[[[raw]]]`) is untouched.
+// The `(?<!\[)...(?!])` guards make sure we don't eat the inner `[[` of a
+// triple-bracket template tag like [[[foo]]].
+const WIKILINK_RE = /(?<!\[)\[\[([^\]|[]+?)(?:\|([^\]]+))?]](?!])/g;
 
-function preprocessMarkdown(md: string): string {
-  const placeholders: string[] = [];
-  let out = md.replace(/\[\[\[([^\]]+)]]]/g, (_, inner) => {
-    const idx = placeholders.length;
-    placeholders.push(inner);
-    return ` ${PLACEHOLDER_PREFIX}${idx} `;
-  });
-
-  out = out.replace(/\[\[([^\]|]+?)(?:\|([^\]]+))?]]/g, (_, slug, label) => {
+function rewriteWikilinks(text: string): string {
+  return text.replace(WIKILINK_RE, (_, slug, label) => {
     const trimmed = slug.trim();
     const category = slugToCategory.get(trimmed);
-    const text = (label ?? trimmed).trim();
-    if (category) return `[${text}](/help/reference/${category}/${trimmed})`;
-    return `\`${text}\``;
+    const displayText = (label ?? trimmed).trim();
+    if (category) return `[${displayText}](/help/reference/${category}/${trimmed})`;
+    return `\`${displayText}\``;
   });
+}
 
-  out = out.replace(new RegExp(` ${PLACEHOLDER_PREFIX}(\\d+) `, 'g'), (_, idx) => {
-    return `\`[[[${placeholders[Number(idx)]}]]]\``;
-  });
-
-  return out;
+function preprocessMarkdown(md: string): string {
+  // Split by fenced code blocks (```...```). Even indexes are prose, odd are
+  // code blocks we leave alone.
+  const fenceParts = md.split(/(```[\s\S]*?```)/g);
+  return fenceParts
+    .map((part, i) => {
+      if (i % 2 === 1) return part; // fenced code block, preserve
+      // In prose, also preserve inline-code spans. Split on backticks, even
+      // indexes are normal prose, odd are inline code content (kept as-is).
+      const inlineParts = part.split(/(`[^`\n]*`)/g);
+      return inlineParts
+        .map((seg, j) => (j % 2 === 1 ? seg : rewriteWikilinks(seg)))
+        .join('');
+    })
+    .join('');
 }
 
 marked.setOptions({ breaks: true, gfm: true });
