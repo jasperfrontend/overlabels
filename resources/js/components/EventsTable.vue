@@ -74,9 +74,40 @@ const externalEventLabels: Record<string, Record<string, string>> = {
   }
 };
 
+// Flat map - every Twitch event type resolves to exactly one human label.
+// Keeping this next to externalEventLabels so both label sources are visible
+// at a glance when adding new event types.
+const twitchEventLabels: Record<string, string> = {
+  'channel.follow': 'followed',
+  'channel.subscribe': 'subscribed',
+  'channel.subscription.message': 'resubscribed',
+  'channel.subscription.gift': 'gifted subs',
+  'channel.cheer': 'cheered',
+  'channel.raid': 'raided the channel',
+  'channel.channel_points_custom_reward_redemption.add': 'redeemed channel points',
+  'channel.channel_points_custom_reward_redemption.update': 'channel points redemption updated',
+  'stream.online': 'went live',
+  'stream.offline': 'ended the stream',
+
+  // Polls
+  'channel.poll.begin': 'Streamer started a poll',
+  'channel.poll.progress': 'Any vote updated the poll',
+  'channel.poll.end': 'poll ended',
+
+  // Hype trains
+  'channel.hype_train.begin': 'started a hype train',
+  'channel.hype_train.progress': 'hype train progressed',
+  'channel.hype_train.end': 'hype train ended',
+
+  // Goals
+  'channel.goal.begin': 'goal started',
+  'channel.goal.progress': 'goal progressed',
+  'channel.goal.end': 'goal ended',
+};
+
 function label(event: UnifiedEvent): string {
   if (event.source === 'twitch') {
-    return event.label ?? event.event_type;
+    return twitchEventLabels[event.event_type] ?? event.label ?? event.event_type;
   }
   return externalEventLabels[event.source]?.[event.event_type] ?? `${event.source}: ${event.event_type}`;
 }
@@ -168,7 +199,6 @@ function relativeTime(iso: string): string {
             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <span v-else class="italic text-muted-foreground/50">-</span>
               <span class="text-muted-foreground">{{ label(event) }}</span>
               <span v-if="details(event)">{{ details(event) }}</span>
             </div>
