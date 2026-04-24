@@ -63,8 +63,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <section class="mb-12 space-y-4">
           <h2 class="text-2xl font-bold">Why being third-party matters a lot</h2>
           <p class="text-foreground">
-            Overlabels doesn't care where your donation came from. StreamElements, StreamLabs, Ko-fi, Twitch
-            Bits - they're all just <em>money that showed up</em>. We normalize every payload into a common
+            Overlabels doesn't care where your donation came from. StreamElements, StreamLabs, Ko-fi,
+            Fourthwall, Twitch Bits - they're all just <em>money that showed up</em>. We normalize every payload into a common
             shape and expose it as a Control you can reference anywhere in your template.
           </p>
           <p class="text-foreground">
@@ -85,11 +85,12 @@ const breadcrumbs: BreadcrumbItem[] = [
   c.streamlabs.latest_donor_name_at,     c.streamlabs.latest_donor_name,
   c.kofi.latest_donor_name_at,           c.kofi.latest_donor_name,
   c.streamelements.latest_donor_name_at, c.streamelements.latest_donor_name,
+  c.fourthwall.latest_donor_name_at,     c.fourthwall.latest_donor_name,
   c.twitch.latest_cheerer_name_at,       c.twitch.latest_cheerer_name
 )</code></pre>
           </div>
           <p class="text-foreground">
-            Calmly outputs the name of the last person who donated through four different services. No
+            Calmly outputs the name of the last person who donated through five different services. No
             other overlay or alert service on the market does this, and with Overlabels it's just another
             function. (And we're adding more integrations all the time.)
           </p>
@@ -116,10 +117,11 @@ const breadcrumbs: BreadcrumbItem[] = [
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>c.kofi.donations_received +
 c.streamlabs.donations_received +
 c.streamelements.donations_received +
+c.fourthwall.donations_received +
 (c.twitch.cheers_this_stream / 100)</code></pre>
           </div>
           <p class="text-foreground">
-            That's a workable USD number, composed from four providers and a currency conversion, updating
+            That's a workable USD number, composed from five providers and a currency conversion, updating
             live as events arrive. You could keep going - weight each source, compute a 1-hour rolling
             average, trigger a goal celebration when the combined total crosses a threshold. It's just
             math.
@@ -143,7 +145,7 @@ c.streamelements.donations_received +
             <li><strong>Expression</strong> - the big one. Math over every other value in the system.</li>
           </ul>
           <p class="text-foreground">
-            Service-managed Controls (Ko-fi, StreamLabs, StreamElements, Overlabels Mobile...) auto-update
+            Service-managed Controls (Ko-fi, StreamLabs, StreamElements, Fourthwall, Overlabels Mobile...) auto-update
             from their source and cannot be manually edited - the data is <em>real</em>. User Controls are
             yours to fiddle with. Either way, every Control can be read by any Expression and targeted by
             any conditional.
