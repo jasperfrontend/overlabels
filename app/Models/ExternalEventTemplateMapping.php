@@ -106,6 +106,9 @@ class ExternalEventTemplateMapping extends Model
         'streamelements' => [
             'donation' => 'StreamElements Tip',
         ],
+        'fourthwall' => [
+            'donation' => 'Fourthwall Donation',
+        ],
     ];
 
     public function user(): BelongsTo

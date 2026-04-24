@@ -176,7 +176,8 @@ const saveAllMappings = async () => {
 };
 
 const serviceLabel: Record<string, string> = {
-  kofi: 'Ko-fi'
+  kofi: 'Ko-fi',
+  fourthwall: 'Fourthwall',
 };
 </script>
 
