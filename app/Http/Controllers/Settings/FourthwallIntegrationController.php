@@ -71,12 +71,23 @@ class FourthwallIntegrationController extends Controller
      */
     public function redirect(Request $request): RedirectResponse
     {
+        $authUrl = config('services.fourthwall.auth_url');
+        $redirectUrl = config('services.fourthwall.redirect_url');
+
+        if (! $authUrl || ! $redirectUrl) {
+            Log::error('Fourthwall integration is not configured', [
+                'auth_url_present' => (bool) $authUrl,
+                'redirect_url_present' => (bool) $redirectUrl,
+            ]);
+
+            return redirect()->route('settings.integrations.fourthwall.show')
+                ->with('error', 'Fourthwall is not configured on this server. Contact the administrator.');
+        }
+
         $state = Str::random(40);
         $request->session()->put(self::OAUTH_STATE_SESSION_KEY, $state);
 
-        $url = config('services.fourthwall.auth_url')
-            .urlencode(config('services.fourthwall.redirect_url'))
-            .'&state='.urlencode($state);
+        $url = $authUrl.urlencode($redirectUrl).'&state='.urlencode($state);
 
         return redirect()->away($url);
     }
