@@ -1,5 +1,9 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Hard reload after EventSub setup completes
+
+- Follow-up to the Reconnect broadcast landed earlier today. `router.reload({ only: ['eventsub'] })` occasionally left the Active events dialog rendering stale prop state for a tick after the partial reload resolved - the counter updated but the individual ✓/✕ rows lagged behind. Swapped to `window.location.reload()` which also reconnects Echo fresh. Rare enough that a page refresh was a reliable tiebreaker, but shouldn't require the user to know that.
+
 ## April 24th, 2026 - EventSub verify pagination bug + hype train v2 + job-based Reconnect
 
 - Reported symptom: the Integrations page showed "Active events (5)" on prod with 22 of 26 event types rendering with a ✕ mark, even right after clicking Reconnect. The actual state on Twitch was healthy - all 24 non-hype-train subs were `status=enabled` on their side. The DB and UI were lying.

@@ -197,7 +197,7 @@ onMounted(() => {
     }
 
     eventsubLoading.value = false;
-    router.reload({ only: ['eventsub'] });
+    window.location.reload();
   });
 });
 
