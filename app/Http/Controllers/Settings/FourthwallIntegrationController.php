@@ -160,9 +160,14 @@ class FourthwallIntegrationController extends Controller
         try {
             $webhookData = $this->apiClient->registerWebhook($integration, $webhookUrl, self::WEBHOOK_EVENT_TYPES);
         } catch (ConnectionException|RequestException $e) {
+            $responseBody = $e instanceof RequestException ? $e->response->body() : null;
+            $responseStatus = $e instanceof RequestException ? $e->response->status() : null;
+
             Log::error('Fourthwall webhook registration failed', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'status' => $responseStatus,
+                'response_body' => $responseBody,
+                'exception' => $e->getMessage(),
             ]);
 
             // Fresh connects with no webhook are useless - roll the row back so the
@@ -171,8 +176,12 @@ class FourthwallIntegrationController extends Controller
                 $integration->delete();
             }
 
+            $flashMessage = $responseStatus === 403
+                ? 'Fourthwall accepted the login but refused to register the webhook (403 Forbidden). Your app likely needs the webhook_write scope enabled - check the app settings in Fourthwall and reconnect.'
+                : 'Connected to Fourthwall, but registering the webhook failed. Please try again.';
+
             return redirect()->route('settings.integrations.fourthwall.show')
-                ->with('error', 'Connected to Fourthwall, but registering the webhook failed. Please try again.');
+                ->with('error', $flashMessage);
         }
 
         $credentials = $integration->getCredentialsDecrypted();
