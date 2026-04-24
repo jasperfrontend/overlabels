@@ -1365,6 +1365,41 @@ function clearFilter() {
                 Inside a loop, use <code>[[[alias.count]]]</code> on the iterable itself to get the total (untruncated) count.
                 For example, <code>[[[subscribers.count]]]</code> shows the real subscriber total even if your cap is 10.
               </p>
+
+              <h4 class="mt-6 mb-3 text-lg font-semibold">Animating loop items with <code>data-key</code></h4>
+              <p class="mb-3 text-foreground">
+                Both static and alert overlays reconcile their rendered HTML via morphdom on every data update - when a poll
+                vote changes or a hype train contribution arrives, only the differences get patched instead of the whole
+                subtree being thrown away. That reconciliation is structural by default, which works fine for content updates
+                but means in-flight CSS transitions reset because the DOM nodes underneath can be replaced between renders.
+              </p>
+              <p class="mb-3 text-foreground">
+                Add <code>data-key</code> to the repeated element and morphdom will reuse the same DOM node across renders
+                whenever the key matches. CSS transitions on that element then keep running smoothly:
+              </p>
+              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+  [[[foreach:event.choices as choice]]]
+    &lt;li data-key="[[[choice.id]]]" style="--bar-width: [[[choice.votes_pct]]]%"&gt;
+      [[[choice.title]]] - [[[choice.votes]]] votes
+    &lt;/li&gt;
+  [[[endforeach]]]
+&lt;/ul&gt;</pre>
+              <p class="mt-3 text-foreground">
+                With the <code>&lt;li&gt;</code> pinned by its <code>data-key</code>, a CSS rule like
+                <code>transition: width 300ms ease-out</code> on a bar inside the <code>&lt;li&gt;</code> will animate from
+                the old width to the new one on every update. Without <code>data-key</code>, morphdom may replace the node
+                and the transition has no "from" state to interpolate from, so the bar jumps.
+              </p>
+              <p class="mt-3 text-foreground">
+                <code>data-key</code> falls back to the element's <code>id</code> if no <code>data-key</code> is set, and
+                finally to morphdom's positional matching if neither is present - so older templates render identically to
+                before. It's purely additive: add it when you want smooth animations on repeated items.
+              </p>
+              <p class="mt-3 text-sm text-foreground">
+                <strong>Gotcha:</strong> pair <code>data-key</code> with CSS <code>transition</code>, not keyframe
+                <code>animation</code>. Keyframe animations only fire once when a node mounts, so they won't re-trigger
+                when the same DOM node's custom property changes. Transitions react to property changes and will.
+              </p>
             </div>
           </div>
         </div>
