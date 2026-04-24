@@ -90,26 +90,55 @@ const twitchEventLabels: Record<string, string> = {
   'stream.offline': 'ended the stream',
 
   // Polls
-  'channel.poll.begin': 'Streamer started a poll',
-  'channel.poll.progress': 'Any vote updated the poll',
-  'channel.poll.end': 'poll ended',
+  'channel.poll.begin': 'A poll started',
+  'channel.poll.progress': 'Active poll updated',
+  'channel.poll.end': 'Active poll ended',
 
-  // Hype trains
-  'channel.hype_train.begin': 'started a hype train',
-  'channel.hype_train.progress': 'hype train progressed',
-  'channel.hype_train.end': 'hype train ended',
+  // Hype train labels are computed dynamically from event data - see hypeTrainLabels()
 
   // Goals
-  'channel.goal.begin': 'goal started',
-  'channel.goal.progress': 'goal progressed',
-  'channel.goal.end': 'goal ended',
+  'channel.goal.begin': 'A Goal started',
+  'channel.goal.progress': 'Active Goal progressed',
+  'channel.goal.end': 'Active Goal ended',
 };
 
 function label(event: UnifiedEvent): string {
   if (event.source === 'twitch') {
+    if (event.event_type.startsWith('channel.hype_train.')) {
+      return hypeTrainLabels(event) || event.event_type;
+    }
     return twitchEventLabels[event.event_type] ?? event.label ?? event.event_type;
   }
   return externalEventLabels[event.source]?.[event.event_type] ?? `${event.source}: ${event.event_type}`;
+}
+
+function hypeTrainLabels(event: UnifiedEvent): string {
+  if (
+    event.event_type !== 'channel.hype_train.begin' &&
+    event.event_type !== 'channel.hype_train.progress' &&
+    event.event_type !== 'channel.hype_train.end'
+  ) return '';
+  const d = event.event_data as Record<string, unknown>;
+  const total = d.total as number;
+  const progress = d.progress as number;
+  const goal = d.goal as number;
+  const level = d.level as number;
+  if (event.event_type === 'channel.hype_train.begin') {
+    return `Hype Train started at level ${level}: ${progress} of ${goal}`;
+  }
+  if (event.event_type === 'channel.hype_train.progress') {
+    return `Hype Train progressed to level ${level}: ${progress} of ${goal}`;
+  }
+  if (event.event_type === 'channel.hype_train.end') {
+    const top = (d.top_contributions as Array<{ user_name: string; total: number; type: string; }> | undefined) ?? [];
+    const contributors = top.map((c) => `${c.user_name}: ${c.total} ${c.type}`);
+    const suffix = contributors.length
+      ? `. Top contributions: ${new Intl.ListFormat(undefined, { type: 'conjunction' }).format(contributors)}`
+      : '';
+    return `Hype Train ended at level ${level}: ${total} contributions${suffix}.`;
+  }
+  return '';
+
 }
 
 function who(event: UnifiedEvent): string | null {
@@ -195,11 +224,11 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex min-w-0 flex-1 gap-1" :id="label(event)">
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div class="flex min-w-0 flex-1 gap-1 group" :id="label(event)">
+            <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-[80%]">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <span class="text-muted-foreground">{{ label(event) }}</span>
+              <div class="text-muted-foreground group-hover:text-foreground whitespace-nowrap overflow-x-hidden text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)">{{ details(event) }}</span>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
@@ -218,9 +247,10 @@ function relativeTime(iso: string): string {
 
       <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-sidebar-accent border-violet-400 dark:border-violet-300" side="top" :side-offset="-1" align="start">
         <div class="flex items-center gap-3">
-          <span class="text-sm text-foreground">Replay event?</span>
+          <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
           <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
           <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
+
         </div>
       </PopoverContent>
     </Popover>

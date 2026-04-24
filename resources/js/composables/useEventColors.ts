@@ -11,16 +11,18 @@ export interface UnifiedEvent {
 // Full class strings so Tailwind can detect them during production builds.
 // Dynamic construction like `bg-${color}` is invisible to Tailwind's scanner.
 const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
-  'channel.subscribe':       { dot: 'bg-purple-500', border: 'hover:border-l-purple-500' },
+  'channel.subscribe':        { dot: 'bg-purple-500', border: 'hover:border-l-purple-500' },
   'channel.subscription.gift': { dot: 'bg-pink-500', border: 'hover:border-l-pink-500' },
   'channel.subscription.message': { dot: 'bg-indigo-500', border: 'hover:border-l-indigo-500' },
-  'channel.raid':            { dot: 'bg-rose-500', border: 'hover:border-l-rose-500' },
-  'channel.cheer':           { dot: 'bg-amber-500', border: 'hover:border-l-amber-500' },
-  'stream.online':           { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
-  'stream.offline':          { dot: 'bg-red-500', border: 'hover:border-l-red-500' },
+  'channel.raid':             { dot: 'bg-rose-500', border: 'hover:border-l-rose-500' },
+  'channel.cheer':            { dot: 'bg-amber-500', border: 'hover:border-l-amber-500' },
+  'stream.online':            { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
+  'stream.offline':           { dot: 'bg-red-500', border: 'hover:border-l-red-500' },
   'channel.channel_points_custom_reward_redemption.add': { dot: 'bg-cyan-500', border: 'hover:border-l-cyan-500' },
   'channel.channel_points_custom_reward_redemption.update': { dot: 'bg-cyan-500', border: 'hover:border-l-cyan-500' },
-  'channel.follow':          { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
+  'channel.follow':           { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
+  'channel.poll.begin':       { dot: 'bg-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
+  'channel.poll.progress':    { dot: 'bg-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
 };
 
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
