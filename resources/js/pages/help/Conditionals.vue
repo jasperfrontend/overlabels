@@ -20,7 +20,8 @@ type FamilyKey =
   | 'twitch_predictions'
   | 'kofi'
   | 'streamlabs'
-  | 'streamelements';
+  | 'streamelements'
+  | 'fourthwall';
 
 const FAMILY_LABELS: Record<FamilyKey, string> = {
   twitch_basic: 'Twitch - Basic',
@@ -33,6 +34,7 @@ const FAMILY_LABELS: Record<FamilyKey, string> = {
   kofi: 'Ko-fi',
   streamlabs: 'StreamLabs',
   streamelements: 'StreamElements',
+  fourthwall: 'Fourthwall',
 };
 
 const FAMILY_ORDER: FamilyKey[] = [
@@ -46,6 +48,7 @@ const FAMILY_ORDER: FamilyKey[] = [
   'kofi',
   'streamlabs',
   'streamelements',
+  'fourthwall',
 ];
 
 interface Tag {
@@ -873,7 +876,7 @@ const cards: EventCard[] = [
         ],
       },
     ],
-    note: { kind: 'info', text: 'Ko-fi, StreamLabs, and StreamElements share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:kofi:, c:streamlabs:, c:streamelements:) and the template keeps working.' },
+    note: { kind: 'info', text: 'Ko-fi, StreamLabs, StreamElements, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:kofi:, c:streamlabs:, c:streamelements:, c:fourthwall:) and the template keeps working.' },
   },
   {
     id: 'kofi-all',
@@ -951,7 +954,7 @@ const cards: EventCard[] = [
         ],
       },
     ],
-    note: { kind: 'info', text: 'StreamLabs, Ko-fi, and StreamElements share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:streamlabs:, c:kofi:, c:streamelements:) and the template keeps working.' },
+    note: { kind: 'info', text: 'StreamLabs, Ko-fi, StreamElements, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:streamlabs:, c:kofi:, c:streamelements:, c:fourthwall:) and the template keeps working.' },
   },
   {
     id: 'streamlabs-donation',
@@ -1002,7 +1005,7 @@ const cards: EventCard[] = [
         ],
       },
     ],
-    note: { kind: 'info', text: 'StreamElements, Ko-fi, and StreamLabs share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:streamelements:, c:kofi:, c:streamlabs:) and the template keeps working.' },
+    note: { kind: 'info', text: 'StreamElements, Ko-fi, StreamLabs, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:streamelements:, c:kofi:, c:streamlabs:, c:fourthwall:) and the template keeps working.' },
   },
   {
     id: 'streamelements-donation',
@@ -1027,6 +1030,57 @@ const cards: EventCard[] = [
     ],
     example: `<div class="donation">
   [[[event.from_name]]] tipped [[[event.formatted_amount]]]!
+  [[[if:event.message]]]
+    <p class="message">[[[event.message]]]</p>
+  [[[endif]]]
+</div>`,
+  },
+
+  // === Fourthwall ===
+  {
+    id: 'fourthwall-controls',
+    family: 'fourthwall',
+    title: 'Fourthwall Auto-provisioned Controls',
+    subtitle: 'Six controls are created on connect and kept up to date with every donation',
+    dot: 'bg-sky-500',
+    cols: [
+      {
+        heading: 'Use in any template with the [[[c:fourthwall:key]]] syntax',
+        tags: [
+          { tag: '[[[c:fourthwall:donations_received]]]', desc: 'Total number of donations received (counter)' },
+          { tag: '[[[c:fourthwall:latest_donor_name]]]', desc: 'Name of the most recent donor' },
+          { tag: '[[[c:fourthwall:latest_donation_amount]]]', desc: 'Amount of the most recent donation' },
+          { tag: '[[[c:fourthwall:latest_donation_message]]]', desc: 'Message from the most recent donor' },
+          { tag: '[[[c:fourthwall:latest_donation_currency]]]', desc: 'Currency of the most recent donation (e.g. USD)' },
+          { tag: '[[[c:fourthwall:total_received]]]', desc: 'Running total of all donation amounts (session)' },
+        ],
+      },
+    ],
+    note: { kind: 'info', text: 'Fourthwall, Ko-fi, StreamLabs, and StreamElements share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:fourthwall:, c:kofi:, c:streamlabs:, c:streamelements:) and the template keeps working.' },
+  },
+  {
+    id: 'fourthwall-donation',
+    family: 'fourthwall',
+    title: 'Fourthwall Donation Event Tags',
+    subtitle: 'Available in alert templates triggered by Fourthwall donations',
+    dot: 'bg-sky-500',
+    cols: [
+      {
+        heading: 'Event Tags',
+        tags: [
+          { tag: '[[[event.from_name]]]', desc: 'Name of the donor' },
+          { tag: '[[[event.message]]]', desc: "Donor's message" },
+          { tag: '[[[event.amount]]]', desc: 'Donation amount (e.g. "10")' },
+          { tag: '[[[event.currency]]]', desc: 'Currency code (e.g. "USD")' },
+          { tag: '[[[event.type]]]', desc: 'Always "donation"' },
+          { tag: '[[[event.source]]]', desc: 'Always "Fourthwall" - useful for reusing alert templates across donation services' },
+          { tag: '[[[event.status]]]', desc: 'Donation lifecycle state (e.g. "OPEN") - Fourthwall-specific' },
+          { tag: '[[[event.transaction_id]]]', desc: 'Unique donation identifier (e.g. don_...)' },
+        ],
+      },
+    ],
+    example: `<div class="donation">
+  [[[event.from_name]]] donated [[[event.amount]]] [[[event.currency]]]!
   [[[if:event.message]]]
     <p class="message">[[[event.message]]]</p>
   [[[endif]]]
@@ -1068,6 +1122,7 @@ const familyCounts = computed(() => {
     kofi: 0,
     streamlabs: 0,
     streamelements: 0,
+    fourthwall: 0,
   };
   for (const card of cards) {
     if (!q) {
@@ -1103,7 +1158,7 @@ function clearFilter() {
     <title>Help - Overlabels</title>
     <meta
       name="description"
-      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and StreamElements integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays."
     />
 
     <meta property="og:type" content="website" />
@@ -1112,7 +1167,7 @@ function clearFilter() {
     <meta property="og:title" content="Help - Overlabels" />
     <meta
       property="og:description"
-      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and StreamElements integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays."
     />
     <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -1123,7 +1178,7 @@ function clearFilter() {
     <meta name="twitter:title" content="Help - Overlabels" />
     <meta
       name="twitter:description"
-      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and StreamElements integration tags in Overlabels overlays."
+      content="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays."
     />
     <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
@@ -1501,7 +1556,7 @@ function clearFilter() {
             <div>
               <h4 class="font-semibold">Shared Alert Templates</h4>
               <p>
-                StreamLabs, Ko-fi, and StreamElements donation events expose the same core tags, so you can point all three services at the same alert template.
+                StreamLabs, Ko-fi, StreamElements, and Fourthwall donation events expose the same core tags, so you can point all four services at the same alert template.
               </p>
             </div>
           </div>
@@ -1536,13 +1591,54 @@ function clearFilter() {
             <div>
               <h4 class="font-semibold">Shared Alert Templates</h4>
               <p>
-                StreamElements, StreamLabs, and Ko-fi donation events expose the same core tags, so you can point all three services at the same alert template.
+                StreamElements, StreamLabs, Ko-fi, and Fourthwall donation events expose the same core tags, so you can point all four services at the same alert template.
               </p>
             </div>
             <div>
               <h4 class="font-semibold">JWT Rotation</h4>
               <p>
                 StreamElements JWTs do not have a refresh flow. If you regenerate the JWT in SE's dashboard, paste the new one into the settings page - Overlabels reconnects automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="activeFamily === 'all' || activeFamily === 'fourthwall'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <h3 class="mb-4 text-xl font-semibold">
+            <span class="mr-2 inline-block h-3 w-3 rounded bg-sky-500"></span>
+            Fourthwall - How It Works
+          </h3>
+          <ol class="mb-4 list-inside list-decimal space-y-2 text-foreground">
+            <li>
+              Go to
+              <a href="/settings/integrations/fourthwall" class="cursor-pointer text-violet-400 hover:underline">Settings &gt; Integrations &gt; Fourthwall</a> and click <strong>Authenticate with Fourthwall</strong>.
+            </li>
+            <li>Authorize Overlabels in the Fourthwall popup, granting the webhook scopes.</li>
+            <li>Done. Overlabels registers a donation webhook on your Fourthwall shop automatically and updates your overlay controls in real time.</li>
+          </ol>
+          <div class="space-y-3 text-sm text-foreground">
+            <div>
+              <h4 class="font-semibold">Test Mode</h4>
+              <p>
+                Toggle test mode on the Fourthwall settings page to experiment with donations without affecting your live counters. When you turn test mode off, the donation counter resets to your seed value. You can fire test donations directly from the Fourthwall dashboard under your webhook's Recent Events.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Starting Donation Count</h4>
+              <p>
+                Already have Fourthwall donations from before connecting? Set a starting count so your <code>[[[c:fourthwall:donations_received]]]</code> control picks up where you left off.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Shared Alert Templates</h4>
+              <p>
+                Fourthwall, Ko-fi, StreamLabs, and StreamElements donation events expose the same core tags, so you can point all four services at the same alert template.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Automatic Webhook Lifecycle</h4>
+              <p>
+                Connecting registers a webhook on your Fourthwall shop programmatically; disconnecting deregisters it. You don't paste URLs into the Fourthwall dashboard - Overlabels manages the webhook on your behalf.
               </p>
             </div>
           </div>
