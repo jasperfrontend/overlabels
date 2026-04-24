@@ -19,7 +19,7 @@
   <!-- Rendered via morphdom so existing DOM nodes are preserved across data updates.
        Give repeated elements a [[[choice.id]]] (or similar stable value) in data-key
        to unlock CSS transitions on foreach-rendered children. -->
-  <div v-else ref="staticContainer" />
+  <div v-else ref="staticContainer" class="overlay-static-root" />
 
   <!-- Dynamic Alert Overlay -->
   <!-- Alert contents are morphed too, so live-updating alerts (e.g. poll.progress

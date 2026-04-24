@@ -18,6 +18,8 @@
             height: 100%;
             overflow: hidden;
         }
+        #overlay-content,
+        #overlay-content > .overlay-static-root { display: contents; }
         .loading {
             display: flex;
             justify-content: center;

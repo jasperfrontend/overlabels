@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Hoist overlay content out of its layout wrappers
+
+- Pain: writing an overlay that wants a full-viewport flex/grid layout (center a scene on screen, justify content to the bottom, split into two columns, etc.) was miserable because the user's top-level element wasn't a child of `<body>` - it was nested inside `body > #overlay-content > [staticContainer div] > their-element`. Flex on body did nothing; the user had to reverse-engineer the DOM from OBS devtools to know what to style.
+- Both wrappers exist for structural reasons we can't drop: `#overlay-content` is the Vue app's mount point (Vue's `mount(el)` keeps the element and renders into it), and the staticContainer is where morphdom patches the user's HTML - it's a sibling of the health banner and the alert overlay, so losing it means restructuring `OverlayRenderer`.
+- Fix: `display: contents` on both wrappers. The CSS spec's "layout-transparent" display mode makes an element invisible to layout - its children behave as if they were direct children of its parent - while keeping the DOM tree intact. Two lines in `authenticate.blade.php`, plus a class (`overlay-static-root`) on the staticContainer in `OverlayRenderer.vue` so the CSS has something to target. Net result: the user's top-level overlay elements behave as direct children of `<body>` for all layout purposes. `body { display: flex; justify-content: flex-end }` now works as expected.
+- Caveats worth remembering: `display: contents` makes the element itself non-paintable, so if we ever want to put a background / border / transform / filter on `#overlay-content` we'd skip contents for that wrapper. Rarely an issue for overlays. Solid browser support in OBS (Chromium 127+).
+
 ## April 24th, 2026 - Fourthwall HMAC verification uses app-level secret
 
 - During live testing of the Fourthwall integration, every inbound webhook hit 403 at our verify step. Root cause: Fourthwall's `POST /open-api/v1.0/webhooks` response doesn't include the per-webhook signing secret - it's only shown once in the FW dashboard and never exposed via API, including through `GET /webhooks/{id}` (which returns exactly four fields: id, url, allowedTypes, apiVersion). Our code stored `$webhookData['secret'] ?? null`, so verification was silently HMAC'ing with an empty string.
