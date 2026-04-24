@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Drop the ghcr.io/ prefix from the cache image path
+
+- Immediate follow-up to the GHA-to-registry switch earlier today. Kamal auto-prepends `registry.server` (ghcr.io) to `builder.cache.image` the same way it does to the main `image:` field. Writing the full `ghcr.io/jasperfrontend/overlabels-buildcache` path produced `ghcr.io/ghcr.io/jasperfrontend/overlabels-buildcache` in the actual `--cache-from` / `--cache-to` flags. GHCR silently 404'd both sides; the deploy was slower than baseline (4:36 vs 4:30) because we paid the cache-write overhead for zero hits. The Kamal log had an explicit `ERROR: failed to configure registry cache importer: ... not found` that nobody was reading, which is how this snuck through.
+- Fix: `image: jasperfrontend/overlabels-buildcache` (no `ghcr.io/` prefix). Same footgun as the accessory-vs-main-image path handling already documented in the Kamal memory reference.
+
 ## April 24th, 2026 - Switch Kamal build cache from GHA to registry
 
 - Second-order fix to the Dockerfile cache ordering earlier today. The `builder.cache.type: gha` config in `config/deploy.yml` was silently not working - Kamal 2 creates its own buildx builder (`kamal-local-docker-container`) instead of using the one `docker/setup-buildx-action` sets up, and that builder doesn't have `ACTIONS_CACHE_URL` / `ACTIONS_RUNTIME_TOKEN` wired into its buildkit daemon. So `--cache-from type=gha --cache-to type=gha` was being passed to the build but the daemon couldn't reach the GHA cache service.
