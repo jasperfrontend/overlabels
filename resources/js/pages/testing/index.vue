@@ -138,7 +138,7 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
       <div class="flex items-center gap-3">
-        <Terminal class="h-6 w-6 text-purple-400" />
+        <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300 " />
         <h1 class="text-2xl font-semibold">Testing Guide</h1>
       </div>
 
@@ -148,17 +148,17 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
           href="https://dev.twitch.tv/docs/cli/"
           target="_blank"
           rel="noopener"
-          class="inline-flex cursor-pointer items-center gap-1 text-purple-400 hover:underline"
+          class="inline-flex cursor-pointer items-center gap-1 text-violet-400 dark:text-violet-300 hover:underline"
         >
           Twitch CLI
           <ExternalLink class="h-3 w-3" />
         </a>
-        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account. You'll need the CLI installed and <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> run once first.
+        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account. You'll need the CLI installed and <code class="rounded bg-slate-300 dark:bg-slate-800 px-1.5 py-0.5 text-xs">twitch configure</code> run once first.
       </p>
 
-      <div class="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-950/20 p-3 text-sm text-amber-300">
+      <div class="flex items-start gap-2 p-3 text-sm border border-amber-300 bg-amber-400/10 text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-300">
         <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>Never paste these commands into a terminal while streaming - the clipboard contains your unredacted webhook secret.</span>
+        <span>Never show these commands on stream or paste them into your chat!</span>
       </div>
 
       <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-300">
@@ -201,24 +201,30 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
               class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
               @click="copyCommand(event.type)"
             >
+
+              <div class="shrink-0 text-xs text-muted-foreground">
+                <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
+                <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
+              </div>
+
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span class="text-sm font-medium">{{ event.label }}</span>
-                  <code class="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-purple-300">{{ event.type }}</code>
+                  <span
+                    class="text-sm font-medium"
+                    :class="copiedCommand === event.type ? 'text-green-400' : 'text-foreground'"
+                  >{{ event.label }}</span>
+                  <code class="rounded bg-sidebar-accent px-1.5 py-0.5 text-[10px] text-violet-400 dark:text-violet-300">{{ event.type }}</code>
                 </div>
                 <p class="text-xs text-muted-foreground">{{ event.description }}</p>
                 <input
                   v-if="showCommand"
                   :value="commandFor(event.type)"
                   readonly
-                  class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-300"
+                  class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-500 dark:text-green-300"
                   @click.stop="copyCommand(event.type)"
                 />
               </div>
-              <div class="shrink-0 text-xs text-muted-foreground">
-                <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
-                <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
-              </div>
+
             </li>
           </ul>
         </section>
@@ -231,7 +237,7 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
             href="https://dev.twitch.tv/docs/eventsub/eventsub-reference/"
             target="_blank"
             rel="noopener"
-            class="inline-flex cursor-pointer items-center gap-1 text-purple-400 hover:underline"
+            class="inline-flex cursor-pointer items-center gap-1 text-violet-400 dark:text-violet-300  hover:underline"
           >
             Twitch EventSub Reference
             <ExternalLink class="h-3 w-3" />
