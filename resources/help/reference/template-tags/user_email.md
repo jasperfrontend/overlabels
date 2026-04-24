@@ -1,0 +1,1 @@
+the email address the user used to sign up for twitch

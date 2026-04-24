@@ -1,0 +1,2 @@
+the twitch user name of the last user who performed an action on the stream, eg. latest follower, latest subscriber.
+note: this is a Capitalised version of name meant for display. To use a user's name in code, use [[user_login]].

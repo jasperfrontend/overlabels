@@ -2,13 +2,19 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Pipette, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, Heart, FileText, Library, Pipette, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
 ];
 
 const pages = [
+  {
+    title: 'Reference',
+    description: 'Fuzzy-searchable reference for every template tag, EventSub event, and foreach field. Press Ctrl+/ from anywhere.',
+    href: '/help/reference',
+    icon: Library,
+  },
   {
     title: 'Why Overlabels',
     description: 'The pitch, for coders. Third-party data normalization, math on any value, Expression Controls, and why this thing is a bit special.',

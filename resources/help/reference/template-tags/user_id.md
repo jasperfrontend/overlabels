@@ -1,0 +1,1 @@
+the twitch user id of the last user who performed an action on the stream, eg. latest follower, latest subscriber.

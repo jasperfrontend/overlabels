@@ -1,0 +1,1 @@
+partner, affiliate, or none

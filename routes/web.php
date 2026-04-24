@@ -138,6 +138,14 @@ Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');
 })->name('help.gamejam');
 
+Route::get('/help/reference/{category?}/{slug?}', function (?string $category = null, ?string $slug = null) {
+    return Inertia::render('help/Reference', [
+        'category' => $category,
+        'slug' => $slug,
+    ]);
+})->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
+  ->name('help.reference');
+
 // Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
 Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-builder.')->group(function () {
     Route::get('/{room}', [RoomBuilderController::class, 'show'])->where('room', '[0-9]+')->name('show');

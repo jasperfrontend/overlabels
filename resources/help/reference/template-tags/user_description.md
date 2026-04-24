@@ -1,0 +1,1 @@
+the description in the biography of the user, if they have added one.

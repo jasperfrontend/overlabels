@@ -1,0 +1,1 @@
+the viewer count of the user, should they currently be streaming
