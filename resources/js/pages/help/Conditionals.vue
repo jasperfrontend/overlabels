@@ -1366,6 +1366,126 @@ function clearFilter() {
                 For example, <code>[[[subscribers.count]]]</code> shows the real subscriber total even if your cap is 10.
               </p>
 
+              <h4 class="mt-6 mb-3 text-lg font-semibold">Inspect a loop item with <code>[[[raw]]]</code></h4>
+              <p class="mb-3 text-foreground">
+                Not sure what fields an iterable exposes? Drop <code>[[[raw]]]</code> inside the loop body and it will print the
+                current item as pretty-printed JSON. It's the fastest way to see the shape of anything you're iterating over
+                without guessing.
+              </p>
+              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[foreach:event.choices as choice]]]
+  &lt;pre&gt;[[[raw]]]&lt;/pre&gt;
+[[[endforeach]]]</pre>
+              <p class="mt-3 text-sm text-foreground">
+                <code>[[[raw]]]</code> only works inside a <code>[[[foreach]]]</code> and always dumps the current iteration's
+                item regardless of the alias name. It's meant as a scaffolding tool - remove it from your finished template.
+              </p>
+
+              <h4 class="mt-6 mb-3 text-lg font-semibold">Fields available on each iteration item</h4>
+              <p class="mb-4 text-foreground">
+                Inside the loop body, reference any of these fields as <code>[[[alias.field]]]</code>, where
+                <code>alias</code> is the name you picked after <code>as</code>. Missing fields render as an empty string.
+              </p>
+
+              <div class="space-y-5">
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>event.choices</code> - poll choice</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>id</code> - stable choice id (good for <code>data-key</code>)</li>
+                    <li><code>title</code> - choice label shown to voters</li>
+                    <li><code>votes</code> - total votes on this choice</li>
+                    <li><code>channel_points_votes</code> - votes cast with channel points</li>
+                    <li><code>bits_votes</code> - votes cast with bits (deprecated by Twitch, still in payload)</li>
+                  </ul>
+                  <p class="mt-2 text-xs text-foreground">
+                    Aggregates on the iterable itself:
+                    <code>event.choices.total_votes</code>,
+                    <code>event.choices.total_channel_points_votes</code>,
+                    <code>event.choices.total_bits_votes</code>.
+                  </p>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>event.outcomes</code> - prediction outcome</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>id</code> - stable outcome id</li>
+                    <li><code>title</code> - outcome label</li>
+                    <li><code>color</code> - <code>"blue"</code> or <code>"pink"</code> (Twitch's own colouring)</li>
+                    <li><code>users</code> - number of predictors on this outcome</li>
+                    <li><code>channel_points</code> - total channel points wagered on this outcome</li>
+                  </ul>
+                  <p class="mt-2 text-xs text-foreground">
+                    Aggregates: <code>event.outcomes.total_users</code>, <code>event.outcomes.total_channel_points</code>.
+                    The winning outcome id is <code>event.winning_outcome_id</code> on lock/end events.
+                  </p>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>event.top_contributions</code> - hype train contributor</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>user_id</code>, <code>user_login</code>, <code>user_name</code> - the contributor</li>
+                    <li><code>type</code> - <code>"bits"</code>, <code>"subscription"</code>, or <code>"other"</code></li>
+                    <li><code>total</code> - amount contributed in the unit implied by <code>type</code></li>
+                  </ul>
+                  <p class="mt-2 text-xs text-foreground">
+                    Capped at 3 items (fixed). For just the single latest contributor use
+                    <code>event.last_contribution.user_name</code>, <code>event.last_contribution.type</code>,
+                    <code>event.last_contribution.total</code>.
+                  </p>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>subscribers</code> - channel subscriber</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>user_id</code>, <code>user_login</code>, <code>user_name</code> - the subscriber</li>
+                    <li><code>user_profile_image_url</code> - the subscriber's avatar (enriched from Helix)</li>
+                    <li><code>broadcaster_id</code>, <code>broadcaster_login</code>, <code>broadcaster_name</code> - your channel</li>
+                    <li><code>is_gift</code> - <code>true</code> if the sub was gifted</li>
+                    <li><code>gifter_id</code>, <code>gifter_login</code>, <code>gifter_name</code> - empty string when <code>is_gift</code> is false</li>
+                    <li><code>gifter_profile_image_url</code> - the gifter's avatar (enriched)</li>
+                    <li><code>tier</code> - <code>"1000"</code>, <code>"2000"</code>, <code>"3000"</code>, or <code>"Prime"</code></li>
+                    <li><code>plan_name</code> - human-readable tier label (e.g. <code>"Tier 1"</code>)</li>
+                  </ul>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>channel_followers</code> - someone who follows you</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>user_id</code>, <code>user_login</code>, <code>user_name</code> - the follower</li>
+                    <li><code>followed_at</code> - ISO-8601 timestamp of when they followed</li>
+                    <li><code>user_profile_image_url</code> - the follower's avatar (enriched from Helix)</li>
+                  </ul>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>followed_channels</code> - a channel you follow</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>broadcaster_id</code>, <code>broadcaster_login</code>, <code>broadcaster_name</code> - the channel</li>
+                    <li><code>followed_at</code> - ISO-8601 timestamp of when you followed</li>
+                    <li><code>broadcaster_profile_image_url</code> - the channel's avatar (enriched from Helix)</li>
+                  </ul>
+                </div>
+
+                <div class="rounded border border-sidebar bg-sidebar p-4">
+                  <h5 class="mb-2 font-semibold"><code>goals</code> - a channel goal</h5>
+                  <ul class="ml-5 list-disc text-sm text-foreground">
+                    <li><code>id</code> - stable goal id</li>
+                    <li><code>broadcaster_id</code>, <code>broadcaster_login</code>, <code>broadcaster_name</code> - your channel</li>
+                    <li>
+                      <code>type</code> - one of
+                      <code>follower</code>,
+                      <code>subscription</code>,
+                      <code>subscription_count</code>,
+                      <code>new_subscription</code>,
+                      <code>new_subscription_count</code>
+                    </li>
+                    <li><code>description</code> - the free-text label you set on Twitch</li>
+                    <li><code>current_amount</code> - progress toward the goal</li>
+                    <li><code>target_amount</code> - goal target</li>
+                    <li><code>created_at</code> - ISO-8601 timestamp of when the goal was created</li>
+                  </ul>
+                </div>
+              </div>
+
               <h4 class="mt-6 mb-3 text-lg font-semibold">Animating loop items with <code>data-key</code></h4>
               <p class="mb-3 text-foreground">
                 Both static and alert overlays reconcile their rendered HTML via morphdom on every data update - when a poll

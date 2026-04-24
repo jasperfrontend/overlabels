@@ -282,6 +282,23 @@ function substituteScopedTokens(
 ): string {
     TAG_REGEX.lastIndex = 0;
     return template.replace(TAG_REGEX, (match, key: string, pipe: string | undefined) => {
+        // [[[raw]]] inside a foreach dumps the current iteration item as
+        // pretty-printed JSON. Useful for inspecting the shape of an iterable
+        // while writing a template. Pipe formatters are ignored.
+        if (key === 'raw') {
+            let json: string;
+            try {
+                json = JSON.stringify(scoped[alias], null, 2) ?? '';
+            } catch {
+                json = String(scoped[alias]);
+            }
+            if (encode) json = encodeHtml(json);
+            // Defuse any `[` / `]` in the JSON so a stray `[[[...]]]` in the
+            // data can't re-enter the outer tag substitution pass. Browsers
+            // still render these as literal brackets.
+            return json.replace(/\[/g, '&#91;').replace(/]/g, '&#93;');
+        }
+
         const isScoped =
             key === alias ||
             key.startsWith(`${alias}.`) ||
