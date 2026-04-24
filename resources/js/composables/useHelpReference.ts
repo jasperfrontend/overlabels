@@ -116,8 +116,30 @@ function preprocessMarkdown(md: string): string {
 
 marked.setOptions({ breaks: true, gfm: true });
 
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Post-render pass: make every [[[tag]]] a click-to-copy <code> element.
+// Runs AFTER marked so that brackets are never ambiguous with markdown syntax.
+// If marked already wrapped a bare [[[tag]]] in <code>...</code> (from an
+// author typing `[[[tag]]]`), we unwrap first so we don't produce nested
+// <code><code>...</code></code>.
+function enhanceTagsInHtml(html: string): string {
+  // Unwrap any single-tag inline <code>[[[...]]]</code>.
+  let out = html.replace(/<code>\s*(\[\[\[[^\[\]<>]+]]])\s*<\/code>/g, '$1');
+
+  // Wrap every remaining [[[tag]]] in a clickable <code>.
+  out = out.replace(/\[\[\[([^\[\]<>]+?)]]]/g, (_, inner) => {
+    const tag = `[[[${inner}]]]`;
+    return `<code class="ov-tag" role="button" tabindex="0" data-tag="${escapeAttr(tag)}" title="Click to copy">${tag}</code>`;
+  });
+
+  return out;
+}
+
 export function renderHelpMarkdown(md: string): string {
-  return marked.parse(preprocessMarkdown(md)) as string;
+  return enhanceTagsInHtml(marked.parse(preprocessMarkdown(md)) as string);
 }
 
 export function useHelpReference() {

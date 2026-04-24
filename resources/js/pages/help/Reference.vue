@@ -134,20 +134,58 @@ function openEntry(entry: HelpEntry) {
   router.visit(`/help/reference/${entry.category}/${entry.slug}`);
 }
 
-// Rewrite anchor clicks inside rendered markdown so internal /help/reference/...
-// links stay SPA-navigated (and external ones open in a new tab).
+// Flash a transient "Copied!" label on a tag element that was just clicked.
+function flashCopied(el: HTMLElement) {
+  const previous = el.getAttribute('data-original');
+  if (previous === null) el.setAttribute('data-original', el.textContent ?? '');
+  el.classList.add('ov-tag-copied');
+  el.textContent = 'Copied!';
+  window.setTimeout(() => {
+    const original = el.getAttribute('data-original');
+    if (original !== null) el.textContent = original;
+    el.classList.remove('ov-tag-copied');
+    el.removeAttribute('data-original');
+  }, 900);
+}
+
+async function copyTagElement(el: HTMLElement) {
+  const tag = el.getAttribute('data-tag');
+  if (!tag) return;
+  try {
+    await navigator.clipboard.writeText(tag);
+    flashCopied(el);
+  } catch {
+    // clipboard blocked; ignore
+  }
+}
+
 function onBodyClick(e: MouseEvent) {
-  const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null;
-  if (!target) return;
-  const href = target.getAttribute('href');
+  const tagEl = (e.target as HTMLElement).closest('.ov-tag') as HTMLElement | null;
+  if (tagEl) {
+    e.preventDefault();
+    copyTagElement(tagEl);
+    return;
+  }
+
+  const anchor = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null;
+  if (!anchor) return;
+  const href = anchor.getAttribute('href');
   if (!href) return;
   if (href.startsWith('/help/reference/')) {
     e.preventDefault();
     router.visit(href);
   } else if (/^https?:\/\//.test(href)) {
-    target.setAttribute('target', '_blank');
-    target.setAttribute('rel', 'noopener noreferrer');
+    anchor.setAttribute('target', '_blank');
+    anchor.setAttribute('rel', 'noopener noreferrer');
   }
+}
+
+function onBodyKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const tagEl = (e.target as HTMLElement).closest('.ov-tag') as HTMLElement | null;
+  if (!tagEl) return;
+  e.preventDefault();
+  copyTagElement(tagEl);
 }
 
 // Reset search when we open a new entry so the sidebar shows full tree again.
@@ -294,6 +332,7 @@ const totalCount = computed(() => allEntries.value.length);
           <div
             class="help-prose text-sm text-foreground"
             @click="onBodyClick"
+            @keydown="onBodyKeydown"
             v-html="renderedBody"
           />
         </div>
@@ -362,6 +401,31 @@ const totalCount = computed(() => allEntries.value.length);
   border: 0;
   border-top: 1px solid hsl(var(--border));
   margin: 1.25rem 0;
+}
+.help-prose :deep(.ov-tag) {
+  cursor: pointer;
+  user-select: none;
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.25);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.help-prose :deep(.ov-tag:hover) {
+  background: hsl(var(--primary) / 0.22);
+  border-color: hsl(var(--primary) / 0.5);
+}
+.help-prose :deep(.ov-tag:focus-visible) {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.help-prose :deep(.ov-tag-copied) {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+.help-prose :deep(pre .ov-tag) {
+  background: hsl(var(--primary) / 0.18);
+  border-color: hsl(var(--primary) / 0.35);
 }
 .help-prose :deep(table) {
   border-collapse: collapse;
