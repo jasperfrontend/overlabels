@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { useHelpReference, renderHelpMarkdown, type HelpEntry } from '@/composables/useHelpReference';
 import { BookOpen, Check, Copy, Search, X } from 'lucide-vue-next';
 
@@ -93,6 +94,7 @@ async function copyTag() {
   try {
     await navigator.clipboard.writeText(tagSnippet.value.code);
     copied.value = true;
+    notifyCopied(tagSnippet.value.code);
     setTimeout(() => (copied.value = false), 1400);
   } catch {
     // clipboard blocked; ignore
@@ -134,10 +136,27 @@ function openEntry(entry: HelpEntry) {
   router.visit(`/help/reference/${entry.category}/${entry.slug}`);
 }
 
+const toastMessage = ref('');
+const toastType = ref<'success' | 'error'>('success');
+const showToast = ref(false);
+
+function notifyCopied(tag: string) {
+  toastMessage.value = `Copied ${tag} to clipboard`;
+  toastType.value = 'success';
+  showToast.value = false;
+  setTimeout(() => { showToast.value = true; }, 10);
+}
+
 // Flash a transient "Copied!" label on a tag element that was just clicked.
+// Pin the element's width so the label swap doesn't reflow surrounding text.
 function flashCopied(el: HTMLElement) {
-  const previous = el.getAttribute('data-original');
-  if (previous === null) el.setAttribute('data-original', el.textContent ?? '');
+  const width = el.getBoundingClientRect().width;
+  if (el.getAttribute('data-original') === null) {
+    el.setAttribute('data-original', el.textContent ?? '');
+  }
+  el.style.width = `${width}px`;
+  el.style.display = 'inline-block';
+  el.style.textAlign = 'center';
   el.classList.add('ov-tag-copied');
   el.textContent = 'Copied!';
   window.setTimeout(() => {
@@ -145,6 +164,9 @@ function flashCopied(el: HTMLElement) {
     if (original !== null) el.textContent = original;
     el.classList.remove('ov-tag-copied');
     el.removeAttribute('data-original');
+    el.style.width = '';
+    el.style.display = '';
+    el.style.textAlign = '';
   }, 900);
 }
 
@@ -154,6 +176,7 @@ async function copyTagElement(el: HTMLElement) {
   try {
     await navigator.clipboard.writeText(tag);
     flashCopied(el);
+    notifyCopied(tag);
   } catch {
     // clipboard blocked; ignore
   }
@@ -338,6 +361,13 @@ const totalCount = computed(() => allEntries.value.length);
         </div>
       </article>
     </div>
+
+    <RekaToast
+      v-if="showToast"
+      :message="toastMessage"
+      :type="toastType"
+      @dismiss="showToast = false"
+    />
   </HelpLayout>
 </template>
 
@@ -405,14 +435,23 @@ const totalCount = computed(() => allEntries.value.length);
 .help-prose :deep(.ov-tag) {
   cursor: pointer;
   user-select: none;
-  background: hsl(var(--primary) / 0.12);
+  display: inline-block;
+  background: hsl(var(--primary) / 0.18);
   color: hsl(var(--primary));
-  border: 1px solid hsl(var(--primary) / 0.25);
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  border: 1px solid hsl(var(--primary) / 0.4);
+  border-radius: 0.375rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.85em;
+  line-height: 1.4;
+  box-shadow: 0 1px 0 hsl(var(--primary) / 0.15);
+  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.06s;
 }
 .help-prose :deep(.ov-tag:hover) {
-  background: hsl(var(--primary) / 0.22);
-  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.3);
+  border-color: hsl(var(--primary) / 0.7);
+}
+.help-prose :deep(.ov-tag:active) {
+  transform: translateY(1px);
 }
 .help-prose :deep(.ov-tag:focus-visible) {
   outline: 2px solid hsl(var(--ring));
@@ -424,8 +463,8 @@ const totalCount = computed(() => allEntries.value.length);
   border-color: hsl(var(--primary));
 }
 .help-prose :deep(pre .ov-tag) {
-  background: hsl(var(--primary) / 0.18);
-  border-color: hsl(var(--primary) / 0.35);
+  background: hsl(var(--primary) / 0.22);
+  border-color: hsl(var(--primary) / 0.5);
 }
 .help-prose :deep(table) {
   border-collapse: collapse;

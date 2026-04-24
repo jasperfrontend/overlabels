@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import { router } from '@inertiajs/vue3';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useHelpReference, type HelpEntry } from '@/composables/useHelpReference';
@@ -43,7 +42,7 @@ watch(open, (val) => {
 
 function navigate(entry: HelpEntry) {
   open.value = false;
-  router.visit(`/help/reference/${entry.category}/${entry.slug}`);
+  window.open(`/help/reference/${entry.category}/${entry.slug}`, '_blank', 'noopener,noreferrer');
 }
 
 function onKeydown(e: KeyboardEvent) {
