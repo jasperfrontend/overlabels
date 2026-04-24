@@ -186,7 +186,9 @@ class FourthwallIntegrationController extends Controller
 
         $credentials = $integration->getCredentialsDecrypted();
         $credentials['webhook_id'] = $webhookData['id'] ?? null;
-        $credentials['webhook_secret'] = $webhookData['secret'] ?? null;
+        // Intentionally not storing a per-webhook secret: Fourthwall's registerWebhook
+        // response does not include one, and inbound verification uses the app-level
+        // FW_HMAC (see FourthwallServiceDriver::verifyRequest).
         $integration->setCredentialsEncrypted($credentials);
         $integration->save();
 

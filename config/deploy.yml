@@ -171,6 +171,7 @@ env:
     - FW_CLIENT_SECRET
     - FW_AUTH_URL
     - FW_REDIRECT_URL
+    - FW_HMAC
 
     - CLOUDINARY_URL
 

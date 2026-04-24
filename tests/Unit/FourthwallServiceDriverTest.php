@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 beforeEach(function () {
     $this->driver = new FourthwallServiceDriver;
+    config(['services.fourthwall.hmac' => 'fw-app-hmac-secret']);
 });
 
 // Sample DONATION payload from https://docs.fourthwall.com/api-reference/order-events/donation
@@ -145,55 +146,70 @@ test('getAutoProvisionedControls returns donation-family keys', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// verifyRequest - HMAC-SHA256 base64 in X-Fourthwall-Hmac-SHA256
+// verifyRequest - HMAC-SHA256 base64 in X-Fourthwall-Hmac-Apps-Sha256,
+// signed with app-level FW_HMAC (config), NOT a per-webhook secret.
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('verifyRequest returns false when no webhook_secret stored', function () {
-    $integration = new ExternalIntegration;
-    $integration->setCredentialsEncrypted(['access_token' => 'tok']);
+test('verifyRequest returns false when FW_HMAC config is empty', function () {
+    config(['services.fourthwall.hmac' => null]);
 
+    $integration = new ExternalIntegration;
     $request = Request::create('/', 'POST', content: '{"foo":"bar"}');
-    $request->headers->set('X-Fourthwall-Hmac-SHA256', 'anything');
+    $request->headers->set('X-Fourthwall-Hmac-Apps-Sha256', 'anything');
 
     expect($this->driver->verifyRequest($request, $integration))->toBeFalse();
 });
 
 test('verifyRequest returns false when header is missing', function () {
     $integration = new ExternalIntegration;
-    $integration->setCredentialsEncrypted(['webhook_secret' => 'shhh']);
-
     $request = Request::create('/', 'POST', content: '{"foo":"bar"}');
 
     expect($this->driver->verifyRequest($request, $integration))->toBeFalse();
 });
 
 test('verifyRequest returns true when signature matches raw body', function () {
-    $secret = 'fw-webhook-secret';
+    $secret = 'fw-app-hmac-secret';
     $body = '{"type":"DONATION","data":{"id":"don_1"}}';
     $signature = base64_encode(hash_hmac('sha256', $body, $secret, true));
 
     $integration = new ExternalIntegration;
-    $integration->setCredentialsEncrypted(['webhook_secret' => $secret]);
-
     $request = Request::create('/', 'POST', content: $body);
-    $request->headers->set('X-Fourthwall-Hmac-SHA256', $signature);
+    $request->headers->set('X-Fourthwall-Hmac-Apps-Sha256', $signature);
 
     expect($this->driver->verifyRequest($request, $integration))->toBeTrue();
 });
 
 test('verifyRequest returns false when body is tampered', function () {
-    $secret = 'fw-webhook-secret';
+    $secret = 'fw-app-hmac-secret';
     $original = '{"type":"DONATION","data":{"id":"don_1"}}';
     $tampered = '{"type":"DONATION","data":{"id":"don_2"}}';
     $signature = base64_encode(hash_hmac('sha256', $original, $secret, true));
 
     $integration = new ExternalIntegration;
-    $integration->setCredentialsEncrypted(['webhook_secret' => $secret]);
-
     $request = Request::create('/', 'POST', content: $tampered);
-    $request->headers->set('X-Fourthwall-Hmac-SHA256', $signature);
+    $request->headers->set('X-Fourthwall-Hmac-Apps-Sha256', $signature);
 
     expect($this->driver->verifyRequest($request, $integration))->toBeFalse();
+});
+
+test('verifyRequest ignores the per-webhook X-Fourthwall-Hmac-Sha256 header', function () {
+    // Even if the per-webhook signature is valid, we should only verify against
+    // X-Fourthwall-Hmac-Apps-Sha256. Guard against a regression where we pick up
+    // the wrong header and accept a webhook we shouldn't.
+    $appSecret = 'fw-app-hmac-secret';
+    $body = '{"type":"DONATION","data":{"id":"don_1"}}';
+    $appSignature = base64_encode(hash_hmac('sha256', $body, $appSecret, true));
+
+    $integration = new ExternalIntegration;
+    $request = Request::create('/', 'POST', content: $body);
+    // The per-webhook header carries a valid-looking but wrong-key signature
+    $request->headers->set('X-Fourthwall-Hmac-Sha256', base64_encode(hash_hmac('sha256', $body, 'some-other-key', true)));
+    // The app-level header is missing
+    expect($this->driver->verifyRequest($request, $integration))->toBeFalse();
+
+    // With the app-level header set correctly, it verifies
+    $request->headers->set('X-Fourthwall-Hmac-Apps-Sha256', $appSignature);
+    expect($this->driver->verifyRequest($request, $integration))->toBeTrue();
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

@@ -162,8 +162,10 @@ test('ignored event type does not update controls', function () {
 // Fourthwall - HMAC-signed JSON, different verification model from Ko-fi
 // ──────────────────────────────────────────────────────────────────────────────
 
-function makeFourthwallIntegration(string $webhookSecret = 'fw-hmac-secret'): array
+function makeFourthwallIntegration(string $appHmac = 'fw-app-hmac-secret'): array
 {
+    config(['services.fourthwall.hmac' => $appHmac]);
+
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
 
     $integration = ExternalIntegration::factory()->create([
@@ -175,7 +177,6 @@ function makeFourthwallIntegration(string $webhookSecret = 'fw-hmac-secret'): ar
             'refresh_token' => 'fw-refresh',
             'expires_at' => now()->addHour()->toIso8601String(),
             'webhook_id' => 'wh_abc',
-            'webhook_secret' => $webhookSecret,
         ])),
     ]);
 
@@ -206,7 +207,7 @@ function fourthwallSamplePayload(string $donationId = 'don_Kpcjx4HIQ1e4bTIOjX9Cs
     ];
 }
 
-function postFourthwall(string $webhookToken, array $payload, string $secret = 'fw-hmac-secret'): TestResponse
+function postFourthwall(string $webhookToken, array $payload, string $secret = 'fw-app-hmac-secret'): TestResponse
 {
     $body = json_encode($payload);
     $signature = base64_encode(hash_hmac('sha256', $body, $secret, true));
@@ -220,7 +221,7 @@ function postFourthwall(string $webhookToken, array $payload, string $secret = '
         [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
-            'HTTP_X_FOURTHWALL_HMAC_SHA256' => $signature,
+            'HTTP_X_FOURTHWALL_HMAC_APPS_SHA256' => $signature,
         ],
         $body,
     );

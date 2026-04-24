@@ -6,6 +6,7 @@ use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class FourthwallServiceDriver implements ExternalServiceDriver
@@ -16,25 +17,33 @@ class FourthwallServiceDriver implements ExternalServiceDriver
     }
 
     /**
-     * Fourthwall signs every webhook with HMAC-SHA256 of the raw body, base64-encoded,
-     * and delivers the digest in X-Fourthwall-Hmac-SHA256. The secret is returned once
-     * when the webhook is registered via the API and stored per-integration.
+     * Every inbound Fourthwall webhook carries two HMACs:
+     *   - X-Fourthwall-Hmac-Sha256        - per-webhook secret (we don't use this;
+     *                                        Fourthwall's API doesn't return the secret
+     *                                        on webhook registration, only shows it in
+     *                                        the dashboard, which makes automated
+     *                                        provisioning impossible)
+     *   - X-Fourthwall-Hmac-Apps-Sha256   - app-level HMAC, shared across every webhook
+     *                                        on every user in our app. This is what we
+     *                                        verify against, via config('services.fourthwall.hmac').
      */
     public function verifyRequest(Request $request, ExternalIntegration $integration): bool
     {
-        $credentials = $integration->getCredentialsDecrypted();
-        $secret = $credentials['webhook_secret'] ?? null;
+        $secret = config('services.fourthwall.hmac');
+        $provided = $request->header('X-Fourthwall-Hmac-Apps-Sha256');
+        $body = $request->getContent();
 
         if (empty($secret)) {
+            Log::error('Fourthwall HMAC verification: FW_HMAC not configured');
+
             return false;
         }
 
-        $provided = $request->header('X-Fourthwall-Hmac-SHA256');
         if (! is_string($provided) || $provided === '') {
             return false;
         }
 
-        $expected = base64_encode(hash_hmac('sha256', $request->getContent(), $secret, true));
+        $expected = base64_encode(hash_hmac('sha256', $body, $secret, true));
 
         return hash_equals($expected, $provided);
     }

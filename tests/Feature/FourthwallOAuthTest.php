@@ -87,7 +87,6 @@ test('callback with valid code creates integration, registers webhook, provision
             'id' => 'wh_abc123',
             'url' => 'https://overlabels.test/api/webhooks/fourthwall/whatever',
             'allowedTypes' => ['DONATION'],
-            'secret' => 'per-webhook-secret-xyz',
             'apiVersion' => 'V1',
         ]),
     ]);
@@ -107,8 +106,8 @@ test('callback with valid code creates integration, registers webhook, provision
     expect($credentials['access_token'])->toBe('fw-access-token')
         ->and($credentials['refresh_token'])->toBe('fw-refresh-token')
         ->and($credentials['webhook_id'])->toBe('wh_abc123')
-        ->and($credentials['webhook_secret'])->toBe('per-webhook-secret-xyz')
-        ->and($credentials['expires_at'])->toBeString();
+        ->and($credentials['expires_at'])->toBeString()
+        ->and($credentials)->not()->toHaveKey('webhook_secret');
 
     $controls = OverlayControl::where('user_id', $user->id)
         ->where('source', 'fourthwall')
@@ -171,7 +170,6 @@ test('disconnect deregisters webhook, deprovisions controls, and deletes integra
             'refresh_token' => 'fw-refresh',
             'expires_at' => now()->addHour()->toIso8601String(),
             'webhook_id' => 'wh_to_delete',
-            'webhook_secret' => 'secret',
         ])),
     ]);
 
@@ -207,7 +205,6 @@ test('disconnect still removes local state when remote deregister fails', functi
             'refresh_token' => 'fw-refresh',
             'expires_at' => now()->addHour()->toIso8601String(),
             'webhook_id' => 'wh_orphan',
-            'webhook_secret' => 'secret',
         ])),
     ]);
 

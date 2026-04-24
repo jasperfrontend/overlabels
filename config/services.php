@@ -43,6 +43,10 @@ return [
         'auth_url' => env('FW_AUTH_URL'),
         'redirect_url' => env('FW_REDIRECT_URL'),
         'api_base' => env('FW_API_BASE', 'https://api.fourthwall.com'),
+        // App-level HMAC: Fourthwall signs every inbound webhook with this secret
+        // using the X-Fourthwall-Hmac-Apps-Sha256 header. Per-webhook secrets from
+        // the registerWebhook response are not used (Fourthwall doesn't return them).
+        'hmac' => env('FW_HMAC'),
     ],
 
     'twitchbot' => [
