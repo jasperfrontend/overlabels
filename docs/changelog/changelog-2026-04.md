@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Editor shows the wrapper tags so the document structure is explicit
+
+- Follow-on to the display: contents hoist earlier today. The template editor has three tabs (HEAD / BODY / CSS) and was three bare CodeMirror panels with no visual cue that the user's content is wrapped in `<head>` / `<body>` / `<style>` at render time. Easy to type your own `<body>` tags inside the HTML tab, or to mis-model the CSS tab as page-level styles rather than "styles inside a `<style>` tag inside `<head>`".
+- Each CodeMirror now sits between a non-editable header showing the opening tag and a footer showing the closing tag: `<head>` / `</head>`, `<body>` / `</body>`, `<style>` / `</style>`. Sidebar bg, muted monospace text, `select-none` so the frame reads as chrome not content. The CSS header carries a second line with a code-comment explainer of the hoist: "/* Your overlay renders directly as a child of `<body>` - flex and grid on body flow right through to your top-level elements. No need to dig up 3 wrappers. */" - the editor is where people learn the mental model, so the explanation lives next to the editor.
+- Layout trick: kept `v-show` (not `v-if`) so tab switches preserve CodeMirror's internal state and scroll position. Each editor wrapper is `absolute inset-0 flex flex-col`, the header/footer are `flex-none`, and CodeMirror lives inside a `relative flex-1 min-h-0` intermediate div with `absolute inset-0` on the editor itself. Without the intermediate relative wrapper, long files push CodeMirror past its flex slot and the closing-tag footer gets clipped by the outer `overflow-hidden`. That was the first-cut bug the user caught; the intermediate div is what fixes it.
+- Bonus: removed a stray `pb-10` on the outer content box in `edit.vue` that was adding dead space under the editor now that it has its own footer row.
+
 ## April 24th, 2026 - Hoist overlay content out of its layout wrappers
 
 - Pain: writing an overlay that wants a full-viewport flex/grid layout (center a scene on screen, justify content to the bottom, split into two columns, etc.) was miserable because the user's top-level element wasn't a child of `<body>` - it was nested inside `body > #overlay-content > [staticContainer div] > their-element`. Flex on body did nothing; the user had to reverse-engineer the DOM from OBS devtools to know what to style.

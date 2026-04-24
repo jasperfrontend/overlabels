@@ -349,7 +349,7 @@ onMounted(() => {
 
         <!-- Content box -->
         <div
-          class="rounded-b-sm border border-t-0 border-sidebar bg-card h-full overflow-auto pb-10"
+          class="rounded-b-sm border border-t-0 border-sidebar bg-card h-full overflow-auto"
         >
           <!-- Code Tab -->
           <TemplateCodeEditor

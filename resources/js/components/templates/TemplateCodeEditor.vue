@@ -111,37 +111,65 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
 
         <!-- Editor panel -->
         <div class="relative flex-1 bg-background">
-          <Codemirror
-            v-show="codeTab === 'head'"
-            :key="'head-' + editorKey"
-            v-model="headValue"
-            class="absolute inset-0"
-            :indent-with-tab="true"
-            :tab-size="2"
-            :extensions="headExtensions"
-            placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
-          />
-          <Codemirror
-            v-show="codeTab === 'body'"
-            :key="'body-' + editorKey"
-            v-model="htmlValue"
-            class="absolute inset-0"
-            :autofocus="true"
-            :indent-with-tab="true"
-            :tab-size="2"
-            :extensions="htmlExtensions"
-            placeholder="Enter your BODY here… Use [[[tag_name]]] for dynamic content"
-          />
-          <Codemirror
-            v-show="codeTab === 'css'"
-            :key="'css-' + editorKey"
-            v-model="cssValue"
-            class="absolute inset-0"
-            :indent-with-tab="true"
-            :tab-size="2"
-            :extensions="cssExtensions"
-            placeholder="Enter your CSS styles here…"
-          />
+          <div v-show="codeTab === 'head'" class="absolute inset-0 flex flex-col">
+            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+              &lt;head&gt;
+            </div>
+            <div class="relative min-h-0 flex-1">
+              <Codemirror
+                :key="'head-' + editorKey"
+                v-model="headValue"
+                class="absolute inset-0"
+                :indent-with-tab="true"
+                :tab-size="2"
+                :extensions="headExtensions"
+                placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
+              />
+            </div>
+            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+              &lt;/head&gt;
+            </div>
+          </div>
+          <div v-show="codeTab === 'body'" class="absolute inset-0 flex flex-col">
+            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+              &lt;body&gt;
+            </div>
+            <div class="relative min-h-0 flex-1">
+              <Codemirror
+                :key="'body-' + editorKey"
+                v-model="htmlValue"
+                class="absolute inset-0"
+                :autofocus="true"
+                :indent-with-tab="true"
+                :tab-size="2"
+                :extensions="htmlExtensions"
+                placeholder="Enter your <body> contents here. No need to add the body tags, your overlay will render directly under <body>. Tailwind 3 tags are supported."
+              />
+            </div>
+            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+              &lt;/body&gt;
+            </div>
+          </div>
+          <div v-show="codeTab === 'css'" class="absolute inset-0 flex flex-col">
+            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar font-mono text-xs">
+              <div class="px-3 pt-1 text-muted-foreground">&lt;style&gt;</div>
+              <div class="px-3 pb-1 italic text-muted-foreground/70">/* Your overlay renders directly as a child of &lt;body&gt; - flex and grid on body flow right through to your top-level elements. No need to dig up 3 wrappers. */</div>
+            </div>
+            <div class="relative min-h-0 flex-1">
+              <Codemirror
+                :key="'css-' + editorKey"
+                v-model="cssValue"
+                class="absolute inset-0"
+                :indent-with-tab="true"
+                :tab-size="2"
+                :extensions="cssExtensions"
+                placeholder="Enter your CSS styles here. Note: your overlay will render directly as a child element of <body>, which makes flexbox styling a breeze"
+              />
+            </div>
+            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+              &lt;/style&gt;
+            </div>
+          </div>
           <!-- Tailwind info panel -->
           <div
             v-show="codeTab === 'tailwind'"
