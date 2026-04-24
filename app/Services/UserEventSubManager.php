@@ -67,19 +67,19 @@ class UserEventSubManager
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => null,
         ],
-        // Hype train
+        // Hype train (v2 - v1 withdrawn by Twitch 2026-01-15)
         'channel.hype_train.begin' => [
-            'version' => '1',
+            'version' => '2',
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => 'channel:read:hype_train',
         ],
         'channel.hype_train.progress' => [
-            'version' => '1',
+            'version' => '2',
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => 'channel:read:hype_train',
         ],
         'channel.hype_train.end' => [
-            'version' => '1',
+            'version' => '2',
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => 'channel:read:hype_train',
         ],
@@ -319,26 +319,23 @@ class UserEventSubManager
             $subscription->delete();
         }
 
-        // Also clean up Twitch-side subscriptions that may not be in our DB
-        $twitchSubs = $this->eventSubService->getSubscriptions($appToken);
+        // Also clean up Twitch-side subscriptions that may not be in our DB.
+        // Scope by user_id so we only look at this broadcaster's subs, avoiding
+        // Twitch's 100-per-page cap on the unfiltered endpoint.
+        $twitchSubs = $this->eventSubService->getSubscriptions($appToken, [
+            'user_id' => $user->twitch_id,
+        ]);
         if ($twitchSubs && isset($twitchSubs['data'])) {
             foreach ($twitchSubs['data'] as $sub) {
-                $condition = $sub['condition'] ?? [];
-                $belongsToUser = ($condition['broadcaster_user_id'] ?? null) === $user->twitch_id
-                    || ($condition['to_broadcaster_user_id'] ?? null) === $user->twitch_id
-                    || ($condition['moderator_user_id'] ?? null) === $user->twitch_id;
-
-                if ($belongsToUser) {
-                    try {
-                        if ($this->eventSubService->deleteSubscription($appToken, $sub['id'])) {
-                            $deletedCount++;
-                        }
-                    } catch (Exception $e) {
-                        Log::warning('Failed to delete Twitch-side subscription', [
-                            'subscription_id' => $sub['id'],
-                            'error' => $e->getMessage(),
-                        ]);
+                try {
+                    if ($this->eventSubService->deleteSubscription($appToken, $sub['id'])) {
+                        $deletedCount++;
                     }
+                } catch (Exception $e) {
+                    Log::warning('Failed to delete Twitch-side subscription', [
+                        'subscription_id' => $sub['id'],
+                        'error' => $e->getMessage(),
+                    ]);
                 }
             }
         }
@@ -366,8 +363,12 @@ class UserEventSubManager
             return ['error' => 'Failed to get app token'];
         }
 
-        // Get all subscriptions from Twitch
-        $twitchSubs = $this->eventSubService->getSubscriptions($appToken);
+        // Get this user's subscriptions from Twitch. Scoping by user_id avoids
+        // the 100-per-page cap that previously caused fresh subs to show up as
+        // not_found_on_twitch whenever the app had >100 subs across all users.
+        $twitchSubs = $this->eventSubService->getSubscriptions($appToken, [
+            'user_id' => $user->twitch_id,
+        ]);
 
         if (! $twitchSubs || ! isset($twitchSubs['data'])) {
             return ['error' => 'Failed to fetch subscriptions from Twitch'];

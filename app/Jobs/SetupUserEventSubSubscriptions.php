@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\EventSubSetupCompleted;
 use App\Models\User;
 use App\Services\UserEventSubManager;
 use Exception;
@@ -57,12 +58,16 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
                 'existing' => count($results['existing']),
             ]);
 
-            // If there were failures, we might want to notify the user
-            if (! empty($results['failed'])) {
-                // You could dispatch an event here to notify the user
-                // event(new EventSubSetupPartiallyFailed($this->user, $results));
-            }
-
+            // Surface the results payload to the frontend via the user's alerts
+            // channel so the settings page can update without polling.
+            EventSubSetupCompleted::dispatch(
+                (string) $this->user->twitch_id,
+                $results['created'] ?? [],
+                $results['failed'] ?? [],
+                $results['existing'] ?? [],
+                $results['skipped_missing_scope'] ?? [],
+                true,
+            );
         } catch (Exception $e) {
             Log::error('Failed to setup EventSub subscriptions', [
                 'user_id' => $this->user->id,
@@ -82,7 +87,13 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
             'error' => $exception->getMessage(),
         ]);
 
-        // You could notify the user that setup failed
-        // event(new EventSubSetupFailed($this->user));
+        EventSubSetupCompleted::dispatch(
+            (string) $this->user->twitch_id,
+            [],
+            ['job_failed' => $exception->getMessage()],
+            [],
+            [],
+            false,
+        );
     }
 }

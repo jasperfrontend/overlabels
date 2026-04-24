@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\ExternalIntegration;
 use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\UserEventSubManager;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,44 +67,23 @@ class IntegrationController extends Controller
     }
 
     /**
-     * Connect EventSub: wipe existing subscriptions and create a fresh set so the
-     * user gets immediate feedback on which event types subscribed successfully.
-     * Called from settings/integrations/index.vue via POST /eventsub/connect.
+     * Dispatch EventSub setup to the queue so Twitch challenge POSTs can hit a
+     * free web worker while the queue worker makes the outbound Helix calls.
+     * Running this inline on the web worker starves the challenges and leaves
+     * most subscriptions in webhook_callback_verification_failed state.
+     * The job fires EventSubSetupCompleted on alerts.{twitch_id} with the
+     * created/failed counts when it's done.
      */
     public function connectEventSub(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        try {
-            $this->eventSubManager->removeUserSubscriptions($user);
-            $results = $this->eventSubManager->setupUserSubscriptions($user);
+        SetupUserEventSubSubscriptions::dispatch($user, true);
 
-            $created = count($results['created']);
-            $failed = count($results['failed']);
-            $existing = count($results['existing']);
-
-            Log::info('EventSub setup completed', [
-                'user_id' => $user->id,
-                'created' => $created,
-                'failed' => $failed,
-                'existing' => $existing,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "EventSub connected: $created created, $existing existing, $failed failed.",
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to setup EventSub', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to setup EventSub connections.',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Setting up Twitch subscriptions. This takes about 15 seconds; the page will update automatically when done.',
+        ], 202);
     }
 
     private function serviceName(string $key): string

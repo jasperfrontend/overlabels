@@ -95,15 +95,19 @@ class TwitchEventSubService
     }
 
     /**
-     * Get all active subscriptions
+     * Get EventSub subscriptions for this app. Twitch caps the response at 100
+     * per page, so without a filter this only sees page 1 — any user whose subs
+     * fall on later pages will look "missing" to verifyUserSubscriptions. Pass
+     * `user_id` (the broadcaster's Twitch id) to scope server-side; Twitch
+     * matches it against any condition key, so raids and follows are included.
      */
-    public function getSubscriptions(string $accessToken): ?array
+    public function getSubscriptions(string $accessToken, array $params = []): ?array
     {
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer $accessToken",
                 'Client-Id' => $this->clientId,
-            ])->get($this->baseUrl);
+            ])->get($this->baseUrl, $params);
 
             if ($response->successful()) {
                 return $response->json();

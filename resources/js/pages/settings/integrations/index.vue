@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
-import { ref, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 interface ServiceInfo {
   key: string;
@@ -85,8 +85,22 @@ function startTestCheerCooldown() {
   }, 1000);
 }
 
+interface EventSubSetupPayload {
+  created: string[];
+  failed: Record<string, string> | string[];
+  existing: string[];
+  skipped_missing_scope: string[];
+  success: boolean;
+}
+
+type EchoChannel = { listen: (event: string, cb: (payload: EventSubSetupPayload) => void) => EchoChannel; stopListening: (event: string) => EchoChannel };
+
+let eventsubChannel: EchoChannel | null = null;
+
 onBeforeUnmount(() => {
   if (testCheerInterval) clearInterval(testCheerInterval);
+  eventsubChannel?.stopListening('.eventsub.setup-completed');
+  eventsubChannel = null;
 });
 
 async function sendTestCheer() {
@@ -151,6 +165,42 @@ function toggleBot() {
   );
 }
 
+const page = usePage();
+const userLocale = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.locale || undefined;
+});
+const twitchId = computed<string | undefined>(() => {
+  const user = (page.props as any)?.auth?.user;
+  return user?.twitch_id ? String(user.twitch_id) : undefined;
+});
+
+onMounted(() => {
+  const echo = (window as any).Echo;
+  if (!echo || !twitchId.value) return;
+  eventsubChannel = echo.channel(`alerts.${twitchId.value}`);
+  eventsubChannel?.listen('.eventsub.setup-completed', (payload: EventSubSetupPayload) => {
+    const createdCount = payload.created?.length ?? 0;
+    const existingCount = payload.existing?.length ?? 0;
+    const failedCount = Array.isArray(payload.failed)
+      ? payload.failed.length
+      : Object.keys(payload.failed ?? {}).length;
+    const skippedCount = payload.skipped_missing_scope?.length ?? 0;
+
+    if (payload.success) {
+      const parts = [`Connected: ${createdCount} created, ${existingCount} existing, ${failedCount} failed`];
+      if (skippedCount > 0) parts.push(`${skippedCount} skipped (missing scope)`);
+      eventsubMessage.value = parts.join(', ') + '.';
+    } else {
+      const reason = Array.isArray(payload.failed) ? payload.failed.join('; ') : Object.values(payload.failed ?? {}).join('; ');
+      eventsubMessage.value = `Setup failed: ${reason || 'unknown error'}`;
+    }
+
+    eventsubLoading.value = false;
+    router.reload({ only: ['eventsub'] });
+  });
+});
+
 async function connectEventSub() {
   eventsubLoading.value = true;
   eventsubMessage.value = '';
@@ -167,22 +217,14 @@ async function connectEventSub() {
     const data = await response.json();
     eventsubMessage.value = data.message;
 
-    if (data.success) {
-      router.reload();
+    if (!response.ok) {
+      eventsubLoading.value = false;
     }
   } catch {
     eventsubMessage.value = 'Failed to connect. Please try again.';
-  } finally {
     eventsubLoading.value = false;
   }
 }
-
-
-const page = usePage();
-const userLocale = computed<string | undefined>(() => {
-  const user = (page.props as any)?.auth?.user;
-  return user?.locale || undefined;
-});
 
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
@@ -218,7 +260,6 @@ function formatDate(iso: string | null): string {
                     Not connected to Twitch
                   </Badge>
                 </div>
-
                 <Dialog>
                   <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-muted-foreground text-sm">
                     Listening to
