@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Stop busting the npm ci cache layer every deploy
+
+- `ARG APP_COMMIT_SHA=dev` + `ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}` were declared at the top of the Vite assets stage in the Dockerfile, before `COPY package.json` and `RUN npm ci`. Every push has a different SHA, so the ENV layer invalidated on every deploy, which cascaded into `npm ci` re-running from scratch each time - easily 60-90 seconds of wasted install time per build.
+- Moved the ARG/ENV block down past `npm ci`. Now `npm ci` hits the GHA buildx cache whenever `package-lock.json` is unchanged. `RUN npm run build` still invalidates on every deploy (expected: Vite needs to re-bundle on any source change) but it gets to start with a warm `node_modules` cache layer.
+- The cache-from/cache-to wiring was already correct: listener images have explicit `cache-from: type=gha` in the workflow, and the main app has `builder.cache.type: gha` in `config/deploy.yml`. This was purely a Dockerfile-ordering issue.
+
 ## April 24th, 2026 - Hard reload after EventSub setup completes
 
 - Follow-up to the Reconnect broadcast landed earlier today. `router.reload({ only: ['eventsub'] })` occasionally left the Active events dialog rendering stale prop state for a tick after the partial reload resolved - the counter updated but the individual ✓/✕ rows lagged behind. Swapped to `window.location.reload()` which also reconnects Echo fresh. Rare enough that a page refresh was a reliable tiebreaker, but shouldn't require the user to know that.

@@ -4,27 +4,27 @@
 FROM node:22-alpine AS assets
 WORKDIR /app
 
-ARG APP_COMMIT_SHA=dev
-ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}
+# npm ci depends only on package*.json, so keep it before anything that changes
+# every commit (like APP_COMMIT_SHA). Previously the ENV for APP_COMMIT_SHA sat
+# above this COPY/RUN pair, which invalidated the npm ci layer on every deploy
+# and cost ~60-90s of needless install time per build.
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
-# Vite reads VITE_* from the build environment and inlines them into the JS
-# bundle. Without these, the client gets `undefined` for the Reverb app key
-# and Echo throws "You must pass your app key when you instantiate Pusher".
-# These values are public (clients see them in the bundle), so passing them
-# as build args (not BuildKit secrets) is correct.
+# Build-time args that Vite inlines into the client bundle. These can change
+# per-deploy (APP_COMMIT_SHA in particular) so they sit downstream of npm ci.
+ARG APP_COMMIT_SHA=dev
 ARG VITE_APP_NAME=Overlabels
 ARG VITE_REVERB_APP_KEY
 ARG VITE_REVERB_HOST
 ARG VITE_REVERB_PORT=443
 ARG VITE_REVERB_SCHEME=https
-ENV VITE_APP_NAME=${VITE_APP_NAME} \
+ENV APP_COMMIT_SHA=${APP_COMMIT_SHA} \
+    VITE_APP_NAME=${VITE_APP_NAME} \
     VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY} \
     VITE_REVERB_HOST=${VITE_REVERB_HOST} \
     VITE_REVERB_PORT=${VITE_REVERB_PORT} \
     VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME}
-
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
 
 COPY resources resources
 COPY public public
