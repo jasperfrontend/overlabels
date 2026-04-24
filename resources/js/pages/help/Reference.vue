@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
@@ -54,6 +54,37 @@ const tagSnippet = computed<TagSnippet | null>(() => {
     };
   }
   return null;
+});
+
+const SIDEBAR_SCROLL_KEY = 'help-reference-sidebar-scroll';
+const sidebarRef = ref<HTMLElement | null>(null);
+
+function saveSidebarScroll() {
+  if (!sidebarRef.value) return;
+  // Don't save scroll position while the user is in search mode - that list
+  // is a different set and would clobber the tree-view scroll position.
+  if (isSearching.value) return;
+  try {
+    localStorage.setItem(SIDEBAR_SCROLL_KEY, String(sidebarRef.value.scrollTop));
+  } catch {
+    // storage blocked; ignore
+  }
+}
+
+function restoreSidebarScroll() {
+  if (!sidebarRef.value) return;
+  try {
+    const raw = localStorage.getItem(SIDEBAR_SCROLL_KEY);
+    if (raw === null) return;
+    const n = Number(raw);
+    if (Number.isFinite(n)) sidebarRef.value.scrollTop = n;
+  } catch {
+    // storage blocked; ignore
+  }
+}
+
+onMounted(() => {
+  nextTick(restoreSidebarScroll);
 });
 
 const copied = ref(false);
@@ -167,7 +198,11 @@ const totalCount = computed(() => allEntries.value.length);
     </div>
 
     <div class="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
-      <aside class="max-h-[calc(100vh-16rem)] overflow-y-auto rounded-md border p-2">
+      <aside
+        ref="sidebarRef"
+        class="max-h-[calc(100vh-16rem)] overflow-y-auto rounded-md border p-2"
+        @scroll="saveSidebarScroll"
+      >
         <div v-if="isSearching">
           <div class="px-2 pt-1 pb-2 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">
             {{ searchResults.length }} results
