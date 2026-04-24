@@ -4,7 +4,7 @@ import { Link, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import { useHelpReference, renderHelpMarkdown, type HelpEntry } from '@/composables/useHelpReference';
-import { BookOpen, Search, X } from 'lucide-vue-next';
+import { BookOpen, Check, Copy, Search, X } from 'lucide-vue-next';
 
 interface Props {
   category?: string | null;
@@ -29,6 +29,44 @@ const searchResults = computed<HelpEntry[]>(() => {
 const isSearching = computed(() => query.value.trim().length > 0);
 
 const renderedBody = computed(() => (selected.value ? renderHelpMarkdown(selected.value.body) : ''));
+
+// Derive the literal tag snippet from filename + category. Skip aggregate
+// index files (all-*) and categories where slug-to-tag isn't 1:1.
+interface TagSnippet {
+  label: string;
+  code: string;
+  language: 'tag' | 'block';
+}
+const tagSnippet = computed<TagSnippet | null>(() => {
+  if (!selected.value) return null;
+  const { category, slug } = selected.value;
+  if (slug.startsWith('all-')) return null;
+
+  if (category === 'template-tags') {
+    return { label: 'Tag', code: `[[[${slug}]]]`, language: 'tag' };
+  }
+  if (category === 'foreach-loops') {
+    const alias = slug.split('.').pop()?.replace(/s$/, '') || 'item';
+    return {
+      label: 'Loop',
+      code: `[[[foreach:${slug} as ${alias}]]]\n  [[[${alias}.id]]]\n[[[endforeach]]]`,
+      language: 'block',
+    };
+  }
+  return null;
+});
+
+const copied = ref(false);
+async function copyTag() {
+  if (!tagSnippet.value) return;
+  try {
+    await navigator.clipboard.writeText(tagSnippet.value.code);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 1400);
+  } catch {
+    // clipboard blocked; ignore
+  }
+}
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const crumbs: BreadcrumbItem[] = [
@@ -198,6 +236,26 @@ const totalCount = computed(() => allEntries.value.length);
             </span>
           </div>
           <h2 class="mb-4 font-mono text-2xl font-semibold break-all">{{ selected.title }}</h2>
+
+          <div
+            v-if="tagSnippet"
+            class="mb-5 rounded-md border bg-muted/40"
+          >
+            <div class="flex items-center justify-between border-b px-3 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <span>{{ tagSnippet.label }}</span>
+              <button
+                type="button"
+                class="flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground cursor-pointer hover:bg-accent"
+                @click="copyTag"
+              >
+                <Check v-if="copied" class="size-3" />
+                <Copy v-else class="size-3" />
+                <span class="text-[10px]">{{ copied ? 'Copied' : 'Copy' }}</span>
+              </button>
+            </div>
+            <pre class="overflow-x-auto px-3 py-2 font-mono text-sm text-foreground whitespace-pre-wrap break-all">{{ tagSnippet.code }}</pre>
+          </div>
+
           <div
             class="help-prose text-sm text-foreground"
             @click="onBodyClick"
