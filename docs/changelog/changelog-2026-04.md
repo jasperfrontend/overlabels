@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 24th, 2026 - Switch Kamal build cache from GHA to registry
+
+- Second-order fix to the Dockerfile cache ordering earlier today. The `builder.cache.type: gha` config in `config/deploy.yml` was silently not working - Kamal 2 creates its own buildx builder (`kamal-local-docker-container`) instead of using the one `docker/setup-buildx-action` sets up, and that builder doesn't have `ACTIONS_CACHE_URL` / `ACTIONS_RUNTIME_TOKEN` wired into its buildkit daemon. So `--cache-from type=gha --cache-to type=gha` was being passed to the build but the daemon couldn't reach the GHA cache service.
+- Confirmed via the deploy log for `29303b5`: `install-php-extensions` ran for 74s, `npm ci` for ~20s, `composer install` for ~20s - none of them cached even though their inputs were unchanged from previous deploys.
+- Switched to `type: registry` with `image: ghcr.io/jasperfrontend/overlabels-buildcache` and `options: mode=max`. Registry cache stores layers as a separate image in GHCR, which Kamal's builder can reach because it's already authenticated for the main image push. `mode=max` exports cache for every intermediate layer, not just the final stage, maximizing hit rate.
+- First deploy after this change writes the cache image (slow-ish, same as before). Subsequent deploys pull from it and should cache everything up through `install-php-extensions`, `npm ci`, and `composer install`. Expected steady-state deploy time drop: ~90-110s of build work, on top of the ~30s `npm ci` saving already won by moving `APP_COMMIT_SHA` past the install step.
+
 ## April 24th, 2026 - Stop busting the npm ci cache layer every deploy
 
 - `ARG APP_COMMIT_SHA=dev` + `ENV APP_COMMIT_SHA=${APP_COMMIT_SHA}` were declared at the top of the Vite assets stage in the Dockerfile, before `COPY package.json` and `RUN npm ci`. Every push has a different SHA, so the ENV layer invalidated on every deploy, which cascaded into `npm ci` re-running from scratch each time - easily 60-90 seconds of wasted install time per build.
