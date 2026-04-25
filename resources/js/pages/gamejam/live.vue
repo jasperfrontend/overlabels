@@ -85,10 +85,18 @@ interface WorldPayload {
   zombies: ZombiePayload[];
 }
 
+interface GameLogEntry {
+  id: string;
+  at: number;
+  type: string;
+  data: Record<string, unknown>;
+}
+
 interface Snapshot {
   game: GamePayload;
   joiners: JoinerPayload[];
   world: WorldPayload;
+  log: GameLogEntry[];
 }
 
 const props = defineProps<{
@@ -103,6 +111,119 @@ const emptyWorld: WorldPayload = { hidden_tiles: [], doors: [], hiding_spots: []
 const game = ref<GamePayload | null>(props.snapshot?.game ?? null);
 const joiners = ref<JoinerPayload[]>(props.snapshot?.joiners ?? []);
 const world = ref<WorldPayload>(props.snapshot?.world ?? emptyWorld);
+const log = ref<GameLogEntry[]>(props.snapshot?.log ?? []);
+const tickerEntry = ref<GameLogEntry | null>(null);
+let tickerTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastSeenLogId: string | null = props.snapshot?.log?.length ? props.snapshot.log[props.snapshot.log.length - 1].id : null;
+const TICKER_VISIBLE_MS = 4000;
+const logScrollRef = ref<HTMLElement | null>(null);
+
+function syncTicker(entries: GameLogEntry[]) {
+  if (!entries.length) return;
+  const latest = entries[entries.length - 1];
+  if (latest.id === lastSeenLogId) return;
+  lastSeenLogId = latest.id;
+  tickerEntry.value = latest;
+  if (tickerTimeout) clearTimeout(tickerTimeout);
+  tickerTimeout = setTimeout(() => {
+    tickerEntry.value = null;
+    tickerTimeout = null;
+  }, TICKER_VISIBLE_MS);
+}
+
+function scrollLogToBottom() {
+  const el = logScrollRef.value;
+  if (!el) return;
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}
+
+function zombieLabel(kind: unknown): string {
+  if (kind === 'boss') return 'the boss';
+  if (kind === 'weakling') return 'a weakling zombie';
+  return 'a zombie';
+}
+
+function weaponLabel(weapon: unknown, ironFists: boolean): string {
+  if (ironFists) return 'Iron Fists';
+  if (weapon === 'de_sword') return 'the DE Sword';
+  if (weapon === 'regular_sword') return 'a Sword';
+  return 'fists';
+}
+
+function contentLabel(content: unknown): string {
+  if (content === 'bomb') return 'a bomb';
+  if (content === 'hp_restore') return 'an HP restore';
+  if (content === 'regular_sword') return 'a Sword';
+  if (content === 'de_sword') return 'the DE Sword';
+  if (content === 'iron_fists') return 'Iron Fists';
+  if (content === 'zombie_spawn') return 'a zombie spawn';
+  return 'something';
+}
+
+function logEntryClass(entry: GameLogEntry): string {
+  switch (entry.type) {
+    case 'zombie_killed':
+      return 'text-lime-300';
+    case 'zombie_attack':
+      return 'text-red-300';
+    case 'game_won':
+      return 'text-blue-300 font-bold';
+    case 'game_lost':
+      return 'text-red-400 font-bold';
+    case 'boss_blocked':
+      return 'text-orange-300';
+    case 'hp_pickup':
+      return 'text-emerald-300';
+    case 'weapon_pickup':
+      return 'text-yellow-300';
+    case 'door_opened':
+      return 'text-lime-200';
+    case 'room_entered':
+      return 'text-blue-200 font-bold';
+    default:
+      return 'text-olive-200';
+  }
+}
+
+function formatLogEntry(entry: GameLogEntry): string {
+  const d = entry.data;
+  switch (entry.type) {
+    case 'hide':
+      return 'You went into hiding';
+    case 'hidden_reveal':
+      return `You found ${contentLabel(d.content)} in a hidden chest`;
+    case 'hp_pickup':
+      return `You picked up +${d.amount} HP (${d.player_hp} hp)`;
+    case 'weapon_pickup':
+      return `You picked up ${weaponLabel(d.weapon, d.iron_fists === true)}`;
+    case 'player_attack':
+      return `You hit ${zombieLabel(d.kind)} for ${d.damage} (${d.target_hp}/${d.target_max_hp})`;
+    case 'zombie_killed':
+      return `You killed ${zombieLabel(d.kind)}`;
+    case 'zombie_attack':
+      return `${zombieLabel(d.kind)[0].toUpperCase() + zombieLabel(d.kind).slice(1)} hit you for ${d.damage} (${d.player_hp} hp)`;
+    case 'door_damage':
+      return d.is_exit
+        ? `You hit the exit door for ${d.damage} (${d.door_hp} left)`
+        : `You hit a door for ${d.damage} (${d.door_hp} left)`;
+    case 'door_opened':
+      return d.is_exit ? 'The exit door is open!' : 'A door is open';
+    case 'boss_blocked':
+      return 'The boss is still alive - the exit is sealed';
+    case 'room_entered':
+      return `You entered room ${d.to_room}`;
+    case 'game_won':
+      return 'Castle saved!';
+    case 'game_lost':
+      if (d.cause === 'fists') return 'You punched yourself to death...';
+      if (d.cause === 'bomb') return 'A bomb finished you off...';
+      return 'The zombies got you...';
+    default:
+      return entry.type;
+  }
+}
 
 type LungeMode = 'none' | 'moving' | 'stationary';
 
@@ -423,10 +544,10 @@ function tileClasses(dx: number, dy: number): string[] {
   return classes;
 }
 
-function triggerAttackFlash(px: number, py: number) {
+function triggerAttackFlash(px: number, py: number, reach: number) {
   const tiles = new Set<string>();
-  for (let dx = -1; dx <= 1; dx++) {
-    for (let dy = -1; dy <= 1; dy++) {
+  for (let dx = -reach; dx <= reach; dx++) {
+    for (let dy = -reach; dy <= reach; dy++) {
       if (dx === 0 && dy === 0) continue;
       const tx = px + dx;
       const ty = py + dy;
@@ -488,7 +609,12 @@ function maybeFlashAttack(g: GamePayload) {
   if (!g.last_resolved_at || g.last_resolved_at === lastFlashedResolvedAt) return;
   if (g.player_x === null || g.player_y === null) return;
   lastFlashedResolvedAt = g.last_resolved_at;
-  triggerAttackFlash(g.player_x, g.player_y);
+
+  const slot = action.startsWith('a:') ? action.slice(2) : '1';
+  const weapon = slot === '2' ? g.weapon_slot_2 : g.weapon_slot_1;
+  const reach = weapon === 'de_sword' ? 2 : 1;
+
+  triggerAttackFlash(g.player_x, g.player_y, reach);
 }
 
 onMounted(() => {
@@ -498,6 +624,10 @@ onMounted(() => {
 
   if (world.value.zombies.length && game.value) {
     syncZombieViews(world.value.zombies, game.value.round_duration_seconds);
+  }
+
+  if (log.value.length) {
+    scrollLogToBottom();
   }
 
   const echo = (window as any).Echo;
@@ -532,7 +662,10 @@ onMounted(() => {
       game.value = incoming;
       joiners.value = payload.joiners;
       world.value = payload.world ?? emptyWorld;
+      log.value = payload.log ?? [];
       syncZombieViews(world.value.zombies, incoming.round_duration_seconds);
+      syncTicker(log.value);
+      scrollLogToBottom();
       maybeFlashAttack(incoming);
 
       const applyEndMs = Date.now();
@@ -561,6 +694,7 @@ onUnmounted(() => {
   document.documentElement.classList.remove('gamejam-fullbleed');
   if (tickInterval) clearInterval(tickInterval);
   if (attackFlashTimeout) clearTimeout(attackFlashTimeout);
+  if (tickerTimeout) clearTimeout(tickerTimeout);
   if (channel) {
     channel.stopListening('.gamejam.state');
     channel.stopListening('.gamejam.debug');
@@ -719,6 +853,21 @@ onUnmounted(() => {
               </div>
             </div>
 
+            <div class="bg-olive-800 border border-olive-500/50 medievalsharp-regular flex flex-col">
+              <div class="text-olive-400 text-center px-3 py-2 border-b border-olive-500/40">Game log</div>
+              <div ref="logScrollRef" class="h-102.5 overflow-y-auto flex flex-col gap-0.5 px-3 py-2">
+                <div
+                  v-for="entry in log"
+                  :key="entry.id"
+                  class="text-sm leading-tight py-0.5 border-b border-olive-500/10 last:border-b-0"
+                  :class="logEntryClass(entry)"
+                >
+                  {{ formatLogEntry(entry) }}
+                </div>
+                <div v-if="!log.length" class="text-olive-400 italic text-sm">No events yet</div>
+              </div>
+            </div>
+
             <div class="medievalsharp-regular text-sm mt-4" v-if="grouped.inactive.length > 0">
               <h2 class="medievalsharp-regular text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
 
@@ -838,7 +987,6 @@ onUnmounted(() => {
           </section>
         </div> <!-- grid col 2 -->
       </div>
-      <pre class="text-sm" v-if="game && debugEnabledLive">{{ game }}</pre>
     </aside>
 
     <main class="grid-area relative">
@@ -848,6 +996,19 @@ onUnmounted(() => {
         !a or !a2 - attack with weapon 1 or 2<br>
         !h - teleport to hiding<br>
         !s - stay. do nothing.
+      </div>
+
+      <div v-if="game" class="ticker medievalsharp-regular">
+        <Transition name="ticker">
+          <div
+            v-if="tickerEntry"
+            :key="tickerEntry.id"
+            class="ticker-entry"
+            :data-type="tickerEntry.type"
+          >
+            {{ formatLogEntry(tickerEntry) }}
+          </div>
+        </Transition>
       </div>
       <div v-if="game" class="grid" :style="gridLayerStyle">
         <div v-for="y in rows" :key="`row-${y}`" class="grid-row">
@@ -898,7 +1059,11 @@ onUnmounted(() => {
 }
 
 .live-board {
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden !important;
   display: grid;
   grid-template-columns: 1fr 1080px;
   background: #0e0e10;
@@ -911,6 +1076,15 @@ onUnmounted(() => {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+:global(html.gamejam-fullbleed),
+:global(html.gamejam-fullbleed body) {
+  overflow: hidden !important;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
 }
 
 .sidebar {
@@ -1199,9 +1373,9 @@ onUnmounted(() => {
   color: #ddd;
   text-shadow: 0 1px 2px #000;
 }
-.has-door { background-color: #2b2b19; }
+.has-door::before { background-color: #2b2b19; }
 .has-door .glyph { color: #e0c860; }
-.has-player {
+.has-player::before {
   background-color: #1a2a4a !important;
   box-shadow: inset 0 0 18px rgba(79, 142, 247, 0.45);
 }
@@ -1211,9 +1385,14 @@ onUnmounted(() => {
 }
 
 /* ---- door-* substate ---- */
-.door-closed { /* hook: add shake/glow anticipation here */ }
-.door-opening { /* hook: mid-open visuals */ }
+.door-closed {
+  border-color: red;
+}
+.door-opening {
+  border-color: yellow;
+}
 .door-open {
+  border-color: green;
   background-color: #2b3a1a;
 }
 .door-open .glyph { color: #9ce04c; }
@@ -1263,7 +1442,10 @@ onUnmounted(() => {
 }
 
 /* ---- player-* modifiers ---- */
-.player-hiding { /* hook: dampen the blue glow, add concealment effect */ }
+.player-hiding::before {
+  background: radial-gradient(circle at 50% 50%, green 0%, rgba(0, 0, 0, 0.25) 100%);
+  z-index: 2;
+}
 .player-low-hp { /* hook: red pulse on the player tile when HP <= 1 */ }
 
 /* ---- vote-* (not wired yet; add when we thread votes into tiles) ---- */
@@ -1295,6 +1477,52 @@ onUnmounted(() => {
     border-color: rgba(247,143,79, .5);
     box-shadow: inset 0 0 30px rgba(247,143,79, .5), 0 0 30px rgba(247,143,79,.5);
   }
+}
+
+/* ---- Live event ticker ---- */
+.ticker {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+  max-width: 360px;
+}
+.ticker-entry {
+  background: rgba(15, 10, 8, 0.78);
+  border: 1px solid rgba(224, 200, 96, 0.35);
+  color: #f0e4c8;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  border-radius: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.ticker-entry[data-type="zombie_killed"] { border-color: rgba(156, 224, 76, 0.6); }
+.ticker-entry[data-type="zombie_attack"] { border-color: rgba(255, 90, 90, 0.55); color: #ffd9d9; }
+.ticker-entry[data-type="game_won"] { border-color: rgba(79, 142, 247, 0.7); color: #c8dbff; }
+.ticker-entry[data-type="game_lost"] { border-color: rgba(122, 43, 43, 0.8); color: #ffcccc; }
+.ticker-entry[data-type="boss_blocked"] { border-color: rgba(224, 160, 96, 0.7); color: #ffe1b8; }
+.ticker-entry[data-type="hp_pickup"] { border-color: rgba(76, 224, 156, 0.6); color: #d6f5e1; }
+.ticker-entry[data-type="weapon_pickup"] { border-color: rgba(224, 200, 96, 0.7); color: #fff2c8; }
+.ticker-entry[data-type="door_opened"] { border-color: rgba(156, 224, 76, 0.7); color: #e8ffd0; }
+.ticker-entry[data-type="room_entered"] { border-color: rgba(79, 142, 247, 0.55); color: #d4e3ff; }
+
+.ticker-enter-active,
+.ticker-leave-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.ticker-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.ticker-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 
 .grid-empty {

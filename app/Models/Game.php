@@ -23,6 +23,32 @@ class Game extends Model
 
     public const string WEAPON_DE_SWORD = 'de_sword';
 
+    public const string LOG_HIDE = 'hide';
+
+    public const string LOG_HIDDEN_REVEAL = 'hidden_reveal';
+
+    public const string LOG_HP_PICKUP = 'hp_pickup';
+
+    public const string LOG_WEAPON_PICKUP = 'weapon_pickup';
+
+    public const string LOG_PLAYER_ATTACK = 'player_attack';
+
+    public const string LOG_ZOMBIE_KILLED = 'zombie_killed';
+
+    public const string LOG_ZOMBIE_ATTACK = 'zombie_attack';
+
+    public const string LOG_DOOR_DAMAGE = 'door_damage';
+
+    public const string LOG_DOOR_OPENED = 'door_opened';
+
+    public const string LOG_BOSS_BLOCKED = 'boss_blocked';
+
+    public const string LOG_ROOM_ENTERED = 'room_entered';
+
+    public const string LOG_GAME_WON = 'game_won';
+
+    public const string LOG_GAME_LOST = 'game_lost';
+
     protected $fillable = [
         'user_id',
         'status',
@@ -41,6 +67,8 @@ class Game extends Model
         'last_resolved_action',
         'last_resolved_tally',
         'last_resolved_at',
+        'log',
+        'recap',
     ];
 
     protected $casts = [
@@ -56,6 +84,8 @@ class Game extends Model
         'round_started_at' => 'datetime',
         'last_resolved_tally' => 'array',
         'last_resolved_at' => 'datetime',
+        'log' => 'array',
+        'recap' => 'array',
     ];
 
     public function user(): BelongsTo

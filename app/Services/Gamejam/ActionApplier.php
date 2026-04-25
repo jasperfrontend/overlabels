@@ -11,6 +11,14 @@ use App\Models\GameZombie;
 class ActionApplier
 {
     /**
+     * When true, killing a zombie advances the player one tile toward its
+     * former position. Disabled by default because it makes attacks feel
+     * unpredictable (e.g. you can no longer hit a door above you after
+     * killing a zombie below).
+     */
+    private const bool ADVANCE_PLAYER_ON_KILL = false;
+
+    /**
      * Zombies that attacked the player via a movement bump this tick. Returned
      * from apply() so the caller can pass them to the zombie-turn resolver,
      * which skips them in the adjacency-attack phase to avoid double-hitting.
@@ -123,8 +131,14 @@ class ActionApplier
         if ($door && $door->is_exit) {
             if ($game->current_room >= 5) {
                 $game->update(['status' => Game::STATUS_WON]);
+                GameLog::append($game, Game::LOG_GAME_WON);
             } else {
-                app(RoomSeeder::class)->advanceTo($game, $game->current_room + 1);
+                $fromRoom = $game->current_room;
+                app(RoomSeeder::class)->advanceTo($game, $fromRoom + 1);
+                GameLog::append($game, Game::LOG_ROOM_ENTERED, [
+                    'from_room' => $fromRoom,
+                    'to_room' => $game->current_room,
+                ]);
             }
 
             return false;
@@ -153,7 +167,7 @@ class ActionApplier
             return;
         }
 
-        if ($this->attackNearestZombie($game, $weapon)) {
+        if ($this->attackZombiesInRange($game, $weapon)) {
             $this->applyAttackCost($game, $weapon);
 
             return;
@@ -176,28 +190,39 @@ class ActionApplier
             return;
         }
 
+        // Bosses gate their room's exit: while any boss is alive in the
+        // current room, doors in that room are immune to attacks. The player
+        // must kill the boss before they can break out.
+        $bossAlive = $game->zombies->contains(fn (GameZombie $z) => $z->active
+            && $z->room === $game->current_room
+            && $z->kind === GameZombie::KIND_BOSS);
+        if ($bossAlive) {
+            GameLog::append($game, Game::LOG_BOSS_BLOCKED);
+
+            return;
+        }
+
         $doorDamage = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
 
         foreach ($doorsHit as $door) {
-            $this->damageDoor($door, $doorDamage);
+            $this->damageDoor($game, $door, $doorDamage);
         }
 
         $this->applyAttackCost($game, $weapon);
     }
 
-    private function attackNearestZombie(Game $game, string $weapon): bool
+    private function attackZombiesInRange(Game $game, string $weapon): bool
     {
         $reach = $weapon === Game::WEAPON_DE_SWORD ? 2 : 1;
 
         $candidates = $game->zombies
             ->filter(fn (GameZombie $z) => $z->active
                 && $z->room === $game->current_room
-                && (abs($z->x - $game->player_x) + abs($z->y - $game->player_y)) <= $reach)
-            ->sortBy(fn (GameZombie $z) => abs($z->x - $game->player_x) + abs($z->y - $game->player_y))
+                && abs($z->x - $game->player_x) <= $reach
+                && abs($z->y - $game->player_y) <= $reach)
             ->values();
 
-        $target = $candidates->first();
-        if (! $target) {
+        if ($candidates->isEmpty()) {
             return false;
         }
 
@@ -207,20 +232,36 @@ class ActionApplier
             default => 2,
         };
 
-        $newHp = max(0, $target->hp - $damage);
-        if ($newHp <= 0) {
-            // Freeze prev_x/prev_y to the death tile so the corpse doesn't
-            // re-animate from its previous-tick position on every broadcast;
-            // the body just stays where it fell.
-            $target->update([
-                'hp' => 0,
-                'active' => false,
-                'prev_x' => $target->x,
-                'prev_y' => $target->y,
+        foreach ($candidates as $target) {
+            $newHp = max(0, $target->hp - $damage);
+            GameLog::append($game, Game::LOG_PLAYER_ATTACK, [
+                'zombie_id' => $target->id,
+                'kind' => $target->kind,
+                'damage' => $damage,
+                'target_hp' => $newHp,
+                'target_max_hp' => $target->max_hp,
             ]);
-            $this->advancePlayerTowardKill($game, $target);
-        } else {
-            $target->update(['hp' => $newHp]);
+
+            if ($newHp <= 0) {
+                // Freeze prev_x/prev_y to the death tile so the corpse doesn't
+                // re-animate from its previous-tick position on every broadcast;
+                // the body just stays where it fell.
+                $target->update([
+                    'hp' => 0,
+                    'active' => false,
+                    'prev_x' => $target->x,
+                    'prev_y' => $target->y,
+                ]);
+                GameLog::append($game, Game::LOG_ZOMBIE_KILLED, [
+                    'zombie_id' => $target->id,
+                    'kind' => $target->kind,
+                ]);
+                if (self::ADVANCE_PLAYER_ON_KILL) {
+                    $this->advancePlayerTowardKill($game, $target);
+                }
+            } else {
+                $target->update(['hp' => $newHp]);
+            }
         }
 
         return true;
@@ -283,11 +324,24 @@ class ActionApplier
         $newHp = $game->player_hp - $zombie->damage;
         if ($newHp <= 0) {
             $game->update(['player_hp' => 0, 'status' => Game::STATUS_LOST]);
+            GameLog::append($game, Game::LOG_ZOMBIE_ATTACK, [
+                'zombie_id' => $zombie->id,
+                'kind' => $zombie->kind,
+                'damage' => $zombie->damage,
+                'player_hp' => 0,
+            ]);
+            GameLog::append($game, Game::LOG_GAME_LOST, ['cause' => 'zombie']);
 
             return;
         }
 
         $game->update(['player_hp' => $newHp]);
+        GameLog::append($game, Game::LOG_ZOMBIE_ATTACK, [
+            'zombie_id' => $zombie->id,
+            'kind' => $zombie->kind,
+            'damage' => $zombie->damage,
+            'player_hp' => $newHp,
+        ]);
     }
 
     private function resolveAttackWeapon(Game $game, ?int $slot): ?string
@@ -299,13 +353,22 @@ class ActionApplier
         return $game->weapon_slot_1 ?? Game::WEAPON_FISTS;
     }
 
-    private function damageDoor(GameDoor $door, int $damage): void
+    private function damageDoor(Game $game, GameDoor $door, int $damage): void
     {
         $newTurns = ($door->turns_remaining ?? 1) - $damage;
+        GameLog::append($game, Game::LOG_DOOR_DAMAGE, [
+            'damage' => $damage,
+            'door_hp' => max(0, $newTurns),
+            'is_exit' => $door->is_exit,
+        ]);
+
         if ($newTurns <= 0) {
             $door->update([
                 'state' => GameDoor::STATE_OPEN,
                 'turns_remaining' => null,
+            ]);
+            GameLog::append($game, Game::LOG_DOOR_OPENED, [
+                'is_exit' => $door->is_exit,
             ]);
         } else {
             $door->update([
@@ -336,6 +399,7 @@ class ActionApplier
             $game->update(['player_hp' => $newHp]);
             if ($newHp <= 0) {
                 $game->update(['status' => Game::STATUS_LOST]);
+                GameLog::append($game, Game::LOG_GAME_LOST, ['cause' => 'fists']);
             }
         }
     }
@@ -344,23 +408,52 @@ class ActionApplier
     {
         $tile->update(['revealed_at_round' => $game->current_round]);
 
-        match ($tile->content) {
-            GameHiddenTile::CONTENT_REGULAR_SWORD => $game->update([
-                'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
-                'weapon_slot_1_uses' => $tile->payload['uses'] ?? 10,
-            ]),
-            GameHiddenTile::CONTENT_DE_SWORD => $game->update([
-                'weapon_slot_2' => Game::WEAPON_DE_SWORD,
-            ]),
-            GameHiddenTile::CONTENT_IRON_FISTS => $game->update([
-                'wears_iron_fists' => true,
-            ]),
-            GameHiddenTile::CONTENT_BOMB => $this->applyBomb($game),
-            GameHiddenTile::CONTENT_HP_RESTORE => $game->update([
-                'player_hp' => $game->player_hp + ($tile->payload['amount'] ?? 1),
-            ]),
-            default => null,
-        };
+        GameLog::append($game, Game::LOG_HIDDEN_REVEAL, [
+            'content' => $tile->content,
+            'x' => $tile->x,
+            'y' => $tile->y,
+        ]);
+
+        switch ($tile->content) {
+            case GameHiddenTile::CONTENT_REGULAR_SWORD:
+                $uses = $tile->payload['uses'] ?? 10;
+                $game->update([
+                    'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
+                    'weapon_slot_1_uses' => $uses,
+                ]);
+                GameLog::append($game, Game::LOG_WEAPON_PICKUP, [
+                    'weapon' => Game::WEAPON_REGULAR_SWORD,
+                    'slot' => 1,
+                    'uses' => $uses,
+                ]);
+                break;
+            case GameHiddenTile::CONTENT_DE_SWORD:
+                $game->update(['weapon_slot_2' => Game::WEAPON_DE_SWORD]);
+                GameLog::append($game, Game::LOG_WEAPON_PICKUP, [
+                    'weapon' => Game::WEAPON_DE_SWORD,
+                    'slot' => 2,
+                ]);
+                break;
+            case GameHiddenTile::CONTENT_IRON_FISTS:
+                $game->update(['wears_iron_fists' => true]);
+                GameLog::append($game, Game::LOG_WEAPON_PICKUP, [
+                    'weapon' => Game::WEAPON_FISTS,
+                    'slot' => null,
+                    'iron_fists' => true,
+                ]);
+                break;
+            case GameHiddenTile::CONTENT_BOMB:
+                $this->applyBomb($game);
+                break;
+            case GameHiddenTile::CONTENT_HP_RESTORE:
+                $amount = $tile->payload['amount'] ?? 1;
+                $game->update(['player_hp' => $game->player_hp + $amount]);
+                GameLog::append($game, Game::LOG_HP_PICKUP, [
+                    'amount' => $amount,
+                    'player_hp' => $game->player_hp,
+                ]);
+                break;
+        }
     }
 
     private function applyBomb(Game $game): void
@@ -369,6 +462,7 @@ class ActionApplier
         $game->update(['player_hp' => $newHp]);
         if ($newHp <= 0) {
             $game->update(['status' => Game::STATUS_LOST]);
+            GameLog::append($game, Game::LOG_GAME_LOST, ['cause' => 'bomb']);
         }
     }
 
@@ -385,6 +479,10 @@ class ActionApplier
         $game->update([
             'player_x' => $nearest->x,
             'player_y' => $nearest->y,
+        ]);
+        GameLog::append($game, Game::LOG_HIDE, [
+            'x' => $nearest->x,
+            'y' => $nearest->y,
         ]);
     }
 }

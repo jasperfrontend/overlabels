@@ -67,6 +67,7 @@ class ZombieTurnResolver
 
         $totalDamage = 0;
         $anyZombieSeesHidingPlayer = false;
+        $attackers = [];
 
         foreach ($zombies as $z) {
             if (in_array($z->id, $bumpedZombieIds, true)) {
@@ -102,6 +103,7 @@ class ZombieTurnResolver
                 $anyZombieSeesHidingPlayer = true;
             }
             $totalDamage += $damage;
+            $attackers[] = ['zombie' => $z, 'damage' => $damage];
 
             // Flag for frontend: this zombie attacked the player this turn.
             // Force facing toward the player so the lunge animation aims at
@@ -119,10 +121,24 @@ class ZombieTurnResolver
             $newHp += 1;
         }
 
+        $finalHp = max(0, $newHp);
         if ($newHp <= 0) {
             $game->update(['player_hp' => 0, 'status' => Game::STATUS_LOST]);
         } else {
             $game->update(['player_hp' => $newHp]);
+        }
+
+        foreach ($attackers as $attacker) {
+            GameLog::append($game, Game::LOG_ZOMBIE_ATTACK, [
+                'zombie_id' => $attacker['zombie']->id,
+                'kind' => $attacker['zombie']->kind,
+                'damage' => $attacker['damage'],
+                'player_hp' => $finalHp,
+            ]);
+        }
+
+        if ($newHp <= 0) {
+            GameLog::append($game, Game::LOG_GAME_LOST, ['cause' => 'zombie']);
         }
     }
 

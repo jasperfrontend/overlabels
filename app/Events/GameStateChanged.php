@@ -53,6 +53,7 @@ class GameStateChanged implements ShouldBroadcastNow
                 'last_resolved_tally' => $game->last_resolved_tally,
                 'last_resolved_at' => $game->last_resolved_at?->toISOString(),
             ],
+            'log' => $game->log ?? [],
             'joiners' => $game->joiners
                 ->sortBy('joined_round')
                 ->values()
