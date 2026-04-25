@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * TemplateDataMapperService
  *
- * Centralized service for all template tag mapping and data transformation.
+ * Centralised service for all template tag mapping and data transformation.
  * This consolidates the mapping logic from JsonTemplateParserService to avoid duplication.
  *
  * - This service is the SINGLE SOURCE OF TRUTH for template tag mappings
@@ -59,12 +59,9 @@ class TemplateDataMapperService
      */
     public static function userScopeIterables(): array
     {
-        $out = [];
-        foreach (self::INDEXED_USER_SCOPE_FIELDS as $key => $spec) {
-            $out[$key] = ['alias' => $spec['alias'], 'default_cap' => $spec['default_cap']];
-        }
-
-        return $out;
+        return array_map(function ($spec) {
+            return ['alias' => $spec['alias'], 'default_cap' => $spec['default_cap']];
+        }, self::INDEXED_USER_SCOPE_FIELDS);
     }
 
     /**
@@ -117,7 +114,6 @@ class TemplateDataMapperService
             'channel.tags.7' => 'channel_tags_7',
             'channel.tags.8' => 'channel_tags_8',
             'channel.tags.9' => 'channel_tags_9',
-            'channel.tags.10' => 'channel_tags_10', // max 10 tags on twitch
             'channel.content_classification_labels' => 'channel_content_labels',
             'channel.is_branded_content' => 'channel_is_branded',
 
@@ -162,34 +158,7 @@ class TemplateDataMapperService
     }
 
     /**
-     * Wraps the provided HTML body and CSS into a complete HTML document.
-     * Used to generate a full HTML page for overlay rendering.
-     *
-     * @param  string  $headHtml  The HTML content to include in the head.
-     * @param  string  $bodyHtml  The HTML content to include in the body.
-     * @param  string  $css  The CSS styles to inject into the document.
-     * @param  string  $title  The title of the HTML document (default: 'Overlay').
-     * @return string The complete HTML document as a string.
-     **/
-    public function wrapHtmlAndCssIntoDocument(string $headHtml, string $bodyHtml, string $css, string $title = 'Overlay'): string
-    {
-        return '<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>'.htmlspecialchars($title).'</title>
-        '.$headHtml.'
-        <style>'.$css.'</style>
-    </head>
-    <body>
-    '.$bodyHtml.'
-    </body>
-    </html>';
-    }
-
-    /**
-     * Get standardized template tag name from JSON path
+     * Get standardised template tag name from JSON path
      * This replaces JsonTemplateParserService::getStandardizedTagName()
      */
     public function getStandardizedTagName(string $jsonPath): string
@@ -248,12 +217,10 @@ class TemplateDataMapperService
         // Emit indexed flat keys for user-scope iterables so [[[foreach:subscribers as s]]]
         // has something to resolve. Runs after the scalar mapping so [[[subscribers_latest_*]]]
         // still works alongside [[[foreach:subscribers as s]]][[[s.*]]][[[endforeach]]].
-        $templateData = array_merge(
+        return array_merge(
             $templateData,
             $this->buildUserScopeIndexedKeys($twitchData, $caps)
         );
-
-        return $templateData;
     }
 
     /**
@@ -293,9 +260,7 @@ class TemplateDataMapperService
 
                 foreach ($item as $subKey => $subValue) {
                     $tag = $spec['alias'].'.'.$i.'.'.$subKey;
-                    $out[$tag] = is_array($subValue)
-                        ? $this->formatValueForTemplate($subValue, $tag)
-                        : $this->formatValueForTemplate($subValue, $tag);
+                    $out[$tag] = $this->formatValueForTemplate($subValue, $tag);
                 }
             }
         }
@@ -455,8 +420,8 @@ class TemplateDataMapperService
     }
 
     /**
-     * Get category mappings for organizing template tags
-     * This is used by JsonTemplateParserService for database organization
+     * Get category mappings for organising template tags
+     * This is used by JsonTemplateParserService for database organisation
      */
     public function getTagCategories(): array
     {
@@ -623,7 +588,7 @@ class TemplateDataMapperService
     /**
      * Get the default value for missing data
      */
-    private function getDefaultValue(string $templateTag): mixed
+    private function getDefaultValue(string $templateTag): string|int|false
     {
         if (in_array($templateTag, self::NUMERIC_TAGS, true)) {
             return 0;
@@ -800,127 +765,4 @@ class TemplateDataMapperService
         return trim($currency.' '.$formatted);
     }
 
-    /**
-     * Get available event template tags
-     */
-    public function getAvailableEventTags(): array
-    {
-        return [
-            // Common event fields
-            'event.type' => 'Event type (channel.follow, channel.subscribe, etc.)',
-            'event.user_id' => 'User ID who triggered the event',
-            'event.user_login' => 'User login who triggered the event',
-            'event.user_name' => 'User display name who triggered the event',
-            'event.broadcaster_user_id' => 'Broadcaster user ID',
-            'event.broadcaster_user_login' => 'Broadcaster login',
-            'event.broadcaster_user_name' => 'Broadcaster display name',
-
-            // Subscription specific
-            'event.tier' => 'Raw subscription tier value (1000, 2000, 3000, Prime)',
-            'event.tier_display' => 'Formatted subscription tier (1, 2, 3, Prime)',
-            'event.is_gift' => 'Whether this is a gifted subscription',
-            'event.total' => 'Total months subscribed',
-            'event.streak_months' => 'Current subscription streak',
-            'event.message' => 'User message (for resubscriptions)',
-
-            // Gift subscription specific
-            'event.is_anonymous' => 'Whether the gift is anonymous',
-            'event.cumulative_total' => 'Total gifts given by this user',
-
-            // Bits/Cheer specific
-            'event.bits' => 'Number of bits cheered',
-
-            // Raid specific
-            'event.viewers' => 'Number of viewers in the raid',
-            'event.from_broadcaster_user_id' => 'Raiding broadcaster ID',
-            'event.from_broadcaster_user_login' => 'Raiding broadcaster login',
-            'event.from_broadcaster_user_name' => 'Raiding broadcaster name',
-
-            // Channel Points Redemption
-            'event.reward_id' => 'Reward ID',
-            'event.reward.title' => 'Reward title',
-            'event.reward.prompt' => 'Reward prompt',
-            'event.reward.cost' => 'Reward cost in points',
-            'event.user_input' => 'User input for the reward',
-            'event.status' => 'Redemption status',
-            'event.redeemed_at' => 'When the reward was redeemed',
-
-            // Hype Train
-            'event.level' => 'Hype train level',
-            'event.total' => 'Hype train total bits-equivalent contributions',
-            'event.progress' => 'Progress toward next level',
-            'event.goal' => 'Hype train next-level goal',
-            'event.started_at' => 'Hype train start time',
-            'event.expires_at' => 'Hype train expiration time',
-            'event.ended_at' => 'Hype train end time',
-            'event.cooldown_ends_at' => 'When cooldown finishes (hype train end)',
-            'event.top_contributions.count' => 'Number of top contributors (hype train)',
-            'event.top_contributions.0.user_name' => 'Top contributor 1 display name',
-            'event.top_contributions.0.type' => 'Top contributor 1 contribution type (bits / subscription)',
-            'event.top_contributions.0.total' => 'Top contributor 1 amount',
-            'event.last_contribution.user_name' => 'Most recent contributor name',
-            'event.last_contribution.type' => 'Most recent contribution type',
-            'event.last_contribution.total' => 'Most recent contribution amount',
-
-            // Charity
-            'event.charity_name' => 'Charity name',
-            'event.charity_description' => 'Charity description',
-            'event.charity_logo' => 'Charity logo URL',
-            'event.charity_website' => 'Charity website',
-            'event.amount.value' => 'Donation amount (minor units)',
-            'event.amount.decimal_places' => 'Donation amount decimal places',
-            'event.amount.currency' => 'Donation currency code',
-            'event.amount.formatted' => 'Donation amount (formatted with currency)',
-            'event.current_amount.formatted' => 'Campaign raised so far (formatted)',
-            'event.target_amount.formatted' => 'Campaign target (formatted)',
-            'event.stopped_at' => 'When the charity campaign ended',
-
-            // Goals
-            'event.description' => 'Goal / poll / prediction description',
-            'event.type' => 'Event type / goal type (follower, subscription, etc.)',
-            'event.current_amount' => 'Current goal progress',
-            'event.target_amount' => 'Goal target',
-            'event.is_achieved' => 'Whether goal was reached when it ended',
-
-            // Polls
-            'event.title' => 'Poll / prediction title',
-            'event.choices.count' => 'Number of poll choices',
-            'event.choices.total_votes' => 'Sum of votes across all choices (use as denominator for progress bars)',
-            'event.choices.total_channel_points_votes' => 'Sum of channel-points votes across all choices',
-            'event.choices.total_bits_votes' => 'Sum of bits votes across all choices (deprecated by Twitch)',
-            'event.choices.0.title' => 'Poll choice 1 title',
-            'event.choices.0.votes' => 'Poll choice 1 total votes',
-            'event.choices.0.channel_points_votes' => 'Poll choice 1 channel points votes',
-            'event.choices.0.bits_votes' => 'Poll choice 1 bits votes (deprecated by Twitch)',
-            'event.bits_voting.is_enabled' => 'Whether bits voting is on (deprecated)',
-            'event.bits_voting.amount_per_vote' => 'Bits per vote (deprecated)',
-            'event.channel_points_voting.is_enabled' => 'Whether channel-points voting is on',
-            'event.channel_points_voting.amount_per_vote' => 'Channel points per vote',
-
-            // Predictions
-            'event.winning_outcome_id' => 'ID of winning prediction outcome',
-            'event.outcomes.count' => 'Number of prediction outcomes',
-            'event.outcomes.total_users' => 'Sum of predictors across all outcomes',
-            'event.outcomes.total_channel_points' => 'Sum of channel points wagered across all outcomes',
-            'event.outcomes.0.title' => 'Prediction outcome 1 title',
-            'event.outcomes.0.color' => 'Prediction outcome 1 color (blue / pink)',
-            'event.outcomes.0.users' => 'Prediction outcome 1 number of predictors',
-            'event.outcomes.0.channel_points' => 'Prediction outcome 1 total channel points wagered',
-            'event.locks_at' => 'When the prediction locks',
-        ];
-    }
-
-    /**
-     * Check if a template has event tags (to determine if it's an alert template)
-     */
-    public function hasEventTags(array $templateTags): bool
-    {
-        foreach ($templateTags as $tag) {
-            if (str_starts_with($tag, 'event.')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

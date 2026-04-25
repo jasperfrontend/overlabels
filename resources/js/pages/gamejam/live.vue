@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, CircleDot, CircleDashed, ShieldCheck, ShieldOff } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, CircleDot, CircleDashed } from 'lucide-vue-next';
 import { floorFor, themeFor, type RoomTheme } from './themes';
 import GameResultBanner from '@/components/gamejam/GameResultBanner.vue';
 import GameStatusCard from '@/components/gamejam/GameStatusCard.vue';
@@ -297,7 +297,7 @@ function voteLabel(vote: string | null): string {
 
 const theme = computed<RoomTheme>(() => themeFor(game.value?.current_room ?? 1));
 
-// Room-level visual layer (CSS filter + colored overlay) authored in the
+// Room-level visual layer (CSS filter + coloured overlay) authored in the
 // builder. Exposed to CSS as custom properties on .grid so .tile::before
 // (floor + filter) and .tile::after (overlay) can read them. Items that sit
 // above these layers (sprites, glyphs, zombies) are unaffected because they
@@ -799,7 +799,7 @@ onUnmounted(() => {
                     (no classes)
                   </span>
                 </div>
-                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-[180px] overflow-y-auto">{{ debugTileState(game.player_x, game.player_y) }}</pre>
+                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-45 overflow-y-auto">{{ debugTileState(game.player_x, game.player_y) }}</pre>
               </div>
               <div v-else class="text-[#666] italic text-[0.75rem]">player not on board</div>
 
@@ -828,7 +828,7 @@ onUnmounted(() => {
                     class="text-[#666] italic text-[0.75rem]"
                   >(no classes)</span>
                 </div>
-                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-[180px] overflow-y-auto">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
+                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-45 overflow-y-auto">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
               </div>
               <div v-else-if="debugInput" class="text-[#666] italic text-[0.75rem]">
                 invalid coords (use x,y with 1-{{ GRID_SIZE }})
@@ -838,7 +838,7 @@ onUnmounted(() => {
           </section>
         </div> <!-- grid col 2 -->
       </div>
-
+      <pre class="text-sm" v-if="game && debugEnabledLive">{{ game }}</pre>
     </aside>
 
     <main class="grid-area relative">
@@ -860,7 +860,7 @@ onUnmounted(() => {
             :data-x="x"
             :data-y="y"
           >
-            <img v-if="spriteFor(x, y)" :src="spriteFor(x, y)!" class="sprite" alt="" />
+            <img v-if="spriteFor(x, y)" :src="spriteFor(x, y)!" class="sprite pixelated" alt="" />
             <span class="glyph">{{ tileGlyph(x, y) }}</span>
             <span class="coords">{{ x }},{{ y }}</span>
           </div>
@@ -1349,21 +1349,6 @@ onUnmounted(() => {
   background: #36bfb0;
 }
 
-progress {
-  height: 30px;
-  background: red;
-  box-shadow: 1px 1px 4px rgba( 0, 0, 0, 0.2 );
-}
-progress::-webkit-progress-bar {
-  background-color: yellow;
-  border-radius: 70px;
-}
-progress::-webkit-progress-value {
-  background-color: blue;
-  border-radius: 7px;
-  box-shadow: 1px 1px 5px 3px rgba( 255, 0, 0, 0.8 );
-}
-
 @media (max-width: 1600px) {
   .live-board {
     grid-template-columns: 1fr;
@@ -1377,5 +1362,9 @@ progress::-webkit-progress-value {
     transform: scale(0.7);
     transform-origin: top center;
   }
+}
+
+.pixelated {
+  image-rendering: pixelated;
 }
 </style>

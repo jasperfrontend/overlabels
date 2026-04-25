@@ -2,394 +2,391 @@
     "tileset": "room-2",
     "width": 11,
     "height": 11,
-    "filter": "hue-rotate(200deg)",
-    "overlayColor": "#f01bf5",
-    "overlayOpacity": 0.26,
     "version": 1,
     "cells": [
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/gray_glazed_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/jungle_door_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/gray_glazed_terracotta.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_02.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_02.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_25.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/jungle_door_bottom.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_26.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_02.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_02.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_52.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_11.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_17.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_18.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_08.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_49.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_11.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_17.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/black_wool.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_18.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_08.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_10.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_20.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_52.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_19.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_09.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/acacia_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_05.png"
+                "bg": "/rooms/2/tiles/black_wool.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_50.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_03.png"
+                "bg": "/rooms/2/tiles/black_wool.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/acacia_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_05.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/blackstone_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_03.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_05.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/black_wool.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/blackstone.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_03.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_01.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_08.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_05.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/jungle_door_top_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_52.png"
+                "bg": "/rooms/2/tiles/black_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_03.png"
+                "bg": "/rooms/2/tiles/black_concrete.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_11.png"
+                "bg": "/rooms/2/tiles/black_carpet.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_51.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_05.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_50.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/jungle_door_top.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_03.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_48.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/tile_51.png"
+                "bg": "/rooms/2/tiles/light_gray_stained_glass_s.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             }
         ],
         [
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/gray_glazed_terracotta.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/jungle_door_bottom.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/spruce_trapdoor.png"
             },
             {
-                "bg": "/rooms/2/tiles/empty.png"
+                "bg": "/rooms/2/tiles/gray_glazed_terracotta.png"
             }
         ]
     ],

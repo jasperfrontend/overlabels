@@ -4,7 +4,7 @@
     "height": 11,
     "filter": "hue-rotate(225deg)",
     "overlayColor": "#000000",
-    "overlayOpacity": 0.36,
+    "overlayOpacity": 0.34,
     "version": 1,
     "cells": [
         [
@@ -24,7 +24,7 @@
                 "bg": "/rooms/5/tiles/tile_13.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_12.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_15.png"
@@ -59,7 +59,7 @@
                 "bg": "/rooms/5/tiles/tile_53.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_14.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_52.png"
@@ -184,7 +184,7 @@
         ],
         [
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/empty.png"
@@ -214,7 +214,7 @@
                 "bg": "/rooms/5/tiles/empty.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             }
         ],
         [
@@ -374,7 +374,7 @@
                 "bg": "/rooms/5/tiles/tile_13.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_15.png"
