@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 25th, 2026 - Push-notify the bot when a user toggles the chat integration
+
+- Reported symptom: a friend authed a fresh account, flipped the chat-bot integration on at `/settings/integrations`, and the gamejam live page started rendering - but `@overlabels` never joined his chat and `!ping` got nothing back. Re-running the `@overlabels` OAuth flow at `/admin/twitchbot` "fixed" it, which made it look like the bot needed re-authentication per new user. It didn't.
+- Real cause: the bot is a single shared `@overlabels` account; channel discovery happens by polling `/api/internal/bot/channels` (returns `users.bot_enabled = true`) on a 60-second cadence. `BotSettingsController::setEnabled` flipped the flag immediately but fired no event, so the bot didn't notice until the next poll tick. The admin "Reconnect" button looked causal because writing a new bot token in `bot_tokens` happens to make the Node side re-sync its full state, which incidentally re-polls channels - pure side effect, not by design.
+- Laravel side: new `App\Events\BotChannelsChanged` (`ShouldBroadcastNow`, public channel `bot-channels`, `broadcastAs` `bot.channels.changed`, payload `{ login, enabled }`). `BotSettingsController::setEnabled` dispatches it after the user update, using the lowercased `twitch_data.login`. Public channel because the payload is just a Twitch login (already public) plus a boolean - no auth handshake needed on the bot side.
+- Bot side (`overlabels-bot` repo): added `pusher-js`, new `src/reverbClient.js` connects to Reverb using `REVERB_APP_KEY` / `REVERB_HOST` / `REVERB_PORT` / `REVERB_SCHEME`, subscribes to `bot-channels`, binds `bot.channels.changed`. On receipt, runs `commandMap.refresh()` + `bot.syncChannels(...)` guarded by a `pushRefreshing` flag so a burst of toggles can't pile up overlapping syncs. Reverb config is all optional in `config.js` - if `APP_KEY` or `HOST` are missing, the bot logs a warning and falls back to poll-only behavior (no crash).
+- The 60-second poll loop is intentionally preserved as a safety net for missed websocket messages; the broadcast just makes the common case feel instant.
+- Deploy: `config/deploy.yml` gets `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME`, `REVERB_APP_KEY` in the `clear:` env block. App key is a public client identifier in Reverb (same one the Vite frontend ships), not a secret.
+- Deliberately scoped narrowly: did not also dispatch on user soft-delete or Twitch unlink. Those paths are rare and the poll catches them within a minute. Fold in if it ever surfaces as a real problem.
+
 ## April 25th, 2026 - Fuzzy-searchable `/help/reference` backed by committed markdown
 
 - Gap: the curated `/help/conditionals`, `/help/controls`, `/help/formatting` pages explain syntax well but aren't the right surface for "what's the exact tag for follower count again?" - 130+ template tags, EventSub events, and foreach fields don't fit in a narrative page. An Obsidian vault with one markdown file per tag proved that a fuzzy-search index over short reference docs is the right shape: type "followe" and every follower-related thing surfaces at once.
