@@ -15,7 +15,11 @@ return [
     */
 
     'cloudinary' => [
-        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        // Fall back to parsing CLOUDINARY_URL (cloudinary://key:secret@cloud_name)
+        // so prod only needs CLOUDINARY_URL in Kamal env; local can keep the
+        // explicit CLOUDINARY_CLOUD_NAME if it's already set.
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME')
+            ?: (env('CLOUDINARY_URL') ? parse_url((string) env('CLOUDINARY_URL'), PHP_URL_HOST) : null),
         'api_key' => env('CLOUDINARY_API_KEY'),
         'api_secret' => env('CLOUDINARY_API_SECRET'),
         'url' => env('CLOUDINARY_URL'),
