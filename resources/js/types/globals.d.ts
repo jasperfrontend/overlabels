@@ -33,6 +33,5 @@ declare global {
     interface Window {
         Pusher: typeof Pusher;
         Echo: InstanceType<typeof Echo>;
-        cloudinaryCloudName: string;
     }
 }

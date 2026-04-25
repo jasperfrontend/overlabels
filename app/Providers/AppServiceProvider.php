@@ -86,6 +86,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        // Cloudinary uploads: 20/hour per user, 100/hour per IP. Generous for
+        // normal use, hostile to abuse. Frontend uploads are now routed
+        // through our backend so this is the only choke point.
+        RateLimiter::for('cloudinary-upload', function (Request $request) {
+            $userId = $request->user()?->id;
+
+            return [
+                Limit::perHour(20)->by($userId ?: $request->ip()),
+                Limit::perHour(100)->by($request->ip()),
+            ];
+        });
+
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('twitch', Provider::class);
         });

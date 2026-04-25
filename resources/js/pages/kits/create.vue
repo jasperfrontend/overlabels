@@ -131,8 +131,7 @@ const submit = () => {
           <CardContent>
             <ImageDropZone
               v-model="form.thumbnail_url"
-              upload-preset="overlabels-kit-thumbnails"
-              folder="kits/thumbnails"
+              kind="kit_thumbnail"
               compact
             />
             <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>

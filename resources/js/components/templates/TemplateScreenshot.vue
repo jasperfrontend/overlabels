@@ -43,8 +43,7 @@ function onUrlChange(url: string | null) {
 <template>
   <ImageDropZone
     :model-value="localUrl"
-    upload-preset="overlabels-overlay-screenshots"
-    folder="overlays/screenshots"
+    kind="template_screenshot"
     @update:model-value="onUrlChange"
     @error="(msg: string) => emit('error', msg)"
     @click-image="showPreview = true"

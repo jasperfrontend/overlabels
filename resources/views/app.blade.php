@@ -52,10 +52,6 @@
         @routes
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
-
-        <script>
-            window.cloudinaryCloudName = '{{ config("services.cloudinary.cloud_name") }}';
-        </script>
     </head>
     <body class="font-sans antialiased">
         @inertia

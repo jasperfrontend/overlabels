@@ -13,7 +13,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
-use Cloudinary\Cloudinary;
+use App\Services\CloudinaryUploadService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -224,7 +224,7 @@ class OverlayTemplateController extends Controller
     /**
      * Remove the specified template from storage
      */
-    public function destroy(Request $request, OverlayTemplate $template)
+    public function destroy(Request $request, OverlayTemplate $template, CloudinaryUploadService $cloudinary)
     {
         // Check ownership
         if ($template->owner_id !== $request->user()->id) {
@@ -242,7 +242,13 @@ class OverlayTemplateController extends Controller
             return back()->withErrors(['error' => $message]);
         }
 
+        $screenshotUrl = $template->screenshot_url;
+
         $template->delete();
+
+        // Delete the Cloudinary asset only if no other template/kit still
+        // references it (forks share screenshot_url via replicate()).
+        $cloudinary->deleteByUrl($screenshotUrl);
 
         // For API/JSON requests
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
@@ -626,7 +632,7 @@ class OverlayTemplateController extends Controller
     /**
      * Update screenshot URL for a template
      */
-    public function updateScreenshot(Request $request, OverlayTemplate $template): RedirectResponse
+    public function updateScreenshot(Request $request, OverlayTemplate $template, CloudinaryUploadService $cloudinary): RedirectResponse
     {
         abort_unless($template->owner_id === auth()->id(), 403);
 
@@ -634,36 +640,20 @@ class OverlayTemplateController extends Controller
             'screenshot_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
-        // Delete old screenshot from Cloudinary if replacing or removing
         $oldUrl = $template->screenshot_url;
-        if ($oldUrl && $oldUrl !== $validated['screenshot_url']) {
-            $this->deleteCloudinaryAsset($oldUrl);
+        $newUrl = $validated['screenshot_url'];
+
+        if ($oldUrl !== $newUrl) {
+            // Delete the previous asset (guarded against forks that share the URL).
+            $cloudinary->deleteByUrl($oldUrl, excludeTemplateId: $template->id);
         }
 
-        $template->update(['screenshot_url' => $validated['screenshot_url']]);
+        $template->update(['screenshot_url' => $newUrl]);
+
+        // Mark the new upload as claimed so the orphan sweeper leaves it alone.
+        $cloudinary->claim($newUrl);
 
         return back()->with('message', 'Screenshot updated.')->with('type', 'success');
-    }
-
-    /**
-     * Delete a Cloudinary asset by its URL
-     */
-    private function deleteCloudinaryAsset(string $url): void
-    {
-        try {
-            // Extract public_id from Cloudinary URL
-            // Format: https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
-            if (preg_match('#/upload/(?:v\d+/)?(.+)\.\w+$#', $url, $matches)) {
-                $publicId = $matches[1];
-                $cloudinary = new Cloudinary(config('services.cloudinary.url'));
-                $cloudinary->adminApi()->deleteAssets($publicId);
-            }
-        } catch (Exception $e) {
-            Log::warning('Failed to delete Cloudinary asset', [
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**

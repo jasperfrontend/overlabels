@@ -1,11 +1,13 @@
 <?php
 
 use App\Jobs\VerifyStreamState;
+use App\Models\CloudinaryUpload;
 use App\Models\ExternalEvent;
 use App\Models\OverlayAccessLog;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
+use App\Services\CloudinaryUploadService;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
 use Illuminate\Foundation\Inspiring;
@@ -183,6 +185,22 @@ Schedule::call(fn () => TwitchEvent::where('created_at', '<', now()->subDays(90)
 
 Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:external-events')->withoutOverlapping();
+
+// Sweep orphaned Cloudinary uploads. Frontend uploads land in cloudinary_uploads
+// unclaimed; if no template/kit save references them within 30 minutes, delete
+// the asset and the row. Closes the abuse vector where someone uploads then
+// abandons the form to use Cloudinary as free image hosting.
+Schedule::call(function () {
+    $service = app(CloudinaryUploadService::class);
+    $orphans = CloudinaryUpload::whereNull('claimed_at')
+        ->where('created_at', '<=', now()->subMinutes(30))
+        ->limit(200)
+        ->get();
+
+    foreach ($orphans as $orphan) {
+        $service->deleteByUrl($orphan->secure_url);
+    }
+})->everyFifteenMinutes()->name('cloudinary:sweep-orphans')->withoutOverlapping();
 
 // Stream state safety net - catches stuck states if verification chain breaks
 Schedule::call(function () {

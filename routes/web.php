@@ -454,6 +454,13 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
     });
 
+    // Cloudinary uploads - all image uploads route through here so we can
+    // rate-limit, validate dimensions, and track for orphan cleanup. The
+    // frontend no longer talks to Cloudinary directly.
+    Route::post('/cloudinary/upload', [\App\Http\Controllers\CloudinaryUploadController::class, 'upload'])
+        ->middleware('throttle:cloudinary-upload')
+        ->name('cloudinary.upload');
+
     // Integration Suggestions (rate limited: 3 per hour per user)
     Route::post('/integration-suggestions', [IntegrationSuggestionController::class, 'store'])
         ->middleware('throttle:3,60')

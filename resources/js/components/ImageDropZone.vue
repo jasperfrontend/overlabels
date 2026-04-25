@@ -4,8 +4,7 @@ import { ImageIcon, Trash2, Upload, Loader2 } from 'lucide-vue-next';
 
 const props = withDefaults(defineProps<{
   modelValue: string | null;
-  uploadPreset: string;
-  folder: string;
+  kind: 'template_screenshot' | 'kit_thumbnail';
   compact?: boolean;
 }>(), {
   compact: false,
@@ -23,8 +22,9 @@ const isDragging = ref(false);
 const isFocused = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const CLOUD_NAME = window.cloudinaryCloudName;
-const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+function getCsrfToken(): string {
+  return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
+}
 
 async function uploadToCloudinary(file: File) {
   isUploading.value = true;
@@ -32,21 +32,32 @@ async function uploadToCloudinary(file: File) {
 
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', props.uploadPreset);
-    formData.append('folder', props.folder);
+    formData.append('image', file);
+    formData.append('kind', props.kind);
 
-    const response = await fetch(UPLOAD_URL, {
+    const response = await fetch('/cloudinary/upload', {
       method: 'POST',
       body: formData,
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': getCsrfToken(),
+        Accept: 'application/json',
+      },
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      const data = await response.json().catch(() => ({}));
+      const msg = data?.error
+        ?? data?.message
+        ?? data?.errors?.image?.[0]
+        ?? data?.errors?.kind?.[0]
+        ?? `Upload failed: ${response.statusText}`;
+      throw new Error(msg);
     }
 
     const data = await response.json();
-    emit('update:modelValue', data.secure_url);
+    emit('update:modelValue', data.url);
   } catch (err: any) {
     emit('error', err.message || 'Upload failed');
   } finally {
