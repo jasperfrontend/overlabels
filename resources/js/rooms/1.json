@@ -6,37 +6,37 @@
     "cells": [
         [
             {
-                "bg": "/rooms/1/tiles/tallgrass.png"
+                "bg": "/rooms/1/tiles/bamboo_leaf.png"
             },
             {
                 "bg": "/rooms/1/tiles/double_plant_syringa_top.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_fern_top.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/double_plant_paeonia_top.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/double_plant_sunflower_top.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/door_acacia_upper.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/double_plant_sunflower_top.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/double_plant_paeonia_top.png"
-            },
-            {
-                "bg": "/rooms/1/tiles/double_plant_fern_top.png"
+                "bg": "/rooms/1/tiles/double_plant_sunflower_back.png"
             },
             {
                 "bg": "/rooms/1/tiles/double_plant_rose_top.png"
             },
             {
-                "bg": "/rooms/1/tiles/tallgrass.png"
+                "bg": "/rooms/1/tiles/double_plant_syringa_top.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/door_acacia_upper.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/flower_blue_orchid.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/flower_blue_orchid.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/flower_cornflower.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/flower_cornflower.png"
+            },
+            {
+                "bg": "/rooms/1/tiles/flower_oxeye_daisy.png"
             }
         ],
         [
@@ -44,31 +44,31 @@
                 "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_syringa_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_fern_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_paeonia_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_sunflower_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
                 "bg": "/rooms/1/tiles/door_acacia_lower.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_sunflower_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_paeonia_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_fern_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_rose_bottom.png"
+                "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
                 "bg": "/rooms/1/tiles/water_placeholder_heightmap.png"

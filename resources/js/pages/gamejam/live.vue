@@ -753,14 +753,14 @@ onUnmounted(() => {
           />
           <GameWeaponCard
             v-if="game.weapon_slot_1 === 'regular_sword'"
-            title="Weapon I"
+            title="Weapon 3x3"
             image-url="/tile-icons/pixel/128x128/sword-default.png"
             image-url-alt="sword-default"
             :weapon-uses="game.weapon_slot_1_uses"
           />
           <GameWeaponCard
             v-if="game.weapon_slot_2"
-            title="Weapon II"
+            title="Weapon 5x5"
             image-url="/tile-icons/pixel/128x128/sword-de.png"
             image-url-alt="sword-de"
             description="Infinite &bull; !a 2"
@@ -855,7 +855,7 @@ onUnmounted(() => {
 
             <div class="bg-olive-800 border border-olive-500/50 medievalsharp-regular flex flex-col">
               <div class="text-olive-400 text-center px-3 py-2 border-b border-olive-500/40">Game log</div>
-              <div ref="logScrollRef" class="h-102.5 overflow-y-auto flex flex-col gap-0.5 px-3 py-2">
+              <div ref="logScrollRef" class="h-100 overflow-y-auto flex flex-col gap-0.5 px-3 py-2">
                 <div
                   v-for="entry in log"
                   :key="entry.id"
@@ -866,19 +866,6 @@ onUnmounted(() => {
                 </div>
                 <div v-if="!log.length" class="text-olive-400 italic text-sm">No events yet</div>
               </div>
-            </div>
-
-            <div class="medievalsharp-regular text-sm mt-4" v-if="grouped.inactive.length > 0">
-              <h2 class="medievalsharp-regular text-lg text-white">Inactive: <span class="count">{{ grouped.inactive.length }} players</span></h2>
-
-              <div v-for="j in grouped.inactive" :key="j.twitch_user_id" class="grid grid-cols-2 mt-0.5">
-                <div class="bg-card flex gap-2 p-1">
-                  <div class="max-w-[75%] overflow-hidden whitespace-nowrap text-ellipsis tracking-wide text-foreground">{{ j.username }}</div>
-                  <div class="ml-auto text-yellow-400/50 tracking-wide">r{{ j.last_vote_round ?? j.joined_round }}</div>
-                </div>
-              </div>
-
-              <div v-if="!grouped.inactive.length" class="text-sm text-muted-foreground">no inactive players right now</div>
             </div>
 
           </section>
@@ -916,6 +903,20 @@ onUnmounted(() => {
                 </li>
                 <li v-if="!grouped.active.length" class="text-xl text-olive-400">no active players right now. Type <span class="text-yellow-400">!join</span> in chat.</li>
               </ul>
+
+              <div
+                v-if="grouped.inactive.length"
+                class="grid grid-cols-2 gap-1 mt-2 opacity-60"
+              >
+                <div
+                  v-for="j in grouped.inactive"
+                  :key="j.twitch_user_id"
+                  class="flex items-center gap-2 px-2 py-0.5 bg-olive-800/60 border border-olive-500/30 text-sm min-w-0"
+                >
+                  <div class="flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-foreground/70">{{ j.username }}</div>
+                  <div class="text-yellow-400/40 shrink-0">r{{ j.last_vote_round ?? j.joined_round }}</div>
+                </div>
+              </div>
             </div>
 
             <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">

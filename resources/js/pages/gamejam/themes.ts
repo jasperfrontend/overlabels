@@ -64,7 +64,7 @@ const tileOptions: TileOptions = {
   player: '/tile-icons/Objects/Scarecrow.png',
   blocker: '/tile-icons/Objects/Tombstone (1).png',
   hidingSpot: '/tile-icons/Objects/Coffin.png',
-  hidden: '/tile-icons/pixel/128x128/chest.png',
+  hidden: '/tile-icons/pixel/128x128/barrel_top.png',
   door: {
     closed:  '/tile-icons/Objects/Coffin.png',
     opening: '/tile-icons/Objects/Coffin.png',
@@ -75,7 +75,7 @@ const tileOptions: TileOptions = {
     regular_sword: '/tile-icons/pixel/128x128/sword-default.png',
     de_sword:      '/tile-icons/pixel/128x128/sword-de.png',
     iron_fists:    '/tile-icons/pixel/128x128/sword-default.png',
-    bomb:          '/tile-icons/pixel/128x128/bomb.png',
+    bomb:          '/tile-icons/pixel/128x128/tnt_side.png',
     hp_restore:    '/tile-icons/pixel/128x128/apple.png',
     zombie_spawn:  '/tile-icons/pixel/128x128/zombie-spawn.png',
   },

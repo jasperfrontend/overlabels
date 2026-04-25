@@ -56,13 +56,13 @@
                 "bg": "/rooms/5/tiles/tile_03.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_53.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_14.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_52.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_05.png"
@@ -152,7 +152,7 @@
                 "bg": "/rooms/5/tiles/tile_14.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_52.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_45.png"
@@ -176,7 +176,7 @@
                 "bg": "/rooms/5/tiles/tile_44.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_53.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_14.png"
@@ -187,7 +187,7 @@
                 "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_48.png"
@@ -211,7 +211,7 @@
                 "bg": "/rooms/5/tiles/tile_48.png"
             },
             {
-                "bg": "/rooms/5/tiles/empty.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_01.png"
@@ -222,7 +222,7 @@
                 "bg": "/rooms/5/tiles/tile_12.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_49.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_46.png"
@@ -246,7 +246,7 @@
                 "bg": "/rooms/5/tiles/tile_47.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_50.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_12.png"
@@ -336,13 +336,13 @@
                 "bg": "/rooms/5/tiles/tile_03.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_53.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_52.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
-                "bg": "/rooms/5/tiles/tile_52.png"
+                "bg": "/rooms/5/tiles/tile_01.png"
             },
             {
                 "bg": "/rooms/5/tiles/tile_05.png"
