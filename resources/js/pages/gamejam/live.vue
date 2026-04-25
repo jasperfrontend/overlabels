@@ -139,6 +139,49 @@ function scrollLogToBottom() {
   });
 }
 
+const activeScrollRef = ref<HTMLElement | null>(null);
+let activeScrollDir: 1 | -1 = 1;
+let activeScrollPausedUntil = 0;
+let activeScrollAnimId: number | null = null;
+let activeScrollLastTs = 0;
+const ACTIVE_SCROLL_PX_PER_MS = 0.04; // ~40px/sec
+const ACTIVE_SCROLL_PAUSE_MS = 1500;
+
+function autoScrollActiveStep(ts: number) {
+  const el = activeScrollRef.value;
+  if (!el) {
+    activeScrollAnimId = requestAnimationFrame(autoScrollActiveStep);
+    return;
+  }
+  if (activeScrollLastTs === 0) activeScrollLastTs = ts;
+  const dt = ts - activeScrollLastTs;
+  activeScrollLastTs = ts;
+
+  const max = el.scrollHeight - el.clientHeight;
+  if (max <= 0) {
+    el.scrollTop = 0;
+    activeScrollAnimId = requestAnimationFrame(autoScrollActiveStep);
+    return;
+  }
+
+  if (ts >= activeScrollPausedUntil) {
+    const next = el.scrollTop + activeScrollDir * ACTIVE_SCROLL_PX_PER_MS * dt;
+    if (next >= max) {
+      el.scrollTop = max;
+      activeScrollDir = -1;
+      activeScrollPausedUntil = ts + ACTIVE_SCROLL_PAUSE_MS;
+    } else if (next <= 0) {
+      el.scrollTop = 0;
+      activeScrollDir = 1;
+      activeScrollPausedUntil = ts + ACTIVE_SCROLL_PAUSE_MS;
+    } else {
+      el.scrollTop = next;
+    }
+  }
+
+  activeScrollAnimId = requestAnimationFrame(autoScrollActiveStep);
+}
+
 function zombieLabel(kind: unknown): string {
   if (kind === 'boss') return 'the boss';
   if (kind === 'weakling') return 'a weakling zombie';
@@ -372,10 +415,67 @@ const lastResolvedTallyEntries = computed(() => {
   return Object.entries(tally).sort((a, b) => b[1] - a[1]);
 });
 
+// DEV: visualize 50 active + 50 inactive. Flip to false (or delete) when done.
+const FAKE_PREVIEW = false;
+const FAKE_NAMES_A = [
+  'mossy_owl', 'pixelpilot', 'banana_storm', 'silentgryph', 'kaiser_42',
+  'zombiehugger99', 'thunderfist', 'lavender_warden', 'oolong_dev', 'crispmango',
+  'nyx_the_great_and_powerful_ruler', 'foxbyte', 'glimmerpath', 'rusticgoose',
+  'inverse_chimera', 'pebble_throw', 'thatonebot', 'sunset_runner', 'binary_bard',
+  'orchidwhisper', 'hexcrafter', 'velvetkey', 'mocha_thunder', 'pinegale',
+  'longusernamethatdefinitelywillnotfit', 'syrupsoul', 'amber_drift', 'voidcricket',
+  'pretzel_logic', 'midnightmoth', 'cobblepunk', 'mintycheese', 'arcanetangerine',
+  'rocketpotato', 'tidewind', 'glassyowl', 'lonesomelantern', 'pawsandeffect',
+  'caramelnova', 'snickerthorn', 'lichenstein', 'verdantwolf', 'hexagonsong',
+  'plumbeard', 'sodalitestream', 'jadewhisker', 'cinder_paw', 'twilight_clover',
+  'opalveil', 'misterquibble',
+];
+const FAKE_NAMES_I = [
+  'driftless_haze', 'wickerbeam', 'rustyriverlong_username_check', 'pumpkin_kite', 'sable_chime',
+  'kelpfortune', 'amaranthia', 'creakycog', 'goldfinchnova', 'tinker_grove',
+  'mauveroamer', 'ferncipher', 'duskwalker', 'tinypost', 'ironclove',
+  'porchlight7', 'ribbonchaser', 'salt_and_clover', 'bramblepudding', 'lozengevortex',
+  'turnipgazer', 'shrubcadet', 'meadowtrickle', 'thistlepine', 'hemlockharbour',
+  'cellargrin', 'frostedfollow', 'maplelore', 'glintwood', 'baronpeach',
+  'orchard_static', 'pebbleflute', 'softprism', 'twigfox', 'apricotmechanic',
+  'cardamomglow', 'snug_lantern', 'velourmoss', 'larkspurnine', 'moltenchime',
+  'sundaystation', 'bluffwicker', 'cherubcrane', 'puddingmoth', 'ginger_oracle',
+  'lookoutdaisy', 'plumeria_void', 'bristlefable', 'lichenpost', 'antiquefen',
+];
+const FAKE_VOTES = ['p:up', 'p:down', 'p:left', 'p:right', 'p:up:2', 'p:right:3', 'a', 'a:2', 'h', 's', null];
+const fakeActive: JoinerPayload[] = FAKE_PREVIEW
+  ? FAKE_NAMES_A.map((name, i) => ({
+      twitch_user_id: `fake-a-${i}`,
+      username: name,
+      status: 'active',
+      joined_round: 1,
+      current_vote: FAKE_VOTES[i % FAKE_VOTES.length],
+      last_vote_round: 1 + (i % 12),
+      blocks_remaining: i % 4,
+    }))
+  : [];
+const fakeInactive: JoinerPayload[] = FAKE_PREVIEW
+  ? FAKE_NAMES_I.map((name, i) => ({
+      twitch_user_id: `fake-i-${i}`,
+      username: name,
+      status: 'inactive',
+      joined_round: 1,
+      current_vote: null,
+      last_vote_round: 1 + (i % 12),
+      blocks_remaining: 0,
+    }))
+  : [];
+
 const grouped = computed(() => ({
-  active: joiners.value.filter((j) => j.status === 'active'),
+  active: [
+    ...joiners.value.filter((j) => j.status === 'active'),
+    ...fakeActive,
+  ],
   pending: joiners.value.filter((j) => j.status === 'pending'),
-  inactive: joiners.value.filter((j) => j.status === 'inactive'),
+  inactive: [
+    ...joiners.value.filter((j) => j.status === 'inactive'),
+    ...fakeInactive,
+  ],
 }));
 
 const blocks = computed(() => {
@@ -630,6 +730,8 @@ onMounted(() => {
     scrollLogToBottom();
   }
 
+  activeScrollAnimId = requestAnimationFrame(autoScrollActiveStep);
+
   const echo = (window as any).Echo;
   if (!echo) return;
 
@@ -695,6 +797,7 @@ onUnmounted(() => {
   if (tickInterval) clearInterval(tickInterval);
   if (attackFlashTimeout) clearTimeout(attackFlashTimeout);
   if (tickerTimeout) clearTimeout(tickerTimeout);
+  if (activeScrollAnimId !== null) cancelAnimationFrame(activeScrollAnimId);
   if (channel) {
     channel.stopListening('.gamejam.state');
     channel.stopListening('.gamejam.debug');
@@ -871,16 +974,16 @@ onUnmounted(() => {
           </section>
         </div> <!-- grid col 1 -->
 
-        <div class="w-[60%]">
-          <section v-if="game" class="pt-0 gap-2 ml-2">
-            <div class="medievalsharp-regular">
-              <ul>
+        <div class="w-[60%] min-w-0 overflow-hidden h-209.5 flex flex-col">
+          <section v-if="game" class="pt-0 gap-2 ml-2 flex flex-col min-h-0 flex-1 overflow-hidden">
+            <div class="medievalsharp-regular flex flex-col min-h-0 flex-1 overflow-hidden">
+              <ul ref="activeScrollRef" class="overflow-hidden flex-1 min-h-0">
                 <li
                   v-for="j in grouped.active"
                   :key="j.twitch_user_id"
-                  class="joiner flex items-center gap-2 pl-1 w-full bg-olive-800 border border-olive-500/50 medievalsharp-regular"
+                  class="joiner flex items-center gap-2 pl-1 w-full min-w-0 bg-olive-800 border border-olive-500/50 medievalsharp-regular"
                 >
-                  <div class="text-teal-400 bg-card p-1 w-25 fade-in-5 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
+                  <div class="text-teal-400 bg-card p-1 w-25 shrink-0 fade-in-5 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
                     <component
                       v-for="i in voteIconCount(j.current_vote)"
                       :is="voteIcon(j.current_vote)"
@@ -889,8 +992,8 @@ onUnmounted(() => {
                     />
                     <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
                   </div>
-                  <div class="name">{{ j.username }}</div>
-                  <div class="flex ml-auto items-center mr-2 gap-1">
+                  <div class="name flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis">{{ j.username }}</div>
+                  <div class="flex shrink-0 items-center mr-2 gap-1">
                     <span
                       v-for="(state, i) in blocks(j.blocks_remaining)"
                       :key="i"
@@ -906,7 +1009,7 @@ onUnmounted(() => {
 
               <div
                 v-if="grouped.inactive.length"
-                class="grid grid-cols-2 gap-1 mt-2 opacity-60"
+                class="grid grid-cols-2 gap-1 mt-2 opacity-60 max-h-60 overflow-hidden shrink-0"
               >
                 <div
                   v-for="j in grouped.inactive"

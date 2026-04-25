@@ -1,5 +1,15 @@
 # CHANGELOG APRIL 2026
 
+## April 25th, 2026 - Joiner list overflow handling + auto-scrolling active players
+
+- Follow-up to the live event ticker work earlier today. With the new game-log panel taking permanent residence in the left column under "Last Twitch chat vote", the old standalone "Inactive" section that lived below it was getting pushed off-screen on tall games. And the right-column active-player list had no height bound either - 50 active joiners would just keep extending the column past the viewport.
+- Merged inactive into the right column as a faded follow-on to the active list. Active stays leading; inactive slot in below as a condensed 2-column grid with username + last-vote round, no vote icon and no energy dots, wrapped in `opacity-60` so they read as visually retired. Long Twitch handles get the standard `flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis` recipe (and the active-row username got the same treatment, since `min-w-0` was missing on the row and ellipsis wasn't kicking in).
+- Right column locked to `h-209.5` (838px) with `overflow-hidden`, and the flex chain inside (`section` -> `div` -> `ul`) all carry `min-h-0 flex-1 overflow-hidden` so only the active `<ul>` is allowed to scroll. The inactive grid is capped at `max-h-60` (240px) with `overflow-hidden shrink-0` so it can't starve the active list of vertical space - this was a real bug discovered in dev: 50 inactive items at natural height claimed ~800px and squeezed the active `<ul>` to a single visible row before the cap.
+- Active list auto-scrolls. `autoScrollActiveStep` is a rAF loop that ping-pongs `scrollTop` at ~40 px/sec with a 1.5s pause at each end, started in `onMounted` and cancelled in `onUnmounted`. No-op when content fits the container. CSS overflow on the `<ul>` is `hidden` (not `auto`) so no scrollbar shows - the animation does the moving.
+- Game-log ticker also adjusted from the multi-entry TransitionGroup to a single-entry `Transition`: top-right shows only the most recent *new* event for 4 seconds, then disappears. The full history lives in the permanent panel under the vote block.
+- Dropped the `LOG_TICKER_LIMIT` cap on `GameLog::append` - both `log` and `recap` columns grow unbounded, since the permanent panel needs the full history and the volume is negligible per the user's read on game length.
+- Left in a `FAKE_PREVIEW` const + 50 active / 50 inactive name pools as a dev visualization toggle (default `false`). Future layout work on this column can flip it on without re-fabricating fixtures. Kept distinct id prefixes (`fake-a-` / `fake-i-`) so Vue keys never collide if both are enabled.
+
 ## April 25th, 2026 - Live event ticker + recap log for the gamejam game
 
 - Gap: chat couldn't see what just happened. Voted attack? Did it land? Was the boss in range? The `last_resolved_action` chip showed the verb but no consequence. We needed a Twitch-style ticker so chat understands cause and effect each tick.
