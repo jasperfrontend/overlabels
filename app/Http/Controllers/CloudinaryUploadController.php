@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class CloudinaryUploadController extends Controller
 {
@@ -26,12 +27,12 @@ class CloudinaryUploadController extends Controller
                 $request->user(),
                 $validated['kind'],
             );
-
-            return response()->json([
-                'url' => $upload->secure_url,
-                'width' => $upload->width,
-                'height' => $upload->height,
-            ]);
+        } catch (ValidationException $e) {
+            // Service-side validation (e.g. min dimensions) - let Laravel
+            // render the standard 422 JSON so the frontend can surface the
+            // actual reason ("Image must be at least 400x400px") instead of
+            // the generic 500 fallback below.
+            throw $e;
         } catch (Exception $e) {
             Log::error('Cloudinary upload failed', [
                 'user_id' => $request->user()?->id,
@@ -43,5 +44,11 @@ class CloudinaryUploadController extends Controller
                 'error' => 'Upload failed. Please try again.',
             ], 500);
         }
+
+        return response()->json([
+            'url' => $upload->secure_url,
+            'width' => $upload->width,
+            'height' => $upload->height,
+        ]);
     }
 }

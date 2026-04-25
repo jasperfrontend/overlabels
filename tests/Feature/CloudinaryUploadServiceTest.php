@@ -6,6 +6,7 @@ use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Services\CloudinaryUploadService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 
 uses(DatabaseTransactions::class);
 
@@ -84,6 +85,22 @@ test('deleteByUrl skips when another template still references the URL', functio
     (new CloudinaryUploadService())->deleteByUrl($url, excludeTemplateId: $other->id);
 
     expect(CloudinaryUpload::find($upload->id))->not->toBeNull();
+});
+
+test('upload endpoint surfaces the dimension validation message verbatim', function () {
+    $user = makeOwner();
+
+    // 100x100 is below the 400x400 minimum - the service throws a
+    // ValidationException; the controller must let it bubble so Laravel
+    // renders 422 with the actual message instead of a generic 500.
+    $response = $this->actingAs($user)->postJson('/cloudinary/upload', [
+        'image' => UploadedFile::fake()->image('tiny.jpg', 100, 100),
+        'kind' => CloudinaryUpload::KIND_TEMPLATE_SCREENSHOT,
+    ]);
+
+    $response->assertStatus(422);
+    expect($response->json('errors.image.0'))
+        ->toContain('400x400');
 });
 
 test('deleteByUrl skips when a kit still references the URL', function () {
