@@ -39,6 +39,7 @@
 ## April 24th, 2026 - Hard reload after EventSub setup completes
 
 - Follow-up to the Reconnect broadcast landed earlier today. `router.reload({ only: ['eventsub'] })` occasionally left the Active events dialog rendering stale prop state for a tick after the partial reload resolved - the counter updated but the individual ✓/✕ rows lagged behind. Swapped to `window.location.reload()` which also reconnects Echo fresh. Rare enough that a page refresh was a reliable tiebreaker, but shouldn't require the user to know that.
+- Update: this is reverted as the hard refresh killed a still-pending connection job.
 
 ## April 24th, 2026 - EventSub verify pagination bug + hype train v2 + job-based Reconnect
 
