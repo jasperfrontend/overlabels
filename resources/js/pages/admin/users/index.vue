@@ -6,6 +6,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
+import {CheckIcon} from 'lucide-vue-next';
 
 interface User {
   id: number;
@@ -14,6 +15,7 @@ interface User {
   twitch_id: string | null;
   role: string;
   is_system_user: boolean;
+  bot_enabled: boolean;
   deleted_at: string | null;
   created_at: string;
   overlay_templates_count: number;
@@ -112,6 +114,7 @@ watch([search, role, includeDeleted], () => {
             <span>{{ user.overlay_templates_count }} templates</span>
             <span>{{ user.overlay_access_tokens_count }} tokens</span>
             <span>Joined {{ user.created_at }}</span>
+            <span v-if="user.bot_enabled">Bot enabled</span>
           </div>
         </div>
       </div>
@@ -127,9 +130,11 @@ watch([search, role, includeDeleted], () => {
             <th class="px-3 py-2">Templates</th>
             <th class="px-3 py-2">Tokens</th>
             <th class="px-3 py-2">Joined</th>
-            <th class="px-3 py-2"></th>
+            <th class="px-3 py-2">Bot</th>
+            <th class="px-3 py-2">View</th>
           </tr>
           </thead>
+
           <tbody>
           <tr v-for="user in users.data" :key="user.id" class="border-t border-sidebar"
               :class="{ 'opacity-50': user.deleted_at }">
@@ -145,7 +150,11 @@ watch([search, role, includeDeleted], () => {
             </td>
             <td class="px-3 py-2">{{ user.overlay_templates_count }}</td>
             <td class="px-3 py-2">{{ user.overlay_access_tokens_count }}</td>
-            <td class="px-3 py-2 text-muted-foreground text-xs">{{ user.created_at }}</td>
+            <td class="px-3 py-2 text-xs">{{ user.created_at }}</td>
+            <td class="px-3 py-2">
+              <span v-if="user.bot_enabled"><CheckIcon class="size-5 text-green-400" /></span>
+              <span v-else>-</span>
+            </td>
             <td class="px-3 py-2">
               <a :href="route('admin.users.show', user.id)" class="text-primary text-xs hover:underline">View</a>
             </td>
