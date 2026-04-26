@@ -382,6 +382,7 @@ const controlsCounter = computed(() => controls.value.length);
                       {{ SERVICE_LABELS[ctrl.source] ?? ctrl.source }}
                     </span>
                   </div>
+                  <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                     <span class="font-mono">{{ snippetKey(ctrl) }}</span>
                     <span

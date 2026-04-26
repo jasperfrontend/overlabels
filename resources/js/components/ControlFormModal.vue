@@ -197,6 +197,7 @@ function resolvedSortOrder(): number {
 const form = ref({
   key: '',
   label: '',
+  description: '',
   type: 'text' as OverlayControl['type'],
   value: '',
   config: {
@@ -272,6 +273,7 @@ watch(() => props.open, (open) => {
       form.value = {
         key: c.key,
         label: c.label ?? '',
+        description: c.description ?? '',
         type: c.type,
         value: c.value ?? '',
         config: {
@@ -296,6 +298,7 @@ watch(() => props.open, (open) => {
       form.value = {
         key: '',
         label: `${c.label || c.key} (copy)`,
+        description: c.description ?? '',
         type: c.type,
         value: c.value ?? '',
         config: {
@@ -318,6 +321,7 @@ watch(() => props.open, (open) => {
       form.value = {
         key: '',
         label: '',
+        description: '',
         type: 'text',
         value: '',
         config: { min: undefined, max: undefined, step: 1, reset_value: 0, random: false, random_interval: 1000, mode: 'countup', base_seconds: 0, target_datetime: '' },
@@ -333,6 +337,7 @@ watch(() => props.open, (open) => {
 function buildPayload() {
   const payload: Record<string, any> = {
     label: form.value.label || null,
+    description: form.value.description || null,
     sort_order: resolvedSortOrder(),
   };
 
@@ -549,6 +554,21 @@ async function save() {
               :class="{ 'border-destructive': errors.label }"
             />
             <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
+          </div>
+
+          <!-- Description (always shown) -->
+          <div class="space-y-2">
+            <Label for="ctrl-description">Description <span class="text-muted-foreground text-xs">(optional)</span></Label>
+            <textarea
+              id="ctrl-description"
+              v-model="form.description"
+              rows="2"
+              maxlength="1000"
+              placeholder="What does this control do? Notes for your future self."
+              class="input-border w-full"
+              :class="{ 'border-destructive': errors.description }"
+            />
+            <p v-if="errors.description" class="text-xs text-destructive">{{ errors.description }}</p>
           </div>
 
           <!-- Only show manual fields if no service preset selected -->

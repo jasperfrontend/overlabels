@@ -18,6 +18,7 @@ use Random\RandomException;
  * @property int $user_id
  * @property string $key
  * @property string|null $label
+ * @property string|null $description
  * @property string $type
  * @property string|null $value
  * @property array<array-key, mixed>|null $config
@@ -46,7 +47,6 @@ use Random\RandomException;
  * @method static Builder<static>|OverlayControl whereUserId($value)
  * @method static Builder<static>|OverlayControl whereValue($value)
  * @mixin Eloquent
- * @mixin IdeHelperOverlayControl
  */
 class OverlayControl extends Model
 {
@@ -57,6 +57,7 @@ class OverlayControl extends Model
         'user_id',
         'key',
         'label',
+        'description',
         'type',
         'value',
         'config',
@@ -79,7 +80,7 @@ class OverlayControl extends Model
     const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
     /**
-     * Sanitize a raw value for a given control type.
+     * Sanitise a raw value for a given control type.
      */
     public static function sanitizeValue(string $type, mixed $raw): string
     {
@@ -200,6 +201,7 @@ class OverlayControl extends Model
             'user_id' => $user->id,
             'key' => $data['key'],
             'label' => $data['label'] ?? null,
+            'description' => $data['description'] ?? null,
             'type' => $data['type'],
             'value' => isset($data['value']) ? static::sanitizeValue($data['type'], $data['value']) : null,
             'config' => $data['config'] ?? null,

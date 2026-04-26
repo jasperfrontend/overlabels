@@ -425,9 +425,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
             !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
           ]">
             <div class="mb-2">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex flex-col gap-1 items-start">
+              <div class="flex items-start justify-between mb-4 gap-3">
+                <div class="flex min-w-0 flex-col gap-1 items-start">
                   <label :for="`cp-input-${ctrl.id}`"><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label>
+                  <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
                   <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
                 </div>
                 <div class="flex flex-col text-center gap-2">

@@ -1,5 +1,11 @@
 # CHANGELOG APRIL 2026
 
+## April 26th, 2026 - Controls can carry a description
+
+- New nullable `description` text column on `overlay_controls` (migration `2026_04_26_120000_alter_overlay_controls_add_description`), max 1000 chars. Lets streamers leave notes for their future selves on what each control is for - especially useful for expression controls and service-managed values whose purpose isn't obvious from the key alone.
+- Wired through `OverlayControl::$fillable`, the `@property` docblock, and `createForTemplate()` so it persists through the standard creation path. Service-preset and expression branches in `OverlayControlController::store()` thread it explicitly; `update()` and `importForkedControls()` validate and persist it the same way. Validation: `nullable|string|max:1000` everywhere.
+- Frontend: `OverlayControl` TS type gets `description: string | null`. `ControlFormModal.vue` adds a 2-row textarea directly under the name input, visible for every type (regular, expression, and service preset). `ControlsManager.vue` shows the description below the control title in the list view; `ControlPanel.vue` shows it between the title and the `[[[c:key]]]` tag inside each control card. Both render with `whitespace-pre-line` so user line breaks survive, and only render when the description is set (no empty placeholder).
+
 ## April 25th, 2026 - Cloudinary uploads now route through the backend, with orphan tracking and lifecycle cleanup
 
 - Reported abuse vector: the previous flow had `ImageDropZone.vue` POSTing files directly to `https://api.cloudinary.com/v1_1/<cloud>/image/upload` from the browser. The asset existed in Cloudinary the moment the upload returned, *before any Laravel call*. So a user could paste an image, capture the `secure_url` from the network tab, close the tab without saving, and walk away with free image hosting. Worse: even saved screenshots/thumbnails were never cleaned up on template/kit deletion (`destroy` just called `$model->delete()` and left the asset). Compounded by `replicate()` copying `screenshot_url` to forks, so any naive cleanup risked orphaning shared references.

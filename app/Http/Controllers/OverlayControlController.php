@@ -59,6 +59,7 @@ class OverlayControlController extends Controller
                 },
             ],
             'label' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:1000',
             'type' => 'required|in:'.implode(',', OverlayControl::TYPES),
             'value' => 'nullable|string|max:1000',
             'config' => 'nullable|array',
@@ -89,6 +90,7 @@ class OverlayControlController extends Controller
                 'user_id' => auth()->id(),
                 'key' => $def['key'],
                 'label' => $validated['label'] ?? $def['label'] ?? null,
+                'description' => $validated['description'] ?? null,
                 'type' => $def['type'],
                 'value' => $def['value'] ?? null,
                 'config' => $def['config'] ?? null,
@@ -118,6 +120,7 @@ class OverlayControlController extends Controller
             $control = OverlayControl::createForTemplate($template, auth()->user(), [
                 'key' => $validated['key'],
                 'label' => $validated['label'] ?? null,
+                'description' => $validated['description'] ?? null,
                 'type' => 'expression',
                 'value' => null,
                 'config' => [
@@ -157,6 +160,7 @@ class OverlayControlController extends Controller
 
         $validated = $request->validate([
             'label' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:1000',
             'value' => ['nullable', function ($attribute, $value, $fail) {
                 if (strlen((string) $value) > 1000) {
                     $fail("The $attribute must not exceed 1000 characters.");
@@ -185,6 +189,7 @@ class OverlayControlController extends Controller
 
             $control->update([
                 'label' => $validated['label'] ?? $control->label,
+                'description' => array_key_exists('description', $validated) ? $validated['description'] : $control->description,
                 'config' => [
                     'expression' => $expression,
                     'dependencies' => $dependencies,
@@ -394,6 +399,7 @@ class OverlayControlController extends Controller
             'controls.*.action' => 'required|in:create,skip',
             'controls.*.key' => 'required|string|max:50|regex:'.OverlayControl::KEY_PATTERN,
             'controls.*.label' => 'nullable|string|max:100',
+            'controls.*.description' => 'nullable|string|max:1000',
             'controls.*.type' => 'required|in:'.implode(',', OverlayControl::TYPES),
             'controls.*.value' => 'nullable|string|max:1000',
             'controls.*.config' => 'nullable|array',
@@ -422,6 +428,7 @@ class OverlayControlController extends Controller
             $control = OverlayControl::createForTemplate($template, $user, [
                 'key' => $item['key'],
                 'label' => $item['label'] ?? null,
+                'description' => $item['description'] ?? null,
                 'type' => $item['type'],
                 'value' => $item['value'] ?? null,
                 'config' => $item['config'] ?? null,
