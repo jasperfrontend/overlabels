@@ -259,7 +259,7 @@ onMounted(() => {
     { description: 'Preview in new tab' }
   );
 
-  for (let i = 1; i <= 9; i++) {
+  for (let i = 1; i <= 6; i++) {
     register(`switch-tab-${i}`, `${i}`, () => {
       const tab = mainTabs.value[i - 1];
       if (tab) mainTab.value = tab.key;
@@ -444,7 +444,7 @@ onMounted(() => {
 
         <!-- Form Actions -->
         <div class="mt-6 flex justify-between">
-          <Link :href="route('templates.show', template)" class="btn btn-cancel">← Back to Overlay</Link>
+          <Link :href="route('templates.show', template)" class="btn btn-cancel" title="Go back to overlay (keyboard shortcut: 's')">← Back to Overlay</Link>
           <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save</button>
         </div>
       </form>

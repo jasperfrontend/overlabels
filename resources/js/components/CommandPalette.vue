@@ -224,7 +224,7 @@ onMounted(() => {
             :key="item.id"
             :data-palette-selected="flatFiltered.indexOf(item) === selectedIndex"
             class="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm cursor-pointer transition-colors"
-            :class="flatFiltered.indexOf(item) === selectedIndex ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'"
+            :class="flatFiltered.indexOf(item) === selectedIndex ? 'bg-card text-accent-foreground hover:bg-card' : 'text-foreground hover:bg-accent/50'"
             @click="navigate(item)"
             @mouseenter="selectedIndex = flatFiltered.indexOf(item)"
           >

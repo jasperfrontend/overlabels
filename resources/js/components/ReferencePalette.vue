@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { useHelpReference, renderHelpMarkdown, type HelpEntry } from '@/composables/useHelpReference';
+import { useHelpReference, type HelpEntry } from '@/composables/useHelpReference';
 import { BookOpen, Search } from 'lucide-vue-next';
 
 const { search } = useHelpReference();
@@ -80,9 +80,9 @@ onMounted(() => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-xl gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col" @interact-outside="open = false">
+    <DialogContent class="max-w-xl gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col bg-sidebar" @interact-outside="open = false">
       <DialogTitle class="sr-only">Help reference search</DialogTitle>
-      <div class="flex items-center gap-2 border-b px-3">
+      <div class="flex items-center gap-2 border-b border-sidebar-border px-3">
         <Search class="size-4 shrink-0 text-muted-foreground" />
         <input
           ref="inputRef"
@@ -92,7 +92,7 @@ onMounted(() => {
           class="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
           @keydown="onKeydown"
         />
-        <kbd class="text-[10px] text-muted-foreground/60 border rounded px-1.5 py-0.5">ESC</kbd>
+        <kbd class="text-[10px] text-muted-foreground/60 border border-sidebar-border rounded px-1.5 py-0.5">ESC</kbd>
       </div>
 
       <div class="flex-1 min-h-0 overflow-y-auto p-1">
@@ -105,7 +105,7 @@ onMounted(() => {
           :key="`${entry.category}/${entry.slug}`"
           :data-ref-palette-selected="i === selectedIndex"
           class="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left cursor-pointer transition-colors"
-          :class="i === selectedIndex ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'"
+          :class="i === selectedIndex ? 'bg-card text-accent-foreground' : 'text-foreground hover:bg-card'"
           @click="navigate(entry)"
           @mouseenter="selectedIndex = i"
         >
@@ -116,15 +116,15 @@ onMounted(() => {
               <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70 shrink-0">{{ entry.categoryLabel }}</span>
             </div>
             <p class="mt-0.5 text-xs text-muted-foreground line-clamp-2">{{ snippet(entry) }}</p>
-            <div>{{entry.tag}}</div>
+            <div class="text-sm font-mono">{{entry.tag}}</div>
           </div>
         </button>
       </div>
 
-      <div class="border-t px-3 py-2 text-[11px] text-muted-foreground/60 flex items-center gap-3">
-        <span><kbd class="border rounded px-1">&#8593;</kbd> <kbd class="border rounded px-1">&#8595;</kbd> navigate</span>
-        <span><kbd class="border rounded px-1">Enter</kbd> open</span>
-        <span><kbd class="border rounded px-1">Esc</kbd> close</span>
+      <div class="border-t border-sidebar-border px-3 py-2 text-[11px] text-muted-foreground/60 flex items-center gap-3">
+        <span><kbd class="border border-sidebar-border rounded px-1">&#8593;</kbd> <kbd class="border border-sidebar-border rounded px-1">&#8595;</kbd> navigate</span>
+        <span><kbd class="border border-sidebar-border rounded px-1">Enter</kbd> open</span>
+        <span><kbd class="border border-sidebar-border rounded px-1">Esc</kbd> close</span>
         <span class="ml-auto">{{ results.length }} results</span>
       </div>
     </DialogContent>

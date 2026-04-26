@@ -268,7 +268,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-          <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary">
+          <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary" title="Edit this overlay (keyboard shortcut: 'e')">
             <PencilIcon class="mr-2 h-4 w-4" />
             Edit
           </a>
@@ -307,7 +307,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <button
           @click="generateOBSUrl()"
           class="h-9.5 flex gap-2 shrink-0 w-50 btn btn-xl border-0 bg-teal-400 hover:bg-teal-500 text-black"
-          title="Add this overlay to your OBS"
+          title="Add this overlay to your OBS (Keyboard shortcut: 'a')"
         >
           <span class="shrink-0 text-sm font-medium uppercase tracking-wide flex items-center gap-1.5">
             <span v-html="obsIconSVG" class="size-4 inline-block" />
