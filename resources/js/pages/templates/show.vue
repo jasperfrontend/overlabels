@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -8,6 +8,7 @@ import ControlsManager from '@/components/ControlsManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,6 +119,24 @@ const obsUrlCopied = ref(false);
 const obsConfirmedCopied = ref(false);
 const obsError = ref('');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
+const { register } = useKeyboardShortcuts();
+
+onMounted(() => {
+  register('edit-template', 'e', () => {
+    if (props.template?.id) router.visit(route('templates.edit', props.template.id));
+  }, { description: 'Edit this overlay' });
+
+  for (let i = 1; i <= 4; i++) {
+    register(`switch-tab-${i}`, `${i}`, () => {
+      const tab = mainTabs.value[i - 1];
+      if (tab) mainTab.value = tab.key;
+    }, { description: `Switch to tab ${i}` });
+  }
+
+  register('add-to-obs', 'a', () => {
+    generateOBSUrl();
+  }, { description: 'Add to OBS' });
+});
 
 function generateOBSUrl() {
   triggerLinkWarning(async () => {

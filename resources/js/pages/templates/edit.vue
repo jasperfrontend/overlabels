@@ -258,6 +258,22 @@ onMounted(() => {
     },
     { description: 'Preview in new tab' }
   );
+
+  for (let i = 1; i <= 9; i++) {
+    register(`switch-tab-${i}`, `${i}`, () => {
+      const tab = mainTabs.value[i - 1];
+      if (tab) mainTab.value = tab.key;
+    }, { description: `Switch to tab ${i}` });
+  }
+
+  register('blur-focus', 'alt+f', () => {
+    const el = document.activeElement as HTMLElement | null;
+    el?.blur();
+  }, { description: 'Release focus from editor / input' });
+
+  register('back-to-show', 's', () => {
+    if (props.template?.id) router.visit(route('templates.show', props.template.id));
+  }, { description: 'Back to overlay overview' });
 });
 
 </script>
