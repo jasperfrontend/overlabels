@@ -11,7 +11,6 @@ import {CheckIcon} from 'lucide-vue-next';
 interface User {
   id: number;
   name: string;
-  email: string;
   twitch_id: string | null;
   role: string;
   is_system_user: boolean;
@@ -77,7 +76,7 @@ watch([search, role, includeDeleted], () => {
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
-        <Input v-model="search" placeholder="Search name, email, twitch_id…" class="w-64" />
+        <Input v-model="search" placeholder="Search name or twitch_id…" class="w-64" />
         <select v-model="role" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
           <option value="">All roles</option>
           <option value="user">user</option>
@@ -100,7 +99,7 @@ watch([search, role, includeDeleted], () => {
           <div class="flex items-start justify-between gap-2">
             <div>
               <div class="font-medium">{{ user.name }}</div>
-              <div class="text-xs text-muted-foreground">{{ user.email }}</div>
+              <div v-if="user.twitch_id" class="text-xs text-muted-foreground">Twitch: {{ user.twitch_id }}</div>
             </div>
             <a :href="route('admin.users.show', user.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
           </div>

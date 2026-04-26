@@ -23,7 +23,7 @@ class AdminSessionController extends Controller
 
         // Attach user info
         $userIds = collect($sessions->items())->pluck('user_id')->filter()->unique();
-        $users = User::whereIn('id', $userIds)->get(['id', 'name', 'email', 'twitch_id'])->keyBy('id');
+        $users = User::whereIn('id', $userIds)->get(['id', 'name', 'twitch_id'])->keyBy('id');
 
         // Check ban status in bulk
         $bannedUserIds = $userIds->isNotEmpty()

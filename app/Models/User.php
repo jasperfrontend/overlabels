@@ -21,11 +21,7 @@ use Mchev\Banhammer\Traits\Bannable;
 /**
  * @property int $id
  * @property string $name
- * @property string $email
  * @property string|null $twitch_id
- * @property Carbon|null $email_verified_at
- * @property string|null $password
- * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string|null $avatar
@@ -68,17 +64,13 @@ use Mchev\Banhammer\Traits\Bannable;
  * @method static Builder<static>|User whereBansMeta(string $key, $value)
  * @method static Builder<static>|User whereCreatedAt($value)
  * @method static Builder<static>|User whereDeletedAt($value)
- * @method static Builder<static>|User whereEmail($value)
- * @method static Builder<static>|User whereEmailVerifiedAt($value)
  * @method static Builder<static>|User whereEventsubAutoConnect($value)
  * @method static Builder<static>|User whereEventsubConnectedAt($value)
  * @method static Builder<static>|User whereId($value)
  * @method static Builder<static>|User whereIsSystemUser($value)
  * @method static Builder<static>|User whereName($value)
  * @method static Builder<static>|User whereOnboardedAt($value)
- * @method static Builder<static>|User wherePassword($value)
  * @method static Builder<static>|User whereRefreshToken($value)
- * @method static Builder<static>|User whereRememberToken($value)
  * @method static Builder<static>|User whereRole($value)
  * @method static Builder<static>|User whereTokenExpiresAt($value)
  * @method static Builder<static>|User whereTwitchData($value)
@@ -102,8 +94,6 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
-        'password',
         'twitch_id',
         'avatar',
         'access_token',
@@ -111,7 +101,6 @@ class User extends Authenticatable
         'token_expires_at',
         'twitch_data',
         'twitch_scopes',
-        'email_verified_at',
         'eventsub_connected_at',
         'eventsub_auto_connect',
         'onboarded_at',
@@ -151,8 +140,6 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
         'webhook_secret',
         'access_token',
         'refresh_token',
@@ -167,7 +154,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'token_expires_at' => 'datetime',
             'eventsub_connected_at' => 'datetime',
             'eventsub_auto_connect' => 'boolean',
@@ -176,7 +162,6 @@ class User extends Authenticatable
             'twitch_scopes' => 'array',
             'bot_settings' => 'array',
             'preferences' => 'array',
-            'password' => 'hashed',
             'is_system_user' => 'boolean',
         ];
     }

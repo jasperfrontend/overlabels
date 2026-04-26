@@ -11,12 +11,9 @@ const { isLive, isTransitioning, uptime } = useStreamState();
 
 interface Props {
   user: User;
-  showEmail?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  showEmail: false
-});
+const props = defineProps<Props>();
 
 const page = usePage();
 const auth = computed(() => page.props.auth);

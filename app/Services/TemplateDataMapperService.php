@@ -214,6 +214,10 @@ class TemplateDataMapperService
             }
         }
 
+        // Email is no longer stored. Tag preserved so legacy templates still
+        // render, but always resolves to the same placeholder.
+        $templateData['user_email'] = 'disabled@for-your-security';
+
         // Emit indexed flat keys for user-scope iterables so [[[foreach:subscribers as s]]]
         // has something to resolve. Runs after the scalar mapping so [[[subscribers_latest_*]]]
         // still works alongside [[[foreach:subscribers as s]]][[[s.*]]][[[endforeach]]].
@@ -288,7 +292,7 @@ class TemplateDataMapperService
             'user_avatar' => 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-300x300.png',
             'user_offline_banner' => '',
             'user_view_count' => '123,456',
-            'user_email' => 'streamer@example.com',
+            'user_email' => 'disabled@for-your-security',
             'user_created' => '2 years ago',
 
             // Channel information
@@ -364,7 +368,7 @@ class TemplateDataMapperService
             'user_avatar' => 'Profile image URL',
             'user_offline_banner' => 'Offline image URL',
             'user_view_count' => 'Total view count',
-            'user_email' => 'User email',
+            'user_email' => 'Disabled - returns a placeholder string',
             'user_created' => 'Account creation date',
 
             // Channel information

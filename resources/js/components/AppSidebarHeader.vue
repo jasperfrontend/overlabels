@@ -38,7 +38,7 @@ const user = computed(() => page.props.auth.user);
             <div v-if="user" class="p-3">
               <DropdownMenu>
                 <DropdownMenuTrigger class="flex items-center gap-2 p-2 px-4 rounded hover:bg-sidebar-accent cursor-pointer outline-none">
-                  <UserInfo :user="user" :show-email="false" />
+                  <UserInfo :user="user" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="min-w-56 rounded-lg" side="bottom" align="end" :side-offset="4">
                   <UserMenuContent :user="user" />

@@ -35,7 +35,7 @@ class AdminDashboardController extends Controller
         $recentSignups = User::where('is_system_user', false)
             ->latest()
             ->limit(10)
-            ->get(['id', 'name', 'email', 'twitch_id', 'role', 'created_at']);
+            ->get(['id', 'name', 'twitch_id', 'role', 'created_at']);
 
         $recentAuditLogs = AdminAuditLog::with('admin:id,name')
             ->latest()

@@ -14,7 +14,6 @@ import type { AdminTemplate } from '@/types';
 interface User {
   id: number;
   name: string;
-  email: string;
   twitch_id: string | null;
   avatar: string | null;
   role: string;

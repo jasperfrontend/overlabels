@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
-use App\Listeners\SendSignupNotification;
 use App\Models\User;
 use App\Observers\UserObserver;
 use App\Services\DefaultTemplateProviderService;
@@ -101,12 +100,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('twitch', Provider::class);
         });
-
-        // Register user registration event listeners
-        Event::listen(
-            UserRegistered::class,
-            SendSignupNotification::class
-        );
 
         Event::listen(
             UserRegistered::class,

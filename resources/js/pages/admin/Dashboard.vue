@@ -17,7 +17,6 @@ interface StatCards {
 interface RecentUser {
   id: number;
   name: string;
-  email: string;
   twitch_id: string | null;
   role: string;
   created_at: string;

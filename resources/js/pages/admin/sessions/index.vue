@@ -11,7 +11,6 @@ import { ref } from 'vue';
 interface SessionUser {
   id: number;
   name: string;
-  email: string;
   twitch_id: string | null;
 }
 

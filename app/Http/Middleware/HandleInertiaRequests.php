@@ -48,7 +48,6 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? $request->user()->only([
                     'id',
                     'name',
-                    'email',
                     'twitch_id',
                     'avatar',
                     'icon',

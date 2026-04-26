@@ -37,7 +37,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
@@ -289,20 +288,25 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
         // resubscribe if this login unlocks new event types for the user.
         $priorMissingScopes = $user ? $scopeService->getMissingScopes($user) : TwitchScopeService::REQUIRED_SCOPES;
 
+        // Twitch returns the user's email in the OAuth payload. We never want
+        // to store it - not as a column, not inside twitch_data JSON. Strip
+        // before persisting.
+        $sanitizedTwitchPayload = array_diff_key(
+            array_merge($twitchUser->user, $extendedData),
+            array_flip(['email', 'email_verified', 'verified'])
+        );
+
         if (! $user) {
             // Create a new user if not found
             $user = User::create([
                 'name' => $twitchUser->getNickname() ?? $twitchUser->getName(),
-                'email' => $twitchUser->getEmail(), // Store it, but don't use it to match accounts. We'll use Twitch ID instead.
                 'twitch_id' => $twitchUser->getId(),
                 'avatar' => $twitchUser->getAvatar(),
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken ?? null,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
-                'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                'twitch_data' => $sanitizedTwitchPayload,
                 'twitch_scopes' => $approvedScopes ?: null,
-                'email_verified_at' => now(),
-                'password' => bcrypt(Str::random(32)),
                 'webhook_secret' => bin2hex(random_bytes(32)),
                 'eventsub_auto_connect' => true, // New users default to auto-connect
             ]);
@@ -317,7 +321,7 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
                 'access_token' => $twitchUser->token,
                 'refresh_token' => $twitchUser->refreshToken ?? null,
                 'token_expires_at' => now()->addSeconds($twitchUser->expiresIn ?? 3600),
-                'twitch_data' => array_merge($twitchUser->user, $extendedData),
+                'twitch_data' => $sanitizedTwitchPayload,
             ];
 
             // Only overwrite twitch_scopes when Socialite actually gave us a list -

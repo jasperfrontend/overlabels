@@ -21,7 +21,6 @@ class TwitchScopeService
      * authoritative "should have" set that drives stale detection.
      */
     public const array REQUIRED_SCOPES = [
-        'user:read:email',
         'user:read:follows',
         'user:read:subscriptions',
         'channel:read:subscriptions',
@@ -41,7 +40,6 @@ class TwitchScopeService
      * falsely flag every legacy user's currently-working scopes as missing.
      */
     public const array LEGACY_SCOPES = [
-        'user:read:email',
         'user:read:follows',
         'user:read:subscriptions',
         'channel:read:subscriptions',
