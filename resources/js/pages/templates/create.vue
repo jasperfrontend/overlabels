@@ -229,14 +229,12 @@ onMounted(() => {
             <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
               <strong class="text-accent-foreground">Event Alert tips:</strong>
               <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
-                <li>
-                  Visit the <a class="text-violet-400 hover:underline"
-                               href="/help/conditionals#event-based-template-tags" target="_blank">Help docs</a> for all
+                <li>Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-tags" target="_blank">Help docs</a> for all
                   event-based tags.
                 </li>
                 <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.
                 </li>
-                <li>Keep alert overlays simple — they display briefly on screen.</li>
+                <li>Keep alert overlays simple: they only display briefly on screen.</li>
               </ul>
             </div>
 

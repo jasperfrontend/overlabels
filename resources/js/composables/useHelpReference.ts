@@ -9,6 +9,7 @@ export interface HelpEntry {
   title: string;
   body: string;
   path: string;
+  tag: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -42,6 +43,8 @@ const entries: HelpEntry[] = Object.entries(modules)
     if (!match) return null;
     const [, category, slug] = match;
     const body = raw.trim();
+    // const tag = `[[[${slug}]]]`;
+    const tag = slug.includes("-") ? '' : `[[[${slug}]]]`;
     return {
       category,
       categoryLabel: CATEGORY_LABELS[category] ?? humanize(category),
@@ -49,6 +52,7 @@ const entries: HelpEntry[] = Object.entries(modules)
       title: extractTitle(body, humanize(slug)),
       body,
       path,
+      tag,
     } satisfies HelpEntry;
   })
   .filter((e): e is HelpEntry => e !== null)

@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { useHelpReference, type HelpEntry } from '@/composables/useHelpReference';
+import { useHelpReference, renderHelpMarkdown, type HelpEntry } from '@/composables/useHelpReference';
 import { BookOpen, Search } from 'lucide-vue-next';
 
 const { search } = useHelpReference();
@@ -74,7 +74,7 @@ function scrollToSelected() {
 const { register } = useKeyboardShortcuts();
 
 onMounted(() => {
-  register('reference-palette', 'ctrl+/', () => { open.value = !open.value; }, { description: 'Help reference' });
+  register('reference-palette', 'alt+r', () => { open.value = !open.value; }, { description: 'Tags reference' });
 });
 </script>
 
@@ -116,6 +116,7 @@ onMounted(() => {
               <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70 shrink-0">{{ entry.categoryLabel }}</span>
             </div>
             <p class="mt-0.5 text-xs text-muted-foreground line-clamp-2">{{ snippet(entry) }}</p>
+            <div>{{entry.tag}}</div>
           </div>
         </button>
       </div>

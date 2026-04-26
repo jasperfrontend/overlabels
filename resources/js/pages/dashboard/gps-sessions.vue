@@ -165,9 +165,21 @@ function batteryColor(pct: number | null): string {
         <Heading title="GPS Sessions" />
       </div>
 
-      <p v-if="sessions.length === 0" class="text-muted-foreground text-sm">
-        No GPS sessions yet. Connect the Overlabels GPS app and start tracking to see your sessions here.
-      </p>
+      <div v-if="sessions.length === 0" class="text-foreground flex flex-col gap-2 text-sm max-w-2xl">
+        <p>No GPS sessions yet. Connect the Overlabels GPS app and start tracking to see your sessions here.</p>
+        <h3 class="mt-4 text-xl font-bold">How to connect the app</h3>
+        <ul>
+          <li>Step 1: you can't yet.</li>
+        </ul>
+
+        <h3 class="mt-4 text-xl font-bold">Why? What's wrong?</h3>
+        <p>The app is great, it's stable and works well. It's pretty efficient on your battery and has all kinds of
+        stuff built in to keep your map logging as efficient and perfect as we possibly can. But&hellip;</p>
+        <p>I can't submit the app to the Google Play Store without either verifying my business through a US-based
+        third party or have my full home address leaked on the app page in the Play Store - And neither of those
+        two things are going to happen anytime soon.</p>
+        <p>So yeah, you're out of luck until Google changes their store policies - which they won't.</p>
+      </div>
 
       <div class="space-y-4">
         <div

@@ -2,41 +2,44 @@
     "tileset": "room-1",
     "width": 11,
     "height": 11,
+    "filter": "invert() hue-rotate(180deg)",
+    "overlayColor": "#d931f0",
+    "overlayOpacity": 0.07,
     "version": 1,
     "cells": [
         [
             {
-                "bg": "/rooms/1/tiles/bamboo_leaf.png"
+                "bg": "/rooms/1/tiles/stonebrick.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_syringa_top.png"
+                "bg": "/rooms/1/tiles/stonebrick.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_sunflower_back.png"
+                "bg": "/rooms/1/tiles/stonebrick_cracked.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_rose_top.png"
+                "bg": "/rooms/1/tiles/stonebrick_cracked.png"
             },
             {
-                "bg": "/rooms/1/tiles/double_plant_syringa_top.png"
+                "bg": "/rooms/1/tiles/stonebrick_cracked.png"
             },
             {
                 "bg": "/rooms/1/tiles/door_acacia_upper.png"
             },
             {
-                "bg": "/rooms/1/tiles/flower_blue_orchid.png"
+                "bg": "/rooms/1/tiles/stonebrick.png"
             },
             {
-                "bg": "/rooms/1/tiles/flower_blue_orchid.png"
+                "bg": "/rooms/1/tiles/stonebrick.png"
             },
             {
-                "bg": "/rooms/1/tiles/flower_cornflower.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             },
             {
-                "bg": "/rooms/1/tiles/flower_cornflower.png"
+                "bg": "/rooms/1/tiles/stonebrick_cracked.png"
             },
             {
-                "bg": "/rooms/1/tiles/flower_oxeye_daisy.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             }
         ],
         [
@@ -71,7 +74,7 @@
                 "bg": "/rooms/1/tiles/wool_colored_silver.png"
             },
             {
-                "bg": "/rooms/1/tiles/water_placeholder_heightmap.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             }
         ],
         [
@@ -181,7 +184,7 @@
         ],
         [
             {
-                "bg": "/rooms/1/tiles/water_still_grey.png"
+                "bg": "/rooms/1/tiles/stonebrick.png"
             },
             {
                 "bg": "/rooms/1/tiles/wool_colored_silver.png"
@@ -216,7 +219,7 @@
         ],
         [
             {
-                "bg": "/rooms/1/tiles/water_still_grey.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             },
             {
                 "bg": "/rooms/1/tiles/wool_colored_silver.png"
@@ -356,7 +359,7 @@
         ],
         [
             {
-                "bg": "/rooms/1/tiles/water_placeholder.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             },
             {
                 "bg": "/rooms/1/tiles/stonebrick_mossy.png"
@@ -386,7 +389,7 @@
                 "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             },
             {
-                "bg": "/rooms/1/tiles/water_still.png"
+                "bg": "/rooms/1/tiles/stonebrick_mossy.png"
             }
         ]
     ],

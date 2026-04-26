@@ -235,7 +235,7 @@ const totalCount = computed(() => allEntries.value.length);
       <h1 class="text-2xl font-bold">Reference</h1>
       <span class="text-sm text-muted-foreground">{{ totalCount }} entries</span>
       <span class="ml-auto text-xs text-muted-foreground hidden sm:inline">
-        Tip: press <kbd class="border rounded px-1">Ctrl</kbd>+<kbd class="border rounded px-1">/</kbd> anywhere to search
+        Tip: press <kbd class="border rounded px-1">Left Alt</kbd>+<kbd class="border rounded px-1">R</kbd> anywhere to search
       </span>
     </div>
 
@@ -437,7 +437,7 @@ const totalCount = computed(() => allEntries.value.length);
   user-select: none;
   display: inline-block;
   background: hsl(var(--primary) / 0.18);
-  color: hsl(var(--primary));
+  color: #a684ff;
   border: 1px solid hsl(var(--primary) / 0.4);
   border-radius: 0.375rem;
   padding: 0.1rem 0.5rem;

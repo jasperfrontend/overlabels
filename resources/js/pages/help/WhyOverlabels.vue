@@ -261,7 +261,7 @@ c.fourthwall.donations_received +
           <p class="text-foreground">
             We do maths. So much maths. All the maths. More maths than you'll ever need, probably. Jokes
             aside - Overlabels ships with a substantial math evaluator built on
-            <a href="https://github.com/EricSmekens/jsep" target="_blank" rel="noopener" class="text-violet-400 hover:underline">JSEP</a>,
+            <a href="https://github.com/EricSmekens/jsep" target="_blank" rel="noopener" class="text-violet-400 hover:underline">EricSmekens/jsep</a>,
             and it can evaluate a frankly absurd array of expressions. The math engine lives inside
             Expression Controls and is powerful enough that we can only explain the basics - the rest is
             up to you.
@@ -303,9 +303,8 @@ c.fourthwall.donations_received +
             pick it apart, see how it's wired. It'll click fast.
           </p>
           <p class="text-foreground">
-            And if it doesn't - hit me up on
-            <a href="https://discord.gg/overlabels" target="_blank" rel="noopener" class="text-violet-400 hover:underline">Discord</a>
-            or send me an email. I actually reply.
+            And if it doesn't? Send me an email on <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
+            I actually reply!
           </p>
         </section>
 
@@ -316,10 +315,13 @@ c.fourthwall.donations_received +
             I want to make Overlabels the best third-party data normalization service there is for Twitch
             and its ecosystem. No other system has come this far at turning any payload - from any source -
             into plain math you can actually work with. I'm proud of that, and I hope by using Overlabels
-            you start to see the shape of it too.
+            you start to see it too.
           </p>
           <p class="mt-3 text-foreground">
             Peace. Thank you. Go nerd out.
+          </p>
+          <p class="mt-3 text-foreground">
+            <a href="https://twitch.tv/JasperDiscovers" class="text-violet-400 hover:underline">/JasperDiscovers</a>
           </p>
         </div>
       </div>

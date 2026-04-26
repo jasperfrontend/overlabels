@@ -8,6 +8,12 @@ use App\Models\GameDoor;
 use App\Models\GameHiddenTile;
 use App\Models\GameZombie;
 
+/**
+ * Applies a player action to the game state.
+ * 1. Movement: 'p:up', 'p:down', 'p:left', 'p:right'
+ * 2. Hide: 'h'
+ * 3. Stay: 's'
+ */
 class ActionApplier
 {
     /**
@@ -272,6 +278,9 @@ class ActionApplier
      * per the GDD. If adjacent, the player steps onto the zombie's now-empty
      * tile; otherwise they close the gap by one tile on the greater axis.
      * No-op if the intermediate tile is blocked.
+     * ====================================================================
+     * Note: Since April 25th, 2026 this feature is now optional because it was annoying.
+     * ====================================================================
      */
     private function advancePlayerTowardKill(Game $game, GameZombie $target): void
     {
