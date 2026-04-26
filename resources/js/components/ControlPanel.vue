@@ -418,186 +418,188 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
           <CollapsibleContent>
             <div class="grid grid-cols-1 bg-sidebar/50 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-          <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
-            'p-6 transition-all duration-500 bg-sidebar',
-            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
-            !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-            !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-          ]">
-            <div class="mb-2">
-              <div class="flex items-start justify-between mb-4 gap-3">
-                <div class="flex min-w-0 flex-col gap-1 items-start">
-                  <label :for="`cp-input-${ctrl.id}`"><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label>
-                  <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
-                  <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
+              <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
+                'p-6 transition-all duration-500 bg-sidebar border border-sidebar-border',
+                !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
+                !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
+                !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
+              ]">
+                <div class="mb-2">
+                  <div class="flex items-start justify-between mb-4 gap-3">
+                    <div class="flex min-w-0 flex-col gap-1 items-start">
+                      <label :for="`cp-input-${ctrl.id}`"><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label>
+                      <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
+                      <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
+                    </div>
+                    <div class="flex flex-col text-center gap-2">
+                      <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
+                      <span v-if="isTwitchOffline(ctrl)" title="This Control only works when you're streaming" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
+                      <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 bg-mauve-300/50 dark:bg-mauve-700/50 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
+                        <LockIcon class="h-2.5 w-2.5" />
+                        {{ SERVICE_LABELS[ctrl.source] }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div class="flex flex-col text-center gap-2">
-                  <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
-                  <span v-if="isTwitchOffline(ctrl)" title="This Control only works when you're streaming" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-                  <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 bg-mauve-300/50 dark:bg-mauve-700/50 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
-                    <LockIcon class="h-2.5 w-2.5" />
-                    {{ SERVICE_LABELS[ctrl.source] }}
-                  </span>
+
+                <!-- Source-managed: read-only value display -->
+                <div v-if="ctrl.source_managed" class="flex items-center gap-3">
+                  <div class="min-w-0 flex-1 font-mono text-sm text-foreground truncate">
+                    {{ ctrl.value ?? '-' }}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- Source-managed: read-only value display -->
-            <div v-if="ctrl.source_managed" class="flex items-center gap-3">
-              <div class="min-w-0 flex-1 font-mono text-sm text-foreground truncate">
-                {{ ctrl.value ?? '-' }}
-              </div>
-            </div>
-
-            <!-- Text control -->
-            <template v-else-if="ctrl.type === 'text'">
-              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex group gap-0">
-                <input
-                  type="text"
-                  :id="`cp-input-${ctrl.id}`"
-                  :name="`cp-input-${ctrl.id}`"
-                  :value="getLocalValue(ctrl)"
-                  :title="getLocalValue(ctrl) || 'Click to edit'"
-                  @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-                  class="peer input-border flex-1"
-                  placeholder="Enter text..."
-                />
-                <button
-                  type="submit"
-                  class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
-                  :disabled="saving[ctrl.id]"
-                >
-                  <SaveIcon class="h-3.5 w-3.5" />
-                </button>
-              </form>
-            </template>
-
-            <!-- Number control -->
-            <template v-else-if="ctrl.type === 'number'">
-              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex">
-                <input
-                  :value="getLocalValue(ctrl)"
-                  :title="getLocalValue(ctrl) || 'Click to edit'"
-                  :id="`cp-input-${ctrl.id}`"
-                  :name="`cp-input-${ctrl.id}`"
-                  @input="onNumberInput(ctrl, $event)"
-                  type="number"
-                  :min="ctrl.config?.min"
-                  :max="ctrl.config?.max"
-                  :step="ctrl.config?.step ?? 1"
-                  class="peer input-border flex-1"
-                />
-                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
-                  <SaveIcon class="h-3.5 w-3.5" />
-                </button>
-              </form>
-              <p v-if="numberConstraintsText(ctrl)" class="mt-2 text-xs text-muted-foreground">
-                {{ numberConstraintsText(ctrl) }}
-              </p>
-            </template>
-
-            <!-- Counter control -->
-            <template v-else-if="ctrl.type === 'counter'">
-              <div class="flex items-center gap-3">
-                <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
-                  {{ ctrl.value ?? '0' }}
-                </div>
-                <div class="flex gap-1.5">
-                  <button
-                    class="btn btn-sm btn-secondary px-3 text-lg"
-                    :disabled="saving[ctrl.id]"
-                    @click="counterAction(ctrl, 'decrement')"
-                    title="Decrement"
-                  >
-                    −
-                  </button>
-                  <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
-                    +
-                  </button>
-                  <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
-                    <RotateCcwIcon class="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </template>
-
-            <!-- Timer control -->
-            <template v-else-if="ctrl.type === 'timer'">
-              <div class="flex items-center gap-3">
-                <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
-                  <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
-                  <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
-                  {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
-                </div>
-                <template v-if="ctrl.config?.mode === 'countto'">
-                  <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? formatCountToTarget(ctrl.config.target_datetime) : 'no target set' }}</span>
+                <!-- Text control -->
+                <template v-else-if="ctrl.type === 'text'">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex group gap-0">
+                    <input
+                      type="text"
+                      :id="`cp-input-${ctrl.id}`"
+                      :name="`cp-input-${ctrl.id}`"
+                      :value="getLocalValue(ctrl)"
+                      :title="getLocalValue(ctrl) || 'Click to edit'"
+                      @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+                      class="peer input-border flex-1"
+                      placeholder="Enter text..."
+                    />
+                    <button
+                      type="submit"
+                      class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
+                      :disabled="saving[ctrl.id]"
+                    >
+                      <SaveIcon class="h-3.5 w-3.5" />
+                    </button>
+                  </form>
                 </template>
-                <div v-else class="flex gap-1.5">
-                  <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
-                    <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
-                    <PlayIcon v-else class="h-3.5 w-3.5" />
-                    <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
-                  </button>
-                  <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
-                    <RotateCcwIcon class="h-3.5 w-3.5" />
-                    <span class="ml-1">Reset</span>
-                  </button>
-                </div>
-              </div>
-            </template>
 
-            <!-- Boolean control -->
-            <template v-else-if="ctrl.type === 'boolean'">
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="ctrl.value === '1'"
-                  :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
-                  :disabled="saving[ctrl.id]"
-                  @click="toggleBoolean(ctrl)"
-                  :class="[
-                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-                    ctrl.value === '1' ? 'bg-accent' : 'bg-input',
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
-                      ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
-                    ]"
-                  />
-                </button>
-                <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">
-                  {{ctrl.value === '1' ? 'On' : 'Off'}}
-                </span>
-              </div>
-            </template>
+                <!-- Number control -->
+                <template v-else-if="ctrl.type === 'number'">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex">
+                    <input
+                      :value="getLocalValue(ctrl)"
+                      :title="getLocalValue(ctrl) || 'Click to edit'"
+                      :id="`cp-input-${ctrl.id}`"
+                      :name="`cp-input-${ctrl.id}`"
+                      @input="onNumberInput(ctrl, $event)"
+                      type="number"
+                      :min="ctrl.config?.min"
+                      :max="ctrl.config?.max"
+                      :step="ctrl.config?.step ?? 1"
+                      class="peer input-border flex-1"
+                    />
+                    <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
+                      <SaveIcon class="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                  <p v-if="numberConstraintsText(ctrl)" class="mt-2 text-xs text-muted-foreground">
+                    {{ numberConstraintsText(ctrl) }}
+                  </p>
+                </template>
 
-            <!-- Expression control (read-only, evaluated in overlay) -->
-            <template v-else-if="ctrl.type === 'expression'">
-              <div class="flex items-center gap-3">
-                <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
-              </div>
-            </template>
+                <!-- Counter control -->
+                <template v-else-if="ctrl.type === 'counter'">
+                  <div class="flex items-center gap-3">
+                    <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
+                      {{ ctrl.value ?? '0' }}
+                    </div>
+                    <div class="flex gap-1.5">
+                      <button
+                        class="btn btn-sm btn-secondary px-3 text-lg"
+                        :disabled="saving[ctrl.id]"
+                        @click="counterAction(ctrl, 'decrement')"
+                        title="Decrement"
+                      >
+                        −
+                      </button>
+                      <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
+                        +
+                      </button>
+                      <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
+                        <RotateCcwIcon class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </template>
 
-            <!-- Datetime control -->
-            <template v-else-if="ctrl.type === 'datetime'">
-              <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex gap-0">
-                <input
-                  :value="getLocalValue(ctrl)"
-                  @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
-                  :id="`cp-input-${ctrl.id}`"
-                  :name="`cp-input-${ctrl.id}`"
-                  type="datetime-local"
-                  class="peer input-border flex-1"
-                />
-                <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
-                  <SaveIcon class="h-3.5 w-3.5" />
-                </button>
-              </form>
-            </template>
-          </div>
+                <!-- Timer control -->
+                <template v-else-if="ctrl.type === 'timer'">
+                  <div class="flex items-center gap-3">
+                    <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
+                      <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
+                      <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
+                      {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
+                    </div>
+                    <template v-if="ctrl.config?.mode === 'countto'">
+                      <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? formatCountToTarget(ctrl.config.target_datetime) : 'no target set' }}</span>
+                    </template>
+                    <div v-else class="flex gap-1.5">
+                      <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
+                        <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
+                        <PlayIcon v-else class="h-3.5 w-3.5" />
+                        <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
+                      </button>
+                      <button class="btn btn-sm btn-cancel px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, 'reset')">
+                        <RotateCcwIcon class="h-3.5 w-3.5" />
+                        <span class="ml-1">Reset</span>
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Boolean control -->
+                <template v-else-if="ctrl.type === 'boolean'">
+                  <div class="flex items-center gap-3">
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="ctrl.value === '1'"
+                      :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
+                      :disabled="saving[ctrl.id]"
+                      @click="toggleBoolean(ctrl)"
+                      :class="[
+                        'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 ' +
+                        'border-transparent transition-colors bg-card focus:outline-none ' +
+                        'disabled:cursor-not-allowed disabled:opacity-50',
+                        ctrl.value === '1' ? 'bg-accent' : 'bg-input',
+                      ]"
+                    >
+                      <span
+                        :class="[
+                          'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
+                          ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
+                        ]"
+                      />
+                    </button>
+                    <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">
+                      {{ctrl.value === '1' ? 'On' : 'Off'}}
+                    </span>
+                  </div>
+                </template>
+
+                <!-- Expression control (read-only, evaluated in overlay) -->
+                <template v-else-if="ctrl.type === 'expression'">
+                  <div class="flex items-center gap-3">
+                    <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
+                  </div>
+                </template>
+
+                <!-- Datetime control -->
+                <template v-else-if="ctrl.type === 'datetime'">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex gap-0">
+                    <input
+                      :value="getLocalValue(ctrl)"
+                      @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
+                      :id="`cp-input-${ctrl.id}`"
+                      :name="`cp-input-${ctrl.id}`"
+                      type="datetime-local"
+                      class="peer input-border flex-1"
+                    />
+                    <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
+                      <SaveIcon class="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                </template>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
