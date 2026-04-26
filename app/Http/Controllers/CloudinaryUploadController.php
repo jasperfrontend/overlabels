@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\CloudinaryUpload;
-use App\Models\Kit;
-use App\Models\OverlayTemplate;
 use App\Services\CloudinaryUploadService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +19,6 @@ class CloudinaryUploadController extends Controller
         $validated = $request->validate([
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:10240'],
             'kind' => ['required', 'in:'.CloudinaryUpload::KIND_TEMPLATE_SCREENSHOT.','.CloudinaryUpload::KIND_KIT_THUMBNAIL],
-            'replaces_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
         try {
@@ -46,28 +43,6 @@ class CloudinaryUploadController extends Controller
             return response()->json([
                 'error' => 'Upload failed. Please try again.',
             ], 500);
-        }
-
-        // Replace flow: the dropzone sent us the URL it was previously holding,
-        // which the user is now discarding in favor of the new upload. Delete
-        // the old asset, but exclude the user's own template/kit that still
-        // points at it (the parent persist call will overwrite that field
-        // moments later). Forks/other refs keep the existing share guard.
-        if (! empty($validated['replaces_url'])) {
-            $previousUrl = $validated['replaces_url'];
-            $userId = $request->user()->id;
-
-            if ($validated['kind'] === CloudinaryUpload::KIND_TEMPLATE_SCREENSHOT) {
-                $excludeTemplateId = OverlayTemplate::where('owner_id', $userId)
-                    ->where('screenshot_url', $previousUrl)
-                    ->value('id');
-                $this->service->deleteByUrl($previousUrl, excludeTemplateId: $excludeTemplateId);
-            } else {
-                $excludeKitId = Kit::where('owner_id', $userId)
-                    ->where('thumbnail', $previousUrl)
-                    ->value('id');
-                $this->service->deleteByUrl($previousUrl, excludeKitId: $excludeKitId);
-            }
         }
 
         return response()->json([
