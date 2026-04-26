@@ -175,40 +175,5 @@ function handleFileSelect(event: Event) {
       </template>
     </div>
 
-    <!-- Replace zone when image exists -->
-    <div v-if="props.modelValue && !isUploading">
-      <p class="mb-2 text-xs text-muted-foreground">Replace image:</p>
-      <div
-        tabindex="0"
-        @paste="handlePaste"
-        @drop.prevent="handleDrop"
-        @dragover.prevent="isDragging = true"
-        @dragleave="isDragging = false"
-        @focus="isFocused = true"
-        @blur="isFocused = false"
-        :class="[
-          'flex items-center justify-center gap-3 rounded border-2 border-dashed p-4 text-center transition-all outline-none',
-          isDragging
-            ? 'border-violet-500 bg-violet-500/10'
-            : isFocused
-              ? 'border-violet-500 bg-violet-500/5 ring-2 ring-violet-500/20'
-              : 'border-muted-foreground/25 hover:border-muted-foreground/50',
-        ]"
-      >
-        <p v-if="!isFocused" class="text-xs text-muted-foreground">Click here and paste (Ctrl+V), drag an image, or</p>
-        <p v-else class="animate-pulse text-xs font-medium text-violet-500">Press Ctrl+V to paste, or</p>
-        <button type="button" @click.stop="fileInput?.click()" class="btn btn-secondary btn-xs">
-          <Upload class="mr-1 h-3 w-3" />
-          Browse
-        </button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="handleFileSelect"
-        />
-      </div>
-    </div>
   </div>
 </template>

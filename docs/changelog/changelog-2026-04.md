@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 26th, 2026 - Drop the Replace-image dropzone, Remove-then-paste only
+
+- Earlier today's attempt to wire a `replaces_url` cleanup into the upload endpoint did not actually free the previous Cloudinary asset in practice - both the original and the replacement URL stayed live and resolvable on the CDN after a replace. The hardening from April 25 only worked through the Remove path (which sets `screenshot_url=null`, hits `updateScreenshot`, calls `deleteByUrl`).
+- Rather than keep iterating on a UI affordance whose backend twin is fragile, removed the affordance: `ImageDropZone.vue` no longer renders the secondary "Replace image:" dropzone that appeared under the Remove button. The component now only exposes Remove. To swap a screenshot a user clicks Remove (which deletes the asset from Cloudinary via the established and tested path) and then pastes / drags / picks the new image into the now-empty dropzone.
+- Reverted `44e80d6` (the failed `replaces_url` plumbing on `CloudinaryUploadController` + `ImageDropZone`) before the UI removal so the rollback is auditable as one commit.
+- No backend route or controller changes needed - the upload endpoint and `OverlayTemplateController::updateScreenshot` both already handle the Remove-then-upload flow correctly. `TemplateScreenshot.vue`, `kits/create.vue`, and `kits/edit.vue` continue to consume `ImageDropZone` unchanged.
+
 ## April 26th, 2026 - Controls can carry a description
 
 - New nullable `description` text column on `overlay_controls` (migration `2026_04_26_120000_alter_overlay_controls_add_description`), max 1000 chars. Lets streamers leave notes for their future selves on what each control is for - especially useful for expression controls and service-managed values whose purpose isn't obvious from the key alone.
