@@ -30,10 +30,18 @@ async function uploadToCloudinary(file: File) {
   isUploading.value = true;
   emit('uploading', true);
 
+  // Capture the URL the dropzone is currently holding. If set, this is a
+  // replace - the backend will delete the old asset as part of the upload so
+  // the previous Cloudinary file isn't orphaned.
+  const replacesUrl = props.modelValue;
+
   try {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('kind', props.kind);
+    if (replacesUrl) {
+      formData.append('replaces_url', replacesUrl);
+    }
 
     const response = await fetch('/cloudinary/upload', {
       method: 'POST',
