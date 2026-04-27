@@ -64,7 +64,7 @@
 
         <article class="min-w-0">
             @if (!$entry)
-                <div class="rounded-md border p-6">
+                <div class="border border-sidebar-border p-6">
                     <h2 class="mb-2 text-lg font-semibold">Pick an entry from the sidebar</h2>
                     <p class="text-sm text-foreground">
                         Or start typing above. The search looks through titles, slugs, and body text - so "followe" finds every
@@ -72,7 +72,7 @@
                     </p>
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         @foreach ($groups as $group)
-                            <div class="rounded-md border p-3">
+                            <div class="border border-sidebar-border p-3">
                                 <div class="font-medium text-sm">{{ $group['categoryLabel'] }}</div>
                                 <div class="text-xs text-muted-foreground">{{ count($group['items']) }} entries</div>
                             </div>
