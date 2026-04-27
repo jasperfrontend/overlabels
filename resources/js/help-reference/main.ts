@@ -1,5 +1,6 @@
-import Fuse from 'fuse.js';
+import '../../css/app.css';
 import './styles.css';
+import Fuse from 'fuse.js';
 
 interface IndexEntry {
     category: string;

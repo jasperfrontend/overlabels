@@ -46,7 +46,7 @@
     <meta name="twitter:description" content="{{ $pageDescription ?? '' }}" />
     <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
 
-    @vite(['resources/css/app.css', 'resources/js/help-reference/main.ts'])
+    @vite(['resources/js/help-reference/main.ts'])
 </head>
 <body class="font-sans antialiased bg-background text-foreground min-h-screen">
     <header class="border-b border-sidebar-border">
