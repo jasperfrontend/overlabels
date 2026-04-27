@@ -11,13 +11,18 @@ try {
     commitHash = (process.env.APP_COMMIT_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
 }
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
     define: {
         __COMMIT_HASH__: JSON.stringify(commitHash),
     },
     plugins: [
         laravel({
-            input: ['resources/js/app.ts', 'resources/js/overlay/app.js', 'resources/js/map/app.ts'],
+            input: [
+                'resources/js/app.ts',
+                'resources/js/overlay/app.js',
+                'resources/js/map/app.ts',
+                'resources/js/help-reference/main.ts',
+            ],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
@@ -34,22 +39,24 @@ export default defineConfig({
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
-            output: {
-                manualChunks: {
-                    codemirror: [
-                        'vue-codemirror',
-                        'codemirror',
-                        '@codemirror/lang-html',
-                        '@codemirror/lang-css',
-                        '@codemirror/lang-javascript',
-                        '@codemirror/theme-one-dark',
-                        '@codemirror/view',
-                        '@codemirror/state'
-                    ],
-                    websocket: ['pusher-js', 'laravel-echo'],
-                    leaflet: ['leaflet'],
-                }
-            }
-        }
-    }
-});
+            output: isSsrBuild
+                ? {}
+                : {
+                      manualChunks: {
+                          codemirror: [
+                              'vue-codemirror',
+                              'codemirror',
+                              '@codemirror/lang-html',
+                              '@codemirror/lang-css',
+                              '@codemirror/lang-javascript',
+                              '@codemirror/theme-one-dark',
+                              '@codemirror/view',
+                              '@codemirror/state',
+                          ],
+                          websocket: ['pusher-js', 'laravel-echo'],
+                          leaflet: ['leaflet'],
+                      },
+                  },
+        },
+    },
+}));

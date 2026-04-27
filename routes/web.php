@@ -9,6 +9,7 @@ use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\ExternalEventTemplateMappingController;
 use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
+use App\Http\Controllers\HelpReferenceController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\MapController;
@@ -137,13 +138,9 @@ Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');
 })->name('help.gamejam');
 
-Route::get('/help/reference/{category?}/{slug?}', function (?string $category = null, ?string $slug = null) {
-    return Inertia::render('help/Reference', [
-        'category' => $category,
-        'slug' => $slug,
-    ]);
-})->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
-  ->name('help.reference');
+Route::get('/help/reference/{category?}/{slug?}', [HelpReferenceController::class, 'show'])
+    ->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
+    ->name('help.reference');
 
 // Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
 Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-builder.')->group(function () {

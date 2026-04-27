@@ -7,6 +7,7 @@ _ide_helper_models.php
 /public/build
 /public/hot
 /public/storage
+/public/help-reference-index.json
 /storage/*.key
 /storage/pail
 /vendor
