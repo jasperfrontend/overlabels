@@ -20,6 +20,14 @@ if [ "${ENTRYPOINT_RUN_MIGRATIONS:-0}" = "1" ]; then
     php artisan migrate --force --no-interaction
 fi
 
+# Build the help/reference search index. Composer's post-autoload-dump hook
+# would normally do this, but the Dockerfile runs `composer install
+# --no-scripts` so the hook never fires inside the image. Running here keeps
+# /help-reference-index.json fresh per deploy. Web role only.
+if [ "${ENTRYPOINT_RUN_HELP_INDEX:-0}" = "1" ]; then
+    php artisan help:build-index || echo "help:build-index failed (continuing - search will stay on Loading...)"
+fi
+
 # Pre-render help/reference OG images on the web role only. ~135 PNGs in a
 # few seconds; subsequent boots skip work for entries whose context hash is
 # already on disk.

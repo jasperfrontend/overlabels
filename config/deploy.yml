@@ -28,6 +28,7 @@ servers:
       clear:
         ROLE: web
         ENTRYPOINT_RUN_MIGRATIONS: "1"
+        ENTRYPOINT_RUN_HELP_INDEX: "1"
         ENTRYPOINT_RUN_OG_GENERATE: "1"
         SERVER_NAME: ":80"
 
