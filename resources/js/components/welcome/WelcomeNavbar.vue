@@ -21,7 +21,6 @@ const mobileMenuOpen = ref(false);
           <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt=""
                                                                                   class="hidden h-8 w-8 dark:block" />
           <span class="text-lg font-bold tracking-tight">Overlabels</span>
-          <Badge variant="outline" class="text-xs">Beta</Badge>
         </Link>
         <div class="hidden text-foreground items-center gap-6 lg:flex">
           <a href="#tags" class="text-sm hover:text-sky-500">Tags</a>

@@ -4,7 +4,7 @@ import { DollarSign, Heart } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { ref } from 'vue';
 
-const integrationsTab = ref<'kofi' | 'streamlabs' | 'streamelements'>('kofi');
+const integrationsTab = ref<'kofi' | 'fourthwall' | 'streamlabs' | 'streamelements'>('kofi');
 
 const integrationConfigs = {
   kofi: {
@@ -13,6 +13,13 @@ const integrationConfigs = {
     tagline: 'Donations, subscriptions, shop orders',
     description:
       'Paste your Ko-fi verification token, set your webhook URL, done. Every Ko-fi event flows through the same alert pipeline as Twitch events.',
+  },
+  fourthwall: {
+    name: 'NEW: Fourthwall',
+    namespace: 'fourthwall',
+    tagline: 'Donations',
+    description:
+      'Authenticate your Overlabels account with Fourthwall through 2 clicks on the integration page, done. Every Fourthwall donation event flows through the same alert pipeline as Twitch events.',
   },
   streamlabs: {
     name: 'Streamlabs',
@@ -32,7 +39,7 @@ const integrationConfigs = {
 </script>
 
 <template>
-  <section id="integrations" class="scroll-mt-16 border-b border-sidebar-accent py-24">
+  <section id="integrations" class="scroll-mt-16 border-b border-b-sidebar-border py-24">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl">
         <div class="mb-4 flex items-center gap-3">
@@ -40,15 +47,15 @@ const integrationConfigs = {
         </div>
         <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Show donations from different sources.</h2>
         <p class="mb-12 max-w-2xl text-lg text-foreground">
-          Connect your Ko-fi, StreamElements or Streamlabs account and Overlabels automatically tracks every donation in real time.
+          Connect your Ko-fi, <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Fourthwall, StreamElements or Streamlabs account and Overlabels automatically tracks every donation in real time.
           Counters update, alerts fire, and your overlay stays current - all without touching a single line of code
           after setup.
         </p>
 
         <!-- Integration tabs -->
-        <div class="mb-8 flex gap-0 overflow-hidden border-b border-sidebar-accent">
+        <div class="mb-8 flex gap-0 overflow-hidden border-b border-sidebar-border  ">
           <button
-            v-for="service in (['kofi', 'streamlabs', 'streamelements'] as const)"
+            v-for="service in (['kofi', 'fourthwall', 'streamlabs', 'streamelements'] as const)"
             :key="service"
             @click="integrationsTab = service"
             :class="[
@@ -102,7 +109,7 @@ const integrationConfigs = {
 
         <!-- Shared alert template example -->
         <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
-          <div class="border-b border-sidebar-accent bg-card/50 px-4 py-2.5">
+          <div class="border-b border-sidebar-border   bg-card/50 px-4 py-2.5">
             <span class="font-mono text-xs text-muted-foreground">One alert template works for all connected external donation services</span>
           </div>
           <div class="overflow-x-auto bg-card p-5 font-mono text-sm leading-7">
@@ -137,18 +144,18 @@ const integrationConfigs = {
         </p>
 
         <!-- The latest() killer feature -->
-        <div class="mt-16 border-t border-sidebar-accent pt-16">
+        <div class="mt-16 border-t border-sidebar-border   pt-16">
           <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">
             No vendor lock-in
           </Badge>
           <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-            Three donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
+            Four donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
           </h3>
           <p class="mb-4 max-w-3xl text-lg text-foreground">
             Every other overlay tool on the market is owned by a donation platform. Streamlabs' overlays show Streamlabs donations. StreamElements' overlays show StreamElements donations. Ko-fi's overlays show Ko-fi donations. That's not a bug, it's the business model.
           </p>
           <p class="mb-8 max-w-3xl text-lg text-foreground">
-            Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all three donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, four pipes.</strong>
+            Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all four donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, four pipes.</strong>
           </p>
 
           <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
@@ -159,6 +166,7 @@ const integrationConfigs = {
               <div><span class="text-zinc-600 dark:text-zinc-400 italic">// c:latest_donator</span></div>
               <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">kofi</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donor_name</span><span class="text-zinc-500">,</span></div>
+              <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">fourthwall</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.fourthwall.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamelements</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamlabs</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">twitch</span>.latest_cheerer_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.twitch.latest_cheerer_name</span></div>
@@ -167,6 +175,7 @@ const integrationConfigs = {
               <div><span class="text-zinc-600 dark:text-zinc-400 italic">// c:last_donation_amount</span></div>
               <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">kofi</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
+              <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">fourthwall</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.fourthwall.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamelements</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamlabs</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">twitch</span>.latest_cheer_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.twitch.latest_cheer_amount</span></div>
@@ -179,7 +188,7 @@ const integrationConfigs = {
         </div>
 
         <!-- Reverse subathon case study -->
-        <div class="mt-16 border-t border-sidebar-accent pt-16">
+        <div class="mt-16 border-t border-sidebar-border   pt-16">
           <Badge class="mb-4" variant="default">
             Case study
           </Badge>

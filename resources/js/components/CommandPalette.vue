@@ -57,6 +57,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'appearance', label: 'Theme Settings', section: 'Settings', href: route('settings.appearance'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme'] },
     { id: 'integrations', label: 'Integrations', section: 'Settings', href: route('settings.integrations.index'), icon: Coffee, keywords: ['kofi', 'streamlabs', 'connect'] },
 
+    { id: 'help', label: 'Overlabels Help', section: 'Learn', href: route('help'), icon: Library, keywords: ['help', 'assistence', 'learn', 'documentation', 'docs'] },
     { id: 'help-reference', label: 'Reference (Left Alt+r)', section: 'Learn', href: '/help/reference', icon: Library, keywords: ['search', 'tags', 'events', 'fields', 'lookup', 'documentation', 'docs'] },
     { id: 'help-tags', label: 'Conditional Tags', section: 'Learn', href: route('help.conditionals'), icon: Brackets, keywords: ['syntax', 'documentation', 'docs'] },
     { id: 'help-controls', label: 'Controls', section: 'Learn', href: route('help.controls'), icon: SlidersHorizontal, keywords: ['documentation', 'docs'] },

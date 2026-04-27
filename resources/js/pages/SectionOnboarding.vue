@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 </script>
 
 <template>
-  <section class="border-b border-sidebar-accent py-24">
+  <section class="border-b border-b-sidebar-border py-24">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-5xl">
         <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Getting started</Badge>

@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
           <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt=""
                                                                                   class="hidden h-8 w-8 dark:block" />
           <span class="font-semibold">Overlabels</span>
-          <Badge variant="outline" class="text-xs">Beta</Badge>
         </div>
         <div class="flex flex-wrap items-center gap-6 text-sm text-foreground">
           <Link href="/help" class="hover:text-sky-500">Help</Link>

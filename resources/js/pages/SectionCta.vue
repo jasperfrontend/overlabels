@@ -25,8 +25,8 @@ import { Link } from '@inertiajs/vue3';
         <div v-else class="flex flex-col items-center gap-6">
           <LoginSocial />
           <p class="text-xs text-foreground">
-            Authenticate with Twitch. You must have an email address attached to your account before you can login.
-            Revoke access anytime from your Twitch settings.
+            Connect with Twitch to log in to Overlabels.
+            Revoke access anytime from your <a href="https://www.twitch.tv/settings/connections" class="text-sky-400 hover:underline">Twitch settings</a>.
           </p>
         </div>
       </div>

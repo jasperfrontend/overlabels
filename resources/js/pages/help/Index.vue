@@ -11,7 +11,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const pages = [
   {
     title: 'Reference',
-    description: 'Fuzzy-searchable reference for every template tag, EventSub event, and foreach field. Press Ctrl+/ from anywhere.',
+    description: 'Fuzzy-searchable reference for every template tag, EventSub event, and foreach field. Press Alt+r from anywhere.',
     href: '/help/reference',
     icon: Library,
   },

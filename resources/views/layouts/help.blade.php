@@ -58,8 +58,8 @@
 <body class="font-sans antialiased bg-background text-foreground min-h-screen">
     <header class="border-b border-sidebar-border">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <a href="/" class="flex items-center gap-2 cursor-pointer">
-                <img src="/favicon.png" alt="" class="size-6" />
+            <a href="/help/reference/" class="flex items-center gap-2 cursor-pointer">
+                <img src="https://overlabels.com/favicon.png" width="26" alt="" class="size-6" />
                 <span class="font-semibold">Overlabels</span>
             </a>
             <nav class="flex items-center gap-4 text-sm">
