@@ -10,6 +10,7 @@ use App\Http\Controllers\ExternalEventTemplateMappingController;
 use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\MapController;
@@ -141,6 +142,8 @@ Route::get('/help/gamejam', function () {
 Route::get('/help/reference/{category?}/{slug?}', [HelpReferenceController::class, 'show'])
     ->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
     ->name('help.reference');
+
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
 Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-builder.')->group(function () {

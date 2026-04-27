@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 27th, 2026 - sitemap.xml + robots.txt for SEO
+
+- Added `/sitemap.xml` route backed by `SitemapController` to give Google an explicit list of all 151 indexable URLs (16 static public pages + 135 reference entries). Static paths are hand-listed with priorities and changefreqs (homepage 1.0/weekly, help landing 0.8/monthly, reference entries 0.6/monthly, legal pages 0.3/yearly). Reference entries pull `lastmod` from the underlying `.md` file's mtime so a doc edit shows up as a fresh date in the sitemap on next deploy.
+- Auth'd surfaces (dashboard, settings, template management, admin, gpslogger) are intentionally excluded - they require login and have no SEO value.
+- `public/robots.txt` now references the sitemap so crawlers can auto-discover it without manual submission. Pre-existing `User-agent: * / Disallow:` (allow-everything) preserved.
+- Response is cached for 3600s via `Cache-Control: public, max-age=3600`. The underlying `HelpReferenceService::all()` already caches the file scan for 60min keyed on dir mtime, so cost on miss is small.
+
 ## April 27th, 2026 - /help/reference moved off Inertia, served from Blade for SEO
 
 - The reference docs at `/help/reference` were rendering through Inertia + Vue, which meant the markdown content for all 135 entries was glob-imported at Vite build time, bundled into the JS, and parsed client-side with `marked`. View-source on any reference page returned an empty `<div id="app">` - Google saw no content. The page also shipped fuse.js + marked + the entire bundled markdown corpus to every visitor on the page, even though 99% of them only read one entry.
