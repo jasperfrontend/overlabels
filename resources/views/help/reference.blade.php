@@ -72,10 +72,14 @@
                     </p>
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         @foreach ($groups as $group)
-                            <div class="border border-sidebar-border p-3">
+                            <button
+                                type="button"
+                                data-help-search="{{ $group['categoryLabel'] }}"
+                                class="border border-sidebar-border p-3 text-left cursor-pointer hover:bg-accent"
+                            >
                                 <div class="font-medium text-sm">{{ $group['categoryLabel'] }}</div>
                                 <div class="text-xs text-muted-foreground">{{ count($group['items']) }} entries</div>
-                            </div>
+                            </button>
                         @endforeach
                     </div>
                 </div>

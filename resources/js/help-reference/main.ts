@@ -99,6 +99,16 @@ document.addEventListener('DOMContentLoaded', () => {
         renderResults();
         input.focus();
     });
+
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement | null;
+        const btn = target?.closest('[data-help-search]') as HTMLElement | null;
+        if (!btn) return;
+        const term = btn.getAttribute('data-help-search') ?? '';
+        input.value = term;
+        renderResults();
+        input.focus();
+    });
 });
 
 function wireCopyButtons() {
