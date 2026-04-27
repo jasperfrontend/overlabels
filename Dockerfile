@@ -71,6 +71,17 @@ RUN install-php-extensions \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
+# resvg: SVG -> PNG renderer for help/reference OG images. Pinned so dev and
+# prod produce byte-identical output (cache invalidation is template-version
+# based, so a binary upgrade alone won't regenerate cached PNGs).
+ARG RESVG_VERSION=0.47.0
+RUN curl -fsSL "https://github.com/linebender/resvg/releases/download/v${RESVG_VERSION}/resvg-linux-x86_64.tar.gz" \
+        -o /tmp/resvg.tar.gz \
+    && tar -xzf /tmp/resvg.tar.gz -C /usr/local/bin \
+    && rm /tmp/resvg.tar.gz \
+    && chmod +x /usr/local/bin/resvg \
+    && resvg --version
+
 WORKDIR /app
 
 # Copy app source first (least likely to invalidate vendor/assets cache layers)

@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Services\HelpReferenceService;
+use App\Services\OgImageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class HelpReferenceController extends Controller
 {
-    public function __construct(private readonly HelpReferenceService $service) {}
+    public function __construct(
+        private readonly HelpReferenceService $service,
+        private readonly OgImageService $og,
+    ) {}
 
     public function show(Request $request, ?string $category = null, ?string $slug = null): SymfonyResponse
     {
@@ -34,9 +38,18 @@ class HelpReferenceController extends Controller
             $tagSnippet = $this->buildTagSnippet($entry['category'], $entry['slug']);
         }
 
+        $canonicalUrl = 'https://overlabels.com/help/reference'
+            .($entry ? "/{$entry['category']}/{$entry['slug']}" : '');
+
+        $totalCount = count($this->service->all());
+
+        $ogImage = $entry
+            ? $this->og->urlFor($entry, $canonicalUrl)
+            : $this->og->urlForIndex($totalCount, $canonicalUrl);
+
         return response()->view('help.reference', [
             'groups' => $this->service->grouped(),
-            'totalCount' => count($this->service->all()),
+            'totalCount' => $totalCount,
             'entry' => $entry,
             'renderedBody' => $renderedBody,
             'tagSnippet' => $tagSnippet,
@@ -46,8 +59,8 @@ class HelpReferenceController extends Controller
             'pageDescription' => $entry
                 ? mb_substr(preg_replace('/\s+/', ' ', $entry['body']) ?? '', 0, 180)
                 : 'Searchable reference for every Overlabels template tag, EventSub event, and foreach loop field.',
-            'canonicalUrl' => 'https://overlabels.com/help/reference'
-                .($entry ? "/{$entry['category']}/{$entry['slug']}" : ''),
+            'canonicalUrl' => $canonicalUrl,
+            'ogImage' => $ogImage,
         ]);
     }
 

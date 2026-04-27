@@ -29,6 +29,12 @@
         <link rel="canonical" href="{{ $canonicalUrl }}" />
     @endif
 
+    @php
+        $resolvedOgImage = !empty($ogImage)
+            ? (str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage))
+            : 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
+    @endphp
+
     <meta property="og:type" content="website" />
     @if (!empty($canonicalUrl))
         <meta property="og:url" content="{{ $canonicalUrl }}" />
@@ -36,15 +42,16 @@
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="{{ $pageTitle ?? 'Reference - Overlabels' }}" />
     <meta property="og:description" content="{{ $pageDescription ?? '' }}" />
-    <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta property="og:image" content="{{ $resolvedOgImage }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Overlabels - build Twitch overlays with HTML, CSS, and live data" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="{{ $pageTitle ?? 'Overlabels - build Twitch overlays with HTML, CSS, and live data' }}" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{{ $pageTitle ?? 'Reference - Overlabels' }}" />
     <meta name="twitter:description" content="{{ $pageDescription ?? '' }}" />
-    <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
+    <meta name="twitter:image" content="{{ $resolvedOgImage }}" />
 
     @vite(['resources/js/help-reference/main.ts'])
 </head>
