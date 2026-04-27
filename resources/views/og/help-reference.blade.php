@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
     <g id="Artboard1" transform="matrix(0.625,0,0,0.583333,0,0)">
         <rect x="0" y="0" width="1920" height="1080" style="fill:rgb(33,19,54);"/>
