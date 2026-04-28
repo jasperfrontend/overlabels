@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 29th, 2026 - Strip the broadcaster's self-subscription from `subscribers.data`
+
+- Twitch always returns the streamer themselves as a tier-3 subscriber to their own channel (it's how Twitch represents that the broadcaster has full sub-only chat etc. access). That self-sub then surfaces in every Overlabels template that iterates subscribers, frequently top of the list because it's the most "recent" entry. Easy to hide with CSS but wrong by default - StreamElements and StreamLabs both filter it for the same reason.
+- Fix is at the source in `TwitchApiService::getChannelSubscribers()`: after the Helix call, drop any row where `user_id === $userId` (the broadcaster id passed in). Filtering at fetch time means the cached response, the foreach-iterated `subscribers` alias, the scalar `subscribers_latest_*` mappings, and anything else that consumes subscribers data all stay self-sub-free in lockstep. The alternative (filtering only in the foreach mapper) would have left `subscribers_latest_user_name` rendering the streamer's own name, which is equally weird.
+- Aggregate counts (`subscribers.total`, `subscribers.points`) come from Twitch directly and are deliberately left untouched - the streamer can decrement themselves if they want a "subscribers minus me" counter.
+- Existing cached responses still contain the self-sub until their TTL expires; new cache entries are filtered.
+
 ## April 28th, 2026 - Server-computed `winners` array on Twitch poll EventSub events
 
 - Twitch's `channel.poll.{begin,progress,end}` payloads ship per-choice `votes` but no winner field, so any template that wanted to call out the leader had to do its own max-finding loop - which the foreach DSL doesn't support. Now the controller computes `winners` once before persistence/broadcast and ships it as a sibling array to `choices`, so templates can just write `[[[foreach:event.winners as winner]]][[[winner.title]]] won with [[[winner.votes]]] votes.[[[endforeach]]]` and ties render correctly without per-template logic.

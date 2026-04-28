@@ -244,6 +244,19 @@ class TwitchApiService
             'get subscribers'
         );
 
+        // Twitch always returns the broadcaster as a tier-3 subscriber to their
+        // own channel, so it's noise in every template that iterates or
+        // surfaces subscribers - and frequently top of the list as the most
+        // recent "subscriber". StreamElements and StreamLabs filter this for
+        // the same reason; matching that behaviour at the source so foreach,
+        // `subscribers_latest_*` scalars, and the events page all stay clean.
+        if (is_array($response) && ! empty($response['data']) && is_array($response['data'])) {
+            $response['data'] = array_values(array_filter(
+                $response['data'],
+                fn ($row) => ($row['user_id'] ?? null) !== $userId,
+            ));
+        }
+
         return $this->enrichWithProfileImages($accessToken, $response, ['user_id', 'gifter_id']);
     }
 
