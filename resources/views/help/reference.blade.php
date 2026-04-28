@@ -8,7 +8,8 @@
         <h1 class="text-2xl font-bold">Reference</h1>
         <span class="text-sm text-muted-foreground">{{ $totalCount }} entries</span>
         <span class="ml-auto text-xs text-muted-foreground hidden sm:inline">
-            Tip: press <kbd class="border rounded px-1">Alt</kbd>+<kbd class="border rounded px-1">R</kbd> to focus search
+            Tip: press <kbd class="border rounded px-1">Alt</kbd>+<kbd class="border rounded px-1">R</kbd> to focus search<br>
+            Don't like my frontend? <abbr title="Bring Your Own Frontend" style="cursor: help;">BYOF</abbr>: <a target="_blank" href="https://overlabels.com/help-reference-index.json" class="underline">/help-reference-index.json</a>
         </span>
     </div>
 
@@ -75,7 +76,7 @@
                             <button
                                 type="button"
                                 data-help-search="{{ $group['categoryLabel'] }}"
-                                class="border border-sidebar-border p-3 text-left cursor-pointer hover:bg-accent"
+                                class="border border-sidebar-border p-3 text-left cursor-pointer hover:bg-card"
                             >
                                 <div class="font-medium text-sm">{{ $group['categoryLabel'] }}</div>
                                 <div class="text-xs text-muted-foreground">{{ count($group['items']) }} entries</div>
