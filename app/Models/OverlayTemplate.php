@@ -225,6 +225,7 @@ class OverlayTemplate extends Model
      */
     private const FOREACH_EVENT_CAPS = [
         'choices' => 5,
+        'winners' => 5,
         'outcomes' => 10,
         'top_contributions' => 3,
     ];

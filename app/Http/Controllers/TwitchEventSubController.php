@@ -378,6 +378,35 @@ class TwitchEventSubController extends Controller
     }
 
     /**
+     * Pick the winning poll choice(s) by max `votes`. Returns every choice tied
+     * at the max so templates can render ties without per-template logic. With
+     * all-zero votes (poll just started) this returns every choice, which is
+     * what lets a single alert template handle begin/progress/end uniformly.
+     *
+     * @param  array<int, array<string, mixed>>  $choices
+     * @return array<int, array<string, mixed>>
+     */
+    private function computePollWinners(array $choices): array
+    {
+        if (empty($choices)) {
+            return [];
+        }
+
+        $max = 0;
+        foreach ($choices as $choice) {
+            $votes = (int) ($choice['votes'] ?? 0);
+            if ($votes > $max) {
+                $max = $votes;
+            }
+        }
+
+        return array_values(array_filter(
+            $choices,
+            fn ($choice) => (int) ($choice['votes'] ?? 0) === $max,
+        ));
+    }
+
+    /**
      * Refresh relevant caches based on the event type
      */
     private function refreshCachesForEvent(string $eventType, ?string $broadcasterId): void
@@ -452,6 +481,14 @@ class TwitchEventSubController extends Controller
                 : ($event['broadcaster_user_id'] ?? null);
 
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+
+            // Twitch poll payloads ship per-choice votes but no winner. Compute it
+            // server-side once so the same value flows through DB persist, alert
+            // render, and broadcast - and templates can iterate it via foreach.
+            if (in_array($eventType, ['channel.poll.begin', 'channel.poll.progress', 'channel.poll.end'], true)) {
+                $event['winners'] = $this->computePollWinners($event['choices'] ?? []);
+                $data['event'] = $event;
+            }
 
             // Store the event in the database
             TwitchEvent::create([

@@ -100,6 +100,67 @@ test('mapEventDataForTemplates flattens poll choices with count', function () {
     expect($mapped['event.choices.1.votes'])->toBe(7);
 });
 
+test('mapEventDataForTemplates flattens poll winners (single winner)', function () {
+    $mapper = app(TemplateDataMapperService::class);
+
+    $data = [
+        'subscription' => ['type' => 'channel.poll.end'],
+        'event' => [
+            'winners' => [
+                ['id' => 'c1', 'title' => 'Red', 'votes' => 21, 'bits_votes' => 6, 'channel_points_votes' => 9],
+            ],
+        ],
+    ];
+
+    $mapped = $mapper->mapEventDataForTemplates($data);
+
+    expect($mapped['event.winners.count'])->toBe(1);
+    expect($mapped['event.winners.0.id'])->toBe('c1');
+    expect($mapped['event.winners.0.title'])->toBe('Red');
+    expect($mapped['event.winners.0.votes'])->toBe(21);
+});
+
+test('mapEventDataForTemplates flattens poll winners (tie)', function () {
+    $mapper = app(TemplateDataMapperService::class);
+
+    $data = [
+        'subscription' => ['type' => 'channel.poll.end'],
+        'event' => [
+            'winners' => [
+                ['id' => 'c1', 'title' => 'Red', 'votes' => 5],
+                ['id' => 'c2', 'title' => 'Blue', 'votes' => 5],
+            ],
+        ],
+    ];
+
+    $mapped = $mapper->mapEventDataForTemplates($data);
+
+    expect($mapped['event.winners.count'])->toBe(2);
+    expect($mapped['event.winners.0.title'])->toBe('Red');
+    expect($mapped['event.winners.1.title'])->toBe('Blue');
+});
+
+test('mapEventDataForTemplates flattens poll winners (all-zero votes)', function () {
+    $mapper = app(TemplateDataMapperService::class);
+
+    $data = [
+        'subscription' => ['type' => 'channel.poll.begin'],
+        'event' => [
+            'winners' => [
+                ['id' => 'c1', 'title' => 'Red', 'votes' => 0],
+                ['id' => 'c2', 'title' => 'Blue', 'votes' => 0],
+                ['id' => 'c3', 'title' => 'Green', 'votes' => 0],
+            ],
+        ],
+    ];
+
+    $mapped = $mapper->mapEventDataForTemplates($data);
+
+    expect($mapped['event.winners.count'])->toBe(3);
+    expect($mapped['event.winners.0.title'])->toBe('Red');
+    expect($mapped['event.winners.2.title'])->toBe('Green');
+});
+
 test('mapEventDataForTemplates formats charity amount as a currency string', function () {
     $mapper = app(TemplateDataMapperService::class);
 

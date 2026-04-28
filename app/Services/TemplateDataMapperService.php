@@ -35,6 +35,7 @@ class TemplateDataMapperService
     private const array INDEXED_LIST_FIELDS = [
         'top_contributions' => 3,
         'choices' => 5,
+        'winners' => 5,
         'outcomes' => 10,
     ];
 

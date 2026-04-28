@@ -114,6 +114,21 @@ test('extractTemplateTags expands foreach iterables to concrete indexed keys', f
         ->toContain('event.choices.4.title');
 });
 
+test('extractTemplateTags expands foreach over event.winners', function () {
+    $template = new OverlayTemplate;
+    $template->html = '[[[foreach:event.winners as winner]]]<li>[[[winner.title]]] ([[[winner.votes]]])</li>[[[endforeach]]]';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)
+        ->toContain('event.winners.count')
+        ->toContain('event.winners.0.title')
+        ->toContain('event.winners.0.votes')
+        ->toContain('event.winners.4.title')
+        ->toContain('event.winners.4.votes');
+});
+
 test('extractTemplateTags drops scope-local alias and loop tokens', function () {
     $template = new OverlayTemplate;
     $template->html = '<ul>[[[foreach:event.choices as choice]]]<li>[[[loop.index]]]. [[[choice.title]]]</li>[[[endforeach]]]</ul>';
