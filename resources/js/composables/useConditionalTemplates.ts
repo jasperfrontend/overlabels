@@ -212,11 +212,19 @@ function resolveIterable(data: Record<string, any>, path: string): any[] {
         item[subkey] = data[key];
     }
 
-    if (byIndex.size === 0 && countFromKey === null) return [];
+    if (byIndex.size === 0) return [];
 
+    // `count` reflects the source-of-truth size (e.g. you follow 24 channels)
+    // even when the user's foreach cap limits the indexed data to fewer
+    // entries. If we trusted count for iteration, the loop would pad with
+    // empty `{}` for indices that have no data - visible bug when [[[raw]]]
+    // dumps each item. Cap iteration at the highest populated index so the
+    // loop only runs over items we actually have data for. `count` itself is
+    // still available as `[[[<iterable>.count]]]` for display purposes.
+    const knownMax = Math.max(...Array.from(byIndex.keys()));
     const maxIdx = countFromKey !== null
-        ? countFromKey - 1
-        : Math.max(-1, ...Array.from(byIndex.keys()));
+        ? Math.min(countFromKey - 1, knownMax)
+        : knownMax;
 
     const arr: any[] = [];
     for (let i = 0; i <= maxIdx; i++) {
