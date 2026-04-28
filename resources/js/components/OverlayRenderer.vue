@@ -302,6 +302,16 @@ function injectHead(headString: string | null) {
   });
 }
 
+// Fields whose values arrive as already-safe HTML (encoded user text + parser-
+// generated <img> emote tags from useEmoteParser). Pre-substituted before the
+// regular tag pass so they are NOT re-encoded; the emote parser is responsible
+// for encoding any donor-supplied chars before adding emote img markup.
+const HTML_SAFE_ALERT_FIELDS = ['event.message.text', 'event.user_input'] as const;
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Alert rendering system
 const compiledAlertHtml = computed(() => {
   if (!currentAlert.value) return '';
@@ -313,9 +323,22 @@ const compiledAlertHtml = computed(() => {
     return replaceTagsWithFormatting(html, {}, userLocale.value);
   }
 
-  // First process conditional logic, then replace tags with formatting
+  // Process conditional logic first (operates on raw alertData so [[[if:...]]]
+  // can branch on the original values).
   html = processTemplate(html, alertData, { locale: userLocale.value, encode: true });
-  html = replaceTagsWithFormatting(html, alertData, userLocale.value);
+
+  // Pre-substitute html-safe fields (emote-parsed) so they bypass encoding,
+  // then strip them from the data passed to the encoded substitution pass.
+  const dataForEncodedPass: Record<string, any> = { ...alertData };
+  for (const field of HTML_SAFE_ALERT_FIELDS) {
+    const safeHtml = alertData[field];
+    if (typeof safeHtml !== 'string') continue;
+    const tagPattern = new RegExp(`\\[\\[\\[${escapeRegex(field)}\\]\\]\\]`, 'g');
+    html = html.replace(tagPattern, safeHtml);
+    delete dataForEncodedPass[field];
+  }
+
+  html = replaceTagsWithFormatting(html, dataForEncodedPass, userLocale.value);
 
   return html;
 });
@@ -490,10 +513,10 @@ onMounted(async () => {
       });
     }
 
-    // Initialize user locale for pipe formatters
+    // Initialise user locale for pipe formatters
     userLocale.value = json.locale ?? 'en-US';
 
-    // Initialize stream live state
+    // Initialise stream live state
     streamLive.value = json.stream_live ?? false;
 
     // Start local ticking for any timer controls that are currently running
@@ -546,10 +569,10 @@ onMounted(async () => {
       event: event.eventData || event.data,
     };
 
-    // First, we normalize the event
-    const normalizedEvent = eventHandler.processRawEvent(restructuredEvent);
+    // First, we normalise the event
+    const normalisedEvent = eventHandler.processRawEvent(restructuredEvent);
 
-    giftBombDetector.processEvent(normalizedEvent, (processedEvent) => {
+    giftBombDetector.processEvent(normalisedEvent, (processedEvent) => {
       // Dispatch the processed event for notifications
       eventHandler.dispatchEvent(processedEvent);
       // Update the store
@@ -701,8 +724,8 @@ function handleAlertTriggered(event: any) {
     compiledCss,
     data: mergedData,
     duration: alertData.duration,
-    transitionIn: alertData.transition_in || 'fade',
-    transitionOut: alertData.transition_out || 'fade',
+    transitionIn: alertData.transition_in || 'none',
+    transitionOut: alertData.transition_out || 'none',
     timestamp: alertData.timestamp || Date.now(),
   });
 }

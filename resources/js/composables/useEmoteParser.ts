@@ -1,5 +1,6 @@
 import { EmoteFetcher, EmoteParser } from '@mkody/twitch-emoticons'
 import { ref } from 'vue'
+import { encodeHtml } from '@/utils/tagParser'
 
 interface TwitchEmotePosition {
   begin: number
@@ -51,12 +52,18 @@ export function useEmoteParser() {
    * Splitting by whitespace before calling this ensures the library regex never sees
    * already-generated <img> HTML.
    */
+  // Encode the token first so any user-typed HTML (e.g. `<img src=evil>`) is
+  // neutralised before we look for emote names. Encoded text still contains
+  // letters/digits, so emote names like `Kappa` survive and can be matched and
+  // replaced with safe `<img>` HTML. The result is a "safe HTML" string the
+  // OverlayRenderer can splice in without re-encoding.
   function parseToken(token: string): string {
     const twitchUrl = twitchEmoteMap.get(token)
     if (twitchUrl) {
-      return `<img class="overlay-emote twitch-emote" alt="${token}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`
+      return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(token)}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`
     }
-    return parser ? parser.parse(token) : token
+    const encoded = encodeHtml(token)
+    return parser ? parser.parse(encoded) : encoded
   }
 
   /** Split text on whitespace runs, parse each word token independently. */
@@ -99,7 +106,7 @@ export function useEmoteParser() {
       const emoteName = text.slice(emote.begin, emote.end + 1)
       const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`
       parts.push(
-        `<img class="overlay-emote twitch-emote" alt="${emoteName}" src="${url}" style="display:inline;vertical-align:middle;height:1.5em;">`,
+        `<img class="overlay-emote twitch-emote" alt="${encodeHtml(emoteName)}" src="${url}" style="display:inline;vertical-align:middle;height:1.5em;">`,
       )
       lastIndex = emote.end + 1
     }
