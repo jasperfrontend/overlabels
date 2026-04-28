@@ -521,9 +521,41 @@ class TemplateDataMapperService
             $all = array_merge($all, $this->mapEventDataForTemplates($eventData));
         }
 
-        // If a tag allowlist is provided, prune to only those keys
+        // If a tag allowlist is provided, prune to only those keys.
+        // Exception: foreach iterables - extractForeachTags always emits
+        // `<iterable>.count`, so its presence is a reliable signal that the
+        // template loops over `<iterable>`. Keep all `<iterable>.*` keys in
+        // that case so [[[raw]]] inside the loop has the full item shape,
+        // not just the subkeys the body happened to reference by name.
         if (is_array($templateTags) && count($templateTags)) {
-            return array_intersect_key($all, array_flip($templateTags));
+            $allowedKeys = array_flip($templateTags);
+            $iterablePrefixes = [];
+            foreach ($templateTags as $tag) {
+                if (is_string($tag) && str_ends_with($tag, '.count')) {
+                    $iterablePrefixes[] = substr($tag, 0, -strlen('count'));
+                }
+            }
+
+            if (empty($iterablePrefixes)) {
+                return array_intersect_key($all, $allowedKeys);
+            }
+
+            $pruned = [];
+            foreach ($all as $key => $value) {
+                if (isset($allowedKeys[$key])) {
+                    $pruned[$key] = $value;
+
+                    continue;
+                }
+                foreach ($iterablePrefixes as $prefix) {
+                    if (str_starts_with($key, $prefix)) {
+                        $pruned[$key] = $value;
+                        break;
+                    }
+                }
+            }
+
+            return $pruned;
         }
 
         return $all;

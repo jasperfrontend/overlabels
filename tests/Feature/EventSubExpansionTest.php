@@ -140,6 +140,34 @@ test('mapEventDataForTemplates flattens poll winners (tie)', function () {
     expect($mapped['event.winners.1.title'])->toBe('Blue');
 });
 
+test('mapForTemplate preserves all iterable subkeys even when body only references one', function () {
+    // Reproduces the [[[raw]]] inside foreach bug: a template that only writes
+    // `[[[winner.id]]]` in the body would previously have its allowlist pruned
+    // to just `event.winners.0.id`, leaving [[[raw]]] with a one-key item.
+    $mapper = app(TemplateDataMapperService::class);
+
+    $eventData = [
+        'subscription' => ['type' => 'channel.poll.end'],
+        'event' => [
+            'winners' => [
+                ['id' => 'c1', 'title' => 'Red', 'votes' => 21, 'bits_votes' => 6, 'channel_points_votes' => 9],
+            ],
+        ],
+    ];
+
+    // Simulate what extractTemplateTags emits for `[[[foreach:event.winners as winner]]][[[winner.id]]][[[raw]]][[[endforeach]]]`
+    $templateTags = ['event.winners.count', 'event.winners.0.id', 'event.winners.1.id', 'event.winners.2.id', 'event.winners.3.id', 'event.winners.4.id'];
+
+    $mapped = $mapper->mapForTemplate([], 'unused', $templateTags, $eventData);
+
+    // The full subkey set must survive so [[[raw]]] can JSON-dump the whole item
+    expect($mapped)->toHaveKey('event.winners.0.id');
+    expect($mapped)->toHaveKey('event.winners.0.title');
+    expect($mapped)->toHaveKey('event.winners.0.votes');
+    expect($mapped)->toHaveKey('event.winners.0.bits_votes');
+    expect($mapped)->toHaveKey('event.winners.0.channel_points_votes');
+});
+
 test('mapEventDataForTemplates flattens poll winners (all-zero votes)', function () {
     $mapper = app(TemplateDataMapperService::class);
 
