@@ -243,8 +243,9 @@ const serviceLabel: Record<string, string> = {
       </div>
 
       <!-- Twitch Events List -->
-      <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">Twitch Events</h3>
-      <div class="space-y-2 mb-8">
+      <div class="space-y-2 mb-8 relative">
+        <div v-if="isSaving" class="fixed top-0 right-0 m-2 p-4 bg-card z-100"><span class="text-green-400">saving&hellip;</span></div>
+        <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">Twitch Events</h3>
         <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
           <!-- Event Row -->
           <div
@@ -284,9 +285,10 @@ const serviceLabel: Record<string, string> = {
                 <span :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
                   {{ getTemplateName(mapping.template_id) }}
                 </span>
-                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000
-                  }}s · in: {{ transitionInTypes[mapping.transition_in]
-                  }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
+                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000}}s ·
+                  in: {{ transitionInTypes[mapping.transition_in] }} /
+                  out: {{ transitionOutTypes[mapping.transition_out] }}
+                </span>
               </div>
             </div>
 
@@ -318,6 +320,8 @@ const serviceLabel: Record<string, string> = {
                 <label>Alert Template</label>
                 <select
                   v-model="mapping.template_id"
+                  @change="saveAllMappings"
+                  :disabled="isSaving"
                   class="input-border h-10 w-full rounded-sm"
                   :class="{
                     'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.template_id,
@@ -339,6 +343,8 @@ const serviceLabel: Record<string, string> = {
                   <input
                     :value="mapping.duration_ms / 1000"
                     @input="mapping.duration_ms = Math.min(30, Math.max(1, Number(($event.target as HTMLInputElement).value) || 1)) * 1000"
+                    @blur="saveAllMappings"
+                    :disabled="isSaving"
                     type="number"
                     min="1"
                     max="30"
@@ -356,6 +362,8 @@ const serviceLabel: Record<string, string> = {
                 <select
                   v-model="mapping.transition_in"
                   class="input-border h-10 w-full rounded-sm"
+                  @change="saveAllMappings"
+                  :disabled="isSaving"
                 >
                   <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
                     {{ label }}
@@ -369,6 +377,8 @@ const serviceLabel: Record<string, string> = {
                 <select
                   v-model="mapping.transition_out"
                   class="input-border h-10 w-full rounded-sm"
+                  @change="saveAllMappings"
+                  :disabled="isSaving"
                 >
                   <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
                     {{ label }}
