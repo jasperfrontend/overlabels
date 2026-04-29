@@ -15,6 +15,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
+import TriggerManager from '@/components/TriggerManager.vue';
 import {
   Brackets,
   Code,
@@ -29,6 +30,7 @@ import {
   SquarePenIcon,
   Target,
   ImageIcon,
+  Zap,
 } from 'lucide-vue-next';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
@@ -48,6 +50,16 @@ interface OverlayOption {
   id: number;
   name: string;
   slug: string;
+}
+
+interface TriggerData {
+  eventTypes: Record<string, string>;
+  externalEventTypes: Record<string, Record<string, string>>;
+  connectedServices: string[];
+  assigned: {
+    twitch: Array<{ event_type: string; duration_ms: number; enabled: boolean }>;
+    external: Array<{ service: string; event_type: string; duration_ms: number; enabled: boolean }>;
+  };
 }
 
 interface Props {
@@ -84,6 +96,7 @@ interface Props {
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
   userScopedControls?: OverlayControl[];
+  triggers?: TriggerData | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -154,6 +167,7 @@ const mainTabs = computed(() => {
     { key: 'screenshot', label: 'Screenshot', icon: ImageIcon }
   ];
   if (props.template.type === 'alert') {
+    tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
   }
   return tabs;
@@ -259,7 +273,7 @@ onMounted(() => {
     { description: 'Preview in new tab' }
   );
 
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 8; i++) {
     register(`switch-tab-${i}`, `${i}`, () => {
       const tab = mainTabs.value[i - 1];
       if (tab) mainTab.value = tab.key;
@@ -428,6 +442,17 @@ onMounted(() => {
               :name="template.name"
               @saved="pushToast('Screenshot saved.', 'success')"
               @removed="pushToast('Screenshot removed.', 'success')"
+              @error="(msg: string) => pushToast(msg, 'error')"
+            />
+          </div>
+
+          <!-- Triggers Tab (alert templates only) -->
+          <div v-if="mainTab === 'triggers'" class="p-4">
+            <TriggerManager
+              v-if="triggers"
+              :template-id="template.id"
+              :triggers="triggers"
+              @saved="pushToast('Triggers saved.', 'success')"
               @error="(msg: string) => pushToast(msg, 'error')"
             />
           </div>

@@ -54,8 +54,7 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
   </div>
   <div v-else>
     <Link href="/">
-      <span class="truncate font-medium">User not logged in</span><br />
-      <span class="truncate text-xs text-muted-foreground">Please Login</span>
+      <span class="truncate text-xs text-muted-foreground">Connect</span>
     </Link>
   </div>
 </template>

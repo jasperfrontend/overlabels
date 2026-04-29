@@ -20,10 +20,6 @@ class AlertTriggered implements ShouldBroadcast
 
     public int $duration;
 
-    public string $transitionIn;
-
-    public string $transitionOut;
-
     public string $broadcasterId;
 
     public ?array $targetOverlaySlugs;
@@ -38,8 +34,6 @@ class AlertTriggered implements ShouldBroadcast
         string $css,
         array $data,
         int $duration,
-        string $transitionIn,
-        string $transitionOut,
         string $broadcasterId,
         ?array $targetOverlaySlugs = null,
         ?string $alertTemplateSlug = null
@@ -48,8 +42,6 @@ class AlertTriggered implements ShouldBroadcast
         $this->css = $css;
         $this->data = $data;
         $this->duration = $duration;
-        $this->transitionIn = $transitionIn;
-        $this->transitionOut = $transitionOut;
         $this->broadcasterId = $broadcasterId;
         $this->targetOverlaySlugs = $targetOverlaySlugs;
         $this->alertTemplateSlug = $alertTemplateSlug;
@@ -78,8 +70,6 @@ class AlertTriggered implements ShouldBroadcast
                 'css' => $this->css,
                 'data' => $this->data,
                 'duration' => $this->duration,
-                'transition_in' => $this->transitionIn,
-                'transition_out' => $this->transitionOut,
                 'timestamp' => now()->timestamp,
                 'target_overlay_slugs' => $this->targetOverlaySlugs,
                 // Reference to the alert template's compiled utility CSS. The

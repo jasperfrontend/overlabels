@@ -171,8 +171,6 @@ test('ExternalAlertService dispatches AlertTriggered with target slugs when set'
         'overlay_template_id' => $alertTemplate->id,
         'enabled' => true,
         'duration_ms' => 5000,
-        'transition_in' => 'fade',
-        'transition_out' => 'fade',
     ]);
 
     // Post a Ko-fi webhook to trigger the pipeline
@@ -215,8 +213,6 @@ test('ExternalAlertService dispatches AlertTriggered with null target slugs when
         'overlay_template_id' => $alertTemplate->id,
         'enabled' => true,
         'duration_ms' => 5000,
-        'transition_in' => 'fade',
-        'transition_out' => 'fade',
     ]);
 
     $payload = [
@@ -255,8 +251,6 @@ test('external event replay includes target_overlay_slugs when configured', func
         'overlay_template_id' => $alertTemplate->id,
         'enabled' => true,
         'duration_ms' => 5000,
-        'transition_in' => 'fade',
-        'transition_out' => 'fade',
     ]);
 
     $externalEvent = ExternalEvent::create([
@@ -290,8 +284,6 @@ test('external event replay has null target slugs when none configured', functio
         'overlay_template_id' => $alertTemplate->id,
         'enabled' => true,
         'duration_ms' => 5000,
-        'transition_in' => 'fade',
-        'transition_out' => 'fade',
     ]);
 
     $externalEvent = ExternalEvent::create([

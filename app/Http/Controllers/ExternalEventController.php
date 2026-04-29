@@ -45,8 +45,6 @@ class ExternalEventController extends Controller
             css: $template->css ?? '',
             data: $data,
             duration: $mapping->duration_ms ?? 5000,
-            transitionIn: $mapping->transition_in ?? 'fade',
-            transitionOut: $mapping->transition_out ?? 'fade',
             broadcasterId: $user->twitch_id,
             targetOverlaySlugs: $targetSlugs,
             alertTemplateSlug: $template->slug,

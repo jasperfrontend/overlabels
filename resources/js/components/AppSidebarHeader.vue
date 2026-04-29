@@ -31,7 +31,7 @@ const user = computed(() => page.props.auth.user);
           <div class="flex items-center gap-2">
             <SidebarTrigger class="-ml-1" />
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
-                <Breadcrumbs :breadcrumbs="breadcrumbs" />
+                <Breadcrumbs class="hidden md:block" :breadcrumbs="breadcrumbs" />
             </template>
           </div>
           <div class="ml-auto w-auto flex items-center">

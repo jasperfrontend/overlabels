@@ -18,8 +18,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property int $duration_ms
- * @property string $transition_in
- * @property string $transition_out
  * @property array<array-key, mixed>|null $settings
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
@@ -34,8 +32,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ExternalEventTemplateMapping whereOverlayTemplateId($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereService($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereSettings($value)
- * @method static Builder<static>|ExternalEventTemplateMapping whereTransitionIn($value)
- * @method static Builder<static>|ExternalEventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|ExternalEventTemplateMapping whereUserId($value)
  * @mixin Eloquent
@@ -50,8 +46,6 @@ class ExternalEventTemplateMapping extends Model
         'overlay_template_id',
         'enabled',
         'duration_ms',
-        'transition_in',
-        'transition_out',
         'settings',
     ];
 
@@ -59,32 +53,6 @@ class ExternalEventTemplateMapping extends Model
         'enabled' => 'boolean',
         'duration_ms' => 'integer',
         'settings' => 'array',
-    ];
-
-    /**
-     * Available transition types for enter animations (mirrored from EventTemplateMapping)
-     */
-    public const array TRANSITION_IN_TYPES = [
-        'fade' => 'Fade in',
-        'scale' => 'Scale in',
-        'slide-bottom' => 'Slide up from bottom',
-        'slide-top' => 'Slide down from top',
-        'slide-left' => 'Slide in from left',
-        'slide-right' => 'Slide in from right',
-        'none' => 'None (instant)',
-    ];
-
-    /**
-     * Available transition types for exit animations (mirrored from EventTemplateMapping)
-     */
-    public const array TRANSITION_OUT_TYPES = [
-        'fade' => 'Fade out',
-        'scale' => 'Scale out',
-        'slide-bottom' => 'Slide down to bottom',
-        'slide-top' => 'Slide up to top',
-        'slide-left' => 'Slide out to left',
-        'slide-right' => 'Slide out to right',
-        'none' => 'None (instant)',
     ];
 
     /**

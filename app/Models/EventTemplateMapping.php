@@ -18,8 +18,6 @@ use Illuminate\Support\Carbon;
  * @property array<array-key, mixed>|null $settings
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property string $transition_in
- * @property string $transition_out
  * @property-read string $event_type_display
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
@@ -34,8 +32,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EventTemplateMapping whereId($value)
  * @method static Builder<static>|EventTemplateMapping whereSettings($value)
  * @method static Builder<static>|EventTemplateMapping whereTemplateId($value)
- * @method static Builder<static>|EventTemplateMapping whereTransitionIn($value)
- * @method static Builder<static>|EventTemplateMapping whereTransitionOut($value)
  * @method static Builder<static>|EventTemplateMapping whereUpdatedAt($value)
  * @method static Builder<static>|EventTemplateMapping whereUserId($value)
  *
@@ -49,8 +45,6 @@ class EventTemplateMapping extends Model
         'event_type',
         'template_id',
         'duration_ms',
-        'transition_in',
-        'transition_out',
         'enabled',
         'settings',
     ];
@@ -97,32 +91,6 @@ class EventTemplateMapping extends Model
         'channel.prediction.progress' => 'Prediction Progress',
         'channel.prediction.lock' => 'Prediction Locked',
         'channel.prediction.end' => 'Prediction Ended',
-    ];
-
-    /**
-     * Available transition types for enter animations
-     */
-    public const array TRANSITION_IN_TYPES = [
-        'fade' => 'Fade in',
-        'scale' => 'Scale in',
-        'slide-bottom' => 'Slide up from bottom',
-        'slide-top' => 'Slide down from top',
-        'slide-left' => 'Slide in from left',
-        'slide-right' => 'Slide in from right',
-        'none' => 'None (instant)',
-    ];
-
-    /**
-     * Available transition types for exit animations
-     */
-    public const array TRANSITION_OUT_TYPES = [
-        'fade' => 'Fade out',
-        'scale' => 'Scale out',
-        'slide-bottom' => 'Slide down to bottom',
-        'slide-top' => 'Slide up to top',
-        'slide-left' => 'Slide out to left',
-        'slide-right' => 'Slide out to right',
-        'none' => 'None (instant)',
     ];
 
     /**

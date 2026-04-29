@@ -6,7 +6,6 @@ use App\Events\UserRegistered;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
-use App\Http\Controllers\ExternalEventTemplateMappingController;
 use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
@@ -460,6 +459,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
         Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
+        Route::put('/{template}/triggers', [OverlayTemplateController::class, 'updateTriggers'])->name('triggers');
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
     });
 
@@ -499,20 +499,9 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/{kit}/fork', [KitController::class, 'fork'])->name('fork');
     });
 
-    // Event Template Mapping Management
-    Route::prefix('alerts')->name('events.')->group(function () {
-        Route::get('/', [EventTemplateMappingController::class, 'index'])->name('index');
-        Route::post('/', [EventTemplateMappingController::class, 'store'])->name('store');
-        Route::put('/bulk', [EventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
-        Route::delete('/{eventType}', [EventTemplateMappingController::class, 'destroy'])->name('destroy');
-
-        // External service event mappings
-        Route::prefix('external')->name('external.')->group(function () {
-            Route::post('/{service}', [ExternalEventTemplateMappingController::class, 'store'])->name('store');
-            Route::put('/bulk', [ExternalEventTemplateMappingController::class, 'updateMultiple'])->name('update.bulk');
-            Route::delete('/{service}/{eventType}', [ExternalEventTemplateMappingController::class, 'destroy'])->name('destroy');
-        });
-    });
+    // Event alerts overview - read-only matrix; per-template editing lives on
+    // the template edit page (Triggers tab).
+    Route::get('/alerts', [EventTemplateMappingController::class, 'index'])->name('events.index');
 
     // EventSub connect - called from settings/integrations/index.vue
     Route::post('/eventsub/connect', [IntegrationController::class, 'connectEventSub'])

@@ -591,8 +591,6 @@ class TwitchEventSubController extends Controller
                 $mapping->template->css,
                 $templateData,
                 $mapping->duration_ms,
-                $mapping->transition_in,
-                $mapping->transition_out,
                 $user->twitch_id,
                 $targetSlugs,
                 $mapping->template->slug,

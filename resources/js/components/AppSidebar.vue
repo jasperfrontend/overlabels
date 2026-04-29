@@ -25,7 +25,6 @@ import {
   Layers,
   LayoutGrid,
   LogIn,
-  Megaphone,
   Pipette,
   Radio,
   ScrollText,
@@ -49,8 +48,7 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems: NavItem[] = [
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
   { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
-  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid },
-  { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
+  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid }
 ];
 const alertsNavItems: NavItem[] = [
   { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
@@ -74,8 +72,8 @@ const helpNavItems: NavItem[] = [
   { title: 'Manifesto', href: '/help/manifesto', icon: FileText }
 ];
 
-const adminNavItems: NavItem[] = [
-  { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck },
+const adminDashboardItem: NavItem = { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck };
+const adminSectionItems: NavItem[] = [
   { title: 'Users', href: route('admin.users.index'), icon: Users },
   { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
   { title: 'Events', href: route('admin.events.index'), icon: Radio },
@@ -87,6 +85,12 @@ const adminNavItems: NavItem[] = [
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
   { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert }
 ];
+
+const isOnAdminPage = computed(() => page.url.startsWith('/admin'));
+const adminNavItems = computed<NavItem[]>(() =>
+  isOnAdminPage.value ? [adminDashboardItem, ...adminSectionItems] : [adminDashboardItem]
+);
+
 </script>
 
 <template>

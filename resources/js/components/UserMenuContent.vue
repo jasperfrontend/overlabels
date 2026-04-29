@@ -9,11 +9,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { BookOpen, Code, Blocks, Grid2x2Check, LogOut, Shield, ShieldAlert, SunMoon, Terminal } from 'lucide-vue-next';
+import { BookOpen, Code, Blocks, Grid2x2Check, LogOut, Megaphone, Shield, ShieldAlert, SunMoon, Terminal } from 'lucide-vue-next';
 
 const settingsItems = [
   { label: 'Theme Settings', href: route('settings.appearance'), icon: SunMoon },
   { label: 'Integrations', href: route('settings.integrations.index'), icon: Blocks },
+  { label: 'Event alerts overview', href: route('events.index'), icon: Megaphone },
 ]
 
 const debugItems = [

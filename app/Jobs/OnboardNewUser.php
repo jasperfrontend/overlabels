@@ -166,8 +166,6 @@ class OnboardNewUser implements ShouldQueue
                         'template_id' => $matchedTemplate->id,
                         'enabled' => true,
                         'duration_ms' => 5000,
-                        'transition_in' => 'fade',
-                        'transition_out' => 'fade',
                     ]
                 );
 

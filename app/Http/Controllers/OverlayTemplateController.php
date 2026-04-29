@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\TemplateUpdated;
+use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
@@ -141,6 +143,10 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
+        $triggers = ($canEdit && $template->type === 'alert')
+            ? $this->buildTriggerData($template)
+            : null;
+
         return Inertia::render('templates/show', [
             'template' => $template,
             'canEdit' => $canEdit,
@@ -150,6 +156,7 @@ class OverlayTemplateController extends Controller
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
+            'triggers' => $triggers,
         ]);
     }
 
@@ -208,6 +215,10 @@ class OverlayTemplateController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $triggers = $template->type === 'alert'
+            ? $this->buildTriggerData($template)
+            : null;
+
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
@@ -217,6 +228,7 @@ class OverlayTemplateController extends Controller
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
+            'triggers' => $triggers,
         ]);
 
     }
@@ -599,6 +611,146 @@ class OverlayTemplateController extends Controller
 
         return redirect()->route('templates.edit', $template)
             ->with('success', 'Template updated successfully!');
+    }
+
+    /**
+     * Build the trigger preload payload for an alert template:
+     *   - eventTypes: full Twitch event-type catalogue (display labels)
+     *   - externalEventTypes: per-service external event-type catalogue
+     *   - connectedServices: the services this user has enabled integrations for
+     *   - assigned: { twitch: [{event_type, duration_ms, enabled}], external: [{service, event_type, duration_ms, enabled}] }
+     *
+     * "assigned" only contains rows currently bound to THIS template - other
+     * templates' mappings stay invisible to this UI.
+     */
+    private function buildTriggerData(OverlayTemplate $template): array
+    {
+        $userId = $template->owner_id;
+
+        $assignedTwitch = EventTemplateMapping::where('user_id', $userId)
+            ->where('template_id', $template->id)
+            ->get(['event_type', 'duration_ms', 'enabled'])
+            ->map(fn (EventTemplateMapping $m) => [
+                'event_type' => $m->event_type,
+                'duration_ms' => $m->duration_ms,
+                'enabled' => (bool) $m->enabled,
+            ])
+            ->values();
+
+        $assignedExternal = ExternalEventTemplateMapping::where('user_id', $userId)
+            ->where('overlay_template_id', $template->id)
+            ->get(['service', 'event_type', 'duration_ms', 'enabled'])
+            ->map(fn (ExternalEventTemplateMapping $m) => [
+                'service' => $m->service,
+                'event_type' => $m->event_type,
+                'duration_ms' => $m->duration_ms,
+                'enabled' => (bool) $m->enabled,
+            ])
+            ->values();
+
+        $connectedServices = ExternalIntegration::where('user_id', $userId)
+            ->where('enabled', true)
+            ->pluck('service')
+            ->toArray();
+
+        return [
+            'eventTypes' => EventTemplateMapping::EVENT_TYPES,
+            'externalEventTypes' => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES,
+            'connectedServices' => $connectedServices,
+            'assigned' => [
+                'twitch' => $assignedTwitch,
+                'external' => $assignedExternal,
+            ],
+        ];
+    }
+
+    /**
+     * Replace this alert template's trigger bindings.
+     *
+     * The UI is per-template: only rows where template_id = $template->id
+     * (or overlay_template_id = $template->id for external) are owned by this
+     * editor. Anything not present in the request body for THIS template is
+     * deleted; rows owned by other templates are left untouched. Reassigning a
+     * Twitch event to this template overrides the previous (user, event_type)
+     * row because of the unique index - that is intentional.
+     */
+    public function updateTriggers(Request $request, OverlayTemplate $template): RedirectResponse
+    {
+        abort_unless($template->owner_id === auth()->id(), 403);
+        abort_unless($template->type === 'alert', 422);
+
+        $validated = $request->validate([
+            'twitch' => ['nullable', 'array'],
+            'twitch.*.event_type' => ['required', 'string', 'in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES))],
+            'twitch.*.duration_ms' => ['required', 'integer', 'min:1000', 'max:999000'],
+            'twitch.*.enabled' => ['required', 'boolean'],
+            'external' => ['nullable', 'array'],
+            'external.*.service' => ['required', 'string', 'in:'.implode(',', array_keys(ExternalEventTemplateMapping::SERVICE_EVENT_TYPES))],
+            'external.*.event_type' => ['required', 'string'],
+            'external.*.duration_ms' => ['required', 'integer', 'min:1000', 'max:999000'],
+            'external.*.enabled' => ['required', 'boolean'],
+        ]);
+
+        $userId = auth()->id();
+        $twitch = $validated['twitch'] ?? [];
+        $external = $validated['external'] ?? [];
+
+        foreach ($external as $row) {
+            $service = $row['service'];
+            $validEventTypes = array_keys(ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$service] ?? []);
+            abort_if(
+                ! in_array($row['event_type'], $validEventTypes, true),
+                422,
+                "Invalid event type '{$row['event_type']}' for service '{$service}'"
+            );
+        }
+
+        $keptTwitchEventTypes = array_map(fn ($row) => $row['event_type'], $twitch);
+        EventTemplateMapping::where('user_id', $userId)
+            ->where('template_id', $template->id)
+            ->when(! empty($keptTwitchEventTypes), fn ($q) => $q->whereNotIn('event_type', $keptTwitchEventTypes))
+            ->delete();
+
+        foreach ($twitch as $row) {
+            EventTemplateMapping::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'event_type' => $row['event_type'],
+                ],
+                [
+                    'template_id' => $template->id,
+                    'duration_ms' => $row['duration_ms'],
+                    'enabled' => $row['enabled'],
+                ]
+            );
+        }
+
+        $keptExternalKeys = array_map(fn ($row) => $row['service'].':'.$row['event_type'], $external);
+        ExternalEventTemplateMapping::where('user_id', $userId)
+            ->where('overlay_template_id', $template->id)
+            ->get()
+            ->each(function (ExternalEventTemplateMapping $m) use ($keptExternalKeys) {
+                if (! in_array($m->service.':'.$m->event_type, $keptExternalKeys, true)) {
+                    $m->delete();
+                }
+            });
+
+        foreach ($external as $row) {
+            ExternalEventTemplateMapping::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'service' => $row['service'],
+                    'event_type' => $row['event_type'],
+                ],
+                [
+                    'overlay_template_id' => $template->id,
+                    'duration_ms' => $row['duration_ms'],
+                    'enabled' => $row['enabled'],
+                ]
+            );
+        }
+
+        return back()->with('message', 'Triggers saved.')->with('type', 'success');
     }
 
     /**

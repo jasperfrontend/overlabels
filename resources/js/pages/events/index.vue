@@ -1,622 +1,172 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
-import RekaToast from '@/components/RekaToast.vue';
-import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, Sparkles, Radio, Save, Plus } from 'lucide-vue-next';
-import axios from 'axios';
-import type { BreadcrumbItem, OverlayTemplate } from '@/types';
+import { ExternalLink, Megaphone } from 'lucide-vue-next';
+import type { BreadcrumbItem } from '@/types';
+import { SERVICE_LABELS } from '@/utils/services';
 
-interface EventMapping {
-  id?: number;
-  event_type: string;
-  template_id: number | null;
-  duration_ms: number;
-  transition_in: string;
-
-  transition_out: string;
-  enabled: boolean;
+interface AssignedTemplate {
+  id: number;
+  name: string;
+  slug: string;
 }
 
-interface ExternalEventMapping {
-  id?: number;
+interface TwitchMapping {
+  event_type: string;
+  event_label: string;
+  duration_ms: number;
+  template: AssignedTemplate | null;
+}
+
+interface ExternalMapping {
   service: string;
   event_type: string;
-  overlay_template_id: number | null;
+  event_label: string;
   duration_ms: number;
-  transition_in: string;
-  transition_out: string;
-  enabled: boolean;
+  template: AssignedTemplate | null;
+}
+
+interface UnassignedEventType {
+  event_type: string;
+  event_label: string;
 }
 
 const props = defineProps<{
-  mappings: EventMapping[];
-  alertTemplates: OverlayTemplate[];
-  eventTypes: Record<string, string>;
-  transitionInTypes: Record<string, string>;
-  transitionOutTypes: Record<string, string>;
-  externalServices: string[];
-  externalMappings: Record<string, ExternalEventMapping>;
-  externalEventTypes: Record<string, Record<string, string>>;
+  twitchMappings: TwitchMapping[];
+  externalMappings: ExternalMapping[];
+  connectedServices: string[];
+  unassignedEventTypes: UnassignedEventType[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Event Alerts Builder',
-    href: '/alerts'
-  }
+  { title: 'Event alerts overview', href: '/alerts' },
 ];
 
-const localMappings = ref<EventMapping[]>(
-  props.mappings.map((mapping) => ({
-    ...mapping,
-    duration_ms: mapping.duration_ms || 5000,
-    transition_in: mapping.transition_in || 'fade',
-    transition_out: mapping.transition_out || 'fade',
-    enabled: mapping.enabled || false
-  }))
-);
-
-// Build local external mappings for each connected service, one entry per event type
-function buildExternalMappings(): ExternalEventMapping[] {
-  const result: ExternalEventMapping[] = [];
-  for (const service of props.externalServices) {
-    const serviceEventTypes = props.externalEventTypes[service] ?? {};
-    for (const eventType of Object.keys(serviceEventTypes)) {
-      const key = `${service}:${eventType}`;
-      const existing = props.externalMappings[key];
-      result.push({
-        id: existing?.id,
-        service,
-        event_type: eventType,
-        overlay_template_id: existing?.overlay_template_id ?? null,
-        duration_ms: existing?.duration_ms ?? 5000,
-        transition_in: existing?.transition_in ?? 'fade',
-        transition_out: existing?.transition_out ?? 'fade',
-        enabled: existing?.enabled ?? false
-      });
-    }
+const externalByService = computed(() => {
+  const grouped: Record<string, ExternalMapping[]> = {};
+  for (const row of props.externalMappings) {
+    (grouped[row.service] ??= []).push(row);
   }
-  return result;
-}
-
-const localExternalMappings = ref<ExternalEventMapping[]>(buildExternalMappings());
-
-// Computed properties
-const activeEvents = computed(() => {
-  return localMappings.value.filter((m) => m.enabled && m.template_id).length;
+  return grouped;
 });
 
-const enabledWithoutTemplate = computed(() => {
-  return localMappings.value.filter((m) => m.enabled && !m.template_id).length;
-});
-
-const totalEnabled = computed(() => {
-  return localMappings.value.filter((m) => m.enabled).length;
-});
-
-const isSaving = ref(false);
-const expandedEvent = ref<string | null>(null);
-const expandedExternalEvent = ref<string | null>(null);
-
-// Toast state
-const toastMessage = ref<string>('');
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
-const showToast = ref(false);
-
-const getTemplateName = (templateId: number | null): string => {
-  if (!templateId) return 'No template selected';
-  const template = props.alertTemplates.find((t) => t.id === templateId);
-  return template?.name || 'Unknown template';
-};
-
-const toggleEvent = (eventType: string) => {
-  if (expandedEvent.value === eventType) {
-    expandedEvent.value = null;
-  } else {
-    expandedEvent.value = eventType;
-  }
-};
-
-const toggleExternalEvent = (key: string) => {
-  if (expandedExternalEvent.value === key) {
-    expandedExternalEvent.value = null;
-  } else {
-    expandedExternalEvent.value = key;
-  }
-};
-
-const externalEventKey = (m: ExternalEventMapping) => `${m.service}:${m.event_type}`;
-
-const saveAllMappings = async () => {
-  isSaving.value = true;
-
-  try {
-    // Save Twitch mappings
-    const mappingsToSave = localMappings.value.map((mapping) => ({
-      event_type: mapping.event_type,
-      template_id: mapping.template_id,
-      duration_ms: mapping.duration_ms,
-      transition_in: mapping.transition_in,
-      transition_out: mapping.transition_out,
-      enabled: mapping.enabled
-    }));
-
-    await axios.put('/alerts/bulk', { mappings: mappingsToSave });
-
-    // Save external mappings if any
-    if (localExternalMappings.value.length > 0) {
-      const externalToSave = localExternalMappings.value.map((m) => ({
-        service: m.service,
-        event_type: m.event_type,
-        overlay_template_id: m.overlay_template_id,
-        duration_ms: m.duration_ms,
-        transition_in: m.transition_in,
-        transition_out: m.transition_out,
-        enabled: m.enabled
-      }));
-
-      await axios.put('/alerts/external/bulk', { mappings: externalToSave });
-    }
-
-    showToast.value = true;
-    toastMessage.value = 'Settings saved successfully!';
-    toastType.value = 'success';
-
-  } catch (error: any) {
-    if (error.response) {
-      alert(`Error: ${error.response.data.error || 'Failed to save settings'}`);
-    } else {
-      alert('Network error occurred while saving settings');
-    }
-  } finally {
-    isSaving.value = false;
-  }
-};
-
-const serviceLabel: Record<string, string> = {
-  kofi: 'Ko-fi',
-  fourthwall: 'Fourthwall',
-};
+const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
 </script>
 
 <template>
-  <Head title="Event alerts builder" />
+  <Head title="Event alerts overview" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="py-3 px-4">
-      <!-- Header Section -->
-      <div class="mb-4 mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-2">
-          <Radio class="w-6 h-6 mr-2" />
-          <Heading title="Alerts Builder" />
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-secondary">
-            {{ isSaving ? 'Saving...' : 'Save Changes' }}
-            <Save class="ml-2 h-4 w-4" />
-          </button>
-
-          <Link :href="route('templates.create', { type: 'alert' })" class="btn btn-primary">
-            Create Template
-            <Plus class="ml-2 h-4 w-4" />
-          </Link>
-        </div>
+    <div class="px-4 py-3">
+      <div class="mb-4 mt-1 flex items-center gap-2">
+        <Megaphone class="h-6 w-6" />
+        <Heading
+          title="Event alerts overview"
+          description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
+        />
       </div>
 
-      <!-- Status Summary - Only show if there are templates -->
-      <div v-if="alertTemplates.length > 0" class="mb-4 flex flex-wrap gap-4">
-        <div class="flex items-center gap-2 text-sm">
-          <CheckCircle2Icon class="h-4 w-4 text-green-500" />
-          <span class="text-muted-foreground">
-            <span class="font-medium text-foreground">{{ activeEvents }}</span> active
-          </span>
-        </div>
-        <div v-if="enabledWithoutTemplate > 0" class="flex items-center gap-2 text-sm">
-          <AlertTriangleIcon class="h-4 w-4 text-yellow-500" />
-          <span class="text-muted-foreground">
-            <span class="font-medium text-foreground">{{ enabledWithoutTemplate }}</span> missing template
-          </span>
-        </div>
-        <div class="flex items-center gap-2 text-sm">
-          <CircleIcon class="h-4 w-4 text-muted-foreground" />
-          <span class="text-muted-foreground">
-            <span class="font-medium text-foreground">{{ localMappings.length - totalEnabled }}</span> disabled
-          </span>
-        </div>
-      </div>
+      <p class="mb-6 text-sm text-muted-foreground">
+        {{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.
+      </p>
 
-      <!-- No Templates Warning -->
-      <div v-if="alertTemplates.length === 0" class="mb-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6">
-        <div class="flex gap-3">
-          <AlertTriangleIcon class="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
-          <div>
-            <Heading title="No Alert Templates Available"
-                     description="Create your first alert template to start configuring events." />
-            <Link :href="route('templates.create')"
-                  class="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
-              <Sparkles class="h-4 w-4" />
-              Create your first template
-            </Link>
-          </div>
-        </div>
-      </div>
+      <!-- Twitch group -->
+      <section class="mb-8">
+        <h3 class="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">Twitch events</h3>
 
-      <!-- Twitch Events List -->
-      <div class="space-y-2 mb-8 relative">
-        <div v-if="isSaving" class="fixed top-0 right-0 m-2 p-4 bg-card z-100"><span class="text-green-400">saving&hellip;</span></div>
-        <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">Twitch Events</h3>
         <div
-          v-for="mapping in localMappings" :key="mapping.event_type" class="group"
+          v-if="twitchMappings.length === 0"
+          class="rounded-sm border border-dashed border-muted-foreground/25 p-6 text-center text-sm text-muted-foreground"
         >
-          <!-- Event Row -->
-          <div
-            class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar-border hover:bg-sidebar p-4"
-            :class="{
-              'bg-sidebar rounded-b-none border border-b-0': mapping.enabled && expandedEvent === mapping.event_type,
-              'bg-background': !mapping.enabled || expandedEvent !== mapping.event_type,
-            }"
-            @click="toggleEvent(mapping.event_type)"
-          >
-            <!-- Enable Toggle -->
-            <label class="relative inline-flex cursor-pointer items-center" @click.stop>
-              <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
-              <span
-                class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none
-                after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white
-                after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600
-                dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
-              ></span>
-            </label>
+          No Twitch events are currently bound to an alert template.
+        </div>
 
-            <!-- Event Info -->
+        <div v-else class="space-y-2">
+          <Link
+            v-for="row in twitchMappings"
+            :key="row.event_type"
+            :href="row.template ? route('templates.show', row.template.id) : '#'"
+            class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+          >
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h3 class="font-medium text-foreground">{{ eventTypes[mapping.event_type] }}</h3>
+                <span class="font-medium text-foreground">{{ row.event_label }}</span>
                 <span
-                  class="peer hidden sm:inline font-mono text-sm border border-dashed p-0.5 px-2
-                  rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200  truncate max-w-56"
-                  :class="mapping.enabled && expandedEvent === mapping.event_type ? 'border-card' : 'border-violet-300/30'"
+                  class="hidden rounded-full border border-dashed border-violet-300/30 px-2 py-0.5 text-xs font-mono text-slate-500 dark:text-slate-400 sm:inline"
                 >
-                  {{ mapping.event_type }}
+                  {{ row.event_type }}
                 </span>
               </div>
-
-              <!-- Quick Status when enabled -->
-              <div v-if="mapping.enabled" class="mt-1 text-sm">
-                <span :class="mapping.template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
-                  {{ getTemplateName(mapping.template_id) }}
-                </span>
-                <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000}}s ·
-                  in: {{ transitionInTypes[mapping.transition_in] }} /
-                  out: {{ transitionOutTypes[mapping.transition_out] }}
-                </span>
+              <div v-if="row.template" class="mt-1 text-sm text-foreground">
+                {{ row.template.name }}
+                <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
               </div>
             </div>
-
-            <!-- Status Indicator -->
-            <div class="flex items-center gap-2">
-              <div v-if="mapping.enabled && !mapping.template_id" class="h-2 w-2 rounded-full bg-yellow-500"
-                   title="Template not selected"></div>
-              <div v-else-if="mapping.enabled" class="h-2 w-2 rounded-full bg-green-500" title="Active"></div>
-              <svg
-                class="h-5 w-5 text-muted-foreground transition-transform"
-                :class="{ 'rotate-180': expandedEvent === mapping.event_type }"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-
-          <!-- Configuration Panel -->
-          <div
-            v-if="mapping.enabled && expandedEvent === mapping.event_type"
-            class="mb-2 border bg-sidebar border-t-0 border-violet-300/30 rounded-b-sm p-4"
-            :class="{ 'pointer-events-none opacity-50 transition-all': isSaving }"
-            @click.stop
-          >
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <!-- Template Selection -->
-              <div class="flex flex-col gap-1">
-                <label>Alert Template</label>
-                <select
-                  v-model="mapping.template_id"
-                  @change="saveAllMappings"
-                  :disabled="isSaving"
-                  class="input-border h-10 w-full rounded-sm"
-                  :class="{
-                    'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.template_id,
-                  }"
-                >
-                  <option :value="null">Select a template...</option>
-                  <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id"
-                          :value="template.id">
-                    {{ template.name }}
-                  </option>
-                </select>
-                <p v-if="!mapping.template_id" class="text-xs text-yellow-600">Select a template to show alerts</p>
-              </div>
-
-              <!-- Duration Input -->
-              <div class="flex flex-col gap-1">
-                <label>Duration (seconds)</label>
-                <div class="flex items-center gap-2">
-                  <input
-                    :value="mapping.duration_ms / 1000"
-                    @input="mapping.duration_ms = Math.min(30, Math.max(1, Number(($event.target as HTMLInputElement).value) || 1)) * 1000"
-                    @blur="saveAllMappings"
-                    :disabled="isSaving"
-                    type="number"
-                    min="1"
-                    max="30"
-                    step="1"
-                    class="input-border h-10 w-24 rounded-sm"
-                    placeholder="1-30"
-                  />
-                  <span class="text-sm text-muted-foreground">seconds</span>
-                </div>
-              </div>
-
-              <!-- Enter Animation -->
-              <div class="flex flex-col gap-1">
-                <label>Enter Animation</label>
-                <select
-                  v-model="mapping.transition_in"
-                  class="input-border h-10 w-full rounded-sm"
-                  @change="saveAllMappings"
-                  :disabled="isSaving"
-                >
-                  <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
-                    {{ label }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Exit Animation -->
-              <div class="flex flex-col gap-1">
-                <label>Exit Animation</label>
-                <select
-                  v-model="mapping.transition_out"
-                  class="input-border h-10 w-full rounded-sm"
-                  @change="saveAllMappings"
-                  :disabled="isSaving"
-                >
-                  <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
-                    {{ label }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Preview Description -->
-            <div v-if="mapping.template_id"
-                 class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
-              <p class="text-sm">
-                <span class="font-medium">Preview:</span>
-                When a {{ eventTypes[mapping.event_type].toLowerCase() }} occurs, the
-                "{{ getTemplateName(mapping.template_id) }}" alert will
-                enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display for
-                {{ mapping.duration_ms / 1000 }} seconds,
-                then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
-              </p>
-            </div>
-          </div>
+            <ExternalLink class="h-4 w-4 text-muted-foreground" />
+          </Link>
         </div>
-      </div>
+      </section>
 
-      <!-- External Integrations Section -->
-      <template v-if="externalServices.length > 0">
-        <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">External Integrations</h3>
+      <!-- External services -->
+      <section v-for="service in connectedServices" :key="service" class="mb-8">
+        <h3 class="mb-2 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          {{ SERVICE_LABELS[service] ?? service }}
+          <span class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400">external</span>
+        </h3>
 
-        <template v-for="service in externalServices" :key="service">
-          <div class="mb-6">
-            <div class="mb-2 flex items-center gap-2">
-              <span class="text-base font-semibold text-foreground">{{ serviceLabel[service] ?? service }}</span>
-              <span class="rounded-full border border-orange-400/40 px-2 py-0.5 text-xs text-orange-400">external</span>
-            </div>
+        <div
+          v-if="!externalByService[service] || externalByService[service].length === 0"
+          class="rounded-sm border border-dashed border-muted-foreground/25 p-6 text-center text-sm text-muted-foreground"
+        >
+          No {{ SERVICE_LABELS[service] ?? service }} events are currently bound to an alert template.
+        </div>
 
-            <div class="space-y-2">
-              <div
-                v-for="mapping in localExternalMappings.filter(m => m.service === service)"
-                :key="externalEventKey(mapping)"
-                class="group"
-              >
-                <!-- Event Row -->
-                <div
-                  class="flex cursor-pointer items-center gap-4 rounded-sm border border-violet-300/30 hover:bg-sidebar p-4"
-                  :class="{
-                    'bg-sidebar-accent rounded-b-none border border-b-0': mapping.enabled && expandedExternalEvent === externalEventKey(mapping),
-                    'bg-background': !mapping.enabled || expandedExternalEvent !== externalEventKey(mapping)
-                  }"
-                  @click="toggleExternalEvent(externalEventKey(mapping))"
+        <div v-else class="space-y-2">
+          <Link
+            v-for="row in externalByService[service]"
+            :key="`${row.service}:${row.event_type}`"
+            :href="row.template ? route('templates.show', row.template.id) : '#'"
+            class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span class="font-medium text-foreground">{{ row.event_label }}</span>
+                <span
+                  class="hidden rounded-full border border-dashed border-violet-300/30 px-2 py-0.5 text-xs font-mono text-slate-500 dark:text-slate-400 sm:inline"
                 >
-                  <!-- Enable Toggle -->
-                  <label class="relative inline-flex cursor-pointer items-center" @click.stop>
-                    <input type="checkbox" v-model="mapping.enabled" class="peer sr-only" />
-                    <span
-                      class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-700 dark:after:bg-gray-100"
-                    ></span>
-                  </label>
-
-                  <!-- Event Info -->
-                  <div class="min-w-0 flex-1">
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <h3 class="font-medium text-foreground">
-                        {{ externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type }}
-                      </h3>
-                      <span
-                        class="hidden sm:inline font-mono text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition truncate max-w-56">
-                        {{ mapping.event_type }}
-                      </span>
-                    </div>
-
-                    <!-- Quick Status when enabled -->
-                    <div v-if="mapping.enabled" class="mt-1 text-sm">
-                      <span :class="mapping.overlay_template_id ? 'text-sidebar-foreground/80' : 'text-yellow-600'">
-                        {{ getTemplateName(mapping.overlay_template_id) }}
-                      </span>
-                      <span class="hidden sm:inline text-sidebar-foreground/50"> · {{ mapping.duration_ms / 1000 }}s · in: {{ transitionInTypes[mapping.transition_in]
-                        }} / out: {{ transitionOutTypes[mapping.transition_out] }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Status Indicator -->
-                  <div class="flex items-center gap-2">
-                    <div v-if="mapping.enabled && !mapping.overlay_template_id"
-                         class="h-2 w-2 rounded-full bg-yellow-500" title="Template not selected"></div>
-                    <div v-else-if="mapping.enabled" class="h-2 w-2 rounded-full bg-green-500" title="Active"></div>
-                    <svg
-                      class="h-5 w-5 text-muted-foreground transition-transform"
-                      :class="{ 'rotate-180': expandedExternalEvent === externalEventKey(mapping) }"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-
-                <!-- Configuration Panel -->
-                <div
-                  v-if="mapping.enabled && expandedExternalEvent === externalEventKey(mapping)"
-                  class="mb-2 border bg-sidebar border-t-0 border-violet-300/30 rounded-b-sm p-4"
-                  @click.stop
-                >
-                  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    <!-- Template Selection -->
-                    <div class="flex flex-col gap-1">
-                      <label>Alert Template</label>
-                      <select
-                        v-model="mapping.overlay_template_id"
-                        class="input-border h-10 w-full rounded-sm"
-                        :class="{
-                          'border-yellow-500 bg-yellow-500/10 dark:bg-yellow-900': !mapping.overlay_template_id,
-                        }"
-                      >
-                        <option :value="null">Select a template...</option>
-                        <option v-for="template in [...alertTemplates].sort((a, b) => b.id - a.id)" :key="template.id"
-                                :value="template.id">
-                          {{ template.name }}
-                        </option>
-                      </select>
-                      <p v-if="!mapping.overlay_template_id" class="text-xs text-yellow-600">Select a template to show
-                        alerts</p>
-                    </div>
-
-                    <!-- Duration Input -->
-                    <div class="flex flex-col gap-1">
-                      <label>Duration (seconds)</label>
-                      <div class="flex items-center gap-2">
-                        <input
-                          :value="mapping.duration_ms / 1000"
-                          @input="mapping.duration_ms = Math.min(30, Math.max(1, Number(($event.target as HTMLInputElement).value) || 1)) * 1000"
-                          type="number"
-                          min="1"
-                          max="30"
-                          step="1"
-                          class="input-border h-10 w-24 rounded-sm"
-                          placeholder="1-30"
-                        />
-                        <span class="text-sm text-muted-foreground">seconds</span>
-                      </div>
-                    </div>
-
-                    <!-- Enter Animation -->
-                    <div class="flex flex-col gap-1">
-                      <label>Enter Animation</label>
-                      <select
-                        v-model="mapping.transition_in"
-                        class="input-border h-10 w-full rounded-sm"
-                      >
-                        <option v-for="(label, value) in transitionInTypes" :key="value" :value="value">
-                          {{ label }}
-                        </option>
-                      </select>
-                    </div>
-
-                    <!-- Exit Animation -->
-                    <div class="flex flex-col gap-1">
-                      <label>Exit Animation</label>
-                      <select
-                        v-model="mapping.transition_out"
-                        class="input-border h-10 w-full rounded-sm"
-                      >
-                        <option v-for="(label, value) in transitionOutTypes" :key="value" :value="value">
-                          {{ label }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Preview Description -->
-                  <div v-if="mapping.overlay_template_id"
-                       class="mt-4 border rounded-md bg-green-400/15 text-green-700 dark:text-green-400 border-green-400 dark:border-green-400 p-3">
-                    <p class="text-sm">
-                      <span class="font-medium">Preview:</span>
-                      When a {{ (externalEventTypes[service]?.[mapping.event_type] ?? mapping.event_type).toLowerCase()
-                      }} occurs, the "{{ getTemplateName(mapping.overlay_template_id) }}" alert will
-                      enter as <strong>{{ transitionInTypes[mapping.transition_in]?.toLowerCase() }}</strong>, display
-                      for {{ mapping.duration_ms / 1000 }} seconds,
-                      then exit as <strong>{{ transitionOutTypes[mapping.transition_out]?.toLowerCase() }}</strong>.
-                    </p>
-                  </div>
-                </div>
+                  {{ row.service }}:{{ row.event_type }}
+                </span>
+              </div>
+              <div v-if="row.template" class="mt-1 text-sm text-foreground">
+                {{ row.template.name }}
+                <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
               </div>
             </div>
-          </div>
-        </template>
-      </template>
+            <ExternalLink class="h-4 w-4 text-muted-foreground" />
+          </Link>
+        </div>
+      </section>
 
-      <!-- Bottom Save Button -->
-      <div class="mt-8 flex justify-end border-t border-border pt-6">
-        <button @click="saveAllMappings" :disabled="isSaving" class="btn btn-primary min-w-40">
-          {{ isSaving ? 'Saving Changes...' : 'Save All Changes' }}
-        </button>
-      </div>
+      <!-- Unassigned twitch events (informational) -->
+      <section v-if="unassignedEventTypes.length > 0">
+        <h3 class="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          Unassigned Twitch events
+        </h3>
+        <p class="mb-3 text-xs text-muted-foreground">
+          These events are not currently bound to any alert template. Bind them from an alert template's Triggers tab.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span
+            v-for="row in unassignedEventTypes"
+            :key="row.event_type"
+            class="rounded-full border border-sidebar-border bg-sidebar px-3 py-1 text-xs text-muted-foreground"
+            :title="row.event_type"
+          >
+            {{ row.event_label }}
+          </span>
+        </div>
+      </section>
     </div>
-
-    <!-- Toast Notification -->
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>
 </template>
-
-<style scoped>
-/* Custom range input styling */
-input[type='range']::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: hsl(var(--primary));
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 2px solid white;
-}
-
-input[type='range']::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: hsl(var(--primary));
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 2px solid white;
-}
-
-input[type='range']::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-input[type='range']::-moz-range-thumb:hover {
-  transform: scale(1.1);
-}
-
-/* Dark mode adjustments for range track */
-@media (prefers-color-scheme: dark) {
-  input[type='range'] {
-    background: rgba(255, 255, 255, 0.1);
-  }
-}
-</style>

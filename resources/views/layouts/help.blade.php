@@ -64,7 +64,7 @@
             </a>
             <nav class="flex items-center gap-4 text-sm">
                 <a href="/help" class="text-foreground hover:underline cursor-pointer">Help</a>
-                <a href="/" class="text-muted-foreground hover:underline cursor-pointer">Back to app</a>
+                <a href="/dashboard" class="text-muted-foreground hover:underline cursor-pointer">Back to Dashboard</a>
             </nav>
         </div>
     </header>

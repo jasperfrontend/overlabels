@@ -25,11 +25,9 @@
   <!-- Alert contents are morphed too, so live-updating alerts (e.g. poll.progress
        firing alert.triggered repeatedly) reuse data-key'd children instead of
        replacing them on every payload. -->
-  <transition :name="activeTransitionName" @leave="onAlertLeave">
-    <div v-if="!error && currentAlert" class="alert-overlay">
-      <div ref="alertContainer" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
-    </div>
-  </transition>
+  <div v-if="!error && currentAlert" class="alert-overlay">
+    <div ref="alertContainer" class="alert-content" :id="`alert-content-${currentAlert.timestamp}`" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -66,8 +64,6 @@ interface AlertData {
   compiledCss: string;
   data: Record<string, any>;
   duration: number;
-  transitionIn: string;
-  transitionOut: string;
   timestamp: number;
 }
 
@@ -200,7 +196,6 @@ function stopTimerTick(key: string) {
 }
 
 // Alert system state
-const activeTransitionName = ref('fade');
 const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
@@ -380,9 +375,6 @@ function showAlert(alertData: AlertData) {
     injectAlertStyle(alertData.css);
   }
 
-  // Set enter transition before showing alert — Vue reads :name at transition-start time
-  activeTransitionName.value = alertData.transitionIn || 'fade';
-
   // Show the alert
   currentAlert.value = alertData;
 
@@ -394,8 +386,8 @@ function showAlert(alertData: AlertData) {
 
 function dismissAlert() {
   if (currentAlert.value) {
-    activeTransitionName.value = currentAlert.value.transitionOut || 'fade';
     currentAlert.value = null;
+    eventStore.clearOverlayTriggers();
   }
   if (alertTimeout.value) {
     clearTimeout(alertTimeout.value);
@@ -431,10 +423,6 @@ function injectAlertCompiledStyle(styleString: string) {
     document.head.appendChild(style);
   }
 }
-
-const onAlertLeave = () => {
-  eventStore.clearOverlayTriggers();
-};
 
 onMounted(async () => {
   data.value = {};
@@ -724,8 +712,6 @@ function handleAlertTriggered(event: any) {
     compiledCss,
     data: mergedData,
     duration: alertData.duration,
-    transitionIn: alertData.transition_in || 'none',
-    transitionOut: alertData.transition_out || 'none',
     timestamp: alertData.timestamp || Date.now(),
   });
 }
