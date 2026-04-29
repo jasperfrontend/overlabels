@@ -61,6 +61,18 @@ function syncTagsFromInput() {
 
 function submit() {
   syncTagsFromInput();
+  // datetime-local is naive (no timezone). Reinterpret it as the browser's
+  // local time and ship UTC, otherwise Laravel parses it as UTC and a post
+  // saved at "now" lands in the future for any non-UTC streamer.
+  if (form.published_at) {
+    const local = new Date(form.published_at);
+    if (!Number.isNaN(local.getTime())) {
+      form.transform((data) => ({
+        ...data,
+        published_at: local.toISOString(),
+      }));
+    }
+  }
   if (isEditing.value) {
     form.put(route('admin.updates.update', props.update!.id));
   } else {

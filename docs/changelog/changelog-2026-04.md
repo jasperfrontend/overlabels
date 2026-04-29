@@ -1,5 +1,10 @@
 # CHANGELOG APRIL 2026
 
+## April 29th, 2026 - Fix `/updates` timezone: convert `datetime-local` to UTC before submit
+
+- `<input type="datetime-local">` ships a naive timestamp (no timezone). The admin form was sending that string straight to Laravel, where the `date` validator + the model's `datetime` cast parse it as UTC, so a streamer in CET picking "now" got a row two hours in the future and the `published()` scope (`published_at <= now()`) filtered it back out of `/updates`. Symptom: post sits in the DB but never shows up in the list.
+- Fix is one-sided in `admin/updates/edit.vue`: before submit, reinterpret the form value as a local `Date` and ship `local.toISOString()` via `form.transform()`. The backend stays unchanged - it now receives a real UTC instant and the `datetime` cast does the right thing.
+
 ## April 29th, 2026 - Add `/updates`: a lightweight blog for platform announcements
 
 - New `updates` table and matching `Update` model: id, title, slug (unique, auto-generated from title via `Str::slug` with collision suffixing), `tags` (JSON array of strings, preserved as-typed because the spec called for "as-is, lowercase, uppercase - no html"), `excerpt` (markdown text, optional), `body` (markdown text, required, HTML inline allowed), `published_at` (datetime, indexed). Excerpt and body are rendered through `marked` on the frontend, the same renderer the help reference uses, so authors can write either markdown or HTML. The `published()` scope filters to `published_at <= now()` so an admin can backdate a post or schedule it forward without it leaking before the timestamp.
