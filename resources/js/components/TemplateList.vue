@@ -69,12 +69,11 @@ function handleDelete(t: OverlayTemplate) {
 </script>
 
 <template>
-  <div class="my-4 w-auto rounded-sm border border-sidebar-border bg-background">
+  <div class="my-4 w-auto flex flex-col gap-2 rounded-sm">
     <div v-for="t in templates" :key="t.id" class="group text-sm">
       <Link
         :href="detailsHref(t)"
-        class="flex flex-row justify-between p-4 overlabels-background"
-        :class="{ 'rounded-t-sm': templates.indexOf(t) === 0, 'rounded-b-sm': templates.indexOf(t) === templates.length - 1 }"
+        class="flex flex-row justify-between p-4 gap-4 overlabels-background"
       >
         <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" description-class="text-xs" />
 

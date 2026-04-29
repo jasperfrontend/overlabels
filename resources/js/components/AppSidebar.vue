@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem
+} from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
@@ -26,7 +34,7 @@ import {
   ShieldCheck,
   Sigma,
   SlidersHorizontal,
-  Users,
+  Users
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -41,16 +49,17 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems: NavItem[] = [
   { title: 'My overlays', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers },
   { title: 'My alerts', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell },
-  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid }
+  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid },
+  { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
 ];
 const alertsNavItems: NavItem[] = [
   { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
-  { title: 'GPS Sessions', href: route('dashboard.gps-sessions'), icon: Radio },
-  { title: 'Alerts builder', href: route('events.index'), icon: Megaphone }
+  { title: 'GPS Sessions', href: route('dashboard.gps-sessions'), icon: Radio }
 ];
 
 const learnNavItems: NavItem[] = [
-  { title: 'Learn Overlabels', href: route('help'), icon: BookOpen }
+  { title: 'Learn Overlabels', href: route('help'), icon: BookOpen },
+  { title: 'Reference (Alt+r)', href: route('help.reference'), icon: Brackets }
 ];
 
 const helpNavItems: NavItem[] = [
@@ -62,7 +71,7 @@ const helpNavItems: NavItem[] = [
   { title: 'Twitch Chat Bot', href: '/help/bot', icon: BotIcon },
   { title: 'Free Resources', href: '/help/resources', icon: BookOpen },
   { title: 'Why Ko-fi', href: '/help/why-kofi', icon: Heart },
-  { title: 'Manifesto', href: '/help/manifesto', icon: FileText },
+  { title: 'Manifesto', href: '/help/manifesto', icon: FileText }
 ];
 
 const adminNavItems: NavItem[] = [
@@ -76,7 +85,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Bans', href: route('admin.bans.index'), icon: ShieldBan },
   { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
-  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
+  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert }
 ];
 </script>
 
@@ -95,15 +104,17 @@ const adminNavItems: NavItem[] = [
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
-      <NavMain v-if="user && alertsNavItems.length > 0" label="Alerts" :items="alertsNavItems" />
-      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
+      <NavMain v-if="user && mainNavItems.length > 0" label="Code & alerts" :items="mainNavItems" />
+      <NavMain v-if="user && alertsNavItems.length > 0" label="Events & sessions" :items="alertsNavItems" />
+      <NavMain v-if="user && learnNavItems.length > 0" label="Help & reference" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
+        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd
+        class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
         <div class="h-0 mt-1" />
-        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="border rounded px-1 py-0.5 text-[10px]">Space</kbd> go to
+        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd
+        class="border rounded px-1 py-0.5 text-[10px]">Space</kbd> go to
       </div>
     </SidebarContent>
 
@@ -119,7 +130,8 @@ const adminNavItems: NavItem[] = [
         </SidebarMenuItem>
       </SidebarMenu>
       <div class="px-3 pb-2 text-[10px] text-muted-foreground/50 group-data-[collapsible=icon]:hidden">
-        <a :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`" target="_blank" rel="noopener noreferrer" class="hover:text-muted-foreground transition-colors">
+        <a :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`" target="_blank"
+           rel="noopener noreferrer" class="hover:text-muted-foreground transition-colors">
           {{ commitHash }}
         </a>
       </div>

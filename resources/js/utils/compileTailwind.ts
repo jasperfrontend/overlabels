@@ -4,7 +4,7 @@
  * Scans authored template HTML (+ head + css) for utility class names and emits
  * only the rules that are actually used. The generated CSS is persisted on the
  * overlay template and injected at render time, replacing the full-CDN Tailwind
- * payload pattern that was making alert templates slow to paint.
+ * payload pattern making alert templates slow to paint.
  *
  * UnoCSS is lazy-imported so the editor pages pay the cost, not the overlay
  * renderer bundle.
@@ -23,7 +23,7 @@ async function getGenerator(): Promise<UnoGenerator> {
         import('@unocss/core'),
         import('@unocss/preset-wind3'),
       ]);
-      return createGenerator({ presets: [presetWind3()] }) as unknown as UnoGenerator;
+      return await createGenerator({ presets: [presetWind3()] }) as unknown as UnoGenerator;
     })();
   }
   return generatorPromise;

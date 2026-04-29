@@ -210,17 +210,17 @@ function relativeTime(iso: string): string {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-4 rounded-sm border border-sidebar-border p-2 transition-all ease-in-out bg-sidebar-accent',
+            'group flex items-start justify-between gap-4 flex-row p-4 overlabels-background',
             eventHoverBorderClass(event),
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer hover:bg-background active:bg-violet-400/20 dark:active:bg-violet-600/30 transition-all duration-100' : '',
-            replayingId === event.id ? 'opacity-60' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer overlabels-background transition-all duration-100' : '',
+            // replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
-            confirmingId === event.id ? 'rounded-tl-none bg-background border-violet-400 dark:border-violet-300' : 'bg-background',
+            confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
 
           ]"
           :role="canReplay(event) ? 'button' : undefined"
           :tabindex="canReplay(event) ? 0 : undefined"
-          @click="openConfirm(event)"
+          @click="canReplay(event) && confirmingId !== event.id ? openConfirm(event) : undefined"
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
@@ -245,7 +245,7 @@ function relativeTime(iso: string): string {
         </div>
       </PopoverTrigger>
 
-      <PopoverContent class="w-auto p-3 border-b-0 rounded-b-none bg-sidebar-accent border-violet-400 dark:border-violet-300" side="top" :side-offset="-1" align="start">
+      <PopoverContent class="w-auto p-3 bg-accent" side="top" :side-offset="-1" align="start">
         <div class="flex items-center gap-3">
           <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
           <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>

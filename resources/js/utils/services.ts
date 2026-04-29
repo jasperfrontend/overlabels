@@ -12,6 +12,7 @@ export const SERVICE_LABELS: Record<string, string> = {
   streamlabs: 'Streamlabs',
   gpslogger: 'GPSLogger',
   twitch: 'Twitch',
+  fourthwall: 'Fourthwall',
   'overlabels-mobile': 'Overlabels Mobile',
 };
 

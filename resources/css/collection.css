@@ -1,7 +1,7 @@
 @layer components {
   .overlabels-background {
-    @apply bg-sidebar-accent transition-all duration-100 ease-in-out;
-    @apply hover:bg-background;
-    @apply active:bg-violet-400/20 dark:active:bg-violet-600/30;
+    @apply border-l-2 border-l-accent transition-all;
+    @apply hover:border-l-violet-400 hover:bg-sidebar-accent dark:hover:bg-accent/50;
+    @apply active:border-l-violet-500 active:bg-linear-to-r active:from-violet-400/20;
   }
 }
