@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from 'vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { computed, defineAsyncComponent, ref, toRef } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2, ExternalLink } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
+
 
 const SessionMapInline = defineAsyncComponent(() => import('@/components/SessionMapInline.vue'));
 
@@ -38,72 +40,19 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'GPS Sessions', href: '/dashboard/gps-sessions' },
 ];
 
-const page = usePage();
-const userLocale = computed<string>(() => {
-  const user = (page.props as any)?.auth?.user;
-  return user?.locale || 'en-US';
-});
-
-function formatSpeed(ms: number | null): string {
-  if (ms === null) return '-';
-  const converted = props.speedUnit === 'mph'
-    ? (ms * 3.6) / 1.609344
-    : ms * 3.6;
-  return new Intl.NumberFormat(userLocale.value, { maximumFractionDigits: 1 }).format(converted);
-}
+const {
+  userLocale,
+  formatDate,
+  formatTime,
+  formatDuration,
+  formatSpeed,
+  formatAltitude,
+  formatDistance,
+  batteryDelta,
+  batteryColor,
+} = useSessionDataFormatter({ speedUnit: toRef(props, 'speedUnit') });
 
 const speedLabel = computed(() => props.speedUnit === 'mph' ? 'mph' : 'km/h');
-
-function formatDistance(km: number): string {
-  if (props.speedUnit === 'mph') {
-    const miles = km / 1.609344;
-    return new Intl.NumberFormat(userLocale.value, { maximumFractionDigits: 2 }).format(miles) + ' mi';
-  }
-  return new Intl.NumberFormat(userLocale.value, { maximumFractionDigits: 2 }).format(km) + ' km';
-}
-
-function formatAltitude(m: number | null): string {
-  if (m === null) return '-';
-  return new Intl.NumberFormat(userLocale.value, { maximumFractionDigits: 1 }).format(m) + ' m';
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(userLocale.value, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(userLocale.value, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
-function formatDuration(startIso: string, endIso: string): string {
-  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
-  }
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
-}
-
-function batteryDelta(start: number | null, end: number | null): string {
-  if (start === null || end === null) return '';
-  const diff = end - start;
-  if (diff > 0) return `+${diff}%`;
-  if (diff < 0) return `${diff}%`;
-  return '0%';
-}
-
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const deleting = ref<string | null>(null);
@@ -147,12 +96,6 @@ function toggleMap(sessionId: string) {
   expandedSessions.value = new Set(expandedSessions.value);
 }
 
-function batteryColor(pct: number | null): string {
-  if (pct === null) return 'text-muted-foreground';
-  if (pct <= 15) return 'text-red-500';
-  if (pct <= 30) return 'text-amber-500';
-  return 'text-green-500';
-}
 </script>
 
 <template>
@@ -185,7 +128,7 @@ function batteryColor(pct: number | null): string {
         <div
           v-for="session in sessions"
           :key="session.session_id"
-          class="rounded-lg border bg-card p-4 space-y-3"
+          class="rounded-lg border border-sidebar-border bg-card p-4 space-y-3"
         >
           <!-- Header: date + status -->
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

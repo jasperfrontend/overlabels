@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use DateMalformedStringException;
+use DateTimeImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -10,20 +12,23 @@ use Inertia\Response;
 class StreamSessionController extends Controller
 {
     /** Buffer added before the matched stream.online event (or session.started_at fallback). */
-    private const PRE_BUFFER_SECONDS = 300;
+    private const int PRE_BUFFER_SECONDS = 300;
 
     /** Buffer added after the matched stream.offline event (or session.ended_at fallback). */
-    private const POST_BUFFER_SECONDS = 300;
+    private const int POST_BUFFER_SECONDS = 300;
 
     /** How far from session bounds to look for the anchor stream.online/offline events. */
-    private const ANCHOR_SEARCH_MINUTES = 30;
+    private const int ANCHOR_SEARCH_MINUTES = 30;
 
     /** Max sessions returned per request (most recent first). */
-    private const SESSION_LIMIT = 50;
+    private const int SESSION_LIMIT = 50;
 
     /** Max resub messages to surface per session (most recent first). */
-    private const RESUB_MESSAGE_LIMIT = 25;
+    private const int RESUB_MESSAGE_LIMIT = 25;
 
+    /**
+     * @throws DateMalformedStringException
+     */
     public function index(Request $request): Response
     {
         $userId = $request->user()->id;
@@ -114,6 +119,7 @@ class StreamSessionController extends Controller
      * Falls back to (started_at, ended_at|now()) when no anchor event exists.
      *
      * @return array<int, array<string, mixed>> keyed by session_id
+     * @throws DateMalformedStringException
      */
     private function loadSessionsWithWindows(int $userId): array
     {
@@ -174,17 +180,17 @@ class StreamSessionController extends Controller
             $anchorStart = $onlineAnchor ?? $startedAt;
             $anchorEnd = $offlineAnchor ?? $effectiveEnd;
 
-            $windowStart = (new \DateTimeImmutable($anchorStart))
+            $windowStart = new DateTimeImmutable($anchorStart)
                 ->modify('-'.self::PRE_BUFFER_SECONDS.' seconds')
                 ->format('Y-m-d H:i:s');
-            $windowEnd = (new \DateTimeImmutable($anchorEnd))
+            $windowEnd = new DateTimeImmutable($anchorEnd)
                 ->modify('+'.self::POST_BUFFER_SECONDS.' seconds')
                 ->format('Y-m-d H:i:s');
 
             $duration = null;
             if ($endedAt !== null) {
-                $duration = (new \DateTimeImmutable($endedAt))->getTimestamp()
-                    - (new \DateTimeImmutable($startedAt))->getTimestamp();
+                $duration = new DateTimeImmutable($endedAt)->getTimestamp()
+                    - new DateTimeImmutable($startedAt)->getTimestamp();
             }
 
             $out[(int) $r->session_id] = [
@@ -359,7 +365,7 @@ class StreamSessionController extends Controller
     }
 
     /**
-     * Bounded by the streamer's reward catalog (typically <30 entries).
+     * Bounded by the streamer's reward catalogue (typically <30 entries).
      *
      * @return array<int, array<int, array<string, mixed>>>
      */
@@ -463,6 +469,7 @@ class StreamSessionController extends Controller
      * in PHP. Excludes follows, cheers, redemptions, and poll.progress on purpose.
      *
      * @return array<int, array<string, array<int, array<string, mixed>>>>
+     * @throws DateMalformedStringException
      */
     private function loadBoundedListEvents(int $userId): array
     {
@@ -615,6 +622,7 @@ class StreamSessionController extends Controller
      * Bounded by RESUB_MESSAGE_LIMIT per session via window function.
      *
      * @return array<int, array<int, array<string, mixed>>>
+     * @throws DateMalformedStringException
      */
     private function loadResubMessages(int $userId): array
     {
@@ -682,10 +690,13 @@ class StreamSessionController extends Controller
         ];
     }
 
+    /**
+     * @throws DateMalformedStringException
+     */
     private function iso(string $sqlTimestamp): string
     {
         // Postgres returns 'YYYY-MM-DD HH:MM:SS' without TZ. Treat as UTC (DB convention).
-        return (new \DateTimeImmutable($sqlTimestamp.' UTC'))->format('Y-m-d\TH:i:s\Z');
+        return new DateTimeImmutable($sqlTimestamp.' UTC')->format('Y-m-d\TH:i:s\Z');
     }
 
     /**
