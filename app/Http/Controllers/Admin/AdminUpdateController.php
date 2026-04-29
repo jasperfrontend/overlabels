@@ -52,6 +52,7 @@ class AdminUpdateController extends Controller
             'tags' => $this->normalizeTags($data['tags'] ?? null),
             'excerpt' => $data['excerpt'] ?? null,
             'body' => $data['body'],
+            'compiled_css' => $data['compiled_css'] ?? null,
             'published_at' => $data['published_at'] ?? now(),
         ]);
 
@@ -87,6 +88,7 @@ class AdminUpdateController extends Controller
             'tags' => $this->normalizeTags($data['tags'] ?? null),
             'excerpt' => $data['excerpt'] ?? null,
             'body' => $data['body'],
+            'compiled_css' => $data['compiled_css'] ?? null,
             'published_at' => $data['published_at'] ?? $update->published_at,
         ]);
 
@@ -126,6 +128,7 @@ class AdminUpdateController extends Controller
             'tags.*' => 'string|max:64',
             'excerpt' => 'nullable|string',
             'body' => 'required|string',
+            'compiled_css' => 'nullable|string',
             'published_at' => 'nullable|date',
         ]);
     }

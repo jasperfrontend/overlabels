@@ -8,7 +8,9 @@ import { Codemirror } from 'vue-codemirror';
 import { html as cmHtml } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
+import { marked } from 'marked';
 import { ArrowLeft, Save, Trash2 } from 'lucide-vue-next';
+import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
 
 const props = defineProps<{
@@ -49,6 +51,7 @@ const form = useForm({
   tags: props.update?.tags ?? [] as string[],
   excerpt: props.update?.excerpt ?? '',
   body: props.update?.body ?? '',
+  compiled_css: props.update?.compiled_css ?? '',
   published_at: toLocalDateTimeInput(props.update?.published_at ?? null),
 });
 
@@ -59,8 +62,22 @@ function syncTagsFromInput() {
     .filter(Boolean);
 }
 
-function submit() {
+async function submit() {
   syncTagsFromInput();
+
+  // Compile Tailwind utility classes that appear in the post body. The main
+  // app uses Tailwind v4 with build-time scanning, so any class that only
+  // exists in DB-stored markdown is invisible to it. We mirror the overlay
+  // pattern: compile in the browser at save time via UnoCSS preset-wind3 and
+  // persist the result, then inject it on the show page. We render markdown
+  // through `marked` first so the compiler sees the actual HTML attributes
+  // (markdown like `**bold**` doesn't carry classes, but inline HTML does).
+  const renderedBody = marked.parse(form.body) as string;
+  const renderedExcerpt = form.excerpt ? (marked.parse(form.excerpt) as string) : '';
+  form.compiled_css = await compileTailwindCss({
+    html: `${renderedExcerpt}\n${renderedBody}`,
+  });
+
   // datetime-local is naive (no timezone). Reinterpret it as the browser's
   // local time and ship UTC, otherwise Laravel parses it as UTC and a post
   // saved at "now" lands in the future for any non-UTC streamer.

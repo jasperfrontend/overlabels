@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  * @property array<int, string>|null $tags
  * @property string|null $excerpt
  * @property string $body
+ * @property string|null $compiled_css
  * @property Carbon $published_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -28,6 +29,7 @@ class Update extends Model
         'tags',
         'excerpt',
         'body',
+        'compiled_css',
         'published_at',
     ];
 

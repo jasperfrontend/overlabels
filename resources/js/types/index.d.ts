@@ -144,6 +144,7 @@ export interface Update {
   tags: string[] | null;
   excerpt: string | null;
   body: string;
+  compiled_css: string | null;
   published_at: string;
   created_at: string;
   updated_at: string;

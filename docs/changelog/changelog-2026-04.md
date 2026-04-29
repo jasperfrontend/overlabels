@@ -1,5 +1,12 @@
 # CHANGELOG APRIL 2026
 
+## April 30th, 2026 - Compile Tailwind utilities for post bodies via UnoCSS at save time
+
+- Symptom: an admin writing `bg-yellow-400/10` (or any other slashed-opacity / arbitrary-value Tailwind class) inside a post body got no styling, while bare `bg-yellow-400` worked. Cause: the main app uses Tailwind v4 with build-time source scanning, so utilities that only exist inside DB-stored markdown are invisible to the build and never get emitted into the shipped CSS bundle. `bg-yellow-400` happened to be used elsewhere in source so it was already in the bundle; `bg-yellow-400/10` was not.
+- Fix mirrors the existing overlay pattern (`compileTailwindCss()` in `resources/js/utils/compileTailwind.ts`, used by the template editor pages): at save time, render the markdown body through `marked` so the compiler sees the actual HTML attributes, then run UnoCSS preset-wind3 over the rendered HTML and persist the minified output on the row. New `compiled_css` text column on `updates` (nullable), `'compiled_css'` added to the model's `$fillable`, and the validator + create/update payloads in `AdminUpdateController` accept and persist it.
+- Show page (`updates/show.vue`) injects `compiled_css` as a `<style id="updates-post-style">` in `<head>` via a `watch(immediate: true)`, and strips it in `onBeforeUnmount` so the post-specific utilities don't leak into other pages during Inertia client-side navigation. Following the overlay convention, the compiled utilities are injected so user-authored CSS in a post can still override them.
+- Backfill for the one pre-existing post: ran a one-shot Node script (`@unocss/core` + `@unocss/preset-wind3` + `marked`, all already in `node_modules`) over the rendered body and persisted ~2KB of compiled CSS via tinker. Going forward every save in the admin form does the same browser-side.
+
 ## April 29th, 2026 - Fix `/updates` timezone: convert `datetime-local` to UTC before submit
 
 - `<input type="datetime-local">` ships a naive timestamp (no timezone). The admin form was sending that string straight to Laravel, where the `date` validator + the model's `datetime` cast parse it as UTC, so a streamer in CET picking "now" got a row two hours in the future and the `published()` scope (`published_at <= now()`) filtered it back out of `/updates`. Symptom: post sits in the DB but never shows up in the list.

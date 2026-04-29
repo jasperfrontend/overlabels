@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { marked } from 'marked';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -19,6 +19,30 @@ const renderedBody = computed(() => marked.parse(props.update.body) as string);
 const renderedExcerpt = computed(() =>
   props.update.excerpt ? (marked.parse(props.update.excerpt) as string) : ''
 );
+
+// Tailwind v4 only ships utilities that appear in source files. Anything
+// authors write inside markdown (e.g. `bg-yellow-400/10`) is invisible to it,
+// so the compiler in the admin form pre-generates the missing utilities via
+// UnoCSS preset-wind3 and stores them on the row. We inject that CSS into
+// <head> while the post is mounted, then strip it on unmount so it doesn't
+// leak utilities into other pages on client-side navigation.
+const STYLE_ID = 'updates-post-style';
+function injectPostStyle(css: string) {
+  document.getElementById(STYLE_ID)?.remove();
+  if (!css) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+watch(
+  () => props.update.compiled_css,
+  (css) => injectPostStyle(css ?? ''),
+  { immediate: true },
+);
+onBeforeUnmount(() => {
+  document.getElementById(STYLE_ID)?.remove();
+});
 
 const formattedDate = computed(() =>
   new Intl.DateTimeFormat(undefined, {
