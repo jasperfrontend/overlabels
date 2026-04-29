@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed, watch, watchEffect } from 'vue';
 import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -11,23 +11,66 @@ import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import type { AppPageProps } from '@/types';
 
-const props = defineProps({
-  templates: Object,
-  filters: Object
-});
+interface FiltersShape {
+  filter?: string;
+  search?: string;
+  type?: string;
+  sort?: string;
+  direction?: string;
+}
 
-const filters = ref({
-  filter: props.filters?.filter || 'all_templates',
-  search: props.filters?.search || '',
-  type: props.filters?.type || '',
-  sort: props.filters?.sort || 'created_at',
-  direction: props.filters?.direction || 'desc'
-});
+const props = defineProps<{
+  templates?: Record<string, any>;
+  filters?: FiltersShape;
+}>();
+
+function normalizeFilters(input?: FiltersShape) {
+  return {
+    filter: input?.filter || 'all_templates',
+    search: input?.search || '',
+    type: input?.type || '',
+    sort: input?.sort || 'created_at',
+    direction: input?.direction || 'desc',
+  };
+}
+
+const filters = ref(normalizeFilters(props.filters));
+
+// Re-sync local filter UI when Inertia restores props on browser back/forward.
+// Without this, going back to a filtered list URL keeps the previous filter
+// form values - the URL changes but the form doesn't reflect it.
+watch(
+  () => props.filters,
+  (newFilters) => {
+    filters.value = normalizeFilters(newFilters);
+  },
+  { deep: true },
+);
+
+// Build a query object that strips empty strings and default values, so the
+// URL stays canonical and doesn't bounce between equivalent forms (e.g.
+// `?search=` vs `?search` vs no search param at all). Bouncing creates
+// spurious browser history entries that break back/forward navigation.
+function buildQuery(): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filters.value.filter && filters.value.filter !== 'all_templates') {
+    params.filter = filters.value.filter;
+  }
+  if (filters.value.search) params.search = filters.value.search;
+  if (filters.value.type) params.type = filters.value.type;
+  if (filters.value.sort && filters.value.sort !== 'created_at') {
+    params.sort = filters.value.sort;
+  }
+  if (filters.value.direction && filters.value.direction !== 'desc') {
+    params.direction = filters.value.direction;
+  }
+  return params;
+}
 
 const applyFilter = () => {
-  router.get(route('templates.index'), filters.value, {
+  router.get(route('templates.index'), buildQuery(), {
     preserveState: true,
-    preserveScroll: true
+    preserveScroll: true,
   });
 };
 
