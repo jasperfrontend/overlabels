@@ -28,7 +28,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|StreamSession whereUpdatedAt($value)
  * @method static Builder<static>|StreamSession whereUserId($value)
  * @mixin Eloquent
- * @mixin IdeHelperStreamSession
  */
 class StreamSession extends Model
 {

@@ -23,6 +23,7 @@ use App\Http\Controllers\RoomBuilderController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
+use App\Http\Controllers\StreamSessionController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
@@ -167,6 +168,10 @@ Route::get('/dashboard/gps-sessions', [GpsSessionController::class, 'index'])
 Route::delete('/dashboard/gps-sessions/{sessionId}', [GpsSessionController::class, 'destroy'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.gps-sessions.destroy');
+
+Route::get('/dashboard/stream-sessions', [StreamSessionController::class, 'index'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.stream-sessions');
 
 Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
     ->middleware(['auth.redirect'])
