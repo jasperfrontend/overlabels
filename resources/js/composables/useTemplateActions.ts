@@ -59,15 +59,38 @@ export function useTemplateActions(template: any) {
     }
   };
 
-  const deleteTemplate = () => {
+  const deleteTemplate = async () => {
     if (!canDelete.value) return;
     if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
 
-    router.delete(route('templates.destroy', template), {
-      onSuccess: () => {
-        // Will redirect to index
-      },
-    });
+    // Use plain axios (not router.delete) so we don't follow the controller's
+    // Inertia redirect to /templates - we want to honor the
+    // templates_list_context sessionStorage entry that the index page sets,
+    // so deleting from show/edit returns the user to the filtered list they
+    // came from instead of resetting to the unfiltered index.
+    try {
+      await axios.delete(route('templates.destroy', template), {
+        headers: { Accept: 'application/json' },
+      });
+
+      let target = route('templates.index');
+      try {
+        const stored = sessionStorage.getItem('templates_list_context');
+        if (stored) {
+          const ctx = JSON.parse(stored);
+          if (typeof ctx?.href === 'string') target = ctx.href;
+        }
+      } catch {
+        // fall through to default
+      }
+      router.visit(target);
+    } catch (error: any) {
+      const msg = error?.response?.data?.error ?? 'Failed to delete template.';
+      showToast.value = false;
+      toastMessage.value = msg;
+      toastType.value = 'error';
+      showToast.value = true;
+    }
   };
 
   return {
