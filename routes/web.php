@@ -28,6 +28,7 @@ use App\Http\Controllers\TestingController;
 use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
+use App\Http\Controllers\UpdateController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\Game;
 use App\Models\User;
@@ -461,6 +462,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
         Route::put('/{template}/triggers', [OverlayTemplateController::class, 'updateTriggers'])->name('triggers');
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
+    });
+
+    // Updates (blog-style platform announcements)
+    Route::prefix('updates')->name('updates.')->group(function () {
+        Route::get('/', [UpdateController::class, 'index'])->name('index');
+        Route::get('/{slug}', [UpdateController::class, 'show'])->name('show')->where('slug', '[a-z0-9-]+');
     });
 
     // Cloudinary uploads - all image uploads route through here so we can

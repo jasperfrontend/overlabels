@@ -25,6 +25,7 @@ import {
   Layers,
   LayoutGrid,
   LogIn,
+  Newspaper,
   Pipette,
   Radio,
   ScrollText,
@@ -83,7 +84,8 @@ const adminSectionItems: NavItem[] = [
   { title: 'Bans', href: route('admin.bans.index'), icon: ShieldBan },
   { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
   { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
-  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert }
+  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
+  { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper }
 ];
 
 const isOnAdminPage = computed(() => page.url.startsWith('/admin'));

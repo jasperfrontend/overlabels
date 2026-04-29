@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTemplateTagController;
 use App\Http\Controllers\Admin\AdminTwitchBotController;
 use App\Http\Controllers\Admin\AdminTwitchEventController;
+use App\Http\Controllers\Admin\AdminUpdateController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +93,14 @@ Route::prefix('admin')
 
         // Twitch Bot (@overlabels shared account)
         Route::get('/twitchbot', [AdminTwitchBotController::class, 'index'])->name('twitchbot.index');
+
+        // Updates (blog-style platform announcements)
+        Route::get('/updates', [AdminUpdateController::class, 'index'])->name('updates.index');
+        Route::get('/updates/create', [AdminUpdateController::class, 'create'])->name('updates.create');
+        Route::post('/updates', [AdminUpdateController::class, 'store'])->name('updates.store');
+        Route::get('/updates/{update}/edit', [AdminUpdateController::class, 'edit'])->name('updates.edit');
+        Route::put('/updates/{update}', [AdminUpdateController::class, 'update'])->name('updates.update');
+        Route::delete('/updates/{update}', [AdminUpdateController::class, 'destroy'])->name('updates.destroy');
     });
 
 // Twitch Bot OAuth flow - must live at /auth/twitchbot/callback to match the Twitch app's

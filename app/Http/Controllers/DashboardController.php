@@ -6,6 +6,7 @@ use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
+use App\Models\Update;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,12 +40,18 @@ class DashboardController extends Controller
 
         $userRecentEvents = $this->mergeRecentEvents($user->id, 5);
 
+        $recentUpdates = Update::published()
+            ->orderByDesc('published_at')
+            ->limit(5)
+            ->get();
+
         return Inertia::render('dashboard/index', [
             'userId' => $user->id,
             'userAlertTemplates' => $userAlertTemplates,
             'userStaticTemplates' => $userStaticTemplates,
             'communityTemplates' => $communityTemplates,
             'userRecentEvents' => $userRecentEvents,
+            'recentUpdates' => $recentUpdates,
             'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
         ]);

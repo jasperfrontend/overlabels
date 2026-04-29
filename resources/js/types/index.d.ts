@@ -137,6 +137,18 @@ export interface OverlayTemplate {
   updated_at: string;
 }
 
+export interface Update {
+  id: number;
+  title: string;
+  slug: string;
+  tags: string[] | null;
+  excerpt: string | null;
+  body: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OverlayControl {
   id: number;
   overlay_template_id: number | null;

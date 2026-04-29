@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import TemplateList from '@/components/TemplateList.vue';
+import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from 'lucide-vue-next';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import type { AppPageProps, OverlayTemplate } from '@/types';
+import type { AppPageProps, OverlayTemplate, Update } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
@@ -41,9 +42,12 @@ const props = defineProps<{
   userAlertTemplates: OverlayTemplate[];
   userStaticTemplates: OverlayTemplate[];
   userRecentEvents: UnifiedEvent[];
+  recentUpdates: Update[];
   needsOnboarding: boolean;
   twitchId: string;
 }>();
+
+const isAdmin = computed(() => !!page.props.isAdmin);
 
 const breadcrumbs = [
   {
@@ -101,6 +105,17 @@ const breadcrumbs = [
 
             <EmptyState v-else
                         message="No events yet. Events will appear here once you have received one or more stream events." />
+          </section>
+
+          <section v-if="props.recentUpdates && props.recentUpdates.length > 0" class="flex-1 p-4">
+            <DashboardSectionHeader
+              title="Recent updates"
+              :view-href="route('updates.index')"
+              view-title="See all platform updates"
+              :create-href="isAdmin ? route('admin.updates.create') : undefined"
+              create-title="Write a new update"
+            />
+            <UpdatesList :updates="props.recentUpdates" :is-admin="isAdmin" />
           </section>
 
         </div>
