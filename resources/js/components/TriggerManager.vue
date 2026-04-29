@@ -239,7 +239,7 @@ function countEnabled(rows: TriggerRow[]): number {
               class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-sidebar-accent p-3"
             >
               <label class="relative inline-flex cursor-pointer items-center" :title="row.enabled ? 'Disable' : 'Enable'">
-                <input v-model="row.enabled" type="checkbox" class="peer sr-only" />
+                <input v-model="row.enabled" type="checkbox" class="peer sr-only" @change="save" />
                 <span
                   class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
                 />
@@ -257,9 +257,11 @@ function countEnabled(rows: TriggerRow[]): number {
                   min="1"
                   max="999"
                   step="1"
-                  class="input-border h-9 w-20 rounded-sm cursor-pointer"
+                  class="input-border h-9 w-20 rounded-sm"
                   :disabled="!row.enabled"
                   @input="onDurationInput(row, ($event.target as HTMLInputElement).value)"
+                  @blur="save"
+                  @keydown.enter.prevent="save"
                 />
                 <span class="text-xs text-muted-foreground">sec</span>
               </div>
@@ -300,7 +302,7 @@ function countEnabled(rows: TriggerRow[]): number {
               class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-sidebar-accent p-3"
             >
               <label class="relative inline-flex cursor-pointer items-center" :title="row.enabled ? 'Disable' : 'Enable'">
-                <input v-model="row.enabled" type="checkbox" class="peer sr-only" />
+                <input v-model="row.enabled" type="checkbox" class="peer sr-only" @change="save" />
                 <span
                   class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-violet-700 dark:after:bg-gray-100"
                 />
@@ -318,9 +320,11 @@ function countEnabled(rows: TriggerRow[]): number {
                   min="1"
                   max="999"
                   step="1"
-                  class="input-border h-9 w-20 rounded-sm cursor-pointer"
+                  class="input-border h-9 w-20 rounded-sm"
                   :disabled="!row.enabled"
                   @input="onDurationInput(row, ($event.target as HTMLInputElement).value)"
+                  @blur="save"
+                  @keydown.enter.prevent="save"
                 />
                 <span class="text-xs text-muted-foreground">sec</span>
               </div>

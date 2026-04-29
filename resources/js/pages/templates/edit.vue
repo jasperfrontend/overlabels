@@ -16,6 +16,7 @@ import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager from '@/components/TriggerManager.vue';
+import AddToObsButton from '@/components/AddToObsButton.vue';
 import {
   Brackets,
   Code,
@@ -175,6 +176,7 @@ const mainTabs = computed(() => {
 
 const mainTab = ref<string>('code');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
+const obsButton = ref<InstanceType<typeof AddToObsButton> | null>(null);
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -288,6 +290,10 @@ onMounted(() => {
   register('back-to-show', 's', () => {
     if (props.template?.id) router.visit(route('templates.show', props.template.id));
   }, { description: 'Back to overlay overview' });
+
+  register('add-to-obs', 'a', () => {
+    obsButton.value?.generateOBSUrl();
+  }, { description: 'Add to OBS' });
 });
 
 </script>
@@ -313,6 +319,7 @@ onMounted(() => {
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
+          <AddToObsButton ref="obsButton" :template="template" />
           <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
