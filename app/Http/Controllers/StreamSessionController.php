@@ -272,7 +272,13 @@ class StreamSessionController extends Controller
                 AND e.twitch_timestamp >= w.window_start
                 AND e.twitch_timestamp <= w.window_end
             LEFT JOIN LATERAL (
-                SELECT event_type, COUNT(*) AS cnt
+                -- channel.poll.end fires twice per poll (status=completed|terminated, then status=archived).
+                -- Dedupe by poll id so the count reflects unique polls ended, not raw event firings.
+                SELECT event_type,
+                       CASE WHEN event_type = 'channel.poll.end'
+                            THEN COUNT(DISTINCT event_data->>'id')::int
+                            ELSE COUNT(*)::int
+                       END AS cnt
                 FROM twitch_events
                 WHERE user_id = ?
                   AND twitch_timestamp >= w.window_start
@@ -541,31 +547,62 @@ class StreamSessionController extends Controller
                     if ($pollId === null) {
                         break;
                     }
-                    $isCompletedEnd = $r->event_type === 'channel.poll.end'
-                        && ($data['status'] ?? null) === 'completed';
-                    if (isset($pollsBySession[$sid][$pollId]['_locked']) && ! $isCompletedEnd) {
-                        break;
+
+                    $status = $data['status'] ?? null;
+                    $isResolvedEnd = $r->event_type === 'channel.poll.end'
+                        && in_array($status, ['completed', 'terminated'], true);
+                    $isArchivedEnd = $r->event_type === 'channel.poll.end' && $status === 'archived';
+                    $isBegin = $r->event_type === 'channel.poll.begin';
+
+                    // Snapshot priority: resolved end (real votes + final status) > archived end > begin.
+                    // We can't assume arrival order - archived may land before completed/terminated.
+                    $newPriority = $isResolvedEnd ? 3 : ($isArchivedEnd ? 2 : 1);
+
+                    $existing = $pollsBySession[$sid][$pollId] ?? null;
+                    $currentPriority = $existing['_snapshot_priority'] ?? 0;
+
+                    if ($newPriority >= $currentPriority) {
+                        $choices = $data['choices'] ?? [];
+                        $totalVotes = array_sum(array_map(fn ($c) => (int) ($c['votes'] ?? 0), $choices));
+                        $pollsBySession[$sid][$pollId] = [
+                            'id' => $pollId,
+                            'title' => $data['title'] ?? null,
+                            'started_at' => $data['started_at'] ?? null,
+                            'ended_at' => $data['ended_at'] ?? null,
+                            'status' => $status,
+                            'choices' => $choices,
+                            'winners' => $data['winners'] ?? [],
+                            'total_votes' => $totalVotes,
+                            '_snapshot_priority' => $newPriority,
+                            '_has_begin' => $existing['_has_begin'] ?? false,
+                            '_has_end_resolved' => $existing['_has_end_resolved'] ?? false,
+                            '_has_end_archived' => $existing['_has_end_archived'] ?? false,
+                        ];
                     }
-                    $choices = $data['choices'] ?? [];
-                    $totalVotes = array_sum(array_map(fn ($c) => (int) ($c['votes'] ?? 0), $choices));
-                    $pollsBySession[$sid][$pollId] = [
-                        'id' => $pollId,
-                        'title' => $data['title'] ?? null,
-                        'started_at' => $data['started_at'] ?? null,
-                        'ended_at' => $data['ended_at'] ?? null,
-                        'status' => $data['status'] ?? null,
-                        'choices' => $choices,
-                        'winners' => $data['winners'] ?? [],
-                        'total_votes' => $totalVotes,
-                        '_locked' => $isCompletedEnd,
-                    ];
+
+                    // Always update the lifecycle flags, regardless of which snapshot won.
+                    if ($isBegin) {
+                        $pollsBySession[$sid][$pollId]['_has_begin'] = true;
+                    } elseif ($isResolvedEnd) {
+                        $pollsBySession[$sid][$pollId]['_has_end_resolved'] = true;
+                    } elseif ($isArchivedEnd) {
+                        $pollsBySession[$sid][$pollId]['_has_end_archived'] = true;
+                    }
                     break;
             }
         }
 
         foreach ($pollsBySession as $sid => $polls) {
             $out[$sid]['polls'] = array_values(array_map(function ($p) {
-                unset($p['_locked']);
+                $hasResolved = $p['_has_end_resolved'];
+                $hasArchived = $p['_has_end_archived'];
+                $p['truly_finished'] = $hasResolved && $hasArchived;
+                $p['lifecycle'] = [
+                    'has_begin' => $p['_has_begin'],
+                    'has_end_resolved' => $hasResolved,
+                    'has_end_archived' => $hasArchived,
+                ];
+                unset($p['_snapshot_priority'], $p['_has_begin'], $p['_has_end_resolved'], $p['_has_end_archived']);
 
                 return $p;
             }, $polls));
