@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExternalIntegration;
+use App\Services\Location\GeoMath;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -52,7 +54,7 @@ class GpsSessionController extends Controller
         }
 
         // Clear cached GeoJSON for this session
-        \Illuminate\Support\Facades\Cache::forget("gps_session_geojson_{$userId}_{$sessionId}");
+        Cache::forget("gps_session_geojson_{$userId}_$sessionId");
 
         return response()->json(['status' => 'ok', 'deleted' => $deleted]);
     }
@@ -79,7 +81,7 @@ class GpsSessionController extends Controller
                     FILTER (WHERE event_type = 'location_update' AND raw_payload->>'alt' IS NOT NULL) AS min_altitude,
                 MAX((raw_payload->>'alt')::float)
                     FILTER (WHERE event_type = 'location_update' AND raw_payload->>'alt' IS NOT NULL) AS max_altitude,
-                (array_agg((raw_payload->>'battery')::int ORDER BY created_at ASC)
+                (array_agg((raw_payload->>'battery')::int ORDER BY created_at)
                     FILTER (WHERE event_type = 'location_update' AND raw_payload->>'battery' IS NOT NULL))[1] AS battery_start,
                 (array_agg((raw_payload->>'battery')::int ORDER BY created_at DESC)
                     FILTER (WHERE event_type = 'location_update' AND raw_payload->>'battery' IS NOT NULL))[1] AS battery_end
@@ -140,8 +142,8 @@ class GpsSessionController extends Controller
             WHERE service = 'overlabels-mobile'
                 AND user_id = ?
                 AND event_type = 'location_update'
-                AND raw_payload->>'session_id' IN ({$placeholders})
-            ORDER BY raw_payload->>'session_id', created_at ASC
+                AND raw_payload->>'session_id' IN ($placeholders)
+            ORDER BY raw_payload->>'session_id', created_at
         ", array_merge([$userId], $sessionIds));
 
         $distances = [];
@@ -152,7 +154,7 @@ class GpsSessionController extends Controller
 
             if (isset($prevBySession[$sid])) {
                 $prev = $prevBySession[$sid];
-                $delta = $this->haversineDistance($prev->lat, $prev->lng, $ping->lat, $ping->lng);
+                $delta = GeoMath::haversineDistance($prev->lat, $prev->lng, $ping->lat, $ping->lng);
                 if ($delta > 0.001) { // >1m jitter filter
                     $distances[$sid] = ($distances[$sid] ?? 0) + $delta;
                 }
@@ -164,21 +166,5 @@ class GpsSessionController extends Controller
         }
 
         return array_map(fn ($d) => round($d, 3), $distances);
-    }
-
-    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $earthRadiusKm = 6371.0;
-
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-
-        $a = sin($dLat / 2) * sin($dLat / 2)
-            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
-            * sin($dLng / 2) * sin($dLng / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadiusKm * $c;
     }
 }

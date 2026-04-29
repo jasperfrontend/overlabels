@@ -246,7 +246,9 @@ const serviceLabel: Record<string, string> = {
       <div class="space-y-2 mb-8 relative">
         <div v-if="isSaving" class="fixed top-0 right-0 m-2 p-4 bg-card z-100"><span class="text-green-400">saving&hellip;</span></div>
         <h3 class="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">Twitch Events</h3>
-        <div v-for="mapping in localMappings" :key="mapping.event_type" class="group">
+        <div
+          v-for="mapping in localMappings" :key="mapping.event_type" class="group"
+        >
           <!-- Event Row -->
           <div
             class="flex cursor-pointer items-center gap-4 rounded-sm border border-sidebar-border hover:bg-sidebar p-4"
@@ -312,6 +314,7 @@ const serviceLabel: Record<string, string> = {
           <div
             v-if="mapping.enabled && expandedEvent === mapping.event_type"
             class="mb-2 border bg-sidebar border-t-0 border-violet-300/30 rounded-b-sm p-4"
+            :class="{ 'pointer-events-none opacity-50 transition-all': isSaving }"
             @click.stop
           >
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">

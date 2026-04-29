@@ -39,7 +39,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|UserEventsubSubscription whereUserId($value)
  * @method static Builder<static>|UserEventsubSubscription whereVersion($value)
  * @mixin Eloquent
- * @mixin IdeHelperUserEventsubSubscription
  */
 class UserEventsubSubscription extends Model
 {

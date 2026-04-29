@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\EventSubSetupCompleted;
 use App\Models\User;
 use App\Services\UserEventSubManager;
+use DateMalformedStringException;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,9 +18,9 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public int $tries = 3;
 
-    public $backoff = [10, 30, 60]; // Retry after 10s, 30s, 60s
+    public array $backoff = [10, 30, 60]; // Retry after 10s, 30s, 60s
 
     private User $user;
 
@@ -32,7 +33,7 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
     }
 
     /**
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      */
     public function handle(UserEventSubManager $manager): void
     {

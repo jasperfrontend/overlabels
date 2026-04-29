@@ -6,6 +6,7 @@ use App\Contracts\ExternalServiceDriver;
 use App\Contracts\StatefulExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
+use App\Services\Location\GeoMath;
 use Illuminate\Http\Request;
 
 class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
@@ -263,7 +264,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         $deltaKm = 0.0;
         if ($lastLat !== null && $lastLng !== null) {
-            $deltaKm = $this->haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
+            $deltaKm = GeoMath::haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
             if ($deltaKm > 0.001) {
                 $updates['gps_distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
             } else {
@@ -319,25 +320,5 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         ]);
         $integration->settings = $settings;
         $integration->save();
-    }
-
-    /**
-     * Calculate distance between two points using the haversine formula.
-     * Returns distance in kilometers.
-     */
-    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $earthRadiusKm = 6371.0;
-
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-
-        $a = sin($dLat / 2) * sin($dLat / 2)
-            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
-            * sin($dLng / 2) * sin($dLng / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadiusKm * $c;
     }
 }

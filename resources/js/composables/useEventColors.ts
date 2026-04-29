@@ -23,6 +23,7 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
   'channel.follow':           { dot: 'bg-green-500', border: 'hover:border-l-green-500' },
   'channel.poll.begin':       { dot: 'bg-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
   'channel.poll.progress':    { dot: 'bg-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
+  'channel.poll.end':         { dot: 'bg-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
 };
 
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {

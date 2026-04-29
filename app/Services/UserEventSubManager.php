@@ -134,7 +134,7 @@ class UserEventSubManager
         'channel.poll.end' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
-            'required_scope' => 'channel:read:polls',
+            'required_scope' => 'channel:manage:polls',
         ],
         // Predictions
         'channel.prediction.begin' => [

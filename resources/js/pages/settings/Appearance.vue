@@ -61,7 +61,7 @@ function updateLocale(newLocale: string) {
     });
   } catch (error) {
     showConfirmation.value = true;
-    confirmationTitle.value = 'Locale updated failed. Please try again. If the error persists, log out and back in again.';
+    confirmationTitle.value = `Locale updated failed. Please try again. If the error: ${error} persists, log out and back in again.`;
   } finally {
     showConfirmation.value = true;
     confirmationTitle.value = `locale updated to ${newLocale}`;

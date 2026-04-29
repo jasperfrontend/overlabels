@@ -4,7 +4,6 @@ import LoginSocial from '@/components/LoginSocial.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { Link } from '@inertiajs/vue3';
 import TwitchIcon from '@/components/TwitchIcon.vue';
-import { Badge } from '@/components/ui/badge';
 import { ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
