@@ -214,6 +214,27 @@ function formatCurrency(value: string, args?: string, locale?: string): string {
 }
 
 /**
+ * Parse a date input that may be either a Unix-seconds value (the Overlabels
+ * timestamp contract) or an ISO/parseable date string. Returns null if the
+ * value can't be interpreted as a date.
+ */
+function parseDateInput(value: string): Date | null {
+  const trimmed = value.trim();
+  if (trimmed === '') return null;
+
+  // Pure numeric input: Unix seconds (Overlabels contract)
+  if (/^-?\d+$/.test(trimmed)) {
+    const seconds = Number(trimmed);
+    if (isNaN(seconds)) return null;
+    const date = new Date(seconds * 1000);
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  const date = new Date(trimmed);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
  * Format a date/datetime string.
  *
  * Without args: locale-aware date + time (e.g. "Apr 5, 2026, 7:00 PM")
@@ -221,8 +242,8 @@ function formatCurrency(value: string, args?: string, locale?: string): string {
  * Custom pattern: dd, MM, yyyy, HH, mm, ss tokens
  */
 function formatDate(value: string, args?: string, locale?: string): string {
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return value;
+  const date = parseDateInput(value);
+  if (!date) return value;
 
   if (!args) {
     return new Intl.DateTimeFormat(locale, {

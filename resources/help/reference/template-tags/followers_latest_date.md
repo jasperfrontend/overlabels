@@ -1,3 +1,3 @@
-the timestamp at which the most recent follower followed the channel (RFC3339 / ISO 8601).
+the timestamp at which the most recent follower followed the channel ([Unix epoch time](https://www.epochconverter.com/clock)).
 example:
-2025-11-02T14:32:09Z
+1777575224

@@ -294,7 +294,7 @@ class TemplateDataMapperService
             'user_offline_banner' => '',
             'user_view_count' => '123,456',
             'user_email' => 'disabled@for-your-security',
-            'user_created' => '2 years ago',
+            'user_created' => 1714435200,
 
             // Channel information
             'channel_id' => '123456789',
@@ -314,14 +314,14 @@ class TemplateDataMapperService
             'followers_latest_id' => '987654321',
             'followers_latest_login' => 'newfollower123',
             'followers_latest_name' => 'NewFollower123',
-            'followers_latest_date' => '2 hours ago',
+            'followers_latest_date' => 1777672800,
 
             // Followed channels information
             'followed_total' => '567',
             'followed_latest_id' => '111222333',
             'followed_latest_login' => 'coolstreamer',
             'followed_latest_name' => 'CoolStreamer',
-            'followed_latest_date' => '1 day ago',
+            'followed_latest_date' => 1777593600,
 
             // Subscriber information
             'subscribers_total' => '89',
@@ -344,7 +344,7 @@ class TemplateDataMapperService
             'goals_latest_target' => '2,000',
             'goals_latest_current' => '1,234',
             'goals_latest_description' => 'Road to 2K followers!',
-            'goals_latest_created_at' => '1 week ago',
+            'goals_latest_created_at' => 1777075200,
         ];
     }
 
@@ -616,7 +616,15 @@ class TemplateDataMapperService
         }
 
         if (str_contains($templateTag, '_date') || str_contains($templateTag, '_created')) {
-            return $this->formatDate(is_string($value) ? $value : null);
+            if (! is_string($value) || $value === '') {
+                return '';
+            }
+
+            try {
+                return Carbon::parse($value)->getTimestamp();
+            } catch (Exception) {
+                return $value;
+            }
         }
 
         return (string) $value;
@@ -637,22 +645,6 @@ class TemplateDataMapperService
 
         // Dates/strings default to ''
         return '';
-    }
-
-    /**
-     * Format date for display
-     */
-    private function formatDate(?string $dateString): string
-    {
-        if (! $dateString) {
-            return 'N/A';
-        }
-
-        try {
-            return Carbon::parse($dateString)->diffForHumans();
-        } catch (Exception) {
-            return $dateString; // Return original if parsing fails
-        }
     }
 
     /**

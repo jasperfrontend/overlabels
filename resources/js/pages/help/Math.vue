@@ -164,7 +164,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             and you can show how long ago it fired.
           </p>
           <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">
-            now() - c.followers_latest_date_at
+            now() - t.followers_latest_date_at
           </div>
           <p class="mt-2 text-sm text-muted-foreground">
             Pipe the result through <code>|duration:mm:ss</code> and you have a "last follow was N minutes ago"

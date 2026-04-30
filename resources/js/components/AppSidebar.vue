@@ -47,13 +47,14 @@ const isAdmin = computed(() => page.props.isAdmin);
 const commitHash = __COMMIT_HASH__;
 
 const mainNavItems: NavItem[] = [
-  { title: 'My overlays', href: '/templates?filter=mine&type=static', icon: Layers },
-  { title: 'My alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
-  { title: 'My kits', href: route('kits.index'), icon: LayoutGrid }
+  { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
+  { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
+  { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
 ];
 const alertsNavItems: NavItem[] = [
-  { title: 'Recent events', href: route('dashboard.recents'), icon: Activity },
-  { title: 'GPS Sessions', href: route('dashboard.gps-sessions'), icon: Radio }
+  { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
+  { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
+  { title: 'Routes', href: route('dashboard.gps-sessions'), icon: Radio }
 ];
 
 const learnNavItems: NavItem[] = [
@@ -110,9 +111,9 @@ const adminNavItems = computed<NavItem[]>(() =>
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain v-if="user && mainNavItems.length > 0" label="Code & alerts" :items="mainNavItems" />
-      <NavMain v-if="user && alertsNavItems.length > 0" label="Events & sessions" :items="alertsNavItems" />
-      <NavMain v-if="user && learnNavItems.length > 0" label="Help & reference" :items="learnNavItems" />
+      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
+      <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" />
+      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
