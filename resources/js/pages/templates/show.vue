@@ -37,7 +37,6 @@ import {
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { useLinkWarning } from '@/composables/useLinkWarning';
 import { VisuallyHidden } from 'reka-ui';
 
 const showPreview = ref(false);
@@ -295,13 +294,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Screenshot tab -->
         <div v-if="mainTab === 'screenshot'" class="mb-6 p-4">
-          <div class="mt-1.25 pb-5 flex items-center text-sm gap-2">
+          <div class="mt-1 pb-5 flex items-center text-sm gap-2">
             {{ props.template?.name }} - screenshot
           </div>
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
-            class="max-h-[70vh] hover:opacity-70 transition-all rounded border border-sidebar cursor-pointer"
+            class="max-h-[70vh] hover:opacity-70 transition-all rounded border border-sidebar-border cursor-pointer"
             @click="showPreview = true"
           />
         </div>

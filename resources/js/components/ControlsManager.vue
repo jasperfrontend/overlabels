@@ -276,7 +276,7 @@ const controlsCounter = computed(() => controls.value.length);
   />
 
   <div class="space-y-4">
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center justify-between">
       <p class="text-sm text-foreground">
         Define mutable values your template can reference. Check
         <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a>
@@ -398,7 +398,7 @@ const controlsCounter = computed(() => controls.value.length);
                 <div class="flex shrink-0 items-center gap-2" @click.stop @keydown.stop>
                   <button
                     type="button"
-                    class="hidden items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex cursor-pointer"
+                    class="items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex cursor-pointer"
                     :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
                     @click="copySnippet(ctrl)"
                   >

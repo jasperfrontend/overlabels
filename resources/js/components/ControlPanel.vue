@@ -287,6 +287,9 @@ function handleControlUpdated(event: any) {
   }
 }
 
+
+const controlsCounter = computed(() => props.controls.length);
+
 onMounted(() => {
   const echo = (window as any).Echo;
   if (!echo || !twitchId.value) return;
@@ -354,7 +357,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
         <a class="text-violet-400 hover:underline" href="/help/controls" target="_blank">the guide</a> to see how to implement Controls in your
         Overlays.
       </p>
-      <div class="h-7.5"></div>
+      <div class="h-7" />
     </div>
 
     <div v-if="controls.length === 0" class="bg-sidebar-accent p-8 text-center text-muted-foreground">No Controls for this Overlay.</div>
@@ -419,7 +422,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
           <CollapsibleContent>
             <div class="grid grid-cols-1 bg-sidebar/50 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
               <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
-                'p-6 transition-all duration-500 bg-sidebar border border-sidebar-border',
+                'p-3 transition-all duration-500 bg-sidebar border border-sidebar-border',
                 !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
                 !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
                 !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
@@ -605,5 +608,10 @@ async function toggleBoolean(ctrl: OverlayControl) {
         </Collapsible>
       </div>
     </template>
+
+    <div class="flex items-center justify-between gap-3 text-xs">
+      <span class="text-foreground">Controls with a lock icon are managed by their source and cannot be manually changed.</span>
+      <span class="ml-auto shrink-0">{{ controlsCounter }}/50 Controls in use.</span>
+    </div>
   </div>
 </template>
