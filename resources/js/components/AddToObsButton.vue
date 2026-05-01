@@ -74,7 +74,7 @@ defineExpose({ generateOBSUrl });
 <template>
   <button
     @click="generateOBSUrl()"
-    class="h-9.5 flex gap-2 shrink-0 w-50 btn btn-xl border-0 bg-teal-400 hover:bg-teal-500 text-black"
+    class="flex gap-2 p-1 px-3 shrink-0 btn border-0 bg-teal-400/60 hover:bg-teal-500 text-black"
     title="Add this overlay to your OBS (Keyboard shortcut: 'a')"
   >
     <span class="shrink-0 text-sm font-medium uppercase tracking-wide flex items-center gap-1.5">

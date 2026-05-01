@@ -397,7 +397,7 @@ onMounted(() => {
           />
 
           <!-- Meta Tab -->
-          <div v-if="mainTab === 'meta'" class="max-w-5xl p-4 space-y-4">
+          <div v-if="mainTab === 'meta'" class="max-w-5xl p-4 pt-5 space-y-5">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Title *</label>
               <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
