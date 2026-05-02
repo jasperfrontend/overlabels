@@ -392,27 +392,31 @@ interface ExpressionEntry {
   timeDependent: boolean;
 }
 
-const TICK_INTERVAL_MS = 250;
-
+// Shared heartbeat for expressions that call `now()`. Read inside their
+// watchEffect to establish a reactive dep; advanced by requestAnimationFrame
+// while at least one time-dependent expression is registered. RAF syncs to
+// the display refresh rate (~60Hz) and auto-throttles when the tab is hidden.
 export function useExpressionEngine(data: Ref<Record<string, any> | null | undefined>) {
   const registry = new Map<string, ExpressionEntry>();
 
-  // Shared heartbeat for expressions that call `now()`. Read inside their
-  // watchEffect to establish a reactive dep; incremented by a single interval
-  // while at least one time-dependent expression is registered.
   const timeTick = ref(0);
-  let tickInterval: ReturnType<typeof setInterval> | null = null;
+  let rafHandle: number | null = null;
   let timeDependentCount = 0;
 
+  function tickFrame(): void {
+    timeTick.value++;
+    rafHandle = requestAnimationFrame(tickFrame);
+  }
+
   function ensureTickerRunning(): void {
-    if (tickInterval !== null) return;
-    tickInterval = setInterval(() => { timeTick.value++; }, TICK_INTERVAL_MS);
+    if (rafHandle !== null) return;
+    rafHandle = requestAnimationFrame(tickFrame);
   }
 
   function stopTickerIfIdle(): void {
-    if (timeDependentCount > 0 || tickInterval === null) return;
-    clearInterval(tickInterval);
-    tickInterval = null;
+    if (timeDependentCount > 0 || rafHandle === null) return;
+    cancelAnimationFrame(rafHandle);
+    rafHandle = null;
   }
 
   function registerExpression(key: string, expression: string): void {
@@ -480,9 +484,9 @@ export function useExpressionEngine(data: Ref<Record<string, any> | null | undef
     }
     registry.clear();
     timeDependentCount = 0;
-    if (tickInterval !== null) {
-      clearInterval(tickInterval);
-      tickInterval = null;
+    if (rafHandle !== null) {
+      cancelAnimationFrame(rafHandle);
+      rafHandle = null;
     }
   }
 

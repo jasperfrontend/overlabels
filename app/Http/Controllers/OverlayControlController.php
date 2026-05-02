@@ -136,10 +136,30 @@ class OverlayControlController extends Controller
                 abort(422, 'This expression would create a circular dependency.');
             }
 
+            ControlValueUpdated::dispatch(
+                $template->slug,
+                $control->broadcastKey(),
+                $control->type,
+                $control->value ?? '',
+                auth()->user()->twitch_id,
+                null,
+                $expression,
+            );
+
             return response()->json(['control' => $control], 201);
         }
 
         $control = OverlayControl::createForTemplate($template, auth()->user(), $validated);
+
+        if ($control->isRandom()) {
+            $cfg = $control->config ?? [];
+            $randomState = [
+                'min' => (int) ($cfg['min'] ?? 0),
+                'max' => (int) ($cfg['max'] ?? 100),
+                'interval' => max(100, (int) ($cfg['random_interval'] ?? 1000)),
+            ];
+            $this->broadcastUpdate($template, $control, $control->resolveDisplayValue(), null, $randomState);
+        }
 
         return response()->json(['control' => $control], 201);
     }

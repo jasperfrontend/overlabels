@@ -517,7 +517,7 @@ onMounted(async () => {
     // Start local ticking for any random-mode controls
     if (Array.isArray(json.random_controls)) {
       for (const rc of json.random_controls) {
-        startRandomTick(rc.key, { min: rc.min, max: rc.max });
+        startRandomTick(rc.key, { min: rc.min, max: rc.max, interval: rc.interval });
       }
     }
 
