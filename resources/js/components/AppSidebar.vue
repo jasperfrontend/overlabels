@@ -58,8 +58,9 @@ const alertsNavItems: NavItem[] = [
 ];
 
 const learnNavItems: NavItem[] = [
-  { title: 'Learn Overlabels', href: route('help'), icon: BookOpen },
-  { title: 'Reference (Alt+r)', href: route('help.reference'), icon: Brackets }
+  { title: 'Learn', href: route('help'), icon: BookOpen },
+  { title: 'Reference', href: route('help.reference'), icon: Brackets },
+  { title: 'Updates', href: route('updates.index'), icon: Newspaper }
 ];
 
 const helpNavItems: NavItem[] = [

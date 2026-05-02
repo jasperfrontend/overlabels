@@ -16,7 +16,7 @@
 
   .btn-chill {
     @apply text-gray-500 dark:text-gray-400 border-gray-500/50;
-    @apply hover:bg-accent;
+    @apply hover:bg-sidebar-accent dark:hover:bg-white/20;
     @apply active:bg-gray-500/30 active:border-gray-400 dark:active:border-gray-300;
     @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-600;
   }

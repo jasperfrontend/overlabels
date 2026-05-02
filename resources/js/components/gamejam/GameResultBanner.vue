@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-
+import { usePage } from '@inertiajs/vue3';
 const props = defineProps<{
   title?: string
   description?: string
@@ -12,6 +12,8 @@ const titleClass = computed(() => ({
   lost: 'text-red-400',
   neutral: 'text-yellow-400',
 }[props.status ?? 'neutral']))
+
+const page = usePage();
 </script>
 
 <template>
@@ -19,6 +21,7 @@ const titleClass = computed(() => ({
     <h2 :class="['text-8xl font-bold mb-4', titleClass]">{{ title }}</h2>
     <p class="text-3xl">{{ props.description }}</p>
     <p class="text-xl mt-8 text-olive-400">{{ props.footnote }}</p>
+    <a :href="page.props.ziggy.location">OK</a>
   </div>
 </template>
 

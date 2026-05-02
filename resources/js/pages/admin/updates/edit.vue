@@ -9,7 +9,7 @@ import { html as cmHtml } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { marked } from 'marked';
-import { ArrowLeft, Save, Trash2 } from 'lucide-vue-next';
+import { ArrowLeft, Save, Trash2, ExternalLink } from 'lucide-vue-next';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
 
@@ -142,14 +142,6 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
             <ArrowLeft class="mr-2 h-4 w-4" />
             Back
           </a>
-          <button v-if="isEditing" type="button" @click="handleDelete" class="btn btn-destructive mr-2 cursor-pointer">
-            <Trash2 class="mr-2 h-4 w-4" />
-            Delete
-          </button>
-          <button type="submit" :disabled="form.processing" class="btn btn-primary cursor-pointer">
-            <Save class="mr-2 h-4 w-4" />
-            {{ isEditing ? 'Save changes' : 'Publish' }}
-          </button>
         </template>
       </PageHeader>
 
@@ -157,7 +149,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
         <div class="lg:col-span-2 flex flex-col gap-4">
           <div class="flex flex-col gap-1">
             <label for="field-title" class="text-sm font-medium">Title</label>
-            <Input id="field-title" v-model="form.title" placeholder="What are you announcing?" required />
+            <input id="field-title" v-model="form.title" class="input-border" placeholder="What are you announcing?" required />
             <p v-if="form.errors.title" class="text-xs text-destructive">{{ form.errors.title }}</p>
           </div>
 
@@ -165,7 +157,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
             <label for="field-slug" class="text-sm font-medium">
               Slug <span class="text-muted-foreground">(optional - auto-generated from title)</span>
             </label>
-            <Input id="field-slug" v-model="form.slug" placeholder="my-update-post" />
+            <input id="field-slug" v-model="form.slug" class="input-border" placeholder="my-update-post" />
             <p v-if="form.errors.slug" class="text-xs text-destructive">{{ form.errors.slug }}</p>
           </div>
 
@@ -177,7 +169,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
               id="field-excerpt"
               v-model="form.excerpt"
               rows="3"
-              class="input-border w-full rounded-sm p-2 font-mono text-sm"
+              class="input-border w-full p-2 text-sm"
               placeholder="A short summary - markdown OK."
             />
             <p v-if="form.errors.excerpt" class="text-xs text-destructive">{{ form.errors.excerpt }}</p>
@@ -209,7 +201,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
               id="field-published"
               v-model="form.published_at"
               type="datetime-local"
-              class="input-border h-10 w-full rounded-sm px-2"
+              class="input-border h-10 w-full"
             />
             <p v-if="form.errors.published_at" class="text-xs text-destructive">{{ form.errors.published_at }}</p>
           </div>
@@ -218,13 +210,29 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
             <label for="field-tags" class="text-sm font-medium">
               Tags <span class="text-muted-foreground">(comma-separated)</span>
             </label>
-            <Input
+            <input
               id="field-tags"
               v-model="tagsInput"
               placeholder="kits, kofi, release"
+              class="input-border"
+              @input="syncTagsFromInput"
             />
             <p v-if="form.errors.tags" class="text-xs text-destructive">{{ form.errors.tags }}</p>
             <p class="text-xs text-muted-foreground">Stored exactly as you type them - no HTML, case preserved.</p>
+            <div class="flex gap-2 mt-3">
+              <button type="submit" :disabled="form.processing" class="btn btn-primary cursor-pointer">
+                <Save class="mr-2 h-4 w-4" />
+                {{ isEditing ? 'Save changes' : 'Publish' }}
+              </button>
+              <a :href="`/updates/${form.slug}`" target="_blank" class="btn btn-chill cursor-pointer">
+                <ExternalLink class="mr-2 h-4 w-4" />
+                View
+              </a>
+              <button v-if="isEditing" type="button" @click="handleDelete" class="btn btn-danger cursor-pointer">
+                <Trash2 class="mr-2 h-4 w-4" />
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>

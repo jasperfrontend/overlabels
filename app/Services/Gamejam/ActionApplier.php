@@ -199,12 +199,12 @@ class ActionApplier
         // Bosses gate their room's exit: while any boss is alive in the
         // current room, doors in that room are immune to attacks. The player
         // must kill the boss before they can break out.
+        // @todo: this causes game crashes and I can't pinpoint yet how or why. for now it's inconsistent.
         $bossAlive = $game->zombies->contains(fn (GameZombie $z) => $z->active
             && $z->room === $game->current_room
             && $z->kind === GameZombie::KIND_BOSS);
         if ($bossAlive) {
             GameLog::append($game, Game::LOG_BOSS_BLOCKED);
-
             return;
         }
 

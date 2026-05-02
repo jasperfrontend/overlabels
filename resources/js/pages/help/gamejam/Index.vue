@@ -2,6 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import { Swords, Heart, Clock, Dices, DoorOpen, Skull, Ghost } from 'lucide-vue-next';
+import { commands } from '@/lib/game-commands';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -47,39 +48,7 @@ const chestItems: ChestItem[] = [
   },
 ];
 
-interface Command {
-  command: string;
-  summary: string;
-  example: string;
-}
 
-const commands: Command[] = [
-  {
-    command: '!join',
-    summary: 'Join the raid. Adds +1 HP to the shared pool and gives you 3 energy blocks. You start pending - you cannot vote in the same round you joined.',
-    example: '!join',
-  },
-  {
-    command: '!p <dir> [steps]',
-    summary: 'Propose a move. Direction is up, down, left, or right. Optional steps is 1-3 (defaults to 1). Steps stop at walls, blockers, and closed doors.',
-    example: '!p up 2',
-  },
-  {
-    command: '!h',
-    summary: 'Propose hiding. The player teleports to the nearest hiding spot this round. Some rooms have no hiding spots - the vote does nothing there.',
-    example: '!h',
-  },
-  {
-    command: '!a [slot]',
-    summary: 'Propose attacking. Defaults to slot 1 (fists, or regular sword if you picked one up). !a 2 uses slot 2 (double-edged sword, if you have one) which deals 2 damage per hit instead of 1. Reaches the 8 tiles around the player (horizontal, vertical, and diagonal - everything except the tile you stand on), so you have to be adjacent to the exit door to damage it.',
-    example: '!a 2',
-  },
-  {
-    command: '!s',
-    summary: 'Stay. An explicit skip vote that still resets your energy to 3. Useful when you want to keep your slot alive but not influence the round.',
-    example: '!s',
-  },
-];
 
 const chestClass: Record<ChestItem['tone'], string> = {
   good: 'border-emerald-500/40 bg-emerald-500/5',
@@ -166,13 +135,18 @@ const zombies: Zombie[] = [
         :key="cmd.command"
         class="rounded-lg border border-sidebar bg-sidebar p-5"
       >
+        <div class="mb-2 text-2xl font-bold">{{ cmd.summary }}</div>
         <div class="mb-2 flex flex-wrap items-center gap-3">
-          <code class="rounded bg-card px-2 py-1 font-mono text-base font-semibold">{{ cmd.command }}</code>
-          <code class="rounded bg-background/50 px-2 py-0.5 font-mono text-sm text-muted-foreground">
-            example: {{ cmd.example }}
+
+          <code class="rounded bg-card px-2 py-1 text-base font-semibold">{{ cmd.command }}</code>
+          <code class="rounded bg-violet-700 px-2 py-0.5 font-bold text-foreground">
+            {{ cmd.example }}
+          </code>
+          <code v-if="cmd.example2" class="rounded bg-violet-700 px-2 py-0.5 font-bold text-foreground">
+            {{ cmd.example2 }}
           </code>
         </div>
-        <p class="text-sm text-foreground">{{ cmd.summary }}</p>
+        <p class="text-sm text-foreground">{{ cmd.description }}</p>
       </div>
     </div>
 
@@ -337,7 +311,7 @@ const zombies: Zombie[] = [
         </p>
       </div>
 
-      <div id="diagram" class="rounded-lg border border-sidebar bg-sidebar/40 p-5">
+      <div id="diagram" class="rounded-lg border border-sidebar-border bg-sidebar/40 p-5">
         <p class="mb-3 text-sm font-semibold">What "orthogonally adjacent" actually means</p>
         <div class="flex flex-wrap items-start gap-6">
           <div class="grid w-fit grid-cols-9 gap-0.5" aria-hidden="true">
@@ -353,7 +327,7 @@ const zombies: Zombie[] = [
               }"
             />
           </div>
-          <ul class="min-w-[12rem] flex-1 space-y-3 text-sm">
+          <ul class="min-w-48 flex-1 space-y-3 text-sm">
             <li class="flex items-center gap-2">
               <span class="inline-block h-4 w-4 shrink-0 rounded-sm bg-violet-500/80 ring-2 ring-violet-300"></span>
               You

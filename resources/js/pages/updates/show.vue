@@ -13,7 +13,7 @@ const props = defineProps<{
 marked.setOptions({ breaks: true, gfm: true });
 
 const page = usePage<AppPageProps>();
-const isAdmin = computed(() => !!page.props.isAdmin);
+const isAdmin = computed(() => page.props.isAdmin);
 
 const renderedBody = computed(() => marked.parse(props.update.body) as string);
 const renderedExcerpt = computed(() =>

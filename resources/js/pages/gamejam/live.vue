@@ -5,6 +5,7 @@ import { floorFor, themeFor, type RoomTheme } from './themes';
 import GameResultBanner from '@/components/gamejam/GameResultBanner.vue';
 import GameStatusCard from '@/components/gamejam/GameStatusCard.vue';
 import GameWeaponCard from '@/components/gamejam/GameWeaponCard.vue';
+import { gameCommands } from '@/lib/game-commands';
 
 interface GamePayload {
   id: number;
@@ -830,7 +831,10 @@ onUnmounted(() => {
     </div>
   </Teleport>
 
-  <div class="live-board">
+  <div
+    class="live-board"
+    :class="game ? 'live' : ''"
+  >
     <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
       <!-- @todo: Remove ! above after you're done here. -->
       <div class="audio-unlock-panel">
@@ -842,7 +846,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <aside class="sidebar">
+    <aside class="sidebar" v-if="game">
 
       <!-- Game Inventory -->
       <section v-if="game" class="flex justify-between medievalsharp-regular">
@@ -1148,7 +1152,32 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <div v-else class="grid-empty">Waiting for a game to start...</div>
+      <div v-else class="grid-empty">
+        <div class="flex flex-col gap-2 p-4">
+          <div>
+            <h1 class="medievalsharp-regular text-6xl text-yellow-400">Welcome to Chat Castle</h1>
+          </div>
+          <div>Type <span class="text-yellow-400 tracking-wide">!castlehelp</span> in chat to see the commands again.</div>
+          <div class="mb-10 space-y-3">
+            <div
+              v-for="cmd in gameCommands"
+              :key="cmd.command"
+              class="bg-olive-800/60 border border-olive-500/30 p-5"
+            >
+              <div class="mb-2 flex flex-wrap items-center gap-3">
+                <code class="bg-olive-600 px-2 py-0.5 font-bold text-foreground inline-block shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50">
+                  {{ cmd.example }}
+                </code>
+                <code v-if="cmd.example2" class="bg-olive-600 px-2 py-0.5 font-bold text-foreground inline-block shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50">
+                  {{ cmd.example2 }}
+                </code>
+              </div>
+              <p class="text-xl text-foreground">{{ cmd.summary }}</p>
+            </div>
+            <div class="pt-4 text-sm">Streamer: go to /gamejam/admin to start a new game.</div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -1169,7 +1198,6 @@ onUnmounted(() => {
   max-height: 100vh;
   overflow: hidden !important;
   display: grid;
-  grid-template-columns: 1fr 1080px;
   background: #0e0e10;
   color: #eee;
   font-size: 25px;
@@ -1180,6 +1208,9 @@ onUnmounted(() => {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+.live-board.live {
+  grid-template-columns: 1fr 1080px;
 }
 
 :global(html.gamejam-fullbleed),
@@ -1225,7 +1256,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: #0a0a0c;
+  background: rgba(0, 0, 0, 0.88);
   border-left: 0;
 }
 .grid {
@@ -1627,11 +1658,6 @@ onUnmounted(() => {
 .ticker-leave-to {
   opacity: 0;
   transform: translateX(20px);
-}
-
-.grid-empty {
-  color: #555;
-  font-style: italic;
 }
 
 .audio-unlock-overlay {

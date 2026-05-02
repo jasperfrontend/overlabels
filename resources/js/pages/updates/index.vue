@@ -19,7 +19,7 @@ interface FiltersShape {
 
 interface Paginated<T> {
   data: T[];
-  links: Array<{ url: string | null; label: string; active: boolean }>;
+  links: Array<{ url: string | null; label: string; active: boolean; page: number }>;
   from: number;
   to: number;
   total: number;
@@ -75,7 +75,7 @@ function clearTag() {
 }
 
 const page = usePage<AppPageProps>();
-const isAdmin = computed(() => !!page.props.isAdmin);
+const isAdmin = computed(() => page.props.isAdmin);
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Updates', href: '/updates' },

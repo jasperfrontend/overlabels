@@ -381,7 +381,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
           {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
         </span>
         <span v-else>
-          {{ controls.length }} controls across {{ groupedControls.length }} groups
+          {{ controls.length }} control{{ controls.length !== 1 ? 's' : null }} across {{ groupedControls.length }} group{{ groupedControls.length !== 1 ? 's' : '' }}
         </span>
         <button
           v-if="filteredGroupedControls.length > 0"
