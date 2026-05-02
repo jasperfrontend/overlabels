@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import { Swords, Heart, Clock, Dices, DoorOpen, Skull, Ghost } from 'lucide-vue-next';
-import { commands } from '@/lib/game-commands';
+import { gameCommands } from '@/lib/game-commands';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -131,7 +131,7 @@ const zombies: Zombie[] = [
 
     <div class="mb-10 space-y-3">
       <div
-        v-for="cmd in commands"
+        v-for="cmd in gameCommands"
         :key="cmd.command"
         class="rounded-lg border border-sidebar bg-sidebar p-5"
       >
