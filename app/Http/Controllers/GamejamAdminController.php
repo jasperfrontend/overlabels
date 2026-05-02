@@ -9,6 +9,7 @@ use App\Jobs\ResolveGameRound;
 use App\Models\BotChatOutbox;
 use App\Models\Game;
 use App\Models\User;
+use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\Gamejam\RoomSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class GamejamAdminController extends Controller
             ] : null,
             'debugEnabled' => GamejamDebug::isEnabledFor($user),
             'broadcasterLogin' => strtolower($user->twitch_data['login'] ?? ''),
+            'recentRateLimits' => BotRateLimitLog::recent(),
         ]);
     }
 

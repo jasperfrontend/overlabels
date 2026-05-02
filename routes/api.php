@@ -159,23 +159,30 @@ Route::get('/internal/streamelements/integrations', function () {
 
 // Internal endpoints for the @overlabels Twitch bot service (separate repo/Railway service).
 // Auth: X-Internal-Secret header, validated by bot.internal middleware.
+// Two throttle buckets: gamejam votes get their own per-channel bucket so a
+// busy raid can't starve token/outbox/control polls. See AppServiceProvider.
 Route::prefix('/internal/bot')
-    ->middleware(['bot.internal', 'throttle:30,1'])
+    ->middleware(['bot.internal'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
     ->group(function () {
-        Route::get('/channels', [BotChannelController::class, 'index']);
-        Route::get('/tokens', [BotTokenController::class, 'show']);
-        Route::post('/tokens', [BotTokenController::class, 'store']);
-        Route::get('/commands', [BotCommandController::class, 'index']);
-        Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
-            ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
-        Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])
-            ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
-        Route::post('/gamejam/action/{login}', [BotGamejamActionController::class, 'handle'])
-            ->where('login', '[a-z0-9_]+');
-        Route::get('/outbox', [BotOutboxController::class, 'index']);
-        Route::post('/settings/{login}/controls-access', [BotSettingsController::class, 'setControlsAccess'])
-            ->where('login', '[a-z0-9_]+');
+        Route::middleware('throttle:bot-internal')->group(function () {
+            Route::get('/channels', [BotChannelController::class, 'index']);
+            Route::get('/tokens', [BotTokenController::class, 'show']);
+            Route::post('/tokens', [BotTokenController::class, 'store']);
+            Route::get('/commands', [BotCommandController::class, 'index']);
+            Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
+                ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
+            Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])
+                ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
+            Route::get('/outbox', [BotOutboxController::class, 'index']);
+            Route::post('/settings/{login}/controls-access', [BotSettingsController::class, 'setControlsAccess'])
+                ->where('login', '[a-z0-9_]+');
+        });
+
+        Route::middleware('throttle:bot-gamejam-action')->group(function () {
+            Route::post('/gamejam/action/{login}', [BotGamejamActionController::class, 'handle'])
+                ->where('login', '[a-z0-9_]+');
+        });
     });
 
 // Deploy webhook - called by GH Actions after a successful kamal deploy

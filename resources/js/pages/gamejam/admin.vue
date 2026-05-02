@@ -18,10 +18,18 @@ interface GameSnapshot {
   round_started_at: string | null;
 }
 
+interface RateLimitEvent {
+  scope: string;
+  login: string | null;
+  ip: string;
+  at: string;
+}
+
 const props = defineProps<{
   game: GameSnapshot | null;
   debugEnabled: boolean;
   broadcasterLogin: string;
+  recentRateLimits: RateLimitEvent[];
 }>();
 
 const page = usePage();
@@ -144,6 +152,25 @@ function toggleDebug() {
         <Button class="cursor-pointer" variant="destructive" :disabled="!isActive || working" @click="end">
           End game as {{ endStatus }}
         </Button>
+      </section>
+
+      <!-- Rate-limit events -->
+      <section class="rounded-sm border border-border p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-foreground font-medium">Recent rate-limited (429) requests</h3>
+          <Badge v-if="recentRateLimits.length" variant="destructive">{{ recentRateLimits.length }}</Badge>
+          <Badge v-else variant="secondary">None</Badge>
+        </div>
+        <p class="text-xs text-muted-foreground">
+          Each entry is one bot request the backend rejected with 429. Chat sees "something went wrong" for these. If this list fills up during a stream, raise the per-minute caps in <code>AppServiceProvider</code>.
+        </p>
+        <ul v-if="recentRateLimits.length" class="text-xs text-foreground space-y-1 max-h-64 overflow-y-auto font-mono">
+          <li v-for="(ev, i) in recentRateLimits" :key="i">
+            <span class="text-muted-foreground">{{ ev.at }}</span>
+            <span class="ml-2">{{ ev.scope }}</span>
+            <span v-if="ev.login" class="ml-2 text-muted-foreground">@{{ ev.login }}</span>
+          </li>
+        </ul>
       </section>
 
       <!-- Debug toggle -->

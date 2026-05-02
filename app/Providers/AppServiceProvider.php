@@ -6,6 +6,7 @@ use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
 use App\Models\User;
 use App\Observers\UserObserver;
+use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\DefaultTemplateProviderService;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -95,6 +96,29 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perHour(20)->by($userId ?: $request->ip()),
                 Limit::perHour(100)->by($request->ip()),
             ];
+        });
+
+        // Bot internal endpoints (token/commands/controls/outbox/settings).
+        // The bot is a single Railway service hitting us from one IP, so the
+        // bucket is global. Outbox alone polls every 2s = 30/min, so the limit
+        // has to leave headroom above that for controls writes and bursts.
+        RateLimiter::for('bot-internal', function (Request $request) {
+            return Limit::perMinute(600)->by('bot-internal:'.$request->ip());
+        });
+
+        // Bot gamejam votes: own bucket, keyed per-channel so a flood in one
+        // channel can't starve another. 50 players * 2 rounds/min = 100 votes
+        // baseline; multi-key spam pushes higher. 1200/min (20/sec) per login.
+        RateLimiter::for('bot-gamejam-action', function (Request $request) {
+            $login = $request->route('login') ?? 'unknown';
+
+            return Limit::perMinute(1200)
+                ->by('bot-gamejam-action:'.$login)
+                ->response(function (Request $request, array $headers) use ($login) {
+                    BotRateLimitLog::record('gamejam-action', $login, $request->ip());
+
+                    return response()->json(['message' => 'Too Many Attempts.'], 429, $headers);
+                });
         });
 
         Event::listen(function (SocialiteWasCalled $event) {
