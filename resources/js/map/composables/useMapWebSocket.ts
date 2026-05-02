@@ -7,11 +7,19 @@ interface PositionUpdate {
   bearing: number;
 }
 
+/**
+ * Subscribes to the streamer's public `map.{twitchId}` channel and exposes
+ * the latest position. The channel is intentionally public-by-design: it's
+ * only fed when the streamer has opted into map sharing, and it carries only
+ * the GPS-shaped fields the public map page needs (lat/lng/speed/bearing/
+ * tracking). All other control updates - donations, alerts, donor names,
+ * stream status - stay on the private alerts channel.
+ */
 export function useMapWebSocket(twitchId: string) {
   const position = ref<PositionUpdate | null>(null);
   const connected = ref(false);
   // null = unknown, true = session active, false = session ended.
-  // Fed by `overlabels-mobile:gps_tracking` control updates ('1'/'0').
+  // Fed by `gps_tracking` map.position payloads ('1'/'0').
   const trackingActive = ref<boolean | null>(null);
 
   const echo = (window as any).Echo;
@@ -47,17 +55,14 @@ export function useMapWebSocket(twitchId: string) {
   }
 
   if (echo) {
-    channel = echo.channel(`alerts.${twitchId}`);
+    channel = echo.channel(`map.${twitchId}`);
 
-    channel.listen('.control.updated', (event: any) => {
+    channel.listen('.map.position', (event: any) => {
       connected.value = true;
 
       const key = event.key as string;
-      if (!key?.startsWith('overlabels-mobile:')) return;
 
-      const controlKey = key.replace('overlabels-mobile:', '');
-
-      switch (controlKey) {
+      switch (key) {
         case 'gps_lat':
           pendingLat = parseFloat(event.value);
           scheduleFlush();
@@ -82,7 +87,7 @@ export function useMapWebSocket(twitchId: string) {
   onUnmounted(() => {
     if (flushTimer) clearTimeout(flushTimer);
     if (channel) {
-      echo?.leave(`alerts.${twitchId}`);
+      echo?.leave(`map.${twitchId}`);
     }
   });
 

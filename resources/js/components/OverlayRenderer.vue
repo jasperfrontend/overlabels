@@ -547,7 +547,7 @@ onMounted(async () => {
     document.getElementById('loading')?.remove();
   }
 
-  useEventSub((event) => {
+  useEventSub(userId.value, (event) => {
     if (!data.value || typeof data.value !== 'object') data.value = {};
 
     const restructuredEvent = {
@@ -595,11 +595,12 @@ function setupAlertListener() {
     return;
   }
 
-  // Listen for alert broadcasts on the user's channel
+  // Listen for alert broadcasts on the user's private channel. Echo prefixes
+  // the wire channel name with `private-`; subscription is gated by the
+  // overlay-token broadcasting auth endpoint configured in overlay/app.js.
   const channelName = `alerts.${userId.value}`;
 
-  // Use Laravel Echo to listen for real-time alert broadcasts
-  const channel = window.Echo.channel(channelName);
+  const channel = window.Echo.private(channelName);
 
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
   channel.listen('.alert.triggered', handleAlertTriggered);

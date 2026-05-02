@@ -544,8 +544,13 @@ class TwitchEventSubController extends Controller
                 ]);
             }
 
-            // Broadcast the event to connected WebSocket clients
-            broadcast(new TwitchEventReceived($eventType, $event));
+            // Broadcast the event to connected WebSocket clients on the
+            // broadcaster's private per-user channel. Without a broadcaster id
+            // we have nowhere to send it - drop silently rather than fan out
+            // to a guessable global channel.
+            if ($broadcasterId) {
+                broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
+            }
 
         } catch (Exception $e) {
             Log::error("Failed to store Twitch event: {$e->getMessage()}", [
@@ -554,7 +559,9 @@ class TwitchEventSubController extends Controller
             ]);
 
             // Still broadcast the event even if database storage fails
-            broadcast(new TwitchEventReceived($eventType, $event));
+            if (! empty($broadcasterId)) {
+                broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
+            }
         } catch (Throwable) {
         }
     }
@@ -706,7 +713,7 @@ class TwitchEventSubController extends Controller
             $alertFired = true;
         }
 
-        broadcast(new TwitchEventReceived('channel.cheer', $event));
+        broadcast(new TwitchEventReceived('channel.cheer', $event, (string) $user->twitch_id));
 
         return response()->json([
             'ok' => true,

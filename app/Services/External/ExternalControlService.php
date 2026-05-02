@@ -4,6 +4,8 @@ namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
 use App\Events\ControlValueUpdated;
+use App\Events\MapPositionBroadcast;
+use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -55,6 +57,12 @@ class ExternalControlService
      */
     public function applyUpdates(User $user, string $service, array $updates): void
     {
+        // Streamers who opt into public map sharing get a parallel broadcast on
+        // the public `map.{twitchId}` channel for GPS controls only. Computed
+        // once per call so the per-control loop doesn't reload it.
+        $mapSharingEnabled = $service === 'overlabels-mobile'
+            && $this->isMapSharingEnabled($user);
+
         foreach ($updates as $key => $update) {
             $controls = OverlayControl::where('user_id', $user->id)
                 ->where('source', $service)
@@ -98,7 +106,45 @@ class ExternalControlService
                     $user->twitch_id,
                 );
 
+                if ($mapSharingEnabled && self::isMapSharedKey($key)) {
+                    MapPositionBroadcast::dispatch(
+                        (string) $user->twitch_id,
+                        $key,
+                        $newValue,
+                    );
+                }
+
             }
         }
+    }
+
+    /**
+     * Allowlist of overlabels-mobile control keys safe to broadcast on the
+     * public `map.{twitchId}` channel. Anything not on this list (including
+     * battery, accuracy, distance, donor info, etc.) stays private.
+     */
+    private static function isMapSharedKey(string $key): bool
+    {
+        return in_array($key, [
+            'gps_lat',
+            'gps_lng',
+            'gps_speed',
+            'gps_bearing',
+            'gps_tracking',
+        ], true);
+    }
+
+    private function isMapSharingEnabled(User $user): bool
+    {
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'overlabels-mobile')
+            ->where('enabled', true)
+            ->first();
+
+        if (! $integration) {
+            return false;
+        }
+
+        return (bool) (($integration->settings ?? [])['map_sharing_enabled'] ?? false);
     }
 }

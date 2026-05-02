@@ -42,10 +42,12 @@ export function useStreamState() {
     updateUptime();
     uptimeInterval = setInterval(updateUptime, 1000);
 
-    // Listen for real-time stream status changes via WebSocket
+    // Listen for real-time stream status changes via WebSocket. The alerts
+    // channel is private; the dashboard's authenticated session signs the
+    // subscription via the standard /broadcasting/auth route.
     const twitchId = (page.props.auth as any)?.user?.twitch_id;
     if (twitchId && window.Echo) {
-      echoChannel = window.Echo.channel(`alerts.${twitchId}`);
+      echoChannel = window.Echo.private(`alerts.${twitchId}`);
       echoChannel.listen('.stream.status', (data: { state: string; confidence: number; startedAt: string | null }) => {
         wsState.value = data.state;
         wsConfidence.value = data.confidence;
@@ -58,6 +60,8 @@ export function useStreamState() {
     if (uptimeInterval) clearInterval(uptimeInterval);
     if (echoChannel) {
       echoChannel.stopListening('.stream.status');
+      const twitchId = (page.props.auth as any)?.user?.twitch_id;
+      if (twitchId) window.Echo?.leave(`private-alerts.${twitchId}`);
     }
   });
 

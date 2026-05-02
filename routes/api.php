@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DeployWebhookController;
 use App\Http\Controllers\Api\ExternalWebhookController;
 use App\Http\Controllers\Api\GpsSessionMapController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
@@ -9,8 +10,8 @@ use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
-use App\Http\Controllers\Api\DeployWebhookController;
 use App\Http\Controllers\ExpressionTagController;
+use App\Http\Controllers\OverlayBroadcastingAuthController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
@@ -35,6 +36,15 @@ Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
         ->middleware(['throttle:overlay', 'rate.limit.overlay', 'lockdown'])
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
+    // Overlay-token-authenticated broadcasting auth endpoint. Lets a session-
+    // less overlay subscribe to its owner's private alerts/twitch-events
+    // channels by presenting a valid OverlayAccessToken. See controller for
+    // the channel allowlist.
+    Route::post('/broadcasting/auth', [OverlayBroadcastingAuthController::class, 'authenticate'])
+        ->name('api.overlay.broadcasting.auth')
+        ->middleware(['throttle:overlay', 'lockdown'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
     // Returns Twitch global + channel emotes as [{code, url}] for frontend emote parsing.
