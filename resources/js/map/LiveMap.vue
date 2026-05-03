@@ -5,7 +5,7 @@ import { useMapWebSocket } from './composables/useMapWebSocket';
 import { Icon, type PointExpression } from 'leaflet';
 
 const props = defineProps<{
-  twitchId: string;
+  slug: string;
   streamerName: string;
   delay: number;
   speedUnit: string;
@@ -25,7 +25,7 @@ const MAX_TRAIL_POINTS = 200;
 // Always subscribe to WebSocket. In delay mode we ignore the position values
 // for display (polling handles that), but we still use WebSocket signals to
 // flip live/offline state in realtime.
-const { position: wsPosition, connected, trackingActive } = useMapWebSocket(props.twitchId);
+const { position: wsPosition, connected, trackingActive } = useMapWebSocket(props.slug);
 
 // The position ref the map actually renders from.
 const position = ref<{ lat: number; lng: number; speed: number; bearing: number } | null>(null);
@@ -75,7 +75,7 @@ onMounted(async () => {
   }
 
   try {
-    const res = await fetch(`/api/map/${props.twitchId}/position`);
+    const res = await fetch(`/api/map/${props.slug}/position`);
     if (res.ok) {
       const data = await res.json();
       if (data.position) {
@@ -98,7 +98,7 @@ if (props.delay > 0) {
   pollInterval = setInterval(async () => {
     if (!isLive.value) return;
     try {
-      const res = await fetch(`/api/map/${props.twitchId}/position`);
+      const res = await fetch(`/api/map/${props.slug}/position`);
       if (res.ok) {
         const data = await res.json();
         if (data.position) {

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (config.type === 'live') {
     createApp(LiveMap, {
-      twitchId: config.twitchId,
+      slug: config.slug,
       streamerName: config.streamerName,
       delay: config.delay,
       speedUnit: config.speedUnit,
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).mount(mount);
   } else if (config.type === 'session') {
     createApp(SessionMap, {
-      twitchId: config.twitchId,
+      slug: config.slug,
       sessionId: config.sessionId,
       streamerName: config.streamerName,
       speedUnit: config.speedUnit,

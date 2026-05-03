@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ExternalIntegration;
 use App\Services\Location\GeoMath;
+use App\Services\MapSlugService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -31,7 +32,7 @@ class GpsSessionController extends Controller
             'sessions' => $sessions,
             'speedUnit' => $speedUnit,
             'mapSharingEnabled' => $mapSharingEnabled,
-            'twitchId' => (string) $user->twitch_id,
+            'mapSlug' => app(MapSlugService::class)->encode($user->twitch_id),
         ]);
     }
 

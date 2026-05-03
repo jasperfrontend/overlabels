@@ -5,19 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\ExternalIntegration;
 use App\Models\User;
 use App\Services\GpsLivenessService;
+use App\Services\MapSlugService;
 use Illuminate\View\View;
 
 class MapController extends Controller
 {
-    public function __construct(private GpsLivenessService $liveness) {}
+    public function __construct(
+        private GpsLivenessService $liveness,
+        private MapSlugService $slugService,
+    ) {}
 
     /**
-     * GET /map/{twitchId}
-     * Public live map page.
+     * GET /map/{slug}
+     * Public live map page. Slug is a Sqids-encoded Twitch ID.
      */
-    public function live(string $twitchId): View
+    public function live(string $slug): View
     {
-        $user = User::where('twitch_id', $twitchId)->firstOrFail();
+        $user = $this->resolveUser($slug);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
             ->where('service', 'overlabels-mobile')
@@ -34,7 +38,7 @@ class MapController extends Controller
         $speedUnit = ($integration->settings ?? [])['speed_unit'] ?? 'kmh';
 
         return view('map.live', [
-            'twitchId' => $twitchId,
+            'slug' => $slug,
             'streamerName' => $user->name,
             'delay' => $delay,
             'speedUnit' => $speedUnit,
@@ -43,12 +47,12 @@ class MapController extends Controller
     }
 
     /**
-     * GET /map/{twitchId}/{sessionId}
+     * GET /map/{slug}/{sessionId}
      * Public saved session map page.
      */
-    public function session(string $twitchId, string $sessionId): View
+    public function session(string $slug, string $sessionId): View
     {
-        $user = User::where('twitch_id', $twitchId)->firstOrFail();
+        $user = $this->resolveUser($slug);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
             ->where('service', 'overlabels-mobile')
@@ -62,10 +66,20 @@ class MapController extends Controller
         $speedUnit = ($integration->settings ?? [])['speed_unit'] ?? 'kmh';
 
         return view('map.session', [
-            'twitchId' => $twitchId,
+            'slug' => $slug,
             'sessionId' => $sessionId,
             'streamerName' => $user->name,
             'speedUnit' => $speedUnit,
         ]);
+    }
+
+    private function resolveUser(string $slug): User
+    {
+        $twitchId = $this->slugService->decode($slug);
+        if ($twitchId === null) {
+            abort(404);
+        }
+
+        return User::where('twitch_id', $twitchId)->firstOrFail();
     }
 }

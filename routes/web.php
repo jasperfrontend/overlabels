@@ -553,9 +553,10 @@ Route::middleware('auth.redirect')->group(function () {
     });
 });
 
-// Public map pages (no auth, opt-in via map_sharing_enabled)
-Route::get('/map/{twitchId}', [MapController::class, 'live'])->name('map.live');
-Route::get('/map/{twitchId}/{sessionId}', [MapController::class, 'session'])->name('map.session');
+// Public map pages (no auth, opt-in via map_sharing_enabled). The slug is a
+// Sqids-encoded Twitch ID so the numeric ID never appears in the URL.
+Route::get('/map/{slug}', [MapController::class, 'live'])->name('map.live');
+Route::get('/map/{slug}/{sessionId}', [MapController::class, 'session'])->name('map.session');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

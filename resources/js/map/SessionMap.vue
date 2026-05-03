@@ -4,7 +4,7 @@ import { LMap, LTileLayer, LPolyline, LCircleMarker, LPopup } from '@vue-leaflet
 import type { LatLngBoundsExpression } from 'leaflet';
 
 const props = defineProps<{
-  twitchId: string;
+  slug: string;
   sessionId: string;
   streamerName: string;
   speedUnit: string;
@@ -23,7 +23,7 @@ const mapRef = ref<InstanceType<typeof LMap> | null>(null);
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/map/${props.twitchId}/${props.sessionId}/geojson`);
+    const res = await fetch(`/api/map/${props.slug}/${props.sessionId}/geojson`);
     if (!res.ok) {
       error.value = res.status === 403 ? 'Map sharing is not enabled.' : 'Session not found.';
       return;

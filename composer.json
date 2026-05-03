@@ -11,6 +11,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-pdo": "*",
         "cloudinary/cloudinary_php": "^3.1",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",
@@ -20,11 +21,10 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "mchev/banhammer": "^2.4",
-
         "socialiteproviders/twitch": "^5.4",
+        "sqids/sqids": "^0.5.0",
         "stevebauman/location": "^7.6",
-        "tightenco/ziggy": "^2.4",
-      "ext-pdo": "*"
+        "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.7",

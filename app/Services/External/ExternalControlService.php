@@ -8,6 +8,7 @@ use App\Events\MapPositionBroadcast;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Services\MapSlugService;
 use Illuminate\Support\Facades\Log;
 
 class ExternalControlService
@@ -58,10 +59,14 @@ class ExternalControlService
     public function applyUpdates(User $user, string $service, array $updates): void
     {
         // Streamers who opt into public map sharing get a parallel broadcast on
-        // the public `map.{twitchId}` channel for GPS controls only. Computed
+        // the public `map.{slug}` channel for GPS controls only. Computed
         // once per call so the per-control loop doesn't reload it.
         $mapSharingEnabled = $service === 'overlabels-mobile'
             && $this->isMapSharingEnabled($user);
+
+        $mapSlug = $mapSharingEnabled
+            ? app(MapSlugService::class)->encode($user->twitch_id)
+            : null;
 
         foreach ($updates as $key => $update) {
             $controls = OverlayControl::where('user_id', $user->id)
@@ -106,9 +111,9 @@ class ExternalControlService
                     $user->twitch_id,
                 );
 
-                if ($mapSharingEnabled && self::isMapSharedKey($key)) {
+                if ($mapSharingEnabled && $mapSlug !== null && self::isMapSharedKey($key)) {
                     MapPositionBroadcast::dispatch(
-                        (string) $user->twitch_id,
+                        $mapSlug,
                         $key,
                         $newValue,
                     );
@@ -120,7 +125,7 @@ class ExternalControlService
 
     /**
      * Allowlist of overlabels-mobile control keys safe to broadcast on the
-     * public `map.{twitchId}` channel. Anything not on this list (including
+     * public `map.{slug}` channel. Anything not on this list (including
      * battery, accuracy, distance, donor info, etc.) stays private.
      */
     private static function isMapSharedKey(string $key): bool

@@ -8,14 +8,16 @@ interface PositionUpdate {
 }
 
 /**
- * Subscribes to the streamer's public `map.{twitchId}` channel and exposes
- * the latest position. The channel is intentionally public-by-design: it's
- * only fed when the streamer has opted into map sharing, and it carries only
- * the GPS-shaped fields the public map page needs (lat/lng/speed/bearing/
- * tracking). All other control updates - donations, alerts, donor names,
- * stream status - stay on the private alerts channel.
+ * Subscribes to the streamer's public `map.{slug}` channel and exposes
+ * the latest position. The slug is the same Sqids-encoded Twitch ID that
+ * appears in the page URL, so the numeric Twitch ID never leaks via the
+ * WebSocket frames either. The channel is intentionally public-by-design:
+ * it's only fed when the streamer has opted into map sharing, and it
+ * carries only the GPS-shaped fields the public map page needs (lat/lng/
+ * speed/bearing/tracking). All other control updates - donations, alerts,
+ * donor names, stream status - stay on the private alerts channel.
  */
-export function useMapWebSocket(twitchId: string) {
+export function useMapWebSocket(slug: string) {
   const position = ref<PositionUpdate | null>(null);
   const connected = ref(false);
   // null = unknown, true = session active, false = session ended.
@@ -55,7 +57,7 @@ export function useMapWebSocket(twitchId: string) {
   }
 
   if (echo) {
-    channel = echo.channel(`map.${twitchId}`);
+    channel = echo.channel(`map.${slug}`);
 
     channel.listen('.map.position', (event: any) => {
       connected.value = true;
@@ -87,7 +89,7 @@ export function useMapWebSocket(twitchId: string) {
   onUnmounted(() => {
     if (flushTimer) clearTimeout(flushTimer);
     if (channel) {
-      echo?.leave(`map.${twitchId}`);
+      echo?.leave(`map.${slug}`);
     }
   });
 

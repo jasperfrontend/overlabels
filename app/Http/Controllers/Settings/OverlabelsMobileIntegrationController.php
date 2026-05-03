@@ -8,6 +8,7 @@ use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
+use App\Services\MapSlugService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +51,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $mapSharingEnabled = ! empty($settings['map_sharing_enabled']);
         $mapDelaySeconds = (int) ($settings['map_delay_seconds'] ?? 0);
         $mapUrl = $mapSharingEnabled && $integration
-            ? url("/map/{$user->twitch_id}")
+            ? url('/map/'.app(MapSlugService::class)->encode($user->twitch_id))
             : null;
 
         return Inertia::render('settings/integrations/overlabels-mobile', [

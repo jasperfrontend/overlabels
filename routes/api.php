@@ -92,12 +92,14 @@ Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'get
 Route::get('/gps-sessions/{sessionId}/geojson', [GpsSessionMapController::class, 'authenticatedGeoJson'])
     ->middleware(['auth:sanctum', 'throttle:60,1']);
 
-// Public map API endpoints (no auth, checks map_sharing_enabled)
+// Public map API endpoints (no auth, checks map_sharing_enabled). The slug
+// is a Sqids-encoded Twitch ID so the numeric ID never appears in network
+// requests or WebSocket channel names.
 Route::prefix('/map')->group(function () {
-    Route::get('/{twitchId}/position', [GpsSessionMapController::class, 'currentPosition'])
+    Route::get('/{slug}/position', [GpsSessionMapController::class, 'currentPosition'])
         ->middleware(['throttle:60,1'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
-    Route::get('/{twitchId}/{sessionId}/geojson', [GpsSessionMapController::class, 'publicSessionGeoJson'])
+    Route::get('/{slug}/{sessionId}/geojson', [GpsSessionMapController::class, 'publicSessionGeoJson'])
         ->middleware(['throttle:30,1'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });

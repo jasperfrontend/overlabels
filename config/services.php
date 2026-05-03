@@ -68,4 +68,14 @@ return [
         'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
     ],
 
+    // Sqids encoding for the public map slug. Encodes a Twitch ID into an
+    // opaque short string so /map/{slug} URLs and the public map.{slug}
+    // broadcast channel never expose the numeric Twitch ID. Pure CPU,
+    // no DB lookup. The alphabet is the only "secret" - it must stay
+    // stable across deploys or every previously shared map URL breaks.
+    'map_slug' => [
+        'alphabet' => env('MAP_SLUG_ALPHABET', 'k4n2pSvBDfWHtgJULRamE6GYqcQA7ujM3i85zVbsX9eyKwoxN1ZhCdrTPlF0OI'),
+        'min_length' => (int) env('MAP_SLUG_MIN_LENGTH', 8),
+    ],
+
 ];

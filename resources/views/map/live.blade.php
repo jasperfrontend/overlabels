@@ -13,7 +13,7 @@
     <script>
         window.__MAP__ = {
             type: 'live',
-            twitchId: @json($twitchId),
+            slug: @json($slug),
             streamerName: @json($streamerName),
             delay: @json($delay),
             speedUnit: @json($speedUnit),

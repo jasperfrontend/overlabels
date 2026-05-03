@@ -1,5 +1,16 @@
 # CHANGELOG MAY 2026
 
+## May 3rd, 2026 - Security: hide Twitch ID behind a Sqids-encoded slug on the public map page
+
+- Public map URLs were `/map/{twitch_id}`, exposing the streamer's numeric Twitch ID to anyone with the share link. The same ID also leaked through `/api/map/{twitch_id}/position`, the `.../geojson` endpoint, and the `map.{twitch_id}` Reverb channel name visible in DevTools. With a Twitch ID a chatter could URL-hack to any other registered streamer's `/map/...` URL to probe whether they were on the platform.
+- Added `App\Services\MapSlugService` wrapping `sqids/sqids` (`composer require sqids/sqids` -> 0.5.0). Encodes a Twitch ID into an opaque short slug (default min length 8) using a custom alphabet pinned in `config/services.php` under `map_slug.alphabet`. Pure CPU, reversible, deterministic - zero DB or cache hits per request, which matters because a popular streamer's map page can have hundreds of viewers polling `/api/map/{slug}/position` every 5s in delay mode. Alphabet is overridable via `MAP_SLUG_ALPHABET` env var; if it ever changes, every previously shared map URL stops resolving (committed default keeps prod stable).
+- All public surfaces switched to the slug:
+    - Routes: `GET /map/{slug}` and `GET /map/{slug}/{sessionId}` in `web.php`; `GET /api/map/{slug}/position` and `GET /api/map/{slug}/{sessionId}/geojson` in `api.php`.
+    - Controllers: `MapController::live`/`session` and `GpsSessionMapController::currentPosition`/`publicSessionGeoJson` decode the slug via `MapSlugService::decode()` and 404 on a malformed/non-resolving slug before any DB query, then look up the user by `twitch_id` exactly as before.
+    - Broadcast: `MapPositionBroadcast` now carries `$slug` instead of `$twitchId` and broadcasts on `map.{slug}`. `ExternalControlService::applyUpdates` encodes the slug once per call (only when map sharing is enabled) and reuses it across the per-control loop.
+    - Frontend: `window.__MAP__` ships `slug` instead of `twitchId`. `LiveMap.vue`, `SessionMap.vue`, `useMapWebSocket.ts`, and `map/app.ts` rename the prop. `OverlabelsMobileIntegrationController` builds the share URL from the encoded slug. The GPS Sessions dashboard exposes `mapSlug` instead of `twitchId` and the "Open full view" button links to `/map/${mapSlug}/${session.session_id}`.
+- Net result: a chatter holding a `/map/...` URL sees only `/map/Yz7X9k2m`, the WebSocket frames carry `map.Yz7X9k2m`, and the API endpoints follow the same shape. Twitch ID never appears in any client-visible string. Slug is not security-grade (sqids are reversible), but it removes the obvious "12345 is a Twitch ID" pattern and prevents URL-hacking to other streamers by guessing.
+
 ## May 3rd, 2026 - Admin: extend donation seed override to all donation-style integrations
 
 - The admin user-detail page (`/admin/users/{id}`) had a Ko-fi-only "Received Count" card so admins could correct a user's `donations_received` seed after the one-time user-facing lock fired. With four more donation services live (StreamLabs, StreamElements, Fourthwall, BMAC) that override only worked for one of them.

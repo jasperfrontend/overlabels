@@ -13,7 +13,7 @@
     <script>
         window.__MAP__ = {
             type: 'session',
-            twitchId: @json($twitchId),
+            slug: @json($slug),
             sessionId: @json($sessionId),
             streamerName: @json($streamerName),
             speedUnit: @json($speedUnit),

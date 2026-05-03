@@ -32,7 +32,7 @@ const props = defineProps<{
   sessions: GpsSession[];
   speedUnit: string;
   mapSharingEnabled: boolean;
-  twitchId: string;
+  mapSlug: string;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -218,7 +218,7 @@ function toggleMap(sessionId: string) {
             <Button
               v-if="mapSharingEnabled"
               as="a"
-              :href="`/map/${twitchId}/${session.session_id}`"
+              :href="`/map/${mapSlug}/${session.session_id}`"
               target="_blank"
               rel="noopener"
               variant="outline"

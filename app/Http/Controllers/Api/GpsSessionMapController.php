@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\User;
 use App\Services\GpsLivenessService;
+use App\Services\MapSlugService;
 use App\Services\RouteSimplifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -13,7 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 class GpsSessionMapController extends Controller
 {
-    public function __construct(private GpsLivenessService $liveness) {}
+    public function __construct(
+        private GpsLivenessService $liveness,
+        private MapSlugService $slugService,
+    ) {}
 
     /**
      * GET /api/gps-sessions/{sessionId}/geojson
@@ -27,12 +31,12 @@ class GpsSessionMapController extends Controller
     }
 
     /**
-     * GET /api/map/{twitchId}/{sessionId}/geojson
-     * Public - checks map_sharing_enabled.
+     * GET /api/map/{slug}/{sessionId}/geojson
+     * Public - checks map_sharing_enabled. Slug is a Sqids-encoded Twitch ID.
      */
-    public function publicSessionGeoJson(string $twitchId, string $sessionId): JsonResponse
+    public function publicSessionGeoJson(string $slug, string $sessionId): JsonResponse
     {
-        $user = User::where('twitch_id', $twitchId)->first();
+        $user = $this->resolveUser($slug);
 
         if (! $user) {
             return response()->json(['error' => 'User not found.'], 404);
@@ -46,12 +50,12 @@ class GpsSessionMapController extends Controller
     }
 
     /**
-     * GET /api/map/{twitchId}/position
+     * GET /api/map/{slug}/position
      * Public - returns current (or delayed) GPS position.
      */
-    public function currentPosition(string $twitchId): JsonResponse
+    public function currentPosition(string $slug): JsonResponse
     {
-        $user = User::where('twitch_id', $twitchId)->first();
+        $user = $this->resolveUser($slug);
 
         if (! $user) {
             return response()->json(['error' => 'User not found.'], 404);
@@ -201,6 +205,16 @@ class GpsSessionMapController extends Controller
         });
 
         return response()->json($geoJson);
+    }
+
+    private function resolveUser(string $slug): ?User
+    {
+        $twitchId = $this->slugService->decode($slug);
+        if ($twitchId === null) {
+            return null;
+        }
+
+        return User::where('twitch_id', $twitchId)->first();
     }
 
     private function isMapSharingEnabled(int $userId): bool
