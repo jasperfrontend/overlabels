@@ -97,9 +97,19 @@ function toggleEvent(eventType: string) {
 
 function save() {
   form.post('/settings/integrations/bmac', {
-    preserveScroll: true
+    preserveScroll: true,
+    // Clear the secret field so the placeholder ("(secret saved - enter new
+    // to replace)") shows on the next render. Without this, the typed value
+    // sticks across the round-trip because Inertia preserves component state.
+    onSuccess: () => form.reset('webhook_secret'),
   });
 }
+
+const submitLabel = computed(() => {
+  if (!props.integration.connected) return 'Generate webhook URL';
+  if (!props.integration.has_secret) return 'Save webhook secret';
+  return 'Save changes';
+});
 
 async function toggleTestMode() {
   testModeLoading.value = true;
@@ -167,39 +177,27 @@ function formatDate(iso: string | null): string {
         </div>
 
         <form class="space-y-6" @submit.prevent="save">
-          <!-- Setup steps -->
-          <div v-if="!integration.connected" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2 text-sm text-muted-foreground">
+          <!-- Setup steps - only shown until the integration is fully wired up -->
+          <div v-if="!integration.connected || !integration.has_secret" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2 text-sm text-muted-foreground">
             <p class="font-medium text-foreground">How to set up BMAC webhooks</p>
             <ol class="list-decimal pl-4 space-y-1">
-              <li>Open <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a> and click "Create new webhook".</li>
-              <li>For "Webhook URL", paste your Overlabels webhook URL (visible below after you save the secret).</li>
-              <li>Pick the events you want Overlabels to receive (the same ones you check below).</li>
-              <li>BMAC will show you a "Secret". Copy it and paste it into the field below, then save.</li>
-              <li>Use BMAC's "Send Test" button to confirm everything works - the event will appear in <a href="/dashboard/recents" class="text-violet-400 hover:underline">Recent Events</a>.</li>
+              <li v-if="!integration.connected">
+                Click <strong>Generate webhook URL</strong> at the bottom of this page. Overlabels will generate
+                a unique URL for you, then this page will reload showing the URL.
+              </li>
+              <li v-if="!integration.connected">
+                Open <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a> and click <strong>Create new webhook</strong>. Paste the Overlabels URL into the <strong>Webhook URL</strong> field.
+              </li>
+              <li v-else>
+                Open <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a> and click <strong>Create new webhook</strong>. Paste the URL above into BMAC's <strong>Webhook URL</strong> field.
+              </li>
+              <li>Pick the BMAC events you want Overlabels to receive (the same ones you check below).</li>
+              <li>BMAC will reveal a <strong>Secret</strong>. Click it to copy, paste it into the field below, then save.</li>
+              <li>Use BMAC's <strong>Send Test</strong> button to confirm everything works - the event will appear in <a href="/dashboard/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.</li>
             </ol>
           </div>
 
-          <!-- Webhook Secret -->
-          <div class="space-y-2">
-            <Label for="webhook_secret">Webhook Secret</Label>
-            <p class="text-muted-foreground text-sm">
-              Find this in your BMAC webhook settings page. It's used to verify that incoming webhooks
-              actually came from Buy Me a Coffee.
-            </p>
-            <input
-              id="webhook_secret"
-              v-model="form.webhook_secret"
-              type="text"
-              :placeholder="integration.has_secret ? '(secret saved - enter new to replace)' : 'Paste your webhook secret'"
-              autocomplete="off"
-              class="input-border w-full rounded-sm"
-            />
-            <p v-if="form.errors.webhook_secret" class="text-destructive text-sm">
-              {{ form.errors.webhook_secret }}
-            </p>
-          </div>
-
-          <!-- Webhook URL (read-only) -->
+          <!-- Webhook URL (read-only) - shown as soon as the integration row exists -->
           <div v-if="integration.connected && integration.webhook_url" class="group space-y-2">
             <Label>Your Webhook URL</Label>
             <p class="text-muted-foreground text-sm">
@@ -215,6 +213,26 @@ function formatDate(iso: string | null): string {
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
             </div>
+          </div>
+
+          <!-- Webhook Secret - only shown once the URL is generated -->
+          <div v-if="integration.connected" class="space-y-2">
+            <Label for="webhook_secret">Webhook Secret</Label>
+            <p class="text-muted-foreground text-sm">
+              BMAC reveals this on the webhook page after you create the webhook. It's used to verify
+              that incoming webhooks actually came from Buy Me a Coffee.
+            </p>
+            <input
+              id="webhook_secret"
+              v-model="form.webhook_secret"
+              type="text"
+              :placeholder="integration.has_secret ? '(secret saved - enter new to replace)' : 'Paste your webhook secret'"
+              autocomplete="off"
+              class="input-border w-full rounded-sm"
+            />
+            <p v-if="form.errors.webhook_secret" class="text-destructive text-sm">
+              {{ form.errors.webhook_secret }}
+            </p>
           </div>
 
           <!-- Enabled Event Types -->
@@ -245,7 +263,7 @@ function formatDate(iso: string | null): string {
 
           <div class="flex gap-2">
             <Button type="submit" :disabled="form.processing" class="cursor-pointer">
-              {{ integration.connected ? 'Save changes' : 'Connect Buy Me a Coffee' }}
+              {{ submitLabel }}
             </Button>
             <Button variant="outline" as-child>
               <Link href="/settings/integrations">Cancel</Link>

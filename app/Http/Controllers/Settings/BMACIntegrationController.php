@@ -74,25 +74,29 @@ class BMACIntegrationController extends Controller
     {
         $user = auth()->user();
 
+        // BMAC's webhook secret is generated AFTER you paste the Overlabels
+        // webhook URL into BMAC, so the first save creates the integration
+        // (and thus the webhook_token URL) with no secret. The user comes back
+        // with the secret on a second save.
         $validated = $request->validate([
-            'webhook_secret' => 'required|string|max:512',
+            'webhook_secret' => 'nullable|string|max:512',
             'enabled_events' => 'nullable|array',
             'enabled_events.*' => 'string|in:'.implode(',', self::SUPPORTED_EVENTS),
             'enabled' => 'nullable|boolean',
         ]);
 
-        $isNew = ! ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE_KEY)
-            ->exists();
-
         $integration = ExternalIntegration::firstOrCreate(
             ['user_id' => $user->id, 'service' => self::SERVICE_KEY],
-            ['enabled' => true]
+            ['enabled' => false]
         );
 
-        $integration->setCredentialsEncrypted([
-            'webhook_secret' => $validated['webhook_secret'],
-        ]);
+        $existingCredentials = $integration->getCredentialsDecrypted();
+        $hadSecret = ! empty($existingCredentials['webhook_secret']);
+        $newSecret = $validated['webhook_secret'] ?? null;
+
+        if ($newSecret !== null && $newSecret !== '') {
+            $integration->setCredentialsEncrypted(['webhook_secret' => $newSecret]);
+        }
 
         // Merge so one-time flags (donations_seed_set) survive a re-save.
         $integration->settings = array_merge(
@@ -100,10 +104,17 @@ class BMACIntegrationController extends Controller
             ['enabled_events' => $validated['enabled_events'] ?? self::SUPPORTED_EVENTS],
         );
 
-        $integration->enabled = $isNew || ($validated['enabled'] ?? true);
+        // Only enable once a secret exists - until then, incoming webhooks
+        // would 403 anyway and BMAC would disable the webhook on us.
+        $hasSecret = $hadSecret || ($newSecret !== null && $newSecret !== '');
+        $integration->enabled = $hasSecret && ($validated['enabled'] ?? true);
         $integration->save();
 
-        return back()->with('success', 'Buy Me a Coffee integration saved.');
+        $message = $hasSecret
+            ? 'Buy Me a Coffee integration saved.'
+            : 'Webhook URL generated. Copy it into your BMAC webhook, then come back here with the secret BMAC shows you.';
+
+        return back()->with('success', $message);
     }
 
     public function setTestMode(Request $request): JsonResponse
