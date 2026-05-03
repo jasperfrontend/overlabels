@@ -49,6 +49,16 @@ export const FOURTHWALL_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'Fourthwall Total Received (session)', type: 'number' },
 ];
 
+export const BMAC_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'BMAC Supporters Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'BMAC Latest Supporter Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'BMAC Latest Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'BMAC Latest Support Note', type: 'text' },
+  { key: 'latest_donation_currency', label: 'BMAC Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'BMAC Total Received (session)', type: 'number' },
+  { key: 'latest_support_type', label: 'BMAC Latest Support Type', type: 'text' },
+];
+
 export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
@@ -88,6 +98,7 @@ export function getPresetsForSource(source: string): ServicePreset[] {
     case 'streamlabs': return STREAMLABS_PRESETS;
     case 'streamelements': return STREAMELEMENTS_PRESETS;
     case 'fourthwall': return FOURTHWALL_PRESETS;
+    case 'bmac': return BMAC_PRESETS;
     default: return [];
   }
 }

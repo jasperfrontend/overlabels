@@ -29,6 +29,7 @@ import {
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
   FOURTHWALL_PRESETS,
+  BMAC_PRESETS,
   TWITCH_PRESETS,
   getPresetsForSource,
   type ServicePreset,
@@ -97,6 +98,9 @@ const showStreamElementsPresets = computed(
 const showFourthwallPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('fourthwall'),
 );
+const showBmacPresets = computed(
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('bmac'),
+);
 const showTwitchPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static',
 );
@@ -138,6 +142,9 @@ const availableStreamElementsPresets = computed(() =>
 );
 const availableFourthwallPresets = computed(() =>
   FOURTHWALL_PRESETS.filter((p) => !isPresetAlreadyAdded('fourthwall', p.key) && matchesPresetSearch('fourthwall', p)),
+);
+const availableBmacPresets = computed(() =>
+  BMAC_PRESETS.filter((p) => !isPresetAlreadyAdded('bmac', p.key) && matchesPresetSearch('bmac', p)),
 );
 
 watch(servicePresetKey, (combinedKey) => {
@@ -450,7 +457,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
@@ -531,6 +538,16 @@ async function save() {
                     v-for="preset in availableFourthwallPresets"
                     :key="'fourthwall:' + preset.key"
                     :value="'fourthwall:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showBmacPresets && availableBmacPresets.length">
+                  <ComboboxLabel>Buy Me a Coffee</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableBmacPresets"
+                    :key="'bmac:' + preset.key"
+                    :value="'bmac:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

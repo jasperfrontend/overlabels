@@ -97,7 +97,7 @@ class IntegrationController extends Controller
             'throne' => 'Throne',
             'patreon' => 'Patreon',
             'fourthwall' => 'Fourthwall',
-            'buymeacoffee' => 'Buy Me a Coffee',
+            'bmac' => 'Buy Me a Coffee',
             default => ucfirst($key),
         };
     }

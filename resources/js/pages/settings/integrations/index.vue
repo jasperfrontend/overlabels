@@ -384,7 +384,7 @@ function formatDate(iso: string | null): string {
                 </p>
               </div>
 
-              <Button v-if="['kofi', 'gpslogger', 'overlabels-mobile', 'streamlabs', 'streamelements', 'fourthwall'].includes(service.key)" variant="outline" as-child>
+              <Button v-if="['kofi', 'gpslogger', 'overlabels-mobile', 'streamlabs', 'streamelements', 'fourthwall', 'bmac'].includes(service.key)" variant="outline" as-child>
                 <Link :href="`/settings/integrations/${service.key}`">
                   {{ service.connected ? 'Manage' : 'Connect' }}
                 </Link>

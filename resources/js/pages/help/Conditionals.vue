@@ -21,7 +21,8 @@ type FamilyKey =
   | 'kofi'
   | 'streamlabs'
   | 'streamelements'
-  | 'fourthwall';
+  | 'fourthwall'
+  | 'bmac';
 
 const FAMILY_LABELS: Record<FamilyKey, string> = {
   twitch_basic: 'Twitch - Basic',
@@ -35,6 +36,7 @@ const FAMILY_LABELS: Record<FamilyKey, string> = {
   streamlabs: 'StreamLabs',
   streamelements: 'StreamElements',
   fourthwall: 'Fourthwall',
+  bmac: 'Buy Me a Coffee',
 };
 
 const FAMILY_ORDER: FamilyKey[] = [
@@ -49,6 +51,7 @@ const FAMILY_ORDER: FamilyKey[] = [
   'streamlabs',
   'streamelements',
   'fourthwall',
+  'bmac',
 ];
 
 interface Tag {
@@ -934,6 +937,90 @@ const cards: EventCard[] = [
     ],
   },
 
+  // === Buy Me a Coffee ===
+  {
+    id: 'bmac-controls',
+    family: 'bmac',
+    title: 'Buy Me a Coffee Auto-provisioned Controls',
+    subtitle: 'Seven controls track every BMAC event - donations, commissions, extras, memberships, monthly support, and wishlist payments',
+    dot: 'bg-yellow-300',
+    cols: [
+      {
+        heading: 'Use in any template with the [[[c:bmac:key]]] syntax',
+        tags: [
+          { tag: '[[[c:bmac:donations_received]]]', desc: 'Total count of BMAC events received (counter, increments on every event type)' },
+          { tag: '[[[c:bmac:latest_donor_name]]]', desc: 'Name of the most recent supporter' },
+          { tag: '[[[c:bmac:latest_donation_amount]]]', desc: 'Top-level amount paid for the most recent event (includes shipping/extras for orders)' },
+          { tag: '[[[c:bmac:latest_donation_message]]]', desc: "Supporter's note - empty when supporter chose to keep it private (note_hidden)" },
+          { tag: '[[[c:bmac:latest_donation_currency]]]', desc: 'Currency of the most recent payment (e.g. USD)' },
+          { tag: '[[[c:bmac:total_received]]]', desc: 'Running total of every BMAC payment (session)' },
+          { tag: '[[[c:bmac:latest_support_type]]]', desc: 'Type of the most recent support: Supporter, Commission, Extra, Membership, Subscription, or Wishlist' },
+        ],
+      },
+    ],
+    note: { kind: 'info', text: 'BMAC shares the same six core control keys as Ko-fi, StreamLabs, StreamElements, and Fourthwall. Swap the prefix (c:kofi:, c:bmac:, etc.) and the same template renders for all five integrations. Use latest()/oldest() over the _at companion timestamps to pick the most recent supporter across services.' },
+  },
+  {
+    id: 'bmac-all',
+    family: 'bmac',
+    title: 'All BMAC Events',
+    subtitle: 'Available on every BMAC event (donation, commission, extra, membership, recurring, wishlist)',
+    dot: 'bg-yellow-300',
+    cols: [
+      {
+        heading: 'Common Tags',
+        tags: [
+          { tag: '[[[event.from_name]]]', desc: 'Name of the supporter (data.supporter_name)' },
+          { tag: '[[[event.source]]]', desc: 'Always "Buy Me a Coffee" - useful for reusing templates across donation services' },
+          { tag: '[[[event.type]]]', desc: 'Normalized type: donation, commission, extra, membership, recurring, or wishlist' },
+          { tag: '[[[event.support_type]]]', desc: 'Human label from BMAC (Supporter, Commission, Extra, Membership, Subscription, Wishlist)' },
+          { tag: '[[[event.transaction_id]]]', desc: "BMAC transaction_id, or psp_id for memberships and monthly support" },
+          { tag: '[[[event.message]]]', desc: 'BMAC-generated description (e.g. "John bought you a coffee")' },
+          { tag: '[[[event.live_mode]]]', desc: '"1" for live events, "0" for BMAC test mode' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'bmac-payment',
+    family: 'bmac',
+    title: 'BMAC Payment Tags',
+    subtitle: 'Money- and message-shaped tags emitted by every event type',
+    dot: 'bg-yellow-400',
+    cols: [
+      {
+        heading: 'Payment Tags',
+        tags: [
+          { tag: '[[[event.amount]]]', desc: 'Top-level amount as string (e.g. "5.00") - matches what BMAC reports on the dashboard' },
+          { tag: '[[[event.currency]]]', desc: 'Currency code (e.g. "USD")' },
+          { tag: '[[[event.support_note]]]', desc: "Supporter's private note. Empty when note_hidden is true (memberships and monthly support)" },
+          { tag: '[[[event.coffee_count]]]', desc: 'Number of coffees purchased (donation events only)' },
+          { tag: '[[[event.commission_name]]]', desc: 'Commission product name (commission events only)' },
+          { tag: '[[[event.wishlist_title]]]', desc: 'Wishlist item title (wishlist events only)' },
+          { tag: '[[[event.extras_title]]]', desc: 'First extra purchased (extra events only)' },
+        ],
+      },
+    ],
+    example: `<div class="donor">[[[event.from_name]]] sent [[[event.amount]]] [[[event.currency]]]!</div>
+<div class="message">[[[if:event.support_note]]][[[event.support_note]]][[[endif]]]</div>`,
+  },
+  {
+    id: 'bmac-recurring',
+    family: 'bmac',
+    title: 'BMAC Recurring & Membership Tags',
+    subtitle: 'Distinguish one-off support from monthly support and membership tiers',
+    dot: 'bg-purple-400',
+    cols: [
+      {
+        heading: 'Recurring Tags',
+        tags: [
+          { tag: '[[[event.is_recurring]]]', desc: '"1" for membership and monthly support, "0" otherwise' },
+          { tag: '[[[event.is_membership]]]', desc: '"1" only for membership events (use to read membership_level_name from raw payload)' },
+        ],
+      },
+    ],
+  },
+
   // === StreamLabs ===
   {
     id: 'streamlabs-controls',
@@ -1123,6 +1210,7 @@ const familyCounts = computed(() => {
     streamlabs: 0,
     streamelements: 0,
     fourthwall: 0,
+    bmac: 0,
   };
   for (const card of cards) {
     if (!q) {
@@ -1794,6 +1882,60 @@ function clearFilter() {
               <h4 class="font-semibold">Automatic Webhook Lifecycle</h4>
               <p>
                 Connecting registers a webhook on your Fourthwall shop programmatically; disconnecting deregisters it. You don't paste URLs into the Fourthwall dashboard - Overlabels manages the webhook on your behalf.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="activeFamily === 'all' || activeFamily === 'bmac'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <h3 class="mb-4 text-xl font-semibold">
+            <span class="mr-2 inline-block h-3 w-3 rounded bg-yellow-300"></span>
+            Buy Me a Coffee - How It Works
+          </h3>
+          <ol class="mb-4 list-inside list-decimal space-y-2 text-foreground">
+            <li>
+              Open
+              <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a>
+              and click <strong>Create new webhook</strong>.
+            </li>
+            <li>
+              Paste the webhook URL shown on
+              <a href="/settings/integrations/bmac" class="cursor-pointer text-violet-400 hover:underline">Settings &gt; Integrations &gt; Buy Me a Coffee</a>
+              into BMAC's <strong>Webhook URL</strong> field.
+            </li>
+            <li>Pick the events you want (donation, commission, extras, membership, monthly support, wishlist) and create the webhook.</li>
+            <li>Copy the <strong>Secret</strong> BMAC shows you and paste it back into the Overlabels settings page.</li>
+            <li>Use BMAC's <strong>Send Test</strong> button to fire a test event - it should appear in <a href="/dashboard/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.</li>
+          </ol>
+          <div class="space-y-3 text-sm text-foreground">
+            <div>
+              <h4 class="font-semibold">Verification</h4>
+              <p>
+                BMAC signs every webhook with HMAC-SHA256 of the request body using the secret you saved. Overlabels rejects any request whose signature header (<code>x-signature-sha256</code>) doesn't match.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Privacy</h4>
+              <p>
+                Overlabels strips the supporter's email, shipping address, and gross-charged total from every event before storing it. Supporter emails are kept in an encrypted backend column for future analytics, never exposed to overlay templates or the Recent Events log.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Test Mode</h4>
+              <p>
+                Toggle test mode on the BMAC settings page to fire the same BMAC test webhook repeatedly without dedup. When you turn it off, the donation counter resets to your seed value.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Starting Donation Count</h4>
+              <p>
+                Already had supporters before connecting? Set a starting count so your <code>[[[c:bmac:donations_received]]]</code> control picks up where you left off. One-time-only - email Jasper if you need to correct it later.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-semibold">Shared Alert Templates</h4>
+              <p>
+                BMAC, Ko-fi, StreamLabs, StreamElements, and Fourthwall all expose the same six core control keys. Pair them with <code>latest()</code>/<code>oldest()</code> over the <code>_at</code> companion timestamps to pick the most recent supporter across every connected service.
               </p>
             </div>
           </div>

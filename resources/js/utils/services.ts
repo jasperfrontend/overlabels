@@ -13,6 +13,7 @@ export const SERVICE_LABELS: Record<string, string> = {
   gpslogger: 'GPSLogger',
   twitch: 'Twitch',
   fourthwall: 'Fourthwall',
+  bmac: 'Buy Me a Coffee',
   'overlabels-mobile': 'Overlabels Mobile',
 };
 

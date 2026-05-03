@@ -3,6 +3,7 @@
 namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
+use App\Services\External\Drivers\BMACServiceDriver;
 use App\Services\External\Drivers\FourthwallServiceDriver;
 use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
@@ -23,6 +24,7 @@ class ExternalServiceRegistry
         'streamlabs' => StreamLabsServiceDriver::class,
         'streamelements' => StreamElementsServiceDriver::class,
         'fourthwall' => FourthwallServiceDriver::class,
+        'bmac' => BMACServiceDriver::class,
     ];
 
     /**

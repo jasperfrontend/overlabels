@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
@@ -78,6 +79,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/fourthwall/test-mode', [FourthwallIntegrationController::class, 'setTestMode'])->name('fourthwall.test-mode');
         Route::post('/fourthwall/seed-count', [FourthwallIntegrationController::class, 'seedDonationCount'])->name('fourthwall.seed-count');
         Route::delete('/fourthwall', [FourthwallIntegrationController::class, 'disconnect'])->name('fourthwall.disconnect');
+
+        Route::get('/bmac', [BMACIntegrationController::class, 'show'])->name('bmac.show');
+        Route::post('/bmac', [BMACIntegrationController::class, 'save'])->name('bmac.save');
+        Route::patch('/bmac/test-mode', [BMACIntegrationController::class, 'setTestMode'])->name('bmac.test-mode');
+        Route::post('/bmac/seed-count', [BMACIntegrationController::class, 'seedDonationCount'])->name('bmac.seed-count');
+        Route::delete('/bmac', [BMACIntegrationController::class, 'disconnect'])->name('bmac.disconnect');
 
         Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
     });
