@@ -38,6 +38,7 @@ import {
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { VisuallyHidden } from 'reka-ui';
+import { Badge } from '@/components/ui/badge';
 
 const showPreview = ref(false);
 const obsButton = ref<InstanceType<typeof AddToObsButton> | null>(null);
@@ -210,20 +211,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
-            <span
-              class="shrink-0 rounded-sm px-2 py-0.5 text-xs font-medium"
-              :class="template?.is_public
-                ? 'bg-green-500/10 text-green-500 dark:text-green-400'
-                : 'bg-violet-500/10 text-violet-500 dark:text-violet-400'"
-            >
+
+            <Badge
+              variant="default"
+              >
               {{ template?.is_public ? 'Public' : 'Private' }}
-            </span>
+            </Badge>
           </div>
           <p v-if="template?.description" class="mt-1 text-sm text-muted-foreground">{{ template?.description }}</p>
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-          <AddToObsButton v-if="canEdit" ref="obsButton" :template="template" />
+
           <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary" title="Edit this overlay (keyboard shortcut: 'e')">
             <PencilIcon class="mr-2 h-4 w-4" />
             Edit
@@ -260,18 +259,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class="mb-0 rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent p-0 pb-0">
+      <div v-if="canEdit" class="border border-b-0 border-sidebar bg-violet-300/20 dark:bg-violet-900/20">
         <div
           class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
             v-for="(tab, index) in mainTabs"
             :key="tab.key"
+            type="button"
             @click="mainTab = tab.key"
             :class="[
-              'flex cursor-pointer items-center gap-1.5 px-3 py-2 lg:px-5 lg:py-2.5 text-sm font-medium transition-colors hover:bg-background',
-              index === 0 && 'rounded-tl-sm',
-              mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
-            ]"
+                'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+                index === 0 && 'rounded-tl-sm',
+                mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
+              ]"
           >
             <component :is="tab.icon" class="h-4 w-4" />
             {{ tab.label }}

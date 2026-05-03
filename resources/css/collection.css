@@ -1,6 +1,6 @@
 @layer components {
   .overlabels-background {
-    @apply border-l-2 border-l-accent transition-all;
+    @apply border-l-2 border-l-accent transition-all px-4 py-2;
     @apply hover:border-l-violet-400 hover:bg-sidebar-accent dark:hover:bg-accent/50;
     @apply active:border-l-violet-500 active:bg-linear-to-r active:from-violet-400/20;
   }

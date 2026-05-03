@@ -9,7 +9,7 @@ defineProps<{
 
 <template>
     <div class="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-        <div class="bg-sidebar p-8 rounded shadow-md transition-all hover:ring-2 hover:shadow ring-sidebar ring-offset-background">
+        <div class="bg-sidebar p-8">
           <div class="space-y-2 flex flex-col items-center">
             <div class="app-logo flex flex-col items-center">
               <TwitchIcon class="size-10" />

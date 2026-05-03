@@ -319,7 +319,7 @@ onMounted(() => {
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
-          <AddToObsButton ref="obsButton" :template="template" />
+
           <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
@@ -364,7 +364,7 @@ onMounted(() => {
 
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
-        <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
+        <div class="border border-b-0 border-sidebar bg-violet-300/20 dark:bg-violet-900/20">
           <div
             class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
@@ -375,7 +375,7 @@ onMounted(() => {
               :class="[
                 'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
                 index === 0 && 'rounded-tl-sm',
-                mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
+                mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
@@ -390,6 +390,8 @@ onMounted(() => {
         >
           <!-- Code Tab -->
           <TemplateCodeEditor
+            :template-type="props.template.type"
+            :template="props.template"
             v-show="mainTab === 'code'"
             v-model:head="form.head"
             v-model:body="form.html"

@@ -210,7 +210,7 @@ function relativeTime(iso: string): string {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-4 flex-row p-4 overlabels-background',
+            'group flex items-start justify-between gap-4 flex-row overlabels-background',
             eventHoverBorderClass(event),
             canReplay(event) && confirmingId !== event.id ? 'cursor-pointer overlabels-background transition-all duration-100' : '',
             // replayingId === event.id ? 'opacity-60' : '',
@@ -224,11 +224,11 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex min-w-0 flex-1 gap-1 group" :id="label(event)">
+          <div class="flex min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-[80%]">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <div class="text-muted-foreground group-hover:text-foreground whitespace-nowrap overflow-x-hidden text-ellipsis">{{ label(event) }}</div>
+              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden font-bold text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)">{{ details(event) }}</span>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">

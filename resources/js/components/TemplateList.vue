@@ -73,7 +73,7 @@ function handleDelete(t: OverlayTemplate) {
     <div v-for="t in templates" :key="t.id" class="group text-sm">
       <Link
         :href="detailsHref(t)"
-        class="flex flex-row justify-between p-4 gap-4 overlabels-background"
+        class="flex flex-row justify-between px-4 py-2 gap-4 overlabels-background"
       >
         <Heading :title="t.name" title-class="text-md" :description="t.description ?? undefined" description-class="text-xs" />
 

@@ -3,21 +3,21 @@ import { cva, type VariantProps } from 'class-variance-authority'
 export { default as Badge } from './Badge.vue'
 
 export const badgeVariants = cva(
-  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+  'inline-flex items-center px-2.5 py-0.5 text-xs font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80',
+          'border-transparent bg-violet-500 dark:bg-violet-400 text-primary-foreground',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'border-transparent bg-secondary text-secondary-foreground',
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80',
+          'border-transparent bg-destructive text-destructive-foreground',
         outline: 'text-foreground border-border',
         success:
-          'border-transparent bg-green-600 text-white shadow hover:bg-green-600/80',
+          'border-transparent bg-green-600 text-white',
         warning:
-          'border-transparent bg-yellow-600 text-white shadow hover:bg-yellow-600/80',
+          'border-transparent bg-yellow-600 text-white',
       },
     },
     defaultVariants: {

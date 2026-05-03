@@ -1,6 +1,6 @@
 @layer components {
   .btn {
-    @apply text-sm leading-4 px-4 py-1.5 rounded-sm cursor-pointer flex items-center justify-center duration-150;
+    @apply text-sm leading-4 px-4 py-1.5 cursor-pointer flex items-center justify-center duration-150;
     @apply bg-sidebar hover:bg-slate-300 text-accent-foreground;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background;
@@ -16,7 +16,7 @@
 
   .btn-chill {
     @apply text-gray-500 dark:text-gray-400 border-gray-500/50;
-    @apply hover:bg-sidebar-accent dark:hover:bg-white/20;
+    @apply hover:bg-violet-400/30;
     @apply active:bg-gray-500/30 active:border-gray-400 dark:active:border-gray-300;
     @apply focus-visible:ring-gray-500 dark:focus-visible:ring-gray-600;
   }
@@ -31,17 +31,17 @@
   }
 
   .btn-primary {
-    @apply text-green-500 dark:text-green-400 border-green-500/50;
-    @apply hover:bg-green-500/10 dark:hover:bg-green-500/40;
+    @apply bg-green-300/20 text-green-500 dark:text-green-400 border-green-500/50;
+    @apply hover:bg-green-500/30 dark:hover:bg-green-500/40;
     @apply active:bg-green-500/30 active:border-green-400 dark:active:border-green-600;
     @apply focus-visible:ring-green-500 dark:focus-visible:ring-green-800;
   }
 
   .btn-secondary {
-    @apply text-blue-500 dark:text-blue-400 border-blue-500/50;
-    @apply hover:bg-blue-500/10 dark:hover:bg-blue-500/40;
-    @apply active:bg-blue-500/30 active:border-blue-400 dark:active:border-blue-600;
-    @apply focus-visible:ring-blue-500 dark:focus-visible:ring-blue-800;
+    @apply text-violet-500 dark:text-violet-400 border-violet-500/50;
+    @apply hover:bg-violet-500/10 dark:hover:bg-violet-500/40;
+    @apply active:bg-violet-500/30 active:border-violet-400 dark:active:border-violet-600;
+    @apply focus-visible:ring-violet-500 dark:focus-visible:ring-violet-800;
   }
 
   .btn-tertiary {

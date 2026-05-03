@@ -15,9 +15,9 @@ use Inertia\Response;
 
 class BMACIntegrationController extends Controller
 {
-    private const SERVICE_KEY = 'bmac';
+    private const string SERVICE_KEY = 'bmac';
 
-    private const SUPPORTED_EVENTS = [
+    private const array SUPPORTED_EVENTS = [
         'donation',
         'commission',
         'extra',

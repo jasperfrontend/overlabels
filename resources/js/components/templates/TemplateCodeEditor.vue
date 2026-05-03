@@ -6,11 +6,18 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind, Video } from 'lucide-vue-next';
+import AddToObsButton from '@/components/AddToObsButton.vue';
+import { Badge } from '@/components/ui/badge';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
+
+const props = defineProps<{
+  template: { id: number; name: string; slug: string };
+  templateType?: string;
+}>();
 
 // Detect dark mode reactively via MutationObserver on <html> class
 const isDark = ref(document.documentElement.classList.contains('dark'));
@@ -34,6 +41,7 @@ const editorTabs = [
   { key: 'body', label: 'BODY', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
   { key: 'css', label: 'CSS', icon: Palette, color: 'text-lime-500 dark:text-lime-400' },
   { key: 'tailwind', label: 'TW3', icon: Wind, color: 'text-sky-500 dark:text-sky-400' },
+  { key: 'add-to-obs', label: 'OBS', icon: Video, color: 'text-violet-500 dark:text-violet-400' },
 ] as const;
 
 type CodeTab = (typeof editorTabs)[number]['key'];
@@ -227,6 +235,28 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
               </p>
             </div>
           </div>
+
+          <!-- Add to OBS panel -->
+          <div
+            v-show="codeTab === 'add-to-obs' && props.templateType === 'static'"
+            class="absolute inset-0 overflow-auto p-6 text-sm text-foreground"
+          >
+            <div class="mx-auto max-w-2xl space-y-4">
+              <div class="flex items-center gap-3">
+                <Video class="size-6 text-violet-500 dark:text-violet-400" />
+                <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
+              </div>
+              <p v-if="props.templateType === 'static'">
+                Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
+              </p>
+
+              <div>
+                <AddToObsButton ref="obsButton" :template="props.template" />
+              </div>
+            </div>
+          </div>
+
+
           <!-- Fullscreen hint bar -->
           <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground">
             <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit

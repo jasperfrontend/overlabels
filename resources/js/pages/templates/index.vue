@@ -138,7 +138,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- Filters Section -->
-      <div class="mb-4 rounded-sm border border-sidebar-border bg-sidebar-accent p-4">
+      <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4 lg:grid-cols-6">
           <!-- Search -->
 
@@ -149,7 +149,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               @input="debounceSearch"
               type="text"
               placeholder="Search overlays and alerts..."
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-search"
             />
           </div>
@@ -160,7 +160,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <select
               v-model="filters.type"
               @change="applyFilter"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-type"
             >
               <option value="">All Types</option>
@@ -175,7 +175,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <select
               v-model="filters.filter"
               @change="applyFilter"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-visibility"
             >
               <option value="all_templates">All overlays</option>
@@ -190,7 +190,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <select
               v-model="filters.sort"
               @change="applyFilter"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-sort"
             >
               <option value="created_at">Date created</option>
