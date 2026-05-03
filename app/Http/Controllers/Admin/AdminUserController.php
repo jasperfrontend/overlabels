@@ -19,6 +19,18 @@ use Inertia\Response;
 
 class AdminUserController extends Controller
 {
+    /**
+     * Donation-style integrations whose donations_received seed value can be
+     * (re)set from the admin panel. Each entry is [service_key => display_name].
+     */
+    private const SEEDABLE_SERVICES = [
+        'kofi' => 'Ko-fi',
+        'streamlabs' => 'StreamLabs',
+        'streamelements' => 'StreamElements',
+        'fourthwall' => 'Fourthwall',
+        'bmac' => 'Buy Me a Coffee',
+    ];
+
     public function __construct(private readonly AdminAuditService $audit) {}
 
     public function index(Request $request): Response
@@ -71,10 +83,26 @@ class AdminUserController extends Controller
             ->limit(10)
             ->get();
 
-        $kofiIntegration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
-            ->first();
-        $kofiSettings = $kofiIntegration?->settings ?? [];
+        $integrations = ExternalIntegration::where('user_id', $user->id)
+            ->whereIn('service', array_keys(self::SEEDABLE_SERVICES))
+            ->get()
+            ->keyBy('service');
+
+        $integrationSeeds = collect(self::SEEDABLE_SERVICES)
+            ->map(function (string $label, string $service) use ($integrations) {
+                $integration = $integrations->get($service);
+                $settings = $integration?->settings ?? [];
+
+                return [
+                    'service' => $service,
+                    'label' => $label,
+                    'connected' => $integration !== null,
+                    'seed_set' => ! empty($settings['donations_seed_set']),
+                    'seed_value' => $settings['donations_seed_value'] ?? null,
+                ];
+            })
+            ->values()
+            ->all();
 
         $activeBan = $user->bans()->notExpired()->latest()->first();
 
@@ -83,9 +111,7 @@ class AdminUserController extends Controller
             'recentTemplates' => $recentTemplates,
             'accessTokens' => $accessTokens,
             'recentAuditEntries' => $recentAuditEntries,
-            'kofiSeedSet' => ! empty($kofiSettings['donations_seed_set']),
-            'kofiSeedValue' => $kofiSettings['donations_seed_value'] ?? null,
-            'kofiConnected' => $kofiIntegration !== null,
+            'integrationSeeds' => $integrationSeeds,
             'isBanned' => $user->isBanned(),
             'activeBan' => $activeBan ? [
                 'id' => $activeBan->id,
@@ -217,8 +243,18 @@ class AdminUserController extends Controller
         return redirect()->route('admin.users.index')->with('message', 'User deleted successfully.');
     }
 
-    public function updateKofiSeed(Request $request, int $id): RedirectResponse
+    /**
+     * Admin override for the donations_received seed value on any donation-
+     * style integration (Ko-fi, StreamLabs, StreamElements, Fourthwall, BMAC).
+     * Bypasses the one-time lock the user-facing settings enforce, so admins
+     * can correct mistakes after the fact.
+     */
+    public function updateIntegrationSeed(Request $request, int $id, string $service): RedirectResponse
     {
+        if (! array_key_exists($service, self::SEEDABLE_SERVICES)) {
+            abort(404);
+        }
+
         $user = User::withTrashed()->findOrFail($id);
         $admin = $request->user();
 
@@ -227,15 +263,17 @@ class AdminUserController extends Controller
         ]);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
+            ->where('service', $service)
             ->first();
 
         if (! $integration) {
-            return back()->withErrors(['initial_count' => 'User has no Ko-fi integration.']);
+            $label = self::SEEDABLE_SERVICES[$service];
+
+            return back()->withErrors(['initial_count' => "User has no $label integration."]);
         }
 
         OverlayControl::where('user_id', $user->id)
-            ->where('source', 'kofi')
+            ->where('source', $service)
             ->where('key', 'donations_received')
             ->where('source_managed', true)
             ->update(['value' => (string) $validated['initial_count']]);
@@ -246,11 +284,12 @@ class AdminUserController extends Controller
         ]);
         $integration->save();
 
-        $this->audit->log($admin, 'user.kofi_seed_updated', 'User', $user->id, [
+        $this->audit->log($admin, 'user.integration_seed_updated', 'User', $user->id, [
+            'service' => $service,
             'initial_count' => $validated['initial_count'],
         ], $request);
 
-        return back()->with('message', 'Ko-fi seed value updated.');
+        return back()->with('message', self::SEEDABLE_SERVICES[$service].' seed value updated.');
     }
 
     public function restore(Request $request, int $id): RedirectResponse

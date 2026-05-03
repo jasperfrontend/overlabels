@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EmptyState from '@/components/EmptyState.vue';
 import { Input } from '@/components/ui/input';
 import { usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import type { AdminTemplate } from '@/types';
 
 interface User {
@@ -50,14 +50,20 @@ interface BanInfo {
   ip: string | null;
 }
 
+interface IntegrationSeed {
+  service: string;
+  label: string;
+  connected: boolean;
+  seed_set: boolean;
+  seed_value: number | null;
+}
+
 const props = defineProps<{
   user: User;
   recentTemplates: AdminTemplate[];
   accessTokens: Token[];
   recentAuditEntries: AuditEntry[];
-  kofiConnected: boolean;
-  kofiSeedSet: boolean;
-  kofiSeedValue: number | null;
+  integrationSeeds: IntegrationSeed[];
   isBanned: boolean;
   activeBan: BanInfo | null;
 }>();
@@ -78,12 +84,26 @@ function submitRole() {
   roleForm.patch(route('admin.users.role', props.user.id));
 }
 
-// Received Ko-fi donations form
-const kofiSeedValueForm = useForm({ initial_count: props.kofiSeedValue ?? 0 });
+// Per-service donations_received seed forms. One useForm per integration so
+// each card has its own loading/error state and the inputs don't share v-model.
+const seedForms = reactive(
+  Object.fromEntries(
+    props.integrationSeeds.map((s) => [
+      s.service,
+      useForm({ initial_count: s.seed_value ?? 0 }),
+    ]),
+  ) as Record<string, ReturnType<typeof useForm<{ initial_count: number }>>>,
+);
 
-function submitKofiSeedValue() {
-  kofiSeedValueForm.post(route('admin.users.kofi-seed', props.user.id));
+function submitIntegrationSeed(service: string) {
+  const form = seedForms[service];
+  if (!form) return;
+  form.post(route('admin.users.integration-seed', { user: props.user.id, service }));
 }
+
+const connectedSeedIntegrations = computed(() =>
+  props.integrationSeeds.filter((s) => s.connected),
+);
 
 // Ban form
 const banForm = useForm({
@@ -252,25 +272,52 @@ function restore() {
             </CardContent>
           </Card>
 
-          <!-- Ko-fi initial seed (donations received) value -->
-          <Card v-if="!user.is_system_user && kofiConnected">
+          <!-- Donation-style integration seed values (donations_received) -->
+          <Card v-if="!user.is_system_user && connectedSeedIntegrations.length">
             <CardHeader>
-              <CardTitle>Ko-fi Received Count</CardTitle>
+              <CardTitle>Donation Counter Seed Values</CardTitle>
             </CardHeader>
             <CardContent>
-              <p class="mb-3 text-sm text-muted-foreground">
-                Override the user's Ko-fi received count seed value. This bypasses the one-time lock.
-                <span v-if="kofiSeedSet"> Currently set to <strong>{{ kofiSeedValue }}</strong>.</span>
-                <span v-else> Not yet set by user.</span>
+              <p class="mb-4 text-sm text-muted-foreground">
+                Override the user's <code>donations_received</code> seed value for any connected donation-style
+                integration. This bypasses the one-time lock the user-facing settings enforce, so use it to correct
+                mistakes after the user has already set their starting count.
               </p>
-              <form @submit.prevent="submitKofiSeedValue" class="flex items-center gap-3">
-                <input type="number" v-model="kofiSeedValueForm.initial_count" min="0" max="9999999"
-                       class="rounded border px-3 py-1.5 text-sm bg-background w-32" />
-                <Button type="submit" class="cursor-pointer" size="sm" :disabled="kofiSeedValueForm.processing">Save
-                </Button>
-                <p v-if="kofiSeedValueForm.errors.initial_count" class="text-xs text-destructive">
-                  {{ kofiSeedValueForm.errors.initial_count }}</p>
-              </form>
+              <div class="space-y-4">
+                <div
+                  v-for="seed in connectedSeedIntegrations"
+                  :key="seed.service"
+                  class="rounded border border-sidebar p-3 space-y-2"
+                >
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium">{{ seed.label }}</p>
+                    <span v-if="seed.seed_set" class="text-xs text-muted-foreground">
+                      Currently set to <strong>{{ seed.seed_value }}</strong>
+                    </span>
+                    <span v-else class="text-xs text-muted-foreground">Not yet set by user</span>
+                  </div>
+                  <form @submit.prevent="submitIntegrationSeed(seed.service)" class="flex items-center gap-3">
+                    <input
+                      type="number"
+                      v-model="seedForms[seed.service].initial_count"
+                      min="0"
+                      max="9999999"
+                      class="rounded border px-3 py-1.5 text-sm bg-background w-32"
+                    />
+                    <Button
+                      type="submit"
+                      class="cursor-pointer"
+                      size="sm"
+                      :disabled="seedForms[seed.service].processing"
+                    >
+                      Save
+                    </Button>
+                    <p v-if="seedForms[seed.service].errors.initial_count" class="text-xs text-destructive">
+                      {{ seedForms[seed.service].errors.initial_count }}
+                    </p>
+                  </form>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

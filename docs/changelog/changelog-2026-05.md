@@ -1,5 +1,20 @@
 # CHANGELOG MAY 2026
 
+## May 3rd, 2026 - Admin: extend donation seed override to all donation-style integrations
+
+- The admin user-detail page (`/admin/users/{id}`) had a Ko-fi-only "Received Count" card so admins could correct a user's `donations_received` seed after the one-time user-facing lock fired. With four more donation services live (StreamLabs, StreamElements, Fourthwall, BMAC) that override only worked for one of them.
+- Generalized: `AdminUserController::updateKofiSeed` is now `updateIntegrationSeed($id, $service)`, gated by a `SEEDABLE_SERVICES` constant (`kofi`, `streamlabs`, `streamelements`, `fourthwall`, `bmac`). 404s for any other service. Updates the `OverlayControl` row(s) where `source = $service` and `key = donations_received` and writes `donations_seed_set` + `donations_seed_value` into the integration's `settings` so the user-facing settings page sees the new value too.
+- Route `admin.users.kofi-seed` (POST `/admin/users/{user}/kofi-seed`) replaced by `admin.users.integration-seed` (POST `/admin/users/{user}/integration-seed/{service}`) with a regex constraint locking `{service}` to the five seedable services.
+- `show()` now ships an `integrationSeeds` array (one entry per seedable service) instead of three Ko-fi-specific props. Each entry carries `{service, label, connected, seed_set, seed_value}`.
+- Vue page renders one card with a per-service row inside it. Each row owns its own `useForm` so loading state, validation errors, and the input value are isolated. Only services where the user actually has an integration row are shown.
+- Audit log key: `user.kofi_seed_updated` becomes `user.integration_seed_updated`, with `service` added to the metadata payload alongside `initial_count`.
+
+## May 3rd, 2026 - Fix: split BMAC connect flow so webhook URL is generated before secret
+
+- BMAC reveals the webhook secret only after you paste an Overlabels URL into BMAC's webhook page, so requiring the secret on first save was a chicken-and-egg dead end.
+- Save now accepts a nullable `webhook_secret`. First submit creates the integration row with `enabled=false` and no credentials so the webhook URL appears, user goes to BMAC and gets the secret, comes back, second submit stores the secret and flips `enabled=true`.
+- UI follows the three-state shape: not connected -> setup steps + "Generate webhook URL" button. Connected without secret -> URL appears, secret input shown, button reads "Save webhook secret". Connected with secret -> "Save changes" + placeholder reads "(secret saved - enter new to replace)" and the input clears on every successful submit via Inertia's onSuccess hook.
+
 ## May 3rd, 2026 - Feature: Buy Me a Coffee (BMAC) integration
 
 - Added BMAC as the fifth donation-style integration alongside Ko-fi, StreamLabs, StreamElements, and Fourthwall. Connects via webhook with HMAC-SHA256 verification: user pastes the secret from `studio.buymeacoffee.com/webhooks/<id>` into Settings -> Integrations -> Buy Me a Coffee, Overlabels generates the webhook URL (`/api/webhooks/bmac/{token}`), user pastes the URL back into BMAC. Every event signed with `x-signature-sha256` of the raw body using the shared secret.
