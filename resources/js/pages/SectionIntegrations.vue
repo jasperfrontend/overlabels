@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
-import { DollarSign, Heart } from 'lucide-vue-next';
+import { DollarSign } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { ref } from 'vue';
 
-const integrationsTab = ref<'kofi' | 'fourthwall' | 'streamlabs' | 'streamelements'>('kofi');
+const integrationsTab = ref<'kofi' | 'fourthwall' | 'bmac' | 'streamlabs' | 'streamelements'>('kofi');
 
 const integrationConfigs = {
   kofi: {
@@ -20,6 +20,13 @@ const integrationConfigs = {
     tagline: 'Donations',
     description:
       'Authenticate your Overlabels account with Fourthwall through 2 clicks on the integration page, done. Every Fourthwall donation event flows through the same alert pipeline as Twitch events.',
+  },
+  bmac: {
+    name: 'NEW: Buy Me a Coffee',
+    namespace: 'bmac',
+    tagline: 'Donations, Commision Orders, Extras, Membership, Monthly Support, Wishlist Payments',
+    description:
+      'Paste your Buy Me a Coffee verification token, set your webhook URL, done. Every Buy Me a Coffee event flows through the same alert pipeline as Twitch events.',
   },
   streamlabs: {
     name: 'Streamlabs',
@@ -47,7 +54,7 @@ const integrationConfigs = {
         </div>
         <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Show donations from different sources.</h2>
         <p class="mb-12 max-w-2xl text-lg text-foreground">
-          Connect your Ko-fi, <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Fourthwall, StreamElements or Streamlabs account and Overlabels automatically tracks every donation in real time.
+          Connect your Ko-fi, <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Fourthwall, <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Buy Me a Coffee, StreamElements or Streamlabs account and Overlabels automatically tracks every donation in real time.
           Counters update, alerts fire, and your overlay stays current - all without touching a single line of code
           after setup.
         </p>
@@ -55,7 +62,7 @@ const integrationConfigs = {
         <!-- Integration tabs -->
         <div class="mb-8 flex gap-0 overflow-hidden border-b border-sidebar-border  ">
           <button
-            v-for="service in (['kofi', 'fourthwall', 'streamlabs', 'streamelements'] as const)"
+            v-for="service in (['kofi', 'fourthwall', 'bmac', 'streamlabs', 'streamelements'] as const)"
             :key="service"
             @click="integrationsTab = service"
             :class="[
@@ -71,8 +78,7 @@ const integrationConfigs = {
         <div class="mb-12 rounded-sm bg-card p-6 max-w-3xl hover:max-w-full transition-all">
           <div class="mb-4 flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
-              <Heart v-if="integrationsTab === 'kofi'" class="h-5 w-5 text-sky-500" />
-              <DollarSign v-else class="h-5 w-5 text-sky-500" />
+              <DollarSign class="h-5 w-5 text-sky-500" />
             </div>
             <div>
               <h3 class="font-semibold">{{ integrationConfigs[integrationsTab].name }}</h3>
@@ -138,7 +144,7 @@ const integrationConfigs = {
           </div>
         </div>
         <p class="mt-3 text-sm text-muted-foreground">
-          Ko-fi, StreamElements and Streamlabs expose the same normalized event tags. Write your donation alert once and it works for
+          Ko-fi, Fourthwall, Buy Me a Coffee, StreamElements and Streamlabs expose the same normalized event tags. Write your donation alert once and it works for
           both - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code>
           tells your overlay which platform it came from.
         </p>
@@ -149,13 +155,13 @@ const integrationConfigs = {
             No vendor lock-in
           </Badge>
           <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-            Four donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
+            Five donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
           </h3>
           <p class="mb-4 max-w-3xl text-lg text-foreground">
             Every other overlay tool on the market is owned by a donation platform. Streamlabs' overlays show Streamlabs donations. StreamElements' overlays show StreamElements donations. Ko-fi's overlays show Ko-fi donations. That's not a bug, it's the business model.
           </p>
           <p class="mb-8 max-w-3xl text-lg text-foreground">
-            Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all four donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, four pipes.</strong>
+            Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all five donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, five pipes.</strong>
           </p>
 
           <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">
@@ -167,6 +173,7 @@ const integrationConfigs = {
               <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">kofi</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">fourthwall</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.fourthwall.latest_donor_name</span><span class="text-zinc-500">,</span></div>
+              <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">bmac</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.bmac.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamelements</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamlabs</span>.latest_donor_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donor_name</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">twitch</span>.latest_cheerer_name<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.twitch.latest_cheerer_name</span></div>
@@ -176,6 +183,7 @@ const integrationConfigs = {
               <div><span class="text-sky-600 dark:text-sky-400">latest</span><span class="text-zinc-500">(</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">kofi</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.kofi.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">fourthwall</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.fourthwall.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
+              <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">bmac</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.bmac.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamelements</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamelements.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">streamlabs</span>.latest_donation_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.streamlabs.latest_donation_amount</span><span class="text-zinc-500">,</span></div>
               <div>&nbsp;&nbsp;<span class="text-amber-700 dark:text-amber-400">c.<span class="text-pink-700 dark:text-pink-400">twitch</span>.latest_cheer_amount<span class="text-green-700 dark:text-green-400">_at</span></span><span class="text-zinc-500">,</span> <span class="text-amber-700 dark:text-amber-400">c.twitch.latest_cheer_amount</span></div>
