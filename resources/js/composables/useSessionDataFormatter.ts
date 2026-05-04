@@ -4,12 +4,18 @@ import { usePage } from '@inertiajs/vue3';
 type Options = {
   /** Optional reactive speed unit ('kmh' | 'mph'). Required if you call formatSpeed/formatDistance. */
   speedUnit?: Ref<string>;
+  /** Optional locale override - takes precedence over the authed user's locale. Used on
+   *  unauthenticated pages (e.g. the public map view) where we want the streamer's locale
+   *  rather than 'en-US'. */
+  localeOverride?: Ref<string | null | undefined>;
 };
 
 export function useSessionDataFormatter(opts: Options = {}) {
   const page = usePage();
 
   const userLocale = computed<string>(() => {
+    const override = opts.localeOverride?.value;
+    if (override) return override;
     const user = (page.props as { auth?: { user?: { locale?: string } } })?.auth?.user;
     return user?.locale || 'en-US';
   });

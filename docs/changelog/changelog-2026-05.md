@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 4th, 2026 - Feat: stats card on the public session-map view
+
+- The public saved-session URL `/map/{slug}/{sessionId}` rendered the route polyline beautifully but with zero context - a viewer who landed on a shared link had no way to see how long the ride was, how far, or how fast. The same data was already living in the GPS Sessions dashboard card (duration, distance, avg/max speed, elevation min-max, battery start-end, ping count); the public view just wasn't asking for it.
+- Extracted `GpsSessionController::aggregateSessions` and `computeDistances` into a new `App\Services\GpsSessionAggregator`. The dashboard now calls `forUser($userId)`; the new public endpoint calls `forSession($userId, $sessionId)`. Same shape, same SQL, one source of truth so the two surfaces can't drift.
+- Added `GET /api/map/{slug}/{sessionId}/meta` (route in `routes/api.php`, `throttle:60,1`, no Sanctum). Gated on `map_sharing_enabled` like the existing geojson endpoint. Returns `{ session, speed_unit, locale }` so the unauthenticated frontend can render the streamer's locale rather than defaulting to `en-US`.
+- `useSessionDataFormatter` gained a `localeOverride?: Ref<string | null | undefined>` option that takes precedence over `usePage().auth.user.locale`. The dashboard keeps using the authed user's locale as before; `SessionMap.vue` passes the streamer's locale through the new override. No call sites broken.
+- `SessionMap.vue` now fires the geojson and meta fetches in parallel and renders an absolute-positioned card in the top-left corner over the leaflet stage. Card uses the same icon set, layout, and formatters as the dashboard row (Clock/Duration, MapPin/Distance, Gauge/Speed, Mountain/Elevation, Battery, Radio/Pings) so the two views feel like the same component. `z-index: 500` puts it above leaflet's default panes (~400). Backdrop-blur + dark glass to keep the route visible underneath. Mobile breakpoint at 640px keeps it readable on phones.
+- Meta fetch is treated as decorative: if it fails or returns 404, the map still renders. The card just isn't drawn.
+
 ## May 4th, 2026 - Fix: live map `/map/{slug}` now seeds the trail with the in-progress session's history
 
 - Symptom: a friend was streaming with the Overlabels GPS app and logged 4002 pings cleanly into the backend, but anyone opening his public live map URL mid-stream saw a blank map that started following him only from the moment they joined - none of the route already travelled was visible. Visiting the matching saved-session URL afterward showed the full route, so logging and storage were fine; the live page just never asked for the history.

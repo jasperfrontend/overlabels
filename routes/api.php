@@ -102,6 +102,9 @@ Route::prefix('/map')->group(function () {
     Route::get('/{slug}/{sessionId}/geojson', [GpsSessionMapController::class, 'publicSessionGeoJson'])
         ->middleware(['throttle:30,1'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+    Route::get('/{slug}/{sessionId}/meta', [GpsSessionMapController::class, 'publicSessionMeta'])
+        ->middleware(['throttle:60,1'])
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Twitch webhook endpoint - must be accessible without authentication or CSRF

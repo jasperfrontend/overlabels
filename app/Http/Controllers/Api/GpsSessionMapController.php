@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\User;
 use App\Services\GpsLivenessService;
+use App\Services\GpsSessionAggregator;
 use App\Services\MapSlugService;
 use App\Services\RouteSimplifier;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,7 @@ class GpsSessionMapController extends Controller
     public function __construct(
         private GpsLivenessService $liveness,
         private MapSlugService $slugService,
+        private GpsSessionAggregator $aggregator,
     ) {}
 
     /**
@@ -47,6 +49,42 @@ class GpsSessionMapController extends Controller
         }
 
         return $this->buildGeoJson($user->id, $sessionId);
+    }
+
+    /**
+     * GET /api/map/{slug}/{sessionId}/meta
+     * Public - aggregated stats (duration, distance, speeds, elevation, battery,
+     * pings) for a single session, mirroring the dashboard card. Backed by
+     * GpsSessionAggregator so the dashboard and the public map share one shape.
+     */
+    public function publicSessionMeta(string $slug, string $sessionId): JsonResponse
+    {
+        $user = $this->resolveUser($slug);
+
+        if (! $user) {
+            return response()->json(['error' => 'User not found.'], 404);
+        }
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'gps')
+            ->where('enabled', true)
+            ->first();
+
+        if (! $integration || empty(($integration->settings ?? [])['map_sharing_enabled'])) {
+            return response()->json(['error' => 'Map sharing is not enabled.'], 403);
+        }
+
+        $session = $this->aggregator->forSession($user->id, $sessionId);
+
+        if ($session === null) {
+            return response()->json(['error' => 'Session not found.'], 404);
+        }
+
+        return response()->json([
+            'session' => $session,
+            'speed_unit' => ($integration->settings ?? [])['speed_unit'] ?? 'kmh',
+            'locale' => $user->locale ?? 'en-US',
+        ]);
     }
 
     /**
