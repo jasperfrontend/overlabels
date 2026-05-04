@@ -51,6 +51,42 @@ class GpsSessionAggregator
         return $this->shape($rows[0], $distances[$sessionId] ?? 0);
     }
 
+    /**
+     * Ordered + simplified coordinates for a session.
+     *
+     * Mirrors the simplification step in GpsSessionMapController::buildGeoJson so
+     * the OG-image renderer (which has no use for tile maps and just wants the
+     * polyline shape) gets the same geometry the public session map shows.
+     *
+     * @return array<int, array{0: float, 1: float}> [[lng, lat], ...]
+     */
+    public function coordinatesFor(int $userId, string $sessionId): array
+    {
+        $rows = DB::select("
+            SELECT
+                (raw_payload->>'lon')::float AS lng,
+                (raw_payload->>'lat')::float AS lat
+            FROM external_events
+            WHERE service = 'gps'
+                AND user_id = ?
+                AND event_type = 'location_update'
+                AND raw_payload->>'session_id' = ?
+            ORDER BY created_at ASC
+        ", [$userId, $sessionId]);
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $coords = array_map(fn ($r) => [(float) $r->lng, (float) $r->lat], $rows);
+
+        if (count($coords) > 100) {
+            $coords = RouteSimplifier::simplify($coords);
+        }
+
+        return $coords;
+    }
+
     private function aggregateSql(string $extraWhere = ''): string
     {
         return "
