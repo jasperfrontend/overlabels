@@ -143,12 +143,12 @@ test('updates speed, lat, lng controls on location update', function () {
         'value' => '4.9041',
     ]);
 
-    // Speed: 13.89 m/s * 3.6 = 50.0 km/h
+    // Speed stored as raw m/s; templates format with |speed:kmh / |speed:mph
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
         'source' => 'overlabels-mobile',
         'key' => 'gps_speed',
-        'value' => '50',
+        'value' => '13.89',
     ]);
 
     Event::assertDispatched(ControlValueUpdated::class);
@@ -276,7 +276,7 @@ test('second ping accumulates haversine distance', function () {
 // Speed unit conversion
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('converts speed to mph when speed_unit is mph', function () {
+test('speed_unit setting does not affect stored speed (always raw m/s)', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration('test-mobile-token', [
@@ -293,7 +293,6 @@ test('converts speed to mph when speed_unit is mph', function () {
         'key' => 'gps_lng', 'type' => 'text', 'label' => 'Lng', 'value' => '',
     ]);
 
-    // 13.89 m/s = 50 km/h = ~31.1 mph
     postMobile($integration->webhook_token, mobilePayload([
         'speed' => 13.89,
         'timestamp' => time(),
@@ -305,9 +304,8 @@ test('converts speed to mph when speed_unit is mph', function () {
         ->where('key', 'gps_speed')
         ->first();
 
-    // 50 km/h / 1.609344 = ~31.1 mph
-    expect((float) $speedControl->value)->toBeGreaterThan(30.0);
-    expect((float) $speedControl->value)->toBeLessThan(32.0);
+    // Always stored as raw m/s regardless of speed_unit; pipe formatters handle display.
+    expect((float) $speedControl->value)->toBe(13.89);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -371,13 +369,14 @@ test('connect creates integration with auto-generated token and provisions contr
     $credentials = $integration->getCredentialsDecrypted();
     expect($credentials['token'])->toBeString()->toHaveLength(32);
 
-    // 8 controls should be auto-provisioned
+    // All driver-defined controls should be auto-provisioned
     $controlCount = OverlayControl::where('user_id', $user->id)
         ->where('source', 'overlabels-mobile')
         ->where('source_managed', true)
         ->count();
 
-    expect($controlCount)->toBe(8);
+    $expected = count((new \App\Services\External\Drivers\OverlabelsMobileServiceDriver())->getAutoProvisionedControls());
+    expect($controlCount)->toBe($expected);
 });
 
 test('disconnect removes integration and controls', function () {

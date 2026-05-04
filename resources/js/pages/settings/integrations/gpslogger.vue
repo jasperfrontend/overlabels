@@ -223,7 +223,9 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <Label for="speed_unit">Speed Unit</Label>
             <p class="text-muted-foreground text-sm">
-              How speed is displayed in your overlays.
+              Default unit for the GPS Sessions dashboard. Overlay templates pick their own unit per tag, e.g.
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_speed|speed:kmh]]]</code>
+              or <code class="rounded bg-black/10 px-1 dark:bg-white/10">|speed:mph</code>.
             </p>
             <select
               id="speed_unit"

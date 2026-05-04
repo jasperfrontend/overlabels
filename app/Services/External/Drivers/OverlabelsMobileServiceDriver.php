@@ -118,7 +118,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
     public function getAutoProvisionedControls(): array
     {
         return [
-            ['key' => 'gps_speed', 'type' => 'number', 'label' => 'GPS Speed', 'value' => '0'],
+            ['key' => 'gps_speed', 'type' => 'number', 'label' => 'GPS Speed (m/s)', 'value' => '0'],
             ['key' => 'gps_lat', 'type' => 'text', 'label' => 'GPS Latitude', 'value' => ''],
             ['key' => 'gps_lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
             ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km, cumulative)', 'value' => '0'],
@@ -169,8 +169,8 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         }
 
         if ($speedMs !== null) {
-            // Default conversion: m/s -> km/h
-            $updates['gps_speed'] = (string) round((float) $speedMs * 3.6, 1);
+            // Store raw m/s; templates format with the speed:* pipe.
+            $updates['gps_speed'] = (string) round((float) $speedMs, 4);
         }
 
         if ($bearing !== null) {
@@ -254,13 +254,6 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         $lastLat = $settings['last_lat'] ?? null;
         $lastLng = $settings['last_lng'] ?? null;
-
-        // Honor the user's display-speed preference for gps_speed (legacy control).
-        $speedUnit = $settings['speed_unit'] ?? 'kmh';
-        if ($speedUnit === 'mph' && isset($updates['gps_speed'])) {
-            $kmh = (float) $updates['gps_speed'];
-            $updates['gps_speed'] = (string) round($kmh / 1.609344, 1);
-        }
 
         $deltaKm = 0.0;
         if ($lastLat !== null && $lastLng !== null) {
