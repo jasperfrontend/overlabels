@@ -138,7 +138,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
     <form @submit.prevent="submit" class="flex flex-col gap-4 p-4">
       <PageHeader :title="isEditing ? 'Edit update' : 'New update'" title-class="text-2xl font-bold">
         <template #actions>
-          <a :href="route('admin.updates.index')" class="btn btn-secondary mr-2 cursor-pointer">
+          <a :href="route('admin.updates.index')" class="btn btn-cancel mr-2 cursor-pointer">
             <ArrowLeft class="mr-2 h-4 w-4" />
             Back
           </a>

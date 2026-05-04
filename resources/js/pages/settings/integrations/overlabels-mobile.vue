@@ -6,6 +6,7 @@ import QRCode from 'qrcode';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,8 @@ const copiedMap = ref(false);
 const resetting = ref(false);
 const regenerating = ref(false);
 const qrDataUrl = ref<string | null>(null);
+const toastMessage = ref<string | null>(null);
+const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 
 onMounted(async () => {
   if (props.integration.deep_link) {
@@ -98,6 +101,16 @@ async function clearSafeZone() {
 function save() {
   form.post('/settings/integrations/overlabels-mobile', {
     preserveScroll: true,
+    onSuccess: () => {
+      toastType.value = 'success';
+      toastMessage.value = props.integration.connected
+        ? 'Settings saved.'
+        : 'Overlabels GPS connected.';
+    },
+    onError: () => {
+      toastType.value = 'error';
+      toastMessage.value = 'Failed to save settings. Please try again.';
+    },
   });
 }
 
@@ -395,5 +408,7 @@ function formatDate(iso: string | null): string {
         </template>
       </div>
     </SettingsLayout>
+
+    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

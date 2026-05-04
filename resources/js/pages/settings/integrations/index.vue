@@ -248,15 +248,15 @@ function formatDate(iso: string | null): string {
                 <div class="flex items-center gap-2">
                   <span class="font-medium">Twitch Alerts</span>
 
-                  <Badge v-if="eventsub.active_count > 0" variant="default" class="bg-green-400 hover:bg-green-400">
+                  <Badge v-if="eventsub.active_count > 0" variant="default">
                     Connected
                   </Badge>
 
-                  <Badge v-else-if="eventsub.connected" variant="secondary" class="bg-yellow-400 hover:bg-yellow-400 text-primary-foreground">
+                  <Badge v-else-if="eventsub.connected" variant="secondary">
                     Not listening to any events
                   </Badge>
 
-                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">
+                  <Badge v-else variant="secondary">
                     Not connected to Twitch
                   </Badge>
                 </div>
@@ -338,8 +338,8 @@ function formatDate(iso: string | null): string {
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium">Chat bot</span>
-                  <Badge v-if="props.bot.enabled" variant="default" class="bg-green-400 hover:bg-green-400">Enabled</Badge>
-                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">Disabled</Badge>
+                  <Badge v-if="props.bot.enabled" variant="success">Enabled</Badge>
+                  <Badge v-else variant="secondary">Disabled</Badge>
                 </div>
                 <p v-if="props.bot.enabled" class="text-sm">
                   Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
@@ -372,12 +372,10 @@ function formatDate(iso: string | null): string {
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium">{{ service.name }}</span>
-                  <Badge v-if="service.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
+                  <Badge v-if="service.connected" variant="success">Connected
                   </Badge>
-                  <Badge v-else variant="secondary" class="bg-accent hover:bg-accent">Not connected</Badge>
-                  <Badge v-if="service.connected && service.test_mode" variant="default"
-                         class="bg-yellow-400 hover:bg-yellow-400">Test mode enabled
-                  </Badge>
+                  <Badge v-else variant="secondary">Not connected</Badge>
+                  <Badge v-if="service.connected && service.test_mode" variant="warning">Test mode enabled</Badge>
                 </div>
                 <p v-if="service.connected" class="text-muted-foreground text-sm">
                   Last event: {{ formatDate(service.last_received_at) }}

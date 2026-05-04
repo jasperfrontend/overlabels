@@ -364,9 +364,9 @@ onMounted(() => {
 
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
-        <div class="border border-b-0 border-sidebar bg-violet-300/20 dark:bg-violet-900/20">
+        <div class="bg-violet-300/20 dark:bg-violet-900/20">
           <div
-            class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
+            class="flex dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
               v-for="(tab, index) in mainTabs"
               :key="tab.key"
@@ -374,7 +374,6 @@ onMounted(() => {
               @click="mainTab = tab.key"
               :class="[
                 'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-                index === 0 && 'rounded-tl-sm',
                 mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
               ]"
             >
@@ -386,7 +385,7 @@ onMounted(() => {
 
         <!-- Content box -->
         <div
-          class="rounded-b-sm border border-t-0 border-sidebar bg-card h-full overflow-auto"
+          class="border border-t-0 border-sidebar-border bg-card h-full overflow-auto"
         >
           <!-- Code Tab -->
           <TemplateCodeEditor

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { CalendarIcon, EyeIcon, UserStar } from 'lucide-vue-next';
 
 const page = usePage();
 const userLocale = computed<string | undefined>(() => {
@@ -53,29 +54,28 @@ function copyTag(tag: string, event: MouseEvent) {
 </script>
 
 <template>
-  <div class="space-y-4 pt-4">
+  <div>
     <div class="grid grid-cols-2 gap-1 rounded-sm bg-background p-4 text-sm">
-      <div>
-        <span class="text-muted-foreground">Created:</span>
-        <span class="ml-2">{{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
+      <div
+        class="flex items-center"
+        :title="`Created ${new Date(createdAt).toLocaleDateString(userLocale)}`"
+      >
+        <span class="text-muted-foreground"><CalendarIcon class="size-4 -mt-0.5" /></span>
+        <span class="ml-2">Created: {{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
       </div>
-      <div>
+
+      <div v-if="new Date(createdAt).toLocaleDateString(userLocale) !== new Date(updatedAt).toLocaleDateString(userLocale)">
         <span class="text-muted-foreground">Last updated:</span>
         <span class="ml-2">{{ new Date(updatedAt).toLocaleDateString(userLocale) }}</span>
       </div>
-      <div>
-        <span class="text-muted-foreground">Views:</span>
-        <span class="ml-2">{{ viewCount }}</span>
+      <div class="flex items-center" :title="`${viewCount} ${viewCount === 1 ? ' view' : 'views'}`">
+        <span class="text-muted-foreground"><EyeIcon class="size-4 -mt-0.5" /></span>
+        <span class="ml-2">{{ viewCount }} {{ viewCount === 1 ? ' view' : 'views' }}</span>
       </div>
-      <div>
-        <span class="text-muted-foreground">URL:</span>
-        <span class="ml-2">{{ slug }}</span>
-      </div>
-      <div>
-        <span class="text-muted-foreground">Owner:</span>
+      <div class="flex items-center" :title="`Owned by ${owner}`">
+        <span class="text-muted-foreground"><UserStar class="size-4 -mt-0.5" /></span>
         <span class="ml-2">{{ owner }}</span>
       </div>
-
       <div>
         <span class="text-muted-foreground">Copies:</span>
         <span class="ml-2">{{ forkCount }}</span>
@@ -116,7 +116,7 @@ function copyTag(tag: string, event: MouseEvent) {
           :key="tag"
           type="button"
           class="btn btn-chill btn-xs cursor-pointer font-mono transition-colors"
-          :class="copiedTag === tag ? 'ring-1 ring-green-500 text-green-400' : ''"
+          :class="copiedTag === tag ? 'ring-1 ring-green-500 dark:bg-green-300 text-accent-foreground dark:text-accent' : ''"
           :title="`Copy [[[${tag}]]] to clipboard`"
           @click="copyTag(tag, $event)"
         >

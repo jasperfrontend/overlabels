@@ -91,7 +91,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <Heading title="Updates" description="What's new on Overlabels - features, tips, kits and other goings-on." />
       </div>
 
-      <div class="mb-4 rounded-sm border border-sidebar-border bg-sidebar-accent p-4">
+      <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
           <div class="flex flex-col gap-1">
             <label for="filter-search">Search</label>
@@ -100,7 +100,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               @input="debounceSearch"
               type="text"
               placeholder="Search title and content..."
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-search"
             />
           </div>
@@ -110,7 +110,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <select
               v-model="filters.tag"
               @change="applyFilter"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-tag"
             >
               <option value="">All tags</option>
@@ -124,7 +124,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               v-model="filters.from"
               @change="applyFilter"
               type="date"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-from"
             />
           </div>
@@ -135,7 +135,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               v-model="filters.to"
               @change="applyFilter"
               type="date"
-              class="input-border h-10 w-full rounded-sm"
+              class="input-border h-10 w-full"
               id="filter-to"
             />
           </div>

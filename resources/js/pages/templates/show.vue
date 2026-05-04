@@ -226,9 +226,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
 
-            <Badge
-              variant="default"
-              >
+            <Badge variant="default">
               {{ template?.is_public ? 'Public' : 'Private' }}
             </Badge>
           </div>
@@ -273,9 +271,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class="border border-b-0 border-sidebar bg-violet-300/20 dark:bg-violet-900/20">
+      <div v-if="canEdit" class=" bg-violet-300/20 dark:bg-violet-900/20">
         <div
-          class="flex border-b border-violet-600 dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
+          class="flex max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
             v-for="(tab, index) in mainTabs"
             :key="tab.key"
@@ -283,7 +281,6 @@ const breadcrumbs: BreadcrumbItem[] = [
             @click="mainTab = tab.key"
             :class="[
                 'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-                index === 0 && 'rounded-tl-sm',
                 mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
               ]"
           >
@@ -293,7 +290,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <div class="mb-6 rounded-b-sm border border-t-0 border-sidebar bg-card">
+      <div class="mb-6 border border-sidebar-border bg-card">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
           <ControlsManager :template="template" :initial-controls="localControls"
@@ -314,7 +311,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
-            class="max-h-[70vh] hover:opacity-70 transition-all rounded border border-sidebar-border cursor-pointer"
+            class="max-h-[70vh] hover:opacity-70 transition-all border border-sidebar-border cursor-pointer"
             @click="showPreview = true"
           />
         </div>
@@ -328,7 +325,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               v-if="template.screenshot_url"
               :src="template.screenshot_url"
               alt="Screenshot preview"
-              class="max-w-[50vw] rounded object-contain"
+              class="max-w-[50vw] object-contain"
             />
             <DialogFooter>
               <div class="flex w-full items-center justify-between gap-2">
@@ -363,18 +360,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
-          <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden border border-x-sidebar border-b-sidebar">
+          <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden">
             <!-- File tabs sidebar -->
-            <div class="flex flex-col border-r border-sidebar bg-sidebar text-sidebar-foreground">
+            <div class="flex flex-col bg-sidebar text-sidebar-foreground">
               <button
                 v-for="tab in editorTabs"
                 :key="tab.key"
                 @click="activeTab = tab.key"
                 :class="[
-                    'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase transition-colors',
+                    'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase',
                   activeTab === tab.key
-                    ? 'bg-background text-accent-foreground'
-                    : 'text-sidebar-foreground/60 hover:bg-background/40 hover:text-sidebar-foreground',
+                    ? 'bg-[#f8f8f8] dark:bg-[#160e21] text-accent-foreground'
+                    : 'text-sidebar-foreground hover:bg-background/40 hover:text-foreground',
                 ]"
               >
                 <component :is="tab.icon" :class="tab.color" class="size-3.5" />
@@ -382,8 +379,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
             <!-- Code panel -->
-            <div class="relative flex-1 bg-sidebar-accent/50 text-gray-700 dark:text-accent-foreground">
-              <pre class="h-[50vh] overflow-auto p-4"><code
+            <div class="relative flex-1  text-gray-700 dark:text-accent-foreground">
+              <pre class="h-[50vh] overflow-auto p-4 bg-white dark:bg-[#160e21]"><code
                 class="text-sm text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
               <button
                 @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"

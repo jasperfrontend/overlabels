@@ -128,7 +128,7 @@ function toggleMap(sessionId: string) {
         <div
           v-for="session in sessions"
           :key="session.session_id"
-          class="rounded-lg border border-sidebar-border bg-card p-4 space-y-3"
+          class="border border-sidebar-border bg-card p-4 space-y-3"
         >
           <!-- Header: date + status -->
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

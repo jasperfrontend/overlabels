@@ -139,5 +139,28 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Fork counts, view counts, featured overlays
 - No gamification, no badges, no points. Just useful discovery.
 
+## Milestone 7 — GPS Session Extensions (overlabels-mobile + bot)
+> *Make the mobile app a real telemetry source for IRL streams, not just a GPS pin. Battery, heat, and whatever else the phone exposes flow into Overlabels and out through the bot.*
 
-*Last updated: 2026-04-13*
+**Battery low warning -> chat**
+- Mobile app pushes battery percentage to backend on each location update (or its own cadence, whichever is cheaper)
+- New user setting on `/settings/integrations/overlabels-mobile`: "Warn in chat when battery dips below {int}%" (default off)
+- When a GPS session is active AND battery crosses below the threshold, backend posts to bot's outbox; bot broadcasts to the streamer's channel
+- One-shot per crossing, not spammed every tick. Re-arms when battery climbs back above threshold
+- `!battery` bot command: prints current battery % to chat on demand (read-only, anyone or sub-only - configurable)
+
+**Heat / thermal data (friend's idea)**
+- App reads device thermal state (Android `BatteryManager` temperature, iOS `ProcessInfo.thermalState`) and posts to backend
+- Stored alongside battery in the same telemetry stream
+- Future: `!heat` command, overlay tags, alerts when phone is cooking
+
+**Mobile app fixes (carry into this milestone)**
+- QR scanner screen has no copy telling the user what to scan - add instructions
+- `/settings/integrations/overlabels-mobile` doesn't show the QR until a manual page refresh - re-fetch after token generation
+- First-launch on a fresh install showed the previous owner's house on the map (huge privacy bug - friend reported). Investigate cached coordinates and ensure clean state on first run / after sign-out
+- Add a tooltip on the safezone setter explaining "Long-press to set your location"
+
+*Status: parked during current code freeze. Do not implement.*
+
+
+*Last updated: 2026-05-04*

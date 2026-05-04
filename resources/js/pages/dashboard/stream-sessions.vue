@@ -227,7 +227,7 @@ function goalLabel(type: string): string {
         <article
           v-for="session in sessions"
           :key="session.session_id"
-          class="rounded-lg border border-sidebar-border bg-card p-4 space-y-4"
+          class="border border-sidebar-border bg-card p-4 space-y-4"
         >
           <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -247,7 +247,7 @@ function goalLabel(type: string): string {
 
           <div
             v-if="!session.window.anchored_on_eventsub.online || !session.window.anchored_on_eventsub.offline"
-            class="flex items-start gap-2 rounded-md border border-sidebar-border bg-amber-500/10 p-3 text-sm text-foreground"
+            class="flex items-start gap-2 border border-sidebar-border bg-amber-500/10 p-3 text-sm text-foreground"
           >
             <AlertTriangle class="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
             <p>
@@ -323,7 +323,7 @@ function goalLabel(type: string): string {
           <!-- Latest title strip -->
           <div
             v-if="session.stats.title_history.length > 0"
-            class="rounded-md border border-sidebar-border bg-background/50 p-3"
+            class="border border-sidebar-border bg-background/50 p-3"
           >
             <div class="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
               <PencilLine class="h-3 w-3" /> Stream title
@@ -372,7 +372,7 @@ function goalLabel(type: string): string {
               <div
                 v-for="poll in session.stats.polls"
                 :key="poll.id"
-                class="rounded-md border border-sidebar-border p-3 space-y-2"
+                class="border border-sidebar-border p-3 space-y-2"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <p class="text-sm font-medium text-foreground">{{ poll.title }}</p>
@@ -411,7 +411,7 @@ function goalLabel(type: string): string {
               <div
                 v-for="(train, i) in session.stats.hype_trains"
                 :key="train.id ?? i"
-                class="rounded-md border border-sidebar-border p-3 space-y-2"
+                class="border border-sidebar-border p-3 space-y-2"
               >
                 <div class="flex flex-wrap items-center gap-3 text-sm">
                   <span class="font-medium text-foreground">Level {{ train.level }}</span>
@@ -444,7 +444,7 @@ function goalLabel(type: string): string {
               <div
                 v-for="goal in session.stats.goals"
                 :key="goal.type"
-                class="rounded-md border border-sidebar-border p-3 space-y-2"
+                class="border border-sidebar-border p-3 space-y-2"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span class="font-medium text-foreground">{{ goalLabel(goal.type) }}</span>
@@ -472,7 +472,7 @@ function goalLabel(type: string): string {
                 <li
                   v-for="(msg, i) in session.stats.resubs.recent_messages"
                   :key="i"
-                  class="rounded-md border border-sidebar-border p-3 space-y-1"
+                  class="border border-sidebar-border p-3 space-y-1"
                 >
                   <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2 text-sm">
@@ -499,7 +499,7 @@ function goalLabel(type: string): string {
                 <li
                   v-for="(raid, i) in session.stats.raids_received.raids"
                   :key="i"
-                  class="flex items-center justify-between rounded-md border border-sidebar-border p-2 text-sm"
+                  class="flex items-center justify-between border border-sidebar-border p-2 text-sm"
                 >
                   <span class="text-foreground">{{ raid.from }}</span>
                   <span class="flex items-center gap-3">
@@ -515,7 +515,7 @@ function goalLabel(type: string): string {
               <h3 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                 <Sparkles class="h-4 w-4" /> Redemptions by reward
               </h3>
-              <div class="overflow-x-auto rounded-md border border-sidebar-border">
+              <div class="overflow-x-auto border border-sidebar-border">
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-sidebar-border bg-background/50">
