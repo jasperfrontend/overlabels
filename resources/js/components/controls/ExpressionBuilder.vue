@@ -419,11 +419,23 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
               </div>
               <div>
                 <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code v-for="fn in ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sqrt', 'fract', 'mod']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                  <code v-for="fn in ['sin', 'cos', 'fract', 'mod']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
                   <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">PI</code>
                 </div>
-                <p class="text-xs text-muted-foreground">Animation and spatial helpers. Trig (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sin</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">cos</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">tan</code>) takes radians; inverse trig (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">asin</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">acos</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan</code>) returns radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan2(y, x)</code> takes two args and handles all four quadrants - the right tool for angle-from-coordinates (e.g. haversine). <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sqrt(x)</code> returns 0 for negative inputs (instead of NaN). <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(x)</code> returns the fractional part (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x - floor(x)</code>). <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(a, b)</code> is floor-based modulo (GLSL-style), so <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(-1, 5) === 4</code>. Use the <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">%</code> operator if you want JS remainder (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">-1 % 5 === -1</code>). <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code> is a bare identifier - use <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code>, not <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI()</code>.</p>
-                <p class="text-xs text-muted-foreground mt-1.5">Expect trailing float noise from <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sin</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">cos</code> (e.g. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(10.2)</code> -> <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">0.19999...93</code>). That's standard IEEE 754 - invisible for animations, easy to clean up for display with a <a href="/help/formatting" target="_blank" rel="noopener" class="text-violet-400 hover:underline">pipe formatter</a> like <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">|round:2</code>.</p>
+                <p class="text-xs text-muted-foreground">Animation helpers. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sin</code>/<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">cos</code> take radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(x)</code> = <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x - floor(x)</code>. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(a, b)</code> is GLSL floor-modulo (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(-1, 5) === 4</code>); use <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">%</code> for JS remainder. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code> is a bare identifier - no parens.</p>
+                <p class="text-xs text-muted-foreground mt-1.5">Expect IEEE 754 float noise (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(10.2)</code> -> <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">0.19999...93</code>). Clean it up with a <a href="/help/formatting" target="_blank" rel="noopener" class="text-violet-400 hover:underline">pipe formatter</a> like <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">|round:2</code>.</p>
+              </div>
+              <div>
+                <div class="flex flex-wrap gap-1.5 mb-1.5">
+                  <code v-for="fn in ['tan', 'asin', 'acos', 'atan', 'atan2', 'sqrt']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
+                </div>
+                <p class="text-xs text-muted-foreground mb-1.5">Spatial math, for GPS overlays and other things that need real geometry.</p>
+                <ul class="space-y-1 text-xs text-muted-foreground list-disc pl-4">
+                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">tan(x)</code> - tangent. x in radians, completes the trig trio.</li>
+                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">asin(x)</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">acos(x)</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan(x)</code> - inverse trig. Take a ratio, return an angle in radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">asin</code> and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">acos</code> expect input in <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">[-1, 1]</code>.</li>
+                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan2(y, x)</code> - two-argument arctangent. Unlike <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan</code>, it sees both coordinates separately so it knows which quadrant the angle lives in. The right tool for "what angle does this vector point in", and the final step of haversine great-circle distance.</li>
+                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sqrt(x)</code> - square root. Returns <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">0</code> for negative input instead of NaN, matching the engine's <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x / 0</code> convention so a malformed control upstream can't poison every dependent expression.</li>
+                </ul>
               </div>
               <div>
                 <div class="flex flex-wrap gap-1.5 mb-1.5">
@@ -469,6 +481,15 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
               <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
                 <p class="text-muted-foreground font-sans mb-1">Highest single donation amount:</p>
                 max(c.streamlabs.latest_donation_amount, c.kofi.latest_donation_amount)
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">2D distance between two points:</p>
+                sqrt((c.x2 - c.x1) * (c.x2 - c.x1) + (c.y2 - c.y1) * (c.y2 - c.y1))
+              </div>
+              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
+                <p class="text-muted-foreground font-sans mb-1">Final haversine step (km from coords):</p>
+                6371 * 2 * atan2(sqrt(c.a), sqrt(1 - c.a))
+                <p class="text-muted-foreground font-sans mt-2 text-[10px]">Build <code class="text-foreground">c.a</code> as a separate control from <code class="text-foreground">sin(dLat/2)<sup>2</sup> + cos(lat1)*cos(lat2)*sin(dLon/2)<sup>2</sup></code> using the GPS lat/lon controls.</p>
               </div>
             </div>
           </AccordionContent>
