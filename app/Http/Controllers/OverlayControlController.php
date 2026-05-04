@@ -424,6 +424,8 @@ class OverlayControlController extends Controller
             'controls.*.value' => 'nullable|string|max:1000',
             'controls.*.config' => 'nullable|array',
             'controls.*.sort_order' => 'nullable|integer|min:0',
+            'controls.*.source' => 'nullable|string|max:50',
+            'controls.*.source_managed' => 'nullable|boolean',
         ]);
 
         $created = [];
@@ -434,10 +436,12 @@ class OverlayControlController extends Controller
                 continue;
             }
 
+            $source = $item['source'] ?? null;
+
             // Skip if key already exists (scoped by source for service controls)
             $existsQuery = OverlayControl::query()->where('overlay_template_id', $template->id)->where('key', $item['key']);
-            if (! empty($item['source'])) {
-                $existsQuery->where('source', $item['source']);
+            if (! empty($source)) {
+                $existsQuery->where('source', $source);
             } else {
                 $existsQuery->whereNull('source');
             }
@@ -453,6 +457,8 @@ class OverlayControlController extends Controller
                 'value' => $item['value'] ?? null,
                 'config' => $item['config'] ?? null,
                 'sort_order' => $item['sort_order'] ?? 0,
+                'source' => $source,
+                'source_managed' => ! empty($source) ? (bool) ($item['source_managed'] ?? true) : false,
             ]);
 
             $created[] = $control;

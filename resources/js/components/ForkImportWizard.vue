@@ -19,10 +19,13 @@ import { serviceLabel } from '@/utils/services';
 interface SourceControl {
   key: string;
   label: string | null;
+  description?: string | null;
   type: string;
   value: string | null;
   config: Record<string, any> | null;
   sort_order: number;
+  source?: string | null;
+  source_managed?: boolean | null;
 }
 
 const props = withDefaults(defineProps<{
@@ -46,10 +49,13 @@ interface WizardRow {
   action: 'create' | 'skip';
   key: string;
   label: string | null;
+  description: string | null;
   type: string;
   value: string | null;
   config: Record<string, any> | null;
   sort_order: number;
+  source: string | null;
+  source_managed: boolean;
 }
 
 const rows = ref<WizardRow[]>([]);
@@ -69,10 +75,13 @@ watch(() => props.open, (open) => {
       action: 'create',
       key: c.key,
       label: c.label,
+      description: c.description ?? null,
       type: c.type,
       value: c.value,
       config: c.config,
       sort_order: c.sort_order,
+      source: c.source ?? null,
+      source_managed: !!c.source_managed,
     }));
   }
 });
@@ -86,10 +95,13 @@ async function confirm() {
         action: r.action,
         key: r.key,
         label: r.label,
+        description: r.description,
         type: r.type,
         value: r.value,
         config: r.config,
         sort_order: r.sort_order,
+        source: r.source,
+        source_managed: r.source_managed,
       })),
     });
     emit('update:open', false);
@@ -164,6 +176,7 @@ function skip() {
                 <TableHead class="w-22.5">Action</TableHead>
                 <TableHead>Key</TableHead>
                 <TableHead>Label</TableHead>
+                <TableHead class="w-28">Source</TableHead>
                 <TableHead class="w-22.5">Type</TableHead>
               </TableRow>
             </TableHeader>
@@ -184,12 +197,17 @@ function skip() {
                 <TableCell>
                   <Input
                     v-model="row.key"
-                    :disabled="row.action === 'skip'"
+                    :disabled="row.action === 'skip' || !!row.source"
+                    :title="row.source ? 'Preset key for ' + serviceLabel(row.source) + ' - cannot be renamed' : undefined"
                     class="h-7 text-sm font-mono"
                     placeholder="key"
                   />
                 </TableCell>
-                <TableCell class="text-muted-foreground text-sm">{{ row.label || '—' }}</TableCell>
+                <TableCell class="text-muted-foreground text-sm">{{ row.label || '-' }}</TableCell>
+                <TableCell>
+                  <Badge v-if="row.source" variant="outline" class="text-xs">{{ serviceLabel(row.source) }}</Badge>
+                  <span v-else class="text-muted-foreground text-xs">-</span>
+                </TableCell>
                 <TableCell>
                   <Badge variant="secondary" class="capitalize text-xs">{{ row.type }}</Badge>
                 </TableCell>

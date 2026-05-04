@@ -196,6 +196,8 @@ class OverlayControl extends Model
      */
     public static function createForTemplate(OverlayTemplate $template, User $user, array $data): self
     {
+        $source = $data['source'] ?? null;
+
         return static::create([
             'overlay_template_id' => $template->id,
             'user_id' => $user->id,
@@ -206,6 +208,8 @@ class OverlayControl extends Model
             'value' => isset($data['value']) ? static::sanitizeValue($data['type'], $data['value']) : null,
             'config' => $data['config'] ?? null,
             'sort_order' => $data['sort_order'] ?? 0,
+            'source' => $source,
+            'source_managed' => ! empty($source) ? (bool) ($data['source_managed'] ?? true) : false,
         ]);
     }
 
