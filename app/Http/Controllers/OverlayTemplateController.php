@@ -820,25 +820,34 @@ class OverlayTemplateController extends Controller
 
         $fork = $template->fork($request->user());
 
+        $connectedServices = ExternalIntegration::where('user_id', $request->user()->id)
+            ->where('enabled', true)
+            ->pluck('service')
+            ->toArray();
+
+        $wizardPayload = [
+            'template' => $fork,
+            'source_controls' => $fork->_sourceControls,
+            'has_controls' => $fork->_hasControls,
+            'required_services' => $fork->_requiredServices,
+            'connected_services' => $connectedServices,
+        ];
+
         // Check if this is an AJAX request or a regular form submission
         if ($request->wantsJson()) {
-            $connectedServices = ExternalIntegration::where('user_id', $request->user()->id)
-                ->where('enabled', true)
-                ->pluck('service')
-                ->toArray();
-
             return response()->json([
-                'template' => $fork,
+                ...$wizardPayload,
                 'message' => 'Template forked successfully',
-                'source_controls' => $fork->_sourceControls,
-                'has_controls' => $fork->_hasControls,
-                'required_services' => $fork->_requiredServices,
-                'connected_services' => $connectedServices,
             ]);
         }
 
-        // For regular form submissions, redirect to templates index
-        return redirect()->route('templates.index')
+        // Non-AJAX paths (Inertia router.post, blade form on overlay preview, etc.)
+        // can't open the wizard inline, so flash the wizard payload onto the
+        // session and redirect to the new template - the show page reads the
+        // flash and triggers the wizard there. Without this, controls on the
+        // forked template would never be imported through these entry points.
+        return redirect()->route('templates.show', $fork)
+            ->with('fork_wizard', $wizardPayload)
             ->with('success', 'Template forked successfully! The template "'.$fork->name.'" has been added to your templates.');
     }
 }

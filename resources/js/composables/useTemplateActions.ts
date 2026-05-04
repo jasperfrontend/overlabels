@@ -30,6 +30,21 @@ export function useTemplateActions(template: any) {
     window.open(url, '_blank');
   };
 
+  const openWizardFromPayload = (data: any): boolean => {
+    if (!data?.template?.id) return false;
+    const hasControls = data.has_controls && data.source_controls?.length > 0;
+    const hasRequiredServices = data.required_services?.length > 0;
+    if (!hasControls && !hasRequiredServices) return false;
+
+    forkWizardTemplateId.value = data.template.id;
+    forkWizardTemplateSlug.value = data.template.slug;
+    forkWizardSourceControls.value = data.source_controls ?? [];
+    forkWizardRequiredServices.value = data.required_services ?? [];
+    forkWizardConnectedServices.value = data.connected_services ?? [];
+    forkWizardOpen.value = true;
+    return true;
+  };
+
   const forkTemplate = async () => {
     if (!confirm('Copy this template?')) return;
 
@@ -37,18 +52,7 @@ export function useTemplateActions(template: any) {
       const response = await axios.post(route('templates.fork', template));
       const data = response.data;
 
-      const hasControls = data.has_controls && data.source_controls?.length > 0;
-      const hasRequiredServices = data.required_services?.length > 0;
-
-      if (hasControls || hasRequiredServices) {
-        // Show import wizard before navigating
-        forkWizardTemplateId.value = data.template.id;
-        forkWizardTemplateSlug.value = data.template.slug;
-        forkWizardSourceControls.value = data.source_controls ?? [];
-        forkWizardRequiredServices.value = data.required_services ?? [];
-        forkWizardConnectedServices.value = data.connected_services ?? [];
-        forkWizardOpen.value = true;
-      } else {
+      if (!openWizardFromPayload(data)) {
         router.visit(route('templates.show', data.template));
       }
     } catch (error) {
@@ -109,5 +113,6 @@ export function useTemplateActions(template: any) {
     forkWizardSourceControls,
     forkWizardRequiredServices,
     forkWizardConnectedServices,
+    openWizardFromPayload,
   };
 }

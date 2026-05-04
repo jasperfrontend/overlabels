@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
@@ -155,8 +155,22 @@ const {
   forkWizardTemplateSlug,
   forkWizardSourceControls,
   forkWizardRequiredServices,
-  forkWizardConnectedServices
+  forkWizardConnectedServices,
+  openWizardFromPayload,
 } = useTemplateActions(props.template);
+
+// Non-AJAX fork entry points (the Copy button on /overlay/{slug}/public,
+// the dropdown items in TemplateCard/TemplateList/TemplateTable that use
+// router.post) can't open the wizard inline because they trigger a full
+// navigation to this page. The controller flashes the wizard payload onto
+// the session and we pick it up here so controls still get imported.
+const page = usePage();
+onMounted(() => {
+  const flash = (page.props as any)?.flash;
+  if (flash?.fork_wizard) {
+    openWizardFromPayload(flash.fork_wizard);
+  }
+});
 
 // Local toast state for clipboard copy
 const copyToClipboard = (url: string, shownValue: string) => {

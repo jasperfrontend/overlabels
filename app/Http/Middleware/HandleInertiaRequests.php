@@ -64,6 +64,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'type' => fn () => $request->session()->get('type'),
+                'fork_wizard' => fn () => $request->session()->get('fork_wizard'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
