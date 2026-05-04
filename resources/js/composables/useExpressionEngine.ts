@@ -195,7 +195,7 @@ export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
 export const SUPPORTED_FUNCTIONS = new Set([
   'argmax', 'argmin', 'latest', 'oldest',
   'max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
-  'sin', 'cos', 'fract', 'mod',
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sqrt', 'fract', 'mod',
   'now', 'now_ms',
 ]);
 
@@ -223,6 +223,15 @@ const FUNCTIONS: Record<string, FnImpl> = {
   ceil: (args) => Math.ceil(toNum(args[0])),
   sin: (args) => Math.sin(toNum(args[0])),
   cos: (args) => Math.cos(toNum(args[0])),
+  tan: (args) => Math.tan(toNum(args[0])),
+  asin: (args) => Math.asin(toNum(args[0])),
+  acos: (args) => Math.acos(toNum(args[0])),
+  atan: (args) => Math.atan(toNum(args[0])),
+  atan2: (args) => Math.atan2(toNum(args[0]), toNum(args[1])),
+  sqrt: (args) => {
+    const x = toNum(args[0]);
+    return x < 0 ? 0 : Math.sqrt(x);
+  },
   fract: (args) => {
     const x = toNum(args[0]);
     return x - Math.floor(x);

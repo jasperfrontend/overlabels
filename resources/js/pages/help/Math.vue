@@ -116,7 +116,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <tr><td class="px-4 py-2 font-mono">abs(x)</td><td class="px-4 py-2 text-foreground">|x|</td></tr>
                 <tr><td class="px-4 py-2 font-mono">round(x) / round(x, n)</td><td class="px-4 py-2 text-foreground">Nearest integer, or n decimals</td></tr>
                 <tr><td class="px-4 py-2 font-mono">floor(x) / ceil(x)</td><td class="px-4 py-2 text-foreground">Round toward &minus;&infin; / +&infin;</td></tr>
-                <tr><td class="px-4 py-2 font-mono">sin(x) / cos(x)</td><td class="px-4 py-2 text-foreground">Trig, x in <em>radians</em></td></tr>
+                <tr><td class="px-4 py-2 font-mono">sin(x) / cos(x) / tan(x)</td><td class="px-4 py-2 text-foreground">Trig, x in <em>radians</em></td></tr>
+                <tr><td class="px-4 py-2 font-mono">asin(x) / acos(x) / atan(x)</td><td class="px-4 py-2 text-foreground">Inverse trig, returns radians</td></tr>
+                <tr><td class="px-4 py-2 font-mono">atan2(y, x)</td><td class="px-4 py-2 text-foreground">Angle from coordinates, all four quadrants. Pair with <code>sqrt</code> for haversine</td></tr>
+                <tr><td class="px-4 py-2 font-mono">sqrt(x)</td><td class="px-4 py-2 text-foreground">Square root. Returns 0 for negative x</td></tr>
                 <tr><td class="px-4 py-2 font-mono">fract(x)</td><td class="px-4 py-2 text-foreground">x &minus; floor(x). Always &isin; [0, 1)</td></tr>
                 <tr><td class="px-4 py-2 font-mono">mod(a, b)</td><td class="px-4 py-2 text-foreground">Floor-modulo (GLSL-style, not JS <code>%</code>)</td></tr>
                 <tr><td class="px-4 py-2 font-mono">now()</td><td class="px-4 py-2 text-foreground">Unix timestamp in seconds (integer)</td></tr>
@@ -548,9 +551,10 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="mb-2 font-semibold text-amber-400">No exponentiation operator</h3>
               <p>
                 <code>x ** 2</code> and <code>x ^ 2</code> do nothing useful. For <MathEquation tex="x^2" /> write
-                <code>x * x</code>. For <MathEquation tex="x^3" /> write <code>x * x * x</code>. There is no
-                <code>sqrt</code>, <code>log</code>, <code>exp</code>, or <code>tan</code> - the function whitelist
-                is deliberately small for security and bundle size.
+                <code>x * x</code>. For <MathEquation tex="x^3" /> write <code>x * x * x</code>. There is also no
+                <code>log</code> or <code>exp</code> - the function whitelist is deliberately small for security
+                and bundle size. <code>sqrt</code> and the full trig surface (<code>tan</code>, <code>asin</code>,
+                <code>acos</code>, <code>atan</code>, <code>atan2</code>) are available for spatial math.
               </p>
             </div>
 

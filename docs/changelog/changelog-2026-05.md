@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 4th, 2026 - Feature: extend expression engine with sqrt and full inverse-trig surface
+
+- Triggered by a friend cycling toward TwitchCon: his overlay needs a character to move across screen proportional to the great-circle distance from his live GPS to the destination. Haversine is the standard formula, and every part of it was already expressible as a chain of Controls (arithmetic, `sin`, `cos`, `PI`) except the final `R * 2 * atan2(sqrt(a), sqrt(1-a))` step. `sqrt` and `atan2` were the only two missing pieces.
+- Added `sqrt`, `tan`, `asin`, `acos`, `atan`, and `atan2` to the jsep evaluator's `FUNCTIONS` map and `SUPPORTED_FUNCTIONS` set in `useExpressionEngine.ts`. The proposal originally framed this as adding `Math.sqrt`/`Math.atan2`, but Overlabels expressions use bare names (`sin(x)`, not `Math.sin(x)`) - and `abs`/`round`/`floor`/`ceil` from the proposal's "confirm" column were already there. Real gap was just the trig + sqrt surface.
+- `sqrt(x)` returns 0 for negative input rather than NaN, matching the engine's existing "swallow div-by-zero, return 0" convention so a malformed control upstream can't propagate NaN through every dependent expression. `atan2(y, x)` is a two-arg call - the resolver already handled multi-arg functions (`max`, `clamp`, `mod`), so no resolver changes needed.
+- Help docs updated: ExpressionBuilder modal pill row now lists the full trig set with a one-line note on what each does, the Math.vue cheatsheet table gains rows for `tan`/`asin`/`acos`/`atan`/`atan2`/`sqrt`, and the "No exponentiation operator" amber callout no longer claims `sqrt` and `tan` are unavailable - just `log` and `exp` (which remain out of scope).
+- Backend stays untouched: expressions only evaluate in the frontend (`useExpressionEngine.ts`), backend just stores the string and tracks dependencies for the cascade. Verified existing Pest tests in `ExpressionControlTest.php` still pass; one pre-existing failure on main ("expression with no references should 422") was confirmed not introduced by this change.
+- Net result: the full haversine formula is expressible as a portable Controls chain - destination coordinates stay in Overlabels (a streamer-configured value, not something the GPS app should own), no per-overlay JS workarounds, works for any future GPS overlay without code changes.
+
 ## May 3rd, 2026 - Security: hide Twitch ID behind a Sqids-encoded slug on the public map page
 
 - Public map URLs were `/map/{twitch_id}`, exposing the streamer's numeric Twitch ID to anyone with the share link. The same ID also leaked through `/api/map/{twitch_id}/position`, the `.../geojson` endpoint, and the `map.{twitch_id}` Reverb channel name visible in DevTools. With a Twitch ID a chatter could URL-hack to any other registered streamer's `/map/...` URL to probe whether they were on the platform.
