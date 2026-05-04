@@ -237,7 +237,12 @@ function insertAtCursor(snippet: string) {
 }
 
 function expressionRef(ctrl: OverlayControl): string {
-  return ctrl.source ? `c.${ctrl.source}.${ctrl.key}` : `c.${ctrl.key}`;
+  if (!ctrl.source) return `c.${ctrl.key}`;
+  // Hyphens in service names (e.g. overlabels-mobile) aren't valid in JS identifiers,
+  // so jsep would parse `c.overlabels-mobile.gps_lat` as the subtraction
+  // `c.overlabels - mobile.gps_lat`. Use bracket notation to preserve the source name.
+  if (/[^a-zA-Z0-9_$]/.test(ctrl.source)) return `c["${ctrl.source}"].${ctrl.key}`;
+  return `c.${ctrl.source}.${ctrl.key}`;
 }
 
 function insertVariable(ctrl: OverlayControl) {
@@ -282,6 +287,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
     kofi: 'Ko-fi',
     streamlabs: 'StreamLabs',
     gpslogger: 'GPSLogger',
+    gps: 'Overlabels GPS',
   };
 
   // Custom first, then services alphabetically

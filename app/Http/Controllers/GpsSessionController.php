@@ -19,7 +19,7 @@ class GpsSessionController extends Controller
         $user = $request->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         $settings = $integration?->settings ?? [];
@@ -45,7 +45,7 @@ class GpsSessionController extends Controller
         $userId = auth()->id();
 
         $deleted = DB::table('external_events')
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('user_id', $userId)
             ->whereRaw("raw_payload->>'session_id' = ?", [$sessionId])
             ->delete();
@@ -87,7 +87,7 @@ class GpsSessionController extends Controller
                 (array_agg((raw_payload->>'battery')::int ORDER BY created_at DESC)
                     FILTER (WHERE event_type = 'location_update' AND raw_payload->>'battery' IS NOT NULL))[1] AS battery_end
             FROM external_events
-            WHERE service = 'overlabels-mobile'
+            WHERE service = 'gps'
                 AND user_id = ?
                 AND raw_payload->>'session_id' IS NOT NULL
             GROUP BY raw_payload->>'session_id'
@@ -140,7 +140,7 @@ class GpsSessionController extends Controller
                 (raw_payload->>'lat')::float AS lat,
                 (raw_payload->>'lon')::float AS lng
             FROM external_events
-            WHERE service = 'overlabels-mobile'
+            WHERE service = 'gps'
                 AND user_id = ?
                 AND event_type = 'location_update'
                 AND raw_payload->>'session_id' IN ($placeholders)

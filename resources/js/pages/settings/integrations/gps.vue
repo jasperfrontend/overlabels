@@ -235,14 +235,14 @@ function formatDate(iso: string | null): string {
               Use these tags in your overlay templates:
             </p>
             <div class="flex flex-wrap gap-2 mt-2">
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_speed]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_lat]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_lng]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_distance]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_bearing]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_battery]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_charging]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:overlabels-mobile:gps_tracking]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:speed]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:lat]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:lng]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:distance]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:bearing]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:battery]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:charging]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:tracking]]]</code>
             </div>
           </div>
         </div>
@@ -254,7 +254,7 @@ function formatDate(iso: string | null): string {
             <Label for="speed_unit">Speed Unit</Label>
             <p class="text-muted-foreground text-sm">
               Default unit for the GPS Sessions dashboard. Overlay templates pick their own unit per tag, e.g.
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:overlabels-mobile:gps_speed|speed:kmh]]]</code>
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gps:speed|speed:kmh]]]</code>
               or <code class="rounded bg-black/10 px-1 dark:bg-white/10">|speed:mph</code>.
             </p>
             <select

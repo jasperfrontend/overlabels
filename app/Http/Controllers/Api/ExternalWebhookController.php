@@ -18,10 +18,27 @@ use Illuminate\View\View;
 
 class ExternalWebhookController extends Controller
 {
+    /**
+     * URL slug aliases. The webhook URL keeps the historical slug for the
+     * Overlabels mobile app, while the canonical service key is `gps`.
+     */
+    private const URL_SLUG_ALIASES = [
+        'overlabels-mobile' => 'gps',
+    ];
+
     public function __construct(
         private readonly ExternalAlertService $alertService,
         private readonly ExternalControlService $controlService,
     ) {}
+
+    /**
+     * Translate the URL slug into the canonical service key used internally
+     * (DB columns, registry lookups, driver matching).
+     */
+    private function canonicalService(string $urlSlug): string
+    {
+        return self::URL_SLUG_ALIASES[$urlSlug] ?? $urlSlug;
+    }
 
     /**
      * GET /api/webhooks/{service}/{webhook_token}
@@ -32,16 +49,18 @@ class ExternalWebhookController extends Controller
      */
     public function show(string $service, string $webhookToken): View
     {
-        if (! in_array($service, ['gpslogger', 'overlabels-mobile'])) {
+        $canonical = $this->canonicalService($service);
+
+        if (! in_array($canonical, ['gpslogger', 'gps'])) {
             abort(404);
         }
 
-        if (! ExternalServiceRegistry::has($service)) {
+        if (! ExternalServiceRegistry::has($canonical)) {
             abort(404);
         }
 
         $integration = ExternalIntegration::where('webhook_token', $webhookToken)
-            ->where('service', $service)
+            ->where('service', $canonical)
             ->first();
 
         if (! $integration) {
@@ -50,7 +69,7 @@ class ExternalWebhookController extends Controller
 
         $webhookUrl = url("/api/webhooks/{$service}/{$webhookToken}");
 
-        if ($service === 'overlabels-mobile') {
+        if ($canonical === 'gps') {
             $credentials = $integration->getCredentialsDecrypted();
             $token = $credentials['token'] ?? '';
             $deepLink = 'overlabels://gps-setup?'
@@ -70,6 +89,8 @@ class ExternalWebhookController extends Controller
      */
     public function handle(Request $request, string $service, string $webhookToken): JsonResponse
     {
+        $service = $this->canonicalService($service);
+
         if (app(LockdownService::class)->isActive()) {
             return response()->json(['ok' => true]); // absorb silently during lockdown
         }

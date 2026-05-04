@@ -314,3 +314,27 @@ test('extractExpressionDependencies resolves template-scoped _at references', fu
     expect($deps)->toContain('deaths')
         ->and($deps)->toHaveCount(1);
 });
+
+test('extractExpressionDependencies parses bracket notation for hyphenated source names', function () {
+    // Hyphenated service names like overlabels-mobile aren't valid JS identifiers,
+    // so the picker emits bracket notation: c["overlabels-mobile"].gps_lat
+    $deps = OverlayControl::extractExpressionDependencies('c["overlabels-mobile"].gps_lat + c["overlabels-mobile"].gps_lng');
+    expect($deps)->toContain('overlabels-mobile:gps_lat')
+        ->and($deps)->toContain('overlabels-mobile:gps_lng')
+        ->and($deps)->toHaveCount(2);
+});
+
+test('extractExpressionDependencies parses single-quoted bracket notation', function () {
+    $deps = OverlayControl::extractExpressionDependencies("c['overlabels-mobile'].gps_speed");
+    expect($deps)->toBe(['overlabels-mobile:gps_speed']);
+});
+
+test('extractExpressionDependencies parses double-bracket notation', function () {
+    $deps = OverlayControl::extractExpressionDependencies('c["overlabels-mobile"]["gps_distance"]');
+    expect($deps)->toBe(['overlabels-mobile:gps_distance']);
+});
+
+test('extractExpressionDependencies strips _at from bracket-notation references', function () {
+    $deps = OverlayControl::extractExpressionDependencies('c["overlabels-mobile"].gps_speed_at');
+    expect($deps)->toBe(['overlabels-mobile:gps_speed']);
+});

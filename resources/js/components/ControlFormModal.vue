@@ -24,8 +24,8 @@ import { ChevronsUpDownIcon } from 'lucide-vue-next';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
   KOFI_PRESETS,
+  GPSLOGGER_PRESETS,
   GPS_PRESETS,
-  OVERLABELS_MOBILE_PRESETS,
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
   FOURTHWALL_PRESETS,
@@ -83,11 +83,11 @@ const isCopying = computed(() => !isEditing.value && !!props.copyFrom);
 const showKofiPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('kofi'),
 );
-const showGpsPresets = computed(
+const showGpsLoggerPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
 );
-const showOverlabelsMobilePresets = computed(
-  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('overlabels-mobile'),
+const showGpsPresets = computed(
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gps'),
 );
 const showStreamLabsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
@@ -128,11 +128,11 @@ const availableTwitchPresets = computed(() =>
 const availableKofiPresets = computed(() =>
   KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key) && matchesPresetSearch('kofi', p)),
 );
-const availableGpsPresets = computed(() =>
-  GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key) && matchesPresetSearch('gpslogger', p)),
+const availableGpsLoggerPresets = computed(() =>
+  GPSLOGGER_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key) && matchesPresetSearch('gpslogger', p)),
 );
-const availableOverlabelsMobilePresets = computed(() =>
-  OVERLABELS_MOBILE_PRESETS.filter((p) => !isPresetAlreadyAdded('overlabels-mobile', p.key) && matchesPresetSearch('overlabels-mobile', p)),
+const availableGpsPresets = computed(() =>
+  GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gps', p.key) && matchesPresetSearch('gps', p)),
 );
 const availableStreamLabsPresets = computed(() =>
   STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key) && matchesPresetSearch('streamlabs', p)),
@@ -258,12 +258,20 @@ watch(() => form.value.key, (key) => {
 // Expression control state
 const expressionText = ref('');
 
-// Controls available as watch targets for expression controls
+// Controls available as watch targets for expression controls.
+// Service-managed controls can exist as both a user-scoped row (overlay_template_id=null,
+// auto-provisioned/backfilled) and a template-scoped row created when the user adds the
+// preset to this template. Both share the same `c.source.key` reference, so we dedupe
+// by (source, key) and prefer the template-scoped one.
 const availableWatchControls = computed(() => {
   const templateControls = (props.existingControls ?? []).filter(
     (c) => c.id !== props.control?.id,
   );
-  const userScoped = (props.userScopedControls ?? []);
+  const seen = new Set<string>();
+  for (const c of templateControls) seen.add(`${c.source ?? ''}:${c.key}`);
+  const userScoped = (props.userScopedControls ?? []).filter(
+    (c) => !seen.has(`${c.source ?? ''}:${c.key}`),
+  );
   return [...templateControls, ...userScoped];
 });
 
@@ -457,7 +465,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showOverlabelsMobilePresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsLoggerPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
@@ -492,22 +500,22 @@ async function save() {
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
                 </ComboboxGroup>
-                <ComboboxGroup v-if="showGpsPresets && availableGpsPresets.length">
+                <ComboboxGroup v-if="showGpsLoggerPresets && availableGpsLoggerPresets.length">
                   <ComboboxLabel>GPSLogger</ComboboxLabel>
                   <ComboboxItem
-                    v-for="preset in availableGpsPresets"
+                    v-for="preset in availableGpsLoggerPresets"
                     :key="'gpslogger:' + preset.key"
                     :value="'gpslogger:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>
                 </ComboboxGroup>
-                <ComboboxGroup v-if="showOverlabelsMobilePresets && availableOverlabelsMobilePresets.length">
+                <ComboboxGroup v-if="showGpsPresets && availableGpsPresets.length">
                   <ComboboxLabel>Overlabels GPS</ComboboxLabel>
                   <ComboboxItem
-                    v-for="preset in availableOverlabelsMobilePresets"
-                    :key="'overlabels-mobile:' + preset.key"
-                    :value="'overlabels-mobile:' + preset.key"
+                    v-for="preset in availableGpsPresets"
+                    :key="'gps:' + preset.key"
+                    :value="'gps:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

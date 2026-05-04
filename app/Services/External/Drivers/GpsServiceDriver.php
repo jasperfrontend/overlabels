@@ -9,11 +9,11 @@ use App\Services\External\NormalizedExternalEvent;
 use App\Services\Location\GeoMath;
 use Illuminate\Http\Request;
 
-class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
+class GpsServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
 {
     public function getServiceKey(): string
     {
-        return 'overlabels-mobile';
+        return 'gps';
     }
 
     /**
@@ -59,7 +59,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             ];
 
             return new NormalizedExternalEvent(
-                service: 'overlabels-mobile',
+                service: 'gps',
                 eventType: $eventType,
                 messageId: $messageId,
                 fromName: null,
@@ -98,7 +98,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         ];
 
         return new NormalizedExternalEvent(
-            service: 'overlabels-mobile',
+            service: 'gps',
             eventType: $eventType,
             messageId: $messageId,
             fromName: null,
@@ -118,34 +118,34 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
     public function getAutoProvisionedControls(): array
     {
         return [
-            ['key' => 'gps_speed', 'type' => 'number', 'label' => 'GPS Speed (m/s)', 'value' => '0'],
-            ['key' => 'gps_lat', 'type' => 'text', 'label' => 'GPS Latitude', 'value' => ''],
-            ['key' => 'gps_lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
-            ['key' => 'gps_distance', 'type' => 'number', 'label' => 'GPS Distance (km, cumulative)', 'value' => '0'],
-            ['key' => 'gps_bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
-            ['key' => 'gps_accuracy', 'type' => 'number', 'label' => 'GPS Accuracy (meters)', 'value' => '0'],
-            ['key' => 'gps_battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
-            ['key' => 'gps_charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
-            ['key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'GPS Tracking Active', 'value' => '0'],
-            ['key' => 'gps_session_distance', 'type' => 'number', 'label' => 'GPS Session Distance (km)', 'value' => '0'],
-            ['key' => 'gps_session_max_speed', 'type' => 'number', 'label' => 'GPS Session Max Speed (m/s)', 'value' => '0'],
-            ['key' => 'gps_session_avg_speed', 'type' => 'number', 'label' => 'GPS Session Avg Speed (m/s)', 'value' => '0'],
-            ['key' => 'gps_session_duration', 'type' => 'number', 'label' => 'GPS Session Duration (seconds)', 'value' => '0'],
+            ['key' => 'speed', 'type' => 'number', 'label' => 'GPS Speed (m/s)', 'value' => '0'],
+            ['key' => 'lat', 'type' => 'text', 'label' => 'GPS Latitude', 'value' => ''],
+            ['key' => 'lng', 'type' => 'text', 'label' => 'GPS Longitude', 'value' => ''],
+            ['key' => 'distance', 'type' => 'number', 'label' => 'GPS Distance (km, cumulative)', 'value' => '0'],
+            ['key' => 'bearing', 'type' => 'number', 'label' => 'GPS Bearing (degrees)', 'value' => '0'],
+            ['key' => 'accuracy', 'type' => 'number', 'label' => 'GPS Accuracy (meters)', 'value' => '0'],
+            ['key' => 'battery', 'type' => 'number', 'label' => 'Phone Battery (%)', 'value' => '0'],
+            ['key' => 'charging', 'type' => 'boolean', 'label' => 'Phone Charging', 'value' => '0'],
+            ['key' => 'tracking', 'type' => 'boolean', 'label' => 'GPS Tracking Active', 'value' => '0'],
+            ['key' => 'session_distance', 'type' => 'number', 'label' => 'GPS Session Distance (km)', 'value' => '0'],
+            ['key' => 'session_max_speed', 'type' => 'number', 'label' => 'GPS Session Max Speed (m/s)', 'value' => '0'],
+            ['key' => 'session_avg_speed', 'type' => 'number', 'label' => 'GPS Session Avg Speed (m/s)', 'value' => '0'],
+            ['key' => 'session_duration', 'type' => 'number', 'label' => 'GPS Session Duration (seconds)', 'value' => '0'],
         ];
     }
 
     /**
      * Return control updates for the given event.
-     * Session events only toggle gps_tracking. Location pings update GPS controls.
+     * Session events only toggle `tracking`. Location pings update GPS controls.
      */
     public function getControlUpdates(NormalizedExternalEvent $event): array
     {
         if ($event->getEventType() === 'session_start') {
-            return ['gps_tracking' => '1'];
+            return ['tracking' => '1'];
         }
 
         if ($event->getEventType() === 'session_end') {
-            return ['gps_tracking' => '0'];
+            return ['tracking' => '0'];
         }
 
         // location_update
@@ -161,32 +161,32 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         $updates = [];
 
         if ($lat !== null) {
-            $updates['gps_lat'] = (string) $lat;
+            $updates['lat'] = (string) $lat;
         }
 
         if ($lng !== null) {
-            $updates['gps_lng'] = (string) $lng;
+            $updates['lng'] = (string) $lng;
         }
 
         if ($speedMs !== null) {
             // Store raw m/s; templates format with the speed:* pipe.
-            $updates['gps_speed'] = (string) round((float) $speedMs, 4);
+            $updates['speed'] = (string) round((float) $speedMs, 4);
         }
 
         if ($bearing !== null) {
-            $updates['gps_bearing'] = (string) round((float) $bearing, 1);
+            $updates['bearing'] = (string) round((float) $bearing, 1);
         }
 
         if ($accuracy !== null) {
-            $updates['gps_accuracy'] = (string) round((float) $accuracy, 1);
+            $updates['accuracy'] = (string) round((float) $accuracy, 1);
         }
 
         if ($battery !== null) {
-            $updates['gps_battery'] = (string) (int) $battery;
+            $updates['battery'] = (string) (int) $battery;
         }
 
         if ($charging !== null) {
-            $updates['gps_charging'] = (string) $charging;
+            $updates['charging'] = (string) $charging;
         }
 
         return $updates;
@@ -210,10 +210,10 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
         if ($event->getEventType() === 'session_start') {
             $this->resetSessionState($integration, $settings, $event->getRaw()['session_id'] ?? null);
-            $updates['gps_session_distance'] = '0';
-            $updates['gps_session_max_speed'] = '0';
-            $updates['gps_session_avg_speed'] = '0';
-            $updates['gps_session_duration'] = '0';
+            $updates['session_distance'] = '0';
+            $updates['session_max_speed'] = '0';
+            $updates['session_avg_speed'] = '0';
+            $updates['session_duration'] = '0';
             return;
         }
 
@@ -222,7 +222,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             // even after pings stop arriving.
             $startedAt = $settings['session_started_at_unix'] ?? null;
             if ($startedAt !== null) {
-                $updates['gps_session_duration'] = (string) max(0, now()->timestamp - (int) $startedAt);
+                $updates['session_duration'] = (string) max(0, now()->timestamp - (int) $startedAt);
             }
             return;
         }
@@ -259,7 +259,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         if ($lastLat !== null && $lastLng !== null) {
             $deltaKm = GeoMath::haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
             if ($deltaKm > 0.001) {
-                $updates['gps_distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
+                $updates['distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
             } else {
                 $deltaKm = 0.0;
             }
@@ -268,7 +268,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
         // Per-session distance (replacement, not add — we hold the accumulator in settings).
         $sessionDistanceKm = (float) ($settings['session_distance_km'] ?? 0.0) + $deltaKm;
         $settings['session_distance_km'] = $sessionDistanceKm;
-        $updates['gps_session_distance'] = (string) round($sessionDistanceKm, 4);
+        $updates['session_distance'] = (string) round($sessionDistanceKm, 4);
 
         // Speed stats in raw m/s.
         $speedMsRaw = $raw['speed'] ?? $raw['spd'] ?? null;
@@ -282,13 +282,13 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
             $settings['session_speed_sum_ms'] = $sumMs;
             $settings['session_speed_count'] = $count;
 
-            $updates['gps_session_max_speed'] = (string) round($maxMs, 4);
-            $updates['gps_session_avg_speed'] = (string) round($sumMs / $count, 4);
+            $updates['session_max_speed'] = (string) round($maxMs, 4);
+            $updates['session_avg_speed'] = (string) round($sumMs / $count, 4);
         }
 
         // Duration in seconds since session_start.
         $startedAt = (int) ($settings['session_started_at_unix'] ?? now()->timestamp);
-        $updates['gps_session_duration'] = (string) max(0, now()->timestamp - $startedAt);
+        $updates['session_duration'] = (string) max(0, now()->timestamp - $startedAt);
 
         $integration->settings = array_merge($settings, [
             'last_lat' => $lat,
@@ -299,7 +299,7 @@ class OverlabelsMobileServiceDriver implements ExternalServiceDriver, StatefulEx
 
     /**
      * Wipe all per-session running counters and stamp a new session_started_at.
-     * Leaves last_lat/last_lng alone — those drive the cumulative gps_distance.
+     * Leaves last_lat/last_lng alone — those drive the cumulative `distance` control.
      */
     private function resetSessionState(ExternalIntegration $integration, array &$settings, ?string $sessionId): void
     {

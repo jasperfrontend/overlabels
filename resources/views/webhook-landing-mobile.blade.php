@@ -196,14 +196,14 @@
                 <li>
                     Your overlays now have live GPS controls:
                     <div class="controls-list">
-                        <code>[[[c:overlabels-mobile:gps_speed]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_lat]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_lng]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_distance]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_bearing]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_battery]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_charging]]]</code>
-                        <code>[[[c:overlabels-mobile:gps_tracking]]]</code>
+                        <code>[[[c:gps:speed]]]</code>
+                        <code>[[[c:gps:lat]]]</code>
+                        <code>[[[c:gps:lng]]]</code>
+                        <code>[[[c:gps:distance]]]</code>
+                        <code>[[[c:gps:bearing]]]</code>
+                        <code>[[[c:gps:battery]]]</code>
+                        <code>[[[c:gps:charging]]]</code>
+                        <code>[[[c:gps:tracking]]]</code>
                     </div>
                 </li>
             </ol>

@@ -21,7 +21,7 @@ function makeMobileIntegration(string $token = 'test-mobile-token', array $setti
 
     $integration = ExternalIntegration::factory()->create([
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
         'enabled' => true,
         'credentials' => Crypt::encryptString(json_encode(['token' => $token])),
         'settings' => $settings,
@@ -77,7 +77,7 @@ test('returns 200 and stores event for valid GPS payload', function () {
 
     $this->assertDatabaseHas('external_events', [
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
         'event_type' => 'location_update',
         'message_id' => "gps_{$ts}_1",
     ]);
@@ -114,10 +114,10 @@ test('updates speed, lat, lng controls on location update', function () {
     [$user, $integration] = makeMobileIntegration();
 
     // Pre-provision controls
-    foreach (['gps_speed', 'gps_lat', 'gps_lng', 'gps_distance'] as $key) {
-        OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+    foreach (['speed', 'lat', 'lng', 'distance'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
             'key' => $key,
-            'type' => in_array($key, ['gps_speed', 'gps_distance']) ? 'number' : 'text',
+            'type' => in_array($key, ['speed', 'distance']) ? 'number' : 'text',
             'label' => $key,
             'value' => '0',
         ]);
@@ -131,23 +131,23 @@ test('updates speed, lat, lng controls on location update', function () {
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_lat',
+        'source' => 'gps',
+        'key' => 'lat',
         'value' => '52.3676',
     ]);
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_lng',
+        'source' => 'gps',
+        'key' => 'lng',
         'value' => '4.9041',
     ]);
 
     // Speed stored as raw m/s; templates format with |speed:kmh / |speed:mph
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_speed',
+        'source' => 'gps',
+        'key' => 'speed',
         'value' => '13.89',
     ]);
 
@@ -159,10 +159,10 @@ test('updates bearing, battery, charging controls on location update', function 
 
     [$user, $integration] = makeMobileIntegration();
 
-    foreach (['gps_bearing', 'gps_battery', 'gps_charging', 'gps_lat', 'gps_lng'] as $key) {
-        OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
+    foreach (['bearing', 'battery', 'charging', 'lat', 'lng'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
             'key' => $key,
-            'type' => $key === 'gps_charging' ? 'boolean' : ($key === 'gps_bearing' || $key === 'gps_battery' ? 'number' : 'text'),
+            'type' => $key === 'charging' ? 'boolean' : ($key === 'bearing' || $key === 'battery' ? 'number' : 'text'),
             'label' => $key,
             'value' => '0',
         ]);
@@ -176,22 +176,22 @@ test('updates bearing, battery, charging controls on location update', function 
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_bearing',
+        'source' => 'gps',
+        'key' => 'bearing',
         'value' => '26',
     ]);
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_battery',
+        'source' => 'gps',
+        'key' => 'battery',
         'value' => '54',
     ]);
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_charging',
+        'source' => 'gps',
+        'key' => 'charging',
         'value' => '0',
     ]);
 
@@ -207,8 +207,8 @@ test('first ping stores position without adding distance', function () {
 
     [$user, $integration] = makeMobileIntegration();
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_distance', 'type' => 'number', 'label' => 'Distance', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '0',
     ]);
 
     postMobile($integration->webhook_token, mobilePayload([
@@ -221,8 +221,8 @@ test('first ping stores position without adding distance', function () {
     // Distance should remain 0 (no previous position)
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_distance',
+        'source' => 'gps',
+        'key' => 'distance',
         'value' => '0',
     ]);
 
@@ -241,17 +241,17 @@ test('second ping accumulates haversine distance', function () {
         'last_lng' => 4.9041,
     ]);
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_distance', 'type' => 'number', 'label' => 'Distance', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '0',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_lat', 'type' => 'text', 'label' => 'Lat', 'value' => '',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'lat', 'type' => 'text', 'label' => 'Lat', 'value' => '',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_lng', 'type' => 'text', 'label' => 'Lng', 'value' => '',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'lng', 'type' => 'text', 'label' => 'Lng', 'value' => '',
     ]);
 
     // Move to a point ~1.1 km away (Rotterdam direction)
@@ -263,8 +263,8 @@ test('second ping accumulates haversine distance', function () {
     ]))->assertStatus(200);
 
     $distanceControl = OverlayControl::where('user_id', $user->id)
-        ->where('source', 'overlabels-mobile')
-        ->where('key', 'gps_distance')
+        ->where('source', 'gps')
+        ->where('key', 'distance')
         ->first();
 
     // ~1.11 km for 0.01 degree latitude change at this position
@@ -283,14 +283,14 @@ test('speed_unit setting does not affect stored speed (always raw m/s)', functio
         'speed_unit' => 'mph',
     ]);
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_lat', 'type' => 'text', 'label' => 'Lat', 'value' => '',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'lat', 'type' => 'text', 'label' => 'Lat', 'value' => '',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_lng', 'type' => 'text', 'label' => 'Lng', 'value' => '',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'lng', 'type' => 'text', 'label' => 'Lng', 'value' => '',
     ]);
 
     postMobile($integration->webhook_token, mobilePayload([
@@ -300,8 +300,8 @@ test('speed_unit setting does not affect stored speed (always raw m/s)', functio
     ]))->assertStatus(200);
 
     $speedControl = OverlayControl::where('user_id', $user->id)
-        ->where('source', 'overlabels-mobile')
-        ->where('key', 'gps_speed')
+        ->where('source', 'gps')
+        ->where('key', 'speed')
         ->first();
 
     // Always stored as raw m/s regardless of speed_unit; pipe formatters handle display.
@@ -320,8 +320,8 @@ test('reset distance endpoint clears distance and position', function () {
         'last_lng' => 4.9041,
     ]);
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_distance', 'type' => 'number', 'label' => 'Distance', 'value' => '42.5',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '42.5',
     ]);
 
     $this->actingAs($user)
@@ -331,8 +331,8 @@ test('reset distance endpoint clears distance and position', function () {
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_distance',
+        'source' => 'gps',
+        'key' => 'distance',
         'value' => '0',
     ]);
 
@@ -358,32 +358,32 @@ test('connect creates integration with auto-generated token and provisions contr
 
     $this->assertDatabaseHas('external_integrations', [
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
         'enabled' => true,
     ]);
 
     // Token should be auto-generated
     $integration = ExternalIntegration::where('user_id', $user->id)
-        ->where('service', 'overlabels-mobile')
+        ->where('service', 'gps')
         ->first();
     $credentials = $integration->getCredentialsDecrypted();
     expect($credentials['token'])->toBeString()->toHaveLength(32);
 
     // All driver-defined controls should be auto-provisioned
     $controlCount = OverlayControl::where('user_id', $user->id)
-        ->where('source', 'overlabels-mobile')
+        ->where('source', 'gps')
         ->where('source_managed', true)
         ->count();
 
-    $expected = count((new \App\Services\External\Drivers\OverlabelsMobileServiceDriver())->getAutoProvisionedControls());
+    $expected = count((new \App\Services\External\Drivers\GpsServiceDriver())->getAutoProvisionedControls());
     expect($controlCount)->toBe($expected);
 });
 
 test('disconnect removes integration and controls', function () {
     [$user, $integration] = makeMobileIntegration();
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'speed', 'type' => 'number', 'label' => 'Speed', 'value' => '0',
     ]);
 
     $this->actingAs($user)
@@ -392,11 +392,11 @@ test('disconnect removes integration and controls', function () {
 
     $this->assertDatabaseMissing('external_integrations', [
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
     ]);
 
     $controlCount = OverlayControl::where('user_id', $user->id)
-        ->where('source', 'overlabels-mobile')
+        ->where('source', 'gps')
         ->count();
 
     expect($controlCount)->toBe(0);
@@ -441,13 +441,13 @@ test('GET webhook URL returns 404 for unknown token', function () {
 // Session lifecycle
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('session_start sets gps_tracking to 1 and stores event', function () {
+test('session_start sets tracking to 1 and stores event', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
     ]);
 
     $sessionId = 'abc12345-def6-7890-abcd-ef1234567890';
@@ -460,28 +460,28 @@ test('session_start sets gps_tracking to 1 and stores event', function () {
 
     $this->assertDatabaseHas('external_events', [
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
         'event_type' => 'session_start',
         'message_id' => "session_start_{$sessionId}",
     ]);
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_tracking',
+        'source' => 'gps',
+        'key' => 'tracking',
         'value' => '1',
     ]);
 
     Event::assertDispatched(ControlValueUpdated::class);
 });
 
-test('session_end sets gps_tracking to 0 and stores event', function () {
+test('session_end sets tracking to 0 and stores event', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '1',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '1',
     ]);
 
     $sessionId = 'abc12345-def6-7890-abcd-ef1234567890';
@@ -494,15 +494,15 @@ test('session_end sets gps_tracking to 0 and stores event', function () {
 
     $this->assertDatabaseHas('external_events', [
         'user_id' => $user->id,
-        'service' => 'overlabels-mobile',
+        'service' => 'gps',
         'event_type' => 'session_end',
         'message_id' => "session_end_{$sessionId}",
     ]);
 
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_tracking',
+        'source' => 'gps',
+        'key' => 'tracking',
         'value' => '0',
     ]);
 
@@ -530,14 +530,14 @@ test('session events do not update GPS controls or accumulate distance', functio
         'last_lng' => 4.9041,
     ]);
 
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'tracking', 'type' => 'boolean', 'label' => 'Tracking', 'value' => '0',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_distance', 'type' => 'number', 'label' => 'Distance', 'value' => '5.0',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '5.0',
     ]);
-    OverlayControl::provisionServiceControl($user, 'overlabels-mobile', [
-        'key' => 'gps_speed', 'type' => 'number', 'label' => 'Speed', 'value' => '30',
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'speed', 'type' => 'number', 'label' => 'Speed', 'value' => '30',
     ]);
 
     postMobile($integration->webhook_token, [
@@ -549,14 +549,14 @@ test('session events do not update GPS controls or accumulate distance', functio
     // Distance and speed should NOT change
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_distance',
+        'source' => 'gps',
+        'key' => 'distance',
         'value' => '5.0',
     ]);
     $this->assertDatabaseHas('overlay_controls', [
         'user_id' => $user->id,
-        'source' => 'overlabels-mobile',
-        'key' => 'gps_speed',
+        'source' => 'gps',
+        'key' => 'speed',
         'value' => '30',
     ]);
 });

@@ -1,7 +1,7 @@
 import { applyFormatter } from '@/utils/formatters';
 
 // Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
-// Tag key allows word chars, dots, colons, and hyphens (for service names like overlabels-mobile)
+// Tag key allows word chars, dots, colons, and hyphens (legacy support for hyphenated service names)
 // Pipe args allow word chars, dots, colons, hyphens, and spaces (for date patterns like dd-MM-yyyy HH:mm)
 //
 // SINGLE-PASS BY DESIGN: this regex runs exactly once per render. Substituted values are never

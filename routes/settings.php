@@ -3,10 +3,10 @@
 use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
+use App\Http\Controllers\Settings\GpsIntegrationController;
 use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
-use App\Http\Controllers\Settings\OverlabelsMobileIntegrationController;
 use App\Http\Controllers\Settings\StreamElementsIntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Models\User;
@@ -55,12 +55,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/gpslogger', [GpsLoggerIntegrationController::class, 'disconnect'])->name('gpslogger.disconnect');
         Route::post('/gpslogger/reset-distance', [GpsLoggerIntegrationController::class, 'resetDistance'])->name('gpslogger.reset-distance');
 
-        Route::get('/overlabels-mobile', [OverlabelsMobileIntegrationController::class, 'show'])->name('overlabels-mobile.show');
-        Route::post('/overlabels-mobile', [OverlabelsMobileIntegrationController::class, 'save'])->name('overlabels-mobile.save');
-        Route::post('/overlabels-mobile/regenerate-token', [OverlabelsMobileIntegrationController::class, 'regenerateToken'])->name('overlabels-mobile.regenerate-token');
-        Route::delete('/overlabels-mobile', [OverlabelsMobileIntegrationController::class, 'disconnect'])->name('overlabels-mobile.disconnect');
-        Route::post('/overlabels-mobile/reset-distance', [OverlabelsMobileIntegrationController::class, 'resetDistance'])->name('overlabels-mobile.reset-distance');
-        Route::post('/overlabels-mobile/clear-safe-zone', [OverlabelsMobileIntegrationController::class, 'clearSafeZone'])->name('overlabels-mobile.clear-safe-zone');
+        Route::get('/overlabels-mobile', [GpsIntegrationController::class, 'show'])->name('overlabels-mobile.show');
+        Route::post('/overlabels-mobile', [GpsIntegrationController::class, 'save'])->name('overlabels-mobile.save');
+        Route::post('/overlabels-mobile/regenerate-token', [GpsIntegrationController::class, 'regenerateToken'])->name('overlabels-mobile.regenerate-token');
+        Route::delete('/overlabels-mobile', [GpsIntegrationController::class, 'disconnect'])->name('overlabels-mobile.disconnect');
+        Route::post('/overlabels-mobile/reset-distance', [GpsIntegrationController::class, 'resetDistance'])->name('overlabels-mobile.reset-distance');
+        Route::post('/overlabels-mobile/clear-safe-zone', [GpsIntegrationController::class, 'clearSafeZone'])->name('overlabels-mobile.clear-safe-zone');
 
         Route::get('/streamlabs', [StreamLabsIntegrationController::class, 'show'])->name('streamlabs.show');
         Route::get('/streamlabs/redirect', [StreamLabsIntegrationController::class, 'redirect'])->name('streamlabs.redirect');

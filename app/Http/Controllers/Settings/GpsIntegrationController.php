@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class OverlabelsMobileIntegrationController extends Controller
+class GpsIntegrationController extends Controller
 {
     public function __construct(
         private readonly ExternalControlService $controlService,
@@ -27,7 +27,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $user = auth()->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         $webhookUrl = $integration
@@ -54,7 +54,7 @@ class OverlabelsMobileIntegrationController extends Controller
             ? url('/map/'.app(MapSlugService::class)->encode($user->twitch_id))
             : null;
 
-        return Inertia::render('settings/integrations/overlabels-mobile', [
+        return Inertia::render('settings/integrations/gps', [
             'integration' => $integration ? [
                 'connected' => true,
                 'enabled' => $integration->enabled,
@@ -99,11 +99,11 @@ class OverlabelsMobileIntegrationController extends Controller
         ]);
 
         $isNew = ! ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->exists();
 
         $integration = ExternalIntegration::firstOrCreate(
-            ['user_id' => $user->id, 'service' => 'overlabels-mobile'],
+            ['user_id' => $user->id, 'service' => 'gps'],
             ['enabled' => true]
         );
 
@@ -127,7 +127,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $integration->save();
 
         // Auto-provision controls (idempotent - also picks up newly added controls for existing integrations)
-        $driver = ExternalServiceRegistry::driver('overlabels-mobile');
+        $driver = ExternalServiceRegistry::driver('gps');
         $this->controlService->provision($user, $driver);
 
         return back()->with('success', 'Overlabels GPS integration saved.');
@@ -138,7 +138,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $user = auth()->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         if (! $integration) {
@@ -158,7 +158,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $user = auth()->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         if (! $integration) {
@@ -178,11 +178,11 @@ class OverlabelsMobileIntegrationController extends Controller
         $user = auth()->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         if ($integration) {
-            $this->controlService->deprovision($user, 'overlabels-mobile');
+            $this->controlService->deprovision($user, 'gps');
             $integration->delete();
         }
 
@@ -195,7 +195,7 @@ class OverlabelsMobileIntegrationController extends Controller
         $user = auth()->user();
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->first();
 
         if (! $integration) {
@@ -204,8 +204,8 @@ class OverlabelsMobileIntegrationController extends Controller
 
         // Reset distance controls to 0
         $controls = OverlayControl::where('user_id', $user->id)
-            ->where('source', 'overlabels-mobile')
-            ->where('key', 'gps_distance')
+            ->where('source', 'gps')
+            ->where('key', 'distance')
             ->where('source_managed', true)
             ->with('template')
             ->get();

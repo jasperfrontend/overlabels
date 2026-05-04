@@ -24,7 +24,7 @@ class MapController extends Controller
         $user = $this->resolveUser($slug);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('enabled', true)
             ->first();
 
@@ -55,7 +55,7 @@ class MapController extends Controller
         $user = $this->resolveUser($slug);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('enabled', true)
             ->first();
 

@@ -15,7 +15,7 @@ export const KOFI_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'Ko-fi Total Received (session)', type: 'number' },
 ];
 
-export const GPS_PRESETS: ServicePreset[] = [
+export const GPSLOGGER_PRESETS: ServicePreset[] = [
   { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
   { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
   { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
@@ -73,28 +73,28 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
 ];
 
-export const OVERLABELS_MOBILE_PRESETS: ServicePreset[] = [
-  { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
-  { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
-  { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
-  { key: 'gps_distance', label: 'GPS Distance (km, cumulative)', type: 'number' },
-  { key: 'gps_session_distance', label: 'GPS Session Distance (km)', type: 'number' },
-  { key: 'gps_session_max_speed', label: 'GPS Session Max Speed (m/s)', type: 'number' },
-  { key: 'gps_session_avg_speed', label: 'GPS Session Avg Speed (m/s)', type: 'number' },
-  { key: 'gps_session_duration', label: 'GPS Session Duration (seconds)', type: 'number' },
-  { key: 'gps_bearing', label: 'GPS Bearing (degrees)', type: 'number' },
-  { key: 'gps_accuracy', label: 'GPS Accuracy (meters)', type: 'number' },
-  { key: 'gps_battery', label: 'Phone Battery (%)', type: 'number' },
-  { key: 'gps_charging', label: 'Phone Charging', type: 'boolean' },
-  { key: 'gps_tracking', label: 'GPS Tracking Active', type: 'boolean' },
+export const GPS_PRESETS: ServicePreset[] = [
+  { key: 'speed', label: 'GPS Speed', type: 'number' },
+  { key: 'lat', label: 'GPS Latitude', type: 'text' },
+  { key: 'lng', label: 'GPS Longitude', type: 'text' },
+  { key: 'distance', label: 'GPS Distance (km, cumulative)', type: 'number' },
+  { key: 'session_distance', label: 'GPS Session Distance (km)', type: 'number' },
+  { key: 'session_max_speed', label: 'GPS Session Max Speed (m/s)', type: 'number' },
+  { key: 'session_avg_speed', label: 'GPS Session Avg Speed (m/s)', type: 'number' },
+  { key: 'session_duration', label: 'GPS Session Duration (seconds)', type: 'number' },
+  { key: 'bearing', label: 'GPS Bearing (degrees)', type: 'number' },
+  { key: 'accuracy', label: 'GPS Accuracy (meters)', type: 'number' },
+  { key: 'battery', label: 'Phone Battery (%)', type: 'number' },
+  { key: 'charging', label: 'Phone Charging', type: 'boolean' },
+  { key: 'tracking', label: 'GPS Tracking Active', type: 'boolean' },
 ];
 
 export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
     case 'twitch': return TWITCH_PRESETS;
     case 'kofi': return KOFI_PRESETS;
-    case 'gpslogger': return GPS_PRESETS;
-    case 'overlabels-mobile': return OVERLABELS_MOBILE_PRESETS;
+    case 'gpslogger': return GPSLOGGER_PRESETS;
+    case 'gps': return GPS_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
     case 'streamelements': return STREAMELEMENTS_PRESETS;
     case 'fourthwall': return FOURTHWALL_PRESETS;

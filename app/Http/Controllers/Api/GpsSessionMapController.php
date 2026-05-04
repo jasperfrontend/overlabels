@@ -62,7 +62,7 @@ class GpsSessionMapController extends Controller
         }
 
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('enabled', true)
             ->first();
 
@@ -91,7 +91,7 @@ class GpsSessionMapController extends Controller
         $delay = (int) ($settings['map_delay_seconds'] ?? 0);
 
         $query = DB::table('external_events')
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('user_id', $user->id)
             ->where('event_type', 'location_update')
             ->whereNotNull(DB::raw("raw_payload->>'lat'"));
@@ -129,7 +129,7 @@ class GpsSessionMapController extends Controller
 
         // Check if session is completed (immutable) - cache indefinitely
         $isCompleted = DB::table('external_events')
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('user_id', $userId)
             ->where('event_type', 'session_end')
             ->whereRaw("raw_payload->>'session_id' = ?", [$sessionId])
@@ -146,7 +146,7 @@ class GpsSessionMapController extends Controller
                     (raw_payload->>'alt')::float AS altitude,
                     created_at
                 FROM external_events
-                WHERE service = 'overlabels-mobile'
+                WHERE service = 'gps'
                     AND user_id = ?
                     AND event_type = 'location_update'
                     AND raw_payload->>'session_id' = ?
@@ -220,7 +220,7 @@ class GpsSessionMapController extends Controller
     private function isMapSharingEnabled(int $userId): bool
     {
         $integration = ExternalIntegration::where('user_id', $userId)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('enabled', true)
             ->first();
 

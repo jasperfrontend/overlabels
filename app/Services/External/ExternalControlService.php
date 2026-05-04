@@ -61,7 +61,7 @@ class ExternalControlService
         // Streamers who opt into public map sharing get a parallel broadcast on
         // the public `map.{slug}` channel for GPS controls only. Computed
         // once per call so the per-control loop doesn't reload it.
-        $mapSharingEnabled = $service === 'overlabels-mobile'
+        $mapSharingEnabled = $service === 'gps'
             && $this->isMapSharingEnabled($user);
 
         $mapSlug = $mapSharingEnabled
@@ -124,25 +124,25 @@ class ExternalControlService
     }
 
     /**
-     * Allowlist of overlabels-mobile control keys safe to broadcast on the
-     * public `map.{slug}` channel. Anything not on this list (including
-     * battery, accuracy, distance, donor info, etc.) stays private.
+     * Allowlist of GPS control keys safe to broadcast on the public
+     * `map.{slug}` channel. Anything not on this list (including battery,
+     * accuracy, distance, donor info, etc.) stays private.
      */
     private static function isMapSharedKey(string $key): bool
     {
         return in_array($key, [
-            'gps_lat',
-            'gps_lng',
-            'gps_speed',
-            'gps_bearing',
-            'gps_tracking',
+            'lat',
+            'lng',
+            'speed',
+            'bearing',
+            'tracking',
         ], true);
     }
 
     private function isMapSharingEnabled(User $user): bool
     {
         $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'overlabels-mobile')
+            ->where('service', 'gps')
             ->where('enabled', true)
             ->first();
 

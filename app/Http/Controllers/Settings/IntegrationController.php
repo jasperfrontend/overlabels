@@ -25,11 +25,18 @@ class IntegrationController extends Controller
             ->get()
             ->keyBy('service');
 
-        $services = array_map(function (string $service) use ($integrations) {
+        // The settings page URL slug for a service. For most services the
+        // canonical key matches the URL, but `gps` keeps the historical
+        // `overlabels-mobile` URL so saved bookmarks and the mobile app's
+        // deep-link target keep working.
+        $urlSlugs = ['gps' => 'overlabels-mobile'];
+
+        $services = array_map(function (string $service) use ($integrations, $urlSlugs) {
             $integration = $integrations->get($service);
 
             return [
                 'key' => $service,
+                'url_slug' => $urlSlugs[$service] ?? $service,
                 'name' => $this->serviceName($service),
                 'connected' => (bool) $integration,
                 'enabled' => $integration?->enabled ?? false,
@@ -91,7 +98,7 @@ class IntegrationController extends Controller
         return match ($key) {
             'kofi' => 'Ko-fi',
             'gpslogger' => 'GPSLogger',
-            'overlabels-mobile' => 'Overlabels GPS',
+            'gps' => 'Overlabels GPS',
             'streamlabs' => 'Streamlabs',
             'streamelements' => 'StreamElements',
             'throne' => 'Throne',

@@ -75,7 +75,7 @@ class OverlayControl extends Model
     const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
-    const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger', 'streamelements', 'overlabels-mobile'];
+    const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger', 'streamelements', 'gps'];
 
     const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
@@ -268,22 +268,41 @@ class OverlayControl extends Model
      */
     public static function extractExpressionDependencies(string $expression): array
     {
-        // Match c.identifier or c.identifier.identifier patterns
-        preg_match_all('/\bc\.([a-z][a-z0-9_]*)(?:\.([a-z][a-z0-9_]*))?/', $expression, $matches, PREG_SET_ORDER);
-
         $deps = [];
-        foreach ($matches as $match) {
+
+        // Dot notation: c.key or c.source.key
+        preg_match_all('/\bc\.([a-z][a-z0-9_]*)(?:\.([a-z][a-z0-9_]*))?/', $expression, $dotMatches, PREG_SET_ORDER);
+        foreach ($dotMatches as $match) {
             if (! empty($match[2])) {
-                $key = $match[2];
                 // Strip _at suffix — these are virtual companion values, not real controls.
                 // The base control is the actual dependency.
-                $key = preg_replace('/_at$/', '', $key);
+                $key = preg_replace('/_at$/', '', $match[2]);
                 $deps[] = $match[1].':'.$key;
             } else {
-                $key = $match[1];
-                $key = preg_replace('/_at$/', '', $key);
+                $key = preg_replace('/_at$/', '', $match[1]);
                 $deps[] = $key;
             }
+        }
+
+        // Bracket notation for hyphenated service names: c["source"].key or c["source"]["key"]
+        // Example: c["overlabels-mobile"].gps_lat. Single-quoted form also accepted.
+        preg_match_all(
+            '/\bc\[([\'"])([a-z][a-z0-9_\-]*)\1\](?:\.([a-z][a-z0-9_]*)|\[([\'"])([a-z][a-z0-9_]*)\4\])?/',
+            $expression,
+            $bracketMatches,
+            PREG_SET_ORDER
+        );
+        foreach ($bracketMatches as $match) {
+            $source = $match[2];
+            $key = $match[3] ?? '';
+            if ($key === '' && isset($match[5])) {
+                $key = $match[5];
+            }
+            if ($key === '') {
+                continue;
+            }
+            $key = preg_replace('/_at$/', '', $key);
+            $deps[] = $source.':'.$key;
         }
 
         return array_values(array_unique($deps));

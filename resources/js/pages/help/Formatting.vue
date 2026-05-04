@@ -503,7 +503,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
               <p class="mb-4 text-foreground">
                 The unit label is never appended. Add your own label in the template
-                if you want it: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:overlabels-mobile:gps_session_distance|distance:km]]] km</code>.
+                if you want it: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:gps:session_distance|distance:km]]] km</code>.
               </p>
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -517,13 +517,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                   </thead>
                   <tbody class="font-mono">
                   <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_distance|distance:km]]]</td>
+                    <td class="py-2 pr-4">[[[c:gps:session_distance|distance:km]]]</td>
                     <td class="py-2 pr-4">11.61</td>
                     <td class="py-2 pr-4">11.61</td>
                     <td class="py-2">11,61</td>
                   </tr>
                   <tr>
-                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_distance|distance:mi]]]</td>
+                    <td class="py-2 pr-4">[[[c:gps:session_distance|distance:mi]]]</td>
                     <td class="py-2 pr-4">11.61</td>
                     <td class="py-2 pr-4">7.21</td>
                     <td class="py-2">7,21</td>
@@ -574,13 +574,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                   </thead>
                   <tbody class="font-mono">
                   <tr class="border-b border-sidebar/50">
-                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_max_speed|speed:kmh]]]</td>
+                    <td class="py-2 pr-4">[[[c:gps:session_max_speed|speed:kmh]]]</td>
                     <td class="py-2 pr-4">15.5</td>
                     <td class="py-2 pr-4">55.8</td>
                     <td class="py-2">55,8</td>
                   </tr>
                   <tr>
-                    <td class="py-2 pr-4">[[[c:overlabels-mobile:gps_session_avg_speed|speed:mph]]]</td>
+                    <td class="py-2 pr-4">[[[c:gps:session_avg_speed|speed:mph]]]</td>
                     <td class="py-2 pr-4">15.5</td>
                     <td class="py-2 pr-4">34.7</td>
                     <td class="py-2">34,7</td>
@@ -592,10 +592,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
-                <strong>Note:</strong> <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c:overlabels-mobile:gps_speed</code>
+                <strong>Note:</strong> <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c:gps:speed</code>
                 is a legacy control that's pre-converted server-side based on your speed_unit setting. The newer
-                per-session controls (<code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">gps_session_max_speed</code>,
-                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">gps_session_avg_speed</code>)
+                per-session controls (<code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">session_max_speed</code>,
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">session_avg_speed</code>)
                 store raw m/s so the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|speed:</code>
                 pipe is required to render them.
               </p>
