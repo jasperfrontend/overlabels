@@ -118,6 +118,7 @@ class GpsSessionMapController extends Controller
                 'altitude' => (float) ($payload['alt'] ?? 0),
                 'timestamp' => $ping->created_at,
             ],
+            'session_id' => $payload['session_id'] ?? null,
             'speed_unit' => $settings['speed_unit'] ?? 'kmh',
             'streamer_name' => $user->name,
         ]);

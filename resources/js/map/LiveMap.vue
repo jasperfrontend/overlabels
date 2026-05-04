@@ -15,12 +15,16 @@ const props = defineProps<{
 const zoom = ref(15);
 const center = ref<[number, number]>([0, 0]);
 const trail = ref<[number, number][]>([]);
+const seededTrailLength = ref(0);
 const hasPosition = ref(false);
 const loading = ref(true);
 const isLive = ref(props.isLive);
 const mapRef = ref<InstanceType<typeof LMap> | null>(null);
 
-const MAX_TRAIL_POINTS = 200;
+// Cap how many *new* live pings we retain on top of the seeded session
+// history. The history seed is already simplified server-side, so the cap
+// only governs growth from WebSocket arrivals during this viewing.
+const MAX_LIVE_TRAIL_GROWTH = 200;
 
 // Always subscribe to WebSocket. In delay mode we ignore the position values
 // for display (polling handles that), but we still use WebSocket signals to
@@ -56,6 +60,7 @@ function goOffline() {
   position.value = null;
   trail.value = [];
   hasPosition.value = false;
+  seededTrailLength.value = 0;
 }
 
 // Keep the tab title in sync with live state so a refreshed tab doesn't
@@ -67,7 +72,9 @@ watch(isLive, (live) => {
     : 'Live location - Overlabels';
 });
 
-// Initial position fetch - only when the server says we're live.
+// Initial position + history fetch - only when the server says we're live.
+// We hit /position to learn the active session_id, then pull that session's
+// geojson so a viewer joining mid-session sees the route already travelled.
 onMounted(async () => {
   if (!isLive.value) {
     loading.value = false;
@@ -80,8 +87,34 @@ onMounted(async () => {
       const data = await res.json();
       if (data.position) {
         center.value = [data.position.lat, data.position.lng];
-        trail.value = [[data.position.lat, data.position.lng]];
         hasPosition.value = true;
+      }
+
+      if (data.session_id) {
+        try {
+          const histRes = await fetch(`/api/map/${props.slug}/${data.session_id}/geojson`);
+          if (histRes.ok) {
+            const geojson = await histRes.json();
+            for (const feature of geojson.features ?? []) {
+              if (feature.geometry?.type === 'LineString') {
+                // GeoJSON is [lng, lat], Leaflet wants [lat, lng]
+                trail.value = feature.geometry.coordinates.map(
+                  (c: number[]) => [c[1], c[0]] as [number, number],
+                );
+                seededTrailLength.value = trail.value.length;
+                break;
+              }
+            }
+          }
+        } catch {
+          // History fetch failed - fall through to current-position-only seed.
+        }
+      }
+
+      // If history seeding produced nothing but we have a current position,
+      // start the trail at that point so the marker has somewhere to anchor.
+      if (trail.value.length === 0 && data.position) {
+        trail.value = [[data.position.lat, data.position.lng]];
       }
     }
   } catch {
@@ -126,7 +159,9 @@ watch(position, (pos) => {
   center.value = latlng;
   hasPosition.value = true;
 
-  trail.value = [...trail.value, latlng].slice(-MAX_TRAIL_POINTS);
+  // Cap only the *live* growth so the seeded history stays intact.
+  const cap = seededTrailLength.value + MAX_LIVE_TRAIL_GROWTH;
+  trail.value = [...trail.value, latlng].slice(-cap);
 
   // Pan map smoothly
   if (mapRef.value?.leafletObject) {
