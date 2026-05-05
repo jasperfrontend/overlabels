@@ -9,15 +9,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { HelpCircle } from 'lucide-vue-next';
+import { ExternalLink, FunctionSquare } from 'lucide-vue-next';
 import { buildContext, evaluate, ARG_FUNCTIONS, SUPPORTED_FUNCTIONS } from '@/composables/useExpressionEngine';
 import type { OverlayControl } from '@/types';
+
+interface FunctionGroup {
+  label: string;
+  functions: string[];
+}
+
+const FUNCTION_GROUPS: FunctionGroup[] = [
+  { label: 'Label selectors', functions: ['argmax', 'argmin', 'latest', 'oldest'] },
+  { label: 'Multi-argument', functions: ['max', 'min', 'clamp', 'sum', 'avg'] },
+  { label: 'Rounding and utility', functions: ['abs', 'round', 'floor', 'ceil', 'sqrt'] },
+  { label: 'Trig', functions: ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2'] },
+  { label: 'GLSL helpers', functions: ['fract', 'mod'] },
+  { label: 'Time', functions: ['now', 'now_ms'] },
+];
+
+const CONSTANTS = ['PI'];
 
 const props = defineProps<{
   modelValue: string;
@@ -70,19 +80,21 @@ function resolvePreviewValue(ctrl: OverlayControl): unknown {
 
   return ctrl.value ?? '';
 }
-const helpOpen = ref(false);
-const HELP_TAB_KEY = 'expression-help-tab';
-const helpTab = ref(localStorage.getItem(HELP_TAB_KEY) ?? 'basics');
-
-watch(helpTab, (val) => {
-  if (val) {
-    localStorage.setItem(HELP_TAB_KEY, val);
-  } else {
-    localStorage.removeItem(HELP_TAB_KEY);
-  }
-});
-
 const controlFilter = ref('');
+const functionsOpen = ref(false);
+const copiedSnippet = ref<string | null>(null);
+let copyTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function copySnippet(snippet: string) {
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText(snippet).then(() => {
+    copiedSnippet.value = snippet;
+    if (copyTimeout) clearTimeout(copyTimeout);
+    copyTimeout = setTimeout(() => {
+      copiedSnippet.value = null;
+    }, 1500);
+  });
+}
 
 /** Walk an AST and return a validation error for unsupported/misconfigured function calls, or null if valid. */
 function validateFunctions(node: jsep.Expression): string | null {
@@ -249,15 +261,6 @@ function insertVariable(ctrl: OverlayControl) {
   insertAtCursor(expressionRef(ctrl));
 }
 
-const exampleCopied = ref(false);
-
-async function copyExampleCode() {
-  const example = `latest(c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name, c.kofi.latest_donor_name_at, c.kofi.latest_donor_name)`;
-  await navigator.clipboard.writeText(example);
-  exampleCopied.value = true;
-  setTimeout(() => { exampleCopied.value = false; }, 3000);
-}
-
 // Group controls by source for visual clarity
 interface ControlGroup {
   label: string;
@@ -300,17 +303,29 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
 
 <template>
   <div class="space-y-3 rounded-sm border border-violet-400/30 bg-violet-400/5 p-3">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-2">
       <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Expression</p>
-      <button
-        type="button"
-        class="flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-background transition cursor-pointer"
-        title="Expression syntax help"
-        @click="helpOpen = true"
-      >
-        <HelpCircle class="size-3.5" />
-        Help
-      </button>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-background transition cursor-pointer"
+          title="Browse all available functions"
+          @click="functionsOpen = true"
+        >
+          <FunctionSquare class="size-3.5" />
+          Functions
+        </button>
+        <a
+          href="/help/expressions"
+          target="_blank"
+          rel="noopener"
+          class="flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-background transition cursor-pointer"
+          title="Open the full Expression Controls reference in a new tab"
+        >
+          <ExternalLink class="size-3.5" />
+          Full reference
+        </a>
+      </div>
     </div>
 
     <!-- Formula -->
@@ -370,137 +385,52 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
         {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
       </div>
     </div>
+
   </div>
 
-  <!-- Help Dialog -->
-  <Dialog v-model:open="helpOpen">
-    <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
+  <!-- Functions picker dialog -->
+  <Dialog v-model:open="functionsOpen">
+    <DialogContent class="max-w-md">
       <DialogHeader>
-        <DialogTitle>Expression Syntax</DialogTitle>
+        <DialogTitle>Available functions</DialogTitle>
       </DialogHeader>
-      <Accordion type="single" collapsible v-model="helpTab" class="text-sm">
-        <!-- Basics: controls, operators, strings -->
-        <AccordionItem value="basics">
-          <AccordionTrigger>Controls, operators and strings</AccordionTrigger>
-          <AccordionContent>
-            <div class="space-y-4 text-foreground">
-              <div class="space-y-1.5">
-                <p class="text-xs font-semibold text-muted-foreground">Referencing controls</p>
-                <ul class="list-disc pl-4 text-sm">
-                  <li>Use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.key</code> to reference a control's current value.</li>
-                  <li>For service controls, use <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.service.key</code> (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.total_received</code>).</li>
-                  <li>Append <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">_at</code> to any control to get its last-updated timestamp (e.g. <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.kofi.latest_donor_name_at</code>).</li>
-                </ul>
-              </div>
-              <div class="space-y-1.5">
-                <p class="text-xs font-semibold text-muted-foreground">Operators</p>
-                <div class="flex flex-wrap gap-1.5">
-                  <code v-for="op in ['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=', '&&', '||', '? :']" :key="op" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ op }}</code>
-                </div>
-              </div>
-              <div class="space-y-1.5">
-                <p class="text-xs font-semibold text-muted-foreground">Strings</p>
-                <p>When working with text values, wrap them in quotes: <code class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">c.myname == "JasperDiscovers" ? "cyan" : "red"</code></p>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <!-- Functions -->
-        <AccordionItem value="functions">
-          <AccordionTrigger>Functions</AccordionTrigger>
-          <AccordionContent>
-            <div class="space-y-3 text-foreground">
-              <div>
-                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code v-for="fn in ['latest', 'oldest', 'argmax', 'argmin']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
-                </div>
-                <p class="text-xs text-muted-foreground">Accept pairs of <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">value, label</code> arguments. Return the label paired with the highest (latest/argmax) or lowest (oldest/argmin) value. Works with numbers and timestamps.</p>
-              </div>
-              <div>
-                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code v-for="fn in ['max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
-                </div>
-                <p class="text-xs text-muted-foreground">Standard math functions. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">max</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">min</code>, <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sum</code>, and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">avg</code> accept multiple arguments. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">round</code> takes an optional decimals count: <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">round(0.1 + 0.2, 2)</code> returns <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">"0.30"</code> (with trailing zero). The 2-arg form returns a string, so put it last in the expression or use a <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">|round:2</code> pipe instead.</p>
-              </div>
-              <div>
-                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code v-for="fn in ['sin', 'cos', 'fract', 'mod']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
-                  <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">PI</code>
-                </div>
-                <p class="text-xs text-muted-foreground">Animation helpers. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sin</code>/<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">cos</code> take radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(x)</code> = <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x - floor(x)</code>. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(a, b)</code> is GLSL floor-modulo (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">mod(-1, 5) === 4</code>); use <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">%</code> for JS remainder. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">PI</code> is a bare identifier - no parens.</p>
-                <p class="text-xs text-muted-foreground mt-1.5">Expect IEEE 754 float noise (<code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">fract(10.2)</code> -> <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">0.19999...93</code>). Clean it up with a <a href="/help/formatting" target="_blank" rel="noopener" class="text-violet-400 hover:underline">pipe formatter</a> like <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">|round:2</code>.</p>
-              </div>
-              <div>
-                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code v-for="fn in ['tan', 'asin', 'acos', 'atan', 'atan2', 'sqrt']" :key="fn" class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">{{ fn }}()</code>
-                </div>
-                <p class="text-xs text-muted-foreground mb-1.5">Spatial math, for GPS overlays and other things that need real geometry.</p>
-                <ul class="space-y-1 text-xs text-muted-foreground list-disc pl-4">
-                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">tan(x)</code> - tangent. x in radians, completes the trig trio.</li>
-                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">asin(x)</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">acos(x)</code> / <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan(x)</code> - inverse trig. Take a ratio, return an angle in radians. <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">asin</code> and <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">acos</code> expect input in <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">[-1, 1]</code>.</li>
-                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan2(y, x)</code> - two-argument arctangent. Unlike <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">atan</code>, it sees both coordinates separately so it knows which quadrant the angle lives in. The right tool for "what angle does this vector point in", and the final step of haversine great-circle distance.</li>
-                  <li><code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">sqrt(x)</code> - square root. Returns <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">0</code> for negative input instead of NaN, matching the engine's <code class="rounded bg-sidebar px-1 py-0.5 font-mono text-[10px]">x / 0</code> convention so a malformed control upstream can't poison every dependent expression.</li>
-                </ul>
-              </div>
-              <div>
-                <div class="flex flex-wrap gap-1.5 mb-1.5">
-                  <code class="rounded bg-sidebar px-2 py-0.5 font-mono text-xs">now()</code>
-                </div>
-                <p class="text-xs text-muted-foreground">Returns the current timestamp in seconds. Useful for calculating time since an event.</p>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <!-- Examples -->
-        <AccordionItem value="examples">
-          <AccordionTrigger>Examples</AccordionTrigger>
-          <AccordionContent>
-            <div class="grid grid-cols-2 gap-2">
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Win rate percentage:</p>
-                c.wins / (c.wins + c.losses) * 100
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Conditional text based on a value:</p>
-                c.deaths > 10 ? "tilted" : "focused"
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Most recent donor across services:</p>
-                <button
-                  type="button"
-                  class="text-violet-400 hover:text-violet-300 cursor-pointer font-sans underline float-right text-[10px] ml-2"
-                  @click="copyExampleCode()"
-                >
-                  {{ exampleCopied ? 'Copied!' : 'Copy' }}
-                </button>
-                latest(<br />
-                &nbsp;&nbsp;c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,<br />
-                &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name<br />
-                )
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Total donations across services:</p>
-                c.streamlabs.total_received + c.kofi.total_received
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Highest single donation amount:</p>
-                max(c.streamlabs.latest_donation_amount, c.kofi.latest_donation_amount)
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">2D distance between two points:</p>
-                sqrt((c.x2 - c.x1) * (c.x2 - c.x1) + (c.y2 - c.y1) * (c.y2 - c.y1))
-              </div>
-              <div class="rounded bg-sidebar p-3 font-mono text-xs leading-relaxed">
-                <p class="text-muted-foreground font-sans mb-1">Final haversine step (km from coords):</p>
-                6371 * 2 * atan2(sqrt(c.a), sqrt(1 - c.a))
-                <p class="text-muted-foreground font-sans mt-2 text-[10px]">Build <code class="text-foreground">c.a</code> as a separate control from <code class="text-foreground">sin(dLat/2)<sup>2</sup> + cos(lat1)*cos(lat2)*sin(dLon/2)<sup>2</sup></code> using the GPS lat/lon controls.</p>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <p class="text-xs text-muted-foreground">
+        Click any function to copy it to your clipboard, then paste it into your expression.
+        For full descriptions, examples, and the Haversine walkthrough, see the
+        <a href="/help/expressions" target="_blank" rel="noopener" class="text-violet-400 hover:underline">Expression Controls reference</a>.
+      </p>
+      <div class="space-y-3 max-h-[60vh] overflow-y-auto">
+        <div v-for="group in FUNCTION_GROUPS" :key="group.label">
+          <p class="text-xs font-semibold text-muted-foreground mb-1">{{ group.label }}</p>
+          <div class="flex flex-wrap gap-1">
+            <button
+              v-for="fn in group.functions"
+              :key="fn"
+              type="button"
+              :title="copiedSnippet === `${fn}()` ? 'Copied!' : `Copy ${fn}() to clipboard`"
+              class="rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 hover:text-violet-400 hover:border-violet-400/40 transition cursor-pointer"
+              @click="copySnippet(`${fn}()`)"
+            >
+              {{ copiedSnippet === `${fn}()` ? 'Copied!' : `${fn}()` }}
+            </button>
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-muted-foreground mb-1">Constants</p>
+          <div class="flex flex-wrap gap-1">
+            <button
+              v-for="c in CONSTANTS"
+              :key="c"
+              type="button"
+              :title="copiedSnippet === c ? 'Copied!' : `Copy ${c} to clipboard`"
+              class="rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 hover:text-violet-400 hover:border-violet-400/40 transition cursor-pointer"
+              @click="copySnippet(c)"
+            >
+              {{ copiedSnippet === c ? 'Copied!' : c }}
+            </button>
+          </div>
+        </div>
+      </div>
     </DialogContent>
   </Dialog>
 </template>

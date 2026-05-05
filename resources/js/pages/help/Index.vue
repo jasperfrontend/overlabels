@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Library, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Library, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -32,6 +32,12 @@ const pages = [
     description: 'Mutable values you can change live - text, numbers, toggles, timers, and more.',
     href: '/help/controls',
     icon: SlidersHorizontal,
+  },
+  {
+    title: 'Expression Controls',
+    description: 'Math-powered live data - no code, no server. Build chained formulas like the Haversine distance, donation progress bars, and more.',
+    href: '/help/expressions',
+    icon: FunctionSquare,
   },
   {
     title: 'Integration Presets',
