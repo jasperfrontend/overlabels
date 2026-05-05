@@ -60,7 +60,7 @@ export const BMAC_PRESETS: ServicePreset[] = [
 ];
 
 export const TWITCH_PRESETS: ServicePreset[] = [
-  { key: 'follows_this_stream', label: 'Followers This Stream', type: 'counter' },
+  { key: 'follows_this_stream', label: 'Follows This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
   { key: 'gift_subs_this_stream', label: 'Gift Subs This Stream', type: 'counter' },
   { key: 'resubs_this_stream', label: 'Resubs This Stream', type: 'counter' },

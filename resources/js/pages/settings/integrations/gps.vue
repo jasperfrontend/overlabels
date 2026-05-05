@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { Head, useForm, Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
+import { GPS_PRESETS } from '@/components/controls/controlPresets';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -239,15 +240,12 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground mt-1">
               Use these tags in your overlay templates:
             </p>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:speed]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:lat]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:lng]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:distance]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:bearing]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:battery]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:charging]]]</code>
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10 text-sm">[[[c:gps:tracking]]]</code>
+            <div class="mt-2 grid gap-3 sm:grid-cols-2">
+              <div v-for="preset in GPS_PRESETS" :key="preset.key" class="space-y-1">
+                <p class="text-sm font-medium text-foreground">{{ preset.label }}</p>
+                <p class="text-xs text-muted-foreground">Type: <span class="font-mono">{{ preset.type }}</span></p>
+                <code class="rounded bg-black/10 px-1 text-sm dark:bg-white/10">[[[c:gps:{{ preset.key }}]]]</code>
+              </div>
             </div>
           </div>
         </div>

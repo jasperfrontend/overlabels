@@ -5,8 +5,6 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -248,19 +246,10 @@ function formatDate(iso: string | null): string {
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
+                  <span title="Connected to Twtich" v-if="eventsub.active_count > 0"><Power class="text-green-400 size-4 my-1" /></span>
+                  <span title="Not listening to any events" v-else-if="eventsub.connected"><ZapOff class="text-pink-400 size-4 my-1" /></span>
+                  <span v-else title="Disconnected from Twitch"><PowerOff class="text-orange-400 size-4 my-1" /></span>
                   <span class="font-medium">Twitch Alerts</span>
-
-                  <Badge v-if="eventsub.active_count > 0" variant="default" title="Connected to Twtich">
-                    <Power class="size-4 mx-2 my-1" />
-                  </Badge>
-
-                  <Badge v-else-if="eventsub.connected" variant="secondary" title="Not listening to any events">
-                    <ZapOff class="size-4 mx-2 my-1" />
-                  </Badge>
-
-                  <Badge v-else variant="secondary" title="Disconnected from Twitch">
-                    <PowerOff class="size-4 mx-2 my-1" />
-                  </Badge>
                 </div>
                 <Dialog>
                   <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-muted-foreground text-sm">
@@ -294,25 +283,25 @@ function formatDate(iso: string | null): string {
                   </DialogContent>
                 </Dialog>
 
-                <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-yellow-600 dark:text-yellow-400">
+                <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-pink-400">
                   Not receiving Twitch events. Click "(Re)connect".
                 </p>
               </div>
 
               <div class="flex gap-2">
-                <Button
+                <button
                   v-if="eventsub.active_count > 0"
-                  variant="outline"
                   :disabled="testCheerLoading || testCheerCooldown > 0"
                   @click="sendTestCheer"
+                  class="btn btn-primary"
                 >
                   <template v-if="testCheerLoading">Firing...</template>
                   <template v-else-if="testCheerCooldown > 0">Wait {{ testCheerCooldown }}s</template>
                   <template v-else>Send test cheer</template>
-                </Button>
-                <Button variant="default" :disabled="eventsubLoading" @click="connectEventSub">
+                </button>
+                <button class="btn btn-tertiary" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -351,9 +340,8 @@ function formatDate(iso: string | null): string {
                 </p>
               </div>
 
-              <Button variant="default" :disabled="botLoading" @click="toggleBot">
-                {{ props.bot.enabled ? 'Disable' : 'Enable' }}
-              </Button>
+              <button v-if="props.bot.enabled" class="btn btn-secondary" :disabled="botLoading" @click="toggleBot">Disable</button>
+              <button v-else class="btn btn-primary" :disabled="botLoading" @click="toggleBot">Enable</button>
             </div>
           </div>
         </div>
@@ -366,6 +354,7 @@ function formatDate(iso: string | null): string {
           />
 
           <div class="mt-4 space-y-4">
+            <pre>{{props.services[1].key}}</pre>
             <div
               v-for="service in props.services"
               :key="service.key"
@@ -376,19 +365,21 @@ function formatDate(iso: string | null): string {
                   <span v-if="service.connected" title="Connected"><Power class="text-green-400 size-5 my-1" /></span>
                   <span v-else title="Disconnected"><PowerOff class="text-orange-400 size-5 my-1" /></span>
                   <span v-if="service.connected && service.test_mode" title="Test mode enabled"><FlaskConical class="text-yellow-400 size-5 my-1" /></span>
-                  <span class="font-medium">{{ service.name }}</span>
+                  <span class="font-medium">{{ service.name }} <span v-if="service.key === 'gpslogger'" class="text-orange-400">(deprecated)</span></span>
                 </div>
                 <p v-if="service.connected" class="text-muted-foreground text-sm">
                   Last event: {{ formatDate(service.last_received_at) }}
                 </p>
               </div>
 
-              <Button v-if="['kofi', 'gpslogger', 'gps', 'streamlabs', 'streamelements', 'fourthwall', 'bmac'].includes(service.key)" variant="outline" as-child>
-                <Link :href="`/settings/integrations/${service.url_slug ?? service.key}`">
-                  {{ service.connected ? 'Manage' : 'Connect' }}
-                </Link>
-              </Button>
-              <span v-else class="text-muted-foreground text-sm">Coming soon</span>
+              <Link
+                class="btn"
+                :class="service.connected ? 'btn-secondary' : 'btn-primary'"
+                :href="`/settings/integrations/${service.url_slug ?? service.key}`"
+              >
+                {{ service.connected ? 'Manage' : 'Connect' }}
+              </Link>
+
             </div>
           </div>
         </div>
