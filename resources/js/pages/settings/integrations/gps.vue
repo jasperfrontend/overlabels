@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, useForm, Link, usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
@@ -54,15 +54,21 @@ const qrDataUrl = ref<string | null>(null);
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 
-onMounted(async () => {
-  if (props.integration.deep_link) {
-    qrDataUrl.value = await QRCode.toDataURL(props.integration.deep_link, {
+watch(
+  () => props.integration.deep_link,
+  async (deepLink) => {
+    if (!deepLink) {
+      qrDataUrl.value = null;
+      return;
+    }
+    qrDataUrl.value = await QRCode.toDataURL(deepLink, {
       width: 240,
       margin: 2,
       color: { dark: '#000000', light: '#ffffff' },
     });
-  }
-});
+  },
+  { immediate: true },
+);
 
 function copyDeepLink() {
   if (!props.integration.deep_link) return;
@@ -344,12 +350,12 @@ function formatDate(iso: string | null): string {
           </p>
 
           <div class="flex gap-2">
-            <Button type="submit" :disabled="form.processing">
+            <button type="submit" class="btn btn-primary" :disabled="form.processing">
               {{ integration.connected ? 'Save changes' : 'Connect Overlabels GPS' }}
-            </Button>
-            <Button variant="outline" as-child>
+            </button>
+            <button class="btn btn-cancel" as-child>
               <Link href="/settings/integrations">Cancel</Link>
-            </Button>
+            </button>
           </div>
         </form>
 

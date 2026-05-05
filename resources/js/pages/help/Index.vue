@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, Heart, FileText, Library, Pipette, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, Heart, FileText, Library, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -32,6 +32,12 @@ const pages = [
     description: 'Mutable values you can change live - text, numbers, toggles, timers, and more.',
     href: '/help/controls',
     icon: SlidersHorizontal,
+  },
+  {
+    title: 'Integration Presets',
+    description: 'Every auto-managed control across Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS - all in one searchable reference.',
+    href: '/help/integration-presets',
+    icon: Plug,
   },
   {
     title: 'Formatting Pipes',

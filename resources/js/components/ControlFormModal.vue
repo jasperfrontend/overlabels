@@ -57,6 +57,14 @@ const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const booleanValue = ref(false);
 const manualInputRef = ref<HTMLInputElement | null>(null);
+const labelInputRef = ref<HTMLInputElement | null>(null);
+
+function focusLabelInput(event: Event) {
+  event.preventDefault();
+  nextTick(() => {
+    labelInputRef.value?.focus();
+  });
+}
 
 // Service preset selection
 const servicePresetKey = ref('');
@@ -454,7 +462,7 @@ async function save() {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent :class="form.type === 'expression' ? 'max-w-300' : 'max-w-lg'">
+    <DialogContent :class="form.type === 'expression' ? 'max-w-300' : 'max-w-lg'" @open-auto-focus="focusLabelInput">
       <DialogHeader>
         <DialogTitle>{{ isEditing ? 'Edit Control' : copyFrom ? 'Duplicate Control' : 'Add Control' }}</DialogTitle>
       </DialogHeader>
@@ -466,7 +474,17 @@ async function save() {
 
           <!-- Service Presets -->
           <div v-if="showTwitchPresets || showKofiPresets || showGpsLoggerPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
-            <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
+              <a
+                href="/help/integration-presets"
+                target="_blank"
+                rel="noopener"
+                class="cursor-pointer text-xs text-violet-500 hover:underline dark:text-violet-400"
+              >
+                Browse all presets &rarr;
+              </a>
+            </div>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
                 <ComboboxInput
@@ -573,6 +591,7 @@ async function save() {
             <Label for="ctrl-label">Give your control a name <span class="text-muted-foreground text-xs">(be descriptive)</span></Label>
             <input
               id="ctrl-label"
+              ref="labelInputRef"
               v-model="form.label"
               :placeholder="selectedServicePreset ? selectedServicePreset.label : 'e.g. Death Counter'"
               class="input-border w-full"

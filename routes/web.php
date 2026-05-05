@@ -104,6 +104,10 @@ Route::get('/help/controls', function () {
     return Inertia::render('help/Controls');
 })->name('help.controls');
 
+Route::get('/help/integration-presets', function () {
+    return Inertia::render('help/IntegrationPresets');
+})->name('help.integration-presets');
+
 Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
 })->name('help.formatting');
