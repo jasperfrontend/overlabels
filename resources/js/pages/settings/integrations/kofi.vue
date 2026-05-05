@@ -144,12 +144,12 @@ function formatDate(iso: string | null): string {
             description="Receive donation alerts and update overlay controls from Ko-fi."
           />
 
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
+          <Badge v-if="integration.connected" variant="success">Connected
           </Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
-        <div v-if="!integration.connected" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
+        <div v-if="!integration.connected" class="border border-violet-500/30 bg-violet-500/5 p-4 space-y-2">
           <HeadingSmall
             title="Why Ko-fi?"
             description="Learn why Ko-fi is the best way to receive donations as a streamer - and why Overlabels chose it as our first integration."
@@ -160,7 +160,7 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div v-if="integration.connected"
-             class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+             class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
           <p class="font-medium text-foreground">What to do next</p>
           <ol class="list-decimal pl-4 space-y-1">
             <li>
@@ -188,7 +188,7 @@ function formatDate(iso: string | null): string {
               type="text"
               :placeholder="integration.has_token ? '(token saved — enter new to replace)' : 'Paste your verification token'"
               autocomplete="off"
-              class="input-border w-full rounded-sm"
+              class="input-border w-full"
             />
             <p v-if="form.errors.verification_token" class="text-destructive text-sm">
               {{ form.errors.verification_token }}
@@ -207,7 +207,7 @@ function formatDate(iso: string | null): string {
                 readonly
                 class="peer font-mono text-sm input-border w-full mr-0"
               />
-              <button type="button" class="btn btn-sm rounded-none bg-background rounded-r-sm border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" @click="copyWebhookUrl">
+              <button type="button" class="btn btn-chill btn-sm rounded-none rounded-r-sm border border-l-0 border-border p-2 px-4 text-sm hover:ring-0" @click="copyWebhookUrl">
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
             </div>
@@ -306,6 +306,7 @@ function formatDate(iso: string | null): string {
                     min="0"
                     placeholder="e.g. 1256"
                     :disabled="seedLoading"
+                    class="input-border"
                   />
                   <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
                 </div>

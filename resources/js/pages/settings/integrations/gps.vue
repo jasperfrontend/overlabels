@@ -165,14 +165,14 @@ function formatDate(iso: string | null): string {
             description="Stream your live GPS location from the Overlabels GPS Android app. Display speed, coordinates, and distance in your overlays."
           />
 
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
         <!-- Not connected: explain what this does -->
         <div
           v-if="!integration.connected"
-          class="rounded-sm border border-border bg-sidebar-accent p-4 space-y-2 text-sm text-foreground"
+          class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-foreground"
         >
           <p class="font-medium">How it works</p>
           <ol class="list-decimal pl-4 space-y-1">
@@ -185,14 +185,14 @@ function formatDate(iso: string | null): string {
         <!-- Connected: QR code + setup instructions -->
         <div
           v-if="integration.connected && qrDataUrl"
-          class="rounded-sm border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md"
+          class="border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md"
         >
           <p class="font-medium text-foreground">Connect the Overlabels GPS app</p>
           <p class="text-sm text-foreground">
             Open the Overlabels GPS app on your phone and scan this QR code. The app will be configured automatically.
           </p>
           <div class="flex flex-col items-start gap-3">
-            <img :src="qrDataUrl" alt="Setup QR code" class="rounded-sm border border-border" width="240" height="240" />
+            <img :src="qrDataUrl" alt="Setup QR code" class="border border-sidebar-border" width="240" height="240" />
             <p class="text-xs text-muted-foreground">
               This QR code contains your endpoint URL and authentication token. Do not share it.
             </p>

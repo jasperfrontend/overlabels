@@ -159,7 +159,7 @@ function formatDate(iso: string | null): string {
               type="password"
               :placeholder="integration.has_jwt ? '(JWT saved - enter new to replace)' : 'Paste your JWT token'"
               autocomplete="off"
-              class="input-border w-full rounded-sm"
+              class="input-border w-full"
             />
             <p v-if="form.errors.jwt_token" class="text-destructive text-sm">
               {{ form.errors.jwt_token }}
@@ -216,7 +216,7 @@ function formatDate(iso: string | null): string {
               </span>
             </p>
             <div v-if="testMode"
-                 class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+                 class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
               Test mode is on. Every incoming event fires an alert regardless of duplicate transaction IDs.
             </div>
           </div>

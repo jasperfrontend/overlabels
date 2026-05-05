@@ -110,7 +110,7 @@ function formatDate(iso: string | null): string {
             description="Receive donation alerts and update overlay controls from your Fourthwall shop."
           />
 
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected</Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
@@ -217,10 +217,28 @@ function formatDate(iso: string | null): string {
                 Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:fourthwall:donations_received]]]</code>
                 controls started from this value.
               </p>
-              <p class="text-muted-foreground text-sm">
-                Need to correct it? Email
-                <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
-              </p>
+              <div class="flex gap-2 items-start">
+                <div class="flex-1 space-y-1">
+                  <input
+                    v-model.number="seedCount"
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1256"
+                    :disabled="seedLoading"
+                    class="input-border"
+                  />
+                  <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  class="cursor-pointer"
+                  :disabled="seedLoading || seedCount === null"
+                  @click="setSeedCount"
+                >
+                  {{ seedLoading ? 'Saving...' : 'Set starting count' }}
+                </Button>
+              </div>
             </template>
 
             <template v-else>

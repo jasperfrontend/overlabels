@@ -161,7 +161,7 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div v-if="integration.connected"
-             class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+             class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
           <p class="font-medium text-foreground">What to do next</p>
           <ol class="list-decimal pl-4 space-y-1">
             <li>
@@ -178,7 +178,7 @@ function formatDate(iso: string | null): string {
 
         <form class="space-y-6" @submit.prevent="save">
           <!-- Setup steps - only shown until the integration is fully wired up -->
-          <div v-if="!integration.connected || !integration.has_secret" class="rounded-sm border border-violet-500/30 bg-violet-500/5 p-4 space-y-2 text-sm text-muted-foreground">
+          <div v-if="!integration.connected || !integration.has_secret" class="border border-violet-500/30 bg-violet-500/5 p-4 space-y-2 text-sm text-muted-foreground">
             <p class="font-medium text-foreground">How to set up BMAC webhooks</p>
             <ol class="list-decimal pl-4 space-y-1">
               <li v-if="!integration.connected">
@@ -228,7 +228,7 @@ function formatDate(iso: string | null): string {
               type="text"
               :placeholder="integration.has_secret ? '(secret saved - enter new to replace)' : 'Paste your webhook secret'"
               autocomplete="off"
-              class="input-border w-full rounded-sm"
+              class="input-border w-full"
             />
             <p v-if="form.errors.webhook_secret" class="text-destructive text-sm">
               {{ form.errors.webhook_secret }}
