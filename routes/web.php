@@ -112,6 +112,10 @@ Route::get('/help/expressions', function () {
     return Inertia::render('help/Expressions');
 })->name('help.expressions');
 
+Route::get('/help/for-creators', function () {
+    return Inertia::render('help/ForCreators');
+})->name('help.for-creators');
+
 Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
 })->name('help.formatting');
