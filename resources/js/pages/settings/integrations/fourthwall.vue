@@ -238,7 +238,7 @@ function formatDate(iso: string | null): string {
                     min="0"
                     placeholder="e.g. 1256"
                     :disabled="seedLoading"
-                    class="input-border w-full"
+                    class="input-border"
                   />
                   <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
                 </div>

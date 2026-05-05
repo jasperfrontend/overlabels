@@ -9,7 +9,7 @@ class BotChatOutbox extends Model
 {
     protected $table = 'bot_chat_outbox';
 
-    public const UPDATED_AT = null;
+    public const null UPDATED_AT = null;
 
     protected $fillable = [
         'user_id',

@@ -225,9 +225,9 @@ class StreamLabsIntegrationController extends Controller
 
         $settings = $integration->settings ?? [];
 
-        if (! empty($settings['donations_seed_set'])) {
-            return response()->json(['error' => 'Starting count has already been set.'], 403);
-        }
+//        if (! empty($settings['donations_seed_set'])) {
+//            return response()->json(['error' => 'Starting count has already been set.'], 403);
+//        }
 
         $validated = $request->validate([
             'initial_count' => 'required|integer|min:0|max:9999999',

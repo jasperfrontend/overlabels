@@ -117,14 +117,14 @@ function formatDate(iso: string | null): string {
             description="Receive tip alerts and update overlay controls from StreamElements."
           />
 
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
+          <Badge v-if="integration.connected" variant="success">Connected
           </Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
         <div v-if="integration.connected"
-             class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
-          <p class="font-medium text-foreground">What to do next</p>
+             class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm">
+          <p class="text-foreground font-bold">What to do next</p>
           <ol class="list-decimal pl-4 space-y-1">
             <li>
               Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
@@ -151,7 +151,7 @@ function formatDate(iso: string | null): string {
             <p class="text-muted-foreground text-sm">
               Find this in <a href="https://streamelements.com/dashboard/account/channels"
                               target="_blank" class="text-violet-400 hover:underline">StreamElements Dashboard</a>
-              &rarr; Account &rarr; Channels &rarr; Show secrets &rarr; JWT Token.
+              &rarr; Click the copy icon next to JWT Token.
             </p>
             <input
               id="jwt_token"
@@ -235,11 +235,27 @@ function formatDate(iso: string | null): string {
                 class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:streamelements:donations_received]]]</code>
                 controls started from this value.
               </p>
-              <p class="text-muted-foreground text-sm">
-                Need to correct it? Email
-                <a href="mailto:jasper@emailjasper.com"
-                   class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
-              </p>
+              <div class="flex gap-2 items-start">
+                <div class="flex-1 space-y-1">
+                  <input
+                    v-model.number="seedCount"
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1256"
+                    :disabled="seedLoading"
+                    class="input-border"
+                  />
+                  <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="seedLoading || seedCount === null"
+                  @click="setSeedCount"
+                >
+                  {{ seedLoading ? 'Saving...' : 'Set starting count' }}
+                </Button>
+              </div>
             </template>
 
             <template v-else>
@@ -257,6 +273,7 @@ function formatDate(iso: string | null): string {
                     min="0"
                     placeholder="e.g. 1256"
                     :disabled="seedLoading"
+                    class="input-border"
                   />
                   <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
                 </div>

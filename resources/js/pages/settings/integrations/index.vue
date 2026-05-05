@@ -24,6 +24,7 @@ interface ServiceInfo {
   connected: boolean;
   enabled: boolean;
   test_mode: boolean;
+  url_slug: string;
   last_received_at: string | null;
 }
 
