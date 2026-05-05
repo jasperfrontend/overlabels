@@ -109,20 +109,19 @@ function formatDate(iso: string | null): string {
             title="Fourthwall"
             description="Receive donation alerts and update overlay controls from your Fourthwall shop."
           />
-
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
         <div
           v-if="flashError"
-          class="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+          class="border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
         >
           {{ flashError }}
         </div>
         <div
           v-if="flashSuccess"
-          class="rounded-sm border border-green-500/40 bg-green-500/10 px-3 py-2 text-green-600 dark:text-green-400 text-sm"
+          class="border border-green-500/40 bg-green-500/10 px-3 py-2 text-green-600 dark:text-green-400 text-sm"
         >
           {{ flashSuccess }}
         </div>
@@ -142,7 +141,7 @@ function formatDate(iso: string | null): string {
 
         <!-- Connected state -->
         <template v-if="integration.connected">
-          <div class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-foreground">
             <p class="font-medium">What to do next</p>
             <ol class="list-decimal pl-4 space-y-1 text-muted-foreground">
               <li>
@@ -198,7 +197,7 @@ function formatDate(iso: string | null): string {
             </p>
             <div
               v-if="testMode"
-              class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm"
+              class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm"
             >
               Test mode is on. Every incoming event fires an alert regardless of duplicate transaction IDs.
             </div>

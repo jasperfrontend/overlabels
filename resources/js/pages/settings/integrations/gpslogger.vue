@@ -105,14 +105,12 @@ function formatDate(iso: string | null): string {
             title="GPSLogger"
             description="Receive live GPS data from GPSLogger for Android and display speed, coordinates, and distance in your overlays."
           />
-
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
-          </Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
 
 
         </div>
-        <div class="flex items-center gap-2 bg-amber-500/10 border border-amber-300/50 p-4 rounded-sm">
+        <div class="flex items-center gap-2 bg-amber-500/10 border border-amber-300/50 p-4">
           <HeadingSmall
             title="Download the correct app"
             description="You need the app from gpslogger.app, NOT the app called GPS Logger on the Play Store."
@@ -121,7 +119,7 @@ function formatDate(iso: string | null): string {
           <a href="https://gpslogger.app/" target="_blank" class="btn btn-chill">Download</a>
         </div>
         <div v-if="integration.connected"
-             class="rounded-sm border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md">
+             class="border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md">
           <p class="font-medium text-foreground">Set up GPSLogger on your phone</p>
           <p class="font-medium text-sm text-amber-400">(TIP: scan the QR code below and read these instructions on your
             phone)</p>
@@ -156,7 +154,7 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div v-if="!integration.connected"
-             class="rounded-sm border border-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
+             class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
           <p class="font-medium text-foreground">How it works</p>
           <ol class="list-decimal pl-4 space-y-1">
             <li>Choose a shared secret token below and hit <strong>Connect GPSLogger</strong>.</li>
@@ -180,7 +178,7 @@ function formatDate(iso: string | null): string {
               Overlabels can verify the data is coming from you. Do this first before proceeding with setup and save
               this token somewhere safe.<br>
               It's adviced to write a dash-separated, lowercase string like
-              <code class="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">my-stream-gps-2026</code>.
+              <code class="rounded border border-sidebar-border bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">my-stream-gps-2026</code>.
             </p>
             <Input
               id="token"
@@ -212,7 +210,7 @@ function formatDate(iso: string | null): string {
               </Button>
             </div>
             <div v-if="qrDataUrl" class="pt-2">
-              <img :src="qrDataUrl" alt="Webhook URL QR code" class="rounded-sm border border-border" width="200"
+              <img :src="qrDataUrl" alt="Webhook URL QR code" class="border border-sidebar-border" width="200"
                    height="200" />
               <p class="text-xs text-muted-foreground pt-1">Scan this with your phone to open the setup
                 instructions.</p>
@@ -222,7 +220,7 @@ function formatDate(iso: string | null): string {
           <!-- Speed Unit -->
           <div class="space-y-2">
             <Label for="speed_unit">Speed Unit</Label>
-            <p class="text-muted-foreground text-sm">
+            <p class="text-foreground text-sm">
               Default unit for the GPS Sessions dashboard. Overlay templates pick their own unit per tag, e.g.
               <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gpslogger:gps_speed|speed:kmh]]]</code>
               or <code class="rounded bg-black/10 px-1 dark:bg-white/10">|speed:mph</code>.
@@ -230,7 +228,7 @@ function formatDate(iso: string | null): string {
             <select
               id="speed_unit"
               v-model="form.speed_unit"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full border border-sidebar-border bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
             >
               <option value="kmh">km/h</option>
               <option value="mph">mph</option>

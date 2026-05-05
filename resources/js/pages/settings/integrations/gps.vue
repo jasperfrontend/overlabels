@@ -164,7 +164,6 @@ function formatDate(iso: string | null): string {
             title="Overlabels GPS"
             description="Stream your live GPS location from the Overlabels GPS Android app. Display speed, coordinates, and distance in your overlays."
           />
-
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
@@ -260,7 +259,7 @@ function formatDate(iso: string | null): string {
             <select
               id="speed_unit"
               v-model="form.speed_unit"
-              class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full border border-sidebar-border bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
             >
               <option value="kmh">km/h</option>
               <option value="mph">mph</option>
@@ -295,7 +294,7 @@ function formatDate(iso: string | null): string {
                 <select
                   id="map_delay_seconds"
                   v-model.number="form.map_delay_seconds"
-                  class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                  class="w-full border border-sidebar-border bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
                 >
                   <option :value="0">No delay (real-time)</option>
                   <option :value="60">1 minute</option>

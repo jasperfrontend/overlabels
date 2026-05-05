@@ -143,9 +143,7 @@ function formatDate(iso: string | null): string {
             title="Ko-fi"
             description="Receive donation alerts and update overlay controls from Ko-fi."
           />
-
-          <Badge v-if="integration.connected" variant="success">Connected
-          </Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
@@ -207,7 +205,7 @@ function formatDate(iso: string | null): string {
                 readonly
                 class="peer font-mono text-sm input-border w-full mr-0"
               />
-              <button type="button" class="btn btn-chill btn-sm rounded-none rounded-r-sm border border-l-0 border-border p-2 px-4 text-sm hover:ring-0" @click="copyWebhookUrl">
+              <button type="button" class="btn btn-chill btn-sm rounded-none rounded-r-sm border border-l-0 border-sidebar-border p-2 px-4 text-sm hover:ring-0" @click="copyWebhookUrl">
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
             </div>
@@ -279,7 +277,7 @@ function formatDate(iso: string | null): string {
                       </span>
             </p>
             <div v-if="testMode"
-                 class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+                 class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
               Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { FlaskConical, Power, PowerOff, ZapOff } from 'lucide-vue-next';
 
 interface ServiceInfo {
   key: string;
@@ -243,22 +244,22 @@ function formatDate(iso: string | null): string {
         <div>
           <HeadingSmall title="Twitch" description="Real-time events from Twitch for alerts, per-stream counters, and live detection." />
 
-          <div class="mt-4 rounded-lg border p-4">
+          <div class="mt-4 border border-sidebar-border p-4">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="font-medium">Twitch Alerts</span>
 
-                  <Badge v-if="eventsub.active_count > 0" variant="default">
-                    Connected
+                  <Badge v-if="eventsub.active_count > 0" variant="default" title="Connected to Twtich">
+                    <Power class="size-4 mx-2 my-1" />
                   </Badge>
 
-                  <Badge v-else-if="eventsub.connected" variant="secondary">
-                    Not listening to any events
+                  <Badge v-else-if="eventsub.connected" variant="secondary" title="Not listening to any events">
+                    <ZapOff class="size-4 mx-2 my-1" />
                   </Badge>
 
-                  <Badge v-else variant="secondary">
-                    Not connected to Twitch
+                  <Badge v-else variant="secondary" title="Disconnected from Twitch">
+                    <PowerOff class="size-4 mx-2 my-1" />
                   </Badge>
                 </div>
                 <Dialog>
@@ -331,16 +332,16 @@ function formatDate(iso: string | null): string {
         <!-- Overlabels Bot -->
         <div>
           <HeadingSmall
-            title="Overlabels Bot"
+            title="Overlabels bot"
             description="Let the shared @overlabels Twitch account join your chat so you can use it to manage your overlay controls."
           />
-          <div class="mt-4 rounded-lg border p-4">
+          <div class="mt-4 border border-sidebar-border p-4">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
+                  <Power v-if="props.bot.enabled" class="text-green-400 size-5 my-1" />
+                  <PowerOff v-else class="text-orange-400 size-5 my-1" />
                   <span class="font-medium">Chat bot</span>
-                  <Badge v-if="props.bot.enabled" variant="success">Enabled</Badge>
-                  <Badge v-else variant="secondary">Disabled</Badge>
                 </div>
                 <p v-if="props.bot.enabled" class="text-sm">
                   Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
@@ -368,15 +369,14 @@ function formatDate(iso: string | null): string {
             <div
               v-for="service in props.services"
               :key="service.key"
-              class="flex items-center justify-between rounded-lg border p-4"
+              class="flex items-center justify-between border border-sidebar-border p-4"
             >
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
+                  <span v-if="service.connected" title="Connected"><Power class="text-green-400 size-5 my-1" /></span>
+                  <span v-else title="Disconnected"><PowerOff class="text-orange-400 size-5 my-1" /></span>
+                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"><FlaskConical class="text-yellow-400 size-5 my-1" /></span>
                   <span class="font-medium">{{ service.name }}</span>
-                  <Badge v-if="service.connected" variant="success">Connected
-                  </Badge>
-                  <Badge v-else variant="secondary">Not connected</Badge>
-                  <Badge v-if="service.connected && service.test_mode" variant="warning">Test mode enabled</Badge>
                 </div>
                 <p v-if="service.connected" class="text-muted-foreground text-sm">
                   Last event: {{ formatDate(service.last_received_at) }}

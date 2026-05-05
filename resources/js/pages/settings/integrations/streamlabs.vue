@@ -103,14 +103,12 @@ function formatDate(iso: string | null): string {
             title="StreamLabs"
             description="Receive donation alerts and update overlay controls from StreamLabs."
           />
-
-          <Badge v-if="integration.connected" variant="default" class="bg-green-400 hover:bg-green-400">Connected
-          </Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
         <!-- Closed beta banner -->
-        <div class="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 space-y-2 text-sm">
+        <div class="border border-amber-500/30 bg-amber-500/5 p-4 space-y-2 text-sm">
           <p class="font-medium text-amber-600 dark:text-amber-400">Closed beta</p>
           <p class="text-muted-foreground">
             The StreamLabs integration is in closed beta while our application is under review by StreamLabs.
@@ -134,7 +132,7 @@ function formatDate(iso: string | null): string {
         <!-- Connected state -->
         <template v-if="integration.connected">
           <div
-            class="rounded-sm border border-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+            class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
             <p class="font-medium text-foreground">What to do next</p>
             <ol class="list-decimal pl-4 space-y-1">
               <li>

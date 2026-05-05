@@ -116,9 +116,7 @@ function formatDate(iso: string | null): string {
             title="StreamElements"
             description="Receive tip alerts and update overlay controls from StreamElements."
           />
-
-          <Badge v-if="integration.connected" variant="success">Connected
-          </Badge>
+          <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
