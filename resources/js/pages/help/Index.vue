@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -14,6 +14,12 @@ const pages = [
     description: 'What Overlabels actually is, beneath the HTML/CSS surface. The reactive value graph, the live data sources, the math layer, and an open call for collaborators.',
     href: '/help/for-creators',
     icon: Lightbulb,
+  },
+  {
+    title: 'For Designers',
+    description: 'A handoff guide for designers working on overlays: the two surfaces, the unknown-background problem, variable-length content, fluid layout, CSS animation, and a deliverables checklist.',
+    href: '/help/for-designers',
+    icon: Palette,
   },
   {
     title: 'Reference',
