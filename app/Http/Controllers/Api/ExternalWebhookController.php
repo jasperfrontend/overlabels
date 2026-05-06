@@ -206,26 +206,32 @@ class ExternalWebhookController extends Controller
 
     /**
      * Handle a settings_sync event from the mobile app.
-     * Persists safe zone (and future settings) into the integration's settings jsonb.
+     * Persists safe zones (and future settings) into the integration's settings jsonb.
      * Does NOT create an external_events row.
+     *
+     * `safe_zones` is a JSON-encoded string in the form-encoded body:
+     *   safe_zones=[{"id":"...","lat":51.92,"lng":4.47,"radius":500}, ...]
+     * - Empty array `[]` clears all zones.
+     * - Field absent = no change.
+     * - Malformed JSON or wrong shape: log and no-op.
      */
     private function handleSettingsSync(ExternalIntegration $integration, array $payload): JsonResponse
     {
         $settings = $integration->settings ?? [];
 
-        // Safe zone
-        if (array_key_exists('safe_zone_lat', $payload)) {
-            $lat = $payload['safe_zone_lat'];
-            $lng = $payload['safe_zone_lng'] ?? null;
-            $radius = $payload['safe_zone_radius'] ?? null;
+        // Drop any legacy single-zone keys regardless of payload shape.
+        unset($settings['safe_zone_lat'], $settings['safe_zone_lng'], $settings['safe_zone_radius']);
 
-            if ($lat === null || $lng === null || $radius === null) {
-                // Clear safe zone
-                unset($settings['safe_zone_lat'], $settings['safe_zone_lng'], $settings['safe_zone_radius']);
+        if (array_key_exists('safe_zones', $payload)) {
+            $rawJson = $payload['safe_zones'];
+            $zones = is_string($rawJson) ? json_decode($rawJson, true) : null;
+
+            if (! is_array($zones)) {
+                Log::warning('settings_sync: malformed safe_zones payload', [
+                    'integration_id' => $integration->id,
+                ]);
             } else {
-                $settings['safe_zone_lat'] = (float) $lat;
-                $settings['safe_zone_lng'] = (float) $lng;
-                $settings['safe_zone_radius'] = (int) $radius;
+                $settings['safe_zones'] = $this->sanitizeSafeZones($zones, $integration->id);
             }
         }
 
@@ -233,6 +239,58 @@ class ExternalWebhookController extends Controller
         $integration->save();
 
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Validate and clamp incoming safe zones. Drops bad rows; keeps good ones.
+     * Caps the result at 10 zones (extras are dropped with a log line).
+     */
+    private function sanitizeSafeZones(array $zones, int $integrationId): array
+    {
+        $out = [];
+
+        foreach ($zones as $zone) {
+            if (! is_array($zone)) {
+                continue;
+            }
+
+            $id = $zone['id'] ?? null;
+            $lat = $zone['lat'] ?? null;
+            $lng = $zone['lng'] ?? null;
+            $radius = $zone['radius'] ?? null;
+
+            if (! is_string($id) || $id === '' || strlen($id) > 64) {
+                continue;
+            }
+            if (! is_numeric($lat) || $lat < -90 || $lat > 90) {
+                continue;
+            }
+            if (! is_numeric($lng) || $lng < -180 || $lng > 180) {
+                continue;
+            }
+            if (! is_numeric($radius)) {
+                continue;
+            }
+
+            $radiusInt = max(1, min(50000, (int) round((float) $radius)));
+
+            $out[] = [
+                'id' => $id,
+                'lat' => (float) $lat,
+                'lng' => (float) $lng,
+                'radius' => $radiusInt,
+            ];
+        }
+
+        if (count($out) > 10) {
+            Log::info('settings_sync: trimmed safe_zones to first 10', [
+                'integration_id' => $integrationId,
+                'received' => count($out),
+            ]);
+            $out = array_slice($out, 0, 10);
+        }
+
+        return $out;
     }
 
     /**

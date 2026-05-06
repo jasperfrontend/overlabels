@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Head, useForm, Link, usePage, router } from '@inertiajs/vue3';
+import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import { GPS_PRESETS } from '@/components/controls/controlPresets';
@@ -26,7 +26,7 @@ interface IntegrationData {
   map_sharing_enabled: boolean;
   map_delay_seconds: number;
   map_url: string | null;
-  safe_zone: { lat: number; lng: number; radius: number } | null;
+  safe_zones: Array<{ id: string; lat: number; lng: number; radius: number }>;
 }
 
 const props = defineProps<{
@@ -93,16 +93,6 @@ function copyMapUrl() {
     copiedMap.value = true;
     setTimeout(() => (copiedMap.value = false), 2000);
   });
-}
-
-async function clearSafeZone() {
-  if (!confirm('Clear the safe zone? The app will resume sending GPS data from everywhere.')) return;
-  try {
-    await axios.post('/settings/integrations/overlabels-mobile/clear-safe-zone');
-    router.reload({ only: ['integration'] });
-  } catch {
-    // Silent
-  }
 }
 
 function save() {
@@ -319,25 +309,25 @@ function formatDate(iso: string | null): string {
             </div>
           </template>
 
-          <!-- Safe zone -->
+          <!-- Safe zones -->
           <template v-if="integration.connected">
             <Separator />
             <div class="space-y-2">
-              <Label>Safe zone</Label>
+              <Label>Safe zones</Label>
               <p class="text-muted-foreground text-sm">
-                When a safe zone is configured in the app, GPS data is not sent while you are inside the zone.
+                When you are inside a safe zone, the app does not send GPS data. Manage zones in the Overlabels GPS app.
               </p>
-              <div v-if="integration.safe_zone" class="flex items-center gap-3 text-sm">
-                <span class="text-foreground">
-                  {{ integration.safe_zone.lat.toFixed(5) }}, {{ integration.safe_zone.lng.toFixed(5) }}
-                  - {{ integration.safe_zone.radius }}m radius
-                </span>
-                <Button type="button" variant="outline" size="sm" @click="clearSafeZone">
-                  Clear safe zone
-                </Button>
-              </div>
+              <ul v-if="integration.safe_zones.length" class="space-y-1 text-sm">
+                <li
+                  v-for="zone in integration.safe_zones"
+                  :key="zone.id"
+                  class="text-foreground"
+                >
+                  {{ zone.lat.toFixed(5) }}, {{ zone.lng.toFixed(5) }} - {{ zone.radius }}m radius
+                </li>
+              </ul>
               <p v-else class="text-sm text-muted-foreground">
-                No safe zone set. Configure one in the Overlabels GPS app.
+                No safe zones set. Configure them in the Overlabels GPS app.
               </p>
             </div>
           </template>

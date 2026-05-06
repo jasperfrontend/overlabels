@@ -60,7 +60,6 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/overlabels-mobile/regenerate-token', [GpsIntegrationController::class, 'regenerateToken'])->name('overlabels-mobile.regenerate-token');
         Route::delete('/overlabels-mobile', [GpsIntegrationController::class, 'disconnect'])->name('overlabels-mobile.disconnect');
         Route::post('/overlabels-mobile/reset-distance', [GpsIntegrationController::class, 'resetDistance'])->name('overlabels-mobile.reset-distance');
-        Route::post('/overlabels-mobile/clear-safe-zone', [GpsIntegrationController::class, 'clearSafeZone'])->name('overlabels-mobile.clear-safe-zone');
 
         Route::get('/streamlabs', [StreamLabsIntegrationController::class, 'show'])->name('streamlabs.show');
         Route::get('/streamlabs/redirect', [StreamLabsIntegrationController::class, 'redirect'])->name('streamlabs.redirect');
