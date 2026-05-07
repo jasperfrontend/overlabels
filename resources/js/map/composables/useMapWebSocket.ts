@@ -21,7 +21,7 @@ export function useMapWebSocket(slug: string) {
   const position = ref<PositionUpdate | null>(null);
   const connected = ref(false);
   // null = unknown, true = session active, false = session ended.
-  // Fed by `gps_tracking` map.position payloads ('1'/'0').
+  // Fed by `tracking` map.position payloads ('1'/'0').
   const trackingActive = ref<boolean | null>(null);
 
   const echo = (window as any).Echo;
@@ -65,21 +65,21 @@ export function useMapWebSocket(slug: string) {
       const key = event.key as string;
 
       switch (key) {
-        case 'gps_lat':
+        case 'lat':
           pendingLat = parseFloat(event.value);
           scheduleFlush();
           break;
-        case 'gps_lng':
+        case 'lng':
           pendingLng = parseFloat(event.value);
           scheduleFlush();
           break;
-        case 'gps_speed':
+        case 'speed':
           pendingSpeed = parseFloat(event.value);
           break;
-        case 'gps_bearing':
+        case 'bearing':
           pendingBearing = parseFloat(event.value);
           break;
-        case 'gps_tracking':
+        case 'tracking':
           trackingActive.value = event.value === '1' || event.value === 1 || event.value === true;
           break;
       }

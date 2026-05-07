@@ -47,7 +47,7 @@ watch(wsPosition, (pos) => {
   }
 });
 
-// session_end (gps_tracking = '0') flips back to offline and clears everything
+// session_end (tracking = '0') flips back to offline and clears everything
 // so the next session starts fresh.
 watch(trackingActive, (active) => {
   if (active === false) {
