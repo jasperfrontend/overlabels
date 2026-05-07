@@ -249,8 +249,32 @@ class StreamSessionController extends Controller
 
         [$cte, $bindings] = $this->buildWindowsCte($sessions);
 
+        // event_counts must be computed in its own CTE: joining it as LATERAL
+        // alongside the per-event row stream multiplies every COUNT FILTER by
+        // the number of distinct event_types in the window.
         $sql = "
-            WITH $cte
+            WITH $cte,
+            ec AS (
+                SELECT
+                    w.session_id,
+                    COALESCE(jsonb_object_agg(et.event_type, et.cnt) FILTER (WHERE et.event_type IS NOT NULL), '{}'::jsonb) AS event_counts
+                FROM windows w
+                LEFT JOIN LATERAL (
+                    -- channel.poll.end fires twice per poll (status=completed|terminated, then status=archived).
+                    -- Dedupe by poll id so the count reflects unique polls ended, not raw event firings.
+                    SELECT event_type,
+                           CASE WHEN event_type = 'channel.poll.end'
+                                THEN COUNT(DISTINCT event_data->>'id')::int
+                                ELSE COUNT(*)::int
+                           END AS cnt
+                    FROM twitch_events
+                    WHERE user_id = ?
+                      AND twitch_timestamp >= w.window_start
+                      AND twitch_timestamp <= w.window_end
+                    GROUP BY event_type
+                ) et ON TRUE
+                GROUP BY w.session_id
+            )
             SELECT
                 w.session_id,
                 COUNT(*) FILTER (WHERE e.event_type = 'channel.follow') AS follows,
@@ -271,27 +295,14 @@ class StreamSessionController extends Controller
                 COUNT(*) FILTER (WHERE e.event_type = 'channel.channel_points_custom_reward_redemption.add') AS redemptions,
                 COALESCE(SUM((e.event_data->'reward'->>'cost')::int)
                     FILTER (WHERE e.event_type = 'channel.channel_points_custom_reward_redemption.add'), 0) AS redemption_cost,
-                COALESCE(jsonb_object_agg(et.event_type, et.cnt) FILTER (WHERE et.event_type IS NOT NULL), '{}'::jsonb) AS event_counts
+                COALESCE(ec.event_counts, '{}'::jsonb) AS event_counts
             FROM windows w
             LEFT JOIN twitch_events e
                 ON e.user_id = ?
                 AND e.twitch_timestamp >= w.window_start
                 AND e.twitch_timestamp <= w.window_end
-            LEFT JOIN LATERAL (
-                -- channel.poll.end fires twice per poll (status=completed|terminated, then status=archived).
-                -- Dedupe by poll id so the count reflects unique polls ended, not raw event firings.
-                SELECT event_type,
-                       CASE WHEN event_type = 'channel.poll.end'
-                            THEN COUNT(DISTINCT event_data->>'id')::int
-                            ELSE COUNT(*)::int
-                       END AS cnt
-                FROM twitch_events
-                WHERE user_id = ?
-                  AND twitch_timestamp >= w.window_start
-                  AND twitch_timestamp <= w.window_end
-                GROUP BY event_type
-            ) et ON TRUE
-            GROUP BY w.session_id
+            LEFT JOIN ec ON ec.session_id = w.session_id
+            GROUP BY w.session_id, ec.event_counts
         ";
 
         $bindings[] = $userId;

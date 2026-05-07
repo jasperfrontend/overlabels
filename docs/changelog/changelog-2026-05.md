@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 7th, 2026 - Stream Sessions headline tiles no longer multiply by the number of distinct event types
+
+- Fixed `StreamSessionController::loadHeadlineAggregates`: the headline aggregate query was joining the per-event row stream against a `LATERAL` subquery that returned one row per distinct `event_type` in the session window. The cartesian product multiplied every `COUNT(*) FILTER (...)` and `SUM(...) FILTER (...)` by the number of distinct event types - so a stream with 6 active event types reported 6 raids instead of 1, 6 redemptions instead of 1, 18 follows instead of 3, and so on. The "Show details" tables (which read from separate queries) were correct, which is what made the discrepancy visible.
+- Fix splits the query: `event_counts` is now computed in its own `ec` CTE, joined 1:1 to the outer aggregation. The per-event row stream and the per-event-type aggregate no longer multiply each other. `event_counts` is added to `GROUP BY` since it's no longer aggregated in the outer SELECT.
+
+## May 7th, 2026 - Live map WebSocket handler matches un-prefixed GPS keys
+
+- Fixed `resources/js/map/composables/useMapWebSocket.ts`: the live map composable was still switching on `gps_lat`/`gps_lng`/`gps_speed`/`gps_bearing`/`gps_tracking` even though commit 678681c had stripped the `gps_` prefix from all GPS control keys. Every `map.position` event arrived (so `connected` flipped true) but every `case` fell through, leaving `position` null and the marker frozen. After hard refresh the initial `/api/map/{slug}/position` fetch painted the marker once but no live updates ever arrived. Cases now match the un-prefixed `lat`/`lng`/`speed`/`bearing`/`tracking` keys the backend dispatches. Stale `gps_tracking` references in nearby comments updated to match.
+
 ## May 7th, 2026 - Multi-zone safe zones for the Overlabels GPS integration
 
 - The mobile app now manages multiple safe zones, so the `settings_sync` wire format moved from the single-zone `safe_zone_lat`/`safe_zone_lng`/`safe_zone_radius` form fields to one `safe_zones` form field whose value is a JSON-encoded array of `{id, lat, lng, radius}` objects. Empty array `[]` clears all zones, field absent means "no change to zones." Single-level JSON, single decode - the form field carries the JSON string verbatim.
