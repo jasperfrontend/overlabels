@@ -45,7 +45,7 @@
         "@vitejs/plugin-vue": "^5.2.1",
         "@vue-leaflet/vue-leaflet": "^0.10.1",
         "@vueuse/core": "^12.8.2",
-        "axios": "^1.15.0",
+        "axios": "^1.16.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
