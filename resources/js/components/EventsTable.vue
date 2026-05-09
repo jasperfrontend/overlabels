@@ -77,6 +77,12 @@ const externalEventLabels: Record<string, Record<string, string>> = {
     wishlist: 'Ordered a Wishlist through Buy Me A Coffee',
     commission: 'Ordered a Commission through Buy Me A Coffee',
   },
+  fourthwall: {
+    donation: 'Donated through Fourthwall',
+    subscription: 'Subscribed through Fourthwall',
+    shop_order: 'Ordered something from the Fourthwall shop',
+    commission: 'Ordered a Commission through Fourthwall',
+  },
   streamelements: {
     donation: 'Donated through StreamElements',
   }
@@ -236,7 +242,7 @@ function relativeTime(iso: string): string {
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-[80%]">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden font-bold text-ellipsis">{{ label(event) }}</div>
+              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)">{{ details(event) }}</span>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
