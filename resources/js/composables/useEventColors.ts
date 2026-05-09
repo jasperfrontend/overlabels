@@ -31,6 +31,8 @@ const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   streamlabs: { dot: 'bg-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
   streamelements: { dot: 'bg-[#2700ff]', border: 'hover:border-l-[#2700ff]' },
   twitch:     { dot: 'bg-[#9146ff]', border: 'hover:border-l-[#9146ff]' },
+  bmac:     { dot: 'bg-[#ffdd00]', border: 'hover:border-l-[#ffdd00]' },
+  fourthwall: { dot: 'bg-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },
 };
 
 const DEFAULT_STYLE = { dot: 'bg-slate-500', border: 'hover:border-l-slate-500' };

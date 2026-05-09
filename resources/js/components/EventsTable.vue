@@ -69,6 +69,14 @@ const externalEventLabels: Record<string, Record<string, string>> = {
     shop_order: 'Ordered something from the Streamlabs shop',
     commission: 'Ordered a Commission through Streamlabs',
   },
+  bmac: {
+    donation: 'Donated through Buy Me A Coffee',
+    recurring: 'Subscribed through Buy Me A Coffee',
+    extra: 'Ordered something extra from the Buy Me A Coffee shop',
+    membership: 'Ordered a Commission through Buy Me A Coffee',
+    wishlist: 'Ordered a Wishlist through Buy Me A Coffee',
+    commission: 'Ordered a Commission through Buy Me A Coffee',
+  },
   streamelements: {
     donation: 'Donated through StreamElements',
   }

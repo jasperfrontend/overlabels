@@ -26,7 +26,7 @@ class KofiIntegrationController extends Controller
             ->first();
 
         $webhookUrl = $integration
-            ? url("/api/webhooks/kofi/{$integration->webhook_token}")
+            ? url("/api/webhooks/kofi/$integration->webhook_token")
             : null;
 
         $credentials = $integration?->getCredentialsDecrypted() ?? [];

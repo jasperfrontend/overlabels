@@ -65,7 +65,7 @@ class StreamLabsIntegrationController extends Controller
             'scope' => 'socket.token donations.read donations.create',
         ]);
 
-        return redirect("https://www.streamlabs.com/api/v1.0/authorize?{$params}");
+        return redirect("https://www.streamlabs.com/api/v1.0/authorize?$params");
     }
 
     /**

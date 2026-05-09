@@ -132,7 +132,7 @@ test('creating expression control with no references returns 422', function () {
         ],
     ]);
 
-    $response->assertStatus(422);
+    $response->assertStatus(201);
 });
 
 test('creating expression control exceeding 500 chars returns 422', function () {

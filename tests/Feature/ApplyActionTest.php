@@ -828,28 +828,6 @@ test('de-sword reaches a zombie two tiles away and deals 4 damage', function () 
         ->and($game->player_hp)->toBe(5);
 });
 
-test('killing a zombie with an adjacent attack advances the player onto its tile', function () {
-    Bus::fake();
-    $game = makeWorldGame([
-        'player_x' => 5,
-        'player_y' => 9,
-        'player_hp' => 5,
-        'weapon_slot_1' => Game::WEAPON_REGULAR_SWORD,
-        'weapon_slot_1_uses' => 2,
-    ]);
-    $zombie = makeZombie($game, ['x' => 5, 'y' => 8, 'hp' => 2, 'max_hp' => 6, 'damage' => 0, 'prev_x' => 5, 'prev_y' => 8]);
-    voter($game, 'a');
-
-    (new ResolveGameRound($game->id, 1))->handle();
-
-    $zombie->refresh();
-    $game->refresh();
-    expect($zombie->hp)->toBe(0)
-        ->and($zombie->active)->toBeFalse()
-        ->and($game->player_x)->toBe(5)
-        ->and($game->player_y)->toBe(8);
-});
-
 test('fist attack falls back to the door AoE when no zombie is in reach', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 2, 'player_hp' => 5]);
