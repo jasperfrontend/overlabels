@@ -36,7 +36,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|EventTemplateMapping whereUserId($value)
  *
  * @mixin Eloquent
- * @mixin IdeHelperEventTemplateMapping
  */
 class EventTemplateMapping extends Model
 {
@@ -91,6 +90,27 @@ class EventTemplateMapping extends Model
         'channel.prediction.progress' => 'Prediction Progress',
         'channel.prediction.lock' => 'Prediction Locked',
         'channel.prediction.end' => 'Prediction Ended',
+        // Ko-fi
+        'channel.kofi.donation' => 'Ko-fi Donation',
+        'channel.kofi.subscription' => 'Ko-fi Subscription',
+        'channel.kofi.shop_order' => 'Ko-fi Shop Order',
+        'channel.kofi.commission' => 'Ko-fi Commission',
+        // Streamlabs
+        'streamlabs.donation' => 'Streamlabs Donation',
+        'streamlabs.subscription' => 'Streamlabs Subscription',
+        'streamlabs.tip' => 'Streamlabs Tip',
+        // Fourthwall
+        'fourthwall.donation' => 'Fourthwall Donation',
+        'fourthwall.subscription' => 'Fourthwall Subscription',
+        'fourthwall.shop_order' => 'Fourthwall Shop Order',
+        'fourthwall.commission' => 'Fourthwall Commission',
+        // Buy Me A Coffee (bmac)
+        'bmac.donation' => 'Buy Me A Coffee Donation',
+        'bmac.recurring' => 'Buy Me A Coffee Subscription',
+        'bmac.extra' => 'Buy Me A Coffee Extra',
+        'bmac.membership' => 'Buy Me A Coffee Membership',
+        'bmac.wishlist' => 'Buy Me A Coffee Wishlist',
+        'bmac.commission' => 'Buy Me A Coffee Commission',
     ];
 
     /**
