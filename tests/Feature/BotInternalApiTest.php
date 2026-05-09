@@ -291,7 +291,7 @@ test('commands returns commands keyed by lowercased login', function () {
         ->and($response['jasperdiscovers'])->toHaveCount(count(BotCommand::DEFAULTS));
 
     $control = collect($response['jasperdiscovers'])->firstWhere('command', 'control');
-    expect($control)->toBe(['command' => 'control', 'permission_level' => 'everyone']);
+    expect($control)->toBe(['command' => 'control', 'permission_level' => 'everyone', 'type' => 'builtin']);
 });
 
 test('commands excludes disabled rows', function () {
