@@ -340,8 +340,18 @@ function formatDate(iso: string | null): string {
                 </p>
               </div>
 
-              <button v-if="props.bot.enabled" class="btn btn-secondary" :disabled="botLoading" @click="toggleBot">Disable</button>
-              <button v-else class="btn btn-primary" :disabled="botLoading" @click="toggleBot">Enable</button>
+              <button v-if="props.bot.enabled" class="btn btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">Disable</button>
+              <button v-else class="btn btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
+            </div>
+            <div v-if="props.bot.enabled" class="mt-4 border-t border-sidebar-border pt-4">
+              <div class="flex items-center justify-between gap-4">
+                <p class="text-sm text-foreground">
+                  Bot expressions: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls and Twitch data.
+                </p>
+                <Link href="/settings/bot/expressions" class="btn btn-tertiary cursor-pointer shrink-0">
+                  Manage expressions
+                </Link>
+              </div>
             </div>
           </div>
         </div>

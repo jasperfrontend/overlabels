@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\BMACIntegrationController;
+use App\Http\Controllers\Settings\BotExpressionsController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsIntegrationController;
@@ -86,5 +87,16 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/bmac', [BMACIntegrationController::class, 'disconnect'])->name('bmac.disconnect');
 
         Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
+    });
+
+    // Bot Expressions: user-authored chat commands templated against controls + Helix.
+    Route::prefix('settings/bot/expressions')->name('settings.bot.expressions.')->group(function () {
+        Route::get('/', [BotExpressionsController::class, 'index'])->name('index');
+        Route::get('/create', [BotExpressionsController::class, 'create'])->name('create');
+        Route::post('/', [BotExpressionsController::class, 'store'])->name('store');
+        Route::post('/preview', [BotExpressionsController::class, 'preview'])->name('preview');
+        Route::get('/{botExpression}/edit', [BotExpressionsController::class, 'edit'])->name('edit');
+        Route::patch('/{botExpression}', [BotExpressionsController::class, 'update'])->name('update');
+        Route::delete('/{botExpression}', [BotExpressionsController::class, 'destroy'])->name('destroy');
     });
 });
