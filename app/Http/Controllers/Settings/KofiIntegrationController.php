@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Events\ControlValueUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
-use App\Models\OverlayControl;
 use App\Services\External\ExternalControlService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -115,34 +113,11 @@ class KofiIntegrationController extends Controller
         // When test mode is turned OFF, reset all service-managed controls to defaults
         if (! $validated['test_mode']) {
             $settings = $integration->settings ?? [];
-            $seedValue = (string) ($settings['donations_seed_value'] ?? 0);
-
-            $controls = OverlayControl::where('user_id', $user->id)
-                ->where('source', 'kofi')
-                ->where('source_managed', true)
-                ->with('template')
-                ->get();
-
-            foreach ($controls as $control) {
-                $resetValue = match ($control->key) {
-                    'donations_received' => $seedValue,
-                    default => in_array($control->type, ['counter', 'number']) ? '0' : '',
-                };
-
-                $control->update(['value' => $resetValue]);
-
-                $overlaySlug = $control->overlay_template_id
-                    ? ($control->template?->slug ?? '')
-                    : '';
-
-                ControlValueUpdated::dispatch(
-                    $overlaySlug,
-                    $control->broadcastKey(),
-                    $control->type,
-                    $resetValue,
-                    $user->twitch_id,
-                );
-            }
+            $this->controlService->resetServiceManagedControls(
+                $user,
+                'kofi',
+                isset($settings['donations_seed_value']) ? (string) $settings['donations_seed_value'] : null,
+            );
         }
 
         return response()->json(['test_mode' => $integration->test_mode]);
@@ -170,12 +145,7 @@ class KofiIntegrationController extends Controller
             'initial_count' => 'required|integer|min:0|max:9999999',
         ]);
 
-        // Apply to all donations_received controls belonging to this user
-        OverlayControl::where('user_id', $user->id)
-            ->where('source', 'kofi')
-            ->where('key', 'donations_received')
-            ->where('source_managed', true)
-            ->update(['value' => (string) $validated['initial_count']]);
+        $this->controlService->seedTotalReceived($user, 'kofi', $validated['initial_count']);
 
         $integration->settings = array_merge($settings, [
             'donations_seed_set' => true,

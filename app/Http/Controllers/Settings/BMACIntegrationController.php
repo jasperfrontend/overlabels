@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Events\ControlValueUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
-use App\Models\OverlayControl;
 use App\Services\External\ExternalControlService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -135,34 +133,11 @@ class BMACIntegrationController extends Controller
 
         if (! $validated['test_mode']) {
             $settings = $integration->settings ?? [];
-            $seedValue = (string) ($settings['donations_seed_value'] ?? 0);
-
-            $controls = OverlayControl::where('user_id', $user->id)
-                ->where('source', self::SERVICE_KEY)
-                ->where('source_managed', true)
-                ->with('template')
-                ->get();
-
-            foreach ($controls as $control) {
-                $resetValue = match ($control->key) {
-                    'donations_received' => $seedValue,
-                    default => in_array($control->type, ['counter', 'number'], true) ? '0' : '',
-                };
-
-                $control->update(['value' => $resetValue]);
-
-                $overlaySlug = $control->overlay_template_id
-                    ? ($control->template?->slug ?? '')
-                    : '';
-
-                ControlValueUpdated::dispatch(
-                    $overlaySlug,
-                    $control->broadcastKey(),
-                    $control->type,
-                    $resetValue,
-                    $user->twitch_id,
-                );
-            }
+            $this->controlService->resetServiceManagedControls(
+                $user,
+                self::SERVICE_KEY,
+                isset($settings['donations_seed_value']) ? (string) $settings['donations_seed_value'] : null,
+            );
         }
 
         return response()->json(['test_mode' => $integration->test_mode]);
@@ -190,11 +165,7 @@ class BMACIntegrationController extends Controller
             'initial_count' => 'required|integer|min:0|max:9999999',
         ]);
 
-        OverlayControl::where('user_id', $user->id)
-            ->where('source', self::SERVICE_KEY)
-            ->where('key', 'donations_received')
-            ->where('source_managed', true)
-            ->update(['value' => (string) $validated['initial_count']]);
+        $this->controlService->seedTotalReceived($user, self::SERVICE_KEY, $validated['initial_count']);
 
         $integration->settings = array_merge($settings, [
             'donations_seed_set' => true,

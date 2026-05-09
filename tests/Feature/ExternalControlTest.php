@@ -91,7 +91,75 @@ test('provisionServiceControl creates user-scoped control', function () {
     expect($control->user_id)->toBe($user->id);
 });
 
-test('disabling test mode resets donations_received to seed value', function () {
+test('disabling test mode resets total_received to seed value', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'test_mode' => true,
+        'settings' => [
+            'enabled_events' => ['donation'],
+            'donations_seed_set' => true,
+            'donations_seed_value' => 42,
+        ],
+    ]);
+
+    $control = OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'total_received',
+        'label' => 'Total Ko-fi Amount (session)',
+        'type' => 'number',
+        'value' => '50',
+        'source' => 'kofi',
+        'source_managed' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => false])
+        ->assertOk()
+        ->assertJson(['test_mode' => false]);
+
+    expect($control->fresh()->value)->toBe('42');
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('disabling test mode resets total_received to 0 when no seed set', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'test_mode' => true,
+        'settings' => ['enabled_events' => ['donation']],
+    ]);
+
+    $control = OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'total_received',
+        'label' => 'Total Ko-fi Amount (session)',
+        'type' => 'number',
+        'value' => '15',
+        'source' => 'kofi',
+        'source_managed' => true,
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => false])
+        ->assertOk();
+
+    expect($control->fresh()->value)->toBe('0');
+});
+
+test('disabling test mode resets donations_received to 0 even when seed is set', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
@@ -113,40 +181,7 @@ test('disabling test mode resets donations_received to seed value', function () 
         'key' => 'donations_received',
         'label' => 'Ko-fi Donations Received',
         'type' => 'counter',
-        'value' => '50',
-        'source' => 'kofi',
-        'source_managed' => true,
-        'sort_order' => 0,
-    ]);
-
-    $this->actingAs($user)
-        ->patchJson('/settings/integrations/kofi/test-mode', ['test_mode' => false])
-        ->assertOk()
-        ->assertJson(['test_mode' => false]);
-
-    expect($control->fresh()->value)->toBe('42');
-    Event::assertDispatched(ControlValueUpdated::class);
-});
-
-test('disabling test mode resets donations_received to 0 when no seed set', function () {
-    Event::fake([ControlValueUpdated::class]);
-
-    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
-
-    $integration = ExternalIntegration::factory()->create([
-        'user_id' => $user->id,
-        'service' => 'kofi',
-        'test_mode' => true,
-        'settings' => ['enabled_events' => ['donation']],
-    ]);
-
-    $control = OverlayControl::create([
-        'user_id' => $user->id,
-        'overlay_template_id' => null,
-        'key' => 'donations_received',
-        'label' => 'Ko-fi Donations Received',
-        'type' => 'counter',
-        'value' => '15',
+        'value' => '7',
         'source' => 'kofi',
         'source_managed' => true,
         'sort_order' => 0,
@@ -159,7 +194,7 @@ test('disabling test mode resets donations_received to 0 when no seed set', func
     expect($control->fresh()->value)->toBe('0');
 });
 
-test('enabling test mode does not reset donations_received', function () {
+test('enabling test mode does not reset total_received', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
@@ -174,9 +209,9 @@ test('enabling test mode does not reset donations_received', function () {
     $control = OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'donations_received',
-        'label' => 'Ko-fi Donations Received',
-        'type' => 'counter',
+        'key' => 'total_received',
+        'label' => 'Total Ko-fi Amount (session)',
+        'type' => 'number',
         'value' => '15',
         'source' => 'kofi',
         'source_managed' => true,

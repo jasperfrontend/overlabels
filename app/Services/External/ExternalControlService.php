@@ -35,6 +35,58 @@ class ExternalControlService
     }
 
     /**
+     * Reset every service-managed control for a source back to defaults and
+     * broadcast each change. `total_received` is special-cased: if the user
+     * has saved a starting amount via {@see seedTotalReceived()}, that value
+     * sticks instead of dropping to 0, so a streamer's donation-goal seed
+     * survives a test-mode toggle. All other counter/number controls reset
+     * to '0'; text controls reset to ''.
+     */
+    public function resetServiceManagedControls(User $user, string $source, ?string $seedValue = null): void
+    {
+        $controls = OverlayControl::where('user_id', $user->id)
+            ->where('source', $source)
+            ->where('source_managed', true)
+            ->with('template')
+            ->get();
+
+        foreach ($controls as $control) {
+            $resetValue = match ($control->key) {
+                'total_received' => $seedValue ?? '0',
+                default => in_array($control->type, ['counter', 'number'], true) ? '0' : '',
+            };
+
+            $control->update(['value' => $resetValue]);
+
+            $overlaySlug = $control->overlay_template_id
+                ? ($control->template?->slug ?? '')
+                : '';
+
+            ControlValueUpdated::dispatch(
+                $overlaySlug,
+                $control->broadcastKey(),
+                $control->type,
+                $resetValue,
+                $user->twitch_id,
+            );
+        }
+    }
+
+    /**
+     * Seed the running total on the source's `total_received` service-managed
+     * control. Used when a streamer raised some money before connecting and
+     * wants their donation goal to start partway, e.g. €30 already in.
+     */
+    public function seedTotalReceived(User $user, string $source, int|string $value): void
+    {
+        OverlayControl::where('user_id', $user->id)
+            ->where('source', $source)
+            ->where('key', 'total_received')
+            ->where('source_managed', true)
+            ->update(['value' => (string) $value]);
+    }
+
+    /**
      * Remove all service-managed controls for a user (called on disconnect).
      */
     public function deprovision(User $user, string $service): int
