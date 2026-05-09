@@ -1,10 +1,10 @@
-current amount updated — fires on every contribution, budget for spam.
+current amount updated :: fires on every contribution, budget for spam.
 
 ### Goal
-- `[[[event.type]]]` — Goal type ("follower", "subscription", etc.)
-- `[[[event.description]]]` — Goal description
-- `[[[event.current_amount]]]` — Current value
-- `[[[event.target_amount]]]` — Target value
+- `[[[event.type]]]` :: Goal type ("follower", "subscription", etc.)
+- `[[[event.description]]]` :: Goal description
+- `[[[event.current_amount]]]` :: Current value
+- `[[[event.target_amount]]]` :: Target value
 
 example:
 ```

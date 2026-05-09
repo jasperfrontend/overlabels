@@ -401,8 +401,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <h3 class="mt-8 mb-3 text-xl font-semibold">Step 1 - Create your static number controls</h3>
           <p class="mb-4 text-foreground">
-            Create two <strong>Number Controls</strong> manually. These are the destination coordinates. Set them once and
-            leave them.
+            Create three <strong>Number Controls</strong> manually. These are the destination coordinates and the length of your trip in km.
+            Set them once and leave them.
           </p>
           <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
             <table class="w-full text-sm">
@@ -456,7 +456,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p class="mb-2 text-foreground">
               <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">haversine_a</code> - the intermediate value
             </p>
-            <pre class="overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">sin(c.dLat / 2) * sin(c.dLat / 2) + cos(c.gps.lat * PI / 180) * cos(c.dest_lat * PI / 180) * sin(c.dLng / 2) * sin(c.dLng / 2)</pre>
+            <pre class="overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">sin(c.dlat / 2) * sin(c.dlat / 2) + cos(c.gps.lat * PI / 180) * cos(c.dest_lat * PI / 180) * sin(c.dlng / 2) * sin(c.dlng / 2)</pre>
           </div>
 
           <div class="mb-4">

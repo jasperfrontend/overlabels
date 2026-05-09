@@ -1,4 +1,4 @@
-dump the current iteration item as pretty-printed JSON — a debugging helper for inspecting the shape of an iterable while authoring a template.
+dump the current iteration item as pretty-printed JSON :: a debugging helper for inspecting the shape of an iterable while authoring a template.
 
 ### Usage
 
@@ -12,7 +12,7 @@ Inside a `foreach` loop body, use `[[[raw]]]`. It outputs `JSON.stringify(item, 
 
 ### Notes
 
-- Only valid inside a `foreach` body — outside a loop, `[[[raw]]]` is left untouched.
+- Only valid inside a `foreach` body :: outside a loop, `[[[raw]]]` is left untouched.
 - Any `[` / `]` in the JSON output are escaped to `&#91;` / `&#93;` so a stray `[[[...]]]` in the data can't re-enter the outer tag substitution pass. Browsers still render them as literal brackets.
 - Intended for template authoring / debugging; remove before shipping an overlay.
 

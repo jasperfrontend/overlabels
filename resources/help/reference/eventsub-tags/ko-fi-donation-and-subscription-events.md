@@ -1,9 +1,9 @@
 additional tags available for Ko-fi donation and subscription events.
 
 ### Payment Tags
-- `[[[event.message]]]` — Supporter's message
-- `[[[event.amount]]]` — Amount as a string (e.g. "5.00")
-- `[[[event.currency]]]` — Currency code (e.g. "USD")
+- `[[[event.message]]]` :: Supporter's message
+- `[[[event.amount]]]` :: Amount as a string (e.g. "5.00")
+- `[[[event.currency]]]` :: Currency code (e.g. "USD")
 
 example:
 ```

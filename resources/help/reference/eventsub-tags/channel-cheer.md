@@ -1,14 +1,14 @@
 when someone cheers bits.
 
 ### User Information
-- `[[[event.user_id]]]` — Cheerer's Twitch ID
-- `[[[event.user_login]]]` — Cheerer's username
-- `[[[event.user_name]]]` — Cheerer's display name
+- `[[[event.user_id]]]` :: Cheerer's Twitch ID
+- `[[[event.user_login]]]` :: Cheerer's username
+- `[[[event.user_name]]]` :: Cheerer's display name
 
 ### Cheer Data
-- `[[[event.bits]]]` — Number of bits cheered
-- `[[[event.message]]]` — Cheer message
-- `[[[event.is_anonymous]]]` — true/false if anonymous
+- `[[[event.bits]]]` :: Number of bits cheered
+- `[[[event.message]]]` :: Cheer message
+- `[[[event.is_anonymous]]]` :: true/false if anonymous
 
 example:
 `[[[if:event.bits >= 1000]]]HUGE CHEER![[[endif]]] [[[event.user_name]]] cheered [[[event.bits]]] bits!`

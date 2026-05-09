@@ -1,13 +1,13 @@
-goal completed or expired — `is_achieved` tells you which.
+goal completed or expired :: `is_achieved` tells you which.
 
 ### Goal
-- `[[[event.type]]]` — Goal type
-- `[[[event.description]]]` — Goal description
-- `[[[event.is_achieved]]]` — true if goal was hit, false if it expired
-- `[[[event.current_amount]]]` — Final value
-- `[[[event.target_amount]]]` — Target value
-- `[[[event.started_at]]]` — When the goal started
-- `[[[event.ended_at]]]` — When the goal ended
+- `[[[event.type]]]` :: Goal type
+- `[[[event.description]]]` :: Goal description
+- `[[[event.is_achieved]]]` :: true if goal was hit, false if it expired
+- `[[[event.current_amount]]]` :: Final value
+- `[[[event.target_amount]]]` :: Target value
+- `[[[event.started_at]]]` :: When the goal started
+- `[[[event.ended_at]]]` :: When the goal ended
 
 example:
 ```
