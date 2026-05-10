@@ -2,7 +2,46 @@
 
 ## Recipes — primer
 
-A primer for the concept, not a spec. Read this first, then we talk more.
+A primer for the concept, not a spec. Yet.
+
+## Status snapshot (2026-05-10)
+
+### Shipped today
+
+**Bot Expressions** (consumer side of the controls-as-bus architecture). The full vertical slice is live in prod: backend resolver + orchestrator + internal API + 24 Pest tests, builder UI with live preview, bot-side dispatch branch, GH Actions auto-deploy workflow for the bot repo. Tag syntax matches overlay templates (`[[[c:foo:bar]]]`, bare Twitch tags, plus the new `bot:*` namespace). Permissions reuse `BotCommand::PERMISSION_LEVELS`, cooldowns are per-channel only for v1, builtin always wins on collision, single-source-of-truth via `bot_chat_outbox` (no inline replies). First real-data test passed end-to-end: `!painge` returns one reply.
+
+### Bot Expressions follow-ups (not urgent, not blocking anything)
+
+- **`c:` reference validation at save time.** Currently a typo in a control reference saves cleanly and resolves to empty at fire time. Match the form-level "refuse to save if integration not connected" pattern from issue #104.
+- **`!commands` meta-command.** Bot exposes a `!commands` listing all enabled-and-not-hidden expressions for that channel. Cheap onboarding win.
+- **Per-user cooldowns.** v1 is per-channel only. Add a `cooldown_scope` enum + `bot_expression_invocations` table when someone asks.
+- **Fallback value syntax.** `[[[c:foo|fallback:'N/A']]]` for when controls are null. Probably not needed; users can use Expression Controls to provide a default upstream.
+- **Anti-spam at channel level.** Global `bot_chat_outbox` rate cap separate from per-expression cooldown. Belongs in BotChatOutbox policy.
+- **Tag autocomplete inside the textarea.** Today's helper is chip-buttons that append at end. Real autocomplete would be a CodeMirror-shaped surface; significant scope.
+- **Pin docker GH Actions to `@v4`** to silence the Node 20 deprecation warning in CI logs. Cosmetic.
+- **Document outbox cadence** in user-facing docs so streamers understand the 1-2s delay between command and reply.
+
+### Recipes themselves (producer side) — not yet started
+
+Bot Expressions are the consumer half. The producer half (Recipes proper) is fully designed but no code exists. Build order from the existing section below still applies:
+
+1. Primitives: `Picker`, `OptionSet`, triggers, control writes, emitted events.
+2. Recipe manifest schema (the strawman + locked decisions are in this doc).
+3. `RecipeInstaller` service that materialises a manifest into owned instance rows.
+4. **Coin Flip** as first recipe (smallest meaningful: 1 OptionSet `[Heads, Tails]` + 1 Picker + 2 triggers + 3 control exports).
+5. **Random Viewer** as second recipe (validates the manifest holds for a different shape).
+6. **Wheel of Fortune Kit** that bundles a recipe + the existing Wheel Vue component + suggested overlay template + suggested alert + suggested Bot Expression default.
+
+### Kits extension — also not yet started
+
+Existing kits ship overlays. They need extending to also bundle recipes + Bot Expressions + alerts as install-time defaults. Small change, blocks step 6 above.
+
+### Strategic note
+
+The architecture call from this conversation that turned out right: **producer / bus / consumer split**. Bot Expressions shipping cleanly without any recipe machinery existing yet is the best validation that the split is correct. Building Recipes next is a pure additive layer on top of a working bus.
+
+---
+
 
 ## What a Recipe is
 

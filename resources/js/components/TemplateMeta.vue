@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { CalendarIcon, EyeIcon, UserStar } from 'lucide-vue-next';
+import { CalendarIcon, Copy, EyeIcon, UserStar } from 'lucide-vue-next';
 
 const page = usePage();
 const userLocale = computed<string | undefined>(() => {
@@ -55,36 +55,42 @@ function copyTag(tag: string, event: MouseEvent) {
 
 <template>
   <div>
-    <div class="grid grid-cols-2 gap-1 rounded-sm bg-background p-4 text-sm">
-      <div
-        class="flex items-center"
-        :title="`Created ${new Date(createdAt).toLocaleDateString(userLocale)}`"
-      >
-        <span class="text-muted-foreground"><CalendarIcon class="size-4 -mt-0.5" /></span>
-        <span class="ml-2">Created: {{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
-      </div>
+    <div class="bg-background">
+      <div class="max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-2 rounded-sm p-4 text-sm">
+        <div
+          class="flex items-center"
+          :title="`Created ${new Date(createdAt).toLocaleDateString(userLocale)}`"
+        >
+          <span class="text-violet-400"><CalendarIcon class="size-4 -mt-0.5" /></span>
+          <span class="ml-2">Created: {{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
+        </div>
 
-      <div v-if="new Date(createdAt).toLocaleDateString(userLocale) !== new Date(updatedAt).toLocaleDateString(userLocale)">
-        <span class="text-muted-foreground">Last updated:</span>
-        <span class="ml-2">{{ new Date(updatedAt).toLocaleDateString(userLocale) }}</span>
-      </div>
-      <div class="flex items-center" :title="`${viewCount} ${viewCount === 1 ? ' view' : 'views'}`">
-        <span class="text-muted-foreground"><EyeIcon class="size-4 -mt-0.5" /></span>
-        <span class="ml-2">{{ viewCount }} {{ viewCount === 1 ? ' view' : 'views' }}</span>
-      </div>
-      <div class="flex items-center" :title="`Owned by ${owner}`">
-        <span class="text-muted-foreground"><UserStar class="size-4 -mt-0.5" /></span>
-        <span class="ml-2">{{ owner }}</span>
-      </div>
-      <div>
-        <span class="text-muted-foreground">Copies:</span>
-        <span class="ml-2">{{ forkCount }}</span>
-      </div>
-      <div v-if="forkParent" class="col-span-2">
-        <span class="text-muted-foreground">Copied from:</span>
-        <Link :href="`/templates/${forkParent.id}`" class="ml-2 text-violet-400 hover:underline" :title="forkTitle">
-          {{ forkParent.name }}
-        </Link>
+        <div
+          v-if="new Date(createdAt).toLocaleDateString(userLocale) !== new Date(updatedAt).toLocaleDateString(userLocale)"
+          class="flex items-center"
+          :title="`Last updated ${new Date(updatedAt).toLocaleDateString(userLocale)}`"
+        >
+          <span class="text-violet-400"><CalendarIcon class="size-4 -mt-0.5" /></span>
+          <span class="ml-2">Last updated: {{ new Date(updatedAt).toLocaleDateString(userLocale) }}</span>
+        </div>
+        <div class="flex items-center" :title="`${viewCount} ${viewCount === 1 ? ' view' : 'views'}`">
+          <span class="text-violet-400"><EyeIcon class="size-4 -mt-0.5" /></span>
+          <span class="ml-2">{{ viewCount === 1 ? 'View' : 'Views' }}: {{ viewCount }}</span>
+        </div>
+        <div class="flex items-center" :title="`Owned by ${owner}`">
+          <span class="text-violet-400"><UserStar class="size-4 -mt-0.5" /></span>
+          <span class="ml-2">Owner: {{ owner }}</span>
+        </div>
+        <div class="flex items-center" :title="`Copies ${forkCount}`">
+          <span class="text-violet-400"><Copy class="size-4 -mt-0.5" /></span>
+          <span class="ml-2">Copies: {{ forkCount }}</span>
+        </div>
+        <div v-if="forkParent" class="col-span-2">
+          <span class="text-violet-400">Copied from:</span>
+          <Link :href="`/templates/${forkParent.id}`" class="ml-2 text-violet-400 hover:underline" :title="forkTitle">
+            {{ forkParent.name }}
+          </Link>
+        </div>
       </div>
     </div>
 

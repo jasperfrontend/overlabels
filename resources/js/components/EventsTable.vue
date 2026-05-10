@@ -227,7 +227,6 @@ function relativeTime(iso: string): string {
             'group flex items-start justify-between gap-4 flex-row overlabels-background',
             eventHoverBorderClass(event),
             canReplay(event) && confirmingId !== event.id ? 'cursor-pointer overlabels-background transition-all duration-100' : '',
-            // replayingId === event.id ? 'opacity-60' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
 
