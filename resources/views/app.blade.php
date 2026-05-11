@@ -33,21 +33,35 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
-        {{-- Open Graph / Social sharing (server-rendered so scrapers can read them) --}}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://overlabels.com/" />
-        <meta property="og:site_name" content="Overlabels" />
-        <meta property="og:title" content="Overlabels — A live overlay DSL for Twitch streamers" />
-        <meta property="og:description" content="Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS." />
-        <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Overlabels — write HTML and CSS, bind live Twitch data with triple-bracket tags" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Overlabels — A live overlay DSL for Twitch streamers" />
-        <meta name="twitter:description" content="Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS." />
-        <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
-        <meta name="twitter:image:alt" content="Overlabels — write HTML and CSS, bind live Twitch data with triple-bracket tags" />
+        {{-- Open Graph / Social sharing (server-rendered so scrapers can read them).
+             Controllers can override per-route by sharing an `$og` array via
+             `view()->share('og', [...])` (see e.g. OverlayTemplateController::servePublic). --}}
+        @php
+            $ogDefaults = [
+                'type' => 'website',
+                'url' => 'https://overlabels.com/',
+                'site_name' => 'Overlabels',
+                'title' => 'Overlabels - A live overlay DSL for Twitch streamers',
+                'description' => 'Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS.',
+                'image' => 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg',
+                'image_alt' => 'Overlabels - write HTML and CSS, bind live Twitch data with triple-bracket tags',
+                'twitter_card' => 'summary_large_image',
+            ];
+            $ogData = array_merge($ogDefaults, $og ?? []);
+        @endphp
+        <meta name="description" content="{{ $ogData['description'] }}" />
+        <meta property="og:type" content="{{ $ogData['type'] }}" />
+        <meta property="og:url" content="{{ $ogData['url'] }}" />
+        <meta property="og:site_name" content="{{ $ogData['site_name'] }}" />
+        <meta property="og:title" content="{{ $ogData['title'] }}" />
+        <meta property="og:description" content="{{ $ogData['description'] }}" />
+        <meta property="og:image" content="{{ $ogData['image'] }}" />
+        <meta property="og:image:alt" content="{{ $ogData['image_alt'] }}" />
+        <meta name="twitter:card" content="{{ $ogData['twitter_card'] }}" />
+        <meta name="twitter:title" content="{{ $ogData['title'] }}" />
+        <meta name="twitter:description" content="{{ $ogData['description'] }}" />
+        <meta name="twitter:image" content="{{ $ogData['image'] }}" />
+        <meta name="twitter:image:alt" content="{{ $ogData['image_alt'] }}" />
 
         @routes
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])

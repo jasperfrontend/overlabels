@@ -275,6 +275,10 @@ class OverlayTemplateController extends Controller
 
     /**
      * Serve the public overlay preview page: 2-column screenshot + raw source viewer.
+     *
+     * Shares an `$og` payload into the root blade view so social-media scrapers
+     * (which don't execute JS and never see Inertia's client-side Head) get
+     * per-overlay OpenGraph + Twitter card metadata in the initial HTML.
      */
     public function servePublic(string $slug)
     {
@@ -287,6 +291,27 @@ class OverlayTemplateController extends Controller
         }
 
         $template->recordView();
+
+        $ownerName = $template->owner?->name ?: 'an Overlabels user';
+        $typeLabel = $template->type === 'alert' ? 'event alert' : 'overlay';
+
+        $description = $template->description
+            ?: "A Twitch {$typeLabel} by {$ownerName} on Overlabels. View the source, copy it to your account, and customise it for your stream.";
+
+        $fallbackImage = 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
+        $hasScreenshot = ! empty($template->screenshot_url);
+        $image = $hasScreenshot ? $template->screenshot_url : $fallbackImage;
+
+        view()->share('og', [
+            'title' => "{$template->name} - Overlabels {$typeLabel} by {$ownerName}",
+            'description' => $description,
+            'url' => route('overlay.public', $template->slug),
+            'image' => $image,
+            'image_alt' => $hasScreenshot
+                ? "Screenshot of {$template->name}, an Overlabels {$typeLabel} by {$ownerName}"
+                : 'Overlabels - reactive Twitch overlays for people who code',
+            'twitter_card' => $hasScreenshot ? 'summary_large_image' : 'summary_large_image',
+        ]);
 
         return Inertia::render('overlay/public-preview', [
             'template' => [
