@@ -274,21 +274,57 @@ class OverlayTemplateController extends Controller
     }
 
     /**
-     * Serve public overlay (unparsed)
+     * Serve the public overlay preview page (Inertia 2-column layout).
+     * The actual unparsed render is loaded into an iframe via servePublicEmbed.
      */
     public function servePublic(string $slug)
     {
-        $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
+        $template = OverlayTemplate::where('slug', $slug)
+            ->with('owner:id,name,avatar')
+            ->firstOrFail();
 
-        // Check if the template is public
         if (! $template->is_public) {
             abort(404, 'This overlay is private');
         }
 
         $template->recordView();
 
-        // Rewrite src/srcset attributes that contain unresolved [[[tags]]] to data-src
-        // so the browser doesn't try to fetch them as relative URLs.
+        return Inertia::render('overlay/public-preview', [
+            'template' => [
+                'id' => $template->id,
+                'slug' => $template->slug,
+                'name' => $template->name,
+                'description' => $template->description,
+                'type' => $template->type,
+                'head' => $template->head,
+                'html' => $template->html,
+                'css' => $template->css,
+                'screenshot_url' => $template->screenshot_url,
+                'view_count' => $template->view_count,
+                'fork_count' => $template->fork_count,
+                'created_at' => $template->created_at,
+                'owner' => $template->owner ? [
+                    'name' => $template->owner->name,
+                    'avatar' => $template->owner->avatar,
+                ] : null,
+            ],
+            'embedUrl' => route('overlay.public.embed', $template->slug),
+        ]);
+    }
+
+    /**
+     * Serve the unparsed overlay render meant to be embedded inside the
+     * public preview iframe. Identical to the legacy servePublic output
+     * but without the floating action bar (chrome is now at page level).
+     */
+    public function servePublicEmbed(string $slug)
+    {
+        $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
+
+        if (! $template->is_public) {
+            abort(404, 'This overlay is private');
+        }
+
         $html = preg_replace(
             '/\b(src|srcset)(\s*=\s*["\'][^"\']*\[\[\[)/i',
             'data-$1$2',
@@ -302,6 +338,7 @@ class OverlayTemplateController extends Controller
             'js' => $template->js,
             'isParsed' => false,
             'template' => $template,
+            'showBar' => false,
         ]);
     }
 
@@ -532,7 +569,7 @@ class OverlayTemplateController extends Controller
     /**
      * Store new template
      */
-    public function store(Request $request)
+    public function store(Request $request, CloudinaryUploadService $cloudinary)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -543,6 +580,7 @@ class OverlayTemplateController extends Controller
             'compiled_css' => 'nullable|string',
             'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
+            'screenshot_url' => 'required|url|max:2048',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
@@ -552,6 +590,8 @@ class OverlayTemplateController extends Controller
         // Extract and store template tags
         $template->template_tags = $template->extractTemplateTags($request->user()->foreachCaps());
         $template->save();
+
+        $cloudinary->claim($validated['screenshot_url']);
 
         // For Inertia requests, redirect to the show page
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {

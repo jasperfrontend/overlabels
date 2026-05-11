@@ -8,7 +8,8 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
-import { Brackets, Code, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
+import ImageDropZone from '@/components/ImageDropZone.vue';
+import { Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
@@ -26,7 +27,8 @@ const form = useForm({
   css: '',
   compiled_css: '',
   type: 'static',
-  is_public: true
+  is_public: true,
+  screenshot_url: '',
 });
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
@@ -37,10 +39,11 @@ const previewHtml = ref('');
 const mainTabs = [
   { key: 'meta', label: 'Meta', icon: InfoIcon },
   { key: 'code', label: 'Code', icon: Code },
-  { key: 'tags', label: 'Tags', icon: Brackets }
+  { key: 'tags', label: 'Tags', icon: Brackets },
+  { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
 ] as const;
 
-const mainTab = ref<'meta' | 'code' | 'tags'>('meta');
+const mainTab = ref<'meta' | 'code' | 'tags' | 'screenshot'>('meta');
 
 const toastMessage = ref<string>('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -49,6 +52,14 @@ const showToast = ref(false);
 const { register } = useKeyboardShortcuts();
 
 const submitForm = async () => {
+  if (!form.screenshot_url) {
+    mainTab.value = 'screenshot';
+    toastMessage.value = 'A screenshot is required before you can create the overlay.';
+    toastType.value = 'warning';
+    showToast.value = true;
+    return;
+  }
+
   const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
@@ -109,7 +120,12 @@ onMounted(() => {
           <button type="button" @click="previewTemplate" class="btn btn-cancel">Preview
             <ExternalLink class="ml-2 h-4 w-4" />
           </button>
-          <button @click="submitForm" :disabled="form.processing" class="btn btn-primary">
+          <button
+            @click="submitForm"
+            :disabled="form.processing || !form.screenshot_url"
+            :title="!form.screenshot_url ? 'Add a screenshot first' : ''"
+            class="btn btn-primary"
+          >
             <Save class="mr-2 h-4 w-4" />
             Create Overlay
           </button>
@@ -252,12 +268,37 @@ onMounted(() => {
           <div v-if="mainTab === 'tags'">
             <TemplateTagsList />
           </div>
+
+          <!-- Screenshot Tab -->
+          <div v-if="mainTab === 'screenshot'" class="max-w-3xl space-y-4">
+            <div>
+              <h3 class="text-sm font-medium text-accent-foreground">
+                Screenshot <span class="text-violet-400">*</span>
+              </h3>
+              <p class="mt-1 text-sm text-foreground">
+                Required. Preview your overlay first (<kbd class="rounded-none bg-sidebar px-1.5 py-0.5 font-mono text-xs">Ctrl+P</kbd>),
+                then paste or drop a screenshot here. This is what visitors see on the public preview page.
+              </p>
+            </div>
+            <ImageDropZone
+              kind="template_screenshot"
+              :model-value="form.screenshot_url || null"
+              @update:model-value="(url: string | null) => form.screenshot_url = url || ''"
+              @error="(msg: string) => { toastMessage = msg; toastType = 'error'; showToast = true; }"
+            />
+            <div v-if="form.errors.screenshot_url" class="text-sm text-red-600">{{ form.errors.screenshot_url }}</div>
+          </div>
         </div>
 
         <!-- Form Actions -->
-        <div class="mt-6 flex justify-between">
+        <div class="mt-6 flex items-center justify-between gap-3">
           <Link :href="route('dashboard.index')" class="btn btn-cancel">← Back to Dashboard</Link>
-          <button type="submit" :disabled="form.processing" class="btn btn-primary">Create Overlay</button>
+          <div class="flex items-center gap-3">
+            <span v-if="!form.screenshot_url" class="text-sm text-violet-400">
+              Add a screenshot to enable Create
+            </span>
+            <button type="submit" :disabled="form.processing || !form.screenshot_url" class="btn btn-primary">Create Overlay</button>
+          </div>
         </div>
       </form>
     </div>

@@ -34,7 +34,7 @@
 <script>0</script> <!-- firefox hack against FUC -->
 {!! $html !!}
 
-@if(!$isParsed)
+@if(!$isParsed && ($showBar ?? true))
     <style>
         .olb-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; }
         .olb-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; background: rgba(15, 15, 20, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.08); }
