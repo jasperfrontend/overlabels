@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -11,7 +11,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { VisuallyHidden } from 'reka-ui';
-import { Check, ChevronDown, ImageOff, Eye, GitFork } from 'lucide-vue-next';
+import {
+  Check,
+  ChevronDown,
+  CodeIcon,
+  Eye,
+  FileCode2Icon,
+  GitFork,
+  ImageOff,
+  PaletteIcon,
+} from 'lucide-vue-next';
 import type { AppPageProps } from '@/types';
 
 interface OwnerInfo {
@@ -37,7 +46,6 @@ interface PreviewTemplate {
 
 const props = defineProps<{
   template: PreviewTemplate;
-  embedUrl: string;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -121,45 +129,26 @@ function openScreenshot() {
   showScreenshot.value = true;
 }
 
-const renderWrap = ref<HTMLDivElement | null>(null);
-const scale = ref(0.3);
+type SourceTab = 'head' | 'html' | 'css';
 
-function recompute() {
-  if (!renderWrap.value) return;
-  const width = renderWrap.value.clientWidth;
-  if (width > 0) {
-    scale.value = width / 1920;
-  }
-}
+const sourceTabs: Array<{ key: SourceTab; label: string; icon: typeof FileCode2Icon; color: string }> = [
+  { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
+  { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
+];
 
-const iframeStyle = computed(() => ({
-  width: '1920px',
-  height: '1080px',
-  transform: `scale(${scale.value})`,
-  transformOrigin: '0 0',
-}));
+const activeSourceTab = ref<SourceTab>('html');
 
-let resizeObserver: ResizeObserver | null = null;
-
-onMounted(() => {
-  recompute();
-  if (typeof ResizeObserver !== 'undefined' && renderWrap.value) {
-    resizeObserver = new ResizeObserver(() => recompute());
-    resizeObserver.observe(renderWrap.value);
-  }
-  window.addEventListener('resize', recompute);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', recompute);
-  resizeObserver?.disconnect();
+const activeSource = computed(() => {
+  const v = props.template[activeSourceTab.value];
+  return typeof v === 'string' && v.length > 0 ? v : '';
 });
 </script>
 
 <template>
   <Head :title="`${template.name} - Public Preview`" />
   <div class="min-h-screen bg-background text-foreground">
-    <div class="mx-auto max-w-[1800px] p-4 lg:p-6">
+    <div class="mx-auto max-w-450 p-4 lg:p-6">
       <!-- Slim brand strip -->
       <div class="mb-4 flex items-center justify-between">
         <Link href="/" class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
@@ -283,32 +272,41 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="flex items-center justify-between border-t border-sidebar-border px-4 py-2.5 text-sm text-foreground">
-            <span><span class="text-violet-400">Look:</span> static preview of how this overlay appears on stream.</span>
+            <span class="text-violet-400">Screenshot</span>
           </div>
         </div>
 
-        <!-- Right: unparsed live render -->
+        <!-- Right: raw source viewer with HEAD / BODY / CSS tabs -->
         <div class="border border-sidebar-border bg-card">
-          <div ref="renderWrap" class="relative aspect-video w-full overflow-hidden bg-black">
-            <iframe
-              :src="embedUrl"
-              class="block border-0"
-              :style="iframeStyle"
-              sandbox="allow-scripts allow-same-origin"
-              loading="lazy"
-              title="Unparsed live render"
-            />
+          <div class="flex aspect-video w-full overflow-hidden">
+            <!-- Vertical tab strip -->
+            <div class="flex flex-col bg-sidebar text-sidebar-foreground">
+              <button
+                v-for="tab in sourceTabs"
+                :key="tab.key"
+                type="button"
+                @click="activeSourceTab = tab.key"
+                :class="[
+                  'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase tracking-wider transition-colors',
+                  activeSourceTab === tab.key
+                    ? 'bg-[#f8f8f8] dark:bg-[#160e21] text-foreground'
+                    : 'text-foreground hover:bg-background/40 hover:text-violet-400',
+                ]"
+              >
+                <component :is="tab.icon" :class="tab.color" class="h-3.5 w-3.5" />
+                <span>{{ tab.label }}</span>
+              </button>
+              <div class="flex-1 bg-sidebar" />
+            </div>
+            <!-- Source panel -->
+            <div class="relative flex-1 overflow-hidden">
+              <pre
+                class="h-full w-full overflow-auto bg-white p-4 text-xs leading-relaxed text-gray-700 dark:bg-[#160e21] dark:text-accent-foreground"
+              ><code v-if="activeSource">{{ activeSource }}</code><code v-else class="text-foreground">// no {{ activeSourceTab.toUpperCase() }} content</code></pre>
+            </div>
           </div>
           <div class="flex items-center justify-between border-t border-sidebar-border px-4 py-2.5 text-sm text-foreground">
-            <span><span class="text-violet-400">Source:</span> live render with tags left unparsed.</span>
-            <a
-              :href="embedUrl"
-              target="_blank"
-              rel="noopener"
-              class="text-violet-400 hover:underline"
-            >
-              Open raw
-            </a>
+            <span class="text-violet-400">Source</span>
           </div>
         </div>
       </div>

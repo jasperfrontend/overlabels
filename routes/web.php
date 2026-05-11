@@ -241,10 +241,6 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
-Route::get('/overlay/{slug}/public/embed', [OverlayTemplateController::class, 'servePublicEmbed'])
-    ->name('overlay.public.embed')
-    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
-
 Route::get('/overlay/{slug}/public/screenshot', [OverlayTemplateController::class, 'servePublicScreenshot'])
     ->name('overlay.public.screenshot')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');

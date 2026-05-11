@@ -274,8 +274,7 @@ class OverlayTemplateController extends Controller
     }
 
     /**
-     * Serve the public overlay preview page (Inertia 2-column layout).
-     * The actual unparsed render is loaded into an iframe via servePublicEmbed.
+     * Serve the public overlay preview page: 2-column screenshot + raw source viewer.
      */
     public function servePublic(string $slug)
     {
@@ -308,37 +307,6 @@ class OverlayTemplateController extends Controller
                     'avatar' => $template->owner->avatar,
                 ] : null,
             ],
-            'embedUrl' => route('overlay.public.embed', $template->slug),
-        ]);
-    }
-
-    /**
-     * Serve the unparsed overlay render meant to be embedded inside the
-     * public preview iframe. Identical to the legacy servePublic output
-     * but without the floating action bar (chrome is now at page level).
-     */
-    public function servePublicEmbed(string $slug)
-    {
-        $template = OverlayTemplate::where('slug', $slug)->firstOrFail();
-
-        if (! $template->is_public) {
-            abort(404, 'This overlay is private');
-        }
-
-        $html = preg_replace(
-            '/\b(src|srcset)(\s*=\s*["\'][^"\']*\[\[\[)/i',
-            'data-$1$2',
-            $template->html ?? ''
-        );
-
-        return view('overlay.render', [
-            'head' => $template->head,
-            'html' => $html,
-            'css' => $template->css,
-            'js' => $template->js,
-            'isParsed' => false,
-            'template' => $template,
-            'showBar' => false,
         ]);
     }
 
