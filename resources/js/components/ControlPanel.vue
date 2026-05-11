@@ -582,7 +582,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <!-- Expression control (read-only, evaluated in overlay) -->
                 <template v-else-if="ctrl.type === 'expression'">
                   <div class="flex items-center gap-3">
-                    <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono">{{ ctrl.config?.expression ?? '' }}</pre>
+                    <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono overflow-hidden">{{ ctrl.config?.expression ?? '' }}</pre>
                   </div>
                 </template>
 
