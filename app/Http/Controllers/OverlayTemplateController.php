@@ -279,8 +279,13 @@ class OverlayTemplateController extends Controller
      * Shares an `$og` payload into the root blade view so social-media scrapers
      * (which don't execute JS and never see Inertia's client-side Head) get
      * per-overlay OpenGraph + Twitter card metadata in the initial HTML.
+     *
+     * Screenshots are served with the "Powered by Overlabels" watermark
+     * applied via Cloudinary URL transformation - the watermark lives in the
+     * delivery layer only, so the owner's edit screen still sees their raw
+     * upload.
      */
-    public function servePublic(string $slug)
+    public function servePublic(string $slug, CloudinaryUploadService $cloudinary)
     {
         $template = OverlayTemplate::where('slug', $slug)
             ->with('owner:id,name,avatar')
@@ -300,7 +305,8 @@ class OverlayTemplateController extends Controller
 
         $fallbackImage = 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
         $hasScreenshot = ! empty($template->screenshot_url);
-        $image = $hasScreenshot ? $template->screenshot_url : $fallbackImage;
+        $brandedScreenshot = $hasScreenshot ? $cloudinary->brandedUrl($template->screenshot_url) : null;
+        $image = $brandedScreenshot ?? $fallbackImage;
 
         view()->share('og', [
             'title' => "{$template->name} - Overlabels {$typeLabel} by {$ownerName}",
@@ -310,7 +316,7 @@ class OverlayTemplateController extends Controller
             'image_alt' => $hasScreenshot
                 ? "Screenshot of {$template->name}, an Overlabels {$typeLabel} by {$ownerName}"
                 : 'Overlabels - reactive Twitch overlays for people who code',
-            'twitter_card' => $hasScreenshot ? 'summary_large_image' : 'summary_large_image',
+            'twitter_card' => 'summary_large_image',
         ]);
 
         return Inertia::render('overlay/public-preview', [
@@ -323,7 +329,7 @@ class OverlayTemplateController extends Controller
                 'head' => $template->head,
                 'html' => $template->html,
                 'css' => $template->css,
-                'screenshot_url' => $template->screenshot_url,
+                'screenshot_url' => $brandedScreenshot,
                 'view_count' => $template->view_count,
                 'fork_count' => $template->fork_count,
                 'created_at' => $template->created_at,

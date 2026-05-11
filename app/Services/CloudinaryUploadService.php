@@ -163,4 +163,41 @@ class CloudinaryUploadService
 
         return null;
     }
+
+    /**
+     * "Powered by Overlabels" watermark overlay public_id (300x80 transparent
+     * PNG, anchored south-east on the screenshot).
+     */
+    private const WATERMARK_PUBLIC_ID = 'powered-by-overlabels_z4l5ne';
+
+    /**
+     * Inject a "Powered by Overlabels" watermark into a Cloudinary delivery
+     * URL. Used on every public-facing surface (public preview, OG image,
+     * social cards) so screenshots stay branded wherever they're shared. The
+     * original URL stays in the database; the watermark only lives at the
+     * delivery layer, which means owners on the edit screen still see their
+     * raw upload and the watermark never bakes into the stored asset.
+     *
+     * Returns the input unchanged when it's null/empty or doesn't look like
+     * one of our own Cloudinary delivery URLs.
+     */
+    public function brandedUrl(?string $url): ?string
+    {
+        if (! $url) {
+            return $url;
+        }
+
+        if (! str_contains($url, '/image/upload/')) {
+            return $url;
+        }
+
+        $transformation = 'l_'.self::WATERMARK_PUBLIC_ID.',w_200,o_90,g_south_east,x_24,y_24';
+
+        return preg_replace(
+            '#/image/upload/#',
+            '/image/upload/'.$transformation.'/',
+            $url,
+            1
+        );
+    }
 }
