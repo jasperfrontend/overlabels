@@ -241,7 +241,19 @@ function stopLibraryAudition() {
 
 function useLibrarySound(sound: FreesoundLibraryRow) {
   form.alert_sound_url = sound.preview_url;
+  applySoundDurationToTtsDelay(sound.duration);
   stopLibraryAudition();
+}
+
+/**
+ * When a sound is picked, set the TTS delay to the sound's duration so the
+ * voice starts right after the SFX finishes. Always overwrites - the assumption
+ * is the user is actively choosing this sound for this alert, so its length is
+ * the right reference for the delay. Users can still hand-tune after.
+ */
+function applySoundDurationToTtsDelay(durationSeconds: number | null | undefined): void {
+  if (durationSeconds === null || durationSeconds === undefined) return;
+  form.tts_delay_ms = Math.ceil(durationSeconds * 1000);
 }
 
 async function removeLibrarySound(sound: FreesoundLibraryRow) {
@@ -250,6 +262,7 @@ async function removeLibrarySound(sound: FreesoundLibraryRow) {
     freesoundLibrary.value = freesoundLibrary.value.filter((s) => s.id !== sound.id);
     if (form.alert_sound_url === sound.preview_url) {
       form.alert_sound_url = '';
+      form.tts_delay_ms = 0;
     }
     if (libraryAuditioningId.value === sound.id) stopLibraryAudition();
     pushToast('Sound removed from your library.', 'success');
@@ -267,18 +280,30 @@ function onFreesoundSaved(sound: FreesoundLibraryRow) {
     freesoundLibrary.value = [sound, ...freesoundLibrary.value];
   }
   form.alert_sound_url = sound.preview_url;
+  applySoundDurationToTtsDelay(sound.duration);
   pushToast(`Added "${sound.name}" to your library.`, 'success');
 }
 
 function clearAlertSoundUrl() {
   form.alert_sound_url = '';
+  form.tts_delay_ms = 0;
 }
 
 function licenseShort(license: string): string {
+  if (!license) return '';
   const l = license.toLowerCase();
-  if (l.includes('creative commons 0') || l.includes('cc0')) return 'CC0';
+  // URL forms (what the Freesound API actually returns)
+  if (l.includes('publicdomain/zero') || l.includes('cc0')) return 'CC0';
+  if (l.includes('/licenses/by-nc')) return 'CC-BY-NC';
+  if (l.includes('/licenses/by-sa')) return 'CC-BY-SA';
+  if (l.includes('/licenses/by-nd')) return 'CC-BY-ND';
+  if (l.includes('sampling')) return 'Sampling+';
+  if (l.includes('/licenses/by/')) return 'CC-BY';
+  // Name-string forms (older Freesound docs claimed these)
+  if (l.includes('creative commons 0')) return 'CC0';
   if (l === 'attribution') return 'CC-BY';
-  return license;
+  if (l.includes('noncommercial')) return 'CC-BY-NC';
+  return l.startsWith('http') ? 'CC' : license;
 }
 
 function formatDuration(d: number | null | undefined): string {

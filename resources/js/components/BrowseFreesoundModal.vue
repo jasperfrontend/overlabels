@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Modal from '@/components/Modal.vue';
-import { Search, Loader2, Play, Pause, Plus, ExternalLink } from 'lucide-vue-next';
+import { Search, Loader2, Play, Pause, Plus, ExternalLink, X } from 'lucide-vue-next';
 
 interface FreesoundHit {
   id: number;
@@ -130,10 +130,21 @@ async function saveAndUse(hit: FreesoundHit) {
 }
 
 function licenseShort(license: string): string {
+  if (!license) return '';
   const l = license.toLowerCase();
-  if (l.includes('creative commons 0') || l.includes('cc0')) return 'CC0';
+  // URL forms (what the Freesound API actually returns)
+  if (l.includes('publicdomain/zero') || l.includes('cc0')) return 'CC0';
+  if (l.includes('/licenses/by-nc')) return 'CC-BY-NC';
+  if (l.includes('/licenses/by-sa')) return 'CC-BY-SA';
+  if (l.includes('/licenses/by-nd')) return 'CC-BY-ND';
+  if (l.includes('sampling')) return 'Sampling+';
+  if (l.includes('/licenses/by/')) return 'CC-BY';
+  // Name-string forms (older Freesound docs claimed these)
+  if (l.includes('creative commons 0')) return 'CC0';
   if (l === 'attribution') return 'CC-BY';
-  return license;
+  if (l.includes('noncommercial')) return 'CC-BY-NC';
+  // Long URLs we don't recognise - render an opaque badge rather than the URL.
+  return l.startsWith('http') ? 'CC' : license;
 }
 
 function formatDuration(d: number | null): string {
@@ -146,17 +157,21 @@ function formatDuration(d: number | null): string {
 <template>
   <Modal :show="show" max-width="3xl" @close="emit('close')">
     <div class="p-6">
-      <div class="mb-4 flex items-baseline justify-between">
-        <div>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
           <h2 class="text-lg font-semibold text-accent-foreground">Browse Freesound</h2>
           <p class="text-sm text-foreground">
-            Commercial-safe sounds only (CC0 and CC-BY). Sounds play directly from Freesound's CDN -
-            Overlabels never hosts the audio.
+            Commercial-safe sounds only (CC0 and CC-BY). Library: {{ libraryCount }} / {{ libraryCap }}.
           </p>
         </div>
-        <div class="text-xs text-foreground/70 whitespace-nowrap pl-4">
-          Library: {{ libraryCount }} / {{ libraryCap }}
-        </div>
+        <button
+          type="button"
+          class="cursor-pointer rounded-md p-1.5 text-foreground hover:bg-muted"
+          aria-label="Close"
+          @click="emit('close')"
+        >
+          <X class="h-5 w-5" />
+        </button>
       </div>
 
       <form @submit.prevent="runSearch(1)" class="mb-4 flex gap-2">
@@ -236,9 +251,9 @@ function formatDuration(d: number | null): string {
         </div>
       </div>
 
-      <div v-if="totalCount > 15" class="mt-4 flex items-center justify-between text-sm text-foreground">
-        <div>{{ totalCount }} results</div>
-        <div class="flex gap-2">
+      <div class="mt-4 flex items-center justify-between gap-3">
+        <div v-if="totalCount > 15" class="flex items-center gap-2 text-sm text-foreground">
+          <span>{{ totalCount }} results</span>
           <button
             type="button"
             class="btn btn-sm btn-secondary cursor-pointer"
@@ -256,6 +271,14 @@ function formatDuration(d: number | null): string {
             Next
           </button>
         </div>
+        <div v-else></div>
+        <button
+          type="button"
+          class="btn btn-secondary cursor-pointer ml-auto"
+          @click="emit('close')"
+        >
+          Close
+        </button>
       </div>
     </div>
   </Modal>

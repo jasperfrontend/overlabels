@@ -106,6 +106,57 @@ test('save rejects non-commercial-safe licenses', function () {
     $this->assertDatabaseMissing('user_freesound_sounds', ['freesound_id' => 404]);
 });
 
+test('save accepts CC0 URL-format licenses (real API shape)', function () {
+    Http::fake(fn () => Http::response(
+        fakeSoundPayload(700, 'http://creativecommons.org/publicdomain/zero/1.0/'),
+        200
+    ));
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->postJson('/freesound/library', ['freesound_id' => 700]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('user_freesound_sounds', [
+        'user_id' => $user->id,
+        'freesound_id' => 700,
+    ]);
+});
+
+test('save accepts CC-BY URL-format licenses', function () {
+    Http::fake(fn () => Http::response(
+        fakeSoundPayload(701, 'https://creativecommons.org/licenses/by/4.0/'),
+        200
+    ));
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->postJson('/freesound/library', ['freesound_id' => 701]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('user_freesound_sounds', [
+        'user_id' => $user->id,
+        'freesound_id' => 701,
+    ]);
+});
+
+test('save rejects URL-format NC licenses', function () {
+    Http::fake(fn () => Http::response(
+        fakeSoundPayload(702, 'http://creativecommons.org/licenses/by-nc/4.0/'),
+        200
+    ));
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->postJson('/freesound/library', ['freesound_id' => 702]);
+
+    $response->assertStatus(422);
+    $this->assertDatabaseMissing('user_freesound_sounds', ['freesound_id' => 702]);
+});
+
 test('save rejects beyond the 10-sound cap', function () {
     Http::fake(fn () => Http::response(fakeSoundPayload(999), 200));
 

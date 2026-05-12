@@ -155,13 +155,35 @@ class FreesoundController extends Controller
 
     private function isCommercialSafeLicense(string $license): bool
     {
-        // Freesound license name strings vary slightly across the API surface
-        // (sometimes "Creative Commons 0", sometimes "Attribution"). Be lenient
-        // about whitespace/casing.
+        // Freesound's API actually returns license URLs, not name strings -
+        // e.g. "http://creativecommons.org/publicdomain/zero/1.0/" for CC0 or
+        // "https://creativecommons.org/licenses/by/4.0/" for CC-BY. We also
+        // tolerate name-string variants in case the API surface ever changes.
         $normalised = strtolower(trim($license));
 
-        return str_contains($normalised, 'creative commons 0')
-            || $normalised === 'attribution'
-            || str_contains($normalised, 'cc0');
+        // Hard-reject any NC, ND, SA, or Sampling+ modifier first so a URL
+        // like "/licenses/by-nc/" can never sneak through the by-check below.
+        if (str_contains($normalised, '/by-nc')
+            || str_contains($normalised, '/by-nd')
+            || str_contains($normalised, '/by-sa')
+            || str_contains($normalised, 'noncommercial')
+            || str_contains($normalised, 'sampling')) {
+            return false;
+        }
+
+        // CC0 (URL and name forms)
+        if (str_contains($normalised, 'publicdomain/zero')
+            || str_contains($normalised, 'creative commons 0')
+            || str_contains($normalised, 'cc0')) {
+            return true;
+        }
+
+        // CC-BY (URL and name forms)
+        if (str_contains($normalised, '/licenses/by/')
+            || $normalised === 'attribution') {
+            return true;
+        }
+
+        return false;
     }
 }
