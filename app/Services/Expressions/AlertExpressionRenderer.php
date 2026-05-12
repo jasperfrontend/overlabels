@@ -22,9 +22,11 @@ use App\Models\User;
  * ExpressionFormatter. Unknown tags resolve to empty string per the
  * null-over-placeholder rule.
  *
- * Reserved gate control: if the user owns a user-scoped (overlay_template_id
- * null) boolean control with key `tts` and its value is "0", render() returns
- * null. The caller treats null as "do not include tts_text in the broadcast".
+ * Reserved gate control: if the user owns any boolean control with key `tts`
+ * whose value is "0", render() returns null. The caller treats null as "do not
+ * include tts_text in the broadcast". The control may live on any of the user's
+ * overlays (template-scoped) or be user-scoped - we don't care, because all the
+ * streamer wants is a single switch to mute TTS.
  */
 class AlertExpressionRenderer
 {
@@ -110,21 +112,17 @@ class AlertExpressionRenderer
     }
 
     /**
-     * User opts out of TTS by creating a user-scoped boolean control with the
-     * reserved key and toggling it off. Absent control = TTS enabled (default).
+     * User opts out of TTS by creating a boolean control named `tts` and
+     * toggling it off. Any such control of the user's gates - we don't restrict
+     * by overlay_template_id because the streamer's mental model is "one switch
+     * that mutes my TTS", not "one switch per overlay". Absent control = TTS on.
      */
     private function isGatedOff(User $user): bool
     {
-        $gate = OverlayControl::where('user_id', $user->id)
-            ->whereNull('overlay_template_id')
+        return OverlayControl::where('user_id', $user->id)
             ->where('key', self::GATE_KEY)
             ->where('type', 'boolean')
-            ->first();
-
-        if (! $gate) {
-            return false;
-        }
-
-        return $gate->resolveDisplayValue() === '0';
+            ->where('value', '0')
+            ->exists();
     }
 }

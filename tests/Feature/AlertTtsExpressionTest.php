@@ -120,6 +120,34 @@ test('boolean tts control set to off suppresses tts_text', function () {
     });
 });
 
+test('template-attached tts control set to off also suppresses tts_text', function () {
+    Event::fake([AlertTriggered::class]);
+
+    [$user, $alert] = makeUserWithAlertTemplate('Hello [[[event.from_name]]]');
+
+    // Template-scoped boolean control: lives on the user's alert template
+    // (overlay_template_id set, not null). The renderer should still pick it
+    // up because the streamer's mental model is "one switch", not "one switch
+    // per overlay".
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => $alert->id,
+        'key' => 'tts',
+        'label' => 'TTS',
+        'type' => 'boolean',
+        'value' => '0',
+        'sort_order' => 0,
+    ]);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Kai']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, function (AlertTriggered $e) {
+        return $e->ttsText === null;
+    });
+});
+
 test('boolean tts control set to on permits tts_text', function () {
     Event::fake([AlertTriggered::class]);
 

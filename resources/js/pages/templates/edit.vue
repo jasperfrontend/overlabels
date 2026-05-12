@@ -504,9 +504,10 @@ onMounted(() => {
             <div class="rounded border border-sidebar-border bg-muted/30 p-3 text-sm text-foreground">
               <p class="mb-2 font-medium">Muting TTS</p>
               <p>
-                Add a user-scoped boolean control with the key <code class="rounded bg-muted px-1">tts</code>
-                from the Controls tab on any static overlay. While the control is off, TTS is skipped for
-                all your alerts. Remove the control or turn it on to resume TTS.
+                Add a boolean control with the key <code class="rounded bg-muted px-1">tts</code>
+                to any of your overlays (Controls tab). When the control is off, TTS is skipped for
+                <em>all</em> your alerts - it doesn't matter which overlay it lives on. Turn it back on
+                or remove the control to resume.
               </p>
             </div>
 

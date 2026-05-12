@@ -1,5 +1,12 @@
 # CHANGELOG MAY 2026
 
+## May 12th, 2026 - TTS gate accepts a `tts` boolean control on any of the user's overlays, not just user-scoped
+
+- The first cut of the TTS gate (earlier today) only matched `OverlayControl` rows with `overlay_template_id IS NULL` (user-scoped). But the UI hint I shipped told streamers to add the boolean from the Controls tab on a static overlay, which creates a *template-scoped* control - so toggling it never gated TTS. Caught by the first user to actually try it.
+- Loosened `AlertExpressionRenderer::isGatedOff()` to a single existence query: `OverlayControl::where(user_id, $user->id)->where('key', 'tts')->where('type', 'boolean')->where('value', '0')->exists()`. Any boolean `tts` control owned by the user that's set to off mutes TTS - it doesn't matter which overlay it lives on. Mental model lines up with what streamers expect: one switch, anywhere, mutes TTS.
+- Updated the TTS-tab explainer copy in `templates/edit.vue` to match: "Add a boolean control with the key `tts` to any of your overlays. When the control is off, TTS is skipped for *all* your alerts." Removed the misleading "user-scoped" jargon.
+- New test in `AlertTtsExpressionTest`: a `tts=0` boolean control with a non-null `overlay_template_id` (i.e. attached to a specific overlay) now also gates correctly. Existing user-scoped test still passes - same path, different `overlay_template_id` value.
+
 ## May 12th, 2026 - TTS Expressions: per-alert-template spoken-line composer, gated by a reserved `tts` boolean control
 
 - New "TTS Expression" field on every alert template - a short templated string the server renders at dispatch time and ships in the `AlertTriggered` broadcast payload as `tts_text`. The overlay calls `SpeechSynthesisUtterance` with that string when an alert arrives, so streamers can finally have their resub / cheer / donation alerts speak a tailored line out loud without bolting on a third-party TTS service. Originally sketched as a "TTS Control" in the issue thread, but the right shape turned out to be: rendered string in the payload (so it can also be reused as plain text by any consumer), authored with the same Bot-Expressions-shaped editor, gated by a single boolean.
