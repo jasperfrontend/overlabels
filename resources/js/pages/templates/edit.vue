@@ -420,6 +420,10 @@ onMounted(() => {
   }, { description: 'Release focus from editor / input' });
 
   register('back-to-show', 's', () => {
+    if (form.isDirty) {
+      pushToast('Save your changes before leaving.', 'warning');
+      return;
+    }
     if (props.template?.id) router.visit(route('templates.show', props.template.id));
   }, { description: 'Back to overlay overview' });
 
@@ -809,7 +813,19 @@ onMounted(() => {
 
         <!-- Form Actions -->
         <div class="mt-6 flex justify-between">
-          <Link :href="route('templates.show', template)" class="btn btn-cancel" title="Go back to overlay (keyboard shortcut: 's')">← Back to Overlay</Link>
+          <Link
+            v-if="!form.isDirty"
+            :href="route('templates.show', template)"
+            class="btn btn-cancel"
+            title="Go back to overlay (keyboard shortcut: 's')"
+          >← Back to Overlay</Link>
+          <button
+            v-else
+            type="button"
+            disabled
+            class="btn btn-cancel opacity-50 cursor-not-allowed"
+            title="Save your changes before leaving"
+          >← Back to Overlay (unsaved changes)</button>
           <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save</button>
         </div>
       </form>
