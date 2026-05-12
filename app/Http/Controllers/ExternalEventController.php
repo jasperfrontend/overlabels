@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\AlertTriggered;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
+use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -40,6 +41,12 @@ class ExternalEventController extends Controller
             ? $template->targetStaticOverlays->pluck('slug')->all()
             : null;
 
+        $ttsText = app(AlertExpressionRenderer::class)->render(
+            $user,
+            $template->tts_expression,
+            $data,
+        );
+
         broadcast(new AlertTriggered(
             html: $template->html ?? '',
             css: $template->css ?? '',
@@ -48,6 +55,7 @@ class ExternalEventController extends Controller
             broadcasterId: $user->twitch_id,
             targetOverlaySlugs: $targetSlugs,
             alertTemplateSlug: $template->slug,
+            ttsText: $ttsText,
         ));
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';

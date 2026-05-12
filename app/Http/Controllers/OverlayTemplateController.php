@@ -9,13 +9,13 @@ use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Services\CloudinaryUploadService;
 use App\Services\HtmlSanitizationService;
 use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
-use App\Services\CloudinaryUploadService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -580,6 +580,7 @@ class OverlayTemplateController extends Controller
             'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
             'screenshot_url' => 'required|url|max:2048',
+            'tts_expression' => 'nullable|string|max:2000',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
@@ -623,6 +624,7 @@ class OverlayTemplateController extends Controller
             'compiled_css' => 'nullable|string',
             'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
+            'tts_expression' => 'sometimes|nullable|string|max:2000',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);

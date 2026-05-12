@@ -10,6 +10,7 @@ use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
 use App\Services\StreamStateMachineService;
@@ -592,6 +593,12 @@ class TwitchEventSubController extends Controller
                 ? $mapping->template->targetStaticOverlays->pluck('slug')->all()
                 : null;
 
+            $ttsText = app(AlertExpressionRenderer::class)->render(
+                $user,
+                $mapping->template->tts_expression,
+                $templateData,
+            );
+
             // Broadcast alert data to overlay
             broadcast(new AlertTriggered(
                 $mapping->template->html,
@@ -601,6 +608,7 @@ class TwitchEventSubController extends Controller
                 $user->twitch_id,
                 $targetSlugs,
                 $mapping->template->slug,
+                $ttsText,
             ));
 
         } catch (Exception $e) {

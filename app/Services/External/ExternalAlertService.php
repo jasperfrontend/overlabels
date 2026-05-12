@@ -5,6 +5,7 @@ namespace App\Services\External;
 use App\Events\AlertTriggered;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\User;
+use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Support\Facades\Log;
 
 class ExternalAlertService
@@ -38,6 +39,12 @@ class ExternalAlertService
             : null;
 
         try {
+            $ttsText = app(AlertExpressionRenderer::class)->render(
+                $user,
+                $template->tts_expression,
+                $data,
+            );
+
             broadcast(new AlertTriggered(
                 html: $template->html ?? '',
                 css: $template->css ?? '',
@@ -46,6 +53,7 @@ class ExternalAlertService
                 broadcasterId: $user->twitch_id,
                 targetOverlaySlugs: $targetSlugs,
                 alertTemplateSlug: $template->slug,
+                ttsText: $ttsText,
             ));
 
             Log::info("External alert dispatched for user {$user->id}", [

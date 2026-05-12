@@ -715,5 +715,20 @@ function handleAlertTriggered(event: any) {
     duration: alertData.duration,
     timestamp: alertData.timestamp || Date.now(),
   });
+
+  speakTts(alertData.tts_text);
+}
+
+function speakTts(text: unknown): void {
+  if (typeof text !== 'string' || text.trim() === '') return;
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  try {
+    // Cancel any in-flight utterance so back-to-back alerts don't queue up
+    // a backlog of speech the streamer can't catch up with.
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  } catch (err) {
+    console.warn('TTS playback failed', err);
+  }
 }
 </script>

@@ -31,6 +31,7 @@ import {
   SquarePenIcon,
   Target,
   ImageIcon,
+  Volume2,
   Zap,
 } from 'lucide-vue-next';
 import PublicToggle from '@/components/PublicToggle.vue';
@@ -82,6 +83,7 @@ interface Props {
     view_count: number;
     fork_count: number;
     template_tags: string[] | null | undefined;
+    tts_expression: string | null;
   };
   availableTags: Array<{
     tag_name: string;
@@ -129,7 +131,8 @@ const form = useForm({
   html: props?.template?.html || '',
   css: props?.template?.css || '',
   compiled_css: props?.template?.compiled_css || '',
-  is_public: props?.template?.is_public
+  is_public: props?.template?.is_public,
+  tts_expression: props?.template?.tts_expression || '',
 });
 
 function getListContext(): { title: string; href: string } {
@@ -170,6 +173,7 @@ const mainTabs = computed(() => {
   if (props.template.type === 'alert') {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
+    tabs.push({ key: 'tts', label: 'TTS', icon: Volume2 });
   }
   return tabs;
 });
@@ -472,6 +476,52 @@ onMounted(() => {
               :static-overlays="staticOverlays ?? []"
             />
             <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
+          </div>
+
+          <!-- TTS Tab (alert templates only) -->
+          <div v-if="mainTab === 'tts'" class="max-w-3xl p-4 space-y-4">
+            <div>
+              <label for="tts_expression" class="mb-1 block text-sm font-medium text-accent-foreground">
+                TTS Expression
+              </label>
+              <p class="mb-2 text-sm text-foreground">
+                Text that gets spoken when this alert fires. Use the same tags as your alert body
+                (e.g. <code class="rounded bg-muted px-1">[[[event.user_name]]]</code>,
+                <code class="rounded bg-muted px-1">[[[event.streak_months|number]]]</code>).
+                Leave empty to disable TTS for this alert.
+              </p>
+              <textarea
+                id="tts_expression"
+                v-model="form.tts_expression"
+                rows="4"
+                maxlength="2000"
+                class="input-border w-full font-mono text-sm"
+                placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months!"
+              />
+              <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
+            </div>
+
+            <div class="rounded border border-sidebar-border bg-muted/30 p-3 text-sm text-foreground">
+              <p class="mb-2 font-medium">Muting TTS</p>
+              <p>
+                Add a user-scoped boolean control with the key <code class="rounded bg-muted px-1">tts</code>
+                from the Controls tab on any static overlay. While the control is off, TTS is skipped for
+                all your alerts. Remove the control or turn it on to resume TTS.
+              </p>
+            </div>
+
+            <div v-if="template.template_tags && template.template_tags.length" class="rounded border border-sidebar-border p-3">
+              <p class="mb-2 text-sm font-medium text-accent-foreground">Tags used in this alert body</p>
+              <div class="flex flex-wrap gap-1.5">
+                <code
+                  v-for="tag in template.template_tags"
+                  :key="tag"
+                  class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
+                  @click="form.tts_expression = (form.tts_expression || '') + `[[[${tag}]]]`"
+                >[[[{{ tag }}]]]</code>
+              </div>
+              <p class="mt-2 text-xs text-foreground">Click a tag to append it to the expression.</p>
+            </div>
           </div>
         </div>
 

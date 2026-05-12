@@ -4,11 +4,10 @@ namespace App\Services\Bot;
 
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Services\Expressions\ExpressionFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use NumberFormatter;
 use Throwable;
 
 /**
@@ -62,7 +61,7 @@ class BotExpressionResolver
                 $pipe = $matches[2] ?? null;
                 $value = $this->lookup($key, $controls, $twitchTags, $botContext);
                 if ($pipe !== null) {
-                    $value = $this->applyFormatter($value, $pipe, $locale);
+                    $value = ExpressionFormatter::apply($value, $pipe, $locale);
                 }
 
                 return $value;
@@ -146,169 +145,5 @@ class BotExpressionResolver
 
             return [];
         }
-    }
-
-    /**
-     * Apply a pipe formatter to a string value. Mirrors the subset of
-     * resources/js/utils/formatters.ts that's relevant to chat output.
-     * Unknown formatters pass the value through unchanged so a typo in
-     * the template doesn't break the whole substitution.
-     */
-    private function applyFormatter(string $value, string $pipe, string $locale): string
-    {
-        $pipe = trim($pipe);
-        [$name, $args] = array_pad(explode(':', $pipe, 2), 2, '');
-        $name = strtolower(trim($name));
-        $args = trim($args);
-
-        return match ($name) {
-            'round' => $this->formatRound($value, $args),
-            'number' => $this->formatNumber($value, $args, $locale),
-            'currency' => $this->formatCurrency($value, $args, $locale),
-            'date' => $this->formatDate($value, $args),
-            'uppercase' => mb_strtoupper($value),
-            'lowercase' => mb_strtolower($value),
-            'distance' => $this->formatDistance($value, $args),
-            'duration' => $this->formatDuration($value, $args),
-            default => $value,
-        };
-    }
-
-    private function formatRound(string $value, string $args): string
-    {
-        $precision = $args === '' ? 0 : max(0, (int) $args);
-        if (! is_numeric($value)) {
-            return $value;
-        }
-
-        return (string) round((float) $value, $precision);
-    }
-
-    private function formatNumber(string $value, string $args, string $locale): string
-    {
-        if (! is_numeric($value)) {
-            return $value;
-        }
-        $precision = $args === '' ? 0 : max(0, (int) $args);
-        $formatter = new NumberFormatter($locale, NumberFormatter::DECIMAL);
-        $formatter->setAttribute(NumberFormatter::FRACTION_DIGITS, $precision);
-
-        return $formatter->format((float) $value);
-    }
-
-    private function formatCurrency(string $value, string $args, string $locale): string
-    {
-        if (! is_numeric($value)) {
-            return $value;
-        }
-        $currency = $args === '' ? 'USD' : strtoupper($args);
-        $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
-
-        return $formatter->formatCurrency((float) $value, $currency);
-    }
-
-    /**
-     * Best-effort date formatting. Accepts unix seconds or any Carbon-parseable
-     * string. Format string follows Carbon's syntax (e.g. "HH:mm", "yyyy-MM-dd").
-     */
-    private function formatDate(string $value, string $args): string
-    {
-        if ($value === '') {
-            return '';
-        }
-        try {
-            $date = is_numeric($value)
-                ? Carbon::createFromTimestamp((int) $value)
-                : Carbon::parse($value);
-            $format = $args === '' ? 'Y-m-d H:i' : $this->translateDateFormat($args);
-
-            return $date->format($format);
-        } catch (Throwable) {
-            return $value;
-        }
-    }
-
-    /**
-     * Translate a small subset of the JS-style date tokens (yyyy, MM, dd, HH, mm,
-     * ss) into PHP date() tokens. Anything else is passed through verbatim.
-     */
-    private function translateDateFormat(string $pattern): string
-    {
-        $map = [
-            'yyyy' => 'Y',
-            'yy' => 'y',
-            'MM' => 'm',
-            'dd' => 'd',
-            'HH' => 'H',
-            'mm' => 'i',
-            'ss' => 's',
-        ];
-
-        return strtr($pattern, $map);
-    }
-
-    private function formatDistance(string $value, string $args): string
-    {
-        if (! is_numeric($value)) {
-            return $value;
-        }
-        $meters = (float) $value;
-        $unit = strtolower($args === '' ? 'km' : $args);
-
-        $converted = match ($unit) {
-            'km' => $meters / 1000,
-            'm' => $meters,
-            'mi' => $meters / 1609.344,
-            'ft' => $meters * 3.280839895,
-            default => $meters,
-        };
-
-        return (string) round($converted, 2);
-    }
-
-    /**
-     * Format a number of seconds into a human-readable duration. Default
-     * pattern is "hh:mm:ss". Supports d/h/m/s tokens via str_pad.
-     */
-    private function formatDuration(string $value, string $args): string
-    {
-        if (! is_numeric($value)) {
-            return $value;
-        }
-        $totalSeconds = max(0, (int) $value);
-        $pattern = $args === '' ? 'hh:mm:ss' : $args;
-
-        $hasDays = str_contains($pattern, 'dd');
-        $hasHours = str_contains($pattern, 'hh');
-        $hasMinutes = str_contains($pattern, 'mm');
-        $hasSeconds = str_contains($pattern, 'ss');
-
-        $remaining = $totalSeconds;
-        $days = $hours = $minutes = $seconds = 0;
-
-        if ($hasDays) {
-            $days = intdiv($remaining, 86400);
-            $remaining %= 86400;
-        }
-        if ($hasHours) {
-            $hours = intdiv($remaining, 3600);
-            $remaining %= 3600;
-        }
-        if ($hasMinutes) {
-            $minutes = intdiv($remaining, 60);
-            $remaining %= 60;
-        }
-        if ($hasSeconds) {
-            $seconds = $remaining;
-        }
-
-        $pad = fn (int $n) => str_pad((string) $n, 2, '0', STR_PAD_LEFT);
-
-        return strtr($pattern, [
-            'dd' => $pad($days),
-            'hh' => $pad($hours),
-            'mm' => $pad($minutes),
-            'ss' => $pad($seconds),
-        ]);
     }
 }

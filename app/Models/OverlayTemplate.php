@@ -102,6 +102,7 @@ class OverlayTemplate extends Model
         'css',
         'compiled_css',
         'js',
+        'tts_expression',
         'is_public',
         'version',
         'fork_of_id',
