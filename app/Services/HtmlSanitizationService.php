@@ -63,6 +63,18 @@ class HtmlSanitizationService
         $value = preg_replace('/<iframe\b[^>]*\/?>/i', '', $value); // self-closing
         $value = preg_replace('/<embed\b[^>]*\/?>/i', '', $value);
 
+        // Strip <audio>, <video>, and bare <source> tags. Alert sounds live in
+        // the alert_sound_url field (singleton-managed, preloaded, cancel-on-new
+        // overlap). Raw <audio autoplay> in template HTML pile up on rapid-fire
+        // alerts - every dispatch instantiates a fresh element that plays
+        // concurrently with the previous one. The field route is the only
+        // controlled way to play audio in an overlay.
+        $value = preg_replace('/<audio\b[^>]*>[\s\S]*?<\/audio\s*>/i', '', $value);
+        $value = preg_replace('/<audio\b[^>]*\/?>/i', '', $value);
+        $value = preg_replace('/<video\b[^>]*>[\s\S]*?<\/video\s*>/i', '', $value);
+        $value = preg_replace('/<video\b[^>]*\/?>/i', '', $value);
+        $value = preg_replace('/<source\b[^>]*\/?>/i', '', $value);
+
         // Strip <meta http-equiv="refresh"> tags with javascript: or data: URIs
         $value = preg_replace(
             '/<meta\s[^>]*http-equiv\s*=\s*["\']?refresh["\']?[^>]*content\s*=\s*["\'][^"\']*url\s*=\s*(?:javascript|data)\s*:[^"\']*["\'][^>]*>/i',

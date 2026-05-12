@@ -6,6 +6,7 @@ use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
+use App\Services\HtmlSanitizationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 
@@ -251,6 +252,83 @@ test('AlertTriggered broadcastWith payload exposes tts_delay_ms', function () {
     $payload = $event->broadcastWith();
 
     expect($payload['alert']['tts_delay_ms'])->toBe(1500);
+});
+
+test('AlertTriggered ships alert_sound_url from the alert template', function () {
+    Event::fake([AlertTriggered::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $alert = OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'alert',
+        'slug' => 'alert-'.fake()->unique()->lexify('????????'),
+        'alert_sound_url' => 'https://example.com/sounds/coin.mp3',
+    ]);
+
+    ExternalEventTemplateMapping::create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'overlay_template_id' => $alert->id,
+        'enabled' => true,
+        'duration_ms' => 5000,
+    ]);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Noa']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, function (AlertTriggered $e) {
+        return $e->alertSoundUrl === 'https://example.com/sounds/coin.mp3';
+    });
+});
+
+test('AlertTriggered ships null alert_sound_url when not set', function () {
+    Event::fake([AlertTriggered::class]);
+
+    [$user] = makeUserWithAlertTemplate();
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Owen']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, function (AlertTriggered $e) {
+        return $e->alertSoundUrl === null;
+    });
+});
+
+test('AlertTriggered broadcastWith payload exposes alert_sound_url', function () {
+    $event = new AlertTriggered(
+        html: '',
+        css: '',
+        data: [],
+        duration: 5000,
+        broadcasterId: '12345',
+        targetOverlaySlugs: null,
+        alertTemplateSlug: 'some-slug',
+        ttsText: null,
+        ttsDelayMs: 0,
+        alertSoundUrl: 'https://example.com/sounds/ding.mp3',
+    );
+
+    $payload = $event->broadcastWith();
+
+    expect($payload['alert']['alert_sound_url'])->toBe('https://example.com/sounds/ding.mp3');
+});
+
+test('HtmlSanitizationService strips audio video and source tags from template HTML', function () {
+    $dirty = '<div>Hi <audio src="https://example.com/sound.mp3" autoplay></audio></div>'
+        .'<video src="https://example.com/clip.mp4" autoplay></video>'
+        .'<source src="https://example.com/alt.mp3" type="audio/mpeg" />';
+
+    $clean = HtmlSanitizationService::sanitize($dirty);
+
+    expect($clean)->not->toContain('<audio')
+        ->and($clean)->not->toContain('<video')
+        ->and($clean)->not->toContain('<source')
+        ->and($clean)->toContain('<div>Hi </div>');
 });
 
 test('AlertTriggered clamps negative tts_delay_ms to zero', function () {

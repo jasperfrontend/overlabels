@@ -610,6 +610,7 @@ class TwitchEventSubController extends Controller
                 $mapping->template->slug,
                 $ttsText,
                 (int) ($mapping->template->tts_delay_ms ?? 0),
+                $mapping->template->alert_sound_url,
             ));
 
         } catch (Exception $e) {

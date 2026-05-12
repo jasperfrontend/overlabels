@@ -508,22 +508,30 @@ class OverlayTemplateController extends Controller
             // explicitly targets this overlay). Shipped once on overlay mount so the
             // per-alert Reverb payload stays slim - AlertTriggered carries only a slug
             // reference and this map resolves it client-side.
+            // alert_sound_url for the same set is shipped alongside so the renderer
+            // can emit <link rel="preload" as="audio"> tags on mount, shaving ~1s
+            // off first-play latency vs. instantiating Audio() lazily on dispatch.
             $alertCssPreload = [];
+            $alertSoundPreload = [];
             if ($template->type === 'static') {
                 $alertTemplates = OverlayTemplate::query()
-                    ->select(['id', 'slug', 'compiled_css'])
+                    ->select(['id', 'slug', 'compiled_css', 'alert_sound_url'])
                     ->where('owner_id', $user->id)
                     ->where('type', 'alert')
-                    ->whereNotNull('compiled_css')
-                    ->where('compiled_css', '!=', '')
                     ->with(['targetStaticOverlays:id'])
                     ->get();
 
                 foreach ($alertTemplates as $alertTemplate) {
                     $targetIds = $alertTemplate->targetStaticOverlays->pluck('id')->all();
                     $firesHere = empty($targetIds) || in_array($template->id, $targetIds, true);
-                    if ($firesHere) {
+                    if (! $firesHere) {
+                        continue;
+                    }
+                    if (! empty($alertTemplate->compiled_css)) {
                         $alertCssPreload[$alertTemplate->slug] = $alertTemplate->compiled_css;
+                    }
+                    if (! empty($alertTemplate->alert_sound_url)) {
+                        $alertSoundPreload[$alertTemplate->slug] = $alertTemplate->alert_sound_url;
                     }
                 }
             }
@@ -538,6 +546,7 @@ class OverlayTemplateController extends Controller
                     'tags' => $template->template_tags,
                 ],
                 'alert_css_preload' => $alertCssPreload,
+                'alert_sound_preload' => $alertSoundPreload,
                 'meta' => [
                     'name' => $template->name,
                     'slug' => $template->slug,
@@ -582,6 +591,7 @@ class OverlayTemplateController extends Controller
             'screenshot_url' => 'required|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
+            'alert_sound_url' => 'nullable|url|max:2048',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
@@ -627,6 +637,7 @@ class OverlayTemplateController extends Controller
             'is_public' => 'sometimes|boolean',
             'tts_expression' => 'sometimes|nullable|string|max:2000',
             'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
+            'alert_sound_url' => 'sometimes|nullable|url|max:2048',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);

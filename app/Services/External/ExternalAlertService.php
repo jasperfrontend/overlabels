@@ -55,6 +55,7 @@ class ExternalAlertService
                 alertTemplateSlug: $template->slug,
                 ttsText: $ttsText,
                 ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
+                alertSoundUrl: $template->alert_sound_url,
             ));
 
             Log::info("External alert dispatched for user {$user->id}", [

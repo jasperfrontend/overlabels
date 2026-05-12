@@ -104,6 +104,7 @@ class OverlayTemplate extends Model
         'js',
         'tts_expression',
         'tts_delay_ms',
+        'alert_sound_url',
         'is_public',
         'version',
         'fork_of_id',

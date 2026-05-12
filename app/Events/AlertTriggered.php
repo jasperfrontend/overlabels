@@ -30,6 +30,8 @@ class AlertTriggered implements ShouldBroadcast
 
     public int $ttsDelayMs;
 
+    public ?string $alertSoundUrl;
+
     /**
      * Create a new event instance.
      */
@@ -42,7 +44,8 @@ class AlertTriggered implements ShouldBroadcast
         ?array $targetOverlaySlugs = null,
         ?string $alertTemplateSlug = null,
         ?string $ttsText = null,
-        int $ttsDelayMs = 0
+        int $ttsDelayMs = 0,
+        ?string $alertSoundUrl = null
     ) {
         $this->html = $html;
         $this->css = $css;
@@ -53,6 +56,7 @@ class AlertTriggered implements ShouldBroadcast
         $this->alertTemplateSlug = $alertTemplateSlug;
         $this->ttsText = $ttsText;
         $this->ttsDelayMs = max(0, $ttsDelayMs);
+        $this->alertSoundUrl = $alertSoundUrl;
     }
 
     /**
@@ -92,6 +96,11 @@ class AlertTriggered implements ShouldBroadcast
                 // Milliseconds to wait after the alert fires before speaking,
                 // so alert sounds/animations can play first. 0 = speak immediately.
                 'tts_delay_ms' => $this->ttsDelayMs,
+                // Fallback URL for the alert sound. Normally the overlay reads
+                // the sound URL from the mount-time preload map (keyed by
+                // alert_template_slug). This field covers the case where a
+                // template was created mid-session and isn't in that map yet.
+                'alert_sound_url' => $this->alertSoundUrl,
             ],
         ];
     }

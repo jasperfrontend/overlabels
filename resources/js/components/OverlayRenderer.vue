@@ -91,6 +91,11 @@ const compiledCssRaw = ref<string>('');
 // on overlay mount; consulted when alerts fire so the WebSocket payload can
 // carry a slug reference instead of a (potentially chonky) CSS blob per event.
 const alertCssPreload = ref<Record<string, string>>({});
+// Alert sound URL preload: { slug: url }. Populated once on overlay mount so
+// we can emit <link rel="preload" as="audio"> + per-origin <link rel="preconnect">
+// tags up front. Tested empirically as ~1s faster first-play vs. instantiating
+// Audio() lazily on alert dispatch.
+const alertSoundPreload = ref<Record<string, string>>({});
 const data = ref<Record<string, any> | undefined>(undefined);
 const userLocale = ref<string>('en-US');
 const error = ref('');
@@ -441,6 +446,8 @@ onMounted(async () => {
     css.value = json.template.css ?? '';
     compiledCssRaw.value = json.template.compiled_css ?? '';
     alertCssPreload.value = json.alert_css_preload ?? {};
+    alertSoundPreload.value = json.alert_sound_preload ?? {};
+    installAudioPreloadLinks(alertSoundPreload.value);
     data.value = json.data ?? {};
 
     // Mirror every Twitch template-tag value from the initial snapshot into the
@@ -716,7 +723,73 @@ function handleAlertTriggered(event: any) {
     timestamp: alertData.timestamp || Date.now(),
   });
 
+  // Resolve sound URL: prefer the mount-time preload (links already warmed)
+  // over the broadcast payload's fallback. The fallback only matters when an
+  // alert template was created after the overlay mounted and so isn't in the
+  // preload map yet - cold-cache, no preload, but at least it plays.
+  const soundUrl = alertSlug && alertSoundPreload.value[alertSlug]
+    ? alertSoundPreload.value[alertSlug]
+    : alertData.alert_sound_url;
+  playAlertSound(soundUrl);
+
   speakTts(alertData.tts_text, alertData.tts_delay_ms);
+}
+
+// Singleton audio element: one shared player for all alert sounds. New alerts
+// cancel the previous one (pause + reset currentTime) before playing, so a
+// rapid-fire 20x event trigger plays the sound once-per-fire instead of
+// stacking 20 overlapping copies into an unlistenable wash of audio.
+let alertSoundPlayer: HTMLAudioElement | null = null;
+
+function playAlertSound(url: unknown): void {
+  if (typeof url !== 'string' || !url) return;
+  if (typeof window === 'undefined' || typeof Audio === 'undefined') return;
+  try {
+    if (alertSoundPlayer) {
+      alertSoundPlayer.pause();
+      alertSoundPlayer.currentTime = 0;
+    }
+    alertSoundPlayer = new Audio(url);
+    void alertSoundPlayer.play().catch((err) => {
+      // Most common cause: browser autoplay policy on an unactivated page.
+      // OBS browser sources don't gate autoplay, so this only bites in
+      // regular tabs before any user gesture.
+      console.warn('Alert sound playback failed', err);
+    });
+  } catch (err) {
+    console.warn('Alert sound setup failed', err);
+  }
+}
+
+// Emit <link rel="preconnect"> per unique audio origin and <link rel="preload"
+// as="audio"> per URL. Called once after the mount payload arrives. Idempotent
+// against the document we just landed in - we don't bother removing old links
+// because the renderer's <head> only loads once per overlay session.
+function installAudioPreloadLinks(map: Record<string, string>): void {
+  if (typeof document === 'undefined') return;
+  const urls = Object.values(map).filter((u): u is string => typeof u === 'string' && u !== '');
+  if (urls.length === 0) return;
+
+  const origins = new Set<string>();
+  for (const url of urls) {
+    try {
+      origins.add(new URL(url).origin);
+    } catch { /* malformed URL - skip */ }
+  }
+  for (const origin of origins) {
+    const preconnect = document.createElement('link');
+    preconnect.rel = 'preconnect';
+    preconnect.href = origin;
+    preconnect.crossOrigin = 'anonymous';
+    document.head.appendChild(preconnect);
+  }
+  for (const url of urls) {
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'audio';
+    preload.href = url;
+    document.head.appendChild(preload);
+  }
 }
 
 // Pending-utterance timer so a new alert arriving during the delay window can

@@ -85,6 +85,7 @@ interface Props {
     template_tags: string[] | null | undefined;
     tts_expression: string | null;
     tts_delay_ms: number | null;
+    alert_sound_url: string | null;
   };
   availableTags: Array<{
     tag_name: string;
@@ -135,6 +136,7 @@ const form = useForm({
   is_public: props?.template?.is_public,
   tts_expression: props?.template?.tts_expression || '',
   tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
+  alert_sound_url: props?.template?.alert_sound_url || '',
 });
 
 function getListContext(): { title: string; href: string } {
@@ -175,7 +177,7 @@ const mainTabs = computed(() => {
   if (props.template.type === 'alert') {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
-    tabs.push({ key: 'tts', label: 'TTS', icon: Volume2 });
+    tabs.push({ key: 'tts', label: 'Sound', icon: Volume2 });
   }
   return tabs;
 });
@@ -480,8 +482,39 @@ onMounted(() => {
             <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
           </div>
 
-          <!-- TTS Tab (alert templates only) -->
-          <div v-if="mainTab === 'tts'" class="max-w-3xl p-4 space-y-4">
+          <!-- Sound Tab (alert templates only): alert sound + TTS -->
+          <div v-if="mainTab === 'tts'" class="max-w-3xl p-4 space-y-6">
+            <div>
+              <label for="alert_sound_url" class="mb-1 block text-sm font-medium text-accent-foreground">
+                Alert sound URL
+              </label>
+              <p class="mb-2 text-sm text-foreground">
+                Direct URL to an MP3/OGG/WAV file that plays when this alert fires. Hosted by you on a
+                CDN that allows hot-linking - Cloudflare R2, Backblaze B2, or even GitHub Pages are
+                free for files this size. Overlabels does not host audio. Embedding
+                <code class="rounded bg-muted px-1">&lt;audio&gt;</code> directly in the alert body is
+                stripped on save - this field is the only supported way to play sound, so we can keep
+                a single audio element and cancel the previous play before the next one fires (otherwise
+                rapid-fire alerts stack into an audio mess).
+              </p>
+              <input
+                id="alert_sound_url"
+                v-model="form.alert_sound_url"
+                type="url"
+                maxlength="2048"
+                class="input-border w-full font-mono text-sm"
+                placeholder="https://your-cdn.example/sounds/coin.mp3"
+              />
+              <div v-if="form.errors.alert_sound_url" class="mt-1 text-sm text-red-600">{{ form.errors.alert_sound_url }}</div>
+              <p class="mt-2 text-xs text-foreground">
+                On overlay load, this URL is preloaded via
+                <code class="rounded bg-muted px-1">&lt;link rel="preload" as="audio"&gt;</code>
+                so first playback is ~1s faster than fetching on demand.
+              </p>
+            </div>
+
+            <hr class="border-sidebar-border" />
+
             <div>
               <label for="tts_expression" class="mb-1 block text-sm font-medium text-accent-foreground">
                 TTS Expression
