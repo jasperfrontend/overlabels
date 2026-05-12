@@ -35,6 +35,7 @@ class FreesoundController extends Controller
         $validated = $request->validate([
             'q' => 'required|string|min:1|max:200',
             'page' => 'sometimes|integer|min:1|max:50',
+            'sort' => 'sometimes|string|in:'.implode(',', FreesoundClient::ALLOWED_SORTS),
         ]);
 
         try {
@@ -42,6 +43,7 @@ class FreesoundController extends Controller
                 query: $validated['q'],
                 page: (int) ($validated['page'] ?? 1),
                 pageSize: 15,
+                sort: $validated['sort'] ?? 'score',
             );
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 502);
@@ -59,6 +61,7 @@ class FreesoundController extends Controller
                 'duration' => $hit['duration'] ?? null,
                 'preview_url' => $hit['previews']['preview-hq-mp3'] ?? null,
                 'freesound_url' => $hit['url'] ?? null,
+                'tags' => is_array($hit['tags'] ?? null) ? array_values($hit['tags']) : [],
             ];
         }, $results['results'] ?? []);
 

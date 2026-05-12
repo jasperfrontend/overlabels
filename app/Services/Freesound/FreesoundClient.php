@@ -35,7 +35,20 @@ class FreesoundClient
      * Fields requested on every search hit. Keep this list tight -
      * unused fields cost bandwidth and add JSON noise.
      */
-    private const SEARCH_FIELDS = 'id,name,username,license,duration,previews,url';
+    private const SEARCH_FIELDS = 'id,name,username,license,duration,previews,url,tags';
+
+    /**
+     * Sort options accepted by Freesound's `sort` query parameter.
+     * The Solr index keys these strings exactly.
+     */
+    public const ALLOWED_SORTS = [
+        'score',
+        'duration_asc',
+        'duration_desc',
+        'created_desc',
+        'downloads_desc',
+        'rating_desc',
+    ];
 
     /**
      * Read the static API key from config at call time rather than holding it
@@ -54,11 +67,12 @@ class FreesoundClient
      * @param  string  $query  Free-text query - the streamer's input. Passed through.
      * @param  int  $page  1-indexed page number.
      * @param  int  $pageSize  Max 150, default 15.
+     * @param  string  $sort  One of ALLOWED_SORTS; falls back to 'score' if anything else.
      * @return array<string, mixed>
      *
      * @throws RuntimeException When the API key is missing or the upstream call fails.
      */
-    public function search(string $query, int $page = 1, int $pageSize = 15): array
+    public function search(string $query, int $page = 1, int $pageSize = 15, string $sort = 'score'): array
     {
         $this->assertConfigured();
 
@@ -68,6 +82,7 @@ class FreesoundClient
             'page' => max(1, $page),
             'page_size' => max(1, min(150, $pageSize)),
             'fields' => self::SEARCH_FIELDS,
+            'sort' => in_array($sort, self::ALLOWED_SORTS, true) ? $sort : 'score',
         ]);
 
         if (! $response->successful()) {

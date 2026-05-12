@@ -12,7 +12,22 @@ interface FreesoundHit {
   duration: number | null;
   preview_url: string | null;
   freesound_url: string | null;
+  tags: string[];
 }
+
+const SORT_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'score', label: 'Relevance' },
+  { value: 'duration_asc', label: 'Shortest first' },
+  { value: 'duration_desc', label: 'Longest first' },
+  { value: 'downloads_desc', label: 'Most downloaded' },
+  { value: 'rating_desc', label: 'Highest rated' },
+  { value: 'created_desc', label: 'Newest' },
+];
+
+// Cap tags-per-result so a sound with 30 tags doesn't blow up the row height.
+// Most sounds have 4-8 tags so the cap rarely bites; when it does, the user
+// can click through to Freesound for the full list.
+const MAX_TAGS_PER_RESULT = 6;
 
 interface FreesoundLibraryRow {
   id: number;
@@ -37,6 +52,7 @@ const emit = defineEmits<{
 }>();
 
 const query = ref('');
+const sort = ref<string>('score');
 const loading = ref(false);
 const error = ref<string | null>(null);
 const results = ref<FreesoundHit[]>([]);
@@ -54,6 +70,7 @@ watch(() => props.show, (visible) => {
   if (visible) {
     // Reset state when reopening so users don't see stale results.
     query.value = '';
+    sort.value = 'score';
     results.value = [];
     totalCount.value = 0;
     currentPage.value = 1;
@@ -61,6 +78,14 @@ watch(() => props.show, (visible) => {
     stopAudition();
   } else {
     stopAudition();
+  }
+});
+
+// Re-run the current query when the user picks a different sort. No-op if
+// they haven't searched yet.
+watch(sort, () => {
+  if (query.value.trim() && results.value.length > 0) {
+    runSearch(1);
   }
 });
 
@@ -72,7 +97,7 @@ async function runSearch(page = 1) {
 
   try {
     const { data } = await axios.get(route('freesound.search'), {
-      params: { q: query.value.trim(), page },
+      params: { q: query.value.trim(), page, sort: sort.value },
     });
     results.value = data.results ?? [];
     totalCount.value = data.count ?? 0;
@@ -84,6 +109,11 @@ async function runSearch(page = 1) {
   } finally {
     loading.value = false;
   }
+}
+
+function searchTag(tag: string) {
+  query.value = tag;
+  runSearch(1);
 }
 
 function toggleAudition(hit: FreesoundHit) {
@@ -182,6 +212,15 @@ function formatDuration(d: number | null): string {
           class="input-border flex-1"
           autofocus
         />
+        <select
+          v-model="sort"
+          class="input-border cursor-pointer w-44"
+          title="Sort results by"
+        >
+          <option v-for="opt in SORT_OPTIONS" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
         <button
           type="submit"
           :disabled="loading || !query.trim()"
@@ -235,6 +274,16 @@ function formatDuration(d: number | null): string {
               >
                 Page <ExternalLink class="h-3 w-3" />
               </a>
+            </div>
+            <div v-if="hit.tags && hit.tags.length" class="mt-1 flex flex-wrap gap-1">
+              <button
+                v-for="tag in hit.tags.slice(0, MAX_TAGS_PER_RESULT)"
+                :key="tag"
+                type="button"
+                class="cursor-pointer rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-foreground hover:bg-violet-500/20 hover:text-violet-700 dark:hover:text-violet-300"
+                :title="`Search for: ${tag}`"
+                @click="searchTag(tag)"
+              >{{ tag }}</button>
             </div>
           </div>
 

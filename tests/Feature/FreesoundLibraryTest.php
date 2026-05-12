@@ -20,6 +20,7 @@ function fakeSoundPayload(int $id, string $license = 'Creative Commons 0'): arra
         'license' => $license,
         'duration' => 1.5,
         'url' => "https://freesound.org/people/someone/sounds/$id/",
+        'tags' => ['coin', 'metal', 'short'],
         'previews' => [
             'preview-hq-mp3' => "https://cdn.freesound.org/previews/$id/sound-hq.mp3",
             'preview-lq-mp3' => "https://cdn.freesound.org/previews/$id/sound-lq.mp3",
@@ -53,6 +54,37 @@ test('search proxies Freesound with the commercial-safe license filter', functio
             && str_contains($url, 'Attribution')
             && $request->hasHeader('Authorization', 'Token test-api-key');
     });
+});
+
+test('search forwards tags array and accepts sort param', function () {
+    Http::fake(fn () => Http::response([
+        'count' => 1,
+        'results' => [fakeSoundPayload(150)],
+    ], 200));
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->getJson('/freesound/search?q=coin&sort=duration_asc');
+
+    $response->assertOk()
+        ->assertJsonPath('results.0.tags.0', 'coin')
+        ->assertJsonPath('results.0.tags.1', 'metal');
+
+    Http::assertSent(function ($request) {
+        return str_contains(urldecode((string) $request->url()), 'sort=duration_asc');
+    });
+});
+
+test('search rejects unknown sort values', function () {
+    Http::fake(fn () => Http::response(['count' => 0, 'results' => []], 200));
+
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $response = $this->getJson('/freesound/search?q=coin&sort=evil_injection');
+
+    $response->assertStatus(422);
 });
 
 test('search requires authentication', function () {
