@@ -17,6 +17,7 @@ import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager from '@/components/TriggerManager.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
+import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
 import {
   Brackets,
   Code,
@@ -33,7 +34,13 @@ import {
   ImageIcon,
   Volume2,
   Zap,
+  Search,
+  Play,
+  Pause,
+  Trash2,
+  ExternalLink as ExternalLinkIcon,
 } from 'lucide-vue-next';
+import axios from 'axios';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
@@ -52,6 +59,17 @@ interface OverlayOption {
   id: number;
   name: string;
   slug: string;
+}
+
+interface FreesoundLibraryRow {
+  id: number;
+  freesound_id: number;
+  name: string;
+  author: string;
+  license: string;
+  duration: number | null;
+  preview_url: string;
+  freesound_url: string | null;
 }
 
 interface TriggerData {
@@ -102,7 +120,10 @@ interface Props {
   targetStaticOverlayIds?: number[];
   userScopedControls?: OverlayControl[];
   triggers?: TriggerData | null;
+  freesoundLibrary?: FreesoundLibraryRow[];
 }
+
+const FREESOUND_LIBRARY_CAP = 10;
 
 const props = withDefaults(defineProps<Props>(), {
   template: Object
@@ -187,6 +208,84 @@ const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 const obsButton = ref<InstanceType<typeof AddToObsButton> | null>(null);
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
+
+const freesoundLibrary = ref<FreesoundLibraryRow[]>([...(props.freesoundLibrary ?? [])]);
+const freesoundModalOpen = ref(false);
+const libraryAuditioningId = ref<number | null>(null);
+let libraryAuditionPlayer: HTMLAudioElement | null = null;
+
+const currentLibrarySound = computed(() =>
+  freesoundLibrary.value.find((s) => s.preview_url === form.alert_sound_url) ?? null
+);
+
+function toggleLibraryAudition(sound: FreesoundLibraryRow) {
+  if (libraryAuditioningId.value === sound.id) {
+    stopLibraryAudition();
+    return;
+  }
+  stopLibraryAudition();
+  libraryAuditionPlayer = new Audio(sound.preview_url);
+  libraryAuditionPlayer.addEventListener('ended', stopLibraryAudition);
+  libraryAuditionPlayer.play().catch(() => stopLibraryAudition());
+  libraryAuditioningId.value = sound.id;
+}
+
+function stopLibraryAudition() {
+  if (libraryAuditionPlayer) {
+    libraryAuditionPlayer.pause();
+    libraryAuditionPlayer.removeEventListener('ended', stopLibraryAudition);
+    libraryAuditionPlayer = null;
+  }
+  libraryAuditioningId.value = null;
+}
+
+function useLibrarySound(sound: FreesoundLibraryRow) {
+  form.alert_sound_url = sound.preview_url;
+  stopLibraryAudition();
+}
+
+async function removeLibrarySound(sound: FreesoundLibraryRow) {
+  try {
+    await axios.delete(route('freesound.destroy', { sound: sound.id }));
+    freesoundLibrary.value = freesoundLibrary.value.filter((s) => s.id !== sound.id);
+    if (form.alert_sound_url === sound.preview_url) {
+      form.alert_sound_url = '';
+    }
+    if (libraryAuditioningId.value === sound.id) stopLibraryAudition();
+    pushToast('Sound removed from your library.', 'success');
+  } catch (e: any) {
+    pushToast(e.response?.data?.message ?? 'Could not remove sound.', 'error');
+  }
+}
+
+function onFreesoundSaved(sound: FreesoundLibraryRow) {
+  // Replace existing entry if user re-saved a sound; otherwise prepend new.
+  const existing = freesoundLibrary.value.findIndex((s) => s.freesound_id === sound.freesound_id);
+  if (existing >= 0) {
+    freesoundLibrary.value.splice(existing, 1, sound);
+  } else {
+    freesoundLibrary.value = [sound, ...freesoundLibrary.value];
+  }
+  form.alert_sound_url = sound.preview_url;
+  pushToast(`Added "${sound.name}" to your library.`, 'success');
+}
+
+function clearAlertSoundUrl() {
+  form.alert_sound_url = '';
+}
+
+function licenseShort(license: string): string {
+  const l = license.toLowerCase();
+  if (l.includes('creative commons 0') || l.includes('cc0')) return 'CC0';
+  if (l === 'attribution') return 'CC-BY';
+  return license;
+}
+
+function formatDuration(d: number | null | undefined): string {
+  if (d === null || d === undefined) return '';
+  if (d < 1) return `${Math.round(d * 1000)}ms`;
+  return `${d.toFixed(1)}s`;
+}
 
 function saveTargeting() {
   router.put(
@@ -483,105 +582,205 @@ onMounted(() => {
           </div>
 
           <!-- Sound Tab (alert templates only): alert sound + TTS -->
-          <div v-if="mainTab === 'tts'" class="max-w-3xl p-4 space-y-6">
-            <div>
-              <label for="alert_sound_url" class="mb-1 block text-sm font-medium text-accent-foreground">
-                Alert sound URL
-              </label>
-              <p class="mb-2 text-sm text-foreground">
-                Direct URL to an MP3/OGG/WAV file that plays when this alert fires. Hosted by you on a
-                CDN that allows hot-linking - Cloudflare R2, Backblaze B2, or even GitHub Pages are
-                free for files this size. Overlabels does not host audio. Embedding
-                <code class="rounded bg-muted px-1">&lt;audio&gt;</code> directly in the alert body is
-                stripped on save - this field is the only supported way to play sound, so we can keep
-                a single audio element and cancel the previous play before the next one fires (otherwise
-                rapid-fire alerts stack into an audio mess).
-              </p>
-              <input
-                id="alert_sound_url"
-                v-model="form.alert_sound_url"
-                type="url"
-                maxlength="2048"
-                class="input-border w-full font-mono text-sm"
-                placeholder="https://your-cdn.example/sounds/coin.mp3"
-              />
-              <div v-if="form.errors.alert_sound_url" class="mt-1 text-sm text-red-600">{{ form.errors.alert_sound_url }}</div>
-              <p class="mt-2 text-xs text-foreground">
-                On overlay load, this URL is preloaded via
-                <code class="rounded bg-muted px-1">&lt;link rel="preload" as="audio"&gt;</code>
-                so first playback is ~1s faster than fetching on demand.
-              </p>
-            </div>
+          <div v-if="mainTab === 'tts'" class="p-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <!-- Left column (2/3): alert sound + TTS -->
+              <div class="lg:col-span-2 space-y-6">
+                <section>
+                  <header class="mb-3">
+                    <h3 class="text-base font-semibold text-accent-foreground">Alert sound</h3>
+                    <p class="text-xs text-foreground/80">
+                      Plays once when the alert fires. Preloaded on overlay mount for instant playback.
+                    </p>
+                  </header>
 
-            <hr class="border-sidebar-border" />
+                  <div class="flex gap-2">
+                    <input
+                      id="alert_sound_url"
+                      v-model="form.alert_sound_url"
+                      type="url"
+                      maxlength="2048"
+                      class="input-border flex-1 font-mono text-sm"
+                      placeholder="https://your-cdn.example/coin.mp3 - or browse Freesound"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-secondary cursor-pointer whitespace-nowrap"
+                      @click="freesoundModalOpen = true"
+                    >
+                      <Search class="mr-1.5 h-4 w-4" />
+                      Browse Freesound
+                    </button>
+                  </div>
+                  <div v-if="form.errors.alert_sound_url" class="mt-1 text-sm text-red-600">{{ form.errors.alert_sound_url }}</div>
 
-            <div>
-              <label for="tts_expression" class="mb-1 block text-sm font-medium text-accent-foreground">
-                TTS Expression
-              </label>
-              <p class="mb-2 text-sm text-foreground">
-                Text that gets spoken when this alert fires. Use the same tags as your alert body
-                (e.g. <code class="rounded bg-muted px-1">[[[event.user_name]]]</code>,
-                <code class="rounded bg-muted px-1">[[[event.streak_months|number]]]</code>).
-                Leave empty to disable TTS for this alert.
-              </p>
-              <textarea
-                id="tts_expression"
-                v-model="form.tts_expression"
-                rows="4"
-                maxlength="2000"
-                class="input-border w-full font-mono text-sm"
-                placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months!"
-              />
-              <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
-            </div>
+                  <!-- Attribution box, shown when the current URL matches a Freesound library entry -->
+                  <div v-if="currentLibrarySound" class="mt-2 flex items-center gap-2 rounded border border-sidebar-border bg-muted/30 px-3 py-2 text-xs text-foreground">
+                    <span class="font-medium">{{ currentLibrarySound.name }}</span>
+                    <span>by {{ currentLibrarySound.author }}</span>
+                    <span class="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase">
+                      {{ licenseShort(currentLibrarySound.license) }}
+                    </span>
+                    <a
+                      v-if="currentLibrarySound.freesound_url"
+                      :href="currentLibrarySound.freesound_url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="cursor-pointer inline-flex items-center gap-0.5 text-violet-500 hover:underline"
+                    >
+                      Freesound <ExternalLinkIcon class="h-3 w-3" />
+                    </a>
+                    <button
+                      type="button"
+                      class="ml-auto cursor-pointer text-foreground/70 hover:text-foreground"
+                      @click="clearAlertSoundUrl"
+                      title="Clear sound from this alert"
+                    >Clear</button>
+                  </div>
 
-            <div>
-              <label for="tts_delay_ms" class="mb-1 block text-sm font-medium text-accent-foreground">
-                Wait before speaking (ms)
-              </label>
-              <p class="mb-2 text-sm text-foreground">
-                Milliseconds to wait after the alert fires before TTS speaks. Useful when your alert
-                plays a sound or animation first - e.g. set this to the length of your alert sound so
-                the voice starts right after it finishes. <strong>0</strong> means speak immediately.
-              </p>
-              <input
-                id="tts_delay_ms"
-                v-model.number="form.tts_delay_ms"
-                type="number"
-                min="0"
-                max="60000"
-                step="100"
-                class="input-border w-40"
-                placeholder="0"
-              />
-              <div v-if="form.errors.tts_delay_ms" class="mt-1 text-sm text-red-600">{{ form.errors.tts_delay_ms }}</div>
-            </div>
+                  <p v-if="!form.alert_sound_url" class="mt-2 text-xs text-foreground/70">
+                    Or host your own MP3/OGG/WAV anywhere CORS-friendly (Cloudflare R2, Backblaze B2, GitHub Pages). Raw <code class="rounded bg-muted px-1">&lt;audio&gt;</code> in the alert HTML is stripped on save - use this field instead.
+                  </p>
+                </section>
 
-            <div class="rounded border border-sidebar-border bg-muted/30 p-3 text-sm text-foreground">
-              <p class="mb-2 font-medium">Muting TTS</p>
-              <p>
-                Add a boolean control with the key <code class="rounded bg-muted px-1">tts</code>
-                to any of your overlays (Controls tab). When the control is off, TTS is skipped for
-                <em>all</em> your alerts - it doesn't matter which overlay it lives on. Turn it back on
-                or remove the control to resume.
-              </p>
-            </div>
+                <hr class="border-sidebar-border" />
 
-            <div v-if="template.template_tags && template.template_tags.length" class="rounded border border-sidebar-border p-3">
-              <p class="mb-2 text-sm font-medium text-accent-foreground">Tags used in this alert body</p>
-              <div class="flex flex-wrap gap-1.5">
-                <code
-                  v-for="tag in template.template_tags"
-                  :key="tag"
-                  class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
-                  @click="form.tts_expression = (form.tts_expression || '') + `[[[${tag}]]]`"
-                >[[[{{ tag }}]]]</code>
+                <section>
+                  <header class="mb-3">
+                    <h3 class="text-base font-semibold text-accent-foreground">Text-to-speech</h3>
+                    <p class="text-xs text-foreground/80">
+                      Spoken via the viewer's browser. Empty disables TTS for this alert.
+                    </p>
+                  </header>
+
+                  <label for="tts_expression" class="mb-1 block text-xs font-medium text-accent-foreground">
+                    Expression
+                  </label>
+                  <textarea
+                    id="tts_expression"
+                    v-model="form.tts_expression"
+                    rows="3"
+                    maxlength="2000"
+                    class="input-border w-full font-mono text-sm"
+                    placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months!"
+                  />
+                  <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
+
+                  <label for="tts_delay_ms" class="mt-3 mb-1 block text-xs font-medium text-accent-foreground">
+                    Wait before speaking (ms)
+                  </label>
+                  <input
+                    id="tts_delay_ms"
+                    v-model.number="form.tts_delay_ms"
+                    type="number"
+                    min="0"
+                    max="60000"
+                    step="100"
+                    class="input-border w-40"
+                    placeholder="0"
+                  />
+                  <p class="mt-1 text-xs text-foreground/70">
+                    Delay TTS until the alert sound finishes. 0 = speak immediately.
+                  </p>
+                  <div v-if="form.errors.tts_delay_ms" class="mt-1 text-sm text-red-600">{{ form.errors.tts_delay_ms }}</div>
+
+                  <div v-if="template.template_tags && template.template_tags.length" class="mt-3">
+                    <p class="mb-1.5 text-xs font-medium text-foreground/80">Tags from this alert</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      <code
+                        v-for="tag in template.template_tags"
+                        :key="tag"
+                        class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
+                        @click="form.tts_expression = (form.tts_expression || '') + `[[[${tag}]]]`"
+                      >[[[{{ tag }}]]]</code>
+                    </div>
+                  </div>
+
+                  <details class="mt-3 text-xs text-foreground/80">
+                    <summary class="cursor-pointer">How do I mute TTS?</summary>
+                    <p class="mt-1 pl-4">
+                      Add a boolean control with the key <code class="rounded bg-muted px-1">tts</code>
+                      to any of your overlays (Controls tab). When it's off, TTS is skipped for all your
+                      alerts. Turn it on or remove the control to resume.
+                    </p>
+                  </details>
+                </section>
               </div>
-              <p class="mt-2 text-xs text-foreground">Click a tag to append it to the expression.</p>
+
+              <!-- Right column (1/3): saved sound library -->
+              <aside class="space-y-2">
+                <header class="flex items-baseline justify-between">
+                  <h3 class="text-base font-semibold text-accent-foreground">Your sounds</h3>
+                  <span class="text-xs text-foreground/70">
+                    {{ freesoundLibrary.length }} / {{ FREESOUND_LIBRARY_CAP }}
+                  </span>
+                </header>
+
+                <div v-if="freesoundLibrary.length === 0" class="rounded border border-sidebar-border bg-muted/30 p-3 text-xs text-foreground">
+                  Browse Freesound to save sounds here. Saved sounds work across all your alerts.
+                </div>
+
+                <ul v-else class="space-y-1.5">
+                  <li
+                    v-for="sound in freesoundLibrary"
+                    :key="sound.id"
+                    class="rounded border border-sidebar-border bg-card p-2"
+                    :class="{ 'ring-1 ring-violet-400': form.alert_sound_url === sound.preview_url }"
+                  >
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        class="cursor-pointer rounded-full bg-violet-500/20 p-1 text-violet-600 hover:bg-violet-500/30 dark:text-violet-300"
+                        :title="libraryAuditioningId === sound.id ? 'Stop' : 'Play'"
+                        @click="toggleLibraryAudition(sound)"
+                      >
+                        <Pause v-if="libraryAuditioningId === sound.id" class="h-3 w-3" />
+                        <Play v-else class="h-3 w-3" />
+                      </button>
+                      <div class="flex-1 min-w-0">
+                        <div class="truncate text-xs font-medium text-accent-foreground">{{ sound.name }}</div>
+                        <div class="text-[11px] text-foreground/70 flex items-center gap-1.5">
+                          <span class="truncate">{{ sound.author }}</span>
+                          <span class="inline-flex items-center rounded bg-muted px-1 py-0 text-[9px] font-medium uppercase">
+                            {{ licenseShort(sound.license) }}
+                          </span>
+                          <span v-if="sound.duration !== null">{{ formatDuration(sound.duration) }}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="cursor-pointer text-foreground/70 hover:text-red-500 p-1"
+                        title="Remove from library"
+                        @click="removeLibrarySound(sound)"
+                      >
+                        <Trash2 class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      v-if="form.alert_sound_url !== sound.preview_url"
+                      type="button"
+                      class="mt-1.5 w-full cursor-pointer rounded bg-violet-500/10 px-2 py-1 text-[11px] text-violet-700 hover:bg-violet-500/20 dark:text-violet-300"
+                      @click="useLibrarySound(sound)"
+                    >
+                      Use for this alert
+                    </button>
+                    <div v-else class="mt-1.5 text-center text-[11px] text-violet-500">
+                      In use for this alert
+                    </div>
+                  </li>
+                </ul>
+              </aside>
             </div>
           </div>
         </div>
+
+        <BrowseFreesoundModal
+          :show="freesoundModalOpen"
+          :library-count="freesoundLibrary.length"
+          :library-cap="FREESOUND_LIBRARY_CAP"
+          @close="freesoundModalOpen = false"
+          @saved="onFreesoundSaved"
+        />
 
         <!-- Form Actions -->
         <div class="mt-6 flex justify-between">

@@ -3,13 +3,14 @@
 use App\Console\Commands\GamejamDebug;
 use App\Events\GameStateChanged;
 use App\Events\UserRegistered;
+use App\Http\Controllers\CloudinaryUploadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
+use App\Http\Controllers\FreesoundController;
 use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
-use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\MapController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\RoomBuilderController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StreamSessionController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
@@ -489,7 +491,7 @@ Route::middleware('auth.redirect')->group(function () {
     // Cloudinary uploads - all image uploads route through here so we can
     // rate-limit, validate dimensions, and track for orphan cleanup. The
     // frontend no longer talks to Cloudinary directly.
-    Route::post('/cloudinary/upload', [\App\Http\Controllers\CloudinaryUploadController::class, 'upload'])
+    Route::post('/cloudinary/upload', [CloudinaryUploadController::class, 'upload'])
         ->middleware('throttle:cloudinary-upload')
         ->name('cloudinary.upload');
 
@@ -509,6 +511,16 @@ Route::middleware('auth.redirect')->group(function () {
             Route::delete('/{control}', [OverlayControlController::class, 'destroy'])->name('destroy');
             Route::post('/{control}/value', [OverlayControlController::class, 'setValue'])->name('value');
         });
+
+    // Freesound search + per-user sound library. Search proxies the
+    // Freesound v2 API (license-filtered to CC0 + Attribution server-side);
+    // save/destroy manage user_freesound_sounds rows. No audio bytes touch
+    // our servers - we hotlink Freesound's preview-hq-mp3 URLs.
+    Route::prefix('freesound')->name('freesound.')->group(function () {
+        Route::get('/search', [FreesoundController::class, 'search'])->name('search');
+        Route::post('/library', [FreesoundController::class, 'save'])->name('save');
+        Route::delete('/library/{sound}', [FreesoundController::class, 'destroy'])->name('destroy');
+    });
 
     // Kit Management
     Route::prefix('kits')->name('kits.')->group(function () {

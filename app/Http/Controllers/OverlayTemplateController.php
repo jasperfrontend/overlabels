@@ -9,6 +9,7 @@ use App\Models\ExternalIntegration;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Models\UserFreesoundSound;
 use App\Services\CloudinaryUploadService;
 use App\Services\HtmlSanitizationService;
 use App\Services\StreamSessionService;
@@ -219,6 +220,14 @@ class OverlayTemplateController extends Controller
             ? $this->buildTriggerData($template)
             : null;
 
+        // Sound library for the Sound tab on alert templates. Hotlink-only -
+        // these rows are metadata pointing at Freesound's CDN, not stored audio.
+        $freesoundLibrary = $template->type === 'alert'
+            ? UserFreesoundSound::where('user_id', auth()->id())
+                ->orderBy('name')
+                ->get()
+            : collect();
+
         return Inertia::render('templates/edit', [
             'template' => $template,
             'availableTags' => $availableTags,
@@ -229,6 +238,7 @@ class OverlayTemplateController extends Controller
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
             'triggers' => $triggers,
+            'freesoundLibrary' => $freesoundLibrary,
         ]);
 
     }

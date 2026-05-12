@@ -64,6 +64,19 @@ return [
         'webhook_secret' => env('DEPLOY_WEBHOOK_SECRET'),
     ],
 
+    'freesound' => [
+        // Static API key for read-only endpoints (search, sound info). Issued
+        // alongside CLIENT_ID/CLIENT_SECRET when you create an app at
+        // https://freesound.org/apiv2/apply/. We avoid OAuth because we only
+        // hit endpoints that accept the static token, and per-user OAuth is
+        // unnecessary at our scale (one app key, all users share rate limit).
+        'api_key' => env('FREESOUND_API_KEY'),
+        // OAuth credentials are reserved for a possible future expansion
+        // (downloading originals would require OAuth) - unused right now.
+        'client_id' => env('FREESOUND_CLIENT_ID'),
+        'client_secret' => env('FREESOUND_CLIENT_SECRET'),
+    ],
+
     'integration_suggestions' => [
         'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
     ],
