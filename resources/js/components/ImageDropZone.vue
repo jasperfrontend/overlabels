@@ -49,9 +49,9 @@ async function uploadToCloudinary(file: File) {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       const msg = data?.error
-        ?? data?.message
         ?? data?.errors?.image?.[0]
         ?? data?.errors?.kind?.[0]
+        ?? data?.message
         ?? `Upload failed: ${response.statusText}`;
       throw new Error(msg);
     }
