@@ -700,7 +700,7 @@ onMounted(() => {
                     type="number"
                     min="0"
                     max="60000"
-                    step="100"
+                    step="1"
                     class="input-border w-40"
                     placeholder="0"
                   />
