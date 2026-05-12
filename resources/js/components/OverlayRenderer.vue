@@ -716,19 +716,42 @@ function handleAlertTriggered(event: any) {
     timestamp: alertData.timestamp || Date.now(),
   });
 
-  speakTts(alertData.tts_text);
+  speakTts(alertData.tts_text, alertData.tts_delay_ms);
 }
 
-function speakTts(text: unknown): void {
+// Pending-utterance timer so a new alert arriving during the delay window can
+// cancel the previous alert's not-yet-spoken voice. Without this, fast
+// back-to-back alerts would each schedule their own delayed speak() and
+// they'd all fire in sequence with no chance to cancel.
+let ttsPendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+function speakTts(text: unknown, delayMs: unknown = 0): void {
   if (typeof text !== 'string' || text.trim() === '') return;
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+  // Cancel any pending OR in-flight utterance from the previous alert.
+  if (ttsPendingTimer !== null) {
+    clearTimeout(ttsPendingTimer);
+    ttsPendingTimer = null;
+  }
   try {
-    // Cancel any in-flight utterance so back-to-back alerts don't queue up
-    // a backlog of speech the streamer can't catch up with.
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  } catch (err) {
-    console.warn('TTS playback failed', err);
+  } catch { /* ignore */ }
+
+  const delay = typeof delayMs === 'number' && delayMs > 0 ? Math.min(delayMs, 60000) : 0;
+  const fire = () => {
+    ttsPendingTimer = null;
+    try {
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    } catch (err) {
+      console.warn('TTS playback failed', err);
+    }
+  };
+
+  if (delay === 0) {
+    fire();
+  } else {
+    ttsPendingTimer = setTimeout(fire, delay);
   }
 }
 </script>

@@ -56,6 +56,7 @@ class ExternalEventController extends Controller
             targetOverlaySlugs: $targetSlugs,
             alertTemplateSlug: $template->slug,
             ttsText: $ttsText,
+            ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
         ));
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';

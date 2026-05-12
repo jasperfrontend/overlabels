@@ -581,6 +581,7 @@ class OverlayTemplateController extends Controller
             'is_public' => 'boolean',
             'screenshot_url' => 'required|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
+            'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
@@ -625,6 +626,7 @@ class OverlayTemplateController extends Controller
             'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
             'tts_expression' => 'sometimes|nullable|string|max:2000',
+            'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);

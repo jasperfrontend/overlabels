@@ -84,6 +84,7 @@ interface Props {
     fork_count: number;
     template_tags: string[] | null | undefined;
     tts_expression: string | null;
+    tts_delay_ms: number | null;
   };
   availableTags: Array<{
     tag_name: string;
@@ -133,6 +134,7 @@ const form = useForm({
   compiled_css: props?.template?.compiled_css || '',
   is_public: props?.template?.is_public,
   tts_expression: props?.template?.tts_expression || '',
+  tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
 });
 
 function getListContext(): { title: string; href: string } {
@@ -499,6 +501,28 @@ onMounted(() => {
                 placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months!"
               />
               <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
+            </div>
+
+            <div>
+              <label for="tts_delay_ms" class="mb-1 block text-sm font-medium text-accent-foreground">
+                Wait before speaking (ms)
+              </label>
+              <p class="mb-2 text-sm text-foreground">
+                Milliseconds to wait after the alert fires before TTS speaks. Useful when your alert
+                plays a sound or animation first - e.g. set this to the length of your alert sound so
+                the voice starts right after it finishes. <strong>0</strong> means speak immediately.
+              </p>
+              <input
+                id="tts_delay_ms"
+                v-model.number="form.tts_delay_ms"
+                type="number"
+                min="0"
+                max="60000"
+                step="100"
+                class="input-border w-40"
+                placeholder="0"
+              />
+              <div v-if="form.errors.tts_delay_ms" class="mt-1 text-sm text-red-600">{{ form.errors.tts_delay_ms }}</div>
             </div>
 
             <div class="rounded border border-sidebar-border bg-muted/30 p-3 text-sm text-foreground">

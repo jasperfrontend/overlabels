@@ -28,6 +28,8 @@ class AlertTriggered implements ShouldBroadcast
 
     public ?string $ttsText;
 
+    public int $ttsDelayMs;
+
     /**
      * Create a new event instance.
      */
@@ -39,7 +41,8 @@ class AlertTriggered implements ShouldBroadcast
         string $broadcasterId,
         ?array $targetOverlaySlugs = null,
         ?string $alertTemplateSlug = null,
-        ?string $ttsText = null
+        ?string $ttsText = null,
+        int $ttsDelayMs = 0
     ) {
         $this->html = $html;
         $this->css = $css;
@@ -49,6 +52,7 @@ class AlertTriggered implements ShouldBroadcast
         $this->targetOverlaySlugs = $targetOverlaySlugs;
         $this->alertTemplateSlug = $alertTemplateSlug;
         $this->ttsText = $ttsText;
+        $this->ttsDelayMs = max(0, $ttsDelayMs);
     }
 
     /**
@@ -85,6 +89,9 @@ class AlertTriggered implements ShouldBroadcast
                 // null when no expression is set or the user has gated TTS off via
                 // their boolean `tts` control. Overlay speaks via SpeechSynthesisUtterance.
                 'tts_text' => $this->ttsText,
+                // Milliseconds to wait after the alert fires before speaking,
+                // so alert sounds/animations can play first. 0 = speak immediately.
+                'tts_delay_ms' => $this->ttsDelayMs,
             ],
         ];
     }

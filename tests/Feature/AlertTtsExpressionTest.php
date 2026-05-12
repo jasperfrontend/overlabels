@@ -188,3 +188,83 @@ test('AlertTriggered broadcastWith payload exposes tts_text', function () {
 
     expect($payload['alert']['tts_text'])->toBe('Hello world');
 });
+
+test('AlertTriggered ships tts_delay_ms from the alert template', function () {
+    Event::fake([AlertTriggered::class]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $alert = OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'alert',
+        'slug' => 'alert-'.fake()->unique()->lexify('????????'),
+        'tts_expression' => 'Hello [[[event.from_name]]]',
+        'tts_delay_ms' => 2500,
+    ]);
+
+    ExternalEventTemplateMapping::create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'overlay_template_id' => $alert->id,
+        'enabled' => true,
+        'duration_ms' => 5000,
+    ]);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Lex']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, function (AlertTriggered $e) {
+        return $e->ttsDelayMs === 2500;
+    });
+});
+
+test('AlertTriggered defaults tts_delay_ms to 0 when not set', function () {
+    Event::fake([AlertTriggered::class]);
+
+    [$user] = makeUserWithAlertTemplate('Hi [[[event.from_name]]]');
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Mira']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, function (AlertTriggered $e) {
+        return $e->ttsDelayMs === 0;
+    });
+});
+
+test('AlertTriggered broadcastWith payload exposes tts_delay_ms', function () {
+    $event = new AlertTriggered(
+        html: '',
+        css: '',
+        data: [],
+        duration: 5000,
+        broadcasterId: '12345',
+        targetOverlaySlugs: null,
+        alertTemplateSlug: 'some-slug',
+        ttsText: 'Hi',
+        ttsDelayMs: 1500,
+    );
+
+    $payload = $event->broadcastWith();
+
+    expect($payload['alert']['tts_delay_ms'])->toBe(1500);
+});
+
+test('AlertTriggered clamps negative tts_delay_ms to zero', function () {
+    $event = new AlertTriggered(
+        html: '',
+        css: '',
+        data: [],
+        duration: 5000,
+        broadcasterId: '12345',
+        targetOverlaySlugs: null,
+        alertTemplateSlug: 'some-slug',
+        ttsText: 'Hi',
+        ttsDelayMs: -500,
+    );
+
+    expect($event->ttsDelayMs)->toBe(0);
+});

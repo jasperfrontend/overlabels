@@ -103,6 +103,7 @@ class OverlayTemplate extends Model
         'compiled_css',
         'js',
         'tts_expression',
+        'tts_delay_ms',
         'is_public',
         'version',
         'fork_of_id',
@@ -120,6 +121,7 @@ class OverlayTemplate extends Model
         'version' => 'integer',
         'view_count' => 'integer',
         'fork_count' => 'integer',
+        'tts_delay_ms' => 'integer',
     ];
 
     /**
