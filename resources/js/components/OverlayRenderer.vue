@@ -723,14 +723,13 @@ function handleAlertTriggered(event: any) {
     timestamp: alertData.timestamp || Date.now(),
   });
 
-  // Resolve sound URL: prefer the mount-time preload (links already warmed)
-  // over the broadcast payload's fallback. The fallback only matters when an
-  // alert template was created after the overlay mounted and so isn't in the
-  // preload map yet - cold-cache, no preload, but at least it plays.
-  const soundUrl = alertSlug && alertSoundPreload.value[alertSlug]
-    ? alertSoundPreload.value[alertSlug]
-    : alertData.alert_sound_url;
-  playAlertSound(soundUrl);
+  // Sound URL comes from the broadcast - it's the canonical "current" value
+  // and self-updates when the streamer edits their alert template (no overlay
+  // reload needed). alertSoundPreload only exists to inject <link rel="preload">
+  // tags on mount that pre-warm the browser's HTTP cache for URLs that haven't
+  // changed since the overlay loaded; it must NOT be used as the source of
+  // truth for which URL to play, or stale preloads beat fresh broadcasts.
+  playAlertSound(alertData.alert_sound_url);
 
   speakTts(alertData.tts_text, alertData.tts_delay_ms);
 }
