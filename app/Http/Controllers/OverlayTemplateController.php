@@ -144,8 +144,6 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
-        $recipeControls = $canEdit ? $this->collectReferencedRecipeControls($template) : collect();
-
         $triggers = ($canEdit && $template->type === 'alert')
             ? $this->buildTriggerData($template)
             : null;
@@ -159,67 +157,8 @@ class OverlayTemplateController extends Controller
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
-            'recipeControls' => $recipeControls,
             'triggers' => $triggers,
         ]);
-    }
-
-    /**
-     * Walk the user's recipe-managed controls and return only those whose
-     * broadcastKey is referenced as a [[[c:...]]] tag anywhere in the
-     * template's html, css, or js. Each row is enriched with its recipe
-     * + instance metadata so the editor UI can group by recipe instance
-     * and show the controls as locked.
-     */
-    private function collectReferencedRecipeControls(OverlayTemplate $template)
-    {
-        $rawSource = ($template->html ?? '')."\n".($template->css ?? '')."\n".($template->js ?? '');
-        if ($rawSource === "\n\n") {
-            return collect();
-        }
-
-        $controls = OverlayControl::with('recipeInstance.recipe')
-            ->where('user_id', auth()->id())
-            ->whereNotNull('recipe_instance_id')
-            ->whereNull('overlay_template_id')
-            ->where('source_managed', true)
-            ->orderBy('sort_order')
-            ->get();
-
-        return $controls
-            ->filter(fn (OverlayControl $c) => str_contains($rawSource, 'c:'.$c->broadcastKey()))
-            ->map(function (OverlayControl $c) {
-                $instance = $c->recipeInstance;
-                $recipe = $instance?->recipe;
-
-                return [
-                    'id' => $c->id,
-                    'overlay_template_id' => null,
-                    'user_id' => $c->user_id,
-                    'recipe_instance_id' => $c->recipe_instance_id,
-                    'key' => $c->key,
-                    'label' => $c->label,
-                    'description' => $c->description,
-                    'type' => $c->type,
-                    'value' => $c->value,
-                    'config' => $c->config,
-                    'sort_order' => $c->sort_order,
-                    'source' => null,
-                    'source_managed' => true,
-                    'broadcast_key' => $c->broadcastKey(),
-                    'recipe_instance' => $instance ? [
-                        'id' => $instance->id,
-                        'instance_slug' => $instance->instance_slug,
-                        'label' => $instance->label,
-                        'recipe' => [
-                            'slug' => $recipe?->slug,
-                            'name' => $recipe?->name,
-                            'version' => $recipe?->version,
-                        ],
-                    ] : null,
-                ];
-            })
-            ->values();
     }
 
     /**

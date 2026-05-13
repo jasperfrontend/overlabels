@@ -49,16 +49,6 @@ interface OverlayOption {
   slug: string;
 }
 
-interface RecipeManagedControl extends OverlayControl {
-  broadcast_key: string;
-  recipe_instance: {
-    id: number;
-    instance_slug: string;
-    label: string | null;
-    recipe: { slug: string | null; name: string | null; version: number | null };
-  } | null;
-}
-
 interface TriggerData {
   eventTypes: Record<string, string>;
   externalEventTypes: Record<string, Record<string, string>>;
@@ -78,7 +68,6 @@ const props = defineProps<{
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
   userScopedControls?: OverlayControl[];
-  recipeControls?: RecipeManagedControl[];
   triggers?: TriggerData | null;
 }>();
 
@@ -306,7 +295,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
           <ControlsManager :template="template" :initial-controls="localControls"
                            :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
-                           :recipe-controls="recipeControls"
                            @change="localControls = $event" />
         </div>
 

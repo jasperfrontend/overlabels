@@ -21,22 +21,11 @@ import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
 
-interface RecipeManagedControl extends OverlayControl {
-  broadcast_key: string;
-  recipe_instance: {
-    id: number;
-    instance_slug: string;
-    label: string | null;
-    recipe: { slug: string | null; name: string | null; version: number | null };
-  } | null;
-}
-
 const props = defineProps<{
   template: OverlayTemplate;
   initialControls: OverlayControl[];
   connectedServices?: string[];
   userScopedControls?: OverlayControl[];
-  recipeControls?: RecipeManagedControl[];
 }>();
 
 const emit = defineEmits<{
@@ -103,12 +92,7 @@ async function deleteControl(control: OverlayControl) {
   }
 }
 
-function isRecipeManaged(ctrl: OverlayControl | RecipeManagedControl): ctrl is RecipeManagedControl {
-  return 'recipe_instance' in ctrl && (ctrl as RecipeManagedControl).recipe_instance != null;
-}
-
-function snippetKey(ctrl: OverlayControl | RecipeManagedControl): string {
-  if (isRecipeManaged(ctrl)) return ctrl.broadcast_key;
+function snippetKey(ctrl: OverlayControl): string {
   return ctrl.source_managed && ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
 }
 
@@ -157,10 +141,7 @@ function configSummary(ctrl: OverlayControl): string[] {
 // ---- Grouping + filtering ----
 interface ControlGroup {
   label: string;
-  controls: (OverlayControl | RecipeManagedControl)[];
-  isRecipe?: boolean;
-  recipeSlug?: string;
-  instanceSlug?: string;
+  controls: OverlayControl[];
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -187,14 +168,6 @@ const groupedControls = computed<ControlGroup[]>(() => {
     }
   }
 
-  // Recipe-managed controls grouped by recipe instance. Each instance is
-  // its own card so a user with two wheels installed sees them separated.
-  const recipeGroupMap: Record<number, RecipeManagedControl[]> = {};
-  for (const ctrl of (props.recipeControls ?? [])) {
-    if (!ctrl.recipe_instance) continue;
-    (recipeGroupMap[ctrl.recipe_instance.id] ??= []).push(ctrl);
-  }
-
   const groups: ControlGroup[] = [];
 
   for (const type of TYPE_ORDER) {
@@ -210,19 +183,6 @@ const groupedControls = computed<ControlGroup[]>(() => {
     groups.push({
       label: SERVICE_LABELS[source] ?? source,
       controls: [...ctrls].sort((a, b) => a.sort_order - b.sort_order),
-    });
-  }
-
-  for (const ctrls of Object.values(recipeGroupMap)) {
-    const first = ctrls[0];
-    const recipeName = first.recipe_instance?.recipe.name ?? first.recipe_instance?.recipe.slug ?? 'Recipe';
-    const instanceSlug = first.recipe_instance?.instance_slug ?? '';
-    groups.push({
-      label: `${recipeName} - ${instanceSlug}`,
-      controls: [...ctrls].sort((a, b) => a.sort_order - b.sort_order),
-      isRecipe: true,
-      recipeSlug: first.recipe_instance?.recipe.slug ?? undefined,
-      instanceSlug,
     });
   }
 
@@ -253,10 +213,6 @@ const filteredGroupedControls = computed<ControlGroup[]>(() => {
 
 const totalVisibleControls = computed(() =>
   filteredGroupedControls.value.reduce((s, g) => s + g.controls.length, 0),
-);
-
-const totalControlsCount = computed(() =>
-  groupedControls.value.reduce((s, g) => s + g.controls.length, 0),
 );
 
 const EXPANDED_KEY = 'controls_manager_expanded';
@@ -338,7 +294,7 @@ const controlsCounter = computed(() => controls.value.length);
       </button>
     </div>
 
-    <div v-if="totalControlsCount === 0" class="rounded-sm border border-sidebar bg-sidebar-accent p-8 text-center text-muted-foreground">
+    <div v-if="controls.length === 0" class="rounded-sm border border-sidebar bg-sidebar-accent p-8 text-center text-muted-foreground">
       No controls yet. Add one to get started.
     </div>
 
@@ -361,7 +317,7 @@ const controlsCounter = computed(() => controls.value.length);
           {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
         </span>
         <span v-else>
-          {{ totalControlsCount }} control{{ totalControlsCount !== 1 ? 's' : '' }} across {{ groupedControls.length }} group{{ groupedControls.length !== 1 ? 's' : '' }}
+          {{ controls.length }} control{{ controls.length !== 1 ? 's' : '' }} across {{ groupedControls.length }} group{{ groupedControls.length !== 1 ? 's' : '' }}
         </span>
         <button
           v-if="filteredGroupedControls.length > 0"
@@ -404,14 +360,13 @@ const controlsCounter = computed(() => controls.value.length);
               <div
                 v-for="ctrl in group.controls"
                 :key="ctrl.id"
-                class="row group/row flex items-start justify-between gap-3 p-3 transition-all overlabels-background"
-                :class="isRecipeManaged(ctrl) ? '' : 'cursor-pointer'"
-                :role="isRecipeManaged(ctrl) ? undefined : 'button'"
-                :tabindex="isRecipeManaged(ctrl) ? undefined : 0"
-                :title="isRecipeManaged(ctrl) ? undefined : `Click to edit ${ctrl.label || ctrl.key}`"
-                @click="!isRecipeManaged(ctrl) && openEdit(ctrl)"
-                @keydown.enter.prevent="!isRecipeManaged(ctrl) && openEdit(ctrl)"
-                @keydown.space.prevent="!isRecipeManaged(ctrl) && openEdit(ctrl)"
+                class="row group/row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all overlabels-background"
+                role="button"
+                tabindex="0"
+                :title="`Click to edit ${ctrl.label || ctrl.key}`"
+                @click="openEdit(ctrl)"
+                @keydown.enter.prevent="openEdit(ctrl)"
+                @keydown.space.prevent="openEdit(ctrl)"
               >
                 <!-- Left: label + key + config summary -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -419,15 +374,7 @@ const controlsCounter = computed(() => controls.value.length);
                     <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
                     <Badge variant="outline" class="text-[10px] capitalize">{{ ctrl.type }}</Badge>
                     <span
-                      v-if="isRecipeManaged(ctrl)"
-                      class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
-                      :title="`Managed by the ${(ctrl as RecipeManagedControl).recipe_instance?.recipe.name} recipe (instance ${(ctrl as RecipeManagedControl).recipe_instance?.instance_slug}) - locked. To remove, uninstall the recipe instance.`"
-                    >
-                      <LockIcon class="h-2.5 w-2.5" />
-                      Recipe: {{ (ctrl as RecipeManagedControl).recipe_instance?.recipe.name }}
-                    </span>
-                    <span
-                      v-else-if="ctrl.source_managed && ctrl.source"
+                      v-if="ctrl.source_managed && ctrl.source"
                       class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
                       :title="`Managed by ${SERVICE_LABELS[ctrl.source] ?? ctrl.source} - cannot be manually changed`"
                     >
@@ -458,10 +405,7 @@ const controlsCounter = computed(() => controls.value.length);
                     <CopyIcon class="h-3 w-3 shrink-0" />
                     [[[c:{{ snippetKey(ctrl) }}]]]
                   </button>
-                  <div
-                    v-if="!isRecipeManaged(ctrl)"
-                    class="flex items-center gap-1 opacity-30 transition group-hover/row:opacity-100 focus-within:opacity-100"
-                  >
+                  <div class="flex items-center gap-1 opacity-30 transition group-hover/row:opacity-100 focus-within:opacity-100">
                     <button
                       type="button"
                       class="btn btn-sm btn-primary px-2"
