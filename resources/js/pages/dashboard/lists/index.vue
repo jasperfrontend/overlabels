@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
@@ -87,7 +87,12 @@ function createList() {
   slugError.value = validateSlug(newSlug.value);
   if (slugError.value) return;
 
-  const items = newItemsText.value.split('\n');
+  // An empty textarea splits to [""] - one empty-string item - which then
+  // shows up as a phantom blank first row when chat-appenders later
+  // add to the list. Distinguishing "" from real content fixes that
+  // without touching the "lists are lists" contract for any non-empty
+  // typed content.
+  const items = newItemsText.value === '' ? [] : newItemsText.value.split('\n');
 
   router.post(route('lists.store'), {
     slug: newSlug.value,
@@ -113,7 +118,7 @@ function createList() {
 function saveActive() {
   if (!activeList.value || saving.value) return;
   saving.value = true;
-  const items = draftItemsText.value.split('\n');
+  const items = draftItemsText.value === '' ? [] : draftItemsText.value.split('\n');
 
   router.put(route('lists.update', activeList.value.id), {
     label: draftLabel.value || null,
@@ -323,6 +328,75 @@ const DEDUP_LABELS: Record<string, string> = {
   per_chatter: 'once per chatter',
   per_chatter_per_stream: 'once per chatter per stream',
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Live updates - subscribe to the user's broadcast channel so chat-appender
+// activity (or another browser tab) updates this page in place.
+// ──────────────────────────────────────────────────────────────────────────────
+
+const page = usePage();
+
+interface ListUpdatedPayload {
+  slug: string;
+  items: string[] | null;
+  updated_at: number | null;
+}
+
+function applyListUpdated(payload: ListUpdatedPayload) {
+  const idx = lists.value.findIndex(l => l.slug === payload.slug);
+  if (idx === -1) return;
+  lists.value[idx] = {
+    ...lists.value[idx],
+    items: payload.items ?? [],
+    updated_at: payload.updated_at,
+  };
+
+  // If the user is currently editing this list AND has unsaved changes,
+  // leave the textarea alone - their pending edits win until they save
+  // or navigate away. If they're not dirty, refresh the textarea so the
+  // chatter's append shows up in their view too.
+  if (activeId.value === lists.value[idx].id && !isDirty.value) {
+    draftItemsText.value = (payload.items ?? []).join('\n');
+  }
+}
+
+function applyListDeleted(slug: string) {
+  const idx = lists.value.findIndex(l => l.slug === slug);
+  if (idx === -1) return;
+  const wasActive = lists.value[idx].id === activeId.value;
+  lists.value.splice(idx, 1);
+  if (wasActive) {
+    activeId.value = lists.value[0]?.id ?? null;
+  }
+}
+
+let echoChannel: any = null;
+let echoChannelName: string | null = null;
+
+onMounted(() => {
+  const twitchId = (page.props.auth as any)?.user?.twitch_id;
+  if (!twitchId || !(window as any).Echo) return;
+
+  echoChannelName = `alerts.${twitchId}`;
+  echoChannel = (window as any).Echo.private(echoChannelName);
+
+  echoChannel.listen('.list.updated', (payload: ListUpdatedPayload) => {
+    applyListUpdated(payload);
+  });
+  echoChannel.listen('.list.deleted', (payload: ListUpdatedPayload) => {
+    applyListDeleted(payload.slug);
+  });
+});
+
+onUnmounted(() => {
+  if (echoChannel) {
+    echoChannel.stopListening('.list.updated');
+    echoChannel.stopListening('.list.deleted');
+  }
+  if (echoChannelName) {
+    (window as any).Echo?.leave(`private-${echoChannelName}`);
+  }
+});
 </script>
 
 <template>

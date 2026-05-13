@@ -1,5 +1,12 @@
 # CHANGELOG MAY 2026
 
+## May 13th, 2026 - Lists page: fix phantom-blank-first-item + subscribe to live broadcasts
+
+- Two post-ship fixes after first real prod use surfaced both. (1) Creating an empty list then having a chat appender add to it produced a list with a phantom blank first row. (2) The /dashboard/lists page didn't update when a chat command appended to a list - had to reload the page to see the new item.
+- Phantom blank fix in `resources/js/pages/dashboard/lists/index.vue`: the textarea was sending `newItemsText.value.split('\n')` to the server on save. JS's split returns `[""]` (one empty-string item) when called on an empty string, not `[]` - so saving an empty textarea created a list whose first item was already `""`, and `!hi hello` from the first chatter would append AFTER that phantom. Fix is `text === '' ? [] : text.split('\n')`. Same fix on `createList()` and `saveActive()`. Preserves the "lists are lists, don't touch what was typed" contract for any non-empty content. Matches what Streamer.Bot's Write-To-File feature is doing under the hood too - same underlying JS pitfall.
+- Live updates fix: the /dashboard/lists page wasn't subscribed to the user's broadcast channel at all. Only `OverlayRenderer.vue` was. Added an Echo subscription in onMounted using the same `alerts.{twitch_id}` pattern as `useStreamState`. Listens for `.list.updated` and `.list.deleted`; patches the local `lists` ref by slug. If the user is currently editing the affected list AND has unsaved changes, the active textarea is left alone (their pending edits win until they save); if they're not dirty, the textarea refreshes with the new items so a chatter's append appears in the view immediately. onUnmounted leaves the channel cleanly.
+- No backend changes - the broadcast was already firing from `ListAppendService`. Both fixes are entirely in the Vue page.
+
 ## May 13th, 2026 - List Appenders: chat commands that grow Lists (raffle / queue / quotes / praise wall)
 
 - Builds the write side on top of the Lists feature shipped earlier today. Streamers can now wire a chat command like `!raffle` to append the invoker's display name to a List automatically; same shape extends to `!join` queues, `!quote` walls, etc. The read side (Bot Expressions / overlays reading lists) and the write side (chat appending to lists) compose to close the producer/bus/consumer loop for the user-controlled-data path.
