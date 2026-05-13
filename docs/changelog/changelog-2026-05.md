@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 13th, 2026 - Fix: /broadcasting/auth was being shadowed by the catch-all 404 route
+
+- WebSocket channel-auth requests to `POST /broadcasting/auth` were returning HTTP 200 with the `errors.404` HTML view instead of the JSON auth signature Echo expects. Browser tab open on `/dashboard/lists` (and presumably everywhere else using `window.Echo.private(...)` - `useStreamState`, the overlay renderer's dashboard preview, etc) couldn't authorise their channel subscriptions. The visible symptom on the Lists page: no live updates when chat appended to a list via a `!command`, even though the server-side broadcast was firing.
+- Root cause: `routes/web.php` ended with `Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*')`. That wildcard regex match wins by route-registration order over `/broadcasting/auth` which gets auto-registered later by Laravel's BroadcastServiceProvider. So Echo's POST hit the catch-all, got `view('errors.404')` rendered as text/html with status 200, and Echo saw the HTML response as a failed auth.
+- Fix: switched the catch-all to `Route::fallback([PageController::class, 'notfound'])`. `Route::fallback()` is Laravel's canonical "match only when no other route matches" mechanism and yields to any later-registered route regardless of order. Genuinely unknown URLs still hit the same `notfound` controller and render the same 404 page; `/broadcasting/auth` (and any future auto-registered Laravel routes) now reach their real handlers.
+- Two new Pest tests in `BroadcastingAuthRouteTest`: hitting `POST /broadcasting/auth` as an authenticated user does NOT return the `errors.404` HTML view; and a genuinely-unknown URL still 404s. 639 tests green (was 637).
+- This was a latent bug, not new in this session - any feature relying on private channel subscriptions has been silently failing auth (useStreamState's "live" indicator, the recipe dashboard's expected real-time `picker.landed` updates, etc.). The Lists feature just made it visible because the new `.list.updated` listener is the first surface that's clearly broken when channel auth fails (other consumers either have polling fallbacks or only matter during specific user-triggered events).
+
 ## May 13th, 2026 - Lists page: fix phantom-blank-first-item + subscribe to live broadcasts
 
 - Two post-ship fixes after first real prod use surfaced both. (1) Creating an empty list then having a chat appender add to it produced a list with a phantom blank first row. (2) The /dashboard/lists page didn't update when a chat command appended to a list - had to reload the page to see the new item.

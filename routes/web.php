@@ -622,4 +622,10 @@ require __DIR__.'/admin.php';
 
 Route::get('/banned', fn () => Inertia::render('Banned'))->name('banned');
 
-Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');
+// Final 404 handler. Must be Route::fallback (not Route::any with a
+// wildcard) because the latter wins by registration order over routes
+// registered later in the boot lifecycle - notably /broadcasting/auth
+// (auto-registered by the BroadcastServiceProvider) - and would return
+// an HTML 404 page in response to Echo's channel-auth POST requests.
+// Route::fallback() always matches last regardless of order.
+Route::fallback([PageController::class, 'notfound']);
