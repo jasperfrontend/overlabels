@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon } from 'lucide-vue-next';
+import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon, PowerIcon, PowerOffIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface ListRow {
@@ -22,6 +22,7 @@ interface ListRow {
   min_items: number;
   max_items: number | null;
   user_editable: boolean;
+  disabled_at: number | null;
   recipe_instance_id: number | null;
   recipe: { slug: string | null; name: string | null; version: number | null; instance_slug: string | null } | null;
   tag: string;
@@ -158,6 +159,27 @@ function deleteActive() {
     },
     onError: (errors) => {
       toastMessage.value = Object.values(errors)[0] as string ?? 'Delete failed.';
+      toastType.value = 'error';
+    },
+  });
+}
+
+function toggleDisabled() {
+  if (!activeList.value) return;
+  const nextDisabled = activeList.value.disabled_at === null;
+
+  router.put(route('lists.update', activeList.value.id), {
+    disabled: nextDisabled,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      toastMessage.value = nextDisabled
+        ? `'${activeList.value?.slug}' disabled. Chat appenders will silently no-op.`
+        : `'${activeList.value?.slug}' re-enabled.`;
+      toastType.value = 'success';
+    },
+    onError: () => {
+      toastMessage.value = 'Failed to toggle list state.';
       toastType.value = 'error';
     },
   });
@@ -499,6 +521,10 @@ onUnmounted(() => {
               </Button>
             </div>
             <div class="flex items-center gap-2">
+              <Badge v-if="activeList.disabled_at !== null" variant="destructive">
+                <PowerOffIcon class="mr-1 h-3 w-3" />
+                Disabled
+              </Badge>
               <Badge v-if="activeList.recipe" variant="secondary">
                 from {{ activeList.recipe.name }}
               </Badge>
@@ -537,16 +563,27 @@ onUnmounted(() => {
           </div>
 
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <Button
-              variant="ghost"
-              class="cursor-pointer text-destructive hover:text-destructive"
-              :disabled="!!isActiveLocked || activeList.recipe_instance_id !== null"
-              :title="activeList.recipe_instance_id !== null ? 'Delete the recipe instance to remove this list.' : 'Delete this list permanently.'"
-              @click="deleteActive"
-            >
-              <Trash2Icon class="h-4 w-4" />
-              <span class="ml-1.5">Delete list</span>
-            </Button>
+            <div class="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                class="cursor-pointer text-destructive hover:text-destructive"
+                :disabled="!!isActiveLocked || activeList.recipe_instance_id !== null"
+                :title="activeList.recipe_instance_id !== null ? 'Delete the recipe instance to remove this list.' : 'Delete this list permanently.'"
+                @click="deleteActive"
+              >
+                <Trash2Icon class="h-4 w-4" />
+                <span class="ml-1.5">Delete list</span>
+              </Button>
+              <Button
+                variant="ghost"
+                class="cursor-pointer"
+                :title="activeList.disabled_at !== null ? 'Re-enable: chat appenders can write again.' : 'Disable: chat appenders silently no-op; existing items stay visible.'"
+                @click="toggleDisabled"
+              >
+                <component :is="activeList.disabled_at !== null ? PowerIcon : PowerOffIcon" class="h-4 w-4" />
+                <span class="ml-1.5">{{ activeList.disabled_at !== null ? 'Enable list' : 'Disable list' }}</span>
+              </Button>
+            </div>
             <Button
               class="cursor-pointer"
               :disabled="!isDirty || saving || !!isActiveLocked"

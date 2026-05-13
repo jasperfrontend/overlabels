@@ -687,9 +687,20 @@ function handleListUpdated(event: any) {
   const baseKey = `c:list:${event.slug}`;
   const items: any[] = Array.isArray(event.items) ? event.items : [];
 
+  // Recompute the derived read tags (:first, :last, :empty, :sum)
+  // alongside the index + count keys so [[[c:list:slug:first]]] and
+  // friends update live on broadcast without an overlay refresh.
+  // :random is deliberately NOT recomputed - it stays whatever the
+  // server picked at overlay mount so it doesn't flicker on every
+  // append. If you want a re-roll, reload the overlay.
   const patch: Record<string, any> = {
     [baseKey]: JSON.stringify(items),
     [`${baseKey}.count`]: String(items.length),
+    [`${baseKey}:count`]: String(items.length),
+    [`${baseKey}:first`]: items.length > 0 ? String(items[0]) : '',
+    [`${baseKey}:last`]: items.length > 0 ? String(items[items.length - 1]) : '',
+    [`${baseKey}:empty`]: items.length === 0 ? '1' : '0',
+    [`${baseKey}:sum`]: computeListSum(event.slug, items),
   };
   items.forEach((item, i) => {
     patch[`${baseKey}.${i}`] = String(item);
@@ -714,15 +725,42 @@ function handleListUpdated(event: any) {
   data.value = next;
 }
 
+/**
+ * Mirrors the server-side sumListItems in OverlayTemplateController.
+ * Whitespace-only / empty entries treated as 0; any other non-numeric
+ * content fails loudly with an inline error string. Kept in sync with
+ * the PHP version so initial-render and broadcast-update produce
+ * identical strings.
+ */
+function computeListSum(slug: string, items: any[]): string {
+  let total = 0;
+  let sawNumber = false;
+
+  for (let i = 0; i < items.length; i++) {
+    const raw = items[i];
+    const trimmed = String(raw ?? '').trim();
+    if (trimmed === '') continue;
+    if (!/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return `ERR: list '${slug}' has non-numeric item '${raw}' at position ${i}`;
+    }
+    total += parseFloat(trimmed);
+    sawNumber = true;
+  }
+
+  if (!sawNumber) return '0';
+  return Number.isInteger(total) ? String(Math.trunc(total)) : String(total);
+}
+
 function handleListDeleted(event: any) {
   if (!data.value || typeof data.value !== 'object') return;
   if (!event?.slug) return;
 
   const baseKey = `c:list:${event.slug}`;
-  const prefix = `${baseKey}.`;
+  const dotPrefix = `${baseKey}.`;
+  const colonPrefix = `${baseKey}:`;
   const next = { ...data.value };
   for (const key of Object.keys(next)) {
-    if (key === baseKey || key.startsWith(prefix)) {
+    if (key === baseKey || key.startsWith(dotPrefix) || key.startsWith(colonPrefix)) {
       delete next[key];
     }
   }

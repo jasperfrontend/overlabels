@@ -76,6 +76,15 @@ class ListAppendService
                 return ['fired' => false, 'reason' => 'list_gone'];
             }
 
+            // Disabled lists silently refuse appends - the streamer
+            // disabled the list intentionally, no need to apologise
+            // in chat. Existing items stay visible to overlays; only
+            // new chat-driven appends are blocked. Streamer can
+            // still curate manually via /dashboard/lists.
+            if ($list->disabled_at !== null) {
+                return ['fired' => false, 'reason' => 'list_disabled'];
+            }
+
             $context = $this->expressionService->buildBotContext($appender->command, $payload);
             $args = (string) ($context['args'] ?? '');
 

@@ -493,17 +493,30 @@ class OverlayTemplateController extends Controller
             // the existing foreach machinery materialises against. So
             // [[[c:list:donors]]] gives the array string, while
             // [[[foreach:c:list:donors as donor]]][[[donor]]][[[endforeach]]]
-            // iterates and renders each item.
+            // iterates and renders each item. Plus derived read tags
+            // (:first, :last, :empty, :random, :sum) for template-side
+            // convenience without needing a foreach.
             $userLists = \App\Models\OptionSet::where('user_id', $user->id)->get();
             $listData = [];
             foreach ($userLists as $list) {
-                $items = $list->items ?? [];
+                $items = array_values($list->items ?? []);
                 $baseKey = 'c:list:'.$list->slug;
-                $listData[$baseKey] = json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                $listData[$baseKey.'.count'] = (string) count($items);
-                foreach (array_values($items) as $i => $item) {
+                $count = count($items);
+
+                $listData[$baseKey] = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $listData[$baseKey.'.count'] = (string) $count;
+                $listData[$baseKey.':count'] = (string) $count;
+                foreach ($items as $i => $item) {
                     $listData[$baseKey.'.'.$i] = (string) $item;
                 }
+
+                // Derived read tags. Empty list -> empty string for value
+                // tags, "1" for :empty boolean, "0" for :sum.
+                $listData[$baseKey.':first'] = $count > 0 ? (string) $items[0] : '';
+                $listData[$baseKey.':last'] = $count > 0 ? (string) $items[$count - 1] : '';
+                $listData[$baseKey.':empty'] = $count === 0 ? '1' : '0';
+                $listData[$baseKey.':random'] = $count > 0 ? (string) $items[array_rand($items)] : '';
+                $listData[$baseKey.':sum'] = $this->sumListItems($list->slug, $items);
             }
 
             // Expand the template-tag allowlist with any `t.<name>` references
@@ -602,6 +615,46 @@ class OverlayTemplateController extends Controller
 
             return response()->json(['error' => 'Failed to render overlay'], 500);
         }
+    }
+
+    /**
+     * Sum the numeric items in a List for the [[[c:list:slug:sum]]] tag.
+     * Whitespace-only / empty items are skipped (treated as 0, since
+     * empties are common as placeholders and aren't really mistakes).
+     * Any other non-numeric content fails loudly with an inline error
+     * string identifying the list slug + offending value + position.
+     * Streamers see the error directly in their overlay and can find +
+     * fix the broken row.
+     *
+     * @param  array<int, string>  $items
+     */
+    private function sumListItems(string $slug, array $items): string
+    {
+        $total = 0.0;
+        $sawNumber = false;
+
+        foreach ($items as $i => $raw) {
+            $trimmed = trim((string) $raw);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (! is_numeric($trimmed)) {
+                return "ERR: list '{$slug}' has non-numeric item '{$raw}' at position {$i}";
+            }
+            $total += (float) $trimmed;
+            $sawNumber = true;
+        }
+
+        // Avoid scientific notation; let the streamer's |number pipe
+        // format if they want commas. Integer-valued sums render
+        // without trailing zeros.
+        if (! $sawNumber) {
+            return '0';
+        }
+
+        return $total == (int) $total
+            ? (string) (int) $total
+            : (string) $total;
     }
 
     /**

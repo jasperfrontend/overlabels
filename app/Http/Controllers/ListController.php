@@ -99,7 +99,25 @@ class ListController extends Controller
             'label' => 'nullable|string|max:255',
             'items' => 'nullable|array',
             'items.*' => 'string',
+            // Optional - toggling disabled is a one-click action from
+            // the dashboard. When present, this PUT only flips the
+            // disabled_at timestamp and ignores label/items even if
+            // sent. Lets the UI fire a focused PATCH without having
+            // to round-trip the items array.
+            'disabled' => 'nullable|boolean',
         ]);
+
+        // Disable / enable is a stand-alone operation. Recipe-locked
+        // lists CAN still be disabled by the owner - locking only
+        // prevents item edits, not enable/disable state.
+        if (array_key_exists('disabled', $validated) && $validated['disabled'] !== null) {
+            $list->update([
+                'disabled_at' => $validated['disabled'] ? now() : null,
+            ]);
+            $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
+
+            return back()->with('flash_list_id', $list->id);
+        }
 
         $newItems = $this->sanitiseItems($validated['items'] ?? []);
 
@@ -191,6 +209,7 @@ class ListController extends Controller
             'min_items' => $list->min_items,
             'max_items' => $list->max_items,
             'user_editable' => $list->user_editable,
+            'disabled_at' => $list->disabled_at?->timestamp,
             'recipe_instance_id' => $list->recipe_instance_id,
             'recipe' => $recipe ? [
                 'slug' => $recipe->slug,

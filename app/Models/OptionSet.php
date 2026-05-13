@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $min_items
  * @property int|null $max_items
  * @property bool $user_editable
+ * @property \Illuminate\Support\Carbon|null $disabled_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read RecipeInstance|null $recipeInstance
@@ -41,6 +42,7 @@ class OptionSet extends Model
         'min_items',
         'max_items',
         'user_editable',
+        'disabled_at',
     ];
 
     protected $casts = [
@@ -48,6 +50,7 @@ class OptionSet extends Model
         'min_items' => 'integer',
         'max_items' => 'integer',
         'user_editable' => 'boolean',
+        'disabled_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

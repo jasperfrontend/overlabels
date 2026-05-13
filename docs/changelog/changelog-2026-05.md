@@ -1,5 +1,23 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - Lists slice A: derived read tags + disable/enable state
+
+- First slice of the lists-as-platform-primitive work designed yesterday. Adds five derived read tags and a per-list disabled state. No new tables - just one column + tag injection extensions.
+- Migration: `option_sets.disabled_at` nullable timestamp. Null = active. Non-null = disabled (silent refuse on chat-appender fires; existing items stay visible; streamer can still curate manually via the dashboard).
+- Five new read tags injected by `OverlayTemplateController::renderAuthenticated`:
+  - `[[[c:list:slug:first]]]` - items[0] or empty string
+  - `[[[c:list:slug:last]]]` - items[count-1] or empty string
+  - `[[[c:list:slug:empty]]]` - "1" if empty, "0" otherwise (for [[[if]]] checks)
+  - `[[[c:list:slug:random]]]` - one random item, stable per overlay mount (never re-rolls on broadcast - that'd flicker on every append)
+  - `[[[c:list:slug:sum]]]` - sums numeric items; whitespace and empty entries skipped as 0; fails loudly with `ERR: list 'slug' has non-numeric item 'abc' at position 4` so the streamer can find and fix the broken row
+- Also exposed `[[[c:list:slug:count]]]` as a colon-form alias for the existing `.count` (foreach materialiser still uses the dot form internally; the colon form is the user-facing read).
+- `OverlayRenderer.vue`'s `handleListUpdated` recomputes :first, :last, :empty, :sum on every `ListUpdated` broadcast so the tags update live in active overlays. `computeListSum` mirrors the PHP version exactly so initial render and broadcast updates produce identical strings. `handleListDeleted` now sweeps both dot-form and colon-form derived keys from the data store.
+- `ListAppendService::fire` short-circuits with `reason: 'list_disabled'` when the target list has `disabled_at` set. Silent - no outbox reply, no chat noise. The streamer disabled the list intentionally and the bot shouldn't apologise about it.
+- `ListController::update` accepts an optional `disabled` boolean. When present, it's a focused PATCH-style operation that only toggles `disabled_at` and ignores label/items even if sent. Lets the dashboard fire a one-click toggle without round-tripping the items array. Recipe-locked lists can still be disabled by their owner - locking only prevents item edits, not state changes.
+- Lists Vue page gets a status badge (red "Disabled" + PowerOffIcon) next to the existing recipe/locked badges, plus a toggle button in the action row that swaps between "Disable list" and "Enable list" depending on current state.
+- 13 new Pest tests in `ListReadTagsTest` cover :first/:last/:empty/:random/:sum (including the loud-failure path for non-numeric content and the integer-no-trailing-zeros formatting), `disabled_at` blocking appender fires, re-enable restoring fires, and the toggle endpoint preserving items when disabled is set. 652 tests green (was 639).
+- Locked-in but deferred to slice B: the `!list <slug> <action>` meta-command + the action vocabulary (draw / clear / pop / clone / count / first / last / random N). Those are bigger surface (action-runner service + bot dispatch + snapshot safety net) and ship together as one cohesive unit.
+
 ## May 13th, 2026 - Fix: /broadcasting/auth was being shadowed by the catch-all 404 route
 
 - WebSocket channel-auth requests to `POST /broadcasting/auth` were returning HTTP 200 with the `errors.404` HTML view instead of the JSON auth signature Echo expects. Browser tab open on `/dashboard/lists` (and presumably everywhere else using `window.Echo.private(...)` - `useStreamState`, the overlay renderer's dashboard preview, etc) couldn't authorise their channel subscriptions. The visible symptom on the Lists page: no live updates when chat appended to a list via a `!command`, even though the server-side broadcast was firing.
