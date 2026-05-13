@@ -21,6 +21,7 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "mchev/banhammer": "^2.4",
+        "opis/json-schema": "^2.6",
         "socialiteproviders/twitch": "^5.4",
         "sqids/sqids": "^0.5.0",
         "stevebauman/location": "^7.6",

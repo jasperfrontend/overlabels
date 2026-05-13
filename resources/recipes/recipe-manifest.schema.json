@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://overlabels.com/schemas/recipe-manifest/v1.json",
+  "title": "Overlabels Recipe Manifest",
+  "description": "Declarative description of a Recipe: the primitives it wires together (option sets, pickers), the controls it exports, and the triggers that fire its pickers. Manifests are 100% declarative - no executable code - because they are intended to be Claude-auditable before publishing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recipe_format_version",
+    "slug",
+    "name",
+    "version",
+    "description",
+    "author",
+    "primitives",
+    "control_exports",
+    "triggers"
+  ],
+  "properties": {
+    "recipe_format_version": {
+      "type": "integer",
+      "description": "The schema version this manifest targets. The installer rejects formats it does not understand.",
+      "const": 1
+    },
+    "slug": {
+      "type": "string",
+      "description": "Globally unique identifier for the recipe. Becomes part of [[[c:<slug>:<instance>:<name>]]] tag namespace; snake_case only.",
+      "pattern": "^[a-z][a-z0-9_]{0,49}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name shown to installers.",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "version": {
+      "type": "integer",
+      "description": "Integer version. A new version is a new installable artifact, never an in-place upgrade.",
+      "minimum": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Short blurb shown on the recipe's install page.",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "twitch_login": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_]{1,25}$"
+        }
+      }
+    },
+    "icon_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to an icon image (PNG/JPG/WebP). Optional."
+    },
+    "changelog": {
+      "type": "string",
+      "description": "Notes on what changed in this version.",
+      "maxLength": 2000
+    },
+    "min_overlabels_version": {
+      "type": "integer",
+      "description": "Minimum platform schema version this manifest needs. Increments only on breaking changes to the recipe-format itself.",
+      "minimum": 1,
+      "default": 1
+    },
+    "requires_integrations": {
+      "type": "array",
+      "description": "List of external integration source keys this recipe reads controls from (e.g. ['kofi', 'streamlabs']). Installer warns but does not block when an installer lacks one of these.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{0,29}$"
+      },
+      "uniqueItems": true
+    },
+    "max_instances_per_user": {
+      "type": "integer",
+      "description": "Per-user install cap for this recipe. Defaults to platform-wide admin setting if omitted.",
+      "minimum": 1
+    },
+    "primitives": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option_sets", "pickers"],
+      "properties": {
+        "option_sets": {
+          "type": "array",
+          "description": "Named, reusable lists of values that pickers draw from.",
+          "items": { "$ref": "#/$defs/optionSet" }
+        },
+        "pickers": {
+          "type": "array",
+          "description": "RNG / selection engines over an option set.",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/picker" }
+        }
+      }
+    },
+    "control_exports": {
+      "type": "array",
+      "description": "Maps picker state to user-facing controls. Each export becomes a [[[c:<slug>:<instance>:<name>]]] tag at install time.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/controlExport" }
+    },
+    "triggers": {
+      "type": "array",
+      "description": "Entry points that fire pickers (chat command, dashboard button). EventSub and scheduled triggers are deliberately out of v1.",
+      "items": { "$ref": "#/$defs/trigger" }
+    }
+  },
+
+  "$defs": {
+    "primitiveRef": {
+      "type": "string",
+      "description": "Manifest-local identifier for a primitive. Translated to a real DB id and per-instance slug at install time.",
+      "pattern": "^[a-z][a-z0-9_]{0,49}$"
+    },
+    "controlExportName": {
+      "type": "string",
+      "description": "Name of an exported control. Lands as the third colon segment in the tag namespace.",
+      "pattern": "^[a-z][a-z0-9_]{0,49}$"
+    },
+    "optionSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "label", "items"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/primitiveRef" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "items": {
+          "type": "array",
+          "description": "Default items. Each item is a short string. User-editable option sets accept post-install edits within min/max bounds.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "user_editable": {
+          "type": "boolean",
+          "default": true
+        },
+        "min_items": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "picker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "label", "option_set_ref"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/primitiveRef" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "option_set_ref": {
+          "$ref": "#/$defs/primitiveRef",
+          "description": "Must match the ref of an option_set declared in the same manifest."
+        },
+        "consume_on_pick": {
+          "type": "boolean",
+          "default": false
+        },
+        "concurrency": {
+          "type": "string",
+          "enum": ["reject_if_running", "cancel_running", "allow"],
+          "default": "reject_if_running"
+        },
+        "user_editable": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "controlExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "from"],
+      "properties": {
+        "name": { "$ref": "#/$defs/controlExportName" },
+        "from": {
+          "type": "string",
+          "description": "Dotted path to the picker state being exported. Currently only pickers.<ref>.{result|result_at|running} are supported.",
+          "pattern": "^pickers\\.[a-z][a-z0-9_]{0,49}\\.(result|result_at|running)$"
+        }
+      }
+    },
+    "trigger": {
+      "oneOf": [
+        { "$ref": "#/$defs/chatCommandTrigger" },
+        { "$ref": "#/$defs/dashboardButtonTrigger" }
+      ]
+    },
+    "chatCommandTrigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "command", "fires"],
+      "properties": {
+        "kind": { "const": "chat_command" },
+        "command": {
+          "type": "string",
+          "description": "Chat command including leading '!'.",
+          "pattern": "^![a-zA-Z0-9_]{1,29}$"
+        },
+        "permissions": {
+          "type": "string",
+          "enum": ["everyone", "subscriber", "vip", "moderator", "broadcaster"],
+          "default": "everyone"
+        },
+        "cooldown_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "fires": {
+          "type": "string",
+          "description": "Dotted path to the picker that fires. Format: pickers.<ref>.",
+          "pattern": "^pickers\\.[a-z][a-z0-9_]{0,49}$"
+        }
+      }
+    },
+    "dashboardButtonTrigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "fires"],
+      "properties": {
+        "kind": { "const": "dashboard_button" },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "fires": {
+          "type": "string",
+          "pattern": "^pickers\\.[a-z][a-z0-9_]{0,49}$"
+        }
+      }
+    }
+  }
+}
