@@ -38,6 +38,21 @@ it('accepts the canonical Coin Flip manifest when loaded via validateFile', func
     expect($result['valid'])->toBeTrue();
 });
 
+it('accepts every shipped first-party manifest', function () {
+    // Regression guard: every file under resources/recipes/<slug>/manifest.json
+    // must round-trip through the validator. Catches a hand-edited manifest
+    // breaking the schema before it lands in production via the seeder.
+    $manifests = glob(base_path('resources/recipes/*/manifest.json'));
+    expect($manifests)->not->toBeEmpty();
+
+    $validator = new RecipeManifestValidator;
+    foreach ($manifests as $path) {
+        $result = $validator->validateFile($path);
+        expect($result['valid'])
+            ->toBeTrue("Manifest at {$path} failed validation: ".json_encode($result['errors']));
+    }
+});
+
 it('rejects a slug with a dash', function () {
     $m = coinFlipManifest();
     $m['slug'] = 'coin-flip';

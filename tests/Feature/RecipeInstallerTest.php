@@ -165,6 +165,54 @@ it('enforces max_instances_per_user', function () {
         ->toThrow(RuntimeException::class, 'Per-user install cap reached');
 });
 
+it('installs the Dice recipe with the same shape and a six-face option set', function () {
+    // Step-5 validation per Recipes.md: the manifest abstraction must hold
+    // for a recipe with a different shape than Coin Flip. Dice has 6 items
+    // instead of 2, a different chat command, and a different cooldown,
+    // but no new code path - same installer, same listener, same bridge.
+    $manifest = json_decode(
+        file_get_contents(base_path('resources/recipes/dice/manifest.json')),
+        true,
+        512,
+        JSON_THROW_ON_ERROR
+    );
+
+    $recipe = Recipe::create([
+        'slug' => $manifest['slug'],
+        'version' => $manifest['version'],
+        'name' => $manifest['name'],
+        'description' => $manifest['description'],
+        'author_name' => $manifest['author']['name'],
+        'manifest' => $manifest,
+        'is_first_party' => true,
+    ]);
+    $user = installerFreshUser();
+
+    $instance = app(RecipeInstaller::class)->install($recipe, $user, 'd6');
+
+    expect($instance->instance_slug)->toBe('d6');
+
+    $optionSet = $instance->optionSets->first();
+    expect($optionSet->slug)->toBe('d6_faces')
+        ->and($optionSet->items)->toBe(['1', '2', '3', '4', '5', '6']);
+
+    $picker = $instance->pickers->first();
+    expect($picker->slug)->toBe('d6_roller');
+
+    $controlKeys = $instance->overlayControls->pluck('key')->all();
+    expect($controlKeys)->toContain('result', 'result_at', 'running');
+    expect($instance->overlayControls->firstWhere('key', 'result')->broadcastKey())
+        ->toBe('dice:d6:result');
+
+    $trigger = $instance->chatTriggers->first();
+    expect($trigger->command)->toBe('roll')
+        ->and($trigger->cooldown_seconds)->toBe(5);
+
+    // Fire once and make sure the picker lands on a real face.
+    $result = $picker->fire();
+    expect($result)->toBeIn(['1', '2', '3', '4', '5', '6']);
+});
+
 it('cascades cleanup: deleting the instance removes primitives and controls', function () {
     $recipe = seedCoinFlipRecipe();
     $user = installerFreshUser();

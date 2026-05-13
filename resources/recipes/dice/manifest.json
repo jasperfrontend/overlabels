@@ -1,0 +1,56 @@
+{
+  "recipe_format_version": 1,
+  "slug": "dice",
+  "name": "Dice",
+  "version": 1,
+  "description": "Roll a six-sided die. Triggered from chat with !roll or from the dashboard. Edit the faces to swap in custom values - anything from prize names to dare ideas.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. Second first-party recipe; validates the manifest shape generalises beyond Coin Flip.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "max_instances_per_user": 5,
+  "primitives": {
+    "option_sets": [
+      {
+        "ref": "faces",
+        "label": "Die faces",
+        "items": ["1", "2", "3", "4", "5", "6"],
+        "user_editable": true,
+        "min_items": 2,
+        "max_items": 100
+      }
+    ],
+    "pickers": [
+      {
+        "ref": "roller",
+        "label": "The roller",
+        "option_set_ref": "faces",
+        "consume_on_pick": false,
+        "concurrency": "reject_if_running",
+        "user_editable": false
+      }
+    ]
+  },
+  "control_exports": [
+    { "name": "result", "from": "pickers.roller.result" },
+    { "name": "result_at", "from": "pickers.roller.result_at" },
+    { "name": "running", "from": "pickers.roller.running" }
+  ],
+  "triggers": [
+    {
+      "kind": "chat_command",
+      "command": "!roll",
+      "permissions": "everyone",
+      "cooldown_seconds": 5,
+      "fires": "pickers.roller"
+    },
+    {
+      "kind": "dashboard_button",
+      "label": "Roll the die",
+      "fires": "pickers.roller"
+    }
+  ]
+}
