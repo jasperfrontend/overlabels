@@ -176,6 +176,10 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
 
+Route::get('/dashboard/recipes', [RecipeInstanceController::class, 'index'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.recipes');
+
 Route::post('/recipes/instances/{instance}/fire-button', [RecipeInstanceController::class, 'fireButton'])
     ->middleware(['auth.redirect'])
     ->name('recipes.instances.fire-button');

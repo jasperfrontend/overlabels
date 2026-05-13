@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\RecipeInstance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -19,6 +21,74 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class RecipeInstanceController extends Controller
 {
+    /**
+     * GET /dashboard/recipes
+     *
+     * Lists the authenticated user's installed Recipe instances. For each
+     * instance, exposes the dashboard_button triggers as clickable rows
+     * and surfaces the last picked result and timestamp for each picker.
+     */
+    public function index(Request $request): Response
+    {
+        $instances = RecipeInstance::with(['recipe', 'pickers'])
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (RecipeInstance $instance) {
+                $manifest = $instance->recipe?->manifest ?? [];
+
+                $buttonsByPickerRef = [];
+                foreach ($manifest['triggers'] ?? [] as $trigger) {
+                    if (($trigger['kind'] ?? null) !== 'dashboard_button') {
+                        continue;
+                    }
+                    if (! preg_match('/^pickers\.([a-z][a-z0-9_]*)$/', $trigger['fires'] ?? '', $m)) {
+                        continue;
+                    }
+                    $buttonsByPickerRef[$m[1]] = $trigger['label'] ?? 'Fire';
+                }
+
+                $pickerById = $instance->pickers->keyBy('id');
+
+                $buttons = [];
+                foreach ($instance->primitive_map['pickers'] ?? [] as $ref => $pickerId) {
+                    if (! isset($buttonsByPickerRef[$ref])) {
+                        continue;
+                    }
+                    $picker = $pickerById->get($pickerId);
+                    if (! $picker) {
+                        continue;
+                    }
+                    $buttons[] = [
+                        'picker_ref' => $ref,
+                        'label' => $buttonsByPickerRef[$ref],
+                        'last_result' => $picker->last_result,
+                        'last_result_at' => $picker->last_result_at?->timestamp,
+                        'is_running' => $picker->is_running,
+                    ];
+                }
+
+                return [
+                    'id' => $instance->id,
+                    'instance_slug' => $instance->instance_slug,
+                    'label' => $instance->label,
+                    'recipe' => [
+                        'slug' => $instance->recipe?->slug,
+                        'name' => $instance->recipe?->name,
+                        'version' => $instance->recipe?->version,
+                    ],
+                    'tag_prefix' => "c:{$instance->recipe?->slug}:{$instance->instance_slug}",
+                    'buttons' => $buttons,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return Inertia::render('dashboard/recipes', [
+            'instances' => $instances,
+        ]);
+    }
+
     /**
      * POST /recipes/instances/{instance}/fire-button
      *
