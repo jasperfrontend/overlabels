@@ -114,6 +114,11 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/controlExport" }
     },
+    "expression_controls": {
+      "type": "array",
+      "description": "Optional. Materialises one or more derived controls computed by the overlay's expression engine on every animation frame. Use these for animations (e.g. a wheel rotation that interpolates from 0 to the landing angle). The expression string uses the dot-notation control syntax (c.<recipe>.<instance>.<key>) and may reference now_ms() to become time-dependent. Inside the expression text, the literal __INSTANCE__ is substituted with the actually-installed instance slug at install time.",
+      "items": { "$ref": "#/$defs/expressionControl" }
+    },
     "triggers": {
       "type": "array",
       "description": "Entry points that fire pickers (chat command, dashboard button). EventSub and scheduled triggers are deliberately out of v1.",
@@ -205,8 +210,26 @@
         "name": { "$ref": "#/$defs/controlExportName" },
         "from": {
           "type": "string",
-          "description": "Dotted path to the picker state being exported. Currently only pickers.<ref>.{result|result_at|running} are supported.",
-          "pattern": "^pickers\\.[a-z][a-z0-9_]{0,49}\\.(result|result_at|running)$"
+          "description": "Dotted path to the picker state being exported. Supported fields: result (string), result_index (integer position in the option set, useful for animation), result_at (Unix seconds), running (boolean).",
+          "pattern": "^pickers\\.[a-z][a-z0-9_]{0,49}\\.(result|result_index|result_at|running)$"
+        }
+      }
+    },
+    "expressionControl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "expression"],
+      "properties": {
+        "name": { "$ref": "#/$defs/controlExportName" },
+        "expression": {
+          "type": "string",
+          "description": "Single-expression formula evaluated by the overlay's expression engine. Reference other controls via the dot-notation form (c.<recipe>.<instance>.<key>) - the bracketed [[[c:...]]] form is for overlay HTML only. Use __INSTANCE__ wherever the installer should substitute the instance slug.",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 100
         }
       }
     },

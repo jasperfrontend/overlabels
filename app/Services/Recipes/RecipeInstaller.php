@@ -133,12 +133,12 @@ class RecipeInstaller
             foreach ($manifest['control_exports'] as $export) {
                 $field = $this->parseFromField($export['from']);
                 $type = match ($field) {
-                    'result_at' => 'number',
+                    'result_index', 'result_at' => 'number',
                     'running' => 'boolean',
                     default => 'text',
                 };
                 $defaultValue = match ($field) {
-                    'result_at', 'running' => '0',
+                    'result_index', 'result_at', 'running' => '0',
                     default => '',
                 };
 
@@ -151,6 +151,32 @@ class RecipeInstaller
                     'type' => $type,
                     'value' => $defaultValue,
                     'config' => null,
+                    'sort_order' => 0,
+                    'source' => null,
+                    'source_managed' => true,
+                ]);
+            }
+
+            foreach ($manifest['expression_controls'] ?? [] as $exprControl) {
+                // __INSTANCE__ substitution: kit authors write their
+                // expression once with the placeholder; the installer
+                // bakes in the actual instance slug here. Any other
+                // occurrences in the string are left alone.
+                $expression = str_replace(
+                    '__INSTANCE__',
+                    $instanceSlug,
+                    (string) $exprControl['expression']
+                );
+
+                OverlayControl::create([
+                    'overlay_template_id' => null,
+                    'user_id' => $user->id,
+                    'recipe_instance_id' => $instance->id,
+                    'key' => $exprControl['name'],
+                    'label' => $exprControl['label'] ?? $exprControl['name'],
+                    'type' => 'expression',
+                    'value' => '0',
+                    'config' => ['expression' => $expression],
                     'sort_order' => 0,
                     'source' => null,
                     'source_managed' => true,
@@ -275,11 +301,11 @@ class RecipeInstaller
 
     /**
      * Extracts the picker-field name from a control_export 'from' path.
-     * Schema-validated input shape: pickers.<ref>.{result|result_at|running}.
+     * Schema-validated input shape: pickers.<ref>.{result|result_index|result_at|running}.
      */
     private function parseFromField(string $from): string
     {
-        if (preg_match('/^pickers\.[a-z][a-z0-9_]*\.(result|result_at|running)$/', $from, $m)) {
+        if (preg_match('/^pickers\.[a-z][a-z0-9_]*\.(result|result_index|result_at|running)$/', $from, $m)) {
             return $m[1];
         }
 

@@ -36,8 +36,16 @@
   },
   "control_exports": [
     { "name": "result", "from": "pickers.wheel.result" },
+    { "name": "result_index", "from": "pickers.wheel.result_index" },
     { "name": "result_at", "from": "pickers.wheel.result_at" },
     { "name": "running", "from": "pickers.wheel.running" }
+  ],
+  "expression_controls": [
+    {
+      "name": "rotation_deg",
+      "label": "Wheel rotation angle (degrees)",
+      "expression": "floor(c.wheel_spin[\"__INSTANCE__:result_at\"] / 4) * 360 + 337.5 - 45 * c.wheel_spin[\"__INSTANCE__:result_index\"]"
+    }
   ],
   "triggers": [
     {

@@ -53,6 +53,7 @@ class BridgePickerLandedToControl
             $field = substr($export['from'], strlen($expected));
             $value = match ($field) {
                 'result' => $event->result,
+                'result_index' => (string) $event->resultIndex,
                 'result_at' => (string) $event->resultAt,
                 'running' => $picker->is_running ? '1' : '0',
                 default => null,

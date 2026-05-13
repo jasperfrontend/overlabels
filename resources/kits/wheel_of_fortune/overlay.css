@@ -1,8 +1,14 @@
 /* Wheel of Fortune overlay. The 8 segment colours come from a conic-gradient
-   on .wheel-disk; the .wheel-segment <div>s are radial label slots positioned
-   on top, NOT the wedges themselves. To customise segment text, edit the
-   <span>s in the HTML and keep the matching c:wheel_spin OptionSet items
-   in sync via the controls page. */
+   on .wheel-disk starting at 12 o'clock and going clockwise. The .wheel-segment
+   <div>s are radial label slots positioned on top, NOT the wedges themselves.
+   To customise segment text: edit the <span>s in the HTML and keep the matching
+   c:wheel_spin OptionSet items in sync via the controls page.
+
+   Spin animation: the inline transform on .wheel-spinner is driven by the
+   `rotation_deg` expression control shipped with the wheel_spin recipe. That
+   expression evaluates to a monotonically-increasing angle whose remainder
+   modulo 360 corresponds to the target segment. The CSS transition below
+   handles the visual interpolation - no JS required. */
 
 .wheel-stage {
   position: relative;
@@ -39,6 +45,7 @@
 .wheel-spinner {
   position: absolute;
   inset: 0;
+  transform: rotate(0deg);
   transition: transform 4s cubic-bezier(0.18, 0.85, 0.25, 1);
   will-change: transform;
 }
@@ -47,8 +54,10 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
+  /* Default conic-gradient starts at 12 o'clock (0deg of the gradient =
+     0deg on the page) and goes clockwise. Segment 0 = 0-45deg = top-right
+     wedge, centered at 22.5deg from top. */
   background: conic-gradient(
-    from -90deg,
     #e74c3c 0deg 45deg,
     #f39c12 45deg 90deg,
     #f1c40f 90deg 135deg,
@@ -62,8 +71,10 @@
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
 
-/* Each .wheel-segment is positioned absolutely, then rotated into place.
-   The <span> inside is counter-rotated so the text reads upright. */
+/* Each .wheel-segment is a 1px-wide div pinned to the wheel center with
+   transform-origin at bottom (the centre of the wheel). It sticks up to
+   the rim by default; rotating it positions the label at that angle from
+   12 o'clock, clockwise. */
 .wheel-segment {
   position: absolute;
   top: 0;
@@ -86,23 +97,24 @@
   white-space: nowrap;
 }
 
-/* 8 segments x 45deg apart. Each label sits at half-segment offset (22.5deg
-   into the wedge) so it's centred over its slice. */
-.wheel-segment-0 { transform: rotate(-67.5deg); }
-.wheel-segment-1 { transform: rotate(-22.5deg); }
-.wheel-segment-2 { transform: rotate(22.5deg);  }
-.wheel-segment-3 { transform: rotate(67.5deg);  }
-.wheel-segment-4 { transform: rotate(112.5deg); }
-.wheel-segment-5 { transform: rotate(157.5deg); }
-.wheel-segment-6 { transform: rotate(202.5deg); }
-.wheel-segment-7 { transform: rotate(247.5deg); }
+/* Labels sit at half-segment offset (22.5deg into the wedge) so they're
+   centred over their slice. Segment N center = 22.5 + 45*N degrees
+   clockwise from top. */
+.wheel-segment-0 { transform: rotate(22.5deg);  }
+.wheel-segment-1 { transform: rotate(67.5deg);  }
+.wheel-segment-2 { transform: rotate(112.5deg); }
+.wheel-segment-3 { transform: rotate(157.5deg); }
+.wheel-segment-4 { transform: rotate(202.5deg); }
+.wheel-segment-5 { transform: rotate(247.5deg); }
+.wheel-segment-6 { transform: rotate(292.5deg); }
+.wheel-segment-7 { transform: rotate(337.5deg); }
 
+/* Segments on the bottom half: counter-rotate 180deg so labels read
+   right-side-up rather than upside-down. */
+.wheel-segment-2 > span,
+.wheel-segment-3 > span,
 .wheel-segment-4 > span,
-.wheel-segment-5 > span,
-.wheel-segment-6 > span,
-.wheel-segment-7 > span {
-  /* Segments on the bottom half: counter-rotate 180deg so labels read
-     right-side-up. */
+.wheel-segment-5 > span {
   transform: translateX(-50%) rotate(180deg);
   top: auto;
   bottom: 14%;
