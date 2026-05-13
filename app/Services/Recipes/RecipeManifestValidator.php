@@ -178,8 +178,8 @@ class RecipeManifestValidator
             if (! is_string($from)) {
                 continue;
             }
-            // Pattern enforced by JSON Schema: pickers.<ref>.{result|result_index|result_at|running}
-            if (preg_match('/^pickers\.([a-z][a-z0-9_]*)\.(?:result|result_index|result_at|running)$/', $from, $m)
+            // Pattern enforced by JSON Schema: pickers.<ref>.{result|result_at|running}
+            if (preg_match('/^pickers\.([a-z][a-z0-9_]*)\.(?:result|result_at|running)$/', $from, $m)
                 && ! in_array($m[1], $pickerRefs, true)
             ) {
                 $errors[] = [

@@ -32,7 +32,6 @@ use RuntimeException;
  * @property string $concurrency
  * @property bool $user_editable
  * @property string|null $last_result
- * @property int|null $last_result_index
  * @property \Illuminate\Support\Carbon|null $last_result_at
  * @property bool $is_running
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -70,7 +69,6 @@ class Picker extends Model
         'concurrency',
         'user_editable',
         'last_result',
-        'last_result_index',
         'last_result_at',
         'is_running',
     ];
@@ -79,7 +77,6 @@ class Picker extends Model
         'consume_on_pick' => 'boolean',
         'consumed_indices' => 'array',
         'user_editable' => 'boolean',
-        'last_result_index' => 'integer',
         'last_result_at' => 'datetime',
         'is_running' => 'boolean',
     ];
@@ -143,7 +140,6 @@ class Picker extends Model
             $resultAt = now();
 
             $locked->last_result = $result;
-            $locked->last_result_index = $pickedIndex;
             $locked->last_result_at = $resultAt;
             $locked->is_running = false;
 
@@ -159,7 +155,6 @@ class Picker extends Model
                     $locked->id,
                     $locked->slug,
                     $result,
-                    $pickedIndex,
                     $resultAt->timestamp,
                     (string) $locked->user->twitch_id,
                 );

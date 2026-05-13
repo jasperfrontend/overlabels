@@ -205,9 +205,6 @@ it('seeds the Wheel of Fortune kit with one bundled recipe and one template', fu
     $template = $kit->templates->first();
     expect($template->html)->toContain('__INSTANCE__')
         ->and($template->html)->toContain('wheel_spin')
-        ->and($template->html)->toContain('rotation_deg')
         ->and($template->css)->toContain('wheel-stage')
-        // The wheel intentionally ships zero JS - the rotation animation
-        // is driven by an expression control + a CSS transition.
-        ->and($template->js ?? '')->not->toContain('document');
+        ->and($template->js)->toContain('SEGMENTS');
 });

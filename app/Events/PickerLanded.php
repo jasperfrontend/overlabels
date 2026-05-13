@@ -25,7 +25,6 @@ class PickerLanded implements ShouldBroadcast
         public int $pickerId,
         public string $pickerSlug,
         public string $result,
-        public int $resultIndex,
         public int $resultAt,
         public string $broadcasterId,
     ) {}
@@ -46,7 +45,6 @@ class PickerLanded implements ShouldBroadcast
             'picker_id' => $this->pickerId,
             'picker_slug' => $this->pickerSlug,
             'result' => $this->result,
-            'result_index' => $this->resultIndex,
             'result_at' => $this->resultAt,
         ];
     }

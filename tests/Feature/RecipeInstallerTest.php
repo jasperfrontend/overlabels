@@ -85,8 +85,6 @@ it('installs Coin Flip end-to-end with correct primitives + controls', function 
         ->and($picker->slug)->toBe('main_flipper')
         ->and($picker->option_set_id)->toBe($optionSet->id);
 
-    // Coin Flip's manifest declares result/result_at/running - three controls.
-    // (It doesn't ship result_index; that's a wheel/dice feature.)
     $controls = OverlayControl::where('recipe_instance_id', $instance->id)->get();
     expect($controls)->toHaveCount(3);
     $keysByType = $controls->keyBy('key');
@@ -94,20 +92,6 @@ it('installs Coin Flip end-to-end with correct primitives + controls', function 
         ->and($keysByType['result']->type)->toBe('text')
         ->and($keysByType['result_at']->type)->toBe('number')
         ->and($keysByType['running']->type)->toBe('boolean');
-});
-
-it('records last_result_index on the picker when fired', function () {
-    $recipe = seedCoinFlipRecipe();
-    $user = installerFreshUser();
-    $instance = app(RecipeInstaller::class)->install($recipe, $user, 'main');
-
-    $picker = $instance->pickers->first();
-    $result = $picker->fire();
-    $picker->refresh();
-
-    expect($result)->toBeIn(['Heads', 'Tails'])
-        ->and($picker->last_result_index)->toBeIn([0, 1])
-        ->and($picker->optionSet->items[$picker->last_result_index])->toBe($result);
 });
 
 it('composes broadcastKey as recipe_slug:instance_slug:key for recipe controls', function () {
@@ -179,79 +163,6 @@ it('enforces max_instances_per_user', function () {
 
     expect(fn () => $installer->install($recipe, $user, 'c'))
         ->toThrow(RuntimeException::class, 'Per-user install cap reached');
-});
-
-it('installs wheel_spin with result_index exported and an expression control', function () {
-    $manifest = json_decode(
-        file_get_contents(base_path('resources/recipes/wheel_spin/manifest.json')),
-        true,
-        512,
-        JSON_THROW_ON_ERROR
-    );
-
-    $recipe = Recipe::create([
-        'slug' => $manifest['slug'],
-        'version' => $manifest['version'],
-        'name' => $manifest['name'],
-        'description' => $manifest['description'],
-        'author_name' => $manifest['author']['name'],
-        'manifest' => $manifest,
-        'is_first_party' => true,
-    ]);
-    $user = installerFreshUser();
-
-    $instance = app(RecipeInstaller::class)->install($recipe, $user, 'wheel');
-
-    // 4 exported state controls + 1 expression control = 5 total
-    expect($instance->overlayControls)->toHaveCount(5);
-
-    $byKey = $instance->overlayControls->keyBy('key');
-    expect($byKey->keys()->all())->toContain('result', 'result_index', 'result_at', 'running', 'rotation_deg')
-        ->and($byKey['result_index']->type)->toBe('number')
-        ->and($byKey['rotation_deg']->type)->toBe('expression');
-
-    // The __INSTANCE__ placeholder in the manifest's expression must be
-    // substituted with the actually-installed instance slug.
-    $exprText = $byKey['rotation_deg']->config['expression'];
-    expect($exprText)->not->toContain('__INSTANCE__')
-        ->and($exprText)->toContain('wheel_spin')
-        ->and($exprText)->toContain('"wheel:result_at"')
-        ->and($exprText)->toContain('"wheel:result_index"');
-});
-
-it('bridges PickerLanded to result_index control when the manifest declares it', function () {
-    \Illuminate\Support\Facades\Event::fake([\App\Events\ControlValueUpdated::class]);
-
-    $manifest = json_decode(
-        file_get_contents(base_path('resources/recipes/wheel_spin/manifest.json')),
-        true,
-        512,
-        JSON_THROW_ON_ERROR
-    );
-    $recipe = Recipe::create([
-        'slug' => $manifest['slug'],
-        'version' => $manifest['version'],
-        'name' => $manifest['name'],
-        'description' => $manifest['description'],
-        'author_name' => $manifest['author']['name'],
-        'manifest' => $manifest,
-        'is_first_party' => true,
-    ]);
-    $user = installerFreshUser();
-    $user->update(['twitch_id' => '88877766']);
-    $instance = app(RecipeInstaller::class)->install($recipe, $user, 'wheel');
-
-    $picker = $instance->pickers->first();
-    $result = $picker->fire();
-    $picker->refresh();
-
-    $indexControl = $instance->overlayControls->fresh()->firstWhere('key', 'result_index');
-    expect($indexControl->value)->toBe((string) $picker->last_result_index);
-
-    \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\ControlValueUpdated::class, function ($event) use ($picker) {
-        return $event->key === 'wheel_spin:wheel:result_index'
-            && $event->value === (string) $picker->last_result_index;
-    });
 });
 
 it('installs the Dice recipe with the same shape and a six-face option set', function () {
