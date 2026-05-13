@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
 use App\Models\ListAppender;
+use App\Models\ListMetaCommand;
 use App\Models\RecipeChatTrigger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -22,15 +23,16 @@ class BotCommandController extends Controller
      *
      *   {
      *     "jasperdiscovers": [
-     *       { "command": "control",  "permission_level": "everyone", "type": "builtin"        },
-     *       { "command": "distance", "permission_level": "everyone", "type": "expression"     },
-     *       { "command": "flip",     "permission_level": "everyone", "type": "recipe_trigger" },
-     *       { "command": "raffle",   "permission_level": "everyone", "type": "list_append"    }
+     *       { "command": "control",  "permission_level": "everyone",   "type": "builtin"        },
+     *       { "command": "distance", "permission_level": "everyone",   "type": "expression"     },
+     *       { "command": "flip",     "permission_level": "everyone",   "type": "recipe_trigger" },
+     *       { "command": "raffle",   "permission_level": "everyone",   "type": "list_append"    },
+     *       { "command": "list",     "permission_level": "moderator",  "type": "list_meta"      }
      *     ]
      *   }
      *
      * Resolution order on command-name collision:
-     *   builtin > expression > recipe_trigger > list_append.
+     *   builtin > expression > recipe_trigger > list_append > list_meta.
      * Validation at save / install time should refuse colliding rows, but enforcing
      * the order here keeps the bot deterministic if a stale row sneaks through.
      */
@@ -55,6 +57,11 @@ class BotCommandController extends Controller
             ->whereIn('user_id', $users->pluck('id'))
             ->get()
             ->groupBy('user_id');
+
+        $metaCommandsByUser = ListMetaCommand::where('enabled', true)
+            ->whereIn('user_id', $users->pluck('id'))
+            ->get()
+            ->keyBy('user_id');
 
         $map = [];
 
@@ -109,6 +116,15 @@ class BotCommandController extends Controller
                     'type' => 'list_append',
                 ];
                 $claimed[] = $appender->command;
+            }
+
+            $meta = $metaCommandsByUser->get($user->id);
+            if ($meta && ! in_array($meta->command, $claimed, true)) {
+                $entries[] = [
+                    'command' => $meta->command,
+                    'permission_level' => ListMetaCommand::PERMISSION_LEVEL,
+                    'type' => 'list_meta',
+                ];
             }
 
             $map[strtolower($login)] = $entries;

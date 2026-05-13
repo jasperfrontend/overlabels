@@ -1,5 +1,26 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - Lists slice B: !list meta-command + action vocabulary + snapshots
+
+- The big half of the lists-as-platform-primitive work. Adds the `!list <slug> <action>` chat surface (one configurable meta-command per user with a fixed action vocabulary), dashboard buttons for the same actions, and an auto-snapshot safety net so destructive actions are undoable.
+- Two new tables. `list_meta_commands` (one row per user; configurable command name defaulting to "list"; unique on user_id; permission hardcoded to moderator+ since the action vocabulary is destructive or chat-emitting). `list_snapshots` (list_id FK cascade, items jsonb, reason enum, triggered_by_user_id, pinned bool, created_at; append-only, no updated_at).
+- Fixed action vocabulary, one parser:
+  - **Read** (no mutation, no snapshot): `count`, `first [N]`, `last [N]`, `random [N]`. N defaults to 1, caps at list size.
+  - **Destructive** (auto-snapshot, broadcast ListUpdated): `draw` (random pick + pop, announces winner with 🎰), `clear` (empties), `pop first|last` (head/tail removal; bare `pop` errors with help), `clone <new_slug>` (duplicates).
+  - **State**: `disable`, `enable`.
+- Self-documenting help threaded through the same parser. Bare `!list` returns the global help message; `!list <slug>` returns per-list help; `!list <slug> unknown_action` lists valid actions; `!list <slug> pop` and `!list <slug> clone` (missing required arg) reply with usage hints inline. Beautifully consistent: any ambiguity surfaces as a helpful reply rather than silent failure.
+- `ListActionService` is the single backing service for both chat-driven invocation and dashboard buttons. Parses `<slug> <action> <args>`, validates ownership, dispatches per-action, generates chat-friendly replies, snapshots before destructive ops inside lockForUpdate transactions, broadcasts ListUpdated. Hard cap of 400 chars on chat replies (Twitch chat is 500; slack for @user prefix).
+- New internal API endpoint `POST /api/internal/bot/list-actions/fire` (sibling of expressions/recipe-triggers/list-appenders). BotCommandController surfaces opted-in users with `type: 'list_meta'`. Resolution order: builtin > expression > recipe_trigger > list_append > list_meta.
+- Bot repo (separate commit) adds the `entry.type === 'list_meta'` dispatch branch in `bot.js`, mirroring the existing pattern. Bot stays silent on response - replies are queued to `bot_chat_outbox` server-side and the outbox poller speaks them.
+- Web endpoints (JSON, consumed via axios): action runner (same vocabulary as chat), snapshot CRUD (list/manual/restore/pin/delete), meta-command settings (one per user; collision-checked against builtin/expression/recipe_trigger/list_append commands at save time).
+- Lists Vue page extended with three sections:
+  - **Meta-command card** at the top: opt into !list, customise command name, toggle enabled.
+  - **Actions row** per active list with 9 buttons (Count / First / Last / Random / Clone / Draw / Pop first / Pop last / Clear). Read actions prompt for an optional N; destructive actions confirm; Draw is the primary call-to-action in violet. Results surface as toasts.
+  - **Snapshots panel** (collapsible) with reason badge, item count, relative age, pin/restore/delete per row. Manual "Save snapshot" button before risky edits.
+- Snapshots are the safety net. Restoring a snapshot creates a `before_restore` snapshot of the current state first so even the restore is undoable. Reason enum: `before_clear` / `before_draw` / `before_pop` / `before_restore` / `manual`.
+- 30 new Pest tests cover service-level read/destructive/state actions + error paths (unknown slug, unknown action, bare pop, bare clone, draw on empty, clone slug collision), bot internal API gate/permission/meta_not_found paths, commandMap surface, web action endpoint + foreign-user 404, snapshot list/restore/pin, meta-command save with collision-check. 682 tests green (was 652).
+- Deliberately deferred: scheduled retention sweep that deletes unpinned snapshots >30 days old (schema + pin behaviour are in place; the cron job is the missing piece), auto-expire entries + auto-expire lists (slice C, requires per-item timestamps), and the synthetic timer-control integration for list expiry.
+
 ## May 14th, 2026 - Lists slice A: derived read tags + disable/enable state
 
 - First slice of the lists-as-platform-primitive work designed yesterday. Adds five derived read tags and a per-list disabled state. No new tables - just one column + tag injection extensions.

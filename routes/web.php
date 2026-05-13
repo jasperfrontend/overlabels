@@ -13,6 +13,7 @@ use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
+use App\Http\Controllers\ListActionWebController;
 use App\Http\Controllers\ListAppenderController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\MapController;
@@ -483,6 +484,13 @@ Route::middleware('auth.redirect')->group(function () {
     Route::prefix('dashboard/lists')->name('lists.')->group(function () {
         Route::get('/', [ListController::class, 'index'])->name('index');
         Route::post('/', [ListController::class, 'store'])->name('store');
+
+        // !list meta-command config (one per user). Routes registered
+        // BEFORE the {list} parameterised routes so 'meta-command'
+        // doesn't get bound to the route-model resolver.
+        Route::get('/meta-command', [ListActionWebController::class, 'getMeta'])->name('meta-command.get');
+        Route::put('/meta-command', [ListActionWebController::class, 'saveMeta'])->name('meta-command.save');
+
         Route::put('/{list}', [ListController::class, 'update'])->name('update');
         Route::delete('/{list}', [ListController::class, 'destroy'])->name('destroy');
 
@@ -494,6 +502,19 @@ Route::middleware('auth.redirect')->group(function () {
             Route::post('/', [ListAppenderController::class, 'store'])->name('store');
             Route::put('/{appender}', [ListAppenderController::class, 'update'])->name('update');
             Route::delete('/{appender}', [ListAppenderController::class, 'destroy'])->name('destroy');
+        });
+
+        // List Actions (dashboard buttons + the !list meta-command's
+        // dashboard equivalent). Same vocabulary as the chat command.
+        Route::post('/{list}/actions', [ListActionWebController::class, 'runAction'])->name('actions.run');
+
+        // Snapshots
+        Route::prefix('{list}/snapshots')->name('snapshots.')->group(function () {
+            Route::get('/', [ListActionWebController::class, 'listSnapshots'])->name('index');
+            Route::post('/manual', [ListActionWebController::class, 'manualSnapshot'])->name('manual');
+            Route::post('/{snapshot}/restore', [ListActionWebController::class, 'restoreSnapshot'])->name('restore');
+            Route::patch('/{snapshot}/pin', [ListActionWebController::class, 'togglePin'])->name('pin');
+            Route::delete('/{snapshot}', [ListActionWebController::class, 'deleteSnapshot'])->name('destroy');
         });
     });
 

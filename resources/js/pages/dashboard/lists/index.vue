@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon, PowerIcon, PowerOffIcon } from 'lucide-vue-next';
+import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon, PowerIcon, PowerOffIcon, DicesIcon, EraserIcon, ArrowUpFromLineIcon, ArrowDownFromLineIcon, CopyPlusIcon, HashIcon, ArrowDownToLineIcon, ArrowUpToLineIcon, ShuffleIcon, HistoryIcon, PinIcon, RotateCcwIcon, TerminalIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface ListRow {
@@ -419,6 +419,206 @@ onUnmounted(() => {
     (window as any).Echo?.leave(`private-${echoChannelName}`);
   }
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// List actions (dashboard buttons that mirror the !list meta-command)
+// ──────────────────────────────────────────────────────────────────────────────
+
+const runningAction = ref<string | null>(null);
+
+async function runAction(action: string, args: string = '', requiresConfirm = false, confirmText = '') {
+  if (!activeList.value) return;
+  if (requiresConfirm && !confirm(confirmText || `Run '${action}' on '${activeList.value.slug}'?`)) return;
+
+  runningAction.value = action;
+  try {
+    const res = await axios.post(`/dashboard/lists/${activeList.value.id}/actions`, { action, args });
+    toastMessage.value = res.data.reply || `'${action}' done.`;
+    toastType.value = 'success';
+    if (['clear', 'draw', 'pop'].includes(action)) {
+      loadSnapshots(activeList.value.id);
+    }
+  } catch (err: any) {
+    toastMessage.value = err?.response?.data?.message || `'${action}' failed.`;
+    toastType.value = 'error';
+  } finally {
+    runningAction.value = null;
+  }
+}
+
+function runCount() { runAction('count'); }
+function runFirst() {
+  const n = prompt(`How many from the start? (default 1)`, '1');
+  if (n === null) return;
+  runAction('first', n.trim());
+}
+function runLast() {
+  const n = prompt(`How many from the end? (default 1)`, '1');
+  if (n === null) return;
+  runAction('last', n.trim());
+}
+function runRandom() {
+  const n = prompt(`How many random items? (default 1)`, '1');
+  if (n === null) return;
+  runAction('random', n.trim());
+}
+function runDraw() {
+  runAction('draw', '', true, `Draw a winner from '${activeList.value?.slug}'? The winner is removed from the list.`);
+}
+function runClear() {
+  runAction('clear', '', true, `Clear ALL items from '${activeList.value?.slug}'? A snapshot is taken first; you can restore.`);
+}
+function runPop(which: 'first' | 'last') {
+  runAction('pop', which, true, `Remove the ${which} item from '${activeList.value?.slug}'?`);
+}
+function runClone() {
+  const slug = prompt(`New slug for the clone of '${activeList.value?.slug}':`, '');
+  if (!slug || !slug.trim()) return;
+  runAction('clone', slug.trim());
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Snapshots
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface SnapshotRow {
+  id: number;
+  reason: string;
+  items: string[];
+  item_count: number;
+  pinned: boolean;
+  created_at: number;
+}
+
+const snapshots = ref<SnapshotRow[]>([]);
+const snapshotsLoading = ref(false);
+const showSnapshots = ref(false);
+
+async function loadSnapshots(listId: number) {
+  snapshotsLoading.value = true;
+  try {
+    const res = await axios.get(`/dashboard/lists/${listId}/snapshots`);
+    snapshots.value = res.data.snapshots ?? [];
+  } catch {
+    snapshots.value = [];
+  } finally {
+    snapshotsLoading.value = false;
+  }
+}
+
+watch(activeId, (id) => {
+  if (id !== null) loadSnapshots(id);
+  else snapshots.value = [];
+});
+
+async function takeManualSnapshot() {
+  if (!activeList.value) return;
+  try {
+    await axios.post(`/dashboard/lists/${activeList.value.id}/snapshots/manual`);
+    loadSnapshots(activeList.value.id);
+    toastMessage.value = 'Snapshot taken.';
+    toastType.value = 'success';
+  } catch {
+    toastMessage.value = 'Failed to take snapshot.';
+    toastType.value = 'error';
+  }
+}
+
+async function restoreSnapshot(snap: SnapshotRow) {
+  if (!activeList.value) return;
+  if (!confirm(`Restore '${activeList.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`)) return;
+  try {
+    await axios.post(`/dashboard/lists/${activeList.value.id}/snapshots/${snap.id}/restore`);
+    loadSnapshots(activeList.value.id);
+    toastMessage.value = `Restored to snapshot (${snap.item_count} items).`;
+    toastType.value = 'success';
+  } catch {
+    toastMessage.value = 'Restore failed.';
+    toastType.value = 'error';
+  }
+}
+
+async function togglePin(snap: SnapshotRow) {
+  if (!activeList.value) return;
+  try {
+    const res = await axios.patch(`/dashboard/lists/${activeList.value.id}/snapshots/${snap.id}/pin`);
+    snap.pinned = res.data.pinned;
+    toastMessage.value = snap.pinned ? 'Snapshot pinned (survives retention sweep).' : 'Snapshot unpinned.';
+    toastType.value = 'success';
+  } catch {
+    toastMessage.value = 'Toggle pin failed.';
+    toastType.value = 'error';
+  }
+}
+
+async function deleteSnapshot(snap: SnapshotRow) {
+  if (!activeList.value) return;
+  if (!confirm(`Delete this snapshot? Cannot be undone.`)) return;
+  try {
+    await axios.delete(`/dashboard/lists/${activeList.value.id}/snapshots/${snap.id}`);
+    snapshots.value = snapshots.value.filter(s => s.id !== snap.id);
+    toastMessage.value = 'Snapshot deleted.';
+    toastType.value = 'success';
+  } catch {
+    toastMessage.value = 'Delete failed.';
+    toastType.value = 'error';
+  }
+}
+
+const REASON_LABELS: Record<string, string> = {
+  before_clear: 'before clear',
+  before_draw: 'before draw',
+  before_pop: 'before pop',
+  before_restore: 'before restore',
+  manual: 'manual',
+};
+
+function snapshotAge(ts: number): string {
+  const delta = Math.max(0, Math.floor(Date.now() / 1000) - ts);
+  if (delta < 60) return `${delta}s ago`;
+  if (delta < 3600) return `${Math.floor(delta / 60)}m ago`;
+  if (delta < 86400) return `${Math.floor(delta / 3600)}h ago`;
+  return `${Math.floor(delta / 86400)}d ago`;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Meta-command settings (!list <slug> <action>)
+// ──────────────────────────────────────────────────────────────────────────────
+
+const metaCommand = ref<{ command: string; enabled: boolean } | null>(null);
+const metaForm = ref({ command: 'list', enabled: true });
+const metaError = ref<string | null>(null);
+const savingMeta = ref(false);
+
+async function loadMeta() {
+  try {
+    const res = await axios.get('/dashboard/lists/meta-command');
+    metaCommand.value = res.data.meta;
+    if (metaCommand.value) {
+      metaForm.value.command = metaCommand.value.command;
+      metaForm.value.enabled = metaCommand.value.enabled;
+    }
+  } catch { /* ignore */ }
+}
+
+async function saveMeta() {
+  savingMeta.value = true;
+  metaError.value = null;
+  try {
+    const res = await axios.put('/dashboard/lists/meta-command', metaForm.value);
+    metaCommand.value = res.data.meta;
+    toastMessage.value = `!${metaCommand.value?.command} ${metaCommand.value?.enabled ? 'enabled' : 'disabled'}.`;
+    toastType.value = 'success';
+  } catch (err: any) {
+    metaError.value = err?.response?.data?.errors?.command?.[0] ?? 'Failed to save.';
+  } finally {
+    savingMeta.value = false;
+  }
+}
+
+onMounted(() => {
+  loadMeta();
+});
 </script>
 
 <template>
@@ -437,6 +637,45 @@ onUnmounted(() => {
       </div>
 
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
+
+      <!-- Meta-command settings: opt into !list (mod+) for chat actions -->
+      <Card class="border-sidebar">
+        <CardContent class="space-y-3 p-4">
+          <div class="flex items-start gap-3">
+            <TerminalIcon class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+            <div class="min-w-0 flex-1 space-y-2">
+              <div>
+                <h3 class="text-sm font-semibold text-foreground">!list meta-command (mod+ in chat)</h3>
+                <p class="mt-0.5 text-xs text-muted-foreground">
+                  One chat command, full action vocabulary. Mods type
+                  <span class="font-mono">!{{ metaForm.command || 'list' }} &lt;slug&gt; &lt;action&gt;</span>
+                  for draw, clear, pop, clone, count, first, last, random, disable, enable.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-end gap-2">
+                <div>
+                  <Label for="meta-cmd" class="text-xs">Command name</Label>
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono text-sm text-muted-foreground">!</span>
+                    <Input id="meta-cmd" v-model="metaForm.command" class="w-32 font-mono" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 pb-2">
+                  <input id="meta-enabled" v-model="metaForm.enabled" type="checkbox" />
+                  <Label for="meta-enabled" class="cursor-pointer">Enabled</Label>
+                </div>
+                <Button size="sm" class="cursor-pointer" :disabled="savingMeta" @click="saveMeta">
+                  {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
+                </Button>
+              </div>
+              <p v-if="metaError" class="text-xs text-destructive">{{ metaError }}</p>
+              <p v-else-if="metaCommand?.enabled" class="text-xs text-muted-foreground">
+                Active in chat: <span class="font-mono">!{{ metaCommand.command }}</span>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card v-if="showCreate" class="border-sidebar">
         <CardContent class="space-y-3 p-4">
@@ -591,6 +830,110 @@ onUnmounted(() => {
             >
               {{ saving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved' }}
             </Button>
+          </div>
+
+          <!-- Action buttons section: same vocabulary as the chat !list -->
+          <div class="mt-6 rounded-md border border-sidebar p-4">
+            <div class="mb-3">
+              <h3 class="text-sm font-semibold text-foreground">Actions</h3>
+              <p class="mt-0.5 text-xs text-muted-foreground">
+                Same vocabulary as <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ activeList.slug }} &lt;action&gt;</span> in chat. Destructive actions snapshot first.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="runCount">
+                <HashIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Count</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="runFirst">
+                <ArrowUpToLineIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">First</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="runLast">
+                <ArrowDownToLineIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Last</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="runRandom">
+                <ShuffleIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Random</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="runClone">
+                <CopyPlusIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Clone</span>
+              </Button>
+              <Button size="sm" class="cursor-pointer bg-violet-500/90 hover:bg-violet-500" :disabled="runningAction !== null" @click="runDraw">
+                <DicesIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Draw winner</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('first')">
+                <ArrowUpFromLineIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Pop first</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('last')">
+                <ArrowDownFromLineIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Pop last</span>
+              </Button>
+              <Button size="sm" variant="outline" class="cursor-pointer text-destructive hover:text-destructive" :disabled="runningAction !== null" @click="runClear">
+                <EraserIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Clear</span>
+              </Button>
+            </div>
+          </div>
+
+          <!-- Snapshots panel: history of destructive actions, restorable -->
+          <div class="mt-4 rounded-md border border-sidebar p-4">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                class="flex cursor-pointer items-center gap-2 text-left"
+                @click="showSnapshots = !showSnapshots"
+              >
+                <HistoryIcon class="h-4 w-4 text-muted-foreground" />
+                <h3 class="text-sm font-semibold text-foreground">Snapshots</h3>
+                <span class="text-xs text-muted-foreground">({{ snapshots.length }})</span>
+                <span class="text-xs text-muted-foreground">{{ showSnapshots ? '▾' : '▸' }}</span>
+              </button>
+              <Button size="sm" variant="ghost" class="cursor-pointer" @click="takeManualSnapshot">
+                <PlusIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Save snapshot</span>
+              </Button>
+            </div>
+            <div v-if="showSnapshots">
+              <div v-if="snapshotsLoading" class="text-sm text-muted-foreground">Loading…</div>
+              <div v-else-if="snapshots.length === 0" class="rounded border border-dashed py-4 text-center text-sm text-muted-foreground">
+                No snapshots yet. They're created automatically before clear/draw/pop.
+              </div>
+              <div v-else class="space-y-2">
+                <div
+                  v-for="snap in snapshots"
+                  :key="snap.id"
+                  class="flex flex-wrap items-center justify-between gap-2 rounded border border-sidebar p-2.5"
+                >
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <Badge variant="outline" class="text-[10px]">{{ REASON_LABELS[snap.reason] ?? snap.reason }}</Badge>
+                      <span class="text-xs text-foreground">{{ snap.item_count }} item{{ snap.item_count === 1 ? '' : 's' }}</span>
+                      <span class="text-xs text-muted-foreground">• {{ snapshotAge(snap.created_at) }}</span>
+                      <Badge v-if="snap.pinned" variant="secondary" class="text-[10px]">
+                        <PinIcon class="mr-1 h-2.5 w-2.5" />
+                        Pinned
+                      </Badge>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" class="cursor-pointer" :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'" @click="togglePin(snap)">
+                      <PinIcon class="h-3.5 w-3.5" :class="snap.pinned ? 'fill-current' : ''" />
+                    </Button>
+                    <Button size="sm" variant="ghost" class="cursor-pointer" title="Restore to this snapshot" @click="restoreSnapshot(snap)">
+                      <RotateCcwIcon class="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="ghost" class="cursor-pointer text-destructive hover:text-destructive" title="Delete this snapshot" @click="deleteSnapshot(snap)">
+                      <Trash2Icon class="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Append commands section -->
