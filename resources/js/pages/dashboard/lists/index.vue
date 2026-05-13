@@ -366,7 +366,14 @@ interface ListUpdatedPayload {
 
 function applyListUpdated(payload: ListUpdatedPayload) {
   const idx = lists.value.findIndex(l => l.slug === payload.slug);
-  if (idx === -1) return;
+  if (idx === -1) {
+    // Unknown slug - this is a new list (just cloned, or created in
+    // another browser tab). Refresh the lists prop from the server so
+    // it appears in the rail. Inertia partial reloads only the lists
+    // prop, no full page reload.
+    router.reload({ only: ['lists'], preserveScroll: true });
+    return;
+  }
   lists.value[idx] = {
     ...lists.value[idx],
     items: payload.items ?? [],

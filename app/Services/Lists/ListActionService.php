@@ -303,7 +303,12 @@ class ListActionService
             'user_id' => $owner->id,
             'recipe_instance_id' => null,
             'slug' => $newSlug,
-            'label' => $list->label ? "Copy of {$list->label}" : null,
+            // Inherit the parent's label verbatim. The streamer already
+            // picked a distinct slug for the clone; auto-prefixing
+            // "Copy of" is condescending and creates a rename chore.
+            // If they want a different display label, the lists page
+            // has a label input.
+            'label' => $list->label,
             'items' => $list->items ?? [],
             'min_items' => 0,
             'max_items' => null,

@@ -198,9 +198,10 @@ it('clone needs a new slug; bare clone errors', function () {
     expect($reply)->toContain('clone needs a new slug');
 });
 
-it('clone creates a new list with the same items', function () {
+it('clone creates a new list with the same items and inherits the label verbatim', function () {
     $user = actionUser();
     $src = actionList($user, 'src', ['a', 'b', 'c']);
+    $src->update(['label' => 'My Pizza List']);
 
     $reply = app(ListActionService::class)->handleInvocation($user, 'src clone snap1', 'Mod');
 
@@ -208,6 +209,9 @@ it('clone creates a new list with the same items', function () {
     expect($reply)->toBe("Cloned 'src' to 'snap1' (3 items).")
         ->and($clone)->not->toBeNull()
         ->and($clone->items)->toBe(['a', 'b', 'c'])
+        // Label inherited verbatim - no "Copy of" prefix. Streamer
+        // already picked a unique slug; auto-prefixing creates rename chores.
+        ->and($clone->label)->toBe('My Pizza List')
         ->and($src->fresh()->items)->toBe(['a', 'b', 'c']); // source untouched
 });
 
