@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -61,16 +60,5 @@ class Recipe extends Model
     public function instances(): HasMany
     {
         return $this->hasMany(RecipeInstance::class);
-    }
-
-    public function kits(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Kit::class,
-            'kit_recipes',
-            'recipe_id',
-            'kit_id'
-        )->withPivot(['default_instance_slug', 'sort_order'])
-            ->withTimestamps();
     }
 }
