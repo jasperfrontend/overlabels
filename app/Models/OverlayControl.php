@@ -55,6 +55,7 @@ class OverlayControl extends Model
     protected $fillable = [
         'overlay_template_id',
         'user_id',
+        'recipe_instance_id',
         'key',
         'label',
         'description',
@@ -178,11 +179,20 @@ class OverlayControl extends Model
 
     /**
      * The broadcast key used for ControlValueUpdated events.
-     * For service-managed controls, includes the source namespace: "kofi:donations_received"
-     * For template controls, is just the key: "goal"
+     * For recipe-managed controls: "<recipe_slug>:<instance_slug>:<key>" (e.g. "coin_flip:lolwheel:result")
+     * For service-managed controls: "<source>:<key>" (e.g. "kofi:donations_received")
+     * For template controls: just the key (e.g. "goal")
      */
     public function broadcastKey(): string
     {
+        if ($this->recipe_instance_id) {
+            $instance = $this->recipeInstance;
+            $recipe = $instance?->recipe;
+            if ($instance && $recipe) {
+                return "{$recipe->slug}:{$instance->instance_slug}:{$this->key}";
+            }
+        }
+
         if ($this->source) {
             return "$this->source:$this->key";
         }
@@ -438,5 +448,10 @@ class OverlayControl extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function recipeInstance(): BelongsTo
+    {
+        return $this->belongsTo(RecipeInstance::class);
     }
 }

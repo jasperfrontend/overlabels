@@ -23,6 +23,7 @@ use RuntimeException;
  *
  * @property int $id
  * @property int $user_id
+ * @property int|null $recipe_instance_id
  * @property int $option_set_id
  * @property string $slug
  * @property string|null $label
@@ -37,6 +38,7 @@ use RuntimeException;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read User|null $user
  * @property-read OptionSet|null $optionSet
+ * @property-read RecipeInstance|null $recipeInstance
  */
 class Picker extends Model
 {
@@ -58,6 +60,7 @@ class Picker extends Model
 
     protected $fillable = [
         'user_id',
+        'recipe_instance_id',
         'option_set_id',
         'slug',
         'label',
@@ -86,6 +89,11 @@ class Picker extends Model
     public function optionSet(): BelongsTo
     {
         return $this->belongsTo(OptionSet::class);
+    }
+
+    public function recipeInstance(): BelongsTo
+    {
+        return $this->belongsTo(RecipeInstance::class);
     }
 
     /**

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(GhostUserSeeder::class);
+        $this->call(FirstPartyRecipesSeeder::class);
 
         // User::factory(10)->create();
 

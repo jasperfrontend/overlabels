@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property int $user_id
+ * @property int|null $recipe_instance_id
  * @property string $slug
  * @property string|null $label
  * @property array<int, string> $items
@@ -23,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $user_editable
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read RecipeInstance|null $recipeInstance
  */
 class OptionSet extends Model
 {
@@ -32,6 +34,7 @@ class OptionSet extends Model
 
     protected $fillable = [
         'user_id',
+        'recipe_instance_id',
         'slug',
         'label',
         'items',
@@ -55,5 +58,10 @@ class OptionSet extends Model
     public function pickers(): HasMany
     {
         return $this->hasMany(Picker::class);
+    }
+
+    public function recipeInstance(): BelongsTo
+    {
+        return $this->belongsTo(RecipeInstance::class);
     }
 }

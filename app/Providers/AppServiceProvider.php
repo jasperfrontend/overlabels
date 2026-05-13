@@ -130,6 +130,10 @@ class AppServiceProvider extends ServiceProvider
             OnboardNewUserListener::class
         );
 
+        // BridgePickerLandedToControl is registered via auto-discovery
+        // (Laravel scans app/Listeners and binds handle() by its typed
+        // event parameter), so no explicit Event::listen() call is needed.
+
         User::observe(UserObserver::class);
     }
 }
