@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Internal;
 use App\Http\Controllers\Controller;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
+use App\Models\RecipeChatTrigger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
@@ -20,15 +21,15 @@ class BotCommandController extends Controller
      *
      *   {
      *     "jasperdiscovers": [
-     *       { "command": "control",  "permission_level": "everyone", "type": "builtin"    },
-     *       { "command": "distance", "permission_level": "everyone", "type": "expression" }
+     *       { "command": "control",  "permission_level": "everyone", "type": "builtin"        },
+     *       { "command": "distance", "permission_level": "everyone", "type": "expression"     },
+     *       { "command": "flip",     "permission_level": "everyone", "type": "recipe_trigger" }
      *     ]
      *   }
      *
-     * On collision (a user authored an expression with the same command name as
-     * a builtin), the builtin wins. Validation should refuse such an expression
-     * at save time, but enforcing here too keeps the bot deterministic if a
-     * stale row exists.
+     * Resolution order on command-name collision: builtin > expression > recipe_trigger.
+     * Validation at save / install time should refuse colliding rows, but enforcing
+     * the order here keeps the bot deterministic if a stale row sneaks through.
      */
     public function index(): JsonResponse
     {
@@ -38,6 +39,11 @@ class BotCommandController extends Controller
             ->get();
 
         $expressionsByUser = BotExpression::where('enabled', true)
+            ->whereIn('user_id', $users->pluck('id'))
+            ->get()
+            ->groupBy('user_id');
+
+        $triggersByUser = RecipeChatTrigger::where('enabled', true)
             ->whereIn('user_id', $users->pluck('id'))
             ->get()
             ->groupBy('user_id');
@@ -59,11 +65,10 @@ class BotCommandController extends Controller
                 ->values()
                 ->all();
 
-            $builtinNames = array_column($entries, 'command');
+            $claimed = array_column($entries, 'command');
 
-            $userExpressions = $expressionsByUser->get($user->id, collect());
-            foreach ($userExpressions as $expr) {
-                if (in_array($expr->command, $builtinNames, true)) {
+            foreach ($expressionsByUser->get($user->id, collect()) as $expr) {
+                if (in_array($expr->command, $claimed, true)) {
                     continue;
                 }
                 $entries[] = [
@@ -71,6 +76,19 @@ class BotCommandController extends Controller
                     'permission_level' => $expr->permission_level,
                     'type' => 'expression',
                 ];
+                $claimed[] = $expr->command;
+            }
+
+            foreach ($triggersByUser->get($user->id, collect()) as $trigger) {
+                if (in_array($trigger->command, $claimed, true)) {
+                    continue;
+                }
+                $entries[] = [
+                    'command' => $trigger->command,
+                    'permission_level' => $trigger->permission_level,
+                    'type' => 'recipe_trigger',
+                ];
+                $claimed[] = $trigger->command;
             }
 
             $map[strtolower($login)] = $entries;

@@ -39,6 +39,25 @@ function seedCoinFlipRecipe(): Recipe
     ]);
 }
 
+/**
+ * A variant of the Coin Flip manifest with the chat_command trigger
+ * stripped out. Useful for tests that care about multi-instance
+ * semantics (the chat command would otherwise collide between the
+ * two installs, since chat names a user-scoped resource).
+ */
+function seedCoinFlipRecipeWithoutChatTrigger(): Recipe
+{
+    $recipe = seedCoinFlipRecipe();
+    $manifest = $recipe->manifest;
+    $manifest['triggers'] = array_values(array_filter(
+        $manifest['triggers'],
+        fn ($t) => ($t['kind'] ?? null) !== 'chat_command'
+    ));
+    $recipe->update(['manifest' => $manifest]);
+
+    return $recipe;
+}
+
 function installerFreshUser(): User
 {
     return User::factory()->create();
@@ -99,7 +118,10 @@ it('refuses to install a duplicate instance_slug for the same (user, recipe)', f
 });
 
 it('allows the same user to install the same recipe twice under different slugs', function () {
-    $recipe = seedCoinFlipRecipe();
+    // Multi-instance only makes sense when the recipe doesn't claim a
+    // user-scoped chat command; with `!flip` declared, the second install
+    // would correctly collide on the chat trigger uniqueness.
+    $recipe = seedCoinFlipRecipeWithoutChatTrigger();
     $user = installerFreshUser();
     $installer = app(RecipeInstaller::class);
 
@@ -112,6 +134,16 @@ it('allows the same user to install the same recipe twice under different slugs'
         ->and(OverlayControl::where('user_id', $user->id)->count())->toBe(6);
 });
 
+it('refuses the second install when both instances would register the same chat command', function () {
+    $recipe = seedCoinFlipRecipe();
+    $user = installerFreshUser();
+    $installer = app(RecipeInstaller::class);
+    $installer->install($recipe, $user, 'main');
+
+    expect(fn () => $installer->install($recipe, $user, 'lolwheel'))
+        ->toThrow(RuntimeException::class, 'collides with an existing recipe trigger');
+});
+
 it('rejects an instance slug that contains a dash', function () {
     $recipe = seedCoinFlipRecipe();
     $user = installerFreshUser();
@@ -121,7 +153,7 @@ it('rejects an instance slug that contains a dash', function () {
 });
 
 it('enforces max_instances_per_user', function () {
-    $recipe = seedCoinFlipRecipe();
+    $recipe = seedCoinFlipRecipeWithoutChatTrigger();
     $recipe->update(['max_instances_per_user' => 2]);
     $user = installerFreshUser();
     $installer = app(RecipeInstaller::class);

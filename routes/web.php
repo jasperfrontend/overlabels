@@ -19,6 +19,7 @@ use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\RecipeInstanceController;
 use App\Http\Controllers\RoomBuilderController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
@@ -174,6 +175,10 @@ Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-bu
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');
+
+Route::post('/recipes/instances/{instance}/fire-button', [RecipeInstanceController::class, 'fireButton'])
+    ->middleware(['auth.redirect'])
+    ->name('recipes.instances.fire-button');
 
 Route::get('/dashboard/recents', [DashboardController::class, 'recentActivity'])
     ->middleware(['auth.redirect'])

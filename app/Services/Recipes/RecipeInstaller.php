@@ -2,10 +2,13 @@
 
 namespace App\Services\Recipes;
 
+use App\Models\BotCommand;
+use App\Models\BotExpression;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\Picker;
 use App\Models\Recipe;
+use App\Models\RecipeChatTrigger;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +81,8 @@ class RecipeInstaller
                 );
             }
         }
+
+        $this->assertNoChatCommandCollisions($recipe->manifest, $user);
 
         return DB::transaction(function () use ($recipe, $user, $instanceSlug, $label) {
             $manifest = $recipe->manifest;
@@ -154,8 +159,101 @@ class RecipeInstaller
 
             $instance->update(['primitive_map' => $primitiveMap]);
 
-            return $instance->fresh(['recipe', 'optionSets', 'pickers', 'overlayControls']);
+            foreach ($manifest['triggers'] ?? [] as $trigger) {
+                if (($trigger['kind'] ?? null) !== 'chat_command') {
+                    // dashboard_button triggers don't need their own row;
+                    // they're fired via the web endpoint which looks the
+                    // picker up directly off the recipe_instance.
+                    continue;
+                }
+
+                $pickerRef = $this->parseFiresTarget($trigger['fires'] ?? '');
+                $pickerId = $primitiveMap['pickers'][$pickerRef] ?? null;
+                if ($pickerId === null) {
+                    throw new RuntimeException(
+                        "Chat trigger fires unknown picker '{$pickerRef}'."
+                    );
+                }
+
+                RecipeChatTrigger::create([
+                    'recipe_instance_id' => $instance->id,
+                    'user_id' => $user->id,
+                    'picker_id' => $pickerId,
+                    'command' => ltrim((string) $trigger['command'], '!'),
+                    'permission_level' => $trigger['permissions'] ?? 'everyone',
+                    'cooldown_seconds' => $trigger['cooldown_seconds'] ?? 0,
+                    'enabled' => true,
+                ]);
+            }
+
+            return $instance->fresh(['recipe', 'optionSets', 'pickers', 'overlayControls', 'chatTriggers']);
         });
+    }
+
+    /**
+     * Walks the manifest's chat_command triggers and refuses the install
+     * if any of the command names collide with an existing BotCommand,
+     * BotExpression, or RecipeChatTrigger for this user. Resolution at
+     * runtime falls back to builtin > expression > recipe_trigger order
+     * but enforcing here gives the user a clear error message rather
+     * than a silently-unreachable install.
+     *
+     * @param  array<string, mixed>  $manifest
+     */
+    private function assertNoChatCommandCollisions(array $manifest, User $user): void
+    {
+        $commands = [];
+        foreach ($manifest['triggers'] ?? [] as $trigger) {
+            if (($trigger['kind'] ?? null) !== 'chat_command') {
+                continue;
+            }
+            $cmd = ltrim((string) ($trigger['command'] ?? ''), '!');
+            if ($cmd !== '') {
+                $commands[] = $cmd;
+            }
+        }
+        if ($commands === []) {
+            return;
+        }
+
+        $builtinCollision = BotCommand::where('user_id', $user->id)
+            ->whereIn('command', $commands)
+            ->value('command');
+        if ($builtinCollision) {
+            throw new RuntimeException(
+                "Chat trigger '!{$builtinCollision}' collides with an existing built-in bot command."
+            );
+        }
+
+        $expressionCollision = BotExpression::where('user_id', $user->id)
+            ->whereIn('command', $commands)
+            ->value('command');
+        if ($expressionCollision) {
+            throw new RuntimeException(
+                "Chat trigger '!{$expressionCollision}' collides with an existing Bot Expression."
+            );
+        }
+
+        $triggerCollision = RecipeChatTrigger::where('user_id', $user->id)
+            ->whereIn('command', $commands)
+            ->value('command');
+        if ($triggerCollision) {
+            throw new RuntimeException(
+                "Chat trigger '!{$triggerCollision}' collides with an existing recipe trigger for this user."
+            );
+        }
+    }
+
+    /**
+     * Extract the picker ref from a triggers[].fires path like "pickers.flipper".
+     */
+    private function parseFiresTarget(string $fires): string
+    {
+        if (preg_match('/^pickers\.([a-z][a-z0-9_]*)$/', $fires, $m)) {
+            return $m[1];
+        }
+
+        throw new RuntimeException("Invalid trigger 'fires' path: {$fires}");
     }
 
     /**

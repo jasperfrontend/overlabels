@@ -4,6 +4,7 @@ namespace App\Services\Bot;
 
 use App\Models\BotChatOutbox;
 use App\Models\BotExpression;
+use App\Support\BotChatGate;
 use Illuminate\Support\Carbon;
 
 /**
@@ -18,18 +19,6 @@ use Illuminate\Support\Carbon;
  */
 class BotExpressionService
 {
-    /**
-     * Permission tiers in least-to-most-privileged order, matching
-     * BotCommand::PERMISSION_LEVELS exactly.
-     */
-    private const array TIER_ORDER = [
-        'everyone' => 0,
-        'subscriber' => 1,
-        'vip' => 2,
-        'moderator' => 3,
-        'broadcaster' => 4,
-    ];
-
     public function __construct(
         private readonly BotExpressionResolver $resolver,
     ) {}
@@ -45,18 +34,16 @@ class BotExpressionService
             return false;
         }
 
-        $isBroadcaster = in_array('broadcaster', $badges, true);
-
-        if (! $this->hasPermission($expression->permission_level, $badges)) {
+        if (! BotChatGate::hasPermission($expression->permission_level, $badges)) {
             return false;
         }
 
         // Broadcaster bypasses cooldown to match the existing builtin-command pattern.
-        if ($isBroadcaster) {
+        if (BotChatGate::isBroadcaster($badges)) {
             return true;
         }
 
-        return $this->isOffCooldown($expression);
+        return BotChatGate::isOffCooldown($expression->last_fired_at, $expression->cooldown_seconds);
     }
 
     /**
@@ -114,32 +101,4 @@ class BotExpressionService
         return $context;
     }
 
-    /**
-     * @param  array<int,string>  $badges
-     */
-    private function hasPermission(string $required, array $badges): bool
-    {
-        $requiredTier = self::TIER_ORDER[$required] ?? 0;
-
-        $highest = 0;
-        foreach ($badges as $badge) {
-            $tier = self::TIER_ORDER[$badge] ?? null;
-            if ($tier !== null && $tier > $highest) {
-                $highest = $tier;
-            }
-        }
-
-        return $highest >= $requiredTier;
-    }
-
-    private function isOffCooldown(BotExpression $expression): bool
-    {
-        if ($expression->cooldown_seconds <= 0 || $expression->last_fired_at === null) {
-            return true;
-        }
-
-        $expiresAt = $expression->last_fired_at->copy()->addSeconds($expression->cooldown_seconds);
-
-        return Carbon::now()->greaterThanOrEqualTo($expiresAt);
-    }
 }

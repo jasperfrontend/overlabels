@@ -65,4 +65,9 @@ class RecipeInstance extends Model
     {
         return $this->hasMany(OverlayControl::class);
     }
+
+    public function chatTriggers(): HasMany
+    {
+        return $this->hasMany(RecipeChatTrigger::class);
+    }
 }
