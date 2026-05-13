@@ -1,0 +1,56 @@
+{
+  "recipe_format_version": 1,
+  "slug": "wheel_spin",
+  "name": "Wheel Spin",
+  "version": 1,
+  "description": "Spin a wheel of fortune. Triggered from chat with !spin or from the dashboard. The producer side of the Wheel of Fortune Kit - the kit also ships the visual overlay that animates the spin.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. Paired with the Wheel of Fortune Kit which ships the spinning visual.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "max_instances_per_user": 5,
+  "primitives": {
+    "option_sets": [
+      {
+        "ref": "segments",
+        "label": "Wheel segments",
+        "items": ["Pizza", "Tacos", "Sushi", "Burger", "Salad", "Pasta", "Curry", "BBQ"],
+        "user_editable": true,
+        "min_items": 2,
+        "max_items": 24
+      }
+    ],
+    "pickers": [
+      {
+        "ref": "wheel",
+        "label": "The wheel",
+        "option_set_ref": "segments",
+        "consume_on_pick": false,
+        "concurrency": "reject_if_running",
+        "user_editable": false
+      }
+    ]
+  },
+  "control_exports": [
+    { "name": "result", "from": "pickers.wheel.result" },
+    { "name": "result_at", "from": "pickers.wheel.result_at" },
+    { "name": "running", "from": "pickers.wheel.running" }
+  ],
+  "triggers": [
+    {
+      "kind": "chat_command",
+      "command": "!spin",
+      "permissions": "everyone",
+      "cooldown_seconds": 15,
+      "fires": "pickers.wheel"
+    },
+    {
+      "kind": "dashboard_button",
+      "label": "Spin the wheel",
+      "fires": "pickers.wheel"
+    }
+  ]
+}

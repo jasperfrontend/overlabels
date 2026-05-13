@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\Recipes\RecipeInstaller;
+use App\Models\RecipeInstance;
 use Database\Factories\KitFactory;
 use Eloquent;
 use Exception;
@@ -13,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -122,6 +125,23 @@ class Kit extends Model
     }
 
     /**
+     * Recipes bundled with this kit. When the kit is forked, each linked
+     * recipe is installed for the new owner via RecipeInstaller using the
+     * pivot's default_instance_slug (with a suffix on collision).
+     */
+    public function recipes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Recipe::class,
+            'kit_recipes',
+            'kit_id',
+            'recipe_id'
+        )->withPivot(['default_instance_slug', 'sort_order'])
+            ->withTimestamps()
+            ->orderBy('kit_recipes.sort_order');
+    }
+
+    /**
      * Fork parent relationship
      */
     public function forkedFrom(): BelongsTo
@@ -138,28 +158,102 @@ class Kit extends Model
     }
 
     /**
-     * Fork this kit for a user
+     * Fork this kit for a user. Wrapped in a transaction so a partial
+     * failure (e.g. a recipe-install collision) leaves no half-baked state.
      */
     public function fork(User $user): self
     {
-        // Create the new kit
-        $fork = $this->replicate();
-        $fork->owner_id = $user->id;
-        $fork->forked_from_id = $this->id;
-        $fork->title = 'Fork of '.Str::limit($this->title, 80);
-        $fork->fork_count = 0;
-        $fork->is_starter_kit = false;
-        $fork->save();
+        return DB::transaction(function () use ($user) {
+            $fork = $this->replicate();
+            $fork->owner_id = $user->id;
+            $fork->forked_from_id = $this->id;
+            $fork->title = 'Fork of '.Str::limit($this->title, 80);
+            $fork->fork_count = 0;
+            $fork->is_starter_kit = false;
+            $fork->save();
 
-        // Fork all templates in the kit
-        $forkedTemplates = [];
+            // Install bundled recipes FIRST so we know the actual instance
+            // slugs before we fork the templates - templates can ship with
+            // an __INSTANCE__ placeholder that gets substituted to the
+            // chosen slug after install resolves collisions.
+            $instanceSlugByRecipeSlug = $this->installBundledRecipes($user);
+
+            $this->forkBundledTemplates($user, $fork, $instanceSlugByRecipeSlug);
+
+            $this->increment('fork_count');
+
+            return $fork;
+        });
+    }
+
+    /**
+     * Install every kit-bundled recipe for the forker. Returns a map from
+     * recipe slug to the actually-used instance slug (suffixed if the
+     * pivot's default collided with an existing install on this user).
+     *
+     * @return array<string, string>
+     */
+    private function installBundledRecipes(User $user): array
+    {
+        $installer = app(RecipeInstaller::class);
+        $map = [];
+
+        foreach ($this->recipes as $recipe) {
+            $desiredSlug = $recipe->pivot->default_instance_slug;
+            $chosenSlug = $this->reserveInstanceSlug($user, $recipe, $desiredSlug);
+
+            $installer->install($recipe, $user, $chosenSlug);
+
+            $map[$recipe->slug] = $chosenSlug;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Find the first instance slug not already in use for (user, recipe).
+     * Starts from $desired, then $desired_2, $desired_3, ...
+     */
+    private function reserveInstanceSlug(User $user, Recipe $recipe, string $desired): string
+    {
+        $candidate = $desired;
+        $suffix = 1;
+
+        while (
+            RecipeInstance::where('user_id', $user->id)
+                ->where('recipe_id', $recipe->id)
+                ->where('instance_slug', $candidate)
+                ->exists()
+        ) {
+            $suffix++;
+            $candidate = $desired.'_'.$suffix;
+            if (strlen($candidate) > 50 || $suffix > 50) {
+                throw new Exception("Cannot find a free instance slug for recipe '{$recipe->slug}'.");
+            }
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * Fork every kit-attached template into a new owned copy. If the
+     * recipe-instance map is non-empty, also substitutes the
+     * `__INSTANCE__` placeholder inside the forked template's html/css/js
+     * with each recipe's chosen instance slug.
+     *
+     * @param  array<string, string>  $instanceSlugByRecipeSlug
+     */
+    private function forkBundledTemplates(User $user, self $fork, array $instanceSlugByRecipeSlug): void
+    {
+        $forkedTemplateIds = [];
+
         foreach ($this->templates as $template) {
             $forkedTemplate = $template->fork($user);
 
-            // Copy non-service-managed controls to the forked template.
-            // The OverlayTemplate::fork() method only stashes controls in a
-            // transient property for the interactive fork wizard — it never
-            // persists them, so kit forks (for example when onboarding) would lose them.
+            if ($instanceSlugByRecipeSlug !== []) {
+                $this->substituteRecipePlaceholders($forkedTemplate, $instanceSlugByRecipeSlug);
+            }
+
             $template->controls()
                 ->whereNull('source')
                 ->orderBy('sort_order')
@@ -179,16 +273,53 @@ class Kit extends Model
                     ]);
                 });
 
-            $forkedTemplates[] = $forkedTemplate->id;
+            $forkedTemplateIds[] = $forkedTemplate->id;
         }
 
-        // Attach forked templates to the new kit
-        $fork->templates()->attach($forkedTemplates);
+        $fork->templates()->attach($forkedTemplateIds);
+    }
 
-        // Increment fork count on original
-        $this->increment('fork_count');
+    /**
+     * Replace each `[[[c:<recipe_slug>:__INSTANCE__:<key>]]]`-shaped tag
+     * (and the matching `__INSTANCE__` references in JS/CSS) with the
+     * actually-installed instance slug. Only the recipes in the provided
+     * map are substituted; unrelated `__INSTANCE__` strings stay intact.
+     *
+     * @param  array<string, string>  $instanceSlugByRecipeSlug
+     */
+    private function substituteRecipePlaceholders(OverlayTemplate $template, array $instanceSlugByRecipeSlug): void
+    {
+        $needles = [];
+        $replacements = [];
 
-        return $fork;
+        foreach ($instanceSlugByRecipeSlug as $recipeSlug => $instanceSlug) {
+            // The fully-qualified tag form: c:<recipe>:__INSTANCE__:<key>
+            $needles[] = "c:{$recipeSlug}:__INSTANCE__:";
+            $replacements[] = "c:{$recipeSlug}:{$instanceSlug}:";
+            // The shorter `<recipe>:__INSTANCE__` form used inside JS/data
+            // attributes that compose tag prefixes dynamically.
+            $needles[] = "{$recipeSlug}:__INSTANCE__";
+            $replacements[] = "{$recipeSlug}:{$instanceSlug}";
+        }
+
+        $newHtml = str_replace($needles, $replacements, $template->html ?? '');
+        $newCss = str_replace($needles, $replacements, $template->css ?? '');
+        $newJs = str_replace($needles, $replacements, $template->js ?? '');
+
+        // OverlayTemplate::fork() stashes transient model properties for the
+        // fork wizard UI (_sourceControls, _hasControls, _requiredServices).
+        // A bare $template->save() would try to flush those into columns
+        // that don't exist. Use a targeted update query so we only touch
+        // the three real columns we changed.
+        OverlayTemplate::where('id', $template->id)->update([
+            'html' => $newHtml,
+            'css' => $newCss,
+            'js' => $newJs,
+        ]);
+
+        $template->html = $newHtml;
+        $template->css = $newCss;
+        $template->js = $newJs;
     }
 
     /**

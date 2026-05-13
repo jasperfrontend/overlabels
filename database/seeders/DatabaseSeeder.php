@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(GhostUserSeeder::class);
         $this->call(FirstPartyRecipesSeeder::class);
+        $this->call(FirstPartyKitsSeeder::class);
 
         // User::factory(10)->create();
 
