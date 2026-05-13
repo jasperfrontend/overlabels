@@ -33,6 +33,19 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Lists are lists - preserve exactly what the user typed (empty
+        // lines, trailing/leading whitespace, duplicates, all
+        // intentional). Without these exemptions, the global TrimStrings
+        // + ConvertEmptyStringsToNull middlewares would silently strip
+        // the user's input before it reached the ListController. The
+        // callback returns true to skip the conversion for this request.
+        $middleware->trimStrings([
+            fn ($request) => $request->is('dashboard/lists', 'dashboard/lists/*'),
+        ]);
+        $middleware->convertEmptyStringsToNull([
+            fn ($request) => $request->is('dashboard/lists', 'dashboard/lists/*'),
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

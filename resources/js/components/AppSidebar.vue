@@ -32,6 +32,7 @@ import {
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
+  ListIcon,
   Sigma,
   SlidersHorizontal,
   Users
@@ -49,6 +50,7 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems: NavItem[] = [
   { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
   { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
+  { title: 'Lists', href: route('lists.index'), icon: ListIcon },
   { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
 ];
 const alertsNavItems: NavItem[] = [

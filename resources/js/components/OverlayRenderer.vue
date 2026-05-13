@@ -615,6 +615,13 @@ function setupAlertListener() {
   // Listen for control value updates
   channel.listen('.control.updated', handleControlUpdated);
 
+  // Listen for user-managed List saves/deletes (the new Lists feature).
+  // Lists ship as c:list:<slug> = JSON array string + c:list:<slug>.N
+  // indexed scalars + .count, so both bare-tag usage and foreach loops
+  // update without an overlay refresh.
+  channel.listen('.list.updated', handleListUpdated);
+  channel.listen('.list.deleted', handleListDeleted);
+
   // Listen for stream online/offline status
   channel.listen('.stream.status', (event: any) => {
     streamLive.value = Boolean(event.live);
@@ -671,6 +678,55 @@ function handleControlUpdated(event: any) {
       [atKey]: timestamp,
     };
   }
+}
+
+function handleListUpdated(event: any) {
+  if (!data.value || typeof data.value !== 'object') return;
+  if (!event?.slug) return;
+
+  const baseKey = `c:list:${event.slug}`;
+  const items: any[] = Array.isArray(event.items) ? event.items : [];
+
+  const patch: Record<string, any> = {
+    [baseKey]: JSON.stringify(items),
+    [`${baseKey}.count`]: String(items.length),
+  };
+  items.forEach((item, i) => {
+    patch[`${baseKey}.${i}`] = String(item);
+  });
+
+  // Strip any indexed keys from the prior version of this list that
+  // don't exist in the new payload, so shrinking a list to 3 items
+  // doesn't leave .3, .4, ... lingering in the data store and visible
+  // to foreach materialisation.
+  const next = { ...data.value, ...patch };
+  const prefix = `${baseKey}.`;
+  for (const key of Object.keys(next)) {
+    if (!key.startsWith(prefix)) continue;
+    if (key === `${baseKey}.count`) continue;
+    const tail = key.slice(prefix.length);
+    if (!/^\d+$/.test(tail)) continue;
+    if (parseInt(tail, 10) >= items.length) {
+      delete next[key];
+    }
+  }
+
+  data.value = next;
+}
+
+function handleListDeleted(event: any) {
+  if (!data.value || typeof data.value !== 'object') return;
+  if (!event?.slug) return;
+
+  const baseKey = `c:list:${event.slug}`;
+  const prefix = `${baseKey}.`;
+  const next = { ...data.value };
+  for (const key of Object.keys(next)) {
+    if (key === baseKey || key.startsWith(prefix)) {
+      delete next[key];
+    }
+  }
+  data.value = next;
 }
 
 function handleAlertTriggered(event: any) {

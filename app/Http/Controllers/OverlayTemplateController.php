@@ -486,6 +486,26 @@ class OverlayTemplateController extends Controller
                 }
             }
 
+            // Inject user-owned Lists (OptionSets) into the data store. Each
+            // list ships as both a JSON-encoded full array (so a template
+            // can render the whole list directly or have inline JS parse
+            // it) AND as flat indexed scalar keys + .count, which is what
+            // the existing foreach machinery materialises against. So
+            // [[[c:list:donors]]] gives the array string, while
+            // [[[foreach:c:list:donors as donor]]][[[donor]]][[[endforeach]]]
+            // iterates and renders each item.
+            $userLists = \App\Models\OptionSet::where('user_id', $user->id)->get();
+            $listData = [];
+            foreach ($userLists as $list) {
+                $items = $list->items ?? [];
+                $baseKey = 'c:list:'.$list->slug;
+                $listData[$baseKey] = json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $listData[$baseKey.'.count'] = (string) count($items);
+                foreach (array_values($items) as $i => $item) {
+                    $listData[$baseKey.'.'.$i] = (string) $item;
+                }
+            }
+
             // Expand the template-tag allowlist with any `t.<name>` references
             // that appear in expression controls but not in the template HTML.
             // Without this, an expression like `t.twitch.followers_total + t.twitch.subscribers_total`
@@ -508,8 +528,8 @@ class OverlayTemplateController extends Controller
                 $user->foreachCaps()
             );
 
-            // Build final data: Twitch data + controls + Twitch ID
-            $finalData = array_merge($mapped, $controlData, [
+            // Build final data: Twitch data + controls + lists + Twitch ID
+            $finalData = array_merge($mapped, $controlData, $listData, [
                 'user_twitch_id' => $user->twitch_id,
             ]);
 

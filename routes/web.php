@@ -13,6 +13,7 @@ use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
+use App\Http\Controllers\ListController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
@@ -474,6 +475,15 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/', [OverlayAccessTokenController::class, 'store'])->name('store');
         Route::post('/{token}/revoke', [OverlayAccessTokenController::class, 'revoke'])->name('revoke');
         Route::delete('/{token}', [OverlayAccessTokenController::class, 'destroy'])->name('destroy');
+    });
+
+    // Lists (user-managed OptionSets, surfaced as a top-level dashboard
+    // section). User-authored rows live alongside recipe-installed lists.
+    Route::prefix('dashboard/lists')->name('lists.')->group(function () {
+        Route::get('/', [ListController::class, 'index'])->name('index');
+        Route::post('/', [ListController::class, 'store'])->name('store');
+        Route::put('/{list}', [ListController::class, 'update'])->name('update');
+        Route::delete('/{list}', [ListController::class, 'destroy'])->name('destroy');
     });
 
     // Template Management - Full resource routes
