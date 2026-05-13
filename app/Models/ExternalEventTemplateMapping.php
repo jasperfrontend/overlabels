@@ -56,26 +56,46 @@ class ExternalEventTemplateMapping extends Model
     ];
 
     /**
-     * Event types per service (service key => [event_type => display label])
+     * Event types per external service (service key => [event_type => display label]).
+     *
+     * Each entry must mirror the driver's getSupportedEventTypes(). Keys
+     * here are what the TriggerManager UI shows under each external
+     * service group and what gets stored on this table. Keep the
+     * service key in sync with ExternalServiceDriver::getServiceKey()
+     * and with SERVICE_LABELS in resources/js/utils/services.ts.
      */
     public const array SERVICE_EVENT_TYPES = [
+        'bmac' => [
+            'donation' => 'Buy Me a Coffee Donation',
+            'recurring' => 'Buy Me a Coffee Subscription',
+            'extra' => 'Buy Me a Coffee Extra',
+            'membership' => 'Buy Me a Coffee Membership',
+            'wishlist' => 'Buy Me a Coffee Wishlist',
+            'commission' => 'Buy Me a Coffee Commission',
+        ],
+        'fourthwall' => [
+            'donation' => 'Fourthwall Donation',
+        ],
+        'gps' => [
+            'location_update' => 'Overlabels GPS Location Update',
+            'session_start' => 'Overlabels GPS Session Started',
+            'session_end' => 'Overlabels GPS Session Ended',
+            'settings_sync' => 'Overlabels GPS Settings Synced',
+        ],
+        'gpslogger' => [
+            'location_update' => 'GPSLogger Location Update',
+        ],
         'kofi' => [
             'donation' => 'Ko-fi Donation',
             'subscription' => 'Ko-fi Subscription',
             'shop_order' => 'Ko-fi Shop Order',
             'commission' => 'Ko-fi Commission',
         ],
-        'gpslogger' => [
-            'location_update' => 'GPS Location Update',
-        ],
-        'streamlabs' => [
-            'donation' => 'StreamLabs Donation',
-        ],
         'streamelements' => [
             'donation' => 'StreamElements Tip',
         ],
-        'fourthwall' => [
-            'donation' => 'Fourthwall Donation',
+        'streamlabs' => [
+            'donation' => 'Streamlabs Donation',
         ],
     ];
 
