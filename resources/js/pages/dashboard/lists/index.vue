@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -9,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat } from 'lucide-vue-next';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface ListRow {
@@ -169,6 +171,158 @@ async function copyTag(tag: string) {
 
 const activeItemCount = computed(() => draftItemsText.value.split('\n').length);
 const isActiveLocked = computed(() => activeList.value && !activeList.value.user_editable && activeList.value.recipe_instance_id !== null);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Append commands per list
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface AppenderRow {
+  id: number;
+  target_list_id: number;
+  command: string;
+  permission_level: string;
+  cooldown_seconds: number;
+  value_template: string;
+  args_empty_reply: string | null;
+  dedup_policy: 'none' | 'per_chatter' | 'per_chatter_per_stream';
+  max_size: number | null;
+  enabled: boolean;
+  last_fired_at: number | null;
+}
+
+const appenders = ref<AppenderRow[]>([]);
+const appendersLoading = ref(false);
+
+async function loadAppenders(listId: number) {
+  appendersLoading.value = true;
+  try {
+    const res = await axios.get(`/dashboard/lists/${listId}/appenders`);
+    appenders.value = res.data.appenders ?? [];
+  } catch {
+    appenders.value = [];
+  } finally {
+    appendersLoading.value = false;
+  }
+}
+
+watch(activeId, (id) => {
+  if (id !== null) loadAppenders(id);
+  else appenders.value = [];
+}, { immediate: true });
+
+// Modal state for adding/editing an appender.
+const appenderModalOpen = ref(false);
+const editingAppender = ref<AppenderRow | null>(null);
+const appenderForm = ref({
+  command: '',
+  permission_level: 'everyone',
+  cooldown_seconds: 0,
+  value_template: '[[[bot:from_user]]]',
+  args_empty_reply: '' as string,
+  dedup_policy: 'per_chatter' as 'none' | 'per_chatter' | 'per_chatter_per_stream',
+  max_size: null as number | null,
+  enabled: true,
+});
+const appenderFormErrors = ref<Record<string, string>>({});
+const savingAppender = ref(false);
+
+function openAppenderAdd() {
+  editingAppender.value = null;
+  appenderForm.value = {
+    command: '',
+    permission_level: 'everyone',
+    cooldown_seconds: 0,
+    value_template: '[[[bot:from_user]]]',
+    args_empty_reply: '',
+    dedup_policy: 'per_chatter',
+    max_size: null,
+    enabled: true,
+  };
+  appenderFormErrors.value = {};
+  appenderModalOpen.value = true;
+}
+
+function openAppenderEdit(a: AppenderRow) {
+  editingAppender.value = a;
+  appenderForm.value = {
+    command: a.command,
+    permission_level: a.permission_level,
+    cooldown_seconds: a.cooldown_seconds,
+    value_template: a.value_template,
+    args_empty_reply: a.args_empty_reply ?? '',
+    dedup_policy: a.dedup_policy,
+    max_size: a.max_size,
+    enabled: a.enabled,
+  };
+  appenderFormErrors.value = {};
+  appenderModalOpen.value = true;
+}
+
+async function saveAppender() {
+  if (!activeList.value) return;
+  savingAppender.value = true;
+  appenderFormErrors.value = {};
+
+  const body = {
+    command: appenderForm.value.command,
+    permission_level: appenderForm.value.permission_level,
+    cooldown_seconds: appenderForm.value.cooldown_seconds,
+    value_template: appenderForm.value.value_template,
+    args_empty_reply: appenderForm.value.args_empty_reply || null,
+    dedup_policy: appenderForm.value.dedup_policy,
+    max_size: appenderForm.value.max_size || null,
+    enabled: appenderForm.value.enabled,
+  };
+
+  try {
+    if (editingAppender.value) {
+      const res = await axios.put(`/dashboard/lists/${activeList.value.id}/appenders/${editingAppender.value.id}`, body);
+      const updated = res.data.appender;
+      const idx = appenders.value.findIndex(a => a.id === updated.id);
+      if (idx >= 0) appenders.value[idx] = updated;
+      toastMessage.value = `!${updated.command} saved.`;
+    } else {
+      const res = await axios.post(`/dashboard/lists/${activeList.value.id}/appenders`, body);
+      appenders.value.push(res.data.appender);
+      toastMessage.value = `!${res.data.appender.command} created.`;
+    }
+    toastType.value = 'success';
+    appenderModalOpen.value = false;
+  } catch (err: any) {
+    if (err?.response?.status === 422 && err.response?.data?.errors) {
+      const errors: Record<string, string> = {};
+      for (const [field, msgs] of Object.entries(err.response.data.errors as Record<string, string[]>)) {
+        errors[field] = msgs[0];
+      }
+      appenderFormErrors.value = errors;
+    } else {
+      toastMessage.value = 'Failed to save command.';
+      toastType.value = 'error';
+    }
+  } finally {
+    savingAppender.value = false;
+  }
+}
+
+async function deleteAppender(a: AppenderRow) {
+  if (!activeList.value) return;
+  if (!confirm(`Delete command !${a.command}?`)) return;
+  try {
+    await axios.delete(`/dashboard/lists/${activeList.value.id}/appenders/${a.id}`);
+    appenders.value = appenders.value.filter(x => x.id !== a.id);
+    toastMessage.value = `!${a.command} deleted.`;
+    toastType.value = 'success';
+  } catch {
+    toastMessage.value = 'Failed to delete command.';
+    toastType.value = 'error';
+  }
+}
+
+const DEDUP_LABELS: Record<string, string> = {
+  none: 'no dedup',
+  per_chatter: 'once per chatter',
+  per_chatter_per_stream: 'once per chatter per stream',
+};
 </script>
 
 <template>
@@ -327,8 +481,146 @@ const isActiveLocked = computed(() => activeList.value && !activeList.value.user
               {{ saving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved' }}
             </Button>
           </div>
+
+          <!-- Append commands section -->
+          <div class="mt-6 rounded-md border border-sidebar p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-foreground">Append commands</h3>
+                <p class="mt-0.5 text-xs text-muted-foreground">
+                  Chat commands that append to this list when fired. Use Bot Expression syntax like
+                  <span class="font-mono">[[[bot:from_user]]]</span> in the value template.
+                </p>
+              </div>
+              <Button size="sm" class="cursor-pointer shrink-0" @click="openAppenderAdd">
+                <PlusIcon class="h-3.5 w-3.5" />
+                <span class="ml-1">Add command</span>
+              </Button>
+            </div>
+
+            <div v-if="appendersLoading" class="text-sm text-muted-foreground">Loading…</div>
+            <div v-else-if="appenders.length === 0" class="rounded border border-dashed py-6 text-center text-sm text-muted-foreground">
+              No append commands yet. Add one to let chatters grow this list.
+            </div>
+            <div v-else class="space-y-2">
+              <div
+                v-for="a in appenders"
+                :key="a.id"
+                class="flex flex-wrap items-start justify-between gap-2 rounded border border-sidebar p-2.5"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-mono text-sm font-medium text-foreground">!{{ a.command }}</span>
+                    <Badge variant="outline" class="text-[10px]">{{ a.permission_level }}</Badge>
+                    <Badge variant="secondary" class="text-[10px]">{{ DEDUP_LABELS[a.dedup_policy] }}</Badge>
+                    <Badge v-if="a.max_size" variant="outline" class="text-[10px]">max {{ a.max_size }}</Badge>
+                    <Badge v-if="a.cooldown_seconds > 0" variant="outline" class="text-[10px]">{{ a.cooldown_seconds }}s cd</Badge>
+                    <Badge v-if="!a.enabled" variant="destructive" class="text-[10px]">disabled</Badge>
+                  </div>
+                  <p class="mt-1 font-mono text-xs text-muted-foreground truncate" :title="a.value_template">
+                    appends: {{ a.value_template }}
+                  </p>
+                  <p v-if="a.args_empty_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
+                    <MessageSquareIcon class="h-3 w-3 shrink-0 mt-0.5" />
+                    <span class="truncate" :title="a.args_empty_reply">empty-args reply: {{ a.args_empty_reply }}</span>
+                  </p>
+                </div>
+                <div class="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" class="cursor-pointer" @click="openAppenderEdit(a)">
+                    <PencilIcon class="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" class="cursor-pointer text-destructive hover:text-destructive" @click="deleteAppender(a)">
+                    <Trash2Icon class="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- Append command edit modal -->
+      <Dialog v-model:open="appenderModalOpen">
+        <DialogContent class="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{{ editingAppender ? `Edit !${editingAppender.command}` : 'New append command' }}</DialogTitle>
+          </DialogHeader>
+          <div class="space-y-3">
+            <div>
+              <Label for="ap-command">Command (no leading !)</Label>
+              <Input id="ap-command" v-model="appenderForm.command" placeholder="raffle" class="font-mono" />
+              <p v-if="appenderFormErrors.command" class="mt-1 text-xs text-destructive">{{ appenderFormErrors.command }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <Label for="ap-perm">Permission</Label>
+                <select id="ap-perm" v-model="appenderForm.permission_level" class="input-border w-full">
+                  <option value="everyone">Everyone</option>
+                  <option value="subscriber">Subscriber</option>
+                  <option value="vip">VIP</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="broadcaster">Broadcaster only</option>
+                </select>
+              </div>
+              <div>
+                <Label for="ap-cooldown">Cooldown (s)</Label>
+                <Input id="ap-cooldown" v-model.number="appenderForm.cooldown_seconds" type="number" min="0" />
+              </div>
+            </div>
+            <div>
+              <Label for="ap-template">Value template</Label>
+              <textarea
+                id="ap-template"
+                v-model="appenderForm.value_template"
+                rows="2"
+                class="input-border w-full font-mono text-sm"
+                placeholder="[[[bot:from_user]]]"
+              ></textarea>
+              <p class="mt-1 text-xs text-muted-foreground">
+                Bot Expression syntax. Pipe formatters work:
+                <span class="font-mono">[[[bot:fired_at|date:HH:mm]]]</span>.
+              </p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <Label for="ap-dedup">Dedup policy</Label>
+                <select id="ap-dedup" v-model="appenderForm.dedup_policy" class="input-border w-full">
+                  <option value="none">None (allow duplicates)</option>
+                  <option value="per_chatter">Once per chatter</option>
+                  <option value="per_chatter_per_stream">Once per chatter per stream</option>
+                </select>
+              </div>
+              <div>
+                <Label for="ap-max">Max size (blank = unlimited)</Label>
+                <Input id="ap-max" v-model.number="appenderForm.max_size" type="number" min="1" />
+              </div>
+            </div>
+            <div>
+              <Label for="ap-empty">Empty-args reply (optional)</Label>
+              <textarea
+                id="ap-empty"
+                v-model="appenderForm.args_empty_reply"
+                rows="2"
+                class="input-border w-full text-sm"
+                placeholder="@[[[bot:from_user]]] add something after !raffle"
+              ></textarea>
+              <p class="mt-1 text-xs text-muted-foreground">
+                Spoken in chat when the template uses <span class="font-mono">[[[bot:args]]]</span> but the chatter didn't supply any. Leave blank for silent.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="ap-enabled" v-model="appenderForm.enabled" type="checkbox" />
+              <Label for="ap-enabled" class="cursor-pointer">Enabled</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" class="cursor-pointer" @click="appenderModalOpen = false">Cancel</Button>
+            <Button class="cursor-pointer" :disabled="savingAppender" @click="saveAppender">
+              {{ savingAppender ? 'Saving…' : 'Save' }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </AppLayout>
 </template>

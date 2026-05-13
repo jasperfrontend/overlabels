@@ -13,6 +13,7 @@ use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpReferenceController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
+use App\Http\Controllers\ListAppenderController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\OnboardingController;
@@ -484,6 +485,16 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/', [ListController::class, 'store'])->name('store');
         Route::put('/{list}', [ListController::class, 'update'])->name('update');
         Route::delete('/{list}', [ListController::class, 'destroy'])->name('destroy');
+
+        // List Append commands - chat commands that append to a list.
+        // Returns JSON; consumed by the Lists Vue page inline rather
+        // than Inertia full-page reloads.
+        Route::prefix('{list}/appenders')->name('appenders.')->group(function () {
+            Route::get('/', [ListAppenderController::class, 'index'])->name('index');
+            Route::post('/', [ListAppenderController::class, 'store'])->name('store');
+            Route::put('/{appender}', [ListAppenderController::class, 'update'])->name('update');
+            Route::delete('/{appender}', [ListAppenderController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // Template Management - Full resource routes

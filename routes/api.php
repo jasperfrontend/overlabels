@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotControlController;
 use App\Http\Controllers\Api\Internal\BotExpressionController;
 use App\Http\Controllers\Api\Internal\BotGamejamActionController;
+use App\Http\Controllers\Api\Internal\BotListAppenderController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
 use App\Http\Controllers\Api\Internal\BotRecipeTriggerController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
@@ -189,6 +190,7 @@ Route::prefix('/internal/bot')
             Route::get('/commands', [BotCommandController::class, 'index']);
             Route::post('/expressions/fire', [BotExpressionController::class, 'fire']);
             Route::post('/recipe-triggers/fire', [BotRecipeTriggerController::class, 'fire']);
+            Route::post('/list-appenders/fire', [BotListAppenderController::class, 'fire']);
             Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
                 ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
             Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])

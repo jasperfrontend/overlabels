@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Internal;
 use App\Http\Controllers\Controller;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
+use App\Models\ListAppender;
 use App\Models\RecipeChatTrigger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -23,11 +24,13 @@ class BotCommandController extends Controller
      *     "jasperdiscovers": [
      *       { "command": "control",  "permission_level": "everyone", "type": "builtin"        },
      *       { "command": "distance", "permission_level": "everyone", "type": "expression"     },
-     *       { "command": "flip",     "permission_level": "everyone", "type": "recipe_trigger" }
+     *       { "command": "flip",     "permission_level": "everyone", "type": "recipe_trigger" },
+     *       { "command": "raffle",   "permission_level": "everyone", "type": "list_append"    }
      *     ]
      *   }
      *
-     * Resolution order on command-name collision: builtin > expression > recipe_trigger.
+     * Resolution order on command-name collision:
+     *   builtin > expression > recipe_trigger > list_append.
      * Validation at save / install time should refuse colliding rows, but enforcing
      * the order here keeps the bot deterministic if a stale row sneaks through.
      */
@@ -44,6 +47,11 @@ class BotCommandController extends Controller
             ->groupBy('user_id');
 
         $triggersByUser = RecipeChatTrigger::where('enabled', true)
+            ->whereIn('user_id', $users->pluck('id'))
+            ->get()
+            ->groupBy('user_id');
+
+        $appendersByUser = ListAppender::where('enabled', true)
             ->whereIn('user_id', $users->pluck('id'))
             ->get()
             ->groupBy('user_id');
@@ -89,6 +97,18 @@ class BotCommandController extends Controller
                     'type' => 'recipe_trigger',
                 ];
                 $claimed[] = $trigger->command;
+            }
+
+            foreach ($appendersByUser->get($user->id, collect()) as $appender) {
+                if (in_array($appender->command, $claimed, true)) {
+                    continue;
+                }
+                $entries[] = [
+                    'command' => $appender->command,
+                    'permission_level' => $appender->permission_level,
+                    'type' => 'list_append',
+                ];
+                $claimed[] = $appender->command;
             }
 
             $map[strtolower($login)] = $entries;

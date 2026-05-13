@@ -89,6 +89,11 @@ class BotExpressionService
             'command' => $command,
             'args' => $args,
             'channel' => strtolower((string) ($payload['channel_login'] ?? '')),
+            // Unix seconds at the moment the bot dispatched this command.
+            // Pipe-formatter friendly: [[[bot:fired_at|date:HH:mm]]]
+            // resolves through the existing date formatter using the
+            // streamer's locale.
+            'fired_at' => (string) now()->timestamp,
         ];
 
         // Flat keys: bot:args.0 / .1 / ... map directly to "args.0" / "args.1"
