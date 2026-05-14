@@ -1,5 +1,15 @@
 # CHANGELOG MAY 2026
 
+## May 15th, 2026 - Help page: /help/bot/commands rewritten for the new command surface
+
+- The bot grew a lot in the last 48 hours (Bot Aliases, `!ol` chat-admin meta-command, `!list` integration, four user-defined command families) and the existing /help/bot/commands page only documented the original eight control commands - in big vertical cards that took ~150px each. Rewriting now while the surface is still fresh.
+- **Density**: every command renders as a one-line `<details>` row by default, expanding on click to show the example chat trace and any notes. Native HTML disclosure widget with a ChevronRight that rotates on open; no Vue state to manage. Mobile-friendly (the row wraps cleanly), full-width on desktop.
+- **Information architecture**: seven sections instead of one giant list - Controls (8), Controls-access switch (2), `!ol` chat-admin (10 subverbs), `!list` meta-command (1, links into /help/lists for the verb vocabulary), Your own commands (overview grid pointing at /help/expressions, /help/bot/commands#ol, /help/lists#appenders, recipes), Miscellaneous (`!ping` plus a pointer to /help/gamejam for the Chat Castle verbs), and Permission tiers. TOC at the top jumps to each.
+- **`!ol` section** has its own options-vocabulary panel at the bottom listing all four option keys (cooldown / permission / enabled / hidden), the permission shortforms (mod, sub, vip, bc, all), and the boolean variants (true/false/on/off/yes/no/1/0). Explicit note that aliases respect the target's permission after rewrite, so an alias to `!reset` doesn't escalate.
+- **Controls-access warning** kept but compacted - the long version still shows on first visit and dismisses to a one-liner with a "Show details" link. localStorage-backed (`help.bot.commands.controlsWarningAck`). Also clarified that `!ol` and `!list` work regardless of the controls-access switch (they're a different surface).
+- **Tier badge palette** reused for visual consistency: green/sky/pink/amber/violet for everyone/sub/vip/mod/broadcaster. Badges shortened (Sub+, VIP+, Mod+) so they don't push the summary off the line on mobile.
+- Visual verification still pending - lint and Vue compilation are clean but I haven't rendered it in a browser; the streamer should eyeball before this lands on prod.
+
 ## May 15th, 2026 - Test: pin the `!ol cmd add !name` bang-stripping behaviour
 
 - New Pest case in `BotChatAdminTest` covering the realistic "mod types the leading `!` by accident" scenario. Verifies single-bang on `cmd add`, double-bang on `cmd delete`, and bang-on-alias-name all normalise to a clean stored name. Two layers already enforced this (the service's `stripBang()` plus the validator's own ltrim+regex), but the behaviour wasn't pinned by a test - so a future refactor could quietly regress it.
