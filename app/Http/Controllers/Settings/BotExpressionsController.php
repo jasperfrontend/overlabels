@@ -7,10 +7,9 @@ use App\Models\BotCommand;
 use App\Models\BotExpression;
 use App\Models\OverlayControl;
 use App\Services\Bot\BotExpressionResolver;
+use App\Services\Bot\BotExpressionValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +17,7 @@ class BotExpressionsController extends Controller
 {
     public function __construct(
         private readonly BotExpressionResolver $resolver,
+        private readonly BotExpressionValidator $validator,
     ) {}
 
     public function index(Request $request): Response
@@ -154,51 +154,9 @@ class BotExpressionsController extends Controller
         ]);
     }
 
-    /**
-     * @return array<string,mixed> Validated payload plus normalised command (lowercased, no leading !).
-     */
     private function validatePayload(Request $request, ?BotExpression $existing = null): array
     {
-        $userId = $request->user()->id;
-
-        $data = $request->validate([
-            'command' => [
-                'required',
-                'string',
-                'max:30',
-                'regex:/^!?[a-zA-Z0-9_-]{1,30}$/',
-            ],
-            'permission_level' => ['required', Rule::in(BotCommand::PERMISSION_LEVELS)],
-            'cooldown_seconds' => ['required', 'integer', 'min:0', 'max:86400'],
-            'expression' => ['required', 'string', 'max:2000'],
-            'enabled' => ['required', 'boolean'],
-            'hidden_from_commands' => ['required', 'boolean'],
-        ]);
-
-        $command = strtolower(ltrim($data['command'], '!'));
-
-        // No collision with builtin commands.
-        $reserved = array_column(BotCommand::DEFAULTS, 'command');
-        if (in_array($command, $reserved, true)) {
-            throw ValidationException::withMessages([
-                'command' => "'!$command' is a built-in bot command and can't be reused as an expression.",
-            ]);
-        }
-
-        // No duplicate per user.
-        $duplicate = BotExpression::where('user_id', $userId)
-            ->where('command', $command)
-            ->when($existing, fn ($q) => $q->where('id', '!=', $existing->id))
-            ->exists();
-        if ($duplicate) {
-            throw ValidationException::withMessages([
-                'command' => "You already have an expression for '!$command'.",
-            ]);
-        }
-
-        $data['command'] = $command;
-
-        return $data;
+        return $this->validator->validateAndNormalize($request->user()->id, $request->all(), $existing);
     }
 
     /**

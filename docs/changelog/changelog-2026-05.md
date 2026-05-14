@@ -1,5 +1,30 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - `!ol` chat-admin: create commands and aliases without leaving Twitch
+
+- New chat-admin meta-command lets moderators (or the streamer) manage Bot Expressions and Bot Aliases from the Twitch chat without opening the dashboard. Targets near-feature-parity with StreamElements' `!command add/edit/delete/options` flow but namespaced under `!ol` so it doesn't collide with SE, Wizebot, Nightbot or Streamlabs Cloudbot, all of which already own `!command` / `!cmd` / `!commands`. The namespace also leaves room for future Overlabels subverbs (`!ol kit install`, `!ol overlay refresh`, ...) without claiming more top-level command slots.
+- **Surface** (full v1 grammar):
+  ```
+  !ol cmd add    <name> <payload>
+  !ol cmd edit   <name> <payload>
+  !ol cmd delete <name>
+  !ol cmd options <name> <option> <value>
+  !ol alias add    <name> <target_template>
+  !ol alias edit   <name> <target_template>
+  !ol alias delete <name>
+  !ol alias options <name> <option> <value>
+  !ol list [cmd|alias]
+  !ol help [cmd|alias|options]
+  ```
+  Options are `cooldown` (0-86400s), `permission` (everyone/sub/vip/mod/broadcaster, with short forms accepted), `enabled` (true/false), `hidden` (true/false). Permission shortforms canonicalise: `mod -> moderator`, `sub -> subscriber`, `bc -> broadcaster`, `all -> everyone`.
+- **Architecture**: new `POST /api/internal/bot/manage` endpoint sits next to `/list-actions/fire` in the bot's internal API. The bot relays the parsed `(subject, action, name, payload, option, value)` shape; the backend dispatches on `(subject, action)` to one method per verb. Validation runs through the same `BotExpressionValidator` / `BotAliasValidator` services the web settings controllers use, so a chat-side typo can't bypass what the dashboard would have rejected. Reply lines (success messages, validation errors, "no command named X") get queued to `bot_chat_outbox` and spoken by the existing outbox poller. Same shape as the `!list <slug> <action>` flow.
+- **Validator extraction**: pulled the inline validation out of `BotExpressionsController::validatePayload()` and `BotAliasesController::validatePayload()` into `App\Services\Bot\BotExpressionValidator` and `BotAliasValidator`. The web controllers now delegate; the new `BotChatAdminService` calls the same methods. Same rules: regex on command names, reserved-word collision check (builtins), duplicate detection per user, self-loop and alias->alias chain blocks for aliases, placeholder syntax check (`{1}`/`{2}`/`{*}` only). 80 existing bot/expression tests still green after the refactor.
+- **Permission model**: `!ol` is a builtin command with `permission_level: moderator`. The bot enforces the chat-side gate (mod or broadcaster only); the backend re-checks via `BotChatGate::hasPermission()` for defence in depth (silent block returns `{queued: false, reason: 'gate'}`). The target command's own permission after rewrite still applies, same as plain Bot Aliases - a mod creating `!ol alias add r reset stuff` won't escalate, because `!reset` is broadcaster-only and stays broadcaster-only at runtime.
+- **Seed migration** adds `!ol` to `BotCommand::DEFAULTS` (moderator) and backfills the row for every existing bot-enabled user; new sign-ups pick it up via `BotCommand::seedDefaults()`. Idempotent (`firstOrCreate`).
+- **Bot-side handler** (`overlabels-bot/src/commands/handlers.js::olAdmin`) parses `!ol <subject> <action> ...` into the structured payload and POSTs to `/api/internal/bot/manage` via new `submitChatAdmin()` API helper. Stays silent on the wire (outbox poller speaks the reply); logs at info level for telemetry. Unknown subjects forward as `subject: help` so the user sees a usage line rather than silence.
+- **Tests**: 15 new Pest tests in `tests/Feature/BotChatAdminTest.php` covering add/edit/delete/options for both cmd and alias paths, builtin collision rejection, self-loop rejection on alias, permission canonicalisation, cooldown range check, list output, help line, mod gate (`{queued: false, reason: 'gate'}` for non-mod chatters), unknown-channel handling, and the unauthenticated 403.
+- **Bot-side work shipped** alongside in the bot repo - the contract doc at `docs/bot-aliases-bot-contract.md` from yesterday already laid out the dispatch pattern; this commit follows the same shape (silent on success, outbox poller speaks, badges forwarded with the request).
+
 ## May 14th, 2026 - Bot aliases: bot-side dispatch shipped, feature is live
 
 - The `overlabels-bot` repo now handles `type: "alias"` entries from the command map. Aliases save in Overlabels and fire end-to-end through chat as of this commit. The earlier Bot Aliases changelog entry (below) shipped the backend + frontend only - this one closes the loop.
