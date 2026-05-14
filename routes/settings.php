@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\BMACIntegrationController;
+use App\Http\Controllers\Settings\BotAliasesController;
 use App\Http\Controllers\Settings\BotExpressionsController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
@@ -106,5 +107,15 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/{botExpression}/edit', [BotExpressionsController::class, 'edit'])->name('edit');
         Route::patch('/{botExpression}', [BotExpressionsController::class, 'update'])->name('update');
         Route::delete('/{botExpression}', [BotExpressionsController::class, 'destroy'])->name('destroy');
+    });
+
+    // Bot Aliases: mod-only command rewrites that expand to another bot command before dispatch.
+    Route::prefix('settings/bot/aliases')->name('settings.bot.aliases.')->group(function () {
+        Route::get('/', [BotAliasesController::class, 'index'])->name('index');
+        Route::get('/create', [BotAliasesController::class, 'create'])->name('create');
+        Route::post('/', [BotAliasesController::class, 'store'])->name('store');
+        Route::get('/{botAlias}/edit', [BotAliasesController::class, 'edit'])->name('edit');
+        Route::patch('/{botAlias}', [BotAliasesController::class, 'update'])->name('update');
+        Route::delete('/{botAlias}', [BotAliasesController::class, 'destroy'])->name('destroy');
     });
 });

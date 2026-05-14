@@ -343,13 +343,21 @@ function formatDate(iso: string | null): string {
               <button v-if="props.bot.enabled" class="btn btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">Disable</button>
               <button v-else class="btn btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
             </div>
-            <div v-if="props.bot.enabled" class="mt-4 border-t border-sidebar-border pt-4">
+            <div v-if="props.bot.enabled" class="mt-4 border-t border-sidebar-border pt-4 space-y-3">
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
                   Bot expressions: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls and Twitch data.
                 </p>
                 <Link href="/settings/bot/expressions" class="btn btn-tertiary cursor-pointer shrink-0">
                   Manage expressions
+                </Link>
+              </div>
+              <div class="flex items-center justify-between gap-4">
+                <p class="text-sm text-foreground">
+                  Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt; <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
+                </p>
+                <Link href="/settings/bot/aliases" class="btn btn-tertiary cursor-pointer shrink-0">
+                  Manage aliases
                 </Link>
               </div>
             </div>

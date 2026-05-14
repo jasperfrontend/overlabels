@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Internal;
 
 use App\Http\Controllers\Controller;
+use App\Models\BotAlias;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
 use App\Models\ListAppender;
@@ -25,6 +26,7 @@ class BotCommandController extends Controller
      *     "jasperdiscovers": [
      *       { "command": "control",  "permission_level": "everyone",   "type": "builtin"        },
      *       { "command": "distance", "permission_level": "everyone",   "type": "expression"     },
+     *       { "command": "w",        "permission_level": "moderator",  "type": "alias",         "target_template": "increment wins {1}" },
      *       { "command": "flip",     "permission_level": "everyone",   "type": "recipe_trigger" },
      *       { "command": "raffle",   "permission_level": "everyone",   "type": "list_append"    },
      *       { "command": "list",     "permission_level": "moderator",  "type": "list_meta"      }
@@ -32,9 +34,13 @@ class BotCommandController extends Controller
      *   }
      *
      * Resolution order on command-name collision:
-     *   builtin > expression > recipe_trigger > list_append > list_meta.
+     *   builtin > expression > alias > recipe_trigger > list_append > list_meta.
      * Validation at save / install time should refuse colliding rows, but enforcing
      * the order here keeps the bot deterministic if a stale row sneaks through.
+     *
+     * Aliases carry an extra `target_template` field with positional placeholders
+     * {1}, {2}, ..., {*}. The bot substitutes args at fire time and re-dispatches
+     * the resulting command through its normal routing (one hop only).
      */
     public function index(): JsonResponse
     {
@@ -44,6 +50,11 @@ class BotCommandController extends Controller
             ->get();
 
         $expressionsByUser = BotExpression::where('enabled', true)
+            ->whereIn('user_id', $users->pluck('id'))
+            ->get()
+            ->groupBy('user_id');
+
+        $aliasesByUser = BotAlias::where('enabled', true)
             ->whereIn('user_id', $users->pluck('id'))
             ->get()
             ->groupBy('user_id');
@@ -92,6 +103,19 @@ class BotCommandController extends Controller
                     'type' => 'expression',
                 ];
                 $claimed[] = $expr->command;
+            }
+
+            foreach ($aliasesByUser->get($user->id, collect()) as $alias) {
+                if (in_array($alias->command, $claimed, true)) {
+                    continue;
+                }
+                $entries[] = [
+                    'command' => $alias->command,
+                    'permission_level' => $alias->permission_level,
+                    'type' => 'alias',
+                    'target_template' => $alias->target_template,
+                ];
+                $claimed[] = $alias->command;
             }
 
             foreach ($triggersByUser->get($user->id, collect()) as $trigger) {
