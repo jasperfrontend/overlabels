@@ -15,8 +15,8 @@ const breadcrumbItems: BreadcrumbItem[] = [
     href: '/dashboard'
   },
   {
-    title: 'Appearance settings',
-    href: '/settings/appearance'
+    title: 'Account settings',
+    href: '/settings/account'
   }
 ];
 
@@ -38,6 +38,31 @@ const showConfirmation = ref(false);
 const confirmationTitle = ref('');
 const foreachSaving = ref(false);
 const foreachConfirmation = ref('');
+
+const deleteInput = ref('');
+const deleteSubmitting = ref(false);
+const deleteError = ref('');
+const DELETE_PHRASE = 'DELETE ACCOUNT';
+
+function submitDeleteAccount() {
+  deleteError.value = '';
+  if (deleteInput.value !== DELETE_PHRASE) {
+    deleteError.value = `You must type ${DELETE_PHRASE} exactly to confirm.`;
+    return;
+  }
+  if (!window.confirm('Last chance. This permanently deletes your account, all your overlays, access tokens, integrations, tags, and history. There is no undo. Continue?')) {
+    return;
+  }
+  deleteSubmitting.value = true;
+  router.delete(route('settings.account.destroy'), {
+    data: { confirmation: deleteInput.value },
+    preserveScroll: true,
+    onError: (errors) => {
+      deleteError.value = errors.confirmation ?? 'Account deletion failed. Please try again.';
+      deleteSubmitting.value = false;
+    },
+  });
+}
 
 const LOCALES = [
   { value: 'en-US', label: 'English (US)' },
@@ -142,11 +167,11 @@ function saveForeachCaps() {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbItems">
-    <Head title="Appearance settings" />
+    <Head title="Account settings" />
 
     <SettingsLayout>
       <div class="space-y-6">
-        <HeadingSmall title="Appearance settings" description="Update your account's appearance settings" />
+        <HeadingSmall title="Appearance" description="Theme controls for the Overlabels dashboard." />
         <AppearanceTabs />
       </div>
 
@@ -213,6 +238,48 @@ function saveForeachCaps() {
           <p v-if="foreachConfirmation" class="text-sm text-green-600 dark:text-green-300">
             {{ foreachConfirmation }}
           </p>
+        </div>
+      </div>
+
+      <div class="space-y-6 rounded-md border border-destructive/40 bg-destructive/5 p-6">
+        <HeadingSmall
+          title="Delete your account"
+          description="Permanently erases your account, every overlay you own, all access tokens, every integration, your tags, your bot commands, and your event history. This cannot be undone and your data cannot be restored."
+        />
+
+        <ul class="list-disc space-y-1 pl-5 text-sm text-foreground">
+          <li>All your overlay templates and alert templates are deleted.</li>
+          <li>All your access tokens stop working immediately and any OBS browser source using them goes blank.</li>
+          <li>Ko-fi, StreamLabs, StreamElements, Fourthwall, Buy Me a Coffee, and other integrations are disconnected.</li>
+          <li>Your bot commands, custom controls, custom tags, and stream history are erased.</li>
+          <li>If you re-authenticate with Twitch later, you will start from scratch as a brand-new account.</li>
+        </ul>
+
+        <div class="space-y-2">
+          <label for="delete-account-confirm" class="block text-sm text-foreground">
+            Type <strong>{{ DELETE_PHRASE }}</strong> in the box below to enable the delete button.
+          </label>
+          <input
+            id="delete-account-confirm"
+            v-model="deleteInput"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="DELETE ACCOUNT"
+            class="input-border h-10 w-full max-w-sm rounded-sm px-3"
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            :disabled="deleteInput !== DELETE_PHRASE || deleteSubmitting"
+            class="cursor-pointer rounded-sm border border-destructive bg-destructive px-4 h-10 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+            @click="submitDeleteAccount"
+          >
+            {{ deleteSubmitting ? 'Deleting...' : 'I am sure, delete my account and all my data' }}
+          </button>
+          <p v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</p>
         </div>
       </div>
     </SettingsLayout>

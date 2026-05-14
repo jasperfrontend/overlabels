@@ -669,7 +669,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="mb-4 text-xl font-semibold">Changing your locale</h3>
               <p class="mb-4 text-foreground">
                 Go to
-                <Link href="/settings/appearance" class="text-violet-400 hover:underline">Settings &gt; Appearance
+                <Link href="/settings/account" class="text-violet-400 hover:underline">Settings &gt; Account
                 </Link>
                 and pick your locale from the dropdown. You will see a live preview of how numbers, currencies, and
                 dates

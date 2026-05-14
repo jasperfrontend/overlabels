@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotExpressionsController;
 use App\Http\Controllers\Settings\BotSettingsController;
@@ -14,10 +15,17 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// Old appearance URL kept as a permanent redirect so existing bookmarks
+// and in-app deep links still land somewhere useful after the rename.
+Route::redirect('/settings/appearance', '/settings/account', 301);
+
 Route::middleware('auth.redirect')->group(function () {
-    Route::get('/settings/appearance', function () {
-        return inertia('settings/Appearance');
-    })->name('settings.appearance');
+    Route::get('/settings/account', function () {
+        return inertia('settings/Account');
+    })->name('settings.account');
+
+    Route::delete('/settings/account', [AccountController::class, 'destroy'])
+        ->name('settings.account.destroy');
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);

@@ -7,8 +7,8 @@ import { Link, usePage } from '@inertiajs/vue3';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Appearance',
-        href: '/settings/appearance',
+        title: 'Account',
+        href: '/settings/account',
     },
     {
         title: 'Integrations',
@@ -23,7 +23,7 @@ const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.locati
 
 <template>
     <div class="px-4 py-6">
-        <Heading title="Settings" description="Manage your theme settings" />
+        <Heading title="Settings" description="Manage your account, integrations, and overlay defaults." />
 
         <div class="flex flex-col space-y-8 md:space-y-0 lg:flex-row lg:space-y-0 lg:space-x-12 mt-4">
             <aside class="w-full max-w-xl lg:w-48">

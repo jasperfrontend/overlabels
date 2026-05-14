@@ -12,6 +12,7 @@ use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
 use App\Models\User;
 use App\Services\AdminAuditService;
+use App\Services\UserDeletionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -157,7 +158,7 @@ class AdminUserController extends Controller
         return back()->with('message', 'Role updated successfully.');
     }
 
-    public function destroy(Request $request, int $id): RedirectResponse
+    public function destroy(Request $request, int $id, UserDeletionService $deletion): RedirectResponse
     {
         $user = User::withTrashed()->findOrFail($id);
         $admin = $request->user();
@@ -174,7 +175,23 @@ class AdminUserController extends Controller
             return back()->withErrors(['strategy' => 'Cannot delete your own account.']);
         }
 
-        if ($request->input('strategy') === 'assign_ghost') {
+        $strategy = $request->input('strategy');
+
+        // Audit before deletion so user_name / twitch_id are still legible
+        // when the row gets hard-deleted under the delete_all strategy.
+        $this->audit->log($admin, 'user.deleted', 'User', $user->id, [
+            'strategy' => $strategy,
+            'user_name' => $user->name,
+            'twitch_id' => $user->twitch_id,
+        ], $request);
+
+        if ($strategy === 'delete_all') {
+            $deletion->eraseAccount($user);
+
+            return redirect()->route('admin.users.index')->with('message', 'User permanently deleted.');
+        }
+
+        if ($strategy === 'assign_ghost') {
             $ghost = User::ghostUser();
 
             OverlayTemplate::where('owner_id', $user->id)->update(['owner_id' => $ghost->id]);
@@ -206,38 +223,10 @@ class AdminUserController extends Controller
             TemplateTagCategory::where('user_id', $user->id)->update(['user_id' => $ghost->id]);
         }
 
-        if ($request->input('strategy') === 'delete_all') {
-            // Detach templates from kits (pivot), then delete kits
-            Kit::where('owner_id', $user->id)->each(function ($kit) {
-                $kit->templates()->detach();
-                $kit->delete();
-            });
-
-            // Detach templates from alert targeting pivot, then delete
-            OverlayTemplate::where('owner_id', $user->id)->each(function ($template) {
-                $template->targetStaticOverlays()->detach();
-                $template->kits()->detach();
-                $template->controls()->delete();
-                $template->eventMappings()->delete();
-                $template->delete();
-            });
-
-            OverlayControl::where('user_id', $user->id)->delete();
-            TemplateTag::where('user_id', $user->id)->delete();
-            TemplateTagCategory::where('user_id', $user->id)->delete();
-            ExternalIntegration::where('user_id', $user->id)->delete();
-        }
-
-        // Always delete access tokens and eventsub subscriptions (security)
+        // delete_content + assign_ghost: revoke credentials, soft-delete the user
+        // so restore() remains meaningful.
         $user->overlayAccessTokens()->delete();
         $user->eventsubSubscriptions()->delete();
-
-        $this->audit->log($admin, 'user.deleted', 'User', $user->id, [
-            'strategy' => $request->input('strategy'),
-            'user_name' => $user->name,
-            'twitch_id' => $user->twitch_id,
-        ], $request);
-
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('message', 'User deleted successfully.');

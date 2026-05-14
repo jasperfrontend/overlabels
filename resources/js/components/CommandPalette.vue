@@ -54,7 +54,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
 
-    { id: 'appearance', label: 'Theme Settings', section: 'Settings', href: route('settings.appearance'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme'] },
+    { id: 'account', label: 'Account Settings', section: 'Settings', href: route('settings.account'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme', 'locale', 'delete', 'account'] },
     { id: 'integrations', label: 'Integrations', section: 'Settings', href: route('settings.integrations.index'), icon: Coffee, keywords: ['kofi', 'streamlabs', 'connect'] },
 
     { id: 'help', label: 'Overlabels Help', section: 'Learn', href: route('help'), icon: Library, keywords: ['help', 'assistence', 'learn', 'documentation', 'docs'] },

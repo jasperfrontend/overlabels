@@ -1390,7 +1390,7 @@ function clearFilter() {
               <p class="mb-3 text-foreground">
                 These are the collections you can put on the right-hand side of <code>[[[foreach:X as Y]]]</code>.
                 Event collections follow Twitch's own limits. User-scope collections obey the caps on your
-                <Link :href="route('settings.appearance')" class="underline hover:no-underline">Appearance settings page</Link>
+                <Link :href="route('settings.account')" class="underline hover:no-underline">Account settings page</Link>
                 (hard maximum 50 per loop).
               </p>
               <div class="overflow-x-auto">
@@ -1425,25 +1425,25 @@ function clearFilter() {
                     <tr class="border-b border-sidebar">
                       <td class="py-2 pr-4"><code>subscribers</code></td>
                       <td class="py-2 pr-4">User (channel)</td>
-                      <td class="py-2 pr-4">Appearance settings (default 10)</td>
+                      <td class="py-2 pr-4">Account settings (default 10)</td>
                       <td class="py-2">Static</td>
                     </tr>
                     <tr class="border-b border-sidebar">
                       <td class="py-2 pr-4"><code>goals</code></td>
                       <td class="py-2 pr-4">User (channel)</td>
-                      <td class="py-2 pr-4">Appearance settings (default 3)</td>
+                      <td class="py-2 pr-4">Account settings (default 3)</td>
                       <td class="py-2">Static</td>
                     </tr>
                     <tr class="border-b border-sidebar">
                       <td class="py-2 pr-4"><code>channel_followers</code></td>
                       <td class="py-2 pr-4">User (channel)</td>
-                      <td class="py-2 pr-4">Appearance settings (default 5)</td>
+                      <td class="py-2 pr-4">Account settings (default 5)</td>
                       <td class="py-2">Static</td>
                     </tr>
                     <tr>
                       <td class="py-2 pr-4"><code>followed_channels</code></td>
                       <td class="py-2 pr-4">User (channel)</td>
-                      <td class="py-2 pr-4">Appearance settings (default 5)</td>
+                      <td class="py-2 pr-4">Account settings (default 5)</td>
                       <td class="py-2">Static</td>
                     </tr>
                   </tbody>
