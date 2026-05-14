@@ -517,6 +517,29 @@ class OverlayTemplateController extends Controller
                 $listData[$baseKey.':empty'] = $count === 0 ? '1' : '0';
                 $listData[$baseKey.':random'] = $count > 0 ? (string) $items[array_rand($items)] : '';
                 $listData[$baseKey.':sum'] = $this->sumListItems($list->slug, $items);
+
+                // Expiry-related tags: static Unix timestamp + a synthetic
+                // timer state the renderer ticks via the same RAF machinery
+                // it uses for [type=timer] controls. The countdown key
+                // resolves to seconds-until-expiry (clamped >= 0), so a
+                // template can render [[[c:list:slug:countdown|duration:mm:ss]]]
+                // and get a live ticker without any per-list timer control.
+                $listData[$baseKey.':expires_at'] = $list->expires_at
+                    ? (string) $list->expires_at->timestamp
+                    : '';
+
+                if ($list->expires_at !== null) {
+                    $timerStates['list:'.$list->slug.':countdown'] = [
+                        'mode' => 'countto',
+                        'base_seconds' => 0,
+                        'offset_seconds' => 0,
+                        'running' => true,
+                        'started_at' => null,
+                        // Renderer parses with new Date(...) - ISO 8601 is
+                        // the safe interchange format.
+                        'target_datetime' => $list->expires_at->toIso8601String(),
+                    ];
+                }
             }
 
             // Expand the template-tag allowlist with any `t.<name>` references

@@ -226,3 +226,11 @@ Schedule::command('log:clear')
     ->onFailure(function () {
         // Log cleanup failure if needed
     });
+
+// Sweep aged-out list entries + finalize expired lists. Service is
+// idempotent and broadcasts ListUpdated on actual changes so overlays
+// react in real time.
+Schedule::command('lists:sweep-expired')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->name('lists:sweep-expired');

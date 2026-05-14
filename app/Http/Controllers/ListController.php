@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\ListUpdated;
 use App\Models\OptionSet;
+use App\Support\ListItemTimestamps;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -72,12 +73,14 @@ class ListController extends Controller
             'items.*' => 'string',
         ]);
 
+        $items = $this->sanitiseItems($validated['items'] ?? []);
         $list = OptionSet::create([
             'user_id' => $userId,
             'recipe_instance_id' => null,
             'slug' => $validated['slug'],
             'label' => $validated['label'] ?? null,
-            'items' => $this->sanitiseItems($validated['items'] ?? []),
+            'items' => $items,
+            'item_added_at' => ListItemTimestamps::freshFor($items),
             'min_items' => 0,
             'max_items' => null,
             'user_editable' => true,
@@ -105,6 +108,16 @@ class ListController extends Controller
             // sent. Lets the UI fire a focused PATCH without having
             // to round-trip the items array.
             'disabled' => 'nullable|boolean',
+            // Optional expiry-config PATCH. Same focused-update pattern
+            // as `disabled` - when either field is present, items/label
+            // are ignored and we only persist the TTL changes.
+            // entry_ttl_seconds: per-item age-out, applied by the sweep
+            // command. Null clears the TTL. Hard cap of 30 days because
+            // anything longer should just be permanent.
+            // expires_at: Unix seconds when the whole list should be
+            // snapshot-cleared-disabled. Must be in the future when set.
+            'entry_ttl_seconds' => 'sometimes|nullable|integer|min:10|max:2592000',
+            'expires_at' => 'sometimes|nullable|integer|min:0',
         ]);
 
         // Disable / enable is a stand-alone operation. Recipe-locked
@@ -114,6 +127,35 @@ class ListController extends Controller
             $list->update([
                 'disabled_at' => $validated['disabled'] ? now() : null,
             ]);
+            $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
+
+            return back()->with('flash_list_id', $list->id);
+        }
+
+        // Expiry-config focused PATCH. Either field present alone is
+        // enough to trigger this path. Items/label changes are not
+        // bundled here - keep the surface single-purpose.
+        $hasTtl = array_key_exists('entry_ttl_seconds', $validated);
+        $hasExpires = array_key_exists('expires_at', $validated);
+        if ($hasTtl || $hasExpires) {
+            $updates = [];
+            if ($hasTtl) {
+                $updates['entry_ttl_seconds'] = $validated['entry_ttl_seconds'];
+            }
+            if ($hasExpires) {
+                // expires_at clears -> re-enable a list that the sweeper
+                // had previously expired. Streamers can set expires_at
+                // to null to "reopen" a list, which feels more natural
+                // than having to also click the Enable button.
+                $expiresAt = $validated['expires_at'] !== null
+                    ? \Illuminate\Support\Carbon::createFromTimestamp($validated['expires_at'])
+                    : null;
+                $updates['expires_at'] = $expiresAt;
+                if ($expiresAt === null && $list->disabled_at !== null) {
+                    $updates['disabled_at'] = null;
+                }
+            }
+            $list->update($updates);
             $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
 
             return back()->with('flash_list_id', $list->id);
@@ -140,9 +182,20 @@ class ListController extends Controller
             throw new HttpException(422, "This list allows at most {$list->max_items} items.");
         }
 
+        // Preserve timestamps for items that match by value (oldest
+        // match wins for duplicates); items removed lose their stamps;
+        // new items get current time. So reordering doesn't reset the
+        // entry-TTL clock, but renames or new entries do.
+        $newTimestamps = ListItemTimestamps::preserveByValue(
+            $list->items ?? [],
+            $list->item_added_at ?? [],
+            $newItems,
+        );
+
         $list->update([
             'label' => $validated['label'] ?? $list->label,
             'items' => $newItems,
+            'item_added_at' => $newTimestamps,
         ]);
 
         $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
@@ -210,6 +263,8 @@ class ListController extends Controller
             'max_items' => $list->max_items,
             'user_editable' => $list->user_editable,
             'disabled_at' => $list->disabled_at?->timestamp,
+            'entry_ttl_seconds' => $list->entry_ttl_seconds,
+            'expires_at' => $list->expires_at?->timestamp,
             'recipe_instance_id' => $list->recipe_instance_id,
             'recipe' => $recipe ? [
                 'slug' => $recipe->slug,
@@ -224,15 +279,6 @@ class ListController extends Controller
 
     private function broadcastUpdate(?string $broadcasterId, OptionSet $list): void
     {
-        if (! $broadcasterId) {
-            return;
-        }
-
-        ListUpdated::dispatch(
-            $broadcasterId,
-            $list->slug,
-            $list->items ?? [],
-            $list->updated_at?->timestamp ?? now()->timestamp,
-        );
+        ListUpdated::dispatchFor($broadcasterId, $list);
     }
 }

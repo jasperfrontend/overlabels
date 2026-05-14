@@ -23,6 +23,8 @@ interface ListRow {
   max_items: number | null;
   user_editable: boolean;
   disabled_at: number | null;
+  entry_ttl_seconds: number | null;
+  expires_at: number | null;
   recipe_instance_id: number | null;
   recipe: { slug: string | null; name: string | null; version: number | null; instance_slug: string | null } | null;
   tag: string;
@@ -196,6 +198,132 @@ async function copyTag(tag: string) {
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Expiry config (entry-TTL + whole-list expires_at)
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Draft state for the expiry panel. ttlValue + ttlUnit compose into the
+// integer seconds we POST; expiresAtLocal is the <input type="datetime-local">
+// string, which we convert to Unix seconds at save time. expiresAtLocal
+// stays in the user's local timezone for editing; the server stores UTC.
+const ttlValue = ref<number | null>(null);
+const ttlUnit = ref<'seconds' | 'minutes' | 'hours'>('minutes');
+const expiresAtLocal = ref<string>('');
+const expirySaving = ref(false);
+
+watch(activeList, (next) => {
+  if (!next || next.entry_ttl_seconds === null) {
+    ttlValue.value = null;
+    ttlUnit.value = 'minutes';
+  } else {
+    // Pick the largest unit that divides evenly so editing feels natural:
+    // 3600 -> 1 hour, 90 -> 90 seconds (not 1.5 minutes).
+    const s = next.entry_ttl_seconds;
+    if (s % 3600 === 0) {
+      ttlValue.value = s / 3600;
+      ttlUnit.value = 'hours';
+    } else if (s % 60 === 0) {
+      ttlValue.value = s / 60;
+      ttlUnit.value = 'minutes';
+    } else {
+      ttlValue.value = s;
+      ttlUnit.value = 'seconds';
+    }
+  }
+  expiresAtLocal.value = next?.expires_at ? unixToLocalInput(next.expires_at) : '';
+}, { immediate: true });
+
+function unixToLocalInput(unix: number): string {
+  const d = new Date(unix * 1000);
+  // datetime-local wants YYYY-MM-DDTHH:mm in local time.
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localInputToUnix(local: string): number | null {
+  if (!local) return null;
+  const ts = new Date(local).getTime();
+  return Number.isFinite(ts) ? Math.floor(ts / 1000) : null;
+}
+
+const ttlSecondsComposed = computed<number | null>(() => {
+  if (ttlValue.value === null || ttlValue.value <= 0) return null;
+  const mult = ttlUnit.value === 'hours' ? 3600 : ttlUnit.value === 'minutes' ? 60 : 1;
+  return Math.floor(ttlValue.value * mult);
+});
+
+const expiresAtUnix = computed<number | null>(() => localInputToUnix(expiresAtLocal.value));
+
+const expiryIsDirty = computed(() => {
+  if (!activeList.value) return false;
+  const currentTtl = activeList.value.entry_ttl_seconds;
+  const currentExpires = activeList.value.expires_at;
+  return ttlSecondsComposed.value !== currentTtl || expiresAtUnix.value !== currentExpires;
+});
+
+// Live preview of how long until expires_at fires - ticks every second so
+// streamers can sanity-check the date picker without doing math in their head.
+const nowTick = ref(Math.floor(Date.now() / 1000));
+let nowTickInterval: number | undefined;
+onMounted(() => {
+  nowTickInterval = window.setInterval(() => {
+    nowTick.value = Math.floor(Date.now() / 1000);
+  }, 1000);
+});
+onUnmounted(() => {
+  if (nowTickInterval) clearInterval(nowTickInterval);
+});
+
+const expiryCountdown = computed<string>(() => {
+  const ts = expiresAtUnix.value;
+  if (ts === null) return '';
+  const delta = ts - nowTick.value;
+  if (delta <= 0) return 'expired';
+  return formatDuration(delta);
+});
+
+function formatDuration(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (days > 0) return `${days}d ${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
+function saveExpiry() {
+  if (!activeList.value || expirySaving.value) return;
+  expirySaving.value = true;
+
+  router.put(route('lists.update', activeList.value.id), {
+    entry_ttl_seconds: ttlSecondsComposed.value,
+    expires_at: expiresAtUnix.value,
+  }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      toastMessage.value = `Expiry updated for '${activeList.value?.slug}'.`;
+      toastType.value = 'success';
+    },
+    onError: (errors) => {
+      toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
+      toastType.value = 'error';
+    },
+    onFinish: () => {
+      expirySaving.value = false;
+    },
+  });
+}
+
+function clearTtl() {
+  ttlValue.value = null;
+}
+
+function clearExpiresAt() {
+  expiresAtLocal.value = '';
+}
+
 const activeItemCount = computed(() => draftItemsText.value.split('\n').length);
 const isActiveLocked = computed(() => activeList.value && !activeList.value.user_editable && activeList.value.recipe_instance_id !== null);
 
@@ -362,6 +490,8 @@ interface ListUpdatedPayload {
   slug: string;
   items: string[] | null;
   updated_at: number | null;
+  expires_at?: number | null;
+  disabled_at?: number | null;
 }
 
 function applyListUpdated(payload: ListUpdatedPayload) {
@@ -378,6 +508,12 @@ function applyListUpdated(payload: ListUpdatedPayload) {
     ...lists.value[idx],
     items: payload.items ?? [],
     updated_at: payload.updated_at,
+    // expires_at / disabled_at only present on broadcasts from sources
+    // that thread them through (the dispatchFor helper does). Falling
+    // back to existing means a broadcast without the field doesn't
+    // accidentally clear it.
+    expires_at: payload.expires_at !== undefined ? payload.expires_at : lists.value[idx].expires_at,
+    disabled_at: payload.disabled_at !== undefined ? payload.disabled_at : lists.value[idx].disabled_at,
   };
 
   // If the user is currently editing this list AND has unsaved changes,
@@ -837,6 +973,99 @@ onMounted(() => {
             >
               {{ saving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved' }}
             </Button>
+          </div>
+
+          <!-- Expiry panel: per-item age-out + whole-list deadline. -->
+          <div class="mt-6 rounded-md border border-sidebar p-4">
+            <div class="mb-3">
+              <h3 class="text-sm font-semibold text-foreground">Expiry</h3>
+              <p class="mt-0.5 text-xs text-muted-foreground">
+                Optional. Per-item age-out drops individual entries after their age exceeds the TTL.
+                Whole-list expiry snapshots the list, clears items, and disables further appends at the chosen moment.
+                Both run every minute.
+              </p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <!-- Entry TTL -->
+              <div>
+                <Label for="entry-ttl">Per-item age-out</Label>
+                <div class="mt-1 flex items-center gap-2">
+                  <Input
+                    id="entry-ttl"
+                    v-model.number="ttlValue"
+                    type="number"
+                    min="1"
+                    placeholder="off"
+                    class="w-24 cursor-pointer"
+                  />
+                  <select
+                    v-model="ttlUnit"
+                    class="input-border cursor-pointer rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <option value="seconds">seconds</option>
+                    <option value="minutes">minutes</option>
+                    <option value="hours">hours</option>
+                  </select>
+                  <Button
+                    v-if="ttlValue !== null"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="cursor-pointer"
+                    @click="clearTtl"
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <p class="mt-1 text-xs text-muted-foreground">
+                  Items older than this are removed on the next sweep. Max 30 days.
+                </p>
+              </div>
+
+              <!-- Whole-list expires_at -->
+              <div>
+                <Label for="expires-at">Whole-list deadline</Label>
+                <div class="mt-1 flex items-center gap-2">
+                  <Input
+                    id="expires-at"
+                    v-model="expiresAtLocal"
+                    type="datetime-local"
+                    class="cursor-pointer"
+                  />
+                  <Button
+                    v-if="expiresAtLocal"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="cursor-pointer"
+                    @click="clearExpiresAt"
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <p class="mt-1 text-xs text-foreground">
+                  <span v-if="expiryCountdown">In <span class="font-mono">{{ expiryCountdown }}</span></span>
+                  <span v-else class="text-muted-foreground">No deadline set.</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between gap-2">
+              <p class="text-xs text-muted-foreground">
+                Template tags:
+                <span class="font-mono">{{ activeList.tag.replace(']]]', ':expires_at]]]') }}</span>,
+                <span class="font-mono">{{ activeList.tag.replace(']]]', ':countdown]]]') }}</span>
+              </p>
+              <Button
+                size="sm"
+                class="cursor-pointer"
+                :disabled="!expiryIsDirty || expirySaving"
+                @click="saveExpiry"
+              >
+                {{ expirySaving ? 'Saving…' : expiryIsDirty ? 'Save expiry' : 'Saved' }}
+              </Button>
+            </div>
           </div>
 
           <!-- Action buttons section: same vocabulary as the chat !list -->

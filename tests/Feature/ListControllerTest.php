@@ -283,6 +283,8 @@ it('ListUpdated broadcasts on the alerts.{twitch_id} channel as list.updated', f
             'slug' => 'pizza',
             'items' => ['a', 'b'],
             'updated_at' => 1234567890,
+            'expires_at' => null,
+            'disabled_at' => null,
         ]);
 });
 

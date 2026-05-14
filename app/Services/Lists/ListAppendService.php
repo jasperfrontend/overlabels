@@ -12,6 +12,7 @@ use App\Services\Bot\BotExpressionResolver;
 use App\Services\Bot\BotExpressionService;
 use App\Services\StreamSessionService;
 use App\Support\BotChatGate;
+use App\Support\ListItemTimestamps;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -117,7 +118,11 @@ class ListAppendService
             }
 
             $newItems = array_merge(array_values($currentItems), [$resolvedValue]);
-            $list->update(['items' => $newItems]);
+            $newTimestamps = ListItemTimestamps::append($list->item_added_at ?? []);
+            $list->update([
+                'items' => $newItems,
+                'item_added_at' => $newTimestamps,
+            ]);
 
             ListAppendHistory::create([
                 'list_appender_id' => $appender->id,
@@ -131,12 +136,7 @@ class ListAppendService
 
             $appender->forceFill(['last_fired_at' => Carbon::now()])->save();
 
-            ListUpdated::dispatch(
-                (string) $user->twitch_id,
-                $list->slug,
-                $newItems,
-                $list->fresh()->updated_at?->timestamp ?? now()->timestamp,
-            );
+            ListUpdated::dispatchFor((string) $user->twitch_id, $list->fresh());
 
             return ['fired' => true, 'value' => $resolvedValue];
         });

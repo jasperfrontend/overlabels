@@ -7,6 +7,7 @@ use App\Models\ListMetaCommand;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
 use App\Services\Lists\ListActionService;
+use App\Support\ListItemTimestamps;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -116,14 +117,16 @@ class ListActionWebController extends Controller
         $this->authorizeSnapshot($list, $snapshot);
 
         $this->service->snapshot($list, ListSnapshot::REASON_BEFORE_RESTORE, $request->user()->id);
-        $list->update(['items' => $snapshot->items ?? []]);
+        // Restored items get fresh timestamps so an old snapshot doesn't
+        // immediately get swept by a short entry-TTL. Restoration is
+        // semantically equivalent to "add these items again now."
+        $restoredItems = $snapshot->items ?? [];
+        $list->update([
+            'items' => $restoredItems,
+            'item_added_at' => ListItemTimestamps::freshFor($restoredItems),
+        ]);
 
-        ListUpdated::dispatch(
-            (string) $request->user()->twitch_id,
-            $list->slug,
-            $list->fresh()->items ?? [],
-            $list->fresh()->updated_at?->timestamp ?? now()->timestamp,
-        );
+        ListUpdated::dispatchFor((string) $request->user()->twitch_id, $list->fresh());
 
         return response()->json([
             'restored' => true,

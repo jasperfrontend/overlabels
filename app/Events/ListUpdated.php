@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\OptionSet;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -30,6 +31,8 @@ class ListUpdated implements ShouldBroadcast
         public string $slug,
         public ?array $items,
         public ?int $updatedAt,
+        public ?int $expiresAt = null,
+        public ?int $disabledAt = null,
     ) {}
 
     /**
@@ -48,11 +51,34 @@ class ListUpdated implements ShouldBroadcast
             'slug' => $this->slug,
             'items' => $this->items,
             'updated_at' => $this->updatedAt,
+            'expires_at' => $this->expiresAt,
+            'disabled_at' => $this->disabledAt,
         ];
     }
 
     public function broadcastAs(): string
     {
         return $this->items === null ? 'list.deleted' : 'list.updated';
+    }
+
+    /**
+     * Shorthand for the common "I mutated this list, broadcast the
+     * current state" case. Pulls items + updated_at + expires_at off the
+     * model so callers don't have to thread them through individually.
+     */
+    public static function dispatchFor(?string $broadcasterId, OptionSet $list): void
+    {
+        if (! $broadcasterId) {
+            return;
+        }
+
+        self::dispatch(
+            $broadcasterId,
+            $list->slug,
+            $list->items ?? [],
+            $list->updated_at?->timestamp ?? now()->timestamp,
+            $list->expires_at?->timestamp,
+            $list->disabled_at?->timestamp,
+        );
     }
 }

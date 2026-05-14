@@ -19,10 +19,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $slug
  * @property string|null $label
  * @property array<int, string> $items
+ * @property array<int, int> $item_added_at  Parallel array to items; Unix seconds per item
  * @property int $min_items
  * @property int|null $max_items
  * @property bool $user_editable
  * @property \Illuminate\Support\Carbon|null $disabled_at
+ * @property int|null $entry_ttl_seconds
+ * @property \Illuminate\Support\Carbon|null $expires_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read RecipeInstance|null $recipeInstance
@@ -39,18 +42,24 @@ class OptionSet extends Model
         'slug',
         'label',
         'items',
+        'item_added_at',
         'min_items',
         'max_items',
         'user_editable',
         'disabled_at',
+        'entry_ttl_seconds',
+        'expires_at',
     ];
 
     protected $casts = [
         'items' => 'array',
+        'item_added_at' => 'array',
         'min_items' => 'integer',
         'max_items' => 'integer',
         'user_editable' => 'boolean',
         'disabled_at' => 'datetime',
+        'entry_ttl_seconds' => 'integer',
+        'expires_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

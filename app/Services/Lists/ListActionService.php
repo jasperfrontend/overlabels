@@ -6,6 +6,7 @@ use App\Events\ListUpdated;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
 use App\Models\User;
+use App\Support\ListItemTimestamps;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -216,7 +217,7 @@ class ListActionService
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $count = count($locked->items ?? []);
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_CLEAR, $owner->id);
-            $locked->update(['items' => []]);
+            $locked->update(['items' => [], 'item_added_at' => []]);
             $this->broadcast($owner, $locked->fresh());
 
             return "Cleared '{$locked->slug}' ({$count} ".($count === 1 ? 'entry' : 'entries').' archived to snapshot).';
@@ -240,7 +241,11 @@ class ListActionService
             $winnerIdx = array_rand($current);
             $winner = $current[$winnerIdx];
             unset($current[$winnerIdx]);
-            $locked->update(['items' => array_values($current)]);
+            $newTimestamps = ListItemTimestamps::removeAt($locked->item_added_at ?? [], $winnerIdx);
+            $locked->update([
+                'items' => array_values($current),
+                'item_added_at' => $newTimestamps,
+            ]);
             $this->broadcast($owner, $locked->fresh());
 
             return "🎰 Winner of '{$locked->slug}': {$winner}";
@@ -269,11 +274,19 @@ class ListActionService
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_POP, $owner->id);
 
-            $popped = $which === 'first'
-                ? array_shift($current)
-                : array_pop($current);
+            $oldTimestamps = $locked->item_added_at ?? [];
+            if ($which === 'first') {
+                $popped = array_shift($current);
+                $newTimestamps = ListItemTimestamps::removeAt($oldTimestamps, 0);
+            } else {
+                $popped = array_pop($current);
+                $newTimestamps = ListItemTimestamps::removeAt($oldTimestamps, count($oldTimestamps) - 1);
+            }
 
-            $locked->update(['items' => $current]);
+            $locked->update([
+                'items' => $current,
+                'item_added_at' => $newTimestamps,
+            ]);
             $this->broadcast($owner, $locked->fresh());
 
             return "Popped {$which} from '{$locked->slug}': {$popped}";
@@ -310,6 +323,11 @@ class ListActionService
             // has a label input.
             'label' => $list->label,
             'items' => $list->items ?? [],
+            // Inherit item timestamps too - the clone is intended as a
+            // snapshot, so per-entry ages carry over. If the streamer
+            // is using entry-TTL on the parent and clones mid-stream,
+            // the clone inherits the same "time-left" for each entry.
+            'item_added_at' => $list->item_added_at ?? [],
             'min_items' => 0,
             'max_items' => null,
             'user_editable' => true,
@@ -318,12 +336,7 @@ class ListActionService
         // Broadcast the new list's contents so the dashboard / overlays
         // pick it up live. (The list-index page will need its own poll
         // to see new lists appearing, but the contents are correct.)
-        ListUpdated::dispatch(
-            (string) $owner->twitch_id,
-            $newList->slug,
-            $newList->items ?? [],
-            $newList->updated_at?->timestamp ?? now()->timestamp,
-        );
+        ListUpdated::dispatchFor((string) $owner->twitch_id, $newList);
 
         return "Cloned '{$list->slug}' to '{$newSlug}' ({$count} ".($count === 1 ? 'item' : 'items').').';
     }
@@ -377,12 +390,7 @@ class ListActionService
 
     private function broadcast(User $owner, OptionSet $list): void
     {
-        ListUpdated::dispatch(
-            (string) $owner->twitch_id,
-            $list->slug,
-            $list->items ?? [],
-            $list->updated_at?->timestamp ?? now()->timestamp,
-        );
+        ListUpdated::dispatchFor((string) $owner->twitch_id, $list);
     }
 
     /**

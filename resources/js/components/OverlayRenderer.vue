@@ -706,6 +706,29 @@ function handleListUpdated(event: any) {
     patch[`${baseKey}.${i}`] = String(item);
   });
 
+  // Expiry: server ships expires_at as Unix seconds (or null when the
+  // streamer cleared it). Patch the static tag and re-seat the synthetic
+  // countdown timer so changes propagate without an overlay reload.
+  const expiresAt: number | null = typeof event.expires_at === 'number' ? event.expires_at : null;
+  patch[`${baseKey}:expires_at`] = expiresAt !== null ? String(expiresAt) : '';
+  const countdownKey = `list:${event.slug}:countdown`;
+  if (expiresAt !== null) {
+    startTimerTick(countdownKey, {
+      mode: 'countto',
+      base_seconds: 0,
+      offset_seconds: 0,
+      running: true,
+      started_at: null,
+      target_datetime: new Date(expiresAt * 1000).toISOString(),
+    });
+  } else {
+    stopTimerTick(countdownKey);
+    // Zero out the data slot too so a template referencing the countdown
+    // doesn't keep showing the last computed value after expires_at was
+    // cleared by the streamer.
+    patch[`c:${countdownKey}`] = '';
+  }
+
   // Strip any indexed keys from the prior version of this list that
   // don't exist in the new payload, so shrinking a list to 3 items
   // doesn't leave .3, .4, ... lingering in the data store and visible
