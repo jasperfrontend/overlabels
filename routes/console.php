@@ -186,6 +186,15 @@ Schedule::call(fn () => TwitchEvent::where('created_at', '<', now()->subDays(90)
 Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:external-events')->withoutOverlapping();
 
+// Auto-prune list snapshots older than 30 days. Pinned snapshots are
+// exempt - streamers explicitly opt into keeping those forever. Runs
+// daily so the 30-day window is honoured to the day (the privacy policy
+// commits to this retention period).
+Schedule::call(fn () => \App\Models\ListSnapshot::where('pinned', false)
+    ->where('created_at', '<', now()->subDays(30))
+    ->delete()
+)->daily()->name('prune:list-snapshots')->withoutOverlapping();
+
 // Sweep orphaned Cloudinary uploads. Frontend uploads land in cloudinary_uploads
 // unclaimed; if no template/kit save references them within 30 minutes, delete
 // the asset and the row. Closes the abuse vector where someone uploads then

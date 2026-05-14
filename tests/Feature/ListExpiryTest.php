@@ -404,6 +404,53 @@ it('serializes entry_ttl_seconds and expires_at to the Inertia page', function (
 // ListUpdated event carries expires_at + disabled_at
 // ──────────────────────────────────────────────────────────────────────────────
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Snapshot retention sweep (30-day, pinned-exempt)
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('prunes unpinned snapshots older than 30 days and keeps pinned ones', function () {
+    $user = User::factory()->create();
+    $list = OptionSet::create([
+        'user_id' => $user->id,
+        'slug' => 'snaps',
+        'items' => [],
+        'item_added_at' => [],
+    ]);
+
+    // Old + unpinned -> swept
+    $oldUnpinned = ListSnapshot::create([
+        'list_id' => $list->id,
+        'items' => ['old'],
+        'reason' => 'manual',
+        'pinned' => false,
+        'created_at' => now()->subDays(31),
+    ]);
+    // Old + pinned -> kept
+    $oldPinned = ListSnapshot::create([
+        'list_id' => $list->id,
+        'items' => ['precious'],
+        'reason' => 'manual',
+        'pinned' => true,
+        'created_at' => now()->subDays(60),
+    ]);
+    // Young + unpinned -> kept
+    $young = ListSnapshot::create([
+        'list_id' => $list->id,
+        'items' => ['recent'],
+        'reason' => 'manual',
+        'pinned' => false,
+        'created_at' => now()->subDays(5),
+    ]);
+
+    \App\Models\ListSnapshot::where('pinned', false)
+        ->where('created_at', '<', now()->subDays(30))
+        ->delete();
+
+    expect(ListSnapshot::find($oldUnpinned->id))->toBeNull()
+        ->and(ListSnapshot::find($oldPinned->id))->not->toBeNull()
+        ->and(ListSnapshot::find($young->id))->not->toBeNull();
+});
+
 it('threads expires_at and disabled_at into the broadcast payload', function () {
     Event::fake();
     $user = User::factory()->create(['twitch_id' => '42']);

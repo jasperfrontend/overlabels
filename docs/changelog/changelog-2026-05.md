@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - Privacy: list snapshot retention sweep + GDPR-friendly policy entry
+
+- Shipping the 30-day snapshot retention sweep that was deferred in slice B/C and surfacing it in the privacy policy so the commitment is real rather than aspirational. Streamers (and their viewers, whose names end up in raffle lists) should be able to point at the policy and trust that snapshots aren't kept forever by default.
+- New scheduled task `prune:list-snapshots` in `routes/console.php` running daily: deletes `list_snapshots` rows where `pinned = false AND created_at < now - 30 days`. Pinned snapshots are exempt and stay until the streamer unpins or deletes them. Daily cadence so the 30-day window is honoured to the day rather than to the week (matters because the privacy text now commits to 30 days specifically).
+- New Pest test in `ListExpiryTest` covering all three cases at once: old-and-unpinned (swept), old-and-pinned (kept), young-and-unpinned (kept). 703 tests green.
+- `Privacy.vue` updated: bumped `lastUpdated` to today, added Lists to "Information You Provide" (so it's clear that values viewers contribute via chat commands - display names, custom messages - are user-provided data we hold), and added a "Lists and snapshots" subsection inside Data Retention covering: every destructive action auto-creates a snapshot, unpinned snapshots auto-delete after 30 days and can't be recovered, pinned snapshots stay until manually removed, deleting a List removes all its snapshots (including pinned ones - the cascade is already in the schema from slice B), deadline-driven expiry produces a snapshot that follows the same 30-day rule.
+- Also fixed a pre-existing import bug in Privacy.vue surfaced by the IDE diagnostic: `<Button>` was referenced at the bottom of the page but never imported. Now imported alongside the other shadcn primitives.
+
 ## May 14th, 2026 - Lists slice C: entry-TTL age-out + whole-list expiry + countdown tags
 
 - Closes the lists-as-platform-primitive series with auto-expiry on two timescales: per-item age-out (drop entries older than N seconds) and whole-list deadline (snapshot, clear, and disable at a future moment). Both ride the same minute-cadence sweeper. No more "the raffle list still has Tuesday's entries on Friday" or "the giveaway closed three hours ago but is still accepting `!enter`."

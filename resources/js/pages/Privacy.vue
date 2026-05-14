@@ -3,9 +3,10 @@ import { Head, Link } from '@inertiajs/vue3';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import LoginSocial from '@/components/LoginSocial.vue';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next';
 
-const lastUpdated = 'January 13, 2025';
+const lastUpdated = 'May 14, 2026';
 </script>
 
 <template>
@@ -66,6 +67,7 @@ const lastUpdated = 'January 13, 2025';
             <ul class="list-disc pl-6 text-gray-600 dark:text-gray-400 space-y-2 mb-4">
               <li>Twitch account information (username, user ID, email address)</li>
               <li>Overlay templates and configurations you create</li>
+              <li>Lists you create through the dashboard or chat commands, including the values your viewers contribute (chatter display names, custom messages, etc.)</li>
               <li>Communication data when you contact our support</li>
             </ul>
 
@@ -135,6 +137,19 @@ const lastUpdated = 'January 13, 2025';
               purposes outlined in this policy.
               When you delete your account, we will delete or anonymize your personal information within 30 days, except
               where we are required to retain it by law.
+            </p>
+            <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Lists and snapshots</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              You can create Lists through the dashboard or have viewers populate them through chat commands. Every
+              destructive action on a List (clear, draw, pop, restore) automatically creates a snapshot of its previous
+              contents so you can recover from mistakes. Snapshots that you have not explicitly pinned are deleted
+              automatically 30 days after they were created and cannot be recovered after that point. Pinned snapshots
+              are retained until you unpin or delete them.
+            </p>
+            <p class="text-gray-600 dark:text-gray-400">
+              Lists you delete are removed immediately, along with all their associated snapshots (including pinned
+              ones). Configuring a List with a deadline causes its contents to be snapshotted, cleared, and the List
+              disabled at that moment; the resulting snapshot follows the same 30-day retention rule.
             </p>
           </section>
 
