@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -56,6 +56,12 @@ const pages = [
     description: 'Every auto-managed control across Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS - all in one searchable reference.',
     href: '/help/integration-presets',
     icon: Plug,
+  },
+  {
+    title: 'Lists',
+    description: 'User-owned arrays of values. Raffles, queues, quote walls, leaderboards, donation goals - all driven from the dashboard or chat with one primitive and ten verbs.',
+    href: '/help/lists',
+    icon: ListChecks,
   },
   {
     title: 'Formatting Pipes',

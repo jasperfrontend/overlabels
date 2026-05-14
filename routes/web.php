@@ -130,6 +130,10 @@ Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
 })->name('help.formatting');
 
+Route::get('/help/lists', function () {
+    return Inertia::render('help/Lists');
+})->name('help.lists');
+
 Route::get('/help/math', function () {
     return Inertia::render('help/Math');
 })->name('help.math');

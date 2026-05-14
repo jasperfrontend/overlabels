@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - Help page: Lists (the whole picture in one place)
+
+- New `/help/lists` page covering the full Lists feature surface end-to-end. Lists shipped in three slices over the past couple of days plus a privacy/retention follow-up; this is the first time it's been written up in one place where a non-developer streamer can read top to bottom and understand what they can do.
+- Structure mirrors the existing `/help/expressions` and `/help/conditionals` pages: TOC, sections, worked examples, "Things to know" panel grid, quick-reference card. AppLayout, violet section links, code blocks in the sidebar palette.
+- Thirteen sections cover: what a List is, creating and editing, all read tags (`:first` `:last` `:count` `:empty` `:random` `:sum` `:expires_at` `:countdown` plus the bare JSON), foreach iteration, chat appenders (with the raffle + quote-wall config tables), the `!list` meta-command and its rename story, the action vocabulary split into read / destructive / state groups, snapshots and 30-day retention, the two expiry timers (entry-TTL and whole-list deadline), disable/enable semantics, four worked examples (raffle, FIFO queue, quote wall, donation tally), seven "Things to know" gotchas (lists-are-lists contract, `:random` stability, mod-floor permissions, collision checking, minute sweep cadence, recipe-managed locks, live update protocol), and a quick-reference card with every tag and chat verb.
+- Route registered at `/help/lists` -> `help/Lists` Inertia component, slotted alphabetically next to `/help/integration-presets` in the help index card grid with a `ListChecks` icon to keep it distinct from the dashboard `ListIcon`.
+- Cross-links into `/help/conditionals`, `/help/formatting`, `/help/expressions`, `/help/reference`, and `/privacy` so the new page sits inside the existing docs graph rather than as an island.
+
 ## May 14th, 2026 - Privacy: list snapshot retention sweep + GDPR-friendly policy entry
 
 - Shipping the 30-day snapshot retention sweep that was deferred in slice B/C and surfacing it in the privacy policy so the commitment is real rather than aspirational. Streamers (and their viewers, whose names end up in raffle lists) should be able to point at the policy and trust that snapshots aren't kept forever by default.
