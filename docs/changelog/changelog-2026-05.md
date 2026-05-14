@@ -1,5 +1,10 @@
 # CHANGELOG MAY 2026
 
+## May 15th, 2026 - /help/aliases + drop the "deaths" example everywhere
+
+- New <Link to /help/aliases>: dedicated docs page for Bot Aliases, modeled on /help/lists' layout (TOC, sections, things-to-know panel, quick-reference card). Covers concepts (what an alias is, two-layer dispatch), creation paths (dashboard + `!ol alias add`), the placeholder grammar ({1}/{2}/{*}), permission and one-hop rules with a worked "viewer fires `!hardreset` aliased to `!reset`" denial trace, all four options, four full worked examples including the negative-amount trick (`!w -2` -> `!inc wins -2`), and a quick-ref card at the bottom. Linked from /help/bot/commands' "Your own commands" grid (previously pointed at a self-anchor `#ol`) and added to the /help index card grid with a CornerDownRight icon.
+- **"Deaths" purged from the user-facing copy.** It had snuck into Controls.vue (six conditional examples, one counter description, one snake_case example), bot/Commands.vue (two of my own examples shipped yesterday), and two stray internal comments (OverlayControl.php docblock, useConditionalTemplates.ts comment). Mood-shifting framing too: the "deaths >= 10 -> 'tilted' / focused" expression became "wins >= 10 -> 'on_fire' / warming_up"; the three-branch conditional ("Struggling tonight..." / "Getting rough." / "Still alive!") became ("On a tear tonight!" / "Building momentum." / "Just getting started."); "this run is falling apart" became "this run is incredible." Two test files (BotInternalApiTest, ExpressionControlTest) renamed their `'deaths'` literals to `'wins'` since the keys are just test data; 75 tests in those files still green, 719 overall.
+
 ## May 15th, 2026 - Help page: /help/bot/commands rewritten for the new command surface
 
 - The bot grew a lot in the last 48 hours (Bot Aliases, `!ol` chat-admin meta-command, `!list` integration, four user-defined command families) and the existing /help/bot/commands page only documented the original eight control commands - in big vertical cards that took ~150px each. Rewriting now while the surface is still fresh.

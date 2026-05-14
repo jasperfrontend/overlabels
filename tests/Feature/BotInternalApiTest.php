@@ -314,18 +314,18 @@ test('commands excludes disabled rows', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('controls show returns 403 without secret', function () {
-    $this->getJson('/api/internal/bot/controls/streamer_a/deaths')->assertStatus(403);
+    $this->getJson('/api/internal/bot/controls/streamer_a/wins')->assertStatus(403);
 });
 
 test('controls show returns 404 for unknown channel', function () {
-    $this->getJson('/api/internal/bot/controls/nobody/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+    $this->getJson('/api/internal/bot/controls/nobody/wins', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertStatus(404);
 });
 
 test('controls show returns 404 for unknown key', function () {
     makeOptedInUser();
 
-    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+    $this->getJson('/api/internal/bot/controls/streamer_a/wins', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertStatus(404);
 });
 
@@ -334,20 +334,20 @@ test('controls show returns control shape', function () {
     OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'deaths',
-        'label' => 'Deaths',
+        'key' => 'wins',
+        'label' => 'Wins',
         'type' => 'counter',
         'value' => '7',
         'source_managed' => false,
     ]);
 
-    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+    $this->getJson('/api/internal/bot/controls/streamer_a/wins', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertOk()
         ->assertExactJson([
-            'key' => 'deaths',
+            'key' => 'wins',
             'type' => 'counter',
             'value' => '7',
-            'label' => 'Deaths',
+            'label' => 'Wins',
         ]);
 });
 
@@ -385,7 +385,7 @@ function makeBotControl(User $user, string $key, string $type = 'counter', strin
 }
 
 test('controls update returns 403 without secret', function () {
-    $this->postJson('/api/internal/bot/controls/streamer_a/deaths', ['action' => 'set', 'value' => '1'])
+    $this->postJson('/api/internal/bot/controls/streamer_a/wins', ['action' => 'set', 'value' => '1'])
         ->assertStatus(403);
 });
 
@@ -393,7 +393,7 @@ test('controls update validates action', function () {
     makeOptedInUser();
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'delete'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(422)->assertJsonValidationErrors(['action']);
@@ -403,7 +403,7 @@ test('controls update requires value when action is set', function () {
     makeOptedInUser();
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'set'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(422)->assertJsonValidationErrors(['value']);
@@ -413,7 +413,7 @@ test('controls update returns 404 when control missing', function () {
     makeOptedInUser();
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'set', 'value' => '5'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(404);
@@ -423,21 +423,21 @@ test('controls update sets value exactly', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = makeOptedInUser();
-    $control = makeBotControl($user, 'deaths');
+    $control = makeBotControl($user, 'wins');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'set', 'value' => '42'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertOk()->assertJson([
-        'key' => 'deaths',
+        'key' => 'wins',
         'type' => 'counter',
         'value' => '42',
     ]);
 
     expect($control->fresh()->value)->toBe('42');
 
-    Event::assertDispatched(ControlValueUpdated::class, fn ($e) => $e->key === 'deaths'
+    Event::assertDispatched(ControlValueUpdated::class, fn ($e) => $e->key === 'wins'
         && $e->value === '42'
         && $e->broadcasterId === $user->twitch_id
     );
@@ -447,10 +447,10 @@ test('controls update increments counter by default step of 1', function () {
     Event::fake([ControlValueUpdated::class]);
 
     $user = makeOptedInUser();
-    makeBotControl($user, 'deaths', value: '3');
+    makeBotControl($user, 'wins', value: '3');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'increment'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertOk()->assertJsonPath('value', '4');
@@ -458,10 +458,10 @@ test('controls update increments counter by default step of 1', function () {
 
 test('controls update increments counter by supplied amount', function () {
     $user = makeOptedInUser();
-    makeBotControl($user, 'deaths', value: '10');
+    makeBotControl($user, 'wins', value: '10');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'increment', 'amount' => 5],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertOk()->assertJsonPath('value', '15');
@@ -469,10 +469,10 @@ test('controls update increments counter by supplied amount', function () {
 
 test('controls update decrements counter', function () {
     $user = makeOptedInUser();
-    makeBotControl($user, 'deaths', value: '10');
+    makeBotControl($user, 'wins', value: '10');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'decrement', 'amount' => 3],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertOk()->assertJsonPath('value', '7');
@@ -480,10 +480,10 @@ test('controls update decrements counter', function () {
 
 test('controls update resets counter to zero', function () {
     $user = makeOptedInUser();
-    makeBotControl($user, 'deaths', value: '99');
+    makeBotControl($user, 'wins', value: '99');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'reset'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertOk()->assertJsonPath('value', '0');
@@ -563,10 +563,10 @@ test('controls update toggles a boolean control', function () {
 
 test('controls update rejects enable on counter control', function () {
     $user = makeOptedInUser();
-    makeBotControl($user, 'deaths', type: 'counter', value: '3');
+    makeBotControl($user, 'wins', type: 'counter', value: '3');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'enable'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(422);
@@ -663,14 +663,14 @@ test('controls show returns 403 silently when controls_enabled is off', function
     OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'deaths',
-        'label' => 'Deaths',
+        'key' => 'wins',
+        'label' => 'Wins',
         'type' => 'counter',
         'value' => '7',
         'source_managed' => false,
     ]);
 
-    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+    $this->getJson('/api/internal/bot/controls/streamer_a/wins', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertStatus(403)
         ->assertExactJson(['reply' => null]);
 });
@@ -679,10 +679,10 @@ test('controls update returns 403 silently when controls_enabled is off', functi
     Event::fake([ControlValueUpdated::class]);
 
     $user = makeOptedInUser(controlsEnabled: false);
-    $control = makeBotControl($user, 'deaths', value: '3');
+    $control = makeBotControl($user, 'wins', value: '3');
 
     $this->postJson(
-        '/api/internal/bot/controls/streamer_a/deaths',
+        '/api/internal/bot/controls/streamer_a/wins',
         ['action' => 'increment'],
         ['X-Internal-Secret' => 'test-bot-secret'],
     )->assertStatus(403)->assertExactJson(['reply' => null]);
@@ -700,13 +700,13 @@ test('controls show works when bot_settings is null (defaults to disabled)', fun
     OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
-        'key' => 'deaths',
+        'key' => 'wins',
         'type' => 'counter',
         'value' => '0',
         'source_managed' => false,
     ]);
 
-    $this->getJson('/api/internal/bot/controls/streamer_a/deaths', ['X-Internal-Secret' => 'test-bot-secret'])
+    $this->getJson('/api/internal/bot/controls/streamer_a/wins', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertStatus(403);
 });
 

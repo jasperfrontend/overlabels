@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, CornerDownRight, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -50,6 +50,12 @@ const pages = [
     description: 'Math-powered live data - no code, no server. Build chained formulas like the Haversine distance, donation progress bars, and more.',
     href: '/help/expressions',
     icon: FunctionSquare,
+  },
+  {
+    title: 'Bot Aliases',
+    description: 'Short chat commands that rewrite to longer ones. !w 2 becomes !inc wins 2 before dispatch. Positional placeholders, one-hop guard, shared validation.',
+    href: '/help/aliases',
+    icon: CornerDownRight,
   },
   {
     title: 'Integration Presets',

@@ -118,6 +118,10 @@ Route::get('/help/expressions', function () {
     return Inertia::render('help/Expressions');
 })->name('help.expressions');
 
+Route::get('/help/aliases', function () {
+    return Inertia::render('help/Aliases');
+})->name('help.aliases');
+
 Route::get('/help/for-creators', function () {
     return Inertia::render('help/ForCreators');
 })->name('help.for-creators');

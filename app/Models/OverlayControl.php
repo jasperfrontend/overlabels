@@ -29,6 +29,7 @@ use Random\RandomException;
  * @property bool $source_managed
  * @property-read OverlayTemplate|null $template
  * @property-read User|null $user
+ *
  * @method static OverlayControlFactory factory($count = null, $state = [])
  * @method static Builder<static>|OverlayControl newModelQuery()
  * @method static Builder<static>|OverlayControl newQuery()
@@ -46,6 +47,7 @@ use Random\RandomException;
  * @method static Builder<static>|OverlayControl whereUpdatedAt($value)
  * @method static Builder<static>|OverlayControl whereUserId($value)
  * @method static Builder<static>|OverlayControl whereValue($value)
+ *
  * @mixin Eloquent
  */
 class OverlayControl extends Model
@@ -273,7 +275,7 @@ class OverlayControl extends Model
      * Parses "c.key" and "c.source.sub_key" patterns, returning broadcast keys.
      *
      * Examples:
-     *   "c.deaths + 1" => ["deaths"]
+     *   "c.wins + 1" => ["wins"]
      *   "c.kofi.donations_received + c.streamlabs.total_received" => ["kofi:donations_received", "streamlabs:total_received"]
      */
     public static function extractExpressionDependencies(string $expression): array

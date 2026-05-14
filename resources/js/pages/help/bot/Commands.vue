@@ -64,8 +64,8 @@ const controlCommands: BotCommandDoc[] = [
     command: '!increment <key> [amount]',
     tier: 'moderator',
     summary: 'Add to a number/counter control. Amount defaults to 1.',
-    example: { chat: '!inc deaths', reply: '@mod deaths is now 4' },
-    notes: 'Shorthand: !inc. Negative amounts work (!inc deaths -2 subtracts 2).',
+    example: { chat: '!inc wins', reply: '@mod wins is now 4' },
+    notes: 'Shorthand: !inc. Negative amounts work (!inc wins -2 subtracts 2).',
   },
   {
     command: '!decrement <key> [amount]',
@@ -78,7 +78,7 @@ const controlCommands: BotCommandDoc[] = [
     command: '!reset <key>',
     tier: 'broadcaster',
     summary: 'Reset a number or counter control back to 0.',
-    example: { chat: '!reset deaths', reply: '@broadcaster reset deaths to 0' },
+    example: { chat: '!reset wins', reply: '@broadcaster reset wins to 0' },
   },
   {
     command: '!enable <key>',
@@ -449,7 +449,7 @@ const miscCommands: BotCommandDoc[] = [
             fired them. The bot speaks the resolved string.
           </p>
         </a>
-        <a href="/help/bot/commands#ol" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a href="/help/aliases" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Aliases</p>
           <p class="text-sm text-muted-foreground">
             Short commands that rewrite to longer ones before dispatch. <code>!w 2</code> becomes

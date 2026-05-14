@@ -333,7 +333,7 @@ export function useConditionalTemplates() {
         condition = condition.trim();
 
         // Check for comparison operators
-        // Updated regex to support dots and colons in variable names like event.bits, c:deaths
+        // Updated regex to support dots and colons in variable names like event.bits, c:wins
         const comparisonMatch = condition.match(/^([a-zA-Z0-9_.:]+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
         if (comparisonMatch) {
             return {

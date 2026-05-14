@@ -133,8 +133,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                     class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
                     counter
                   </div>
-                  <div class="text-foreground">A whole-number counter with +/- /Reset buttons. Great for deaths, wins,
-                    donations.
+                  <div class="text-foreground">A whole-number counter with +/- /Reset buttons. Great for wins,
+                    rounds played, donations.
                   </div>
                 </a>
                 <a href="#type-timer" class="flex gap-4 group">
@@ -247,12 +247,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                 value</strong> (default 0).
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
-                &lt;div class="deaths"&gt;<br />
-                &nbsp;&nbsp;Deaths: &lt;span class="big"&gt;[[[c:deaths]]]&lt;/span&gt;<br />
+                &lt;div class="wins"&gt;<br />
+                &nbsp;&nbsp;Wins: &lt;span class="big"&gt;[[[c:wins]]]&lt;/span&gt;<br />
                 &lt;/div&gt;<br /><br />
                 &lt;!-- Combine with conditionals for reactive messaging --&gt;<br />
-                [[[if:c:deaths >= 10]]]<br />
-                &nbsp;&nbsp;&lt;div class="tilt"&gt;Maybe take a break?&lt;/div&gt;<br />
+                [[[if:c:wins >= 10]]]<br />
+                &nbsp;&nbsp;&lt;div class="hot-streak"&gt;On a tear tonight!&lt;/div&gt;<br />
                 [[[endif]]]
               </div>
               <div class="mt-4 rounded border border-violet-400/20 bg-violet-400/5 p-3">
@@ -414,7 +414,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
                 &lt;!-- Ternary / if-else logic --&gt;<br />
-                Expression: <span class="text-violet-400">c.deaths > 10 ? "tilted" : "focused"</span><br /><br />
+                Expression: <span class="text-violet-400">c.wins >= 10 ? "on_fire" : "warming_up"</span><br /><br />
                 &lt;div class="status"&gt;Mood: [[[c:mood]]]&lt;/div&gt;
               </div>
               <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
@@ -500,7 +500,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 creation modal.</p>
               <div class="space-y-3 text-foreground">
                 <div><strong class="text-foreground">Key</strong> A lowercase slug used in template tags, e.g. <code
-                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">deaths</code>, <code
+                  class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">wins</code>, <code
                   class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">goal_amount</code>. Must start with a
                   letter and contain only lowercase letters, digits, and underscores. The key is permanent and cannot be
                   changed after creation.
@@ -588,8 +588,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 value.
               </p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
-                &lt;div class="deaths-counter"&gt;<br />
-                &nbsp;&nbsp;Deaths: &lt;span&gt;[[[c:deaths]]]&lt;/span&gt;<br />
+                &lt;div class="wins-counter"&gt;<br />
+                &nbsp;&nbsp;Wins: &lt;span&gt;[[[c:wins]]]&lt;/span&gt;<br />
                 &lt;/div&gt;
               </div>
               <p class="mt-4 text-sm text-foreground">
@@ -606,12 +606,12 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
 
               <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
-                [[[if:c:deaths >= 10]]]<br />
-                &nbsp;&nbsp;&lt;div class="danger"&gt;Struggling a bit tonight...&lt;/div&gt;<br />
-                [[[elseif:c:deaths >= 5]]]<br />
-                &nbsp;&nbsp;&lt;div class="warning"&gt;Getting rough.&lt;/div&gt;<br />
+                [[[if:c:wins >= 10]]]<br />
+                &nbsp;&nbsp;&lt;div class="hot-streak"&gt;On a tear tonight!&lt;/div&gt;<br />
+                [[[elseif:c:wins >= 5]]]<br />
+                &nbsp;&nbsp;&lt;div class="warm"&gt;Building momentum.&lt;/div&gt;<br />
                 [[[else]]]<br />
-                &nbsp;&nbsp;&lt;div class="ok"&gt;Still alive!&lt;/div&gt;<br />
+                &nbsp;&nbsp;&lt;div class="cold"&gt;Just getting started.&lt;/div&gt;<br />
                 [[[endif]]]
               </div>
 
@@ -665,8 +665,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                 &lt;!-- Alert for a sub that mentions the current death count --&gt;<br />
                 &lt;div class="sub-alert"&gt;<br />
                 &nbsp;&nbsp;[[[event.user_name]]] just subscribed!<br />
-                &nbsp;&nbsp;[[[if:c:deaths > 0]]]<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&lt;span class="subtle"&gt;(and yes, [[[c:deaths]]] deaths so
+                &nbsp;&nbsp;[[[if:c:wins > 0]]]<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&lt;span class="subtle"&gt;(and yes, [[[c:wins]]] wins so
                 far)&lt;/span&gt;<br />
                 &nbsp;&nbsp;[[[endif]]]<br />
                 &lt;/div&gt;
@@ -828,7 +828,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="text-foreground text-xl mb-4">Choose descriptive keys</h3>
               <p>
                 Keys are effectively permanent, so name them like Future You is tired and mildly annoyed.
-                Use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">boss_deaths</code> instead of
+                Use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">boss_wins</code> instead of
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">d</code>.
               </p>
             </div>
@@ -851,7 +851,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 pressure than manually typing a new number every time.</p>
               <p class="mb-2 text-foreground font-medium">Good examples:</p>
               <ul class="list-disc pl-5">
-                <li>in-game deaths</li>
+                <li>boss fights cleared</li>
                 <li>rounds won</li>
                 <li>times chat bullied you into a bad idea 🤣</li>
               </ul>
@@ -860,14 +860,14 @@ const breadcrumbs: BreadcrumbItem[] = [
               <h3 class="text-foreground text-xl mb-4">Controls are more powerful with conditionals</h3>
               <p class="mb-2">
                 A Control does not have to be shown as raw text. You can use it inside <code
-                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[if:c:deaths >= 10]]]</code>
+                class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[if:c:wins >= 10]]]</code>
                 logic to change content, styling, or full layout states.
               </p>
               <p class="mb-2 text-foreground font-medium">Example:</p>
               <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
-                [[[if:c:deaths >= 10]]]<br />
-                &lt;div class="danger"&gt;<br />
-                &nbsp;&nbsp;this run is falling apart<br />
+                [[[if:c:wins >= 10]]]<br />
+                &lt;div class="epic"&gt;<br />
+                &nbsp;&nbsp;this run is incredible<br />
                 &lt;/div&gt;<br />
                 [[[endif]]]
               </div>

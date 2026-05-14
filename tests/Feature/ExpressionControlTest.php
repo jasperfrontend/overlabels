@@ -26,7 +26,7 @@ test('creating expression control with valid expression succeeds', function () {
     OverlayControl::create([
         'overlay_template_id' => $template->id,
         'user_id' => $user->id,
-        'key' => 'deaths',
+        'key' => 'wins',
         'type' => 'counter',
         'value' => '5',
         'sort_order' => 0,
@@ -35,23 +35,23 @@ test('creating expression control with valid expression succeeds', function () {
     $this->actingAs($user);
 
     $response = $this->postJson("/templates/{$template->id}/controls", [
-        'key' => 'double_deaths',
-        'label' => 'Double Deaths',
+        'key' => 'double_wins',
+        'label' => 'Double Wins',
         'type' => 'expression',
         'config' => [
-            'expression' => 'c.deaths * 2',
+            'expression' => 'c.wins * 2',
         ],
     ]);
 
     $response->assertStatus(201);
-    $control = OverlayControl::where('key', 'double_deaths')
+    $control = OverlayControl::where('key', 'double_wins')
         ->where('overlay_template_id', $template->id)
         ->first();
 
     expect($control)->not->toBeNull()
         ->and($control->type)->toBe('expression')
-        ->and($control->config['expression'])->toBe('c.deaths * 2')
-        ->and($control->config['dependencies'])->toBe(['deaths']);
+        ->and($control->config['expression'])->toBe('c.wins * 2')
+        ->and($control->config['dependencies'])->toBe(['wins']);
 });
 
 test('creating expression control referencing service-managed control extracts namespaced deps', function () {
@@ -276,8 +276,8 @@ test('reserved key names are rejected', function () {
 });
 
 test('extractExpressionDependencies parses simple references', function () {
-    $deps = OverlayControl::extractExpressionDependencies('c.deaths + 1');
-    expect($deps)->toBe(['deaths']);
+    $deps = OverlayControl::extractExpressionDependencies('c.wins + 1');
+    expect($deps)->toBe(['wins']);
 });
 
 test('extractExpressionDependencies parses namespaced references', function () {
@@ -288,13 +288,13 @@ test('extractExpressionDependencies parses namespaced references', function () {
 });
 
 test('extractExpressionDependencies deduplicates references', function () {
-    $deps = OverlayControl::extractExpressionDependencies('c.deaths + c.deaths');
-    expect($deps)->toBe(['deaths']);
+    $deps = OverlayControl::extractExpressionDependencies('c.wins + c.wins');
+    expect($deps)->toBe(['wins']);
 });
 
 test('extractExpressionDependencies handles mixed references', function () {
-    $deps = OverlayControl::extractExpressionDependencies('c.deaths > 5 ? c.kofi.total_received : c.goal');
-    expect($deps)->toContain('deaths')
+    $deps = OverlayControl::extractExpressionDependencies('c.wins > 5 ? c.kofi.total_received : c.goal');
+    expect($deps)->toContain('wins')
         ->and($deps)->toContain('kofi:total_received')
         ->and($deps)->toContain('goal')
         ->and($deps)->toHaveCount(3);
@@ -310,8 +310,8 @@ test('extractExpressionDependencies resolves _at references to base controls', f
 });
 
 test('extractExpressionDependencies resolves template-scoped _at references', function () {
-    $deps = OverlayControl::extractExpressionDependencies('c.deaths_at > 1000 ? c.deaths : 0');
-    expect($deps)->toContain('deaths')
+    $deps = OverlayControl::extractExpressionDependencies('c.wins_at > 1000 ? c.wins : 0');
+    expect($deps)->toContain('wins')
         ->and($deps)->toHaveCount(1);
 });
 
