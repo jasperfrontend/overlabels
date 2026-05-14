@@ -1,5 +1,9 @@
 # CHANGELOG MAY 2026
 
+## May 15th, 2026 - Test: pin the `!ol cmd add !name` bang-stripping behaviour
+
+- New Pest case in `BotChatAdminTest` covering the realistic "mod types the leading `!` by accident" scenario. Verifies single-bang on `cmd add`, double-bang on `cmd delete`, and bang-on-alias-name all normalise to a clean stored name. Two layers already enforced this (the service's `stripBang()` plus the validator's own ltrim+regex), but the behaviour wasn't pinned by a test - so a future refactor could quietly regress it.
+
 ## May 14th, 2026 - `!ol` chat-admin: create commands and aliases without leaving Twitch
 
 - New chat-admin meta-command lets moderators (or the streamer) manage Bot Expressions and Bot Aliases from the Twitch chat without opening the dashboard. Targets near-feature-parity with StreamElements' `!command add/edit/delete/options` flow but namespaced under `!ol` so it doesn't collide with SE, Wizebot, Nightbot or Streamlabs Cloudbot, all of which already own `!command` / `!cmd` / `!commands`. The namespace also leaves room for future Overlabels subverbs (`!ol kit install`, `!ol overlay refresh`, ...) without claiming more top-level command slots.

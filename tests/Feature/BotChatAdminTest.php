@@ -60,6 +60,37 @@ it('cmd add creates a Bot Expression and queues a chat reply', function () {
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toBe('added !lol');
 });
 
+it('strips leading ! from command names so `!ol cmd add !test foo` lands as `test`', function () {
+    $user = adminUser();
+
+    // Single bang on cmd add.
+    postManage(managePayload([
+        'name' => '!greet',
+        'payload' => 'hello [[[bot:from_user]]]',
+    ]))->assertOk();
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeTrue();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toBe('added !greet');
+
+    // Double bang on cmd delete - ltrim strips all leading `!` chars.
+    postManage(managePayload([
+        'action' => 'delete',
+        'name' => '!!greet',
+    ]))->assertOk();
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeFalse();
+
+    // Leading bang on alias add - name stripped to plain, target_template's
+    // own leading bang stripped by the alias validator.
+    postManage(managePayload([
+        'subject' => 'alias',
+        'action' => 'add',
+        'name' => '!w',
+        'payload' => '!increment wins {1}',
+    ]))->assertOk();
+    $alias = BotAlias::where('user_id', $user->id)->where('command', 'w')->first();
+    expect($alias)->not->toBeNull();
+    expect($alias->target_template)->toBe('increment wins {1}');
+});
+
 it('cmd add rejects collision with a builtin', function () {
     $user = adminUser();
 
