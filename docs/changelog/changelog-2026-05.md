@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 14th, 2026 - Bot aliases: bot-side dispatch shipped, feature is live
+
+- The `overlabels-bot` repo now handles `type: "alias"` entries from the command map. Aliases save in Overlabels and fire end-to-end through chat as of this commit. The earlier Bot Aliases changelog entry (below) shipped the backend + frontend only - this one closes the loop.
+- **Backend touchup**: `BotCommandController::index()` now includes `cooldown_seconds` in alias map entries. Other command types either ride server-side cooldown (expressions) or the bot's hardcoded default (builtins), but aliases have no fire endpoint and need to enforce cooldown bot-side, so the value has to travel in the map.
+- **Bot-side**: dispatch tree extracted into an inner `processParsedCommand(parsed, event, aliasDepth)` so the alias branch can recursively re-dispatch the rewritten command without duplicating routing logic. `aliasDepth` parameter caps recursion at 1 hop - if a rewrite somehow lands on another alias (stale map data) it's logged and dropped, defending against alias->alias chains in case backend validation drift ever lets one slip through. `event` is passed through unchanged so reply threading still targets the chatter's original message and badge checks still see the original user.
+- **Naming collision fixed**: bot had a hardcoded `const ALIASES = new Map([['inc', 'increment'], ['dec', 'decrement']])` shorthand table at the top of `registry.js`. Renamed to `BUILTIN_SHORTHAND` so "alias" unambiguously means the per-user feature throughout the bot codebase. The shorthand still works (and composes nicely - an alias's `target_template` can target `inc` and the shorthand layer expands it to `increment` on re-parse).
+- **Cooldown**: new `createDynamicCooldown()` factory that accepts the window at check time instead of at construction time. Aliases use this with their per-row `cooldown_seconds * 1000`; existing builtin cooldown gate is untouched. Broadcaster bypass and "log on block" logic match the existing helper.
+- **Substitution**: `expandAliasTemplate(template, args)` does the `{1}`/`{2}`/`{*}` rewrite then `parseCommand('!' + expanded)` re-parses it back into `{ name, args }`. Trim + collapse-whitespace on the expanded string handles users putting awkward spaces in their templates. Smoke-tested six cases including empty args, `{*}` capture, multi-positional, and shorthand chain.
+
 ## May 14th, 2026 - Bot aliases: short rewrites that expand to longer commands
 
 - New "Bot aliases" feature alongside Bot Expressions. An alias is a short command (e.g. `!w`) that rewrites to a longer one (e.g. `!increment wins {1}`) before the bot dispatches it. Closes the long-standing "I want a one-letter shortcut for the command I type 40 times a stream" gap without forcing me to author full expressions for every shortcut.

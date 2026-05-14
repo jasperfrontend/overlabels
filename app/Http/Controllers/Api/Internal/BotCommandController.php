@@ -114,6 +114,10 @@ class BotCommandController extends Controller
                     'permission_level' => $alias->permission_level,
                     'type' => 'alias',
                     'target_template' => $alias->target_template,
+                    // Aliases have no fire endpoint, so the bot enforces cooldown
+                    // using this value (other types ride either server-side cooldown
+                    // or the bot's hardcoded default; aliases need explicit data).
+                    'cooldown_seconds' => $alias->cooldown_seconds,
                 ];
                 $claimed[] = $alias->command;
             }
