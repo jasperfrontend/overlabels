@@ -37,6 +37,14 @@ import {
 import { fuzzyMatch, presetHaystack } from '@/utils/services';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
+interface UserList {
+  id: number;
+  slug: string;
+  label?: string | null;
+  items_count: number;
+  disabled: boolean;
+}
+
 const props = defineProps<{
   open: boolean;
   template: OverlayTemplate;
@@ -45,6 +53,7 @@ const props = defineProps<{
   connectedServices?: string[];
   existingControls?: OverlayControl[];
   userScopedControls?: OverlayControl[];
+  userLists?: UserList[];
 }>();
 
 const emit = defineEmits<{
@@ -266,6 +275,13 @@ watch(() => form.value.key, (key) => {
 // Expression control state
 const expressionText = ref('');
 
+// List writer control state (type='list_writer'). Stored separately from
+// form.config so the picker bindings stay typed as IDs not strings.
+const listWriter = ref({
+  source_control_id: '' as number | '',
+  target_list_id: '' as number | '',
+});
+
 // Controls available as watch targets for expression controls.
 // Service-managed controls can exist as both a user-scoped row (overlay_template_id=null,
 // auto-provisioned/backfilled) and a template-scoped row created when the user adds the
@@ -315,6 +331,12 @@ watch(() => props.open, (open) => {
       booleanValue.value = c.value === '1';
       sortMode.value = 'manual';
       expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
+      listWriter.value = c.type === 'list_writer'
+        ? {
+            source_control_id: (cfg.source_control_id ?? '') as number | '',
+            target_list_id: (cfg.target_list_id ?? '') as number | '',
+          }
+        : { source_control_id: '', target_list_id: '' };
     } else if (props.copyFrom) {
       const c = props.copyFrom;
       const cfg = c.config ?? {};
@@ -340,6 +362,12 @@ watch(() => props.open, (open) => {
       booleanValue.value = c.value === '1';
       sortMode.value = 'after';
       expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
+      listWriter.value = c.type === 'list_writer'
+        ? {
+            source_control_id: (cfg.source_control_id ?? '') as number | '',
+            target_list_id: (cfg.target_list_id ?? '') as number | '',
+          }
+        : { source_control_id: '', target_list_id: '' };
     } else {
       form.value = {
         key: '',
@@ -353,6 +381,7 @@ watch(() => props.open, (open) => {
       booleanValue.value = false;
       sortMode.value = 'after';
       expressionText.value = '';
+      listWriter.value = { source_control_id: '', target_list_id: '' };
     }
   }
 });
@@ -378,6 +407,15 @@ function buildPayload() {
 
   if (t === 'expression') {
     payload.config = { expression: expressionText.value };
+    return payload;
+  }
+
+  if (t === 'list_writer') {
+    payload.config = {
+      source_control_id: Number(listWriter.value.source_control_id),
+      target_list_id: Number(listWriter.value.target_list_id),
+    };
+    payload.value = null;
     return payload;
   }
 
@@ -656,6 +694,7 @@ async function save() {
                 <option value="datetime">Date/Time</option>
                 <option value="boolean">Boolean (on/off switch)</option>
                 <option value="expression">Expression (formula)</option>
+                <option value="list_writer">List writer (log values to a list)</option>
               </select>
               <p v-if="errors.type" class="text-xs text-destructive">{{ errors.type }}</p>
             </div>
@@ -743,6 +782,57 @@ async function save() {
                 />
                 <p class="text-xs text-muted-foreground">
                   How often to generate a new random value. Default: 1000ms (1 second).
+                </p>
+              </div>
+            </div>
+
+            <!-- List writer config: source control + target list -->
+            <div v-if="form.type === 'list_writer'" class="space-y-3 rounded-sm border border-sidebar p-3">
+              <p class="text-xs text-muted-foreground">
+                Every time the source control's value changes, the new value is appended to the
+                target list. Works for any control type including Expression Controls.
+              </p>
+              <div class="space-y-2">
+                <Label for="ctrl-lw-source">Source control</Label>
+                <select
+                  id="ctrl-lw-source"
+                  v-model="listWriter.source_control_id"
+                  class="input-border w-full"
+                >
+                  <option value="">— pick a control —</option>
+                  <option
+                    v-for="c in availableWatchControls"
+                    :key="c.id"
+                    :value="c.id"
+                  >
+                    {{ c.label || c.key }} ({{ c.type }}{{ c.source ? `, ${c.source}` : '' }})
+                  </option>
+                </select>
+                <p v-if="errors['config.source_control_id']" class="text-xs text-destructive">
+                  {{ errors['config.source_control_id'] }}
+                </p>
+              </div>
+              <div class="space-y-2">
+                <Label for="ctrl-lw-target">Target list</Label>
+                <select
+                  id="ctrl-lw-target"
+                  v-model="listWriter.target_list_id"
+                  class="input-border w-full"
+                >
+                  <option value="">— pick a list —</option>
+                  <option
+                    v-for="l in (props.userLists ?? [])"
+                    :key="l.id"
+                    :value="l.id"
+                  >
+                    {{ l.label || l.slug }} ({{ l.items_count }} item{{ l.items_count === 1 ? '' : 's' }}{{ l.disabled ? ', disabled' : '' }})
+                  </option>
+                </select>
+                <p v-if="errors['config.target_list_id']" class="text-xs text-destructive">
+                  {{ errors['config.target_list_id'] }}
+                </p>
+                <p v-if="(props.userLists ?? []).length === 0" class="text-xs text-amber-500">
+                  You don't have any Lists yet. Create one from the Lists dashboard first.
                 </p>
               </div>
             </div>

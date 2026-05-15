@@ -21,11 +21,20 @@ import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
 
+interface UserList {
+  id: number;
+  slug: string;
+  label?: string | null;
+  items_count: number;
+  disabled: boolean;
+}
+
 const props = defineProps<{
   template: OverlayTemplate;
   initialControls: OverlayControl[];
   connectedServices?: string[];
   userScopedControls?: OverlayControl[];
+  userLists?: UserList[];
 }>();
 
 const emit = defineEmits<{
@@ -112,6 +121,19 @@ const userLocale = computed<string | undefined>(() => {
   return user?.locale || undefined;
 });
 
+function lookupControlLabel(id: number | undefined): string {
+  if (!id) return '(unknown control)';
+  const all = [...controls.value, ...(props.userScopedControls ?? [])];
+  const c = all.find((x) => x.id === id);
+  return c ? (c.label || c.key) : `(control #${id})`;
+}
+
+function lookupListLabel(id: number | undefined): string {
+  if (!id) return '(unknown list)';
+  const l = (props.userLists ?? []).find((x) => x.id === id);
+  return l ? (l.label || l.slug) : `(list #${id})`;
+}
+
 function configSummary(ctrl: OverlayControl): string[] {
   const cfg = ctrl.config ?? {};
   const parts: string[] = [];
@@ -129,6 +151,10 @@ function configSummary(ctrl: OverlayControl): string[] {
   } else if (ctrl.type === 'expression') {
     const expr = cfg.expression;
     if (expr) parts.push(expr);
+  } else if (ctrl.type === 'list_writer') {
+    const source = lookupControlLabel(cfg.source_control_id);
+    const target = lookupListLabel(cfg.target_list_id);
+    parts.push(`${source} → ${target}`);
   } else if (ctrl.type === 'datetime' && ctrl.value) {
     parts.push(new Date(ctrl.value).toLocaleString(userLocale.value));
   } else if (ctrl.value) {
@@ -152,9 +178,10 @@ const TYPE_LABELS: Record<string, string> = {
   boolean: 'Toggle',
   expression: 'Expression',
   datetime: 'Date/Time',
+  list_writer: 'List writer',
 };
 
-const TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'datetime'];
+const TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'list_writer', 'datetime'];
 
 const groupedControls = computed<ControlGroup[]>(() => {
   const serviceGroups: Record<string, OverlayControl[]> = {};
@@ -272,6 +299,7 @@ const controlsCounter = computed(() => controls.value.length);
     :connected-services="connectedServices"
     :existing-controls="controls"
     :user-scoped-controls="userScopedControls"
+    :user-lists="userLists"
     @saved="onSaved"
   />
 
@@ -397,6 +425,7 @@ const controlsCounter = computed(() => controls.value.length);
                 <!-- Right: snippet pill + actions -->
                 <div class="flex shrink-0 items-center gap-2" @click.stop @keydown.stop>
                   <button
+                    v-if="ctrl.type !== 'list_writer'"
                     type="button"
                     class="items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex cursor-pointer"
                     :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"

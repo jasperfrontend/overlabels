@@ -6,6 +6,7 @@ use App\Events\TemplateUpdated;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
+use App\Models\OptionSet;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
@@ -144,6 +145,24 @@ class OverlayTemplateController extends Controller
                 ->get()
             : collect();
 
+        // User's lists, surfaced so the ControlFormModal's list_writer picker
+        // has something to choose from. Light projection (just the columns
+        // the picker renders) plus the items count rather than the full
+        // array - avoids shipping potentially large list contents that
+        // aren't needed for picking.
+        $userLists = $canEdit
+            ? OptionSet::where('user_id', auth()->id())
+                ->orderBy('slug')
+                ->get(['id', 'slug', 'label', 'items', 'disabled_at'])
+                ->map(fn ($l) => [
+                    'id' => $l->id,
+                    'slug' => $l->slug,
+                    'label' => $l->label,
+                    'items_count' => count($l->items ?? []),
+                    'disabled' => $l->disabled_at !== null,
+                ])
+            : collect();
+
         $triggers = ($canEdit && $template->type === 'alert')
             ? $this->buildTriggerData($template)
             : null;
@@ -157,6 +176,7 @@ class OverlayTemplateController extends Controller
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
+            'userLists' => $userLists,
             'triggers' => $triggers,
         ]);
     }
@@ -216,6 +236,19 @@ class OverlayTemplateController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // Same shape as in show() - the modal's list_writer picker needs
+        // these to populate the target dropdown.
+        $userLists = OptionSet::where('user_id', auth()->id())
+            ->orderBy('slug')
+            ->get(['id', 'slug', 'label', 'items', 'disabled_at'])
+            ->map(fn ($l) => [
+                'id' => $l->id,
+                'slug' => $l->slug,
+                'label' => $l->label,
+                'items_count' => count($l->items ?? []),
+                'disabled' => $l->disabled_at !== null,
+            ]);
+
         $triggers = $template->type === 'alert'
             ? $this->buildTriggerData($template)
             : null;
@@ -237,6 +270,7 @@ class OverlayTemplateController extends Controller
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
             'staticOverlays' => $staticOverlays,
             'userScopedControls' => $userScopedControls,
+            'userLists' => $userLists,
             'triggers' => $triggers,
             'freesoundLibrary' => $freesoundLibrary,
         ]);
@@ -496,7 +530,7 @@ class OverlayTemplateController extends Controller
             // iterates and renders each item. Plus derived read tags
             // (:first, :last, :empty, :random, :sum) for template-side
             // convenience without needing a foreach.
-            $userLists = \App\Models\OptionSet::where('user_id', $user->id)->get();
+            $userLists = OptionSet::where('user_id', $user->id)->get();
             $listData = [];
             foreach ($userLists as $list) {
                 $items = array_values($list->items ?? []);

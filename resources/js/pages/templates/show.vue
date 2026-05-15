@@ -68,6 +68,7 @@ const props = defineProps<{
   staticOverlays?: OverlayOption[];
   targetStaticOverlayIds?: number[];
   userScopedControls?: OverlayControl[];
+  userLists?: Array<{ id: number; slug: string; label?: string | null; items_count: number; disabled: boolean }>;
   triggers?: TriggerData | null;
 }>();
 
@@ -295,6 +296,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
           <ControlsManager :template="template" :initial-controls="localControls"
                            :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
+                           :user-lists="userLists"
                            @change="localControls = $event" />
         </div>
 

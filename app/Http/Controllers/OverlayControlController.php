@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\ControlValueUpdated;
+use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
@@ -149,6 +150,26 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control], 201);
         }
 
+        // List writer: side-effect control that appends the source control's
+        // value to a target list every time the source updates. Has no
+        // renderable value of its own; the row exists so the binding fits
+        // into the same management surface as every other control.
+        if ($validated['type'] === 'list_writer') {
+            $listWriterConfig = $this->validateListWriterConfig($request, auth()->id(), $template->id);
+
+            $control = OverlayControl::createForTemplate($template, auth()->user(), [
+                'key' => $validated['key'],
+                'label' => $validated['label'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'type' => 'list_writer',
+                'value' => null,
+                'config' => $listWriterConfig,
+                'sort_order' => $validated['sort_order'] ?? 0,
+            ]);
+
+            return response()->json(['control' => $control], 201);
+        }
+
         $control = OverlayControl::createForTemplate($template, auth()->user(), $validated);
 
         if ($control->isRandom()) {
@@ -166,6 +187,7 @@ class OverlayControlController extends Controller
 
     /**
      * Update a control's label, config, or sort_order. Key is immutable.
+     *
      * @throws RandomException
      */
     public function update(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
@@ -231,7 +253,23 @@ class OverlayControlController extends Controller
             return response()->json(['control' => $control->fresh()]);
         }
 
-        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'expression'])) {
+        // List writer update: re-validate the new source + target if either
+        // is being changed. Label / sort_order updates pass through normally
+        // below; value never applies to list_writer.
+        if ($control->isListWriter() && isset($validated['config'])) {
+            $listWriterConfig = $this->validateListWriterConfig($request, auth()->id(), $template->id);
+
+            $control->update([
+                'label' => $validated['label'] ?? $control->label,
+                'description' => array_key_exists('description', $validated) ? $validated['description'] : $control->description,
+                'config' => $listWriterConfig,
+                'sort_order' => $validated['sort_order'] ?? $control->sort_order,
+            ]);
+
+            return response()->json(['control' => $control->fresh()]);
+        }
+
+        if (array_key_exists('value', $validated) && ! in_array($control->type, ['timer', 'expression', 'list_writer'])) {
             $validated['value'] = OverlayControl::sanitizeValue($control->type, $validated['value'] ?? '');
         } else {
             unset($validated['value']);
@@ -254,6 +292,47 @@ class OverlayControlController extends Controller
     }
 
     /**
+     * Validate the config block for a list_writer control and return the
+     * canonical config array. Verifies the source control and target list
+     * both exist and belong to the requesting user. Returns the int-cast
+     * IDs to keep the stored JSON consistent.
+     *
+     * @return array{source_control_id:int,target_list_id:int}
+     */
+    private function validateListWriterConfig(Request $request, int $userId, int $templateId): array
+    {
+        $request->validate([
+            'config.source_control_id' => 'required|integer',
+            'config.target_list_id' => 'required|integer',
+        ]);
+
+        $sourceId = (int) $request->input('config.source_control_id');
+        $targetId = (int) $request->input('config.target_list_id');
+
+        // Source can live on this template OR be user-scoped
+        // (overlay_template_id=null) the same way Expression Control
+        // dependencies are scoped.
+        $source = OverlayControl::where('id', $sourceId)
+            ->where('user_id', $userId)
+            ->where(function ($q) use ($templateId) {
+                $q->where('overlay_template_id', $templateId)
+                    ->orWhereNull('overlay_template_id');
+            })
+            ->first();
+        abort_unless($source !== null, 422, 'Source control not found in this template or your user scope.');
+
+        $target = OptionSet::where('id', $targetId)
+            ->where('user_id', $userId)
+            ->first();
+        abort_unless($target !== null, 422, 'Target list not found or not owned by you.');
+
+        return [
+            'source_control_id' => $sourceId,
+            'target_list_id' => $targetId,
+        ];
+    }
+
+    /**
      * Delete a control.
      */
     public function destroy(OverlayTemplate $template, OverlayControl $control): JsonResponse
@@ -268,6 +347,7 @@ class OverlayControlController extends Controller
 
     /**
      * Mutate the value of a control at stream time.
+     *
      * @throws RandomException
      */
     public function setValue(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
@@ -344,6 +424,7 @@ class OverlayControlController extends Controller
 
     /**
      * Handle timer-specific mutations.
+     *
      * @throws RandomException
      */
     private function setTimerValue(Request $request, OverlayTemplate $template, OverlayControl $control): JsonResponse
