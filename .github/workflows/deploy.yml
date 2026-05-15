@@ -142,6 +142,15 @@ jobs:
 
           kamal deploy --skip-push=false
 
+          # `kamal deploy` doesn't auto-boot newly-added accessories - they
+          # need a one-time `kamal accessory boot`. We run it after every
+          # deploy so a fresh accessory in config/deploy.yml comes up on
+          # the next push without manual intervention. `|| true` swallows
+          # the harmless "already booted" error for accessories that are
+          # already running. When you add a new accessory, append another
+          # line here.
+          kamal accessory boot expression-engine || true
+
       - name: Notify app of successful deploy
         env:
           DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
