@@ -1,5 +1,53 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - Expression engine sidecar + `list_writer` control type
+
+Substantial architecture change: Expression Controls now evaluate server-side, persistently, through a shared-code sidecar. The yesterday-shipped `option_sets.source_control_id` binding got unwound in favour of a first-class control type. Together these unblock the user's flagship use case ("save the result of any control value into a list, including Expression Controls") which yesterday's slice explicitly couldn't do.
+
+### Shared expression engine: one codebase, two runtimes
+
+- New `resources/js/lib/expression-engine/engine.mjs` is the **single source of truth** for Overlabels expression semantics. Pure functions: jsep parsing, AST evaluation, the built-in function library (`latest`, `argmax`, `oldest`, `round`, `sqrt`, `atan2`, `now`, etc.), context building, result stringification. No Vue, no DOM, no I/O.
+- `useExpressionEngine.ts` is now a thin Vue wrapper over the shared lib: imports `evaluate` / `buildContext` / `resultToString` / `containsNowCall` and adds the reactive `watchEffect` + RAF ticker for time-dependent expressions. Behaviour unchanged on the overlay side; lint and full Vite build pass.
+- This is the load-bearing decision: parity between the overlay and the server side is by construction, not by parallel implementations and parity tests. Adding a function like `argmax` is one PR touching one file; both runtimes pick it up at deploy time.
+
+### Sidecar service
+
+- `expression-engine.mjs` at the repo root, alongside the existing `streamlabs-listener.mjs` and `streamelements-listener.mjs`. Node 22, no new framework dep (Node built-in `http` instead of Express - the surface is two endpoints).
+- Bound to `127.0.0.1` by default. `EXPRESSION_ENGINE_SECRET` required at boot; missing secret = hard exit so we can't accidentally run an unauthenticated evaluator.
+- Endpoints: `POST /evaluate` (X-Internal-Secret gated, JSON in/out, parse error / payload-too-large / 403 / 500 each have explicit responses), `GET /health` (Kamal liveness probe).
+- `Dockerfile.expression-engine` for Kamal accessory deployment; same shape as the other sidecars.
+- Graceful SIGTERM shutdown so Kamal restarts don't drop in-flight requests.
+- Smoke-tested locally: `c.wins + 1` -> `6`, `latest(...)` picks the most recent timestamped value, parse errors come back as `{ ok: false, error: { code: "parse_error" } }`, missing secret returns 403.
+
+### Laravel client + recompute listener
+
+- `App\Services\Controls\ExpressionEngineClient` is a thin HTTP wrapper over the sidecar. Timeout-bounded (default 2s). On any failure (connection error, non-2xx, malformed response) returns `null`; callers treat null as "skip this update" rather than crashing - the overlay still computes locally, persistence just doesn't refresh until the next dep update succeeds.
+- `App\Listeners\RecomputeExpressionControls` subscribes to `ControlValueUpdated`. When any control updates, finds every Expression Control owned by the same user whose `config.dependencies` includes the updated broadcast key, ships each through the sidecar, stores the new value on the row, and dispatches a cascade event so downstream listeners (`list_writer`, alerts, overlay broadcast) see the new value.
+- Cascade walk happens inside one handler invocation. Cascade events are flagged with a new `alreadyRecomputed: bool` field on `ControlValueUpdated`; the recompute listener bails when it sees the flag (it already walked the descendants in-process). Other listeners ignore the flag.
+- Termination guaranteed by the save-time cycle check (dep graph is a DAG). `MAX_DEPTH = 10` is the defensive backstop in case a row ever leaks past the cycle check.
+- Scope limit: data context is built from `overlay_controls` only. Expressions referencing `t.<tag>` (Twitch template-tag values) see those as undefined for now - the real Twitch tag data lookup is a follow-up.
+
+### `list_writer` control type
+
+- New entry in `OverlayControl::TYPES`: `'list_writer'`. Config carries `source_control_id` (the control whose value to record) + `target_list_id` (the list to append to). The `value` column on the row is null - this is a side-effect control, not a renderable one.
+- `OverlayControl::isListWriter() / listWriterSourceId() / listWriterTargetId()` accessors keep the storage shape readable from callers.
+- `App\Listeners\ListWriterAppend` subscribes to `ControlValueUpdated`, finds list_writers pointing at the updating control (via `whereJsonContains('config->source_control_id', ...)`), and appends. Same FIFO drop logic as yesterday's listener: "keep latest N" intent on cap, not silent refusal.
+- Cross-user safety: defence-in-depth check rejects appends to a list owned by a different user (the dashboard will prevent it once the UI ships, but the listener also enforces).
+
+### The unwind: drop `option_sets.source_control_id`
+
+- Yesterday's binding lived briefly on the List. The list_writer control type supersedes it: bindings are Controls now, which means they fit naturally into the existing Control management surface (edit, clone, recipe-manifest-export, etc.) and stop being a one-off field on a different model.
+- New migration drops `option_sets.source_control_id` (the column, the unique index, the FK).
+- `App\Listeners\AppendControlValueToList` deleted. Its test file deleted. `OptionSet::detectListBindingCycle()` deleted (the cycle vector it guarded against is irrelevant when the binding lives on the control side - the existing Expression Control cycle check covers everything).
+- The model-level validator that rejected Expression Control sources is gone. Expression Controls work as `list_writer` sources now (that's the whole point).
+
+### Tests + ops
+
+- 10 new Pest tests in `tests/Feature/ListWriterTest.php`. Happy path with raw counter + service-managed source, FIFO cap, disabled list skip, no-binding no-op, cross-user safety, and four cases exercising the recompute path: Expression Control recomputes through the sidecar and ends up in the bound list, chained `A -> B` cascade through two Expression Controls, sidecar-returns-null safely no-ops, and the `alreadyRecomputed` flag prevents re-walking. 729 tests green overall.
+- Uses a `FakeExpressionEngineClient` test double bound in the container so tests don't need the sidecar process running.
+- Required new env vars (production): `EXPRESSION_ENGINE_URL` (default `http://127.0.0.1:3010`), `EXPRESSION_ENGINE_SECRET` (must be set), `EXPRESSION_ENGINE_TIMEOUT_MS` (default 2000).
+- Kamal accessory wiring not yet in `config/deploy.yml` - that's a follow-up so we can review the deploy shape together before flipping production over.
+
 ## May 15th, 2026 - Control-to-List binding: migration + listener + cycle guard (no UI yet)
 
 - First slice of "Lists can subscribe to a Control's value stream." Every time the bound Control fires a `ControlValueUpdated` event, the new value gets appended to its bound List automatically. Closes a real gap - until now Controls had no way to store their value over time, so things like "latest donor across all services" or "every win this stream" died as soon as the underlying control updated.

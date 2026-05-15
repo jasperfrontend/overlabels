@@ -60,6 +60,15 @@ return [
         'listener_secret' => env('TWITCHBOT_LISTENER_SECRET'),
     ],
 
+    'expression_engine' => [
+        // Localhost-only HTTP sidecar that evaluates Expression Controls
+        // server-side using the same JS engine the overlay runs. See
+        // expression-engine.mjs at the repo root.
+        'url' => env('EXPRESSION_ENGINE_URL', 'http://127.0.0.1:3010'),
+        'secret' => env('EXPRESSION_ENGINE_SECRET'),
+        'timeout_ms' => (int) env('EXPRESSION_ENGINE_TIMEOUT_MS', 2000),
+    ],
+
     'deploy' => [
         'webhook_secret' => env('DEPLOY_WEBHOOK_SECRET'),
     ],

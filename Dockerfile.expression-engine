@@ -1,0 +1,7 @@
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY expression-engine.mjs ./
+COPY resources/js/lib/expression-engine ./resources/js/lib/expression-engine
+CMD ["node", "expression-engine.mjs"]

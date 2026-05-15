@@ -75,7 +75,7 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression'];
+    const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression', 'list_writer'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
     const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gpslogger', 'streamelements', 'gps'];
@@ -255,6 +255,39 @@ class OverlayControl extends Model
     public function isExpression(): bool
     {
         return $this->type === 'expression';
+    }
+
+    public function isListWriter(): bool
+    {
+        return $this->type === 'list_writer';
+    }
+
+    /**
+     * For list_writer controls, return the source control ID this writer
+     * subscribes to. Stored on config so the column model stays flat.
+     */
+    public function listWriterSourceId(): ?int
+    {
+        if (! $this->isListWriter()) {
+            return null;
+        }
+        $id = $this->config['source_control_id'] ?? null;
+
+        return $id === null ? null : (int) $id;
+    }
+
+    /**
+     * For list_writer controls, return the target list ID this writer
+     * appends into.
+     */
+    public function listWriterTargetId(): ?int
+    {
+        if (! $this->isListWriter()) {
+            return null;
+        }
+        $id = $this->config['target_list_id'] ?? null;
+
+        return $id === null ? null : (int) $id;
     }
 
     /**

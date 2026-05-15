@@ -29,6 +29,15 @@ class ControlValueUpdated implements ShouldBroadcast
     public string $broadcasterId;
 
     /**
+     * True when this event is the cascade output of
+     * RecomputeExpressionControls re-running an Expression Control whose
+     * deps changed. The recompute listener checks this flag and bails to
+     * prevent walking its own cascade output. Other listeners (list_writer,
+     * overlay broadcast) ignore it and fire normally.
+     */
+    public bool $alreadyRecomputed;
+
+    /**
      * Create a new event instance.
      */
     public function __construct(
@@ -39,7 +48,8 @@ class ControlValueUpdated implements ShouldBroadcast
         string $broadcasterId,
         ?array $timerState = null,
         ?string $expression = null,
-        ?array $randomState = null
+        ?array $randomState = null,
+        bool $alreadyRecomputed = false,
     ) {
         $this->overlaySlug = $overlaySlug;
         $this->key = $key;
@@ -49,6 +59,7 @@ class ControlValueUpdated implements ShouldBroadcast
         $this->timerState = $timerState;
         $this->expression = $expression;
         $this->randomState = $randomState;
+        $this->alreadyRecomputed = $alreadyRecomputed;
     }
 
     /**
