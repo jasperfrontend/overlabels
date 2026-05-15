@@ -142,6 +142,12 @@ env:
     REDIS_HOST: overlabels-redis
     REDIS_PORT: "6379"
 
+    # Expression Control evaluator sidecar. Container-to-container via Kamal's
+    # auto-named accessory container (overlabels-expression-engine). The
+    # host-side port 3010 is bound localhost-only and not used by the app.
+    EXPRESSION_ENGINE_URL: http://overlabels-expression-engine:3010
+    EXPRESSION_ENGINE_TIMEOUT_MS: "2000"
+
     REVERB_HOST: ws.overlabels.com
     REVERB_PORT: "443"
     REVERB_SCHEME: https
@@ -178,6 +184,8 @@ env:
     - STREAMLABS_LISTENER_SECRET
 
     - STREAMELEMENTS_LISTENER_SECRET
+
+    - EXPRESSION_ENGINE_SECRET
 
     - FW_CLIENT_ID
     - FW_CLIENT_SECRET
@@ -259,5 +267,23 @@ accessories:
         APP_URL: https://overlabels.com
       secret:
         - STREAMELEMENTS_LISTENER_SECRET
+    options:
+      memory: 128m
+
+  # Expression Control evaluator. Pure compute, no inbound from the internet.
+  # Imports the same engine code the overlay runs so server-side and overlay
+  # evaluation are guaranteed to agree. The app container POSTs to this on
+  # port 3010 via the host. Bound to 0.0.0.0 inside the container; the host
+  # port mapping is localhost-only so it's never reachable externally.
+  expression-engine:
+    image: ghcr.io/jasperfrontend/overlabels-expression-engine:latest
+    host: 172.235.171.209
+    port: "127.0.0.1:3010:3010"
+    env:
+      clear:
+        EXPRESSION_ENGINE_HOST: 0.0.0.0
+        EXPRESSION_ENGINE_PORT: "3010"
+      secret:
+        - EXPRESSION_ENGINE_SECRET
     options:
       memory: 128m

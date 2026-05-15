@@ -66,6 +66,18 @@ jobs:
           cache-from: type=gha,scope=streamelements-listener
           cache-to: type=gha,mode=max,scope=streamelements-listener
 
+      - name: Build & push expression-engine
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.expression-engine
+          push: true
+          tags: |
+            ghcr.io/jasperfrontend/overlabels-expression-engine:latest
+            ghcr.io/jasperfrontend/overlabels-expression-engine:${{ github.sha }}
+          cache-from: type=gha,scope=expression-engine
+          cache-to: type=gha,mode=max,scope=expression-engine
+
       # Kamal deploy: builds + pushes the main app image, rolls all roles.
       # The deploy SSH key + registry password are pulled from secrets.
       - name: Kamal deploy
@@ -90,6 +102,7 @@ jobs:
           STREAMLABS_CLIENT_SECRET: ${{ secrets.STREAMLABS_CLIENT_SECRET }}
           STREAMLABS_LISTENER_SECRET: ${{ secrets.STREAMLABS_LISTENER_SECRET }}
           STREAMELEMENTS_LISTENER_SECRET: ${{ secrets.STREAMELEMENTS_LISTENER_SECRET }}
+          EXPRESSION_ENGINE_SECRET: ${{ secrets.EXPRESSION_ENGINE_SECRET }}
           FW_CLIENT_ID: ${{ secrets.FW_CLIENT_ID }}
           FW_CLIENT_SECRET: ${{ secrets.FW_CLIENT_SECRET }}
           FW_AUTH_URL: ${{ secrets.FW_AUTH_URL }}
@@ -117,6 +130,7 @@ jobs:
                      TWITCHBOT_CLIENT_ID TWITCHBOT_CLIENT_SECRET TWITCHBOT_LISTENER_SECRET \
                      STREAMLABS_CLIENT_ID STREAMLABS_CLIENT_SECRET STREAMLABS_LISTENER_SECRET \
                      STREAMELEMENTS_LISTENER_SECRET \
+                     EXPRESSION_ENGINE_SECRET \
                      FW_CLIENT_ID FW_CLIENT_SECRET FW_AUTH_URL FW_REDIRECT_URL FW_HMAC \
                      CLOUDINARY_URL \
                      FREESOUND_API_KEY \

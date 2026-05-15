@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - Wire expression-engine into dev + Kamal + CI
+
+- Three small edits to make yesterday's sidecar actually run, both locally and on the Linode box.
+- **composer dev script**: added `node expression-engine.mjs` as a fifth `concurrently` stream alongside server / queue / vite / reverb. `composer run dev` (the `crd` alias) now starts the sidecar with the rest. Picks up the secret from `.env`.
+- **Kamal accessory**: new `expression-engine` accessory in `config/deploy.yml`, same shape as the existing streamlabs/streamelements listeners. Port binding is `127.0.0.1:3010:3010` so it's only reachable from the host (not the public internet); the app container reaches it via Docker DNS (`http://overlabels-expression-engine:3010`). 128m memory limit. `EXPRESSION_ENGINE_HOST=0.0.0.0` inside the container, `EXPRESSION_ENGINE_PORT=3010`.
+- **App env**: `EXPRESSION_ENGINE_URL` and `EXPRESSION_ENGINE_TIMEOUT_MS` added to the app's `env.clear` block; `EXPRESSION_ENGINE_SECRET` added to `env.secret`. The Laravel client picks up the URL through `config/services.php`.
+- **GitHub Actions**: new "Build & push expression-engine" step in the deploy workflow (same shape as the listener builds, with `cache-from`/`cache-to` scoped to its own cache key). `EXPRESSION_ENGINE_SECRET` added to the Kamal-deploy step's env block and to the `.kamal/secrets` writer loop. Repo secret already set, so no additional action required.
+
 ## May 16th, 2026 - Expression engine sidecar + `list_writer` control type
 
 Substantial architecture change: Expression Controls now evaluate server-side, persistently, through a shared-code sidecar. The yesterday-shipped `option_sets.source_control_id` binding got unwound in favour of a first-class control type. Together these unblock the user's flagship use case ("save the result of any control value into a list, including Expression Controls") which yesterday's slice explicitly couldn't do.

@@ -69,7 +69,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74,#86efac\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" \"php artisan reverb:start\" --names='server,queue,vite,reverb'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74,#86efac,#f87171\" \"php artisan serve --no-reload\" \"php artisan queue:listen --tries=1\" \"npm run dev\" \"php artisan reverb:start\" \"node expression-engine.mjs\" --names='server,queue,vite,reverb,engine'"
         ],
         "dev:ssr": [
             "npm run build:ssr",
