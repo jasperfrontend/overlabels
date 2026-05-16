@@ -78,6 +78,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <li><a href="#type-boolean" class="text-violet-400/70 hover:underline text-sm">Boolean</a></li>
                 <li><a href="#type-datetime" class="text-violet-400/70 hover:underline text-sm">Datetime</a></li>
                 <li><a href="#type-expression" class="text-violet-400/70 hover:underline text-sm">Expression</a></li>
+                <li><a href="#type-list_writer" class="text-violet-400/70 hover:underline text-sm">List writer</a></li>
               </ul>
             </li>
             <li><a href="#managing-controls" class="text-violet-400 hover:underline">Managing Controls</a></li>
@@ -170,6 +171,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                   </div>
                   <div class="text-foreground">A formula that derives its value from other controls. Evaluated live on
                     the overlay.
+                  </div>
+                </a>
+                <a href="#type-list_writer" class="flex gap-4 group">
+                  <div
+                    class="mt-0.5 flex h-6 w-20 shrink-0 items-center justify-center rounded bg-background font-mono text-xs font-bold group-hover:bg-violet-500/10 transition-colors">
+                    list writer
+                  </div>
+                  <div class="text-foreground">Records another control's value to a List every time it changes.
+                    Works with any control type, including Expressions.
                   </div>
                 </a>
               </div>
@@ -474,6 +484,63 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <p>Returns the current timestamp in seconds. Useful for calculating time since an event, e.g. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">now() - c.kofi.latest_donor_at</code>.</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- List writer -->
+            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-list_writer">
+              <h3 class="mb-4 text-xl font-semibold"><span
+                class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">list writer</span> List writer
+              </h3>
+              <p class="mb-4 text-foreground">
+                A side-effect control with one job: every time the source control's value changes, append the new value
+                to a target <Link href="/help/lists" class="text-violet-400 hover:underline">List</Link>. Unlike every
+                other control type, a list writer has no value of its own and renders nothing in your overlay - the row
+                exists purely as a binding between a source control and a list.
+              </p>
+              <p class="mb-4 text-foreground">
+                The source can be <strong>any control type</strong>: a counter you bump from chat, a service-managed
+                control (Ko-fi donor name, StreamLabs tip amount, Twitch cheer count), or even an Expression Control.
+                Yes, even an Expression Control - the server evaluates the same formula your overlay does, then writes
+                the result to the list. So an expression that combines values from multiple services can have its
+                history persisted automatically.
+              </p>
+
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                <span class="text-muted-foreground">// Bind a chat-driven counter to a log list</span><br />
+                Source: <span class="text-violet-400">c.wins</span><br />
+                Target: <span class="text-violet-400">wins_log</span><br /><br />
+                <span class="text-muted-foreground">// Mod types !inc wins 1 - the new value gets appended to wins_log automatically</span>
+              </div>
+
+              <div class="mb-4 rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                <span class="text-muted-foreground">// Persist the result of an expression that aggregates across services</span><br />
+                Expression: <span class="text-violet-400">latest(<br />
+                &nbsp;&nbsp;c.kofi.latest_donor_at, c.kofi.latest_donor_name,<br />
+                &nbsp;&nbsp;c.streamlabs.latest_donor_at, c.streamlabs.latest_donor_name<br />
+                )</span><br /><br />
+                Source: <span class="text-violet-400">c.latest_donor (the expression above)</span><br />
+                Target: <span class="text-violet-400">donor_history</span>
+              </div>
+
+              <div class="mt-4 space-y-2 text-sm text-foreground">
+                <p><strong>Why this exists.</strong> Controls hold the <em>current</em> value of something. The moment
+                  a counter bumps or a donation lands, the previous value is gone. A list writer keeps the trail. Once
+                  values are in a list, every existing <Link href="/help/lists#actions" class="text-violet-400 hover:underline">list
+                  action</Link> works on them: <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">[[[c:list:donor_history:count]]]</code>,
+                  foreach iteration, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:last</code> for
+                  the most recent, <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">:random</code> for
+                  a shout-out picker, and so on.</p>
+                <p><strong>Capping.</strong> Set <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">max_items</code>
+                  on the target list (from the Lists dashboard) for a rolling window. List writers FIFO-drop the oldest
+                  entry when the cap is hit, so "last 10 donors" is just <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">max_items = 10</code>
+                  on the list. Without a cap, the list grows unbounded.</p>
+                <p><strong>Curation.</strong> The target list is editable from the Lists dashboard exactly like any
+                  other List. Delete entries you don't want, rename items, clear the whole thing - the writer keeps
+                  feeding new values either way. If a donor you'd rather not advertise lands in the history, just
+                  remove the row.</p>
+                <p><strong>Disabled lists.</strong> Disabling a list (from the Lists dashboard) silently skips appends.
+                  The writer doesn't error; the value just doesn't land. Re-enable the list to resume.</p>
               </div>
             </div>
           </div>
