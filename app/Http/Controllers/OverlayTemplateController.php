@@ -477,7 +477,7 @@ class OverlayTemplateController extends Controller
 
             $controlData = [];
             $timerStates = [];
-            $expressionControls = [];
+            $expressionsByKey = [];
             $randomControls = [];
             foreach ($controls as $control) {
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:donations_received")
@@ -502,9 +502,9 @@ class OverlayTemplateController extends Controller
                     ];
                 }
                 if ($control->type === 'expression') {
-                    $expressionControls[] = [
-                        'key' => $control->broadcastKey(),
+                    $expressionsByKey[$control->broadcastKey()] = [
                         'expression' => $control->config['expression'] ?? '',
+                        'dependencies' => array_values((array) ($control->config['dependencies'] ?? [])),
                     ];
                 }
                 if ($control->isRandom()) {
@@ -574,6 +574,48 @@ class OverlayTemplateController extends Controller
                         'target_datetime' => $list->expires_at->toIso8601String(),
                     ];
                 }
+            }
+
+            // Filter expression controls: only ship those whose c:<broadcastKey>
+            // is referenced in template_tags, plus any they transitively depend
+            // on. An unreferenced expression with `now_ms()` still ticks the RAF
+            // loop on every frame and cascades through every other watcher
+            // subscribed to the data ref, so leaving them in the payload costs
+            // O(N^2) re-evaluations per frame for a template that doesn't even
+            // use them. Note: alert templates that reference c:<key> are not
+            // considered here - those tags live on the alert template, not the
+            // static one.
+            $referencedControlKeys = [];
+            foreach ((array) ($template->template_tags ?? []) as $tag) {
+                if (is_string($tag) && str_starts_with($tag, 'c:')) {
+                    $referencedControlKeys[substr($tag, 2)] = true;
+                }
+            }
+
+            $registeredExpressionKeys = [];
+            $queue = array_keys($referencedControlKeys);
+            while (! empty($queue)) {
+                $key = array_shift($queue);
+                if (isset($registeredExpressionKeys[$key])) {
+                    continue;
+                }
+                if (! isset($expressionsByKey[$key])) {
+                    continue;
+                }
+                $registeredExpressionKeys[$key] = true;
+                foreach ($expressionsByKey[$key]['dependencies'] as $dep) {
+                    if (is_string($dep) && ! isset($registeredExpressionKeys[$dep])) {
+                        $queue[] = $dep;
+                    }
+                }
+            }
+
+            $expressionControls = [];
+            foreach (array_keys($registeredExpressionKeys) as $key) {
+                $expressionControls[] = [
+                    'key' => $key,
+                    'expression' => $expressionsByKey[$key]['expression'],
+                ];
             }
 
             // Expand the template-tag allowlist with any `t.<name>` references

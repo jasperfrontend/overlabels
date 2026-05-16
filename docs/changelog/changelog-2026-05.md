@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - Skip unreferenced Expression Controls on overlay render
+
+User reported an overlay with 4 lissajous-curve Expression Controls (each using `now_ms()`) crashing the Chromium-family browsers - OBS Browser Source, Edge, Helium - while Firefox rendered it fine. Tracing showed all 4 expressions ticked on RAF and cascaded through Vue's reactivity even when only 2 were referenced in the HTML/CSS, because the renderer registered every expression the user owned on the template, regardless of whether the template actually used the value.
+
+- **Backend filter** (`OverlayTemplateController::renderAuthenticated`): expression controls are now collected into a `$expressionsByKey` map (broadcast key -> expression + dependencies) instead of straight into the payload. After the controls/lists loops we build `$referencedControlKeys` from `template_tags` (any tag starting with `c:`) and BFS the dependency closure - an expression ships in the response only if its `c:<broadcastKey>` is referenced in the template, or another shipped expression transitively depends on it. The existing Twitch-tag allowlist widening (`extractTwitchTagReferences` loop) still operates on the filtered list, so `t.<name>` references inside unused expressions no longer widen the data payload either.
+- **Why dependency-closure, not direct-reference**: chained expressions like `c.A = c.B * 2; c.B = now_ms() / 1000` where only `c.A` is rendered still need `c.B` registered for `c.A` to resolve. The BFS walks every shipped expression's `config.dependencies` so the transitive set is correct by construction.
+- **Known limitation**: alert templates that reference `c:<key>` are not considered here - those tags live on the alert template, not the static one. Rare in practice; flagged in a comment for follow-up if anyone hits it.
+- **Verified by the reporter**: leaving the 2 unreferenced controls in the user's account no longer crashes the overlay in OBS Browser Source.
+
 ## May 16th, 2026 - Dashboard UI for `list_writer` controls
 
 - Closes the "code works on prod, but you have to tinker" gap from the prod smoke test. The whole pipeline (sidecar -> recompute -> ListWriterAppend -> list growth) has been live and tested end-to-end since this morning; this slice surfaces it to the dashboard so streamers can wire bindings without `php artisan tinker`.
