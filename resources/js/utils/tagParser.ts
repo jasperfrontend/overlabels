@@ -42,3 +42,133 @@ export function replaceTagsWithFormatting(
     return encode ? encodeHtml(formatted) : formatted;
   });
 }
+
+// ---------------------------------------------------------------------------
+// CSS custom-property fast path (Phase 1 of surgical patching).
+//
+// Rewrites every [[[tag|pipe]]] inside a CSS source into a `var(--ol-...)`
+// reference. The renderer injects the rewritten stylesheet exactly once at
+// mount; subsequent tag updates write to CSS custom properties via
+// document.documentElement.style.setProperty, avoiding the full re-parse +
+// <style> swap that the slow path triggers on every data update.
+//
+// Bails to the slow path if the CSS contains conditional or foreach blocks,
+// since those select between subtrees of text and can't be reduced to a
+// single var() reference.
+// ---------------------------------------------------------------------------
+
+export type CssBinding = { property: string; pipe?: string; suffix?: string };
+export type CssBindingTable = Map<string, CssBinding[]>;
+
+export type CompiledCssBindings =
+  | { fastPath: true; css: string; bindings: CssBindingTable }
+  | { fastPath: false };
+
+// Characters that mark a safe boundary between a placeholder and surrounding
+// CSS. Anything outside this set adjacent to `[[[` on the left would have to
+// be folded into the var()'s value at write time (e.g. `#[[[hex]]]` needs `#`
+// included with the resolved value because `#var(--x)` is not valid CSS); we
+// punt on that in Phase 1 and bail to the slow path instead.
+const CSS_BOUNDARY = /[\s;,(){}:/*"'=!]/;
+
+export function compileCssBindings(source: string): CompiledCssBindings {
+  if (
+    source.includes('[[[if:') ||
+    source.includes('[[[elseif:') ||
+    source.includes('[[[foreach:')
+  ) {
+    return { fastPath: false };
+  }
+
+  type Match = {
+    index: number;
+    consumed: number;
+    key: string;
+    pipe?: string;
+    suffix: string;
+  };
+
+  const matches: Match[] = [];
+  for (const m of source.matchAll(TAG_REGEX)) {
+    const start = m.index ?? 0;
+    const placeholderLen = m[0].length;
+    const key = m[1];
+    const pipe = m[2];
+
+    // Left-side adjacency check: `--x: [[[k]]]` is fine (space before),
+    // `#[[[hex]]]` is not (hex digit prefix would need merging).
+    if (start > 0) {
+      const prev = source[start - 1];
+      if (!CSS_BOUNDARY.test(prev)) {
+        return { fastPath: false };
+      }
+    }
+
+    // Right-side suffix: capture letters and `%` glued to `]]]`. Covers
+    // `[[[x]]]px`, `[[[x]]]%`, `[[[c:r|round:0]]]vh`, etc. The browser will
+    // not accept `var(--x)px`, so we have to bake the unit into the property
+    // value at write time.
+    const suffixMatch = source.slice(start + placeholderLen).match(/^[a-zA-Z%]+/);
+    const suffix = suffixMatch ? suffixMatch[0] : '';
+
+    matches.push({
+      index: start,
+      consumed: placeholderLen + suffix.length,
+      key,
+      pipe,
+      suffix,
+    });
+  }
+
+  const bindings: CssBindingTable = new Map();
+  // Property names are keyed by (key, pipe, suffix) so the same tag emitted
+  // with two different unit suffixes (`[[[x]]]px` vs `[[[x]]]%`) resolves to
+  // two distinct properties with the unit pre-baked.
+  const propertyByHash = new Map<string, string>();
+  const usedProperties = new Set<string>();
+
+  function getOrCreateProperty(hash: string, displayPart: string): string {
+    const existing = propertyByHash.get(hash);
+    if (existing) return existing;
+
+    let base = displayPart
+      .replace(/[^a-z0-9_]/gi, '-')
+      .replace(/-+/g, '-')
+      .toLowerCase();
+    if (base.startsWith('-')) base = base.slice(1);
+    if (base.endsWith('-')) base = base.slice(0, -1);
+
+    let candidate = `--ol-${base}`;
+    let i = 1;
+    while (usedProperties.has(candidate)) {
+      candidate = `--ol-${base}-${i++}`;
+    }
+    usedProperties.add(candidate);
+    propertyByHash.set(hash, candidate);
+    return candidate;
+  }
+
+  let css = '';
+  let cursor = 0;
+  for (const match of matches) {
+    css += source.slice(cursor, match.index);
+
+    const hash = `${match.key}|${match.pipe ?? ''}|${match.suffix}`;
+    const displayParts = [match.key];
+    if (match.pipe) displayParts.push(match.pipe);
+    if (match.suffix) displayParts.push(match.suffix);
+    const property = getOrCreateProperty(hash, displayParts.join('-'));
+
+    const list = bindings.get(match.key) ?? [];
+    if (!list.some((b) => b.property === property)) {
+      list.push({ property, pipe: match.pipe, suffix: match.suffix || undefined });
+    }
+    bindings.set(match.key, list);
+
+    css += `var(${property})`;
+    cursor = match.index + match.consumed;
+  }
+  css += source.slice(cursor);
+
+  return { fastPath: true, css, bindings };
+}

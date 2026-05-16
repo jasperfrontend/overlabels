@@ -41,8 +41,9 @@ import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
+import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
 import { EVENT_RULES } from '@/composables/useTwitchEventRules';
-import { replaceTagsWithFormatting } from '@/utils/tagParser';
+import { compileCssBindings, replaceTagsWithFormatting } from '@/utils/tagParser';
 
 // Canonical set of tag names declared by EVENT_RULES. These are the "twitch"
 // (t.*) values exposed to the expression engine; other bare-keyed snapshot
@@ -107,6 +108,17 @@ const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
 const emoteParser = useEmoteParser();
 const expressionEngine = useExpressionEngine(data);
+const cssApplier = useCssCustomProperties();
+
+// Phase 1 surgical-patching state. When fastPath is true, the user's CSS was
+// rewritten at mount to reference CSS custom properties (`var(--ol-...)`) for
+// every [[[tag]]] occurrence. The <style> element is injected once and never
+// re-built; tag updates write properties via cssApplier.applyAll(). When
+// false, we fall back to the legacy compiledCss computed + injectStyle watcher
+// path (CSS contains conditionals or foreach blocks that need text-level
+// substitution).
+const cssOnFastPath = ref(false);
+const cssCompiledStatic = ref<string>('');
 
 // Stream live state — Twitch source controls are muted when offline
 const streamLive = ref(false);
@@ -218,8 +230,31 @@ function parseSource(source: string | null | undefined, encode: boolean = true):
 }
 
 const compiledHtml = computed(() => parseSource(rawHtml.value, true));
-const compiledCss = computed(() => parseSource(css.value, false));
-watch(compiledCss, (newCss) => injectStyle(newCss));
+// On the fast path, compiledCss resolves to the statically-rewritten stylesheet
+// (no `data.value` dependency), so the computed never re-runs after mount and
+// the watcher fires exactly once for the initial inject. Tag updates flow
+// through cssApplier.applyAll() via the watch(data, ...) hook below.
+const compiledCss = computed(() => {
+  if (cssOnFastPath.value) return cssCompiledStatic.value;
+  return parseSource(css.value, false);
+});
+watch(compiledCss, (newCss) => {
+  if (cssOnFastPath.value) return;
+  injectStyle(newCss);
+});
+
+// Phase 1 fast-path runtime: every reassignment of data.value drives a sweep
+// of the bound CSS custom properties. The applier's internal cache short-
+// circuits writes for unchanged values, so high-frequency expression ticks
+// only touch the DOM for properties whose formatted value actually changed.
+// On the slow path this is a no-op because cssApplier has no bindings.
+watch(
+  data,
+  (newData) => {
+    cssApplier.applyAll(newData);
+  },
+  { flush: 'post' },
+);
 
 // Template ref for the static overlay container. morphdom patches its children
 // in place rather than replacing innerHTML wholesale, so any element with a
@@ -537,6 +572,21 @@ onMounted(async () => {
       }
     }
 
+    // Phase 1 surgical patching: try to compile the user's CSS source into a
+    // single static stylesheet that references CSS custom properties for every
+    // [[[tag]]] occurrence. Bails when the CSS contains conditional or foreach
+    // blocks - those select between text segments and can't be reduced to a
+    // var() reference.
+    const compiled = compileCssBindings(css.value);
+    if (compiled.fastPath) {
+      cssCompiledStatic.value = compiled.css;
+      cssApplier.install(compiled.bindings, userLocale.value);
+      cssOnFastPath.value = true;
+      // Seed every bound property from the current data snapshot, including
+      // values just written by the expression engine above.
+      cssApplier.applyAll(data.value);
+    }
+
     injectStyle(compiledCss.value);
     injectCompiledStyle(compiledCssRaw.value);
     injectHead(head.value);
@@ -582,6 +632,7 @@ onMounted(async () => {
 onUnmounted(() => {
   health.destroy();
   expressionEngine.destroy();
+  cssApplier.teardown();
   for (const key of Object.keys(timerIntervals)) {
     stopTimerTick(key);
   }

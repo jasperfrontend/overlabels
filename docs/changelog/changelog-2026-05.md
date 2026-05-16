@@ -1,5 +1,36 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - CSS custom-property fast path for overlay tag updates (Phase 1 surgical patching)
+
+Even after filtering unused expressions, the user's lissajous overlay still ticked the full render pipeline 60 times a second: every data update triggered `compiledCss` to re-run `replaceTagsWithFormatting` across the entire CSS string, then `injectStyle` destroyed and re-created the `<style>` element, then `compiledHtml` re-parsed the entire HTML, then morphdom diffed the rebuilt DOM against the live one. The HTML output is byte-identical every frame for CSS-variable animations - all of that work produces the same DOM. This is Phase 1 of the surgical-patching plan: compile the CSS once at mount, rewrite every `[[[tag]]]` into a `var(--ol-...)` reference, inject the stylesheet exactly once, and write CSS custom properties on the root element for tag value changes instead of replacing the `<style>` element.
+
+### Compiler (`resources/js/utils/tagParser.ts`)
+
+- New `compileCssBindings(source)` returns `{ fastPath: true, css, bindings }` where `css` is the rewritten stylesheet and `bindings` is a `Map<tagKey, Array<{property, pipe, suffix}>>`. Same `[[[key|pipe]]]` syntax, single regex pass.
+- **Property naming**: each unique `(key, pipe, suffix)` tuple gets its own property, slug-derived (`c:lissajous_x` + pipe `round:2` + suffix `px` -> `--ol-c-lissajous-x-round-2-px`). The same tag emitted with two different unit suffixes resolves to two distinct properties with the unit pre-baked.
+- **Suffix handling is essential, not optional**: the user's CSS writes `[[[c:lissajous_x|round:2]]]px`, which under a naive rewrite becomes `var(--ol-...)px` - **invalid CSS**, because you cannot append a unit to a `var()` reference. The compiler captures any `[a-zA-Z%]+` glued to the right of `]]]` and bakes it into the property's *value* at write time, so `setProperty('--ol-...-px', '50.42px')` produces the unit correctly inside the cascade.
+- **Bail conditions** (fall back to slow path):
+  - CSS contains `[[[if:`, `[[[elseif:`, or `[[[foreach:` - those select between text segments and can't be reduced to a single `var()` reference.
+  - A placeholder is glued to a non-boundary character on its left (e.g. `#[[[hex]]]`). Handling left-side prefixes would require folding them into the property value too; punted to a follow-up.
+
+### Applier (`resources/js/composables/useCssCustomProperties.ts`, new)
+
+- `install(table, locale)` stores the bindings + locale; `applyAll(data)` iterates the table, formats each value with the bound pipe, and writes via `document.documentElement.style.setProperty(property, value + suffix)`.
+- Internal `lastWritten` cache short-circuits writes when the formatted value didn't change for that property - a 60Hz expression tick that rounds to the same two decimals as last frame costs zero DOM work.
+- Empty formatted value -> property set to empty (suffix dropped), so a missing data slot leaves `var(--ol-...)` falling back through the CSS cascade cleanly instead of writing `'px'` as a property value (which would parse as invalid length and silently nuke the rule).
+- `teardown()` removes every property the applier ever wrote from `:root`, called from `onUnmounted`.
+
+### Renderer wiring (`resources/js/components/OverlayRenderer.vue`)
+
+- New state: `cssApplier` (the composable instance), `cssOnFastPath: Ref<boolean>`, `cssCompiledStatic: Ref<string>`.
+- `compiledCss` computed short-circuits to `cssCompiledStatic.value` when `cssOnFastPath` is true, so it no longer subscribes to `data.value` at all - the computed never re-runs after mount on the fast path. `watch(compiledCss, ...)` no-ops on fast path.
+- Mount-time block (after expression controls are registered, so initial expression values are in `data.value`): `compileCssBindings(css.value)` -> if fast-path, install the table, set `cssOnFastPath = true`, seed every bound property from the current data snapshot.
+- New `watch(data, applier.applyAll, { flush: 'post' })` drives property updates on every `data.value` reassignment. On the slow path this is a no-op because the applier has no bindings.
+
+### Verified
+
+User reported the lissajous overlay rendering at 60fps in OBS Browser Source with 10 time-dependent expressions (5 pairs, each 500ms offset), where previously even 4 expressions crashed Chromium-family browsers entirely. CSS custom properties visible in DevTools update at the screen refresh rate; the `<style id="overlay-style">` element is constant across frames.
+
 ## May 16th, 2026 - Skip unreferenced Expression Controls on overlay render
 
 User reported an overlay with 4 lissajous-curve Expression Controls (each using `now_ms()`) crashing the Chromium-family browsers - OBS Browser Source, Edge, Helium - while Firefox rendered it fine. Tracing showed all 4 expressions ticked on RAF and cascaded through Vue's reactivity even when only 2 were referenced in the HTML/CSS, because the renderer registered every expression the user owned on the template, regardless of whether the template actually used the value.
