@@ -32,6 +32,12 @@ class TwitchScopeService
         'channel:read:charity',
         'channel:read:polls',
         'channel:read:predictions',
+        // Authorizes the shared @overlabels chatbot to send messages in the
+        // streamer's channel via the Send Chat Message API using an app
+        // access token. Without this scope (or moderator status for the bot
+        // account), Twitch returns 401 on bot replies and the Chat Bot
+        // Badge does not render.
+        'channel:bot',
     ];
 
     /**

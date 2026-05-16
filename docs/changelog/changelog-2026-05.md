@@ -1,5 +1,29 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - channel:bot in streamer OAuth + bot sends as app token
+
+Two coordinated changes (one here, one in the overlabels-bot repo) so the shared @overlabels chat bot account qualifies for Twitch's Chat Bot Badge on outgoing messages.
+
+### Why
+
+Per [Twitch's Chatbot Badge and Chat Identity docs](https://dev.twitch.tv/docs/chat/), to display the Chat Bot Badge a bot must (1) call the Send Chat Message API, (2) authenticate that call with an app access token, (3) have `channel:bot` granted by the broadcaster OR moderator status in the channel, and (4) not be the channel's own broadcaster. Overlabels already met (1) and (4); the bot's sends were signed with its user access token rather than an app token, and broadcasters never granted `channel:bot` because we never asked for it.
+
+### What changed here
+
+`TwitchScopeService::REQUIRED_SCOPES` now includes `channel:bot`. The Connect Twitch flow at `routes/web.php:287` reads this constant directly, so new authentications request the scope without any further wiring. Existing users surface in the stale-scope detection that already drives the re-auth nudge - no migration, no forced sign-out.
+
+### What changed in the bot repo
+
+`apiClient.asUser(botUserId, ctx => ctx.chat.sendChatMessage(...))` -> `apiClient.chat.sendChatMessageAsApp(botUserId, broadcasterId, text, options)`. The bot still authenticates its EventSub WebSocket reads with the user token (no change there), but outgoing replies now use Twurple's app-token send path, which `RefreshingAuthProvider` services automatically via the client id/secret it already holds.
+
+### Failure mode during the transition
+
+Connected streamers who haven't re-auth'd (and who haven't manually modded the @overlabels bot account) will see bot replies return 401 from Helix until they refresh scopes. The stale-scope nudge surfaces this. Accepted as a closed-beta-acceptable trade against keeping a user-token fallback path and its branching.
+
+### What this does not unlock
+
+This change qualifies the bot for the Chat Bot Badge only. Appearing under "Chat Bots" in Users in Chat additionally requires Channel Chat Message reads via EventSub Webhooks (not WebSockets) - the bot still reads via WebSockets, and that's a separate, larger refactor not bundled here.
+
 ## May 16th, 2026 - RAF-batched time-dependent expression evaluation
 
 With the CSS fast path landed, the lissajous overlay rendered in Chromium without crashing but ran at ~5fps and spammed `Uncaught (in promise) Maximum recursive updates exceeded. This means you have a reactive effect that is mutating its own dependencies and thus recursively triggering itself.` on every frame. The CSS work was no longer the bottleneck - the bottleneck was Vue's effect scheduler refusing to converge.
