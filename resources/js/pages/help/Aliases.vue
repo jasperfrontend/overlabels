@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -49,11 +50,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Header -->
         <div class="mb-10">
-          <h1 class="mb-4 text-4xl font-bold">Bot Aliases</h1>
-          <p class="text-lg font-medium text-violet-400">
-            Short chat commands that rewrite to longer ones. <code class="rounded bg-background px-1.5 py-0.5 font-mono text-base">!w 2</code> becomes
-            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-base">!inc wins 2</code> before the bot dispatches it.
-          </p>
+          <Heading
+            title="Bot Aliases"
+            title-class="text-4xl font-bold mb-4"
+            description="Short chat commands that rewrite to longer ones. Positional placeholders, one-hop guard, shared validation."
+          />
         </div>
 
         <!-- TOC -->

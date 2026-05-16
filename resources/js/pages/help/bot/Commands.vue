@@ -3,6 +3,7 @@ import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import { ShieldAlert, ChevronRight } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -216,11 +217,11 @@ const miscCommands: BotCommandDoc[] = [
   >
     <!-- Hero -->
     <div class="mb-8">
-      <h1 class="mb-3 text-4xl font-bold">Bot Commands</h1>
-      <p class="text-lg text-violet-400">
-        Every chat-driven command the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-base">@overlabels</code> bot ships with.
-        Click a row to expand its example.
-      </p>
+      <Heading
+        title="Bot Commands"
+        title-class="text-4xl font-bold mb-4"
+        description="Every chat command the @overlabels Twitch bot understands - controls, !ol chat-admin meta-command, list operations, and built-ins. Click a row to expand it and show an example."
+      />
     </div>
 
     <!-- Controls-access warning (collapsed version once acknowledged) -->

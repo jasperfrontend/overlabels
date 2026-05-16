@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -47,14 +48,12 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <!-- Hero -->
         <div class="mb-10">
-          <h1 class="text-4xl font-extrabold tracking-tight">Why Overlabels</h1>
-          <p class="mt-4 text-lg text-foreground">
-            Overlabels is a third-party data normalization engine for Twitch and the services around it.
-            Donations, subs, bits, followers, GPS pings, chat - they all come in through different APIs with
-            different shapes, and by the time they hit your overlay they're just numbers, strings, and
-            booleans you can do math with.
-          </p>
-          <p class="mt-4 text-lg text-foreground">
+          <Heading
+            title="Why Overlabels"
+            title-class="text-4xl font-bold mb-4"
+            description="Overlabels is a third-party data normalization engine for Twitch and the services around it. Donations, subs, bits, followers - it all becomes math you can work with."
+          />
+          <p class="mt-4 text-foreground">
             If that sentence excited you, you're in the right place. Strap in.
           </p>
         </div>
@@ -86,6 +85,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   c.kofi.latest_donor_name_at,           c.kofi.latest_donor_name,
   c.streamelements.latest_donor_name_at, c.streamelements.latest_donor_name,
   c.fourthwall.latest_donor_name_at,     c.fourthwall.latest_donor_name,
+  c.bmac.latest_donor_name_at,           c.bmac.latest_donor_name,
   c.twitch.latest_cheerer_name_at,       c.twitch.latest_cheerer_name
 )</code></pre>
           </div>

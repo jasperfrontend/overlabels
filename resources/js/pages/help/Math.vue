@@ -99,7 +99,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Scalar math</h3>
-          <div class="overflow-x-auto rounded-lg border border-sidebar">
+          <div class="overflow-x-auto border border-sidebar">
             <table class="w-full text-sm">
               <thead class="bg-sidebar">
                 <tr class="text-left">
@@ -497,8 +497,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             t.last_raid_from ? t.last_raid_from + " raided with " + t.last_raid_viewers_peak + " viewers" : ""
           </div>
 
-          <div class="mt-6 rounded-lg border border-violet-500/30 bg-violet-500/5 p-4 text-sm text-foreground">
-            <strong class="font-semibold text-violet-400">Note:</strong>
+          <div class="mt-6 border border-sidebar-border bg-card p-4 text-sm text-foreground">
+            <strong class="font-semibold text-violet-400">Note: </strong>
             <code>[[[tag]]]</code> syntax does not work inside expression strings -
             expressions never reparse template-tag syntax, and template tags never evaluate expressions.
             Use <code>t.tag</code> in expressions, <code>[[[tag]]]</code> in HTML. That separation is
@@ -511,7 +511,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-4 text-2xl font-bold">10. Pitfalls and things that will not work</h2>
 
           <div class="space-y-4">
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">Time resolution: <code>now()</code> vs <code>now_ms()</code></h3>
               <p class="mb-2">
                 The engine runs a shared 250&nbsp;ms ticker that re-evaluates any expression containing
@@ -538,7 +538,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">Radians, not degrees</h3>
               <p>
                 <code>sin(90)</code> is not 1. It is <MathEquation tex="\sin(90 \text{ rad}) \approx 0.894" />.
@@ -547,7 +547,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">No exponentiation operator</h3>
               <p>
                 <code>x ** 2</code> and <code>x ^ 2</code> do nothing useful. For <MathEquation tex="x^2" /> write
@@ -558,7 +558,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">Division by zero returns zero</h3>
               <p>
                 The engine swallows <MathEquation tex="x / 0" /> and returns <code>0</code> instead of
@@ -568,7 +568,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">Odd argument count in arg-family</h3>
               <p>
                 <code>latest(a, b, c)</code> with three arguments returns the literal error string
@@ -577,7 +577,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-5 text-foreground">
               <h3 class="mb-2 font-semibold text-amber-400">Floating-point sins</h3>
               <p>
                 <MathEquation tex="0.1 + 0.2 = 0.30000000000000004" />. When rendering, round at the edge:
@@ -589,7 +589,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- Closing -->
-        <div class="mt-16 rounded-lg border border-violet-500/30 bg-violet-500/5 p-6 text-foreground">
+        <div class="mt-16 border border-violet-500/30 bg-violet-500/5 p-6 text-foreground">
           <h2 class="mb-3 text-xl font-bold">Now go build something weird</h2>
           <p class="mb-2">
             The entire engine fits in one file -
