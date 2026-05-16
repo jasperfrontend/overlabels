@@ -80,7 +80,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="text-foreground">
             One function:
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>latest(
   c.streamlabs.latest_donor_name_at,     c.streamlabs.latest_donor_name,
   c.kofi.latest_donor_name_at,           c.kofi.latest_donor_name,
@@ -96,13 +96,13 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
           <p class="text-foreground">
             Every control Overlabels tracks gets an automatic
-            <code class="rounded bg-sidebar px-1 font-mono">_at</code> companion - a Unix timestamp of
-            when that value last updated. <code class="rounded bg-sidebar px-1 font-mono">latest()</code> walks
+            <code class="border border-sidebar-border bg-sidebar p-0.5 px-1 font-mono">_at</code> companion - a Unix timestamp of
+            when that value last updated. <code class="border border-sidebar-border bg-sidebar p-0.5 px-1 font-mono">latest()</code> walks
             through (timestamp, value) pairs and returns the value whose timestamp is the largest. Same
             mechanism gives you
-            <code class="rounded bg-sidebar px-1 font-mono">oldest()</code>,
-            <code class="rounded bg-sidebar px-1 font-mono">max()</code>, and
-            <code class="rounded bg-sidebar px-1 font-mono">min()</code>.
+            <code class="border border-sidebar-border bg-sidebar p-0.5 px-1 font-mono">oldest()</code>,
+            <code class="border border-sidebar-border bg-sidebar p-0.5 px-1 font-mono">max()</code>, and
+            <code class="border border-sidebar-border bg-sidebar p-0.5 px-1 font-mono">min()</code>.
           </p>
         </section>
 
@@ -113,7 +113,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Twitch Bits are 100 Bits = 1 USD, which is a math problem everyone else seems to just... give
             up on. Drop an Expression Control into your overlay and unleash:
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>c.kofi.donations_received +
 c.streamlabs.donations_received +
 c.streamelements.donations_received +
@@ -165,7 +165,7 @@ c.fourthwall.donations_received +
           <p class="text-foreground">
             If? If not? If larger? If smaller? Oh yeah, we gotchu. Conditional engine: built in.
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>[[[if:followers_total &gt;= 1000]]]
   &lt;div class="milestone"&gt;1K+ followers!&lt;/div&gt;
 [[[elseif:followers_total &gt;= 100]]]
@@ -176,7 +176,7 @@ c.fourthwall.donations_received +
           </div>
           <p class="text-foreground">
             Full comparison operators, boolean logic, nested branches, event-scoped conditions, even
-            conditional styling inside <code class="rounded bg-sidebar px-1 font-mono">&lt;style&gt;</code>
+            conditional styling inside <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">&lt;style&gt;</code>
             blocks. Read all about it at
             <a href="/help/conditionals" class="text-violet-400 hover:underline">/help/conditionals</a>.
           </p>
@@ -186,27 +186,27 @@ c.fourthwall.donations_received +
         <section class="mb-12 space-y-4">
           <h2 class="text-2xl font-bold">But data is ugly!</h2>
           <p class="text-foreground">
-            Yes. It really is. Ever typed <code class="rounded bg-sidebar px-1 font-mono">0.1 + 0.2</code>
+            Yes. It really is. Ever typed <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">0.1 + 0.2</code>
             into any modern programming language and expected
-            <code class="rounded bg-sidebar px-1 font-mono">0.3</code>? Yeah - you got
-            <code class="rounded bg-sidebar px-1 font-mono">0.30000000000000004</code>. Floats are cursed. When
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">0.3</code>? Yeah - you got
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">0.30000000000000004</code>. Floats are cursed. When
             rendering, round at the edge:
-            <code class="rounded bg-sidebar px-1 font-mono">round(expr, 2)</code> or the
-            <code class="rounded bg-sidebar px-1 font-mono">|round:2</code> pipe. Never compare floats with
-            <code class="rounded bg-sidebar px-1 font-mono">==</code> - use
-            <code class="rounded bg-sidebar px-1 font-mono">abs(a - b) &lt; 0.001</code>.
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">round(expr, 2)</code> or the
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">|round:2</code> pipe. Never compare floats with
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">==</code> - use
+            <code class="border border-sidebar-border bg-sidebar p-1 px-0.5 font-mono">abs(a - b) &lt; 0.001</code>.
           </p>
           <p class="text-foreground">
             Overlabels ships with <code>round</code>, <code>number</code>, <code>currency</code>,
             <code>duration</code>, <code>date</code>, <code>distance</code>, <code>speed</code>, and upper /
             lowercase formatters. Pipe any value into a formatter and boom - readable.
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>[[[c:event_date|date]]]</code></pre>
           </div>
           <p class="text-foreground">
-            Renders <code class="rounded bg-sidebar px-1 font-mono">Apr 5, 2026, 7:00 PM</code> when your
-            locale is US. Renders <code class="rounded bg-sidebar px-1 font-mono">5 apr 2026, 19:00</code>
+            Renders <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">Apr 5, 2026, 7:00 PM</code> when your
+            locale is US. Renders <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">5 apr 2026, 19:00</code>
             when you're Dutch. Every pipe formatter honors your locale setting.
             See <a href="/help/formatting" class="text-violet-400 hover:underline">/help/formatting</a>.
           </p>
@@ -225,9 +225,9 @@ c.fourthwall.donations_received +
             <li><strong>Locale</strong> - drives every formatter pipe system-wide</li>
             <li>
               <strong>Foreach caps</strong> - very important. Controls how many entries Overlabels streams
-              down for <code class="rounded bg-sidebar px-1 font-mono">subscribers</code>,
-              <code class="rounded bg-sidebar px-1 font-mono">channel_followers</code>,
-              <code class="rounded bg-sidebar px-1 font-mono">followed_channels</code>, and goals. Higher caps
+              down for <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">subscribers</code>,
+              <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">channel_followers</code>,
+              <code class="border border-sidebar-border bg-sidebar-accent px-1 font-mono">followed_channels</code>, and goals. Higher caps
               = more rows in your loops = bigger payload. Tune to your overlay's needs.
             </li>
           </ul>
@@ -242,7 +242,7 @@ c.fourthwall.donations_received +
             poll as animated bars. Render the last 10 subs as avatars. Render hype-train contributors as a
             leaderboard. The loop is just markup:
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <pre class="overflow-x-auto text-sm font-mono text-foreground"><code>[[[foreach:event.choices as choice]]]
   &lt;li data-key="[[[choice.id]]]"&gt;
     [[[choice.title]]] - [[[choice.votes]]]
@@ -309,7 +309,7 @@ c.fourthwall.donations_received +
         </section>
 
         <!-- Vision -->
-        <div class="rounded-lg border border-sidebar bg-sidebar p-6">
+        <div class="border border-sidebar-border bg-card p-6">
           <h2 class="mb-3 text-xl font-bold">The vision</h2>
           <p class="text-foreground">
             I want to make Overlabels the best third-party data normalization service there is for Twitch

@@ -77,7 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <section class="space-y-4 mb-12">
           <h2 class="text-2xl font-bold">Why not just use PayPal directly?</h2>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+            <div class="border border-red-400/40 bg-red-400/10 flex gap-4 items-center p-4 space-y-1">
               <div>
                 <EyeIcon class="size-10 text-red-400" />
               </div>
@@ -88,7 +88,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </p>
               </div>
             </div>
-            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+            <div class="border border-red-400/40 bg-red-400/10 flex gap-4 items-center p-4 space-y-1">
               <div>
                 <UserKey class="size-10 text-red-400" />
               </div>
@@ -99,7 +99,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </p>
               </div>
             </div>
-            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+            <div class="border border-red-400/40 bg-red-400/10 flex gap-4 items-center p-4 space-y-1">
               <div>
                 <Webhook class="size-10 text-red-400" />
               </div>
@@ -111,7 +111,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </p>
               </div>
             </div>
-            <div class="rounded-lg border flex gap-4 items-center p-4 space-y-1">
+            <div class="border border-red-400/40 bg-red-400/10 flex gap-4 items-center p-4 space-y-1">
               <div>
                 <TriangleAlertIcon class="size-10 text-red-400" />
               </div>
@@ -188,7 +188,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </section>
 
         <!-- CTA -->
-        <section class="rounded-lg border bg-sidebar-accent p-6 text-center space-y-3 mb-6">
+        <section class="border border-sidebar-border bg-card p-6 text-center space-y-3 mb-6">
           <p class="text-xl font-bold">Ready to connect Ko-fi to your overlays?</p>
           <p class="text-foreground">
             Sign up at

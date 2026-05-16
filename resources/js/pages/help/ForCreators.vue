@@ -62,7 +62,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-border bg-sidebar-accent p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#thesis" class="text-violet-400 hover:underline">The thesis</a></li>
@@ -72,7 +72,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <li><a href="#constraint" class="text-violet-400 hover:underline">The constraint is the feature</a></li>
             <li><a href="#gaps" class="text-violet-400 hover:underline">Honest gaps</a></li>
             <li><a href="#collaborate" class="text-violet-400 hover:underline">Looking for collaborators</a></li>
-            <li><a href="#deep-dives" class="text-violet-400 hover:underline">Deep dives</a></li>
+            <li><a href="#deep-dives" class="text-violet-400 hover:underline">Deep-dives</a></li>
           </ol>
         </div>
 
@@ -95,7 +95,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">2. The primitives</h2>
 
           <!-- Values -->
-          <div class="mb-6 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-6">
             <h3 class="mb-3 text-xl font-semibold">Values (Controls)</h3>
             <p class="mb-3 text-foreground">
               Every named value is a Control. Controls have a key, a type, and a current value. You reference a Control
@@ -116,7 +116,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Sources -->
-          <div class="mb-6 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-6">
             <h3 class="mb-3 text-xl font-semibold">Sources (live data)</h3>
             <p class="mb-3 text-foreground">
               A Source produces values automatically. The streamer connects a Source once; from then on it emits
@@ -147,7 +147,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Expression engine -->
-          <div class="mb-6 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-6">
             <h3 class="mb-3 text-xl font-semibold">The expression engine</h3>
             <p class="mb-3 text-foreground">
               Expression Controls let you write formulas that compute their value live. The engine is sandboxed (no
@@ -189,7 +189,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Output -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h3 class="mb-3 text-xl font-semibold">Output (the overlay itself)</h3>
             <p class="mb-3 text-foreground">
               An overlay is an HTML and CSS template. Anywhere you can write text, you can drop
@@ -264,7 +264,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- 4. Why this is different -->
         <section class="mb-14" id="why-different">
           <h2 class="mb-4 text-2xl font-bold">4. Why this is different from other overlay tools</h2>
-          <div class="overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="overflow-x-auto border border-sidebar-border bg-sidebar-accent">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -306,7 +306,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- 5. The constraint is the feature -->
         <section class="mb-14" id="constraint">
           <h2 class="mb-4 text-2xl font-bold">5. The constraint is the feature</h2>
-          <div class="rounded-lg border border-violet-400/30 bg-violet-400/5 p-6">
+          <div class="border border-green-400/40 bg-green-400/10 p-6">
             <p class="mb-4 text-lg font-medium text-foreground">
               The "no JavaScript" rule isn't an oversight - it's the load-bearing security and shareability decision
               the whole system rests on.
@@ -382,7 +382,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- 7. Looking for collaborators -->
         <section class="mb-14" id="collaborate">
           <h2 class="mb-4 text-2xl font-bold">7. Looking for collaborators</h2>
-          <div class="rounded-lg border border-violet-400/40 bg-violet-400/5 p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <p class="mb-3 text-foreground">
               If you're a creative coder, shader artist, or generative-art person who reads
               <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">sin(t * PI / 2)</code>
@@ -409,7 +409,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- 8. Deep dives -->
         <section class="mb-14" id="deep-dives">
-          <h2 class="mb-4 text-2xl font-bold">8. Deep dives</h2>
+          <h2 class="mb-4 text-2xl font-bold">8. Deep-dives</h2>
           <p class="mb-4 text-foreground">
             The rest of the help section is the developer-style reference for each primitive:
           </p>

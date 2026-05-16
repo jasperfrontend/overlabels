@@ -88,7 +88,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">Pipe Syntax</h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 Add a pipe <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|</code> after any tag
                 name,
@@ -113,7 +113,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Works with all tag types</h3>
               <p class="mb-4 text-foreground">
                 Pipes work on any template tag - controls, Twitch data, Ko-fi data, StreamLabs data, event data.
@@ -140,7 +140,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <span class="ml-2 text-lg font-normal text-muted-foreground">Round numbers</span>
           </h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <p class="mb-4 text-foreground">
               Rounds a numeric value. Without arguments, rounds to a whole number. Pass a number to control decimal
               places.
@@ -183,7 +183,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <span class="ml-2 text-lg font-normal text-muted-foreground">Locale-aware numbers</span>
           </h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <p class="mb-4 text-foreground">
               Formats a number with thousands separators and decimal notation based on your
               <a href="#locale" class="text-violet-400 hover:underline">locale setting</a>.
@@ -226,7 +226,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 Formats a number as a currency value with the proper symbol, decimal places, and separators for your
                 locale.
@@ -271,7 +271,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
                 <strong>Tip:</strong> If your streaming currency differs from your locale's default, just pass the code
                 explicitly.
@@ -292,7 +292,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Auto-format (no arguments)</h3>
               <p class="mb-4 text-foreground">
                 Without arguments, the duration formatter picks the most readable format based on how large the value
@@ -329,7 +329,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Explicit patterns</h3>
               <p class="mb-4 text-foreground">
                 Pass a pattern using <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">dd</code>,
@@ -381,7 +381,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
                 <strong>Tip:</strong> Negative values (like a countdown past zero) are supported. The output will be
                 prefixed with
@@ -400,7 +400,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 Formats a date or datetime string. Without arguments, shows a locale-aware date and time.
                 Use a named preset or a custom pattern to control the exact output.
@@ -453,7 +453,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Available tokens</h3>
               <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <div>
@@ -493,7 +493,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 Formats a distance value with locale-aware number formatting and optional unit conversion.
                 The input is always assumed to be in <strong>kilometers</strong>. Pass the target unit as an
@@ -533,7 +533,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
                 <strong>Why km in, any unit out?</strong> Overlabels GPS controls store raw distance values in km
                 so your templates are the single source of truth for how distance is shown. Your locale handles
@@ -551,7 +551,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 Formats a speed value with locale-aware number formatting and unit conversion. The input is
                 always assumed to be in <strong>meters per second</strong>. Pass the target unit:
@@ -590,7 +590,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-6">
+            <div class="border border-amber-500/30 bg-amber-500/5 p-6">
               <p class="text-foreground">
                 <strong>Note:</strong> <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c:gps:speed</code>
                 is a legacy control that's pre-converted server-side based on your speed_unit setting. The newer
@@ -611,7 +611,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <span class="ml-2 text-lg font-normal text-muted-foreground">Text transforms</span>
           </h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <p class="mb-4 text-foreground">
               Simple text case transformations. No arguments needed.
             </p>
@@ -646,7 +646,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">Locale Settings</h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|number</code>,
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">|currency</code>,
@@ -665,7 +665,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </ul>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Changing your locale</h3>
               <p class="mb-4 text-foreground">
                 Go to
@@ -686,7 +686,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="css">
           <h2 class="mb-6 text-2xl font-bold">Pipes in CSS</h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <p class="mb-4 text-foreground">
               Pipes work in CSS too - anywhere you can use a template tag, you can pipe it.
             </p>
@@ -708,7 +708,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12" id="tips">
           <h2 class="mb-6 text-2xl font-bold">Tips</h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <div class="space-y-8 text-foreground">
               <div>
                 <h3 class="text-xl mb-3">One pipe per tag</h3>
@@ -766,7 +766,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="mb-12">
           <h2 class="mb-6 text-2xl font-bold">Quick Reference</h2>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>

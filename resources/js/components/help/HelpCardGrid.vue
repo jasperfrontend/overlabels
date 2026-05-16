@@ -18,10 +18,10 @@ defineProps<{ pages: HelpCard[] }>();
       v-for="page in pages"
       :key="page.href"
       :href="page.href"
-      class="group flex gap-4 rounded-lg border border-border p-5 transition-colors hover:border-violet-400/50 hover:bg-sidebar-accent"
+      class="group flex gap-4 border border-sidebar-border p-5 transition-colors hover:border-violet-400/50 hover:bg-sidebar-accent"
     >
       <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-400"
+        class="flex h-10 w-10 shrink-0 items-center justify-center bg-card text-violet-400"
       >
         <component :is="page.icon" class="h-5 w-5" />
       </div>

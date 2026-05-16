@@ -174,7 +174,7 @@ function copyTag(tag: string) {
           </p>
         </div>
 
-        <div class="mb-8 rounded-lg border border-sidebar bg-sidebar-accent p-4 text-sm text-foreground">
+        <div class="mb-8 border border-sidebar-border bg-card p-4 text-sm text-foreground">
           <p>
             Want to use one of these? Open a static template, click <strong>Add control</strong>,
             and pick the preset from the <strong>Stream Controls</strong> dropdown - or paste the tag straight into your overlay HTML.
@@ -191,7 +191,7 @@ function copyTag(tag: string) {
               </div>
             </div>
 
-            <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar-accent">
+            <div class="overflow-hidden border border-sidebar-border bg-card">
               <ul class="divide-y divide-sidebar">
                 <li
                   v-for="preset in section.presets"

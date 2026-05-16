@@ -51,7 +51,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-border bg-card p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#toolbox" class="text-violet-400 hover:underline">The toolbox</a></li>
@@ -77,7 +77,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mt-6 mb-2 text-lg font-semibold">Operators</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">
             +&nbsp;&nbsp;-&nbsp;&nbsp;*&nbsp;&nbsp;/&nbsp;&nbsp;%&nbsp;&nbsp;&nbsp;&nbsp;==&nbsp;&nbsp;!=&nbsp;&nbsp;&gt;&nbsp;&nbsp;&lt;&nbsp;&nbsp;&gt;=&nbsp;&nbsp;&lt;=&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp;&nbsp;&nbsp;||&nbsp;&nbsp;!&nbsp;&nbsp;&nbsp;&nbsp;?&nbsp;:
           </div>
           <p class="mt-2 text-sm text-muted-foreground">
@@ -133,7 +133,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Take value/label pairs and return the <em>label</em> paired with the winning value.
             Ties go to the first pair.
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">
             argmax(v1, l1, v2, l2, ...)<br />
             argmin(v1, l1, v2, l2, ...)<br />
             latest(v1, l1, v2, l2, ...)&nbsp;&nbsp;&nbsp;&nbsp;// alias of argmax, but intent: timestamps<br />
@@ -166,7 +166,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             from. Pick any event-driven control - for example, the one that stores the latest follower -
             and you can show how long ago it fired.
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">
             now() - t.followers_latest_date_at
           </div>
           <p class="mt-2 text-sm text-muted-foreground">
@@ -190,7 +190,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Map that one formula to controls and you have a breathing badge, a pulsing circle, a
             lighthouse sweep, or a subtle bob. The pattern:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// 1 Hz pulse, mapped to 0..1 (use as opacity / scale normaliser)</span><br />
             0.5 + 0.5 * sin(2 * PI * now())<br /><br />
             <span class="text-muted-foreground">// Slow breathe, &plusmn;5% around 1.0, period 6 s</span><br />
@@ -212,7 +212,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Drive an X offset with <code>sin</code> and a Y offset with <code>cos</code> at different
             frequencies. Two control expressions, one orbit:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// c:orbit_x</span><br />
             40 * sin(2 * PI * now() / 5)<br /><br />
             <span class="text-muted-foreground">// c:orbit_y (3:2 frequency ratio -&gt; a classic Lissajous)</span><br />
@@ -233,7 +233,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             tex="\text{fract}(x) = x - \lfloor x \rfloor \quad\in [0,\,1)"
           />
 
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// 10-second loop, ramps 0 -&gt; 1</span><br />
             fract(now() / 10)<br /><br />
             <span class="text-muted-foreground">// Same loop, reversed: 1 -&gt; 0</span><br />
@@ -255,7 +255,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-3 text-foreground">
             This expression returns a seemingly random integer from 1 to 9, changing twice per second:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-base text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-base text-foreground">
             floor(fract(sin(now() / 2) * 1000) * 9) + 1
           </div>
           <p class="mt-3 text-foreground">
@@ -301,7 +301,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           />
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Variants</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Uniform-ish [0, 1) noise (no integer snap)</span><br />
             fract(sin(now()) * 43758.5453123)<br /><br />
             <span class="text-muted-foreground">// Roll a 20-sided die every 3 seconds</span><br />
@@ -333,7 +333,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             are indexing something cyclic.
           </p>
 
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Cycle 0 -&gt; 1 -&gt; 2 -&gt; 0 every 5 s</span><br />
             mod(floor(now() / 5), 3)<br /><br />
             <span class="text-muted-foreground">// Cycle through the days of the year (day-of-year)</span><br />
@@ -345,7 +345,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mt-4 text-foreground">
             Pair <code>mod</code> with a conditional to rotate overlay text:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// c:banner_index =&gt;</span><br />
             mod(floor(now() / 8), 3)<br /><br />
             <span class="text-muted-foreground">// In HTML:</span><br />
@@ -364,7 +364,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mt-4 mb-2 text-lg font-semibold">Clamp as a saturation limiter</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Hype meter: 0..100, never overshoots, never negative</span><br />
             clamp(0, c.cheer_bits / 100, 100)
           </div>
@@ -373,7 +373,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-3 text-foreground">
             Trig output has 15 decimal places you never want to show. Round at the edge of the UI.
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Win rate as a clean percentage</span><br />
             round(c.wins / (c.wins + c.losses) * 100, 1)
           </div>
@@ -398,7 +398,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             tex="\text{most\_recent\_donor} = \underset{s \in \text{sources}}{\operatorname{argmax}}\ t_{s}"
           />
 
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Who tipped most recently - Ko-fi, Streamlabs, or StreamElements?</span><br />
             latest(<br />
             &nbsp;&nbsp;c.kofi.latest_donor_name_at, c.kofi.latest_donor_name,<br />
@@ -415,7 +415,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Sum across services</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Unified donation counter</span><br />
             c.kofi.donations_received + c.streamlabs.donations_received + c.streamelements.donations_received<br /><br />
             <span class="text-muted-foreground">// Unified total received amount</span><br />
@@ -427,7 +427,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Because <code>t.subscribers_latest_is_gift</code> is a boolean stamped by the
             <code>channel.subscribe</code> EventSub rule, you can build sentiment directly:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Who to thank for the most recent sub</span><br />
             t.subscribers_latest_is_gift<br />
             &nbsp;&nbsp;? t.subscribers_latest_gifter_name + " gifted a sub to " + t.subscribers_latest_user_name<br />
@@ -460,7 +460,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             A horizontal progress bar that fills from 0 to 100 as your follower count approaches the
             next thousand, then snaps back to zero and starts climbing again:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// c:milestone_pct -&gt;</span><br />
             clamp(0, (t.followers_total - floor(t.followers_total / 1000) * 1000) / 10, 100)
           </div>
@@ -474,13 +474,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             Every tag has an automatic <code>_at</code> Unix timestamp companion. Combine it with
             <code>now()</code> and <code>clamp</code> to get a two-second fade-in on every new follow:
           </p>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// c:greet_opacity -&gt;</span><br />
             clamp(0, (now() - t.followers_latest_user_name_at) / 2, 1)
           </div>
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Greeting copy that switches on the event shape</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// c:greet_text -&gt;</span><br />
             t.subscribers_latest_is_gift<br />
             &nbsp;&nbsp;? "Thanks " + t.subscribers_latest_gifter_name + " for gifting a sub to " + t.subscribers_latest_user_name + "!"<br />
@@ -488,7 +488,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <h3 class="mt-8 mb-2 text-lg font-semibold">Raid hype meter</h3>
-          <div class="rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-7 text-foreground">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-7 text-foreground">
             <span class="text-muted-foreground">// Scale from 0..1 based on peak raid size, saturating at 500 viewers</span><br />
             <span class="text-muted-foreground">// c:raid_hype -&gt;</span><br />
             clamp(0, t.last_raid_viewers_peak / 500, 1)<br /><br />

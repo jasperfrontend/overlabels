@@ -64,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-border bg-card p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#two-surfaces" class="text-violet-400 hover:underline">The two surfaces: static and alert</a></li>
@@ -87,7 +87,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             is the most common mistake.
           </p>
 
-          <div class="mb-4 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-4 border border-sidebar-border bg-card p-6">
             <h3 class="mb-2 text-xl font-semibold">Static overlay</h3>
             <p class="mb-2 text-foreground">
               The always-on layer. Camera frames, follower counters, donation goals, current game or location, recent
@@ -102,7 +102,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </p>
           </div>
 
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-card p-6">
             <h3 class="mb-2 text-xl font-semibold">Alert overlay</h3>
             <p class="mb-2 text-foreground">
               The one-shot layer. Fires when an event arrives (a follow, a sub, a raid, a Ko-fi donation). Animates in,
@@ -151,7 +151,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             can be 12 or 12,000,000. The same overlay slot has to accommodate all of these without breaking.
           </p>
 
-          <div class="mb-6 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-6 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -294,7 +294,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <div class="space-y-4">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">A Figma file (or equivalent)</h3>
               <p class="text-foreground">
                 Frames at 1920x1080 for each surface (static overlay, each alert variant). Layers named meaningfully -
@@ -303,7 +303,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">Multiple states per surface</h3>
               <p class="text-foreground">
                 Show the static overlay at minimum once with realistic short content and once with worst-case long
@@ -313,7 +313,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">Color tokens</h3>
               <p class="text-foreground">
                 A small palette of named colors (primary, accent, success, warning, surface, surface-elevated, text,
@@ -322,7 +322,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">Typography spec</h3>
               <p class="text-foreground">
                 Font family, weight, size (rems preferred), line-height, letter-spacing, and the actual font file or
@@ -332,7 +332,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">Asset exports</h3>
               <p class="text-foreground">
                 SVG for icons and decorative shapes, exported with optimized paths and sane viewBox. PNG (transparent)
@@ -342,7 +342,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">Animation references</h3>
               <p class="text-foreground">
                 One short video per animated element showing the desired motion at the desired timing. Lottie JSON if
@@ -352,7 +352,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-5">
+            <div class="border border-sidebar-border bg-card p-5">
               <h3 class="mb-2 text-lg font-semibold">A list of which fields are live data</h3>
               <p class="text-foreground">
                 Mark every text element as either "static copy" or "live data". For live data, name the source

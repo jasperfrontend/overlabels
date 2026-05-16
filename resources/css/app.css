@@ -124,7 +124,7 @@
 .dark {
     --background: hsl(252 26% 4%);
     --foreground: hsl(270 16% 98%);
-    --card: var(--primary-foreground);
+    --card: hsl(261 91% 4%);
     --card-foreground: var(--foreground);
     --popover: var(--primary-foreground);
     --popover-foreground: var(--foreground);

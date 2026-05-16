@@ -269,7 +269,7 @@ const cssTools = [
         </div>
 
         <!-- Colors -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Colors</h2>
           <p class="text-foreground">Pick colors, generate palettes, and find the right look for your
             overlays.</p>
@@ -280,7 +280,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -289,7 +289,7 @@ const cssTools = [
         </section>
 
         <!-- Gradients & Contrast -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Gradients & Contrast</h2>
           <p class="text-foreground">Generate CSS gradients and check readability.</p>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -299,7 +299,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -308,7 +308,7 @@ const cssTools = [
         </section>
 
         <!-- Icons -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Icons (1-click SVG copy)</h2>
           <p class="text-foreground">Browse thousands of icons and copy the SVG straight into your overlay
             HTML.</p>
@@ -319,7 +319,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -328,7 +328,7 @@ const cssTools = [
         </section>
 
         <!-- Fonts -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Fonts</h2>
           <p class="text-foreground">Free font libraries you can use in your overlays via CSS imports.</p>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -338,7 +338,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -347,7 +347,7 @@ const cssTools = [
         </section>
 
         <!-- Textures & Patterns -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Textures & Patterns</h2>
           <p class="text-foreground">Backgrounds, seamless patterns, and SVG generators for overlay flair.</p>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -357,7 +357,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -366,7 +366,7 @@ const cssTools = [
         </section>
 
         <!-- Animations -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Animations</h2>
           <p class="text-foreground">CSS animations, Lottie files, loaders, and animated backgrounds for your
             overlays.</p>
@@ -377,7 +377,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -386,7 +386,7 @@ const cssTools = [
         </section>
 
         <!-- Sounds -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">Sounds</h2>
           <p class="text-foreground">Free sound effects for alert overlays. No attribution required unless
             noted.</p>
@@ -397,7 +397,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -406,7 +406,7 @@ const cssTools = [
         </section>
 
         <!-- CSS Tools -->
-        <section class="space-y-4 mb-6">
+        <section class="space-y-4 mb-10">
           <h2 class="text-2xl font-bold">CSS Tools</h2>
           <p class="text-foreground">Visual generators for shadows, shapes, glass effects, and more.</p>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -416,7 +416,7 @@ const cssTools = [
               :href="resource.url"
               target="_blank"
               rel="noopener"
-              class="group rounded-lg border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
+              class="group border border-sidebar-border p-4 transition hover:border-violet-500/50 hover:bg-violet-500/5"
             >
               <p class="font-semibold group-hover:text-violet-400">{{ resource.name }}</p>
               <p class="text-sm text-muted-foreground">{{ resource.description }}</p>
@@ -425,7 +425,7 @@ const cssTools = [
         </section>
 
         <!-- Note -->
-        <section class="rounded-lg border bg-sidebar-accent p-5 text-center">
+        <section class="border border-sidebar-border bg-sidebar-accent p-5 text-center">
           <p class="text-sm text-foreground">
             Know a great free resource that should be on this list?
             Let us know at <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.

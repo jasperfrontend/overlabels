@@ -102,7 +102,7 @@ const zombies: Zombie[] = [
       </p>
     </div>
 
-    <div class="mb-10 rounded-lg border border-violet-500/40 bg-violet-500/10 p-5">
+    <div class="mb-10 border border-sidebar-border bg-card p-5">
       <h2 class="mb-2 flex items-center gap-2 text-xl font-semibold text-violet-400">
         <Dices class="h-5 w-5" />
         The short version
@@ -133,7 +133,7 @@ const zombies: Zombie[] = [
       <div
         v-for="cmd in gameCommands"
         :key="cmd.command"
-        class="rounded-lg border border-sidebar bg-sidebar p-5"
+        class="border border-sidebar-border bg-sidebar-accent p-5"
       >
         <div class="mb-2 text-2xl font-bold">{{ cmd.summary }}</div>
         <div class="mb-2 flex flex-wrap items-center gap-3">
@@ -245,7 +245,7 @@ const zombies: Zombie[] = [
         <div
           v-for="z in zombies"
           :key="z.room"
-          class="rounded-lg border border-sidebar bg-sidebar p-4"
+          class="border border-sidebar-border bg-sidebar-accent p-4"
         >
           <h3 class="mb-1 font-semibold">{{ z.room }}</h3>
           <p class="text-sm text-foreground">{{ z.count }} - {{ z.hp }} HP, {{ z.damage }} damage per hit</p>
@@ -290,7 +290,7 @@ const zombies: Zombie[] = [
         This is where it pays to understand <a href="#tick" class="underline">the tick</a>. Zombie
         damage arrives in one of two ways, at two different moments inside the same tick:
       </p>
-      <div class="rounded-lg border border-rose-500/40 bg-rose-500/5 p-5">
+      <div class="border border-rose-500/40 bg-rose-500/5 p-5">
         <p class="mb-2 font-semibold text-rose-300">1. Bump damage (during your action, step 2 of the tick)</p>
         <p class="text-sm">
           If the winning vote is <code class="rounded bg-sidebar px-1">!p</code> into a zombie's
@@ -300,7 +300,7 @@ const zombies: Zombie[] = [
           hit's worth of damage, you stop early.
         </p>
       </div>
-      <div class="rounded-lg border border-rose-500/40 bg-rose-500/5 p-5">
+      <div class="border border-rose-500/40 bg-rose-500/5 p-5">
         <p class="mb-2 font-semibold text-rose-300">2. Adjacency damage (after the zombies move, step 3 of the tick)</p>
         <p class="text-sm">
           Once every zombie has finished its turn, every zombie that ends up <strong>orthogonally
@@ -311,7 +311,7 @@ const zombies: Zombie[] = [
         </p>
       </div>
 
-      <div id="diagram" class="rounded-lg border border-sidebar-border bg-sidebar/40 p-5">
+      <div id="diagram" class="border border-sidebar-border bg-sidebar/40 p-5">
         <p class="mb-3 text-sm font-semibold">What "orthogonally adjacent" actually means</p>
         <div class="flex flex-wrap items-start gap-6">
           <div class="grid w-fit grid-cols-9 gap-0.5" aria-hidden="true">
@@ -417,7 +417,7 @@ const zombies: Zombie[] = [
         v-for="item in chestItems"
         :key="item.name"
         :class="chestClass[item.tone]"
-        class="rounded-lg border p-4"
+        class="border p-4"
       >
         <h3 class="mb-1 font-semibold">{{ item.name }}</h3>
         <p class="text-sm text-foreground">{{ item.effect }}</p>
@@ -472,7 +472,7 @@ const zombies: Zombie[] = [
       </li>
     </ul>
 
-    <div class="mt-10 rounded-lg border border-sidebar bg-sidebar p-5 text-sm text-foreground">
+    <div class="mt-10 border border-sidebar-border bg-sidebar-accent p-5 text-sm text-foreground">
       <p>
         Viewers: share this page with <code class="rounded bg-background/40 px-1">!castlehelp</code> in chat.
         Streamers running Chat Castle can enable the command by opting into the @overlabels bot.

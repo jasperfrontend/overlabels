@@ -1296,24 +1296,24 @@ function clearFilter() {
           </p>
 
           <div class="space-y-8">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Boolean Conditions</h3>
               <p class="mb-4 text-foreground">
                 Test if a value exists and is truthy. Values considered false: <code>null</code>, <code>undefined</code>, <code>""</code>,
                 <code>"false"</code>, <code>"0"</code>
               </p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_is_branded]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_is_branded]]]
   &lt;p&gt;This stream is sponsored!&lt;/p&gt;
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Numerical Comparisons</h3>
               <p class="mb-4 text-foreground">
                 Compare numbers using standard operators: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>,
                 <code>!=</code>, <code>=</code>
               </p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[if:followers_total >= 1000]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:followers_total >= 1000]]]
   &lt;div class="milestone"&gt;1K+ followers!&lt;/div&gt;
 [[[elseif:followers_total >= 100]]]
   &lt;div&gt;Growing strong with [[[followers_total]]] followers&lt;/div&gt;
@@ -1322,22 +1322,22 @@ function clearFilter() {
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">String Comparisons</h3>
               <p class="mb-4 text-foreground">Compare text values using <code>=</code> and <code>!=</code> operators.</p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_language = en]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_language = en]]]
   &lt;p&gt;Welcome to our English stream!&lt;/p&gt;
 [[[elseif:channel_language = es]]]
   &lt;p&gt;¡Bienvenidos a nuestro stream en Español!&lt;/p&gt;
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Event-based Conditionals</h3>
               <p class="mb-4 text-foreground">
                 Use event data in alert templates to create dynamic alerts based on donation/subscription amounts, viewer counts, etc.
               </p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.bits >= 1000]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.bits >= 1000]]]
   &lt;div class="big-cheer"&gt;HUGE CHEER! [[[event.user_name]]] donated [[[event.bits]]] bits!&lt;/div&gt;
 [[[elseif:event.bits >= 100]]]
   &lt;div class="medium-cheer"&gt;Thanks [[[event.user_name]]] for [[[event.bits]]] bits!&lt;/div&gt;
@@ -1346,10 +1346,10 @@ function clearFilter() {
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Nested Conditionals</h3>
               <p class="mb-4 text-foreground">You can nest conditionals up to 10 levels deep for complex logic.</p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.tier = 3000]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.tier = 3000]]]
   [[[if:event.total >= 10]]]
     &lt;div&gt;Tier 3 gift bomb! [[[event.total]]] subs!&lt;/div&gt;
   [[[else]]]
@@ -1358,7 +1358,7 @@ function clearFilter() {
 [[[endif]]]</pre>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="foreach-loops">
+            <div class="border border-sidebar-border bg-card p-6" id="foreach-loops">
               <h3 class="mb-4 text-xl font-semibold">Foreach Loops</h3>
               <p class="mb-4 text-foreground">
                 Repeat a block of markup for every item in a list. Use this for poll choices, prediction outcomes, hype-train
@@ -1374,7 +1374,7 @@ function clearFilter() {
                 <li><code>[[[loop.first]]]</code> / <code>[[[loop.last]]]</code> - booleans, handy with <code>[[[if:...]]]</code></li>
                 <li><code>[[[loop.count]]]</code> - total number of items</li>
               </ul>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
   [[[foreach:event.choices as choice]]]
     &lt;li class="[[[if:loop.first]]]first[[[endif]]]"&gt;
       [[[loop.index]]]. [[[choice.title]]] - [[[choice.votes]]] votes
@@ -1460,7 +1460,7 @@ function clearFilter() {
                 current item as pretty-printed JSON. It's the fastest way to see the shape of anything you're iterating over
                 without guessing.
               </p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">[[[foreach:event.choices as choice]]]
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[foreach:event.choices as choice]]]
   &lt;pre&gt;[[[raw]]]&lt;/pre&gt;
 [[[endforeach]]]</pre>
               <p class="mt-3 text-sm text-foreground">
@@ -1585,7 +1585,7 @@ function clearFilter() {
                 Add <code>data-key</code> to the repeated element and morphdom will reuse the same DOM node across renders
                 whenever the key matches. CSS transitions on that element then keep running smoothly:
               </p>
-              <pre class="rounded bg-sidebar p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
   [[[foreach:event.choices as choice]]]
     &lt;li data-key="[[[choice.id]]]" style="--bar-width: [[[choice.votes_pct]]]%"&gt;
       [[[choice.title]]] - [[[choice.votes]]] votes
@@ -1673,7 +1673,7 @@ function clearFilter() {
         </div>
 
         <!-- Event cards -->
-        <div v-if="filteredCards.length === 0" class="rounded-lg border border-sidebar bg-sidebar-accent p-8 text-center">
+        <div v-if="filteredCards.length === 0" class="border border-sidebar-border bg-card p-8 text-center">
           <p class="text-sm text-muted-foreground">
             No cards match your filter. <button type="button" class="cursor-pointer text-violet-400 hover:underline" @click="clearFilter">Clear filters</button>.
           </p>
@@ -1684,18 +1684,18 @@ function clearFilter() {
             v-for="card in filteredCards"
             :key="card.id"
             :id="card.id"
-            class="rounded-lg border border-sidebar bg-sidebar-accent p-6"
+            class="border border-sidebar-border bg-card p-6"
           >
             <div class="mb-1 flex items-start gap-3">
               <span class="mt-1.5 inline-block h-3 w-3 shrink-0 rounded" :class="card.dot"></span>
               <div class="min-w-0 flex-1">
                 <h3 class="text-xl font-semibold">
                   {{ card.title }}
-                  <code v-if="card.type" class="ml-2 rounded bg-sidebar px-1.5 py-0.5 text-xs font-normal text-purple-300">{{ card.type }}</code>
+                  <code v-if="card.type" class="ml-2 border border-sidebar-border px-1.5 py-0.5 text-xs font-normal text-purple-300">{{ card.type }}</code>
                 </h3>
                 <p class="mt-1 text-sm text-muted-foreground">{{ card.subtitle }}</p>
               </div>
-              <span class="shrink-0 rounded bg-sidebar px-2 py-0.5 text-[10px] text-muted-foreground">{{ FAMILY_LABELS[card.family] }}</span>
+              <span class="shrink-0 border border-sidebar-border px-2 py-0.5 text-[10px] text-muted-foreground">{{ FAMILY_LABELS[card.family] }}</span>
             </div>
 
             <div class="mt-4 grid grid-cols-1 gap-4" :class="card.cols.length > 1 ? 'md:grid-cols-2' : ''">
@@ -1711,7 +1711,7 @@ function clearFilter() {
               </div>
             </div>
 
-            <div v-if="card.example" class="mt-4 rounded bg-sidebar p-4">
+            <div v-if="card.example" class="mt-4 border border-sidebar-border p-4">
               <h5 class="mb-2 font-semibold">Example:</h5>
               <pre class="overflow-x-auto font-mono text-xs whitespace-pre-wrap text-foreground">{{ card.example }}</pre>
             </div>
@@ -1747,7 +1747,7 @@ function clearFilter() {
               <p class="text-sm text-foreground">
                 Use <code>[[[event.total]]]</code> in your template to show the final gift count. Combine with conditionals to style large bombs differently:
               </p>
-              <pre class="mt-3 overflow-x-auto rounded bg-sidebar p-4 font-mono text-xs whitespace-pre-wrap">[[[if:event.total >= 25]]]
+              <pre class="mt-3 overflow-x-auto border border-sidebar-border p-4 font-mono text-xs whitespace-pre-wrap">[[[if:event.total >= 25]]]
   &lt;div class="mega-bomb"&gt;[[[event.user_name]]] just gifted [[[event.total]]] subs!&lt;/div&gt;
 [[[elseif:event.total >= 5]]]
   &lt;div class="gift-bomb"&gt;[[[event.user_name]]] gifted [[[event.total]]] subs!&lt;/div&gt;
@@ -1759,7 +1759,7 @@ function clearFilter() {
         </div>
 
         <!-- Integration how-it-works (always visible when the respective family is all or selected) -->
-        <div v-if="activeFamily === 'all' || activeFamily === 'kofi'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div v-if="activeFamily === 'all' || activeFamily === 'kofi'" class="mb-12 border border-sidebar-border bg-card p-6">
           <h3 class="mb-4 text-xl font-semibold">
             <span class="mr-2 inline-block h-3 w-3 rounded bg-orange-400"></span>
             Ko-fi - How It Works
@@ -1770,7 +1770,7 @@ function clearFilter() {
           </p>
         </div>
 
-        <div v-if="activeFamily === 'all' || activeFamily === 'streamlabs'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div v-if="activeFamily === 'all' || activeFamily === 'streamlabs'" class="mb-12 border border-sidebar-border bg-card p-6">
           <h3 class="mb-4 text-xl font-semibold">
             <span class="mr-2 inline-block h-3 w-3 rounded bg-emerald-500"></span>
             StreamLabs - How It Works
@@ -1805,7 +1805,7 @@ function clearFilter() {
           </div>
         </div>
 
-        <div v-if="activeFamily === 'all' || activeFamily === 'streamelements'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div v-if="activeFamily === 'all' || activeFamily === 'streamelements'" class="mb-12 border border-sidebar-border bg-card p-6">
           <h3 class="mb-4 text-xl font-semibold">
             <span class="mr-2 inline-block h-3 w-3 rounded bg-teal-500"></span>
             StreamElements - How It Works
@@ -1846,7 +1846,7 @@ function clearFilter() {
           </div>
         </div>
 
-        <div v-if="activeFamily === 'all' || activeFamily === 'fourthwall'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div v-if="activeFamily === 'all' || activeFamily === 'fourthwall'" class="mb-12 border border-sidebar-border bg-card p-6">
           <h3 class="mb-4 text-xl font-semibold">
             <span class="mr-2 inline-block h-3 w-3 rounded bg-sky-500"></span>
             Fourthwall - How It Works
@@ -1887,7 +1887,7 @@ function clearFilter() {
           </div>
         </div>
 
-        <div v-if="activeFamily === 'all' || activeFamily === 'bmac'" class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div v-if="activeFamily === 'all' || activeFamily === 'bmac'" class="mb-12 border border-sidebar-border bg-card p-6">
           <h3 class="mb-4 text-xl font-semibold">
             <span class="mr-2 inline-block h-3 w-3 rounded bg-yellow-300"></span>
             Buy Me a Coffee - How It Works
@@ -1942,16 +1942,16 @@ function clearFilter() {
         </div>
 
         <!-- Tips Section (always visible) -->
-        <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="tips">
+        <div class="border border-sidebar-border bg-sidebar-accent p-6" id="tips">
           <h2 class="mb-4 text-2xl font-bold">Tips & Best Practices</h2>
-          <div class="space-y-4 text-foreground">
+          <div class="space-y-6 text-foreground">
             <div>
-              <h4 class="font-semibold text-foreground">Use Meaningful Conditions</h4>
-              <p>Create different alert styles based on the value: small donations vs large donations, new followers vs milestone followers.</p>
+              <h4 class="font-semibold text-lg text-violet-400">Use Meaningful Conditions</h4>
+              <p class="text-sm">Create different alert styles based on the value: small donations vs large donations, new followers vs milestone followers.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Test Your Conditions</h4>
-              <p>
+              <h4 class="font-semibold text-lg text-violet-400">Test Your Conditions</h4>
+              <p class="text-sm">
                 Use the
                 <a class="cursor-pointer text-accent-foreground underline hover:no-underline" href="/testing" target="_blank" rel="nofollow noopener">Twitch Testing Guide</a>
                 to test your alert templates with different event values to ensure they work as expected. Be sure to install the
@@ -1960,25 +1960,25 @@ function clearFilter() {
               </p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Style Conditional Content</h4>
-              <p>Apply different CSS classes within conditionals to create visual variety for different alert types.</p>
+              <h4 class="font-semibold text-lg text-violet-400">Style Conditional Content</h4>
+              <p class="text-sm">Apply different CSS classes within conditionals to create visual variety for different alert types.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Copy the Starter Kit</h4>
-              <p>
+              <h4 class="font-semibold text-lg text-violet-400">Copy the Starter Kit</h4>
+              <p class="text-sm">
                 <Link class="cursor-pointer text-accent-foreground underline hover:no-underline" href="/kits/1">Copy the Overlabels Starter Kit</Link>
                 to get a great set of defaults to work with.
               </p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">High-frequency progress events</h4>
-              <p>
+              <h4 class="font-semibold text-lg text-violet-400">High-frequency progress events</h4>
+              <p class="text-sm">
                 Hype train, charity, goal, poll, and prediction <code>*.progress</code> events can fire every few seconds during active engagement. The overlay extends the current alert rather than restacking, so the UI stays calm - but keep your templates lightweight for good measure.
               </p>
             </div>
             <div>
-              <h4 class="font-semibold text-foreground">Speak HTML & CSS</h4>
-              <p>Overlabels assumes you know your way around HTML, CSS, and a template engine.</p>
+              <h4 class="font-semibold text-lg text-violet-400">Speak HTML & CSS</h4>
+              <p class="text-sm">Overlabels assumes you know your way around HTML, CSS, and a template engine.</p>
             </div>
           </div>
         </div>

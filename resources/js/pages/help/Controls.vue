@@ -94,7 +94,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold" id="what">What are Controls?</h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <p class="mb-4 text-foreground">
                 A Control is a named value that lives on your overlay or alert template. You define its key, type, and
                 optional label, and then
@@ -111,7 +111,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Control types -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Control Types</h3>
               <p class="mb-4 text-sm text-muted-foreground">Click a type to jump to its detailed section.</p>
               <div class="space-y-4">
@@ -193,7 +193,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="space-y-6">
             <!-- Text -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-text">
+            <div class="border border-sidebar-border bg-card p-6" id="type-text">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">text</span> Text</h3>
               <p class="mb-4 text-foreground">
@@ -216,7 +216,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Number -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-number">
+            <div class="border border-sidebar-border bg-card p-6" id="type-number">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">number</span> Number</h3>
               <p class="mb-4 text-foreground">
@@ -243,7 +243,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Counter -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-counter">
+            <div class="border border-sidebar-border bg-card p-6" id="type-counter">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">counter</span> Counter</h3>
               <p class="mb-4 text-foreground">
@@ -272,7 +272,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Timer -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-timer">
+            <div class="border border-sidebar-border bg-card p-6" id="type-timer">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">timer</span> Timer</h3>
               <p class="mb-4 text-foreground">
@@ -348,7 +348,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Boolean -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-boolean">
+            <div class="border border-sidebar-border bg-card p-6" id="type-boolean">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">boolean</span> Boolean</h3>
               <p class="mb-4 text-foreground">
@@ -378,7 +378,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Datetime -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-datetime">
+            <div class="border border-sidebar-border bg-card p-6" id="type-datetime">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">datetime</span> Datetime</h3>
               <p class="mb-4 text-foreground">
@@ -402,7 +402,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Expression -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-expression">
+            <div class="border border-sidebar-border bg-card p-6" id="type-expression">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">expression</span> Expression
               </h3>
@@ -488,7 +488,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- List writer -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6" id="type-list_writer">
+            <div class="border border-sidebar-border bg-card p-6" id="type-list_writer">
               <h3 class="mb-4 text-xl font-semibold"><span
                 class="mr-2 rounded bg-background px-2 py-0.5 font-mono text-sm font-bold">list writer</span> List writer
               </h3>
@@ -556,7 +556,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="space-y-6">
             <!-- Create -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-1 text-xl font-semibold">
                 <span
                   class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold"><Plus
@@ -591,7 +591,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Edit -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-1 text-xl font-semibold">
                 <span
                   class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold"><Pencil
@@ -607,7 +607,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Delete -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-1 text-xl font-semibold">
                 <span
                   class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold"><Trash
@@ -622,7 +622,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Snippet copy -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-1 text-xl font-semibold">
                 <span
                   class="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold"><Trash
@@ -648,7 +648,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="space-y-6">
             <!-- Basic value injection -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Displaying a Value</h3>
               <p class="mb-4 text-foreground">
                 Place the tag wherever you want the value to appear. At render time the overlay substitutes the current
@@ -665,7 +665,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Conditionals with controls -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Conditionals with Control Values</h3>
               <p class="mb-4 text-foreground">
                 Control values participate fully in the conditional engine. Use them exactly as you would any other
@@ -702,7 +702,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Controls in CSS -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Controls in CSS</h3>
               <p class="mb-4 text-foreground">
                 Just like Twitch data tags, control tags can appear inside <code>&lt;style&gt;</code> blocks, which
@@ -722,7 +722,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <!-- Alert templates -->
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Controls in Alerts</h3>
               <p class="mb-4 text-foreground">
                 Alerts also support control tags. This lets an alert read the current state of your overlay to decide
@@ -752,7 +752,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">How each type works</h3>
               <div class="space-y-5">
                 <div>
@@ -806,7 +806,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Real-time updates</h3>
               <p class="text-foreground">
                 Every Control Panel action broadcasts the new value over your live channel. Any open overlay that
@@ -815,7 +815,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Access</h3>
               <p class="text-foreground">
                 The Control Panel is available only to the overlay owner and requires a logged-in session.
@@ -835,7 +835,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">The Import Wizard</h3>
               <p class="mb-4 text-foreground">
                 The wizard shows a table of every control from the source overlay. For each one you can choose:
@@ -854,7 +854,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">What gets copied</h3>
               <div class="space-y-3 text-foreground">
                 <div><strong class="text-foreground">Copied:</strong> key, label, type, configuration (min/max/mode/base
@@ -870,7 +870,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Skipping the wizard</h3>
               <p class="text-foreground">
                 Clicking <strong>Skip all, take me to the copy</strong> skips import entirely and takes you straight to
@@ -889,7 +889,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           Keep these tips and best practices in mind when using controls in your overlays.
         </p>
 
-        <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6 mb-12">
+        <div class="border border-sidebar-border bg-card p-6 mb-12">
           <div class="space-y-12 text-foreground">
             <div>
               <h3 class="text-foreground text-xl mb-4">Choose descriptive keys</h3>

@@ -55,7 +55,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-border bg-card p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#what" class="text-violet-400 hover:underline">What is an Expression Control?</a></li>
@@ -146,7 +146,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Referencing Controls -->
         <section class="mb-14" id="referencing">
           <h2 class="mb-4 text-2xl font-bold">Referencing Controls in expressions</h2>
-          <div class="overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -197,7 +197,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <!-- Trig -->
           <h3 class="mb-3 text-xl font-semibold">Trig</h3>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -244,7 +244,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <!-- Rounding & utility -->
           <h3 class="mb-3 text-xl font-semibold">Rounding and utility</h3>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -286,7 +286,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <!-- Multi-argument math -->
           <h3 class="mb-3 text-xl font-semibold">Multi-argument math</h3>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -326,7 +326,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             arguments and return the <strong>label</strong> paired with the winning value. Useful for picking a display
             name based on a numeric or timestamp comparison.
           </p>
-          <div class="mb-6 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-6 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -368,7 +368,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <!-- Constants -->
           <h3 class="mt-8 mb-3 text-xl font-semibold">Constants</h3>
-          <div class="overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -404,7 +404,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Create three <strong>Number Controls</strong> manually. These are the destination coordinates and the length of your trip in km.
             Set them once and leave them.
           </p>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-border bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -499,7 +499,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">Things to know</h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Expressions are evaluated live.</h3>
               <p class="text-foreground">
                 When any referenced Control changes value, all Expression Controls that depend on it recompute. This
@@ -510,7 +510,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">GPS controls update on every app ping.</h3>
               <p class="text-foreground">
                 The Overlabels GPS Android app sends updates every 2-60 seconds (configurable). Each ping updates
@@ -520,7 +520,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Angles are in radians.</h3>
               <p class="text-foreground">
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">sin</code>,
@@ -531,7 +531,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">atan2</code> takes two arguments.</h3>
               <p class="text-foreground">
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">atan2(y, x)</code> -
@@ -539,7 +539,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Expression Controls can reference service presets.</h3>
               <p class="text-foreground">
                 Any of the GPS, Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, or BMAC preset controls are
@@ -551,7 +551,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">No EventSub data directly in expressions yet.</h3>
               <p class="text-foreground">
                 EventSub triggers (follows, subs, raids etc.) update the preset Controls, which you <em>can</em>
@@ -565,7 +565,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Quick reference -->
         <section class="mb-14" id="quick-ref">
           <h2 class="mb-4 text-2xl font-bold">Quick reference card</h2>
-          <pre class="overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-relaxed text-foreground">sin(x)           cos(x)           tan(x)
+          <pre class="overflow-x-auto border border-sidebar-border bg-sidebar p-4 font-mono text-sm leading-relaxed text-foreground">sin(x)           cos(x)           tan(x)
 asin(x)          acos(x)          atan(x)
 atan2(y, x)      sqrt(x)          abs(x)
 round(x)         round(x, n)      floor(x)         ceil(x)

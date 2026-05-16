@@ -10,6 +10,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const pages = [
   {
+    title: 'Why Overlabels',
+    description: 'The pitch, for coders. Third-party data normalization, math on any value, Expression Controls, and why this thing is a bit special.',
+    href: '/help/why-overlabels',
+    icon: Sparkles,
+  },
+  {
     title: 'For Creators',
     description: 'What Overlabels actually is, beneath the HTML/CSS surface. The reactive value graph, the live data sources, the math layer, and an open call for collaborators.',
     href: '/help/for-creators',
@@ -22,16 +28,16 @@ const pages = [
     icon: Palette,
   },
   {
+    title: 'Why Ko-fi',
+    description: 'Why we chose Ko-fi as our first External Integration over Patreon, Stripe, or built-in payments.',
+    href: '/help/why-kofi',
+    icon: Heart,
+  },
+  {
     title: 'Reference',
     description: 'Fuzzy-searchable reference for every template tag, EventSub event, and foreach field. Press Alt+r from anywhere.',
     href: '/help/reference',
     icon: Library,
-  },
-  {
-    title: 'Why Overlabels',
-    description: 'The pitch, for coders. Third-party data normalization, math on any value, Expression Controls, and why this thing is a bit special.',
-    href: '/help/why-overlabels',
-    icon: Sparkles,
   },
   {
     title: 'Conditional and Event Tags',
@@ -94,12 +100,6 @@ const pages = [
     icon: BookOpen,
   },
   {
-    title: 'Why Ko-fi',
-    description: 'Why we chose Ko-fi over Patreon, Stripe, or built-in payments.',
-    href: '/help/why-kofi',
-    icon: Heart,
-  },
-  {
     title: 'Manifesto',
     description: 'What Overlabels is, why it exists, and the principles behind it.',
     href: '/help/manifesto',
@@ -118,7 +118,8 @@ const pages = [
     <div class="mb-8">
       <h1 class="mb-4 text-4xl font-bold">Welcome to Overlabels Help</h1>
       <p class="text-lg text-foreground">
-        Everything you need to build dynamic Twitch overlays - from template syntax to live controls.
+        Everything you need to build dynamic Twitch overlays - from template syntax to live controls. This page is a bit
+        of a clusterf*ck, but I'll get around to cleaning this up eventually.
       </p>
     </div>
 

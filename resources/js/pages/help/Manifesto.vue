@@ -57,7 +57,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <div class="space-y-8">
           <!-- Principle 1 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-bold">1</span>
@@ -71,7 +71,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 2 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-500 text-white text-sm font-bold">2</span>
@@ -85,7 +85,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 3 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white text-sm font-bold">3</span>
@@ -99,7 +99,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 4 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white text-sm font-bold">4</span>
@@ -115,7 +115,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 5 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white text-sm font-bold">5</span>
@@ -130,7 +130,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 6 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500 text-white text-sm font-bold">6</span>
@@ -144,7 +144,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Principle 7 -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-border bg-sidebar-accent p-6">
             <h2 class="mb-4 text-2xl font-bold text-foreground">
               <span
                 class="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-500 text-white text-sm font-bold">7</span>
@@ -160,7 +160,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- Footer -->
-        <div class="mt-12 rounded-lg border border-sidebar bg-sidebar p-6 text-center">
+        <div class="mt-12 border border-sidebar-border bg-card p-6 text-center">
           <p class="text-foreground">
             These principles guide every decision we make. They ensure Overlabels remains focused, predictable, and
             respectful of web standards, while also

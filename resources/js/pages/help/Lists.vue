@@ -56,7 +56,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-accent bg-card p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#what" class="text-violet-400 hover:underline">What is a List?</a></li>
@@ -106,7 +106,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Click "New list", pick a slug (lowercase letters, digits, underscores - must start with a letter, max 50
             chars), optionally a label, and optionally a starting set of items - one per line.
           </p>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-accent bg-card p-6">
             <h3 class="mb-2 text-lg font-semibold">Why no dashes in the slug?</h3>
             <p class="text-foreground">
               Tag parser context. A slug like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">my-raffle</code>
@@ -133,7 +133,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             with slug <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">donors</code> and items
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">["Alice", "Bob", "Carol"]</code>:
           </p>
-          <div class="mb-6 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-6 overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -195,7 +195,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             The derived tags above are great for "show the first item" or "show the count". When you want to render
             every item, use <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">foreach</code>:
           </p>
-          <pre class="mb-4 overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">&lt;ul&gt;
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">&lt;ul&gt;
   [[[foreach:c:list:donors as donor]]]
     &lt;li&gt;[[[donor]]]&lt;/li&gt;
   [[[endforeach]]]
@@ -237,7 +237,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-4 text-foreground">
             <strong>Example - raffle entry by display name, one per chatter per stream:</strong>
           </p>
-          <div class="mb-4 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-4 overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <tbody class="divide-y divide-sidebar">
                 <tr>
@@ -285,11 +285,11 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-4 text-foreground">
             Syntax is always:
           </p>
-          <pre class="mb-4 overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">!list &lt;slug&gt; &lt;action&gt; [args...]</pre>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">!list &lt;slug&gt; &lt;action&gt; [args...]</pre>
           <p class="mb-4 text-foreground">
             Examples:
           </p>
-          <pre class="mb-6 overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">!list raffle_entries count
+          <pre class="mb-6 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">!list raffle_entries count
 !list raffle_entries draw
 !list raffle_entries clear
 !list raffle_entries pop first
@@ -322,7 +322,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mb-3 text-xl font-semibold">Read actions (no mutation, no snapshot)</h3>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -352,7 +352,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <h3 class="mb-3 text-xl font-semibold">Destructive actions (auto-snapshot, broadcast)</h3>
-          <div class="mb-8 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-8 overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -390,7 +390,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <h3 class="mb-3 text-xl font-semibold">State actions</h3>
-          <div class="overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -433,7 +433,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <li><strong>Delete</strong> - remove a single snapshot immediately. No further undo.</li>
             <li><strong>Save snapshot</strong> - take a manual snapshot of the current state right now.</li>
           </ul>
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-accent bg-card p-6">
             <h3 class="mb-2 text-lg font-semibold">Retention</h3>
             <p class="text-foreground">
               Unpinned snapshots are automatically deleted 30 days after they were created and cannot be recovered after
@@ -474,7 +474,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-4 text-foreground">
             Two tags surface the deadline directly in your overlay:
           </p>
-          <div class="mb-4 overflow-x-auto rounded-lg border border-sidebar bg-sidebar-accent">
+          <div class="mb-4 overflow-x-auto border border-sidebar-accent bg-card">
             <table class="w-full text-sm">
               <thead class="border-b border-sidebar text-left">
                 <tr>
@@ -497,7 +497,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-4 text-foreground">
             <strong>Example - live mm:ss countdown in your overlay:</strong>
           </p>
-          <pre class="mb-4 overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm text-foreground">Raffle closes in [[[c:list:raffle:countdown|duration:mm:ss]]]</pre>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">Raffle closes in [[[c:list:raffle:countdown|duration:mm:ss]]]</pre>
           <p class="text-foreground">
             See <Link href="/help/formatting" class="text-violet-400 hover:underline">formatting pipes</Link> for the
             full duration pattern reference (<code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">hh:mm:ss</code>,
@@ -528,7 +528,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">Worked examples</h2>
 
           <!-- Example 1: Raffle -->
-          <div class="mb-10 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-10 border border-sidebar-accent bg-card p-6">
             <h3 class="mb-3 text-xl font-semibold">Raffle - !raffle to enter, !list raffle draw to pick a winner</h3>
             <ol class="mb-4 list-decimal space-y-2 pl-6 text-foreground">
               <li>Create a List <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">raffle_entries</code>.</li>
@@ -553,7 +553,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Example 2: Queue -->
-          <div class="mb-10 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-10 border border-sidebar-accent bg-card p-6">
             <h3 class="mb-3 text-xl font-semibold">FIFO queue - !join to enter, !list queue pop first for next up</h3>
             <ol class="mb-4 list-decimal space-y-2 pl-6 text-foreground">
               <li>Create a List <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">queue</code>.</li>
@@ -564,7 +564,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </li>
               <li>
                 Put the queue in your overlay as a foreach:
-                <pre class="my-2 overflow-x-auto rounded border border-sidebar bg-sidebar p-3 font-mono text-xs text-foreground">[[[foreach:c:list:queue as player]]]
+                <pre class="my-2 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-3 font-mono text-xs text-foreground">[[[foreach:c:list:queue as player]]]
   &lt;li&gt;[[[player]]]&lt;/li&gt;
 [[[endforeach]]]</pre>
               </li>
@@ -573,7 +573,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Example 3: Quote wall -->
-          <div class="mb-10 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="mb-10 border border-sidebar-accent bg-card p-6">
             <h3 class="mb-3 text-xl font-semibold">Quote wall - !quote to add, random rotation in overlay</h3>
             <ol class="list-decimal space-y-2 pl-6 text-foreground">
               <li>Create a List <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">quotes</code>.</li>
@@ -592,7 +592,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
 
           <!-- Example 4: Donation goal -->
-          <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+          <div class="border border-sidebar-accent bg-card p-6">
             <h3 class="mb-3 text-xl font-semibold">Donation tally - List of amounts, :sum as the goal driver</h3>
             <p class="mb-3 text-foreground">
               When you don't want to wire a full Ko-fi or StreamLabs integration but you do want a quick tally:
@@ -607,7 +607,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </li>
               <li>
                 In your overlay:
-                <pre class="my-2 overflow-x-auto rounded border border-sidebar bg-sidebar p-3 font-mono text-xs text-foreground">Raised: €[[[c:list:tips:sum]]] of €500 goal</pre>
+                <pre class="my-2 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-3 font-mono text-xs text-foreground">Raised: €[[[c:list:tips:sum]]] of €500 goal</pre>
               </li>
               <li>
                 Want a progress bar? Create an <Link href="/help/expressions" class="text-violet-400 hover:underline">Expression Control</Link>
@@ -624,7 +624,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="mb-6 text-2xl font-bold">Things to know</h2>
 
           <div class="space-y-6">
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Lists are lists. We don't sanitise content.</h3>
               <p class="text-foreground">
                 Whatever you (or your viewers) put in, we keep. Empty lines, duplicates, 200x the same value, lengthy
@@ -634,7 +634,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:random</code> is stable per overlay mount.</h3>
               <p class="text-foreground">
                 The random tag picks once on initial render and keeps the same value across broadcasts. Otherwise every
@@ -644,7 +644,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Mod permission is the floor for <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!list</code>.</h3>
               <p class="text-foreground">
                 The meta-command can clear, draw, disable, and clone. We don't want a viewer running
@@ -655,7 +655,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Command-name collisions are checked at save time.</h3>
               <p class="text-foreground">
                 A chat appender's command, the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!list</code>
@@ -665,7 +665,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Sweeps run every minute.</h3>
               <p class="text-foreground">
                 Both per-item age-out and whole-list deadlines are evaluated by a sweep that runs every minute. So a
@@ -675,7 +675,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Recipe-managed Lists.</h3>
               <p class="text-foreground">
                 Recipes can create Lists on your behalf. They show up with a "from Recipe" badge. If the recipe declared
@@ -684,7 +684,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded-lg border border-sidebar bg-sidebar-accent p-6">
+            <div class="border border-sidebar-accent bg-card p-6">
               <h3 class="mb-2 text-lg font-semibold">Live updates everywhere.</h3>
               <p class="text-foreground">
                 Every change to a List (manual edit, chat append, action, sweeper) broadcasts to your overlays and your
@@ -698,7 +698,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Quick reference -->
         <section class="mb-14" id="quick-ref">
           <h2 class="mb-4 text-2xl font-bold">Quick reference card</h2>
-          <pre class="overflow-x-auto rounded border border-sidebar bg-sidebar p-4 font-mono text-sm leading-relaxed text-foreground">Tags
+          <pre class="overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-relaxed text-foreground">Tags
   [[[c:list:slug]]]              JSON array string
   [[[c:list:slug:first]]]        first item
   [[[c:list:slug:last]]]         last item
