@@ -2,7 +2,7 @@
   <Transition name="toast" @after-leave="emit('dismiss')">
     <div
       v-if="visible"
-      class="pointer-events-auto fixed top-4 right-4 z-50 flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border border-l-4 px-4 py-3 shadow-lg"
+      class="pointer-events-auto fixed top-0 left-0 z-50 flex w-full items-start px-4 py-3 gap-4 shadow-lg"
       :class="[color.bg, color.border]"
       :role="toastRole"
       :aria-live="ariaLive"
@@ -25,7 +25,7 @@
       <button
         type="button"
         @click="dismiss"
-        class="shrink-0 cursor-pointer rounded text-lg leading-none opacity-40 transition-opacity hover:opacity-80 focus:ring-2 focus:ring-black/20 focus:outline-none"
+        class="shrink-0 cursor-pointer rounded text-2xl leading-none opacity-40 transition-opacity hover:opacity-80 focus:ring-2 focus:ring-black/20 focus:outline-none"
         :class="color.title"
         aria-label="Dismiss notification"
       >
@@ -36,13 +36,13 @@
 </template>
 
 <script lang="ts" setup>
-import { AlertTriangle, CheckCircle, Info, XCircle } from 'lucide-vue-next';
+import { AlertTriangle, Check, Info, X } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps({
   message: { type: String, required: true },
   type: { type: String, default: 'info' }, // info | success | warning | error
-  duration: { type: Number, default: 4000 },
+  duration: { type: Number, default: 3000 },
 });
 
 const emit = defineEmits<{ dismiss: [] }>();
@@ -82,11 +82,11 @@ watch(
 const icon = computed(() => {
   switch (props.type) {
     case 'success':
-      return CheckCircle;
+      return Check;
     case 'warning':
       return AlertTriangle;
     case 'error':
-      return XCircle;
+      return X;
     default:
       return Info;
   }
@@ -99,17 +99,17 @@ const color = computed(() => {
   switch (props.type) {
     case 'success':
       return {
-        bg: 'bg-green-50',
-        border: 'border-green-200 border-l-green-500',
-        icon: 'text-green-600',
-        title: 'text-green-800',
-        body: 'text-green-700',
+        bg: 'bg-violet-100',
+        border: 'border-violet-200',
+        icon: 'text-violet-600',
+        title: 'text-violet-800',
+        body: 'text-violet-700',
         label: 'Success',
       };
     case 'error':
       return {
-        bg: 'bg-red-50',
-        border: 'border-red-200 border-l-red-500',
+        bg: 'bg-red-100',
+        border: 'border-red-200',
         icon: 'text-red-600',
         title: 'text-red-800',
         body: 'text-red-700',
@@ -117,8 +117,8 @@ const color = computed(() => {
       };
     case 'warning':
       return {
-        bg: 'bg-amber-50',
-        border: 'border-amber-200 border-l-amber-500',
+        bg: 'bg-amber-100',
+        border: 'border-amber-200',
         icon: 'text-amber-600',
         title: 'text-amber-800',
         body: 'text-amber-700',
@@ -126,8 +126,8 @@ const color = computed(() => {
       };
     default:
       return {
-        bg: 'bg-blue-50',
-        border: 'border-blue-200 border-l-blue-500',
+        bg: 'bg-blue-100',
+        border: 'border-blue-200',
         icon: 'text-blue-600',
         title: 'text-blue-800',
         body: 'text-blue-700',
@@ -148,7 +148,7 @@ const color = computed(() => {
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(0.75rem);
+  transform: translateY(-0.75rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
