@@ -52,12 +52,6 @@ const pages = [
     icon: FunctionSquare,
   },
   {
-    title: 'Bot Aliases',
-    description: 'Short chat commands that rewrite to longer ones. !w 2 becomes !inc wins 2 before dispatch. Positional placeholders, one-hop guard, shared validation.',
-    href: '/help/aliases',
-    icon: CornerDownRight,
-  },
-  {
     title: 'Integration Presets',
     description: 'Every auto-managed control across Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS - all in one searchable reference.',
     href: '/help/integration-presets',

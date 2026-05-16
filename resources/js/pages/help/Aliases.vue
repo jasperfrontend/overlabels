@@ -5,7 +5,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
-  { title: 'Bot Aliases', href: '/help/aliases' },
+  { title: 'Twitch Bot', href: '/help/bot' },
+  { title: 'Aliases', href: '/help/bot/aliases' },
 ];
 </script>
 

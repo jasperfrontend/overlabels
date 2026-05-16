@@ -168,7 +168,7 @@ function insertSnippet(snippet: string) {
             <Textarea
               id="expression"
               v-model="form.expression"
-              rows="4"
+              :rows="4"
               class="font-mono text-sm"
               placeholder="Hi [[[bot:from_user]]], the count is [[[c:my_counter]]]"
             />
@@ -191,7 +191,7 @@ function insertSnippet(snippet: string) {
             <div v-else-if="!previewOutput" class="text-sm text-foreground/50 italic">
               (empty)
             </div>
-            <div v-else class="text-sm whitespace-pre-wrap break-words">
+            <div v-else class="text-sm whitespace-pre-wrap wrap-break-word">
               {{ previewOutput }}
             </div>
             <p class="mt-3 text-xs text-foreground/60">

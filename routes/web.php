@@ -118,9 +118,9 @@ Route::get('/help/expressions', function () {
     return Inertia::render('help/Expressions');
 })->name('help.expressions');
 
-Route::get('/help/aliases', function () {
+Route::get('/help/bot/aliases', function () {
     return Inertia::render('help/Aliases');
-})->name('help.aliases');
+})->name('help.bot.aliases');
 
 Route::get('/help/for-creators', function () {
     return Inertia::render('help/ForCreators');

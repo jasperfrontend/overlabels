@@ -442,28 +442,28 @@ const miscCommands: BotCommandDoc[] = [
         is managed from the dashboard, and three of them are also reachable through <code>!ol</code> in chat.
       </p>
       <div class="grid gap-3 sm:grid-cols-2">
-        <a href="/help/expressions" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="route('help.expressions')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Expressions</p>
           <p class="text-sm text-muted-foreground">
             Custom <code>!command</code> chat replies templated against controls, Helix data, and the chatter who
             fired them. The bot speaks the resolved string.
           </p>
         </a>
-        <a href="/help/aliases" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="route('help.bot.aliases')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Aliases</p>
           <p class="text-sm text-muted-foreground">
             Short commands that rewrite to longer ones before dispatch. <code>!w 2</code> becomes
             <code>!inc wins 2</code>. Positional placeholders: <code>{1}</code>, <code>{2}</code>, <code>{*}</code>.
           </p>
         </a>
-        <a href="/help/lists#appenders" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="`${route('help.lists')}#appenders`" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">List Appenders</p>
           <p class="text-sm text-muted-foreground">
             Chat commands that append a chatter's input to one of your Lists. Raffle entries, quote walls,
             song requests - one verb per kind of growing list.
           </p>
         </a>
-        <a href="/help" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="route('help')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Recipe chat triggers</p>
           <p class="text-sm text-muted-foreground">
             Chat commands that fire a Recipe (Coin Flip, Random Viewer, Wheel, ...). Recipes are user-installable

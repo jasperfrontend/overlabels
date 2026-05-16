@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Terminal, AlertTriangle } from 'lucide-vue-next';
+import { CornerDownRight, Terminal, AlertTriangle } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -15,6 +15,12 @@ const pages = [
     description: 'The built-in chat commands the bot ships with, plus one working example per command.',
     href: '/help/bot/commands',
     icon: Terminal,
+  },
+  {
+    title: 'Bot Aliases',
+    description: 'Short chat commands that rewrite to longer ones. !w 2 becomes !inc wins 2 before dispatch. Positional placeholders, one-hop guard, shared validation.',
+    href: '/help/bot/aliases',
+    icon: CornerDownRight,
   },
 ];
 </script>
