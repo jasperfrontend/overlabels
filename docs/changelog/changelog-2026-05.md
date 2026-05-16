@@ -1,5 +1,32 @@
 # CHANGELOG MAY 2026
 
+## May 16th, 2026 - RAF-batched time-dependent expression evaluation
+
+With the CSS fast path landed, the lissajous overlay rendered in Chromium without crashing but ran at ~5fps and spammed `Uncaught (in promise) Maximum recursive updates exceeded. This means you have a reactive effect that is mutating its own dependencies and thus recursively triggering itself.` on every frame. The CSS work was no longer the bottleneck - the bottleneck was Vue's effect scheduler refusing to converge.
+
+### Root cause
+
+Time-dependent Expression Controls (anything using `now()` / `now_ms()`) each had their own `watchEffect`. Each watchEffect both **read** `data.value` (via `buildContext`) and **wrote** `data.value` when its result string changed. With 4+ expressions ticking on a shared RAF, each write triggered the other watchEffects to re-run. `now_ms()` had advanced by a few microseconds in between, so `resultToString` produced a different float string, which wrote `data.value` again, which retriggered the other watchEffects... Vue tripped its `MAX_TRIGGER_RECURSION_LIMIT` guard and aborted the flush mid-stream, leaving most of the work undone for that frame.
+
+### Fix
+
+Time-dependent expressions are no longer wired into Vue's reactivity. They're evaluated in a single RAF-driven loop:
+
+- `tickFrame()` builds the data context once, iterates every time-dependent entry in the registry, evaluates against the shared context, collects results into a single patch object, and performs **one** `data.value = { ...data.value, ...patch }` write per frame.
+- `registerExpression()` branches: time-dependent expressions are stored in the registry with `stop: null` (no watchEffect); data-dependent expressions still create a watchEffect as before. The `timeTick` ref and its `void timeTick.value` read inside the watchEffect are gone entirely.
+- Initial value is seeded synchronously at registration time so the first frame doesn't render with an empty slot.
+- The RAF loop self-dispatches with `requestAnimationFrame(tickFrame)` and the existing `timeDependentCount` accounting starts/stops it when the registry transitions to / from zero time-dependent entries.
+
+### Trade-off
+
+A change to a data dependency that a time-dependent expression reads (e.g. `now_ms() * c.speed`) now propagates on the next RAF tick (<=16ms latency) instead of synchronously inside the same microtask. This is the same latency the old code effectively gave - `timeTick` only advanced on RAF anyway - so there's no observable regression.
+
+Data-dependent expressions (no `now*()` call) keep their `watchEffect`. Their writes converge because identical results don't propagate (the `!==` check), and they were never the source of the cascade.
+
+### Verified
+
+10 time-dependent expressions at 60fps in OBS Browser Source / Edge / Helium. No console spam.
+
 ## May 16th, 2026 - CSS custom-property fast path for overlay tag updates (Phase 1 surgical patching)
 
 Even after filtering unused expressions, the user's lissajous overlay still ticked the full render pipeline 60 times a second: every data update triggered `compiledCss` to re-run `replaceTagsWithFormatting` across the entire CSS string, then `injectStyle` destroyed and re-created the `<style>` element, then `compiledHtml` re-parsed the entire HTML, then morphdom diffed the rebuilt DOM against the live one. The HTML output is byte-identical every frame for CSS-variable animations - all of that work produces the same DOM. This is Phase 1 of the surgical-patching plan: compile the CSS once at mount, rewrite every `[[[tag]]]` into a `var(--ol-...)` reference, inject the stylesheet exactly once, and write CSS custom properties on the root element for tag value changes instead of replacing the `<style>` element.

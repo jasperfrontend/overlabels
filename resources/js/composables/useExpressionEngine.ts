@@ -17,7 +17,7 @@
  */
 
 import jsep from 'jsep';
-import { ref, type Ref, watchEffect, type WatchStopHandle } from 'vue';
+import { type Ref, watchEffect, type WatchStopHandle } from 'vue';
 
 // Pure engine surface from the shared lib. Re-exported so consumers don't
 // need to know whether they're talking to the wrapper or the lib.
@@ -55,12 +55,41 @@ interface ExpressionEntry {
 export function useExpressionEngine(data: Ref<Record<string, any> | null | undefined>) {
   const registry = new Map<string, ExpressionEntry>();
 
-  const timeTick = ref(0);
   let rafHandle: number | null = null;
   let timeDependentCount = 0;
 
+  // Time-dependent expressions are evaluated in a single RAF-driven batch
+  // rather than via per-expression watchEffects. The old design read and
+  // wrote data.value inside each watchEffect, so each write triggered every
+  // other time-dependent watchEffect to re-run; `now_ms()` had advanced by a
+  // few microseconds in between, so resultToString produced a different
+  // string, which wrote data.value again, which... Vue trips its recursive-
+  // update guard and the overlay locks up at ~5fps. Batching collapses N
+  // writes into one per frame and breaks the cycle entirely.
   function tickFrame(): void {
-    timeTick.value++;
+    if (data.value) {
+      const ctx = buildContext(data.value);
+      let patch: Record<string, string> | null = null;
+
+      for (const entry of registry.values()) {
+        if (!entry.timeDependent || !entry.ast) continue;
+        try {
+          const result = evaluate(entry.ast, ctx);
+          const strResult = resultToString(result);
+          if (data.value[entry.dataKey] !== strResult) {
+            if (patch === null) patch = {};
+            patch[entry.dataKey] = strResult;
+          }
+        } catch (e) {
+          console.warn(`[ExpressionEngine] Evaluation error for "${entry.key}":`, e);
+        }
+      }
+
+      if (patch !== null) {
+        data.value = { ...data.value, ...patch };
+      }
+    }
+
     rafHandle = requestAnimationFrame(tickFrame);
   }
 
@@ -88,29 +117,50 @@ export function useExpressionEngine(data: Ref<Record<string, any> | null | undef
     }
 
     const timeDependent = containsNowCall(ast);
+
+    let stop: WatchStopHandle | null = null;
+
     if (timeDependent) {
+      // Driven by tickFrame; no watchEffect. Data-dep refreshes pick up on
+      // the next animation frame (<= 16ms), which is the same latency the
+      // user would see from a CSS transition anyway.
       timeDependentCount++;
       ensureTickerRunning();
-    }
 
-    const stop = watchEffect(() => {
-      if (!data.value || !ast) return;
-
-      if (timeDependent) void timeTick.value;
-
-      const ctx = buildContext(data.value);
-
-      try {
-        const result = evaluate(ast, ctx);
-        const strResult = resultToString(result);
-
-        if (data.value[dataKey] !== strResult) {
-          data.value = { ...data.value, [dataKey]: strResult };
+      // Seed the initial value so the first frame doesn't render with an
+      // undefined slot. Result is written directly without reactivity.
+      if (ast && data.value) {
+        try {
+          const result = evaluate(ast, buildContext(data.value));
+          const strResult = resultToString(result);
+          if (data.value[dataKey] !== strResult) {
+            data.value = { ...data.value, [dataKey]: strResult };
+          }
+        } catch (e) {
+          console.warn(`[ExpressionEngine] Initial eval error for "${key}":`, e);
         }
-      } catch (e) {
-        console.warn(`[ExpressionEngine] Evaluation error for "${key}":`, e);
       }
-    });
+    } else {
+      // Data-dependent only: react to changes in the keys this expression
+      // reads. Writes are bounded by the `!==` check so identical results
+      // do not propagate.
+      stop = watchEffect(() => {
+        if (!data.value || !ast) return;
+
+        const ctx = buildContext(data.value);
+
+        try {
+          const result = evaluate(ast, ctx);
+          const strResult = resultToString(result);
+
+          if (data.value[dataKey] !== strResult) {
+            data.value = { ...data.value, [dataKey]: strResult };
+          }
+        } catch (e) {
+          console.warn(`[ExpressionEngine] Evaluation error for "${key}":`, e);
+        }
+      });
+    }
 
     registry.set(key, { key, dataKey, expression, ast, stop, timeDependent });
   }
