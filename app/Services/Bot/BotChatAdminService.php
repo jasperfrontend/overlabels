@@ -323,7 +323,7 @@ class BotChatAdminService
                 }
                 $row->update(['cooldown_seconds' => $n]);
 
-                return "$label cooldown is now {$n}s";
+                return "cooldown on $label is now {$n}s";
 
             case 'permission':
                 $level = $this->canonicalPermissionLevel($rawValue);
@@ -332,7 +332,7 @@ class BotChatAdminService
                 }
                 $row->update(['permission_level' => $level]);
 
-                return "$label permission is now $level";
+                return "permission on $label is now $level";
 
             case 'enabled':
                 $bool = $this->parseBoolean($rawValue);
@@ -341,7 +341,7 @@ class BotChatAdminService
                 }
                 $row->update(['enabled' => $bool]);
 
-                return "$label is now ".($bool ? 'enabled' : 'disabled');
+                return "command $label is now ".($bool ? 'enabled' : 'disabled');
 
             case 'hidden':
                 $bool = $this->parseBoolean($rawValue);
@@ -350,7 +350,7 @@ class BotChatAdminService
                 }
                 $row->update(['hidden_from_commands' => $bool]);
 
-                return "$label is now ".($bool ? 'hidden' : 'visible').' in !commands listings';
+                return "command $label is now ".($bool ? 'hidden' : 'visible').' in !commands listings';
 
             default:
                 return 'unknown option - try !ol help options';
