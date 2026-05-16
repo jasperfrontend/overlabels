@@ -53,6 +53,11 @@ const mainNavItems: NavItem[] = [
   { title: 'Lists', href: route('lists.index'), icon: ListIcon },
   { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
 ];
+const botNavItems: NavItem[] = [
+  { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: BotIcon },
+  { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: BotIcon }
+];
+
 const alertsNavItems: NavItem[] = [
   { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
   { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
@@ -115,6 +120,7 @@ const adminNavItems = computed<NavItem[]>(() =>
 
     <SidebarContent>
       <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
+      <NavMain v-if="user && botNavItems.length > 0" label="Chat bot" :items="botNavItems" />
       <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" />
       <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
