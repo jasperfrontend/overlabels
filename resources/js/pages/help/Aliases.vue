@@ -57,7 +57,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- TOC -->
-        <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-6">
+        <div class="mb-12 border border-sidebar-border bg-card p-6">
           <h2 class="mb-4 text-xl font-bold" id="toc">Table of contents</h2>
           <ol class="list-decimal space-y-1 pl-6 text-foreground">
             <li><a href="#what" class="text-violet-400 hover:underline">What is an alias?</a></li>
@@ -123,7 +123,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Mod-or-broadcaster can run <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!ol alias
             add &lt;name&gt; &lt;target&gt;</code> in chat. Replies thread normally through the bot's outbox.
           </p>
-          <div class="rounded-lg border border-sidebar bg-background p-4 font-mono text-sm">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div><span class="text-muted-foreground">@mod:</span> !ol alias add w !inc wins {1}</div>
             <div class="mt-1"><span class="text-muted-foreground">@overlabels:</span> added alias !w -&gt; !inc wins {1}</div>
           </div>
@@ -142,7 +142,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
 
           <div class="mb-6 space-y-3">
-            <div class="rounded border border-sidebar bg-sidebar p-4">
+            <div class="border border-sidebar-border bg-sidebar-accent p-4">
               <p class="mb-2 font-mono text-sm">
                 <code class="rounded bg-background px-2 py-0.5">{1}</code>,
                 <code class="rounded bg-background px-2 py-0.5">{2}</code>,
@@ -156,7 +156,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </p>
             </div>
 
-            <div class="rounded border border-sidebar bg-sidebar p-4">
+            <div class="border border-sidebar-border bg-sidebar-accent p-4">
               <p class="mb-2 font-mono text-sm">
                 <code class="rounded bg-background px-2 py-0.5">{*}</code>
               </p>
@@ -191,7 +191,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             you accidentally open an alias to everyone, the target command's gate still runs against the original
             chatter's badges.
           </p>
-          <div class="mb-6 rounded-lg border border-sidebar bg-sidebar p-4 font-mono text-sm">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div class="text-muted-foreground"># An alias to !reset (broadcaster-only), opened to everyone</div>
             <div>!ol alias add hardreset reset {1}</div>
             <div>!ol alias options hardreset permission everyone</div>
@@ -220,7 +220,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             dashboard or via <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!ol alias options
             &lt;name&gt; &lt;option&gt; &lt;value&gt;</code> in chat.
           </p>
-          <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+          <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
             <div class="grid grid-cols-3 border-b border-sidebar bg-background/30 px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground">
               <div>Option</div>
               <div class="col-span-2">Value</div>
@@ -267,7 +267,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             Bind <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!w</code> to incrementing your
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">wins</code> counter.
           </p>
-          <div class="mb-6 rounded-lg border border-sidebar bg-background p-4 font-mono text-sm">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div class="text-muted-foreground"># Create</div>
             <div>!ol alias add w !inc wins {1}</div>
             <div class="mt-3 text-muted-foreground"># Use - positive</div>
@@ -283,7 +283,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">{*}</code> is for cases where you
             don't know how many args the chatter will type. Good for wrapping commands that accept a free-form string.
           </p>
-          <div class="mb-6 rounded-lg border border-sidebar bg-background p-4 font-mono text-sm">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div class="text-muted-foreground"># Create</div>
             <div>!ol alias add shout !set announcement {*}</div>
             <div class="mt-3 text-muted-foreground"># Use</div>
@@ -295,7 +295,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="mb-3 text-foreground">
             Positionals can appear anywhere in the target template, with literal text in between.
           </p>
-          <div class="mb-6 rounded-lg border border-sidebar bg-background p-4 font-mono text-sm">
+          <div class="mb-6 border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div class="text-muted-foreground"># Create</div>
             <div>!ol alias add gift !give {1} from {2}</div>
             <div class="mt-3 text-muted-foreground"># Use</div>
@@ -309,7 +309,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Link href="/help/expressions" class="text-violet-400 hover:underline">Bot Expressions</Link>, not just
             built-ins. Useful when you want a short trigger for a long templated reply.
           </p>
-          <div class="rounded-lg border border-sidebar bg-background p-4 font-mono text-sm">
+          <div class="border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm">
             <div class="text-muted-foreground"># Suppose !discord is one of your Bot Expressions.</div>
             <div class="text-muted-foreground"># Make !d an alias for it.</div>
             <div>!ol alias add d !discord</div>
@@ -324,21 +324,21 @@ const breadcrumbs: BreadcrumbItem[] = [
         <section class="mb-14" id="things-to-know">
           <h2 class="mb-4 text-2xl font-bold">Things to know</h2>
           <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">One hop only</p>
               <p class="text-sm text-muted-foreground">
                 Aliases can't target other aliases. Self-loops are also rejected. Validation catches both at save time
                 with explicit errors.
               </p>
             </div>
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">Target permission still applies</p>
               <p class="text-sm text-muted-foreground">
                 After the rewrite, the target command's own permission gate runs against the original chatter. An
                 alias can't escalate privilege.
               </p>
             </div>
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">Cooldown is per-alias</p>
               <p class="text-sm text-muted-foreground">
                 The alias's <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">cooldown_seconds</code>
@@ -346,14 +346,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                 that runs independently on the second hop.
               </p>
             </div>
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">Missing args are silent</p>
               <p class="text-sm text-muted-foreground">
                 <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">{1}</code> with no arg substitutes
                 empty string. The rewritten command keeps running - it just sees a shorter arg list. No error to chat.
               </p>
             </div>
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">Negative numbers work</p>
               <p class="text-sm text-muted-foreground">
                 Args pass through verbatim. <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">!w -2</code>
@@ -363,7 +363,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 signed amounts.
               </p>
             </div>
-            <div class="rounded-lg border border-sidebar bg-sidebar p-4">
+            <div class="border border-green-400/40 bg-green-400/10 p-4">
               <p class="mb-2 font-semibold text-foreground">Hide from listings if it's internal</p>
               <p class="text-sm text-muted-foreground">
                 The <code class="rounded bg-background px-1 py-0.5 font-mono text-xs">hidden</code> option keeps an
@@ -377,7 +377,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Quick reference -->
         <section class="mb-14" id="quick-ref">
           <h2 class="mb-4 text-2xl font-bold">Quick reference</h2>
-          <div class="rounded-lg border border-violet-400/40 bg-violet-400/5 p-6">
+          <div class="border border-violet-border-400/sidebar-accent bg-violet-400/5 p-6">
             <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-violet-300">Chat commands</h3>
             <div class="mb-5 space-y-1 font-mono text-sm text-foreground">
               <div>!ol alias add &lt;name&gt; &lt;target&gt;</div>

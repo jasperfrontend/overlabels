@@ -35,7 +35,7 @@ const pages = [
     <div class="mb-8">
       <h1 class="mb-4 text-4xl font-bold">Twitch Chat Bot</h1>
 
-      <div class="mb-8 rounded-lg border border-amber-500 bg-amber-500/20 p-5">
+      <div class="mb-8 border border-amber-500 bg-amber-500/20 p-5">
         <h2 class="mb-2 font-semibold text-xl text-amber-500">
           <AlertTriangle class="mr-2 inline-block h-5 w-5" />
           VERY MUCH a work in progress

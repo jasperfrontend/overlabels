@@ -1302,7 +1302,7 @@ function clearFilter() {
                 Test if a value exists and is truthy. Values considered false: <code>null</code>, <code>undefined</code>, <code>""</code>,
                 <code>"false"</code>, <code>"0"</code>
               </p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_is_branded]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_is_branded]]]
   &lt;p&gt;This stream is sponsored!&lt;/p&gt;
 [[[endif]]]</pre>
             </div>
@@ -1313,7 +1313,7 @@ function clearFilter() {
                 Compare numbers using standard operators: <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>,
                 <code>!=</code>, <code>=</code>
               </p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:followers_total >= 1000]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[if:followers_total >= 1000]]]
   &lt;div class="milestone"&gt;1K+ followers!&lt;/div&gt;
 [[[elseif:followers_total >= 100]]]
   &lt;div&gt;Growing strong with [[[followers_total]]] followers&lt;/div&gt;
@@ -1325,7 +1325,7 @@ function clearFilter() {
             <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">String Comparisons</h3>
               <p class="mb-4 text-foreground">Compare text values using <code>=</code> and <code>!=</code> operators.</p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_language = en]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[if:channel_language = en]]]
   &lt;p&gt;Welcome to our English stream!&lt;/p&gt;
 [[[elseif:channel_language = es]]]
   &lt;p&gt;¡Bienvenidos a nuestro stream en Español!&lt;/p&gt;
@@ -1337,7 +1337,7 @@ function clearFilter() {
               <p class="mb-4 text-foreground">
                 Use event data in alert templates to create dynamic alerts based on donation/subscription amounts, viewer counts, etc.
               </p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.bits >= 1000]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.bits >= 1000]]]
   &lt;div class="big-cheer"&gt;HUGE CHEER! [[[event.user_name]]] donated [[[event.bits]]] bits!&lt;/div&gt;
 [[[elseif:event.bits >= 100]]]
   &lt;div class="medium-cheer"&gt;Thanks [[[event.user_name]]] for [[[event.bits]]] bits!&lt;/div&gt;
@@ -1349,7 +1349,7 @@ function clearFilter() {
             <div class="border border-sidebar-border bg-card p-6">
               <h3 class="mb-4 text-xl font-semibold">Nested Conditionals</h3>
               <p class="mb-4 text-foreground">You can nest conditionals up to 10 levels deep for complex logic.</p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.tier = 3000]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[if:event.tier = 3000]]]
   [[[if:event.total >= 10]]]
     &lt;div&gt;Tier 3 gift bomb! [[[event.total]]] subs!&lt;/div&gt;
   [[[else]]]
@@ -1374,7 +1374,7 @@ function clearFilter() {
                 <li><code>[[[loop.first]]]</code> / <code>[[[loop.last]]]</code> - booleans, handy with <code>[[[if:...]]]</code></li>
                 <li><code>[[[loop.count]]]</code> - total number of items</li>
               </ul>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
   [[[foreach:event.choices as choice]]]
     &lt;li class="[[[if:loop.first]]]first[[[endif]]]"&gt;
       [[[loop.index]]]. [[[choice.title]]] - [[[choice.votes]]] votes
@@ -1460,7 +1460,7 @@ function clearFilter() {
                 current item as pretty-printed JSON. It's the fastest way to see the shape of anything you're iterating over
                 without guessing.
               </p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">[[[foreach:event.choices as choice]]]
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">[[[foreach:event.choices as choice]]]
   &lt;pre&gt;[[[raw]]]&lt;/pre&gt;
 [[[endforeach]]]</pre>
               <p class="mt-3 text-sm text-foreground">
@@ -1585,7 +1585,7 @@ function clearFilter() {
                 Add <code>data-key</code> to the repeated element and morphdom will reuse the same DOM node across renders
                 whenever the key matches. CSS transitions on that element then keep running smoothly:
               </p>
-              <pre class="border border-sidebar-border p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
+              <pre class="bg-sidebar-accent p-4 font-mono text-sm whitespace-pre-wrap">&lt;ul&gt;
   [[[foreach:event.choices as choice]]]
     &lt;li data-key="[[[choice.id]]]" style="--bar-width: [[[choice.votes_pct]]]%"&gt;
       [[[choice.title]]] - [[[choice.votes]]] votes

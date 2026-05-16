@@ -226,7 +226,7 @@ const miscCommands: BotCommandDoc[] = [
     <!-- Controls-access warning (collapsed version once acknowledged) -->
     <div
       v-if="!iUnderstand"
-      class="mb-8 rounded-lg border border-amber-500 bg-amber-500/20 p-5"
+      class="mb-8 border border-amber-500 bg-amber-500/20 p-5"
     >
       <h2 class="mb-2 text-xl font-semibold text-amber-500">
         <ShieldAlert class="mr-2 inline-block h-5 w-5" />
@@ -243,13 +243,13 @@ const miscCommands: BotCommandDoc[] = [
         To open the controls surface for your channel, type <code class="rounded bg-background px-1.5 py-0.5 font-mono">!enablecontrols</code>
         in your own chat (broadcaster only). To close it again, <code class="rounded bg-background px-1.5 py-0.5 font-mono">!disablecontrols</code>.
       </p>
-      <button class="btn btn-primary cursor-pointer" @click="iUnderstand = true">
+      <button class="btn btn-chill cursor-pointer" @click="iUnderstand = true">
         I understand, let's go!
       </button>
     </div>
     <div
       v-else
-      class="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm"
+      class="mb-8 flex flex-wrap items-center justify-between gap-3 border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm"
     >
       <p class="text-foreground">
         <ShieldAlert class="mr-1 inline-block h-4 w-4 text-amber-500" />
@@ -264,7 +264,7 @@ const miscCommands: BotCommandDoc[] = [
     </div>
 
     <!-- TOC -->
-    <div class="mb-12 rounded-lg border border-sidebar bg-sidebar-accent p-5">
+    <div class="mb-12 border border-sidebar-border bg-card p-5">
       <h2 class="mb-3 text-lg font-semibold" id="toc">Jump to</h2>
       <ol class="grid list-decimal grid-cols-1 gap-x-6 gap-y-1 pl-6 text-foreground sm:grid-cols-2">
         <li><a href="#controls" class="text-violet-400 hover:underline">Controls</a></li>
@@ -285,14 +285,14 @@ const miscCommands: BotCommandDoc[] = [
         service-managed controls (Ko-fi, StreamLabs, StreamElements counters) are intentionally invisible to chat.
         Requires <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!enablecontrols</code> on your channel.
       </p>
-      <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+      <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
         <details
           v-for="(cmd, i) in controlCommands"
           :key="cmd.command"
           class="group"
           :class="{ 'border-t border-sidebar': i > 0 }"
         >
-          <summary class="flex cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
+          <summary class="flex flex-col md:flex-row cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
             <ChevronRight class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 sm:mt-0" />
             <code class="rounded bg-background px-2 py-0.5 font-mono text-sm whitespace-nowrap">{{ cmd.command }}</code>
             <span :class="tierClass[cmd.tier]" class="rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">
@@ -318,14 +318,14 @@ const miscCommands: BotCommandDoc[] = [
         Broadcaster-only toggles that open or close the entire <em>Controls</em> section above. Useful when you
         want chat to drive your overlay state for one stream and not the next.
       </p>
-      <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+      <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
         <details
           v-for="(cmd, i) in accessCommands"
           :key="cmd.command"
           class="group"
           :class="{ 'border-t border-sidebar': i > 0 }"
         >
-          <summary class="flex cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
+          <summary class="flex flex-col md:flex-row cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
             <ChevronRight class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 sm:mt-0" />
             <code class="rounded bg-background px-2 py-0.5 font-mono text-sm whitespace-nowrap">{{ cmd.command }}</code>
             <span :class="tierClass[cmd.tier]" class="rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">
@@ -356,14 +356,14 @@ const miscCommands: BotCommandDoc[] = [
         normally in chat. Validation runs server-side - the same rules that gate the dashboard form catch chat-side
         typos too (reserved names, self-looping aliases, bad placeholder syntax, etc).
       </p>
-      <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+      <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
         <details
           v-for="(cmd, i) in olCommands"
           :key="cmd.command"
           class="group"
           :class="{ 'border-t border-sidebar': i > 0 }"
         >
-          <summary class="flex cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
+          <summary class="flex flex-col md:flex-row cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
             <ChevronRight class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 sm:mt-0" />
             <code class="rounded bg-background px-2 py-0.5 font-mono text-sm whitespace-nowrap">{{ cmd.command }}</code>
             <span :class="tierClass[cmd.tier]" class="rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">
@@ -381,7 +381,7 @@ const miscCommands: BotCommandDoc[] = [
         </details>
       </div>
 
-      <div class="mt-5 rounded-lg border border-sidebar bg-sidebar-accent p-4 text-sm">
+      <div class="mt-5 border border-sidebar-border bg-card p-4 text-sm">
         <h3 class="mb-2 font-semibold text-foreground">Options vocabulary</h3>
         <p class="mb-3 text-foreground">
           <code class="rounded bg-background px-1.5 py-0.5 font-mono">!ol cmd options &lt;name&gt; &lt;option&gt; &lt;value&gt;</code>
@@ -405,14 +405,14 @@ const miscCommands: BotCommandDoc[] = [
         cover read (<code>count</code>, <code>first</code>, <code>random</code>...), grow (<code>add</code>), shrink (<code>draw</code>, <code>pop</code>, <code>clear</code>),
         snapshot/restore, and lifecycle (<code>disable</code>, <code>enable</code>).
       </p>
-      <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+      <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
         <details
           v-for="(cmd, i) in listCommands"
           :key="cmd.command"
           class="group"
           :class="{ 'border-t border-sidebar': i > 0 }"
         >
-          <summary class="flex cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
+          <summary class="flex flex-col md:flex-row cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
             <ChevronRight class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 sm:mt-0" />
             <code class="rounded bg-background px-2 py-0.5 font-mono text-sm whitespace-nowrap">{{ cmd.command }}</code>
             <span :class="tierClass[cmd.tier]" class="rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">
@@ -441,33 +441,26 @@ const miscCommands: BotCommandDoc[] = [
         Everything above is built into the bot. On top of that you can author four kinds of custom commands - each
         is managed from the dashboard, and three of them are also reachable through <code>!ol</code> in chat.
       </p>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <a :href="route('help.expressions')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+      <div class="grid gap-3 sm:grid-cols-3">
+        <a :href="route('help.expressions')" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Expressions</p>
           <p class="text-sm text-muted-foreground">
             Custom <code>!command</code> chat replies templated against controls, Helix data, and the chatter who
             fired them. The bot speaks the resolved string.
           </p>
         </a>
-        <a :href="route('help.bot.aliases')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="route('help.bot.aliases')" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Aliases</p>
           <p class="text-sm text-muted-foreground">
             Short commands that rewrite to longer ones before dispatch. <code>!w 2</code> becomes
             <code>!inc wins 2</code>. Positional placeholders: <code>{1}</code>, <code>{2}</code>, <code>{*}</code>.
           </p>
         </a>
-        <a :href="`${route('help.lists')}#appenders`" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
+        <a :href="`${route('help.lists')}#appenders`" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">List Appenders</p>
           <p class="text-sm text-muted-foreground">
             Chat commands that append a chatter's input to one of your Lists. Raffle entries, quote walls,
             song requests - one verb per kind of growing list.
-          </p>
-        </a>
-        <a :href="route('help')" class="block rounded-lg border border-sidebar bg-sidebar p-4 hover:border-violet-400/50">
-          <p class="mb-1 font-semibold text-foreground">Recipe chat triggers</p>
-          <p class="text-sm text-muted-foreground">
-            Chat commands that fire a Recipe (Coin Flip, Random Viewer, Wheel, ...). Recipes are user-installable
-            mini-games and pickers.
           </p>
         </a>
       </div>
@@ -481,14 +474,14 @@ const miscCommands: BotCommandDoc[] = [
     <!-- Section: Misc -->
     <section class="mb-12" id="misc">
       <h2 class="mb-3 text-2xl font-bold">Miscellaneous</h2>
-      <div class="overflow-hidden rounded-lg border border-sidebar bg-sidebar">
+      <div class="overflow-hidden border border-sidebar-border bg-sidebar-accent">
         <details
           v-for="(cmd, i) in miscCommands"
           :key="cmd.command"
           class="group"
           :class="{ 'border-t border-sidebar': i > 0 }"
         >
-          <summary class="flex cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
+          <summary class="flex flex-col md:flex-row cursor-pointer items-start gap-3 px-4 py-2.5 hover:bg-foreground/5 sm:items-center">
             <ChevronRight class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 sm:mt-0" />
             <code class="rounded bg-background px-2 py-0.5 font-mono text-sm whitespace-nowrap">{{ cmd.command }}</code>
             <span :class="tierClass[cmd.tier]" class="rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap">
