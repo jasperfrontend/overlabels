@@ -22,11 +22,11 @@ use Illuminate\Validation\ValidationException;
  * prefix ("!w") so the streamer can copy-paste from chat into a follow-up
  * command without thinking about it.
  */
-class BotChatAdminService
+readonly class BotChatAdminService
 {
     public function __construct(
-        private readonly BotExpressionValidator $exprValidator,
-        private readonly BotAliasValidator $aliasValidator,
+        private BotExpressionValidator $exprValidator,
+        private BotAliasValidator      $aliasValidator,
     ) {}
 
     /**
@@ -323,7 +323,7 @@ class BotChatAdminService
                 }
                 $row->update(['cooldown_seconds' => $n]);
 
-                return "cooldown on $label is now {$n}s";
+                return "$label cooldown is now {$n}s";
 
             case 'permission':
                 $level = $this->canonicalPermissionLevel($rawValue);
