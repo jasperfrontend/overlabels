@@ -6,7 +6,10 @@ use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\User;
 use App\Services\Controls\ExpressionEngineClient;
+use App\Services\TemplateDataMapperService;
+use App\Services\TwitchApiService;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Server-side parity for Expression Controls.
@@ -32,10 +35,12 @@ use Illuminate\Support\Facades\Log;
  * computes the value locally; persistence just doesn't refresh until
  * the next successful dep update.
  *
- * Scope limit (v1): builds the data context from the user's
- * `overlay_controls` table only. Expressions that reference `t.<tag>`
- * (Twitch template-tag values) will see those as undefined and evaluate
- * accordingly. Real Twitch tag data lookup is a follow-up.
+ * Data context: both `c:<broadcastKey>` (controls) and `t:<tagName>`
+ * (Twitch template tags) get shipped to the sidecar so expressions like
+ * `t.followers_total + c.bonus` evaluate the same way they would in the
+ * overlay. Twitch data comes from the Helix cache via TwitchApiService -
+ * if a user has no access_token or the fetch fails, t-tags evaluate to
+ * empty (same fallback as the overlay sees while data loads).
  */
 class RecomputeExpressionControls
 {
@@ -49,6 +54,8 @@ class RecomputeExpressionControls
 
     public function __construct(
         private readonly ExpressionEngineClient $engine,
+        private readonly TwitchApiService $twitchService,
+        private readonly TemplateDataMapperService $mapper,
     ) {}
 
     public function handle(ControlValueUpdated $event): void
@@ -66,15 +73,26 @@ class RecomputeExpressionControls
             return;
         }
 
-        $this->walk($event, $user, 0, []);
+        // Build the data context once at the top - both controls and Twitch
+        // tags. Cascade steps mutate the local copy with newly-computed
+        // expression values; nothing else changes within a single cascade.
+        $data = $this->buildDataContext($user);
+
+        $this->walk($event, $user, $data, 0, []);
     }
 
     /**
+     * @param  array<string,string>  $data  Flat key->value context. Mutated
+     *                                      in-place as we recompute and
+     *                                      passed by reference into the
+     *                                      recursive cascade so deeper
+     *                                      steps see the just-computed
+     *                                      values without an extra DB read.
      * @param  array<int,bool>  $visited  Expression Control IDs already
      *                                    recomputed in this cascade (DAG
      *                                    safety net).
      */
-    private function walk(ControlValueUpdated $event, User $user, int $depth, array $visited): void
+    private function walk(ControlValueUpdated $event, User $user, array &$data, int $depth, array $visited): void
     {
         if ($depth >= self::MAX_DEPTH) {
             Log::warning('[recompute-expression] max cascade depth reached', [
@@ -93,8 +111,6 @@ class RecomputeExpressionControls
         if ($dependents->isEmpty()) {
             return;
         }
-
-        $data = $this->buildDataContext($user);
 
         foreach ($dependents as $expr) {
             if (isset($visited[$expr->id])) {
@@ -148,15 +164,16 @@ class RecomputeExpressionControls
                 null,
                 true,
             );
-            $this->walk($cascadeEvent, $user, $depth + 1, $visited);
+            $this->walk($cascadeEvent, $user, $data, $depth + 1, $visited);
         }
     }
 
     /**
      * Build the flat key->value map the sidecar expects. Keyed by
-     * "c:<broadcastKey>" for every control the user owns. Service-managed
-     * controls give "c:kofi:donations_received" etc.; user-authored
-     * controls give "c:wins" etc.
+     * "c:<broadcastKey>" for every control the user owns, plus "t:<tag>"
+     * for every Twitch template tag. The latter lets expressions mix
+     * Helix data into their formulas server-side, the same way the
+     * overlay's local jsep evaluator can.
      *
      * @return array<string,string>
      */
@@ -172,6 +189,61 @@ class RecomputeExpressionControls
             $data['c:'.$broadcastKey] = (string) ($control->value ?? '');
         }
 
+        $this->addTwitchTagData($user, $data);
+
         return $data;
+    }
+
+    /**
+     * Pull the user's cached Helix data through the standard mapper so the
+     * tag names match what the overlay's `[[[tag]]]` rendering and the
+     * Expression Control's `t.<tag>` reference would resolve to. Failure
+     * here is non-fatal: missing access_token, expired token, or a Helix
+     * outage all fall through to "no t-tags in context", which makes
+     * any `t.<tag>` reference evaluate to empty for this cascade. Next
+     * recompute will retry the fetch.
+     *
+     * @param  array<string,string>  $data  Mutated in-place.
+     */
+    private function addTwitchTagData(User $user, array &$data): void
+    {
+        if (! $user->access_token || ! $user->twitch_id) {
+            return;
+        }
+
+        try {
+            $twitchData = $this->twitchService->getExtendedUserData(
+                $user->access_token,
+                (string) $user->twitch_id,
+            );
+            // overlayName is only used by the mapper to scope `for_overlay`
+            // tags; passing a stable placeholder is fine because we're not
+            // rendering a specific overlay here. caps default per-user.
+            $mapped = $this->mapper->mapForTemplate(
+                $twitchData,
+                'recompute',
+                null,
+                null,
+                $user->foreachCaps(),
+            );
+
+            foreach ($mapped as $tag => $value) {
+                if (! is_string($tag)) {
+                    continue;
+                }
+                // Scalars only - arrays / objects in the mapped output
+                // belong to foreach iteration paths the math engine
+                // doesn't address anyway.
+                if (is_array($value) || is_object($value)) {
+                    continue;
+                }
+                $data['t:'.$tag] = (string) ($value ?? '');
+            }
+        } catch (Throwable $e) {
+            Log::warning('[recompute-expression] Twitch data fetch failed; skipping t-tags', [
+                'user_id' => $user->id,
+                'err' => $e->getMessage(),
+            ]);
+        }
     }
 }

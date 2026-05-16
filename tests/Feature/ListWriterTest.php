@@ -6,6 +6,8 @@ use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Services\Controls\ExpressionEngineClient;
+use App\Services\TemplateDataMapperService;
+use App\Services\TwitchApiService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -113,6 +115,39 @@ class FakeExpressionEngineClient extends ExpressionEngineClient
         $this->calls[] = ['expression' => $expression, 'data' => $data];
 
         return $this->responses[$expression] ?? null;
+    }
+}
+
+/**
+ * Bypasses the real Twitch API entirely - returns whatever the test sets.
+ * Constructor is intentionally empty so the parent's dependency on tokens /
+ * HTTP clients doesn't fire during tests.
+ */
+class FakeTwitchApiService extends TwitchApiService
+{
+    /** @var array<string,mixed> */
+    public array $extendedData = [];
+
+    public function __construct() {}
+
+    public function getExtendedUserData(string $accessToken, string $userId): array
+    {
+        return $this->extendedData;
+    }
+}
+
+/**
+ * Bypasses mapForTemplate so tests don't need to know the mapper's full
+ * tag-name conventions. Returns a flat map of tag => value verbatim.
+ */
+class FakeTemplateDataMapperService extends TemplateDataMapperService
+{
+    /** @var array<string,mixed> */
+    public array $mapped = [];
+
+    public function mapForTemplate(array $twitchData, string $overlayName, ?array $templateTags = null, ?array $eventData = null, ?array $caps = null): array
+    {
+        return $this->mapped;
     }
 }
 
@@ -323,4 +358,106 @@ it('bails on alreadyRecomputed cascade events to prevent self-walk', function ()
 
     // The listener should have bailed; no sidecar calls made.
     expect($fake->calls)->toBe([]);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Twitch tag (t.<tag>) data populates the recompute context
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('ships t:<tag> data to the sidecar when the user has a Twitch access token', function () {
+    $fakeEngine = new FakeExpressionEngineClient;
+    $fakeTwitch = new FakeTwitchApiService;
+    $fakeTwitch->extendedData = ['user' => ['display_name' => 'JasperDiscovers']]; // shape doesn't matter; mapper is faked too
+    $fakeMapper = new FakeTemplateDataMapperService;
+    $fakeMapper->mapped = [
+        'followers_total' => 1234,
+        'channel_name' => 'jasperdiscovers',
+    ];
+
+    app()->instance(ExpressionEngineClient::class, $fakeEngine);
+    app()->instance(TwitchApiService::class, $fakeTwitch);
+    app()->instance(TemplateDataMapperService::class, $fakeMapper);
+
+    $user = lwUser();
+    $user->access_token = 'pretend-this-is-a-token';
+    $user->save();
+
+    $template = lwTemplate($user);
+    $raw = lwCounter($user, $template, 'bonus');
+    $raw->value = '5';
+    $raw->save();
+
+    $expr = lwExpression($user, $template, 't.followers_total + c.bonus', 'total', ['bonus']);
+    $fakeEngine->responses['t.followers_total + c.bonus'] = '1239';
+
+    ControlValueUpdated::dispatch($template->slug, 'bonus', 'counter', '5', (string) $user->twitch_id);
+
+    // The sidecar received both control AND twitch-tag data
+    expect($fakeEngine->calls)->toHaveCount(1)
+        ->and($fakeEngine->calls[0]['data'])->toHaveKey('c:bonus')
+        ->and($fakeEngine->calls[0]['data'])->toHaveKey('t:followers_total')
+        ->and($fakeEngine->calls[0]['data']['t:followers_total'])->toBe('1234')
+        ->and($fakeEngine->calls[0]['data']['t:channel_name'])->toBe('jasperdiscovers');
+
+    // And the expression's stored value updated as usual
+    expect($expr->fresh()->value)->toBe('1239');
+});
+
+it('skips Twitch tag enrichment when user has no access_token', function () {
+    $fakeEngine = new FakeExpressionEngineClient;
+    $fakeTwitch = new FakeTwitchApiService;
+    $fakeTwitch->extendedData = ['user' => ['display_name' => 'should not appear']];
+    $fakeMapper = new FakeTemplateDataMapperService;
+    $fakeMapper->mapped = ['followers_total' => 9999];
+
+    app()->instance(ExpressionEngineClient::class, $fakeEngine);
+    app()->instance(TwitchApiService::class, $fakeTwitch);
+    app()->instance(TemplateDataMapperService::class, $fakeMapper);
+
+    $user = lwUser();
+    // access_token deliberately null/default
+    $template = lwTemplate($user);
+    $raw = lwCounter($user, $template, 'bonus');
+    $expr = lwExpression($user, $template, 'c.bonus', 'doubled', ['bonus']);
+    $fakeEngine->responses['c.bonus'] = '7';
+
+    ControlValueUpdated::dispatch($template->slug, 'bonus', 'counter', '7', (string) $user->twitch_id);
+
+    // Sidecar was called but t-tags were NOT in the data
+    expect($fakeEngine->calls)->toHaveCount(1)
+        ->and($fakeEngine->calls[0]['data'])->not->toHaveKey('t:followers_total');
+});
+
+it('survives Twitch API failure without breaking the cascade', function () {
+    $fakeEngine = new FakeExpressionEngineClient;
+    // Use Mockery-style fake via anonymous class to throw on the call.
+    $brokenTwitch = new class extends TwitchApiService
+    {
+        public function __construct() {}
+
+        public function getExtendedUserData(string $accessToken, string $userId): array
+        {
+            throw new RuntimeException('helix unavailable');
+        }
+    };
+    $fakeMapper = new FakeTemplateDataMapperService;
+
+    app()->instance(ExpressionEngineClient::class, $fakeEngine);
+    app()->instance(TwitchApiService::class, $brokenTwitch);
+    app()->instance(TemplateDataMapperService::class, $fakeMapper);
+
+    $user = lwUser();
+    $user->access_token = 'token';
+    $user->save();
+    $template = lwTemplate($user);
+    $raw = lwCounter($user, $template, 'bonus');
+    $expr = lwExpression($user, $template, 'c.bonus * 2', 'doubled', ['bonus']);
+    $fakeEngine->responses['c.bonus * 2'] = '10';
+
+    ControlValueUpdated::dispatch($template->slug, 'bonus', 'counter', '5', (string) $user->twitch_id);
+
+    // Recompute still ran with the controls it could see, just no t-tags
+    expect($fakeEngine->calls)->toHaveCount(1)
+        ->and($fakeEngine->calls[0]['data'])->toHaveKey('c:bonus');
+    expect($expr->fresh()->value)->toBe('10');
 });
