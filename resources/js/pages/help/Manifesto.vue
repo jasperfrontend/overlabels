@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -50,9 +51,12 @@ const breadcrumbs: BreadcrumbItem[] = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
-        <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">The Overlabels Manifesto</h1>
-          <p class="text-lg text-foreground">Our principles for building a data engine, not a design engine.</p>
+        <div class="mb-10">
+          <Heading
+            title="The Overlabels Manifesto"
+            title-class="text-4xl font-bold mb-4"
+            description="Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it."
+          />
         </div>
 
         <div class="space-y-8">
@@ -65,8 +69,6 @@ const breadcrumbs: BreadcrumbItem[] = [
             </h2>
             <p class="text-foreground">
               We exist to pipe live Twitch data into overlays. Styling and animation belong to your own CSS, not to us.
-              The only animation styling
-              Overlabels provides is optional Alert entrance and exit transitions, because that seemed like a good idea.
             </p>
           </div>
 

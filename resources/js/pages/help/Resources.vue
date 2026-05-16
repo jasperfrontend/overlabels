@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -261,11 +262,12 @@ const cssTools = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
-        <div class="text-left">
-          <h1 class="text-4xl font-extrabold tracking-tight">Free Resources</h1>
-          <p class="mt-4 mb-6 text-lg text-foreground">
-            Tools we love for building overlays. All free, no credit required unless noted.
-          </p>
+        <div class="mb-10">
+          <Heading
+            title="Free Resources"
+            title-class="text-4xl font-bold mb-4"
+            description="Tools we love for building overlays. All free, no credit(card) required unless noted."
+          />
         </div>
 
         <!-- Colors -->

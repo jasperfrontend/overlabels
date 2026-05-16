@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { EyeIcon, UserKey, Webhook, TriangleAlertIcon } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -52,15 +53,16 @@ const breadcrumbs: BreadcrumbItem[] = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
-        <div class="text-left">
-          <h1 class="text-4xl font-extrabold tracking-tight">Overlabels &hearts; Ko-fi</h1>
-          <p class="mt-4 mb-6 text-lg text-foreground">
-            Why we chose Ko-fi as our first external integration - and why we think you should use it too.
-          </p>
+        <div class="mb-10">
+          <Heading
+            title="Overlabels &hearts; Ko-fi"
+            title-class="text-4xl font-bold mb-4"
+            description="Why we chose Ko-fi as our first external integration - and why we think you should use it too."
+          />
         </div>
 
         <!-- The pitch -->
-        <section class="space-y-4 mb-12">
+        <section class="space-y-4 mb-12 bg-green-400/10 p-6 border border-green-400/40">
           <h2 class="text-2xl font-bold">Ko-fi is amazing because it's a proper platform</h2>
           <p class="text-foreground">
             It has a donation page, supporter history, multiple payment methods, guest checkout, privacy, and most

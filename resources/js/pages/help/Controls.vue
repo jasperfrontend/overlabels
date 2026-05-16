@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -52,13 +53,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">Controls</h1>
-          <p class="text-lg text-foreground mb-4">
-            Controls are mutable, overlay-scoped values you can update live during a stream. No code, no deployment.
-            Use them to display death counts, donation goals, timers, custom text, or anything that changes while you
-            play.
-          </p>
-          <p class="text-lg text-foreground">
+
+          <Heading
+            title="How to Use Controls"
+            title-class="text-4xl font-bold mb-4"
+            description="Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream."
+          />
+
+          <p class="mt-4 text-foreground">
             You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly
             powerful.
           </p>

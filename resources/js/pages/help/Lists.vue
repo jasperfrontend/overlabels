@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -48,11 +49,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Header -->
         <div class="mb-10">
-          <h1 class="mb-4 text-4xl font-bold">Lists in Overlabels</h1>
-          <p class="text-lg font-medium text-violet-400">
-            One primitive, ten verbs. Raffles, queues, quote walls, leaderboards, donation goals - all driven from the
-            dashboard or chat.
-          </p>
+          <Heading
+            title="Lists in Overlabels"
+            title-class="text-4xl font-bold mb-4"
+            description="User-owned arrays of values that streamers manage from the dashboard or chat. Raffles, queues, quote walls, leaderboards, donation goals."
+          />
         </div>
 
         <!-- TOC -->

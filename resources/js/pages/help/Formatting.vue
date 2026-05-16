@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -53,13 +54,14 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mx-auto max-w-4xl p-6">
         <!-- Header -->
         <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">Formatting Pipes</h1>
-          <p class="text-lg text-foreground mb-4">
-            Pipes let you format raw values directly inside your template tags. Append a pipe character and a formatter
-            name to any tag,
-            and the overlay renders the formatted result instead of the raw value.
-          </p>
-          <p class="text-lg text-foreground">
+
+          <Heading
+            title="Formatting Pipes"
+            title-class="text-4xl font-bold mb-4"
+            description="Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware."
+          />
+
+          <p class="mt-4 text-foreground">
             No JavaScript required, no external libraries, no build step. Just add a pipe to your tag and you are done.
           </p>
         </div>

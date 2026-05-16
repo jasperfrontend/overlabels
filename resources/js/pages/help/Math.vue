@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MathEquation from '@/components/help/MathEquation.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -34,14 +35,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Header -->
         <div class="mb-10">
-          <h1 class="mb-4 text-4xl font-bold">The Math Engine</h1>
-          <p class="mb-3 text-lg text-foreground">
-            Overlabels ships with a tiny, sandboxed expression engine. Give it an expression string,
+
+          <Heading
+            title="The Math Engine"
+            title-class="text-4xl font-bold mb-4"
+            description="Overlabels ships with a tiny, sandboxed expression engine. Give it an expression string,
             it gives you a live value that re-evaluates whenever its dependencies change. That is enough
             rope to build waves, counters, rotations, pseudo-random digits, and cross-service racing logic
-            entirely in a text field.
-          </p>
-          <p class="text-lg text-foreground">
+            entirely in a text field."
+          />
+
+          <p class="mt-4 text-foreground">
             This page is for the math-heads. If you came here for gentle examples, try
             <Link href="/help/conditionals" class="text-violet-400 hover:underline">Conditionals</Link>
             or

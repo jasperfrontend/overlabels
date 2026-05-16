@@ -2,7 +2,8 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, CornerDownRight, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -115,12 +116,12 @@ const pages = [
     description="Learn how to build Twitch overlays with Overlabels - conditional tags, controls, formatting, and more."
     canonical-url="https://overlabels.com/help"
   >
-    <div class="mb-8">
-      <h1 class="mb-4 text-4xl font-bold">Welcome to Overlabels Help</h1>
-      <p class="text-lg text-foreground">
-        Everything you need to build dynamic Twitch overlays - from template syntax to live controls. This page is a bit
-        of a clusterf*ck, but I'll get around to cleaning this up eventually.
-      </p>
+    <div class="mb-10">
+      <Heading
+        title="Welcome to Overlabels Help"
+        title-class="text-4xl font-bold mb-4"
+        description="Everything you need to build dynamic Twitch overlays - from template syntax to live controls. This page is a bit of a clusterf*ck, but I'll get around to cleaning this up eventually."
+      />
     </div>
 
     <HelpCardGrid :pages="pages" />

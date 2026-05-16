@@ -26,6 +26,7 @@ import {
   Tv,
   type LucideIcon,
 } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -145,13 +146,13 @@ function copyTag(tag: string) {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
-        <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">Integration Presets</h1>
-          <p class="text-lg text-foreground mb-4">
-            These are the auto-managed controls Overlabels exposes through its integrations.
-            Drop the tag into any overlay template and the value updates live as events come in.
-          </p>
-          <p class="text-foreground">
+        <div class="mb-10">
+          <Heading
+            title="Integration presets"
+            title-class="text-4xl font-bold mb-4"
+            description="These are the auto-managed controls Overlabels exposes through its integrations. Drop the tag into any overlay template and the value updates live as events come in."
+          />
+          <p class="mt-4 text-foreground">
             Click any <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:source:key]]]</code>
             tag to copy it. There are {{ totalPresets }} presets across {{ sections.length }} integrations.
           </p>

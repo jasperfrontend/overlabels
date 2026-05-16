@@ -4,6 +4,7 @@ import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { Search } from 'lucide-vue-next';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -1274,12 +1275,13 @@ function clearFilter() {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
-        <div class="mb-8">
-          <h1 class="mb-4 text-4xl font-bold">Conditional Tags Reference</h1>
-          <p class="text-lg text-foreground">
-            Complete guide to conditional template tags and available event data for your overlays.
-          </p>
-          <p class="text-lg text-foreground">
+        <div class="mb-12">
+          <Heading
+            title="Conditional Tags Reference"
+            title-class="text-4xl font-bold mb-4"
+            description="Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays."
+          />
+          <p class="mt-4 text-foreground">
             See your
             <a href="/tags" class="cursor-pointer text-violet-400 hover:underline">static Template Tags</a>
             for your account. Need to format numbers, durations, or currencies? See

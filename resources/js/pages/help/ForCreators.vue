@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -48,13 +49,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Header -->
         <div class="mb-10">
-          <h1 class="mb-4 text-4xl font-bold">Overlabels for Creators</h1>
-          <p class="mb-3 text-lg text-foreground">
-            If you've heard of Overlabels, you probably heard "Twitch overlays you build with HTML and CSS". That's true
-            and it's also selling the cheap part. The expensive part - the part that makes Overlabels different from
-            every other overlay tool - is the live math layer underneath.
-          </p>
-          <p class="text-lg text-foreground">
+          <Heading
+            title="Overlabels for Creators"
+            title-class="text-4xl font-bold mb-4"
+            description="If you've heard of Overlabels, you probably heard 'Twitch overlays you build with HTML and CSS'. That's true
+          and it's also selling the cheap part. The expensive part - the part that makes Overlabels different from
+          every other overlay tool - is the live math layer underneath."
+          />
+
+
+          <p class="mt-4 text-foreground">
             This page is the long-form description of what that actually means. It's written for creators in the broad
             sense: streamers who want to know what they're holding, and creative coders who might want to help map the
             space.

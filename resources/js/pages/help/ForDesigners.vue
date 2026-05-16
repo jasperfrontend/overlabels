@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
+import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
@@ -48,12 +49,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Header -->
         <div class="mb-10">
-          <h1 class="mb-4 text-4xl font-bold">Overlabels for Designers</h1>
-          <p class="mb-3 text-lg text-foreground">
-            This page is for the designer working on a Twitch overlay that will be implemented in Overlabels, and for
-            the streamer who hired them and is wondering what to actually ask for.
-          </p>
-          <p class="text-lg text-foreground">
+
+          <Heading
+            title="Overlabels for Designers"
+            title-class="text-4xl font-bold mb-4"
+            description="This page is for the designer working on a Twitch overlay that will be implemented in Overlabels, and for the streamer who hired them and is wondering what to actually ask for."
+          />
+
+          <p class="mt-4 text-foreground">
             Overlay design has constraints that web and product design don't usually train for: the background is
             literally a video game, an IRL camera walking through a sunlit park, a cooking stream, or a moving
             cycling shot. Every text field is variable-length, and every animation has to be expressible in CSS.
