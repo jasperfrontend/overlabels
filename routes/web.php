@@ -98,6 +98,8 @@ Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
+Route::get('/kaylin', fn () => response('Kaylin is the voice of Overlabels.', 200, ['Content-Type' => 'text/plain']));
+
 Route::get('/help', function () {
     return Inertia::render('help/Index');
 })->name('help');
