@@ -20,6 +20,14 @@ if [ "${ENTRYPOINT_RUN_MIGRATIONS:-0}" = "1" ]; then
     php artisan migrate --force --no-interaction
 fi
 
+# storage:link creates public/storage -> storage/app/public so files written
+# via the public disk (e.g. ElevenLabs TTS mp3 cache) are reachable over HTTP.
+# Web role only; --force is safe because the entire public/ tree is rebuilt
+# from the image on each container start.
+if [ "${ENTRYPOINT_RUN_STORAGE_LINK:-0}" = "1" ]; then
+    php artisan storage:link --force || echo "storage:link failed (continuing - public-disk URLs will 404)"
+fi
+
 # Build the help/reference search index. Composer's post-autoload-dump hook
 # would normally do this, but the Dockerfile runs `composer install
 # --no-scripts` so the hook never fires inside the image. Running here keeps

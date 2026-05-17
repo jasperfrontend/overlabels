@@ -24,18 +24,32 @@ servers:
         interval: 5
         path: /up
         timeout: 5
+    # Persist ElevenLabs TTS mp3 cache across deploys AND share it with the
+    # queue worker (which writes the files after synthesis) and the scheduler
+    # (which runs the weekly tts:cleanup eviction). Without this, synthesis
+    # would land in the queue container's ephemeral fs and never be visible
+    # to the web container that has to serve the URL.
+    options:
+      volume:
+        - "overlabels-tts-storage:/app/storage/app/public/tts"
     env:
       clear:
         ROLE: web
         ENTRYPOINT_RUN_MIGRATIONS: "1"
         ENTRYPOINT_RUN_HELP_INDEX: "1"
         ENTRYPOINT_RUN_OG_GENERATE: "1"
+        # Creates public/storage -> storage/app/public symlink so the public
+        # disk's url() helper resolves over HTTP. Web role only; idempotent.
+        ENTRYPOINT_RUN_STORAGE_LINK: "1"
         SERVER_NAME: ":80"
 
   queue:
     hosts:
       - 172.235.171.209
     cmd: php artisan queue:work --verbose --tries=3 --timeout=300 --sleep=3 --max-jobs=1000 --max-time=3600
+    options:
+      volume:
+        - "overlabels-tts-storage:/app/storage/app/public/tts"
     env:
       clear:
         ROLE: queue
@@ -45,6 +59,9 @@ servers:
     hosts:
       - 172.235.171.209
     cmd: bash -c 'while true; do php artisan schedule:run --no-interaction --verbose; sleep 60; done'
+    options:
+      volume:
+        - "overlabels-tts-storage:/app/storage/app/public/tts"
     env:
       clear:
         ROLE: scheduler
@@ -162,6 +179,12 @@ env:
     TELESCOPE_ENABLED: "false"
     TRUSTED_PROXIES: "*"
 
+    # ElevenLabs TTS. Voice ID is Kaylin ("the voice of Overlabels") - not a
+    # secret per se but pinned here so a key swap can't accidentally change
+    # the voice. Model defaults inside services.php; pinned here for clarity.
+    ELEVENLABS_VOICE_ID: AYQJi30bKdh5rHiPdUGX
+    ELEVENLABS_MODEL_ID: eleven_flash_v2_5
+
   secret:
     - APP_KEY
     - DB_PASSWORD
@@ -201,6 +224,8 @@ env:
     - SIGNUP_NOTIFICATION_EMAIL
 
     - DEPLOY_WEBHOOK_SECRET
+
+    - ELEVENLABS_API_KEY
 
 aliases:
   console: app exec --interactive --reuse "php artisan tinker"

@@ -113,6 +113,7 @@ jobs:
           INTEGRATION_SUGGESTION_WEBHOOK_URL: ${{ secrets.INTEGRATION_SUGGESTION_WEBHOOK_URL }}
           SIGNUP_NOTIFICATION_EMAIL: ${{ secrets.SIGNUP_NOTIFICATION_EMAIL }}
           DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           APP_COMMIT_SHA: ${{ github.sha }}
         run: |
           mkdir -p ~/.ssh
@@ -135,7 +136,8 @@ jobs:
                      CLOUDINARY_URL \
                      FREESOUND_API_KEY \
                      INTEGRATION_SUGGESTION_WEBHOOK_URL SIGNUP_NOTIFICATION_EMAIL \
-                     DEPLOY_WEBHOOK_SECRET; do
+                     DEPLOY_WEBHOOK_SECRET \
+                     ELEVENLABS_API_KEY; do
               printf '%s=%q\n' "$v" "${!v}"
             done
           } > .kamal/secrets
