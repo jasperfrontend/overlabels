@@ -90,6 +90,15 @@ return [
         'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
     ],
 
+    'elevenlabs' => [
+        'api_key' => env('ELEVENLABS_API_KEY'),
+        // Kaylin - "the voice of Overlabels". Single voice for all TTS.
+        'voice_id' => env('ELEVENLABS_VOICE_ID'),
+        // Flash 2.5 is the lowest-latency model and good enough quality for
+        // ~3s alert lines. Bump to eleven_multilingual_v2 if quality bites.
+        'model_id' => env('ELEVENLABS_MODEL_ID', 'eleven_flash_v2_5'),
+    ],
+
     // Sqids encoding for the public map slug. Encodes a Twitch ID into an
     // opaque short string so /map/{slug} URLs and the public map.{slug}
     // broadcast channel never expose the numeric Twitch ID. Pure CPU,

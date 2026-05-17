@@ -3,10 +3,12 @@
 namespace App\Services\External;
 
 use App\Events\AlertTriggered;
+use App\Jobs\SynthesizeAlertTts;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\User;
 use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ExternalAlertService
 {
@@ -45,7 +47,10 @@ class ExternalAlertService
                 $data,
             );
 
+            $alertId = (string) Str::uuid();
+
             broadcast(new AlertTriggered(
+                alertId: $alertId,
                 html: $template->html ?? '',
                 css: $template->css ?? '',
                 data: $data,
@@ -57,6 +62,10 @@ class ExternalAlertService
                 ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
                 alertSoundUrl: $template->alert_sound_url,
             ));
+
+            if ($ttsText !== null) {
+                SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+            }
 
             Log::info("External alert dispatched for user {$user->id}", [
                 'service' => $event->getService(),

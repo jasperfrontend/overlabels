@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Events\AlertTriggered;
+use App\Jobs\SynthesizeAlertTts;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ExternalEventController extends Controller
 {
@@ -47,7 +49,10 @@ class ExternalEventController extends Controller
             $data,
         );
 
+        $alertId = (string) Str::uuid();
+
         broadcast(new AlertTriggered(
+            alertId: $alertId,
             html: $template->html ?? '',
             css: $template->css ?? '',
             data: $data,
@@ -59,6 +64,10 @@ class ExternalEventController extends Controller
             ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
             alertSoundUrl: $template->alert_sound_url,
         ));
+
+        if ($ttsText !== null) {
+            SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+        }
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';
 

@@ -243,3 +243,18 @@ Schedule::command('lists:sweep-expired')
     ->everyMinute()
     ->withoutOverlapping()
     ->name('lists:sweep-expired');
+
+// Cleanup ElevenLabs TTS audio cache. Files are content-addressed by
+// sha256(text + voice + model) so a cache miss after eviction just costs
+// one re-synthesis. 7 days keeps frequent alert lines warm without letting
+// the directory grow unbounded.
+Schedule::call(function () {
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    if (! $disk->exists('tts')) return;
+    $cutoff = now()->subDays(7)->getTimestamp();
+    foreach ($disk->files('tts') as $file) {
+        if ($disk->lastModified($file) < $cutoff) {
+            $disk->delete($file);
+        }
+    }
+})->weekly()->name('tts:cleanup')->withoutOverlapping();

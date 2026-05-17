@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\AlertTriggered;
+use App\Jobs\SynthesizeAlertTts;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayControl;
@@ -8,7 +9,9 @@ use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Services\HtmlSanitizationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 
 uses(DatabaseTransactions::class);
 
@@ -173,8 +176,9 @@ test('boolean tts control set to on permits tts_text', function () {
     });
 });
 
-test('AlertTriggered broadcastWith payload exposes tts_text', function () {
+test('AlertTriggered broadcastWith payload exposes alert_id and omits tts_text', function () {
     $event = new AlertTriggered(
+        alertId: 'alert-abc-123',
         html: '',
         css: '',
         data: [],
@@ -187,7 +191,11 @@ test('AlertTriggered broadcastWith payload exposes tts_text', function () {
 
     $payload = $event->broadcastWith();
 
-    expect($payload['alert']['tts_text'])->toBe('Hello world');
+    // alert_id ships so the overlay can correlate the matching TtsAudioReady.
+    expect($payload['alert']['alert_id'])->toBe('alert-abc-123');
+    // tts_text is server-only now: synthesis happens in SynthesizeAlertTts
+    // and the overlay receives audio_url via TtsAudioReady, not raw text.
+    expect($payload['alert'])->not->toHaveKey('tts_text');
 });
 
 test('AlertTriggered ships tts_delay_ms from the alert template', function () {
@@ -238,6 +246,7 @@ test('AlertTriggered defaults tts_delay_ms to 0 when not set', function () {
 
 test('AlertTriggered broadcastWith payload exposes tts_delay_ms', function () {
     $event = new AlertTriggered(
+        alertId: (string) Str::uuid(),
         html: '',
         css: '',
         data: [],
@@ -301,6 +310,7 @@ test('AlertTriggered ships null alert_sound_url when not set', function () {
 
 test('AlertTriggered broadcastWith payload exposes alert_sound_url', function () {
     $event = new AlertTriggered(
+        alertId: (string) Str::uuid(),
         html: '',
         css: '',
         data: [],
@@ -333,6 +343,7 @@ test('HtmlSanitizationService strips audio video and source tags from template H
 
 test('AlertTriggered clamps negative tts_delay_ms to zero', function () {
     $event = new AlertTriggered(
+        alertId: (string) Str::uuid(),
         html: '',
         css: '',
         data: [],
@@ -345,4 +356,57 @@ test('AlertTriggered clamps negative tts_delay_ms to zero', function () {
     );
 
     expect($event->ttsDelayMs)->toBe(0);
+});
+
+test('SynthesizeAlertTts is dispatched with the alert_id when tts_text is non-null', function () {
+    Event::fake([AlertTriggered::class]);
+    Bus::fake([SynthesizeAlertTts::class]);
+
+    [$user] = makeUserWithAlertTemplate('Hello [[[event.from_name]]]');
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Pat']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Bus::assertDispatched(SynthesizeAlertTts::class, function (SynthesizeAlertTts $job) use ($user) {
+        return $job->broadcasterId === (string) $user->twitch_id
+            && $job->text === 'Hello Pat'
+            && $job->alertId !== '';
+    });
+});
+
+test('SynthesizeAlertTts is NOT dispatched when tts_text resolves to null', function () {
+    Event::fake([AlertTriggered::class]);
+    Bus::fake([SynthesizeAlertTts::class]);
+
+    [$user] = makeUserWithAlertTemplate(null);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Quinn']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Bus::assertNotDispatched(SynthesizeAlertTts::class);
+});
+
+test('SynthesizeAlertTts is NOT dispatched when the tts gate control is off', function () {
+    Event::fake([AlertTriggered::class]);
+    Bus::fake([SynthesizeAlertTts::class]);
+
+    [$user] = makeUserWithAlertTemplate('Hi [[[event.from_name]]]');
+
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'tts',
+        'label' => 'TTS',
+        'type' => 'boolean',
+        'value' => '0',
+        'sort_order' => 0,
+    ]);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Riley']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Bus::assertNotDispatched(SynthesizeAlertTts::class);
 });

@@ -1,5 +1,47 @@
 # CHANGELOG MAY 2026
 
+## May 17th, 2026 - Server-side TTS via ElevenLabs (Kaylin, voice of Overlabels)
+
+The browser `speechSynthesis` path was producing wildly inconsistent voices across viewer machines (whatever the OS default happened to be), reading the donor's chosen sentence in a flat narration voice that fought the alert's vibe instead of supporting it. Replaced wholesale with ElevenLabs Flash 2.5, server-rendered, with Kaylin as the single brand voice for all Overlabels TTS.
+
+### How the new flow works
+
+1. `AlertExpressionRenderer::render()` (unchanged) resolves the `tts_expression` template to a final sentence at alert dispatch time.
+2. `broadcast(new AlertTriggered(...))` fires immediately with a new `alert_id` UUID so the overlay can correlate.
+3. If the resolved sentence is non-null, `SynthesizeAlertTts::dispatch($alertId, $twitchId, $text)` is queued. The job calls `TtsService::synthesize()`, which either returns a cached mp3 URL (content-addressed by `sha256(text + voice + model)` under `storage/app/public/tts/`) or hits ElevenLabs, writes the mp3, and returns the URL.
+4. On success the job broadcasts `TtsAudioReady` on the same `alerts.{twitch_id}` channel, carrying `{alert_id, audio_url}`.
+5. The overlay's new `handleTtsAudioReady` looks up the alert by `alert_id`, calculates `remaining = ttsDelayMs - (now - firedAt)`, and schedules `new Audio(url).play()` after that delay. Audio that arrives after the delay window has already elapsed plays immediately.
+
+### Why queued (and why client-side delay scheduling)
+
+Synchronous synthesis would have held `AlertTriggered` for 700ms-2s while ElevenLabs answered, making alerts feel laggy. Queued synthesis runs in parallel with the alert's SFX, so for typical 1-2s SFX the voice lands at exactly `tts_delay_ms` (zero perceived latency). Worst case the audio arrives slightly after the planned delay - still correct, just delivered when ready. The `alert_id` correlation is what lets the overlay enforce the delay client-side instead of `->delay()`-ing the synthesis job and wasting parallelism.
+
+### Invariants preserved from the old browser-TTS path
+
+- Server resolves the expression before broadcast (tags still never reparse on the client - donor message content cannot inject template tags).
+- 500-char cap on the resolved sentence (in `AlertExpressionRenderer`).
+- `tts` boolean control mute gate: streamer creates a boolean control with key `tts` and value `0` to suppress all TTS. Now suppresses synthesis entirely (no API spend) since the resolved string is `null` and the job is never dispatched.
+- Cancel-prior-utterance on rapid alerts: replaced `speechSynthesis.cancel()` with a singleton `HTMLAudioElement` pattern matching `playAlertSound`.
+
+### Overlays never phone home (still true)
+
+The overlay receives a pre-baked public mp3 URL on the broadcast and plays it with `new Audio()`. Same trust boundary as alert SFX - no API keys in the browser, no telemetry, no synthesis calls from the overlay. ElevenLabs only talks to the queue worker.
+
+### Cost model
+
+ElevenLabs Starter ($5/mo) unlocks Kaylin (a "professional" library voice that free-tier API access forbids). Cache hits cost zero credits, so repeat sentences like "X just followed!" are free after first synthesis. Weekly `tts:cleanup` schedule evicts `tts/*.mp3` older than 7 days; a cache miss just re-synthesizes. No per-user budget enforcement for now (3 users, 1 active); the plan is to gate TTS upgrades behind Ko-fi support tiers when it matters.
+
+### Files
+
+- `app/Services/Tts/TtsService.php`: ElevenLabs wrapper with `synthesize()` + `listVoices()`. Failure logs and returns null - alerts must fire even when ElevenLabs is down.
+- `app/Console/Commands/TtsListVoices.php`: `php artisan tts:list-voices [--filter=name]` for discovering voice IDs at setup.
+- `app/Jobs/SynthesizeAlertTts.php`: queued, `$tries = 1` (no retries - permanently-malformed input shouldn't burn credits looping).
+- `app/Events/TtsAudioReady.php`: new broadcast event, `tts.ready` on `alerts.{twitch_id}`.
+- `app/Events/AlertTriggered.php`: `alert_id` is now a required constructor arg + ships in the broadcast payload. `tts_text` removed from the broadcast payload (synthesis happens server-side; overlay receives audio URL instead).
+- `resources/js/components/OverlayRenderer.vue`: `speakTts()` replaced by `rememberPendingTts()` + `handleTtsAudioReady()` with the singleton `HTMLAudioElement` pattern.
+- `config/services.php`: new `elevenlabs` section reading `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` / `ELEVENLABS_MODEL_ID`.
+- `routes/console.php`: weekly `tts:cleanup` schedule entry.
+
 ## May 16th, 2026 - channel:bot in streamer OAuth + bot sends as app token
 
 Two coordinated changes (one here, one in the overlabels-bot repo) so the shared @overlabels chat bot account qualifies for Twitch's Chat Bot Badge on outgoing messages.

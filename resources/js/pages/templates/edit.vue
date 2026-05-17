@@ -680,7 +680,7 @@ onMounted(() => {
                   <header class="mb-3">
                     <h3 class="text-base font-semibold text-accent-foreground">Text-to-speech</h3>
                     <p class="text-xs text-foreground/80">
-                      Spoken via the viewer's browser. Empty disables TTS for this alert.
+                      Spoken by Kaylin, the voice of Overlabels. Empty disables TTS for this alert.
                     </p>
                   </header>
 

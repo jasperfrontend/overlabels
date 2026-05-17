@@ -663,6 +663,11 @@ function setupAlertListener() {
   // Listen for alert broadcasts (Laravel Echo requires dot prefix)
   channel.listen('.alert.triggered', handleAlertTriggered);
 
+  // Pre-synthesized TTS audio for a previously-triggered alert. Arrives
+  // asynchronously (synthesis takes ~700ms-2s); we correlate by alert_id
+  // and play after the alert's tts_delay_ms relative to when the alert fired.
+  channel.listen('.tts.ready', handleTtsAudioReady);
+
   // Listen for control value updates
   channel.listen('.control.updated', handleControlUpdated);
 
@@ -899,7 +904,12 @@ function handleAlertTriggered(event: any) {
   // truth for which URL to play, or stale preloads beat fresh broadcasts.
   playAlertSound(alertData.alert_sound_url);
 
-  speakTts(alertData.tts_text, alertData.tts_delay_ms);
+  // Record the alert so when its TtsAudioReady broadcast arrives (after
+  // server-side ElevenLabs synthesis) we can schedule playback at the right
+  // offset from when this alert fired.
+  if (typeof alertData.alert_id === 'string' && alertData.alert_id) {
+    rememberPendingTts(alertData.alert_id, alertData.tts_delay_ms);
+  }
 }
 
 // Singleton audio element: one shared player for all alert sounds. New alerts
@@ -959,39 +969,77 @@ function installAudioPreloadLinks(map: Record<string, string>): void {
   }
 }
 
-// Pending-utterance timer so a new alert arriving during the delay window can
-// cancel the previous alert's not-yet-spoken voice. Without this, fast
-// back-to-back alerts would each schedule their own delayed speak() and
-// they'd all fire in sequence with no chance to cancel.
+// TTS is server-rendered: ElevenLabs synthesizes the resolved sentence on the
+// queue, then broadcasts TtsAudioReady with a public mp3 URL. The overlay
+// records every alert's fire-time + tts_delay_ms in `pendingTts` so it can
+// schedule playback at the right offset whenever the audio shows up.
+// Synthesis often beats the delay window (so audio plays at tts_delay_ms);
+// when it doesn't, audio plays as soon as it arrives.
+interface PendingTtsEntry {
+  firedAt: number;
+  delayMs: number;
+}
+
+const pendingTts = new Map<string, PendingTtsEntry>();
+const PENDING_TTS_MAX_AGE_MS = 60_000;
+
+// Singleton player mirrors playAlertSound's pattern: a rapid second TTS
+// cancels the first instead of stacking voices.
+let ttsAudioPlayer: HTMLAudioElement | null = null;
 let ttsPendingTimer: ReturnType<typeof setTimeout> | null = null;
 
-function speakTts(text: unknown, delayMs: unknown = 0): void {
-  if (typeof text !== 'string' || text.trim() === '') return;
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+function rememberPendingTts(alertId: string, delayMsRaw: unknown): void {
+  const delayMs = typeof delayMsRaw === 'number' && delayMsRaw > 0
+    ? Math.min(delayMsRaw, 60_000)
+    : 0;
+  pendingTts.set(alertId, { firedAt: Date.now(), delayMs });
 
-  // Cancel any pending OR in-flight utterance from the previous alert.
+  // Evict anything older than the max-age cap. Cheap because the map only
+  // ever holds a handful of entries (one per recent alert) - guards against
+  // synthesis failures leaving zombie entries.
+  const cutoff = Date.now() - PENDING_TTS_MAX_AGE_MS;
+  for (const [id, entry] of pendingTts) {
+    if (entry.firedAt < cutoff) pendingTts.delete(id);
+  }
+}
+
+function handleTtsAudioReady(event: any): void {
+  const alertId = event?.alert_id;
+  const audioUrl = event?.audio_url;
+  if (typeof alertId !== 'string' || typeof audioUrl !== 'string' || !audioUrl) return;
+
+  const entry = pendingTts.get(alertId);
+  // Late-arriving audio for an alert we've forgotten about: play immediately.
+  // No record means no scheduled SFX to wait for either.
+  const elapsed = entry ? Date.now() - entry.firedAt : Infinity;
+  const remaining = entry ? Math.max(0, entry.delayMs - elapsed) : 0;
+  pendingTts.delete(alertId);
+
   if (ttsPendingTimer !== null) {
     clearTimeout(ttsPendingTimer);
     ttsPendingTimer = null;
   }
-  try {
-    window.speechSynthesis.cancel();
-  } catch { /* ignore */ }
 
-  const delay = typeof delayMs === 'number' && delayMs > 0 ? Math.min(delayMs, 60000) : 0;
-  const fire = () => {
+  const play = () => {
     ttsPendingTimer = null;
     try {
-      window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+      if (ttsAudioPlayer) {
+        ttsAudioPlayer.pause();
+        ttsAudioPlayer.currentTime = 0;
+      }
+      ttsAudioPlayer = new Audio(audioUrl);
+      void ttsAudioPlayer.play().catch((err) => {
+        console.warn('TTS playback failed', err);
+      });
     } catch (err) {
-      console.warn('TTS playback failed', err);
+      console.warn('TTS audio setup failed', err);
     }
   };
 
-  if (delay === 0) {
-    fire();
+  if (remaining === 0) {
+    play();
   } else {
-    ttsPendingTimer = setTimeout(fire, delay);
+    ttsPendingTimer = setTimeout(play, remaining);
   }
 }
 </script>

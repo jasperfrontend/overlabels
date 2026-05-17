@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
+use App\Jobs\SynthesizeAlertTts;
 use App\Models\EventTemplateMapping;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
@@ -599,8 +600,11 @@ class TwitchEventSubController extends Controller
                 $templateData,
             );
 
+            $alertId = (string) \Illuminate\Support\Str::uuid();
+
             // Broadcast alert data to overlay
             broadcast(new AlertTriggered(
+                $alertId,
                 $mapping->template->html,
                 $mapping->template->css,
                 $templateData,
@@ -612,6 +616,13 @@ class TwitchEventSubController extends Controller
                 (int) ($mapping->template->tts_delay_ms ?? 0),
                 $mapping->template->alert_sound_url,
             ));
+
+            // Synthesis is queued (best-effort, never blocks the alert). The
+            // overlay correlates the resulting TtsAudioReady by alert_id and
+            // schedules playback after tts_delay_ms.
+            if ($ttsText !== null) {
+                SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+            }
 
         } catch (Exception $e) {
             Log::error("Failed to render event alert: {$e->getMessage()}", [

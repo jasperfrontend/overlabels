@@ -12,6 +12,8 @@ class AlertTriggered implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public string $alertId;
+
     public string $html;
 
     public string $css;
@@ -34,8 +36,13 @@ class AlertTriggered implements ShouldBroadcast
 
     /**
      * Create a new event instance.
+     *
+     * $alertId is a server-generated UUID. The overlay correlates the matching
+     * TtsAudioReady broadcast back to this alert so it can schedule audio
+     * playback relative to the alert's tts_delay_ms (voice arrives after SFX).
      */
     public function __construct(
+        string $alertId,
         string $html,
         string $css,
         array $data,
@@ -47,6 +54,7 @@ class AlertTriggered implements ShouldBroadcast
         int $ttsDelayMs = 0,
         ?string $alertSoundUrl = null
     ) {
+        $this->alertId = $alertId;
         $this->html = $html;
         $this->css = $css;
         $this->data = $data;
@@ -78,6 +86,7 @@ class AlertTriggered implements ShouldBroadcast
     {
         return [
             'alert' => [
+                'alert_id' => $this->alertId,
                 'html' => $this->html,
                 'css' => $this->css,
                 'data' => $this->data,
@@ -89,12 +98,12 @@ class AlertTriggered implements ShouldBroadcast
                 // keep this broadcast payload small even when the template
                 // carries a large utility stylesheet.
                 'alert_template_slug' => $this->alertTemplateSlug,
-                // Pre-rendered TTS string from the alert template's tts_expression.
-                // null when no expression is set or the user has gated TTS off via
-                // their boolean `tts` control. Overlay speaks via SpeechSynthesisUtterance.
-                'tts_text' => $this->ttsText,
-                // Milliseconds to wait after the alert fires before speaking,
-                // so alert sounds/animations can play first. 0 = speak immediately.
+                // Milliseconds to wait after the alert fires before playing TTS
+                // audio, so alert sounds/animations can play first. The overlay
+                // schedules playback relative to this delay when the matching
+                // TtsAudioReady broadcast arrives. 0 = play as soon as audio is
+                // ready. The resolved TTS string itself is NOT broadcast - it's
+                // pre-synthesized server-side by SynthesizeAlertTts.
                 'tts_delay_ms' => $this->ttsDelayMs,
                 // Fallback URL for the alert sound. Normally the overlay reads
                 // the sound URL from the mount-time preload map (keyed by
