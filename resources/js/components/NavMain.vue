@@ -30,8 +30,8 @@ const isActive = (href: string): boolean => {
 </script>
 
 <template>
-    <SidebarGroup class="px-2 py-0 mb-4">
-        <SidebarGroupLabel v-if="label">{{ label }}</SidebarGroupLabel>
+    <SidebarGroup class="px-2 py-0 mb-2">
+        <SidebarGroupLabel v-if="label" class="text-violet-400 dark:text-violet-300">{{ label }}</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton as-child :is-active="isActive(item.href)" :tooltip="item.title">

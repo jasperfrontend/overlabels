@@ -25,6 +25,8 @@ import {
   Layers,
   LayoutGrid,
   LogIn,
+  MessageSquare,
+  MessageSquareCode,
   Newspaper,
   Pipette,
   Radio,
@@ -54,8 +56,8 @@ const mainNavItems: NavItem[] = [
   { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
 ];
 const botNavItems: NavItem[] = [
-  { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: BotIcon },
-  { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: BotIcon }
+  { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: MessageSquare },
+  { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode }
 ];
 
 const alertsNavItems: NavItem[] = [
@@ -120,8 +122,8 @@ const adminNavItems = computed<NavItem[]>(() =>
 
     <SidebarContent>
       <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
-      <NavMain v-if="user && botNavItems.length > 0" label="Chat bot" :items="botNavItems" />
       <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" />
+      <NavMain v-if="user && botNavItems.length > 0" label="Chat bot" :items="botNavItems" />
       <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />

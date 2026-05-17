@@ -10,7 +10,32 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ListIcon, PlusIcon, CopyIcon, Trash2Icon, LockIcon, ChefHat, MessageSquareIcon, PencilIcon, PowerIcon, PowerOffIcon, DicesIcon, EraserIcon, ArrowUpFromLineIcon, ArrowDownFromLineIcon, CopyPlusIcon, HashIcon, ArrowDownToLineIcon, ArrowUpToLineIcon, ShuffleIcon, HistoryIcon, PinIcon, RotateCcwIcon, TerminalIcon } from 'lucide-vue-next';
+import {
+  ListIcon,
+  PlusIcon,
+  CopyIcon,
+  Trash2Icon,
+  LockIcon,
+  ChefHat,
+  List,
+  MessageSquareIcon,
+  PencilIcon,
+  PowerIcon,
+  PowerOffIcon,
+  DicesIcon,
+  EraserIcon,
+  ArrowUpFromLineIcon,
+  ArrowDownFromLineIcon,
+  CopyPlusIcon,
+  HashIcon,
+  ArrowDownToLineIcon,
+  ArrowUpToLineIcon,
+  ShuffleIcon,
+  HistoryIcon,
+  PinIcon,
+  RotateCcwIcon,
+  TerminalIcon,
+} from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 interface ListRow {
@@ -766,30 +791,34 @@ onMounted(() => {
 <template>
   <Head title="Lists" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
+    <div class="mx-auto w-full space-y-4 p-4">
       <div class="flex items-start justify-between gap-3">
-        <Heading
-          title="Lists"
-          description="Reusable lists you can reference from any overlay via [[[c:list:<slug>]]] or loop with [[[foreach:c:list:<slug> as item]]]. Lists are lists - we preserve exactly what you type, empties and duplicates included."
-        />
+        <div class="flex items-center gap-3">
+          <List class="h-6 w-6 mr-2" />
+          <Heading
+            title="Lists"
+          />
+        </div>
+
         <button class="btn btn-primary cursor-pointer shrink-0" @click="showCreate = !showCreate">
           <PlusIcon class="h-4 w-4" />
           <span class="ml-1.5">New list</span>
         </button>
       </div>
 
+      <p class="text-sm">Reusable lists you can reference from any overlay via [[[c:list:&lt;slug&gt;]]] or loop with [[[foreach:c:list:&lt;slug&gt; as item]]]. Lists are lists - we preserve exactly what you type, empties and duplicates included.</p>
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
       <!-- Meta-command settings: opt into !list (mod+) for chat actions -->
-      <Card class="border-sidebar-border">
-        <CardContent class="space-y-3 p-4">
+      <Card class="border-sidebar-border mb-6 bg-sidebar-accent">
+        <CardContent>
           <div class="flex items-start gap-3">
             <TerminalIcon class="mt-0.5 h-5 w-5 shrink-0" />
             <div class="min-w-0 flex-1 space-y-2">
               <div>
                 <h3 class="text-sm font-semibold text-foreground">!list meta-command (mod+ in chat)</h3>
                 <p class="mt-0.5 text-xs text-muted-foreground">
-                  By default, mod actions live under !list. If that doesn't work with your stream
+                  By default, mod actions live under <span class="text-foreground">!list</span>. If that doesn't work with your stream
                   configuration, you can set another command here.
                 </p>
               </div>
@@ -798,15 +827,11 @@ onMounted(() => {
                 <div>
                   <div class="flex items-center gap-1">
                     <span class="font-mono text-sm text-muted-foreground">!</span>
-                    <input id="meta-cmd" v-model="metaForm.command" class="w-32 font-mono input-border" />
+                    <input id="meta-cmd" v-model="metaForm.command" class="w-32 h-8 font-mono input-border" />
                   </div>
                 </div>
-                <div class="flex items-center gap-2 pb-2">
-                  <input id="meta-enabled" v-model="metaForm.enabled" type="checkbox" />
-                  <Label for="meta-enabled" class="cursor-pointer">Enabled</Label>
-                </div>
 
-                <button size="sm" class="btn h-10 btn-primary cursor-pointer" :disabled="savingMeta" @click="saveMeta">
+                <button size="sm" class="btn h-8 btn-primary cursor-pointer" :disabled="savingMeta" @click="saveMeta">
                   {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
                 </button>
               </div>
@@ -916,13 +941,14 @@ onMounted(() => {
             </div>
           </div>
 
-          <div>
+          <div class="w-full">
             <Label for="active-label">Label</Label>
             <input
               id="active-label"
               v-model="draftLabel"
               :disabled="!!isActiveLocked"
               placeholder="(optional)"
+              class="input-border w-full"
             />
           </div>
 
@@ -964,7 +990,7 @@ onMounted(() => {
               </button>
             </div>
             <button
-              class="cursor-pointer"
+              class="cursor-pointer btn btn-primary"
               :disabled="!isDirty || saving || !!isActiveLocked"
               @click="saveActive"
             >
