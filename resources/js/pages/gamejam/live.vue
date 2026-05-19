@@ -216,8 +216,6 @@ function logEntryClass(entry: GameLogEntry): string {
       return 'text-blue-300 font-bold';
     case 'game_lost':
       return 'text-red-400 font-bold';
-    case 'boss_blocked':
-      return 'text-orange-300';
     case 'hp_pickup':
       return 'text-emerald-300';
     case 'weapon_pickup':
@@ -254,8 +252,6 @@ function formatLogEntry(entry: GameLogEntry): string {
         : `You hit a door for ${d.damage} (${d.door_hp} left)`;
     case 'door_opened':
       return d.is_exit ? 'The exit door is open!' : 'A door is open';
-    case 'boss_blocked':
-      return 'The boss is still alive - the exit is sealed';
     case 'room_entered':
       return `You entered room ${d.to_room}`;
     case 'game_won':
@@ -1641,7 +1637,6 @@ onUnmounted(() => {
 .ticker-entry[data-type="zombie_attack"] { border-color: rgba(255, 90, 90, 0.55); color: #ffd9d9; }
 .ticker-entry[data-type="game_won"] { border-color: rgba(79, 142, 247, 0.7); color: #c8dbff; }
 .ticker-entry[data-type="game_lost"] { border-color: rgba(122, 43, 43, 0.8); color: #ffcccc; }
-.ticker-entry[data-type="boss_blocked"] { border-color: rgba(224, 160, 96, 0.7); color: #ffe1b8; }
 .ticker-entry[data-type="hp_pickup"] { border-color: rgba(76, 224, 156, 0.6); color: #d6f5e1; }
 .ticker-entry[data-type="weapon_pickup"] { border-color: rgba(224, 200, 96, 0.7); color: #fff2c8; }
 .ticker-entry[data-type="door_opened"] { border-color: rgba(156, 224, 76, 0.7); color: #e8ffd0; }

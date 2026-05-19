@@ -1,5 +1,30 @@
 # CHANGELOG MAY 2026
 
+## May 19th, 2026 - Remove the boss-gate on door damage in Chat Castle
+
+First Chat Castle stream test ran the night of May 18. Players reported the game felt unresponsive and "stopped registering commands" toward the end. The @todo on `ActionApplier::attack()` had flagged the boss-gate as a suspected cause ("this causes game crashes and I can't pinpoint yet how or why"), but the postmortem in the database doesn't support that theory and the gate had downsides anyway, so removing it.
+
+### What the DB showed about last night
+
+- Game 32 ran cleanly to round 67. `last_resolved_at` advanced normally; `failed_jobs` had zero entries for the window.
+- All three rooms played (1-3) had only `regular` zombies. No bosses. Zero `boss_blocked` events in the 36-entry recap. The boss-gate code never executed.
+- The 4m 35s of "silence" in room 3 (20:22:53 hp_pickup -> 20:27:28 bomb tile) was the player wandering across the room with no logged state changes - votes were splitting between directions, `!a` attacks were silent no-ops because nothing was in adjacency range, and the bot was silently dropping 37% of commands on a per-channel cooldown (separate fix shipped today in `overlabels-bot@00f6542`).
+
+### What the boss-gate actually was
+
+`ActionApplier::attack()` lines 199-209 filtered `$doorsHit` for closed doors in 1-tile adjacency, then bailed with a `LOG_BOSS_BLOCKED` entry if any boss was alive in the current room. Two problems with keeping it:
+
+1. The rolling ticker is capped at 30 entries (`Game::LOG_TICKER_LIMIT`). A boss with 30 HP and players spamming `!a` while not in melee range of the boss would fill the ticker with `boss_blocked` and push real events out. Combined with the bot cooldown bug this is almost certainly what felt like "the game stopped responding" in earlier sessions.
+2. The design beat it was trying to land ("you must kill the boss before you can leave") was already implied by every room placing a boss between the player and the exit. Explicit gating on top added friction without adding clarity.
+
+### What changed
+
+- `app/Services/Gamejam/ActionApplier.php` - deleted the boss-gate block. Doors in adjacency now always take damage when `!a` connects (modulo the existing zombies-in-range short-circuit, which still hits zombies first if any are reachable).
+- `app/Models/Game.php` - removed the now-unused `LOG_BOSS_BLOCKED` constant.
+- `tests/Feature/GameLogTest.php` - the "boss alive prevents door damage and logs boss_blocked" test inverted into "door takes damage even when a boss is alive elsewhere in the room", same fixture.
+- `resources/js/pages/gamejam/live.vue` - dropped the `boss_blocked` cases from the colour switch, the formatter switch, and the ticker-entry CSS.
+- 5/5 `GameLogTest` and 21/21 `BotGamejamActionTest` green. `node --check` style lint clean on the Vue file.
+
 ## May 17th, 2026 - Server-side TTS via ElevenLabs (Kaylin, voice of Overlabels)
 
 The browser `speechSynthesis` path was producing wildly inconsistent voices across viewer machines (whatever the OS default happened to be), reading the donor's chosen sentence in a flat narration voice that fought the alert's vibe instead of supporting it. Replaced wholesale with ElevenLabs Flash 2.5, server-rendered, with Kaylin as the single brand voice for all Overlabels TTS.

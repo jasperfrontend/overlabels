@@ -85,7 +85,7 @@ test('attacking a zombie logs player_attack and zombie_killed on kill', function
     expect($types)->toContain('player_attack', 'zombie_killed');
 });
 
-test('boss alive prevents door damage and logs boss_blocked', function () {
+test('door takes damage even when a boss is alive elsewhere in the room', function () {
     $game = makeLoggedGame();
     $game->update(['weapon_slot_1' => Game::WEAPON_REGULAR_SWORD, 'weapon_slot_1_uses' => 10]);
 
@@ -119,9 +119,7 @@ test('boss alive prevents door damage and logs boss_blocked', function () {
 
     (new ActionApplier())->apply($game, 'a');
 
-    $types = logTypes($game);
-    expect($types)->toContain('boss_blocked')
-        ->and($types)->not->toContain('door_damage');
+    expect(logTypes($game))->toContain('door_damage');
 });
 
 test('hide action emits a hide entry', function () {

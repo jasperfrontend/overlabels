@@ -41,8 +41,6 @@ class Game extends Model
 
     public const string LOG_DOOR_OPENED = 'door_opened';
 
-    public const string LOG_BOSS_BLOCKED = 'boss_blocked';
-
     public const string LOG_ROOM_ENTERED = 'room_entered';
 
     public const string LOG_GAME_WON = 'game_won';
