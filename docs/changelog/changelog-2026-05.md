@@ -1,5 +1,47 @@
 # CHANGELOG MAY 2026
 
+## May 19th, 2026 - Per-list, per-action chat permissions for !list
+
+Until today, `!list` was gated by a single moderator+ check in `BotListActionController`, hardcoded against `ListMetaCommand::PERMISSION_LEVEL`. That was fine when the meta-command only existed for destructive operations, but with the new `search` / `searchall` / `random` verbs there's real value in letting viewers run safe lookups while keeping `clear` / `draw` / `pop` mod-only. The single hardcoded gate prevented that. Replacing it with per-action permissions configurable per list.
+
+### Storage shape
+
+- New nullable `jsonb` column `chat_permissions` on `option_sets`. NULL = use service-side defaults (everything moderator+). When non-null, holds a partial map `{action: level}` of overrides only - actions matching the default get dropped at save time so the JSON stays minimal, and an all-defaults submission persists as NULL.
+- The full known-action set is defined in `ListActionService::ACTION_DEFAULTS` (12 actions: count, first, last, random, search, searchall, pop, draw, clone, clear, disable, enable). Levels are the standard `BotChatGate::TIER_ORDER` strings (everyone / subscriber / vip / moderator / broadcaster).
+
+### Service gate
+
+- `ListActionService::handleInvocation` gained a fourth parameter `?array $badges = null`. `null` = bypass (dashboard path - the request has already been authorised as the list's owner). An array (even empty) = gate is active and the action's resolved permission level is checked against the chatter's badges via `BotChatGate::hasPermission`.
+- The gate runs only for known actions in `ACTION_DEFAULTS` - bare `!list`, slug-only, and unknown-action help text always pass through. Gating help would be confusing ("you can't see what you can't see").
+- On denial, the service returns a friendly `@user - 'count' on 'q' is moderator+ only.` reply so viewers understand why their `!list q random` worked but `!list q clear` didn't. The bot still gets a `{fired: true, reply: ...}` JSON response so the reply lands in `bot_chat_outbox`.
+- Two helper methods: `resolvePermission(OptionSet, string)` returns the merged level for a single action; `resolveAllPermissions(OptionSet)` returns the complete merged map (used by `ListController::serialize` so the dashboard always sees a full picture without having to know the defaults itself).
+
+### Bot map
+
+- `BotCommandController` now announces `permission_level: 'everyone'` for `list_meta` instead of `moderator`. Necessary - otherwise the bot pre-gates `!list` at the IRC layer and viewer messages never reach our server, defeating any per-action `everyone` overrides. The trade-off is that every `!list` from any chatter hits us now, but `!list` isn't a high-frequency surface so the extra HTTP volume is negligible. Server gate stays authoritative.
+
+### Controllers
+
+- `BotListActionController` - dropped the static `BotChatGate::hasPermission(ListMetaCommand::PERMISSION_LEVEL, $badges)` block; now passes badges straight into the service.
+- `ListActionWebController::runAction` - passes `null` badges (bypass) since the dashboard caller has already cleared `authorizeOwnership`.
+- `ListController` - serialize includes the resolved permission map; update accepts `chat_permissions` as a focused PATCH (same pattern as `disabled` and the expiry fields). Validates that levels come from `BotChatGate::TIER_ORDER`; defaults are dropped at save time and an all-defaults payload persists as NULL.
+
+### Dashboard UI
+
+- The "Actions" panel on `/dashboard/lists` is now a 2-column grid on `md+` screens. Left column: existing button stack, unchanged. Right column: "Allow viewers in chat" header + four sub-groups (Inspect / Pop/draw / Whole list / State) of checkboxes, one per action, grouped to mirror the left column's structure.
+- Binary toggle: checked = `everyone`, unchecked = `moderator`. The underlying storage holds the full level string so a future UI can expose subscriber/vip without a migration.
+- Auto-saves on each toggle via the focused `lists.update` PATCH. Optimistic local update + revert on error + brief "Saving…" hint while the request is in-flight. Plain HTML checkboxes (per the existing project convention - Reka's checkboxes have had issues).
+
+### Tests
+
+- `ListActionTest`: 7 new service-level cases (default-action denial, opened-action runs, other-actions-on-same-list-still-gated, dashboard-bypass, unknown-action-help-bypasses-gate, resolveAllPermissions merge). 2 existing cases updated (the old single-gate refusal flipped into a friendly per-action denial; the command-map permission level updated to 'everyone').
+- `ListControllerTest`: 3 new PATCH cases (override-with-defaults-dropped, all-defaults-becomes-null, unknown-level-422).
+- 146/146 green across all `List*Test` suites.
+
+### Manual UI verification
+
+- Production vite build clean, `vue-tsc` no errors in the file. I have not exercised the checkbox UI in a browser - please verify the toggle save + revert behaviour and the layout on mobile (`md` breakpoint flips to single-column).
+
 ## May 19th, 2026 - !list search / searchall for quotes-style lookups
 
 A viewer on stream today tried `!list q search <name>` after adding a quote via a chat-append command, expecting the same search vocabulary they'd had on their previous bot (Wizebot's `!quote search`). The Overlabels meta-command didn't have a `search` verb, so the lookup silently failed and they had to scroll the dashboard. Adding `search` + `searchall` to `ListActionService` so the meta-command speaks that vocabulary too.

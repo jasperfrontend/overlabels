@@ -49,10 +49,15 @@ class ListActionWebController extends Controller
 
         // Re-assemble the raw args string the service expects: "<slug> <action> <args>"
         $raw = trim("{$list->slug} {$validated['action']} ".($validated['args'] ?? ''));
+        // null badges = bypass the per-action gate. The caller is the
+        // list owner (already enforced by authorizeOwnership above) so
+        // they always have permission to run any action via the
+        // dashboard, regardless of how they've configured chat access.
         $reply = $this->service->handleInvocation(
             $request->user(),
             $raw,
-            $request->user()->display_name ?: $request->user()->name ?: ''
+            $request->user()->display_name ?: $request->user()->name ?: '',
+            null,
         );
 
         return response()->json([

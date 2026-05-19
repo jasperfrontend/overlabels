@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $disabled_at
  * @property int|null $entry_ttl_seconds
  * @property Carbon|null $expires_at
+ * @property array<string, string>|null $chat_permissions  Action -> permission level overrides; NULL means use defaults
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read RecipeInstance|null $recipeInstance
@@ -50,6 +51,7 @@ class OptionSet extends Model
         'disabled_at',
         'entry_ttl_seconds',
         'expires_at',
+        'chat_permissions',
     ];
 
     protected $casts = [
@@ -61,6 +63,7 @@ class OptionSet extends Model
         'disabled_at' => 'datetime',
         'entry_ttl_seconds' => 'integer',
         'expires_at' => 'datetime',
+        'chat_permissions' => 'array',
     ];
 
     public function user(): BelongsTo

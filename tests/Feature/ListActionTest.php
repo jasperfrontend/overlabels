@@ -197,6 +197,74 @@ it('searchall needs a keyword', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Per-action permission gate (chat_permissions overrides)
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('denies a default mod+ action when a viewer (empty badges) runs it', function () {
+    $user = actionUser();
+    actionList($user, 'raffle', ['a']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'raffle count', 'Viewer', []);
+
+    expect($reply)->toBe("@Viewer - 'count' on 'raffle' is moderator+ only.");
+});
+
+it('runs an action a streamer has opened up to everyone for this list', function () {
+    $user = actionUser();
+    $list = actionList($user, 'raffle', ['a', 'b']);
+    $list->update(['chat_permissions' => ['count' => 'everyone']]);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'raffle count', 'Viewer', []);
+
+    expect($reply)->toBe("'raffle' has 2 entries.");
+});
+
+it('still gates other actions on the same list after one is opened', function () {
+    $user = actionUser();
+    $list = actionList($user, 'raffle', ['a', 'b']);
+    $list->update(['chat_permissions' => ['count' => 'everyone']]);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'raffle clear', 'Viewer', []);
+
+    expect($reply)->toContain("'clear' on 'raffle' is moderator+ only.");
+});
+
+it('bypasses the gate when badges is null (dashboard path)', function () {
+    $user = actionUser();
+    actionList($user, 'raffle', ['a', 'b']);
+
+    // No badges passed - service treats this as the trusted owner path
+    // (used by ListActionWebController). Even a mod-only action fires.
+    $reply = app(ListActionService::class)->handleInvocation($user, 'raffle clear', 'Streamer', null);
+
+    expect($reply)->toContain("Cleared 'raffle'");
+});
+
+it('lets unknown-action help through regardless of permission', function () {
+    $user = actionUser();
+    actionList($user, 'raffle', ['a']);
+
+    // A viewer typing `!list raffle wat` should see the help text, not a
+    // permission-denied message. Action lookup happens before the gate.
+    $reply = app(ListActionService::class)->handleInvocation($user, 'raffle wat', 'Viewer', []);
+
+    expect($reply)->toContain("'wat' isn't a valid action");
+});
+
+it('resolveAllPermissions merges stored overrides over defaults', function () {
+    $user = actionUser();
+    $list = actionList($user, 'raffle');
+    $list->update(['chat_permissions' => ['count' => 'everyone', 'random' => 'vip']]);
+
+    $resolved = app(ListActionService::class)->resolveAllPermissions($list->fresh());
+
+    expect($resolved['count'])->toBe('everyone')
+        ->and($resolved['random'])->toBe('vip')
+        ->and($resolved['clear'])->toBe('moderator')
+        ->and($resolved)->toHaveCount(count(ListActionService::ACTION_DEFAULTS));
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Service-level: help messages
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -381,14 +449,34 @@ it('fire endpoint queues the reply to bot_chat_outbox', function () {
     expect($msg->message)->toBe("'raffle' has 2 entries.");
 });
 
-it('fire endpoint refuses non-mods', function () {
+it('fire endpoint replies with a friendly mods-only message for default-permission actions', function () {
     $user = actionUser('streamer_a');
     actionList($user, 'raffle', ['a']);
     ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
 
-    fireListActionRequest(fireMetaPayload(['badges' => []]))
+    // Default chat_permissions = NULL = everything mod+. Viewer-tier
+    // badges (empty) trying `count` get a per-action denial reply, not
+    // the old endpoint-level `gate` rejection.
+    $resp = fireListActionRequest(fireMetaPayload(['badges' => [], 'args' => 'raffle count']))
         ->assertOk()
-        ->assertJson(['fired' => false, 'reason' => 'gate']);
+        ->assertJson(['fired' => true]);
+
+    $msg = BotChatOutbox::where('user_id', $user->id)->latest()->first();
+    expect($msg->message)->toContain("'count' on 'raffle' is moderator+ only.");
+});
+
+it('fire endpoint runs an action a viewer has been opened up to per list', function () {
+    $user = actionUser('streamer_a');
+    $list = actionList($user, 'raffle', ['a', 'b', 'c']);
+    $list->update(['chat_permissions' => ['count' => 'everyone']]);
+    ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
+
+    fireListActionRequest(fireMetaPayload(['badges' => [], 'args' => 'raffle count']))
+        ->assertOk()
+        ->assertJson(['fired' => true]);
+
+    $msg = BotChatOutbox::where('user_id', $user->id)->latest()->first();
+    expect($msg->message)->toBe("'raffle' has 3 entries.");
 });
 
 it('fire endpoint accepts broadcaster', function () {
@@ -425,7 +513,10 @@ it('exposes the meta-command in /api/internal/bot/commands with type=list_meta',
 
     expect($list)->not->toBeNull()
         ->and($list['type'])->toBe('list_meta')
-        ->and($list['permission_level'])->toBe('moderator');
+        // 'everyone' so the bot relays every chatter's !list to us;
+        // per-action gating runs in ListActionService against the
+        // target list's chat_permissions overrides.
+        ->and($list['permission_level'])->toBe('everyone');
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

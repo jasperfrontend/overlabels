@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Events\ListUpdated;
 use App\Models\OptionSet;
+use App\Services\Lists\ListActionService;
+use App\Support\BotChatGate;
 use App\Support\ListItemTimestamps;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +27,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class ListController extends Controller
 {
+    public function __construct(
+        private readonly ListActionService $actions,
+    ) {}
+
     /**
      * Tag-safe slug pattern, matching the rest of the c:* namespace
      * conventions. Lowercase, must start with a letter, max 50 chars.
@@ -118,6 +124,13 @@ class ListController extends Controller
             // snapshot-cleared-disabled. Must be in the future when set.
             'entry_ttl_seconds' => 'sometimes|nullable|integer|min:10|max:2592000',
             'expires_at' => 'sometimes|nullable|integer|min:0',
+            // Per-action chat permission overrides. Same focused-PATCH
+            // pattern as `disabled` and the expiry fields. Keys must be
+            // known actions; values must be known tier levels. Anything
+            // matching the service-side default is dropped at save time
+            // so the JSON stays minimal.
+            'chat_permissions' => 'sometimes|array',
+            'chat_permissions.*' => 'string|in:'.implode(',', array_keys(BotChatGate::TIER_ORDER)),
         ]);
 
         // Disable / enable is a stand-alone operation. Recipe-locked
@@ -127,6 +140,29 @@ class ListController extends Controller
             $list->update([
                 'disabled_at' => $validated['disabled'] ? now() : null,
             ]);
+            $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
+
+            return back()->with('flash_list_id', $list->id);
+        }
+
+        // Chat-permissions focused PATCH. Stored shape is the partial-
+        // override map; keys that match the service-side default get
+        // dropped so the JSON stays minimal (and an empty map persists
+        // as NULL, signalling "everything default").
+        if (array_key_exists('chat_permissions', $validated)) {
+            $incoming = $validated['chat_permissions'] ?? [];
+            $known = array_keys(ListActionService::ACTION_DEFAULTS);
+            $stored = [];
+            foreach ($incoming as $action => $level) {
+                if (! in_array($action, $known, true)) {
+                    continue;
+                }
+                if ($level === ListActionService::ACTION_DEFAULTS[$action]) {
+                    continue;
+                }
+                $stored[$action] = $level;
+            }
+            $list->update(['chat_permissions' => $stored === [] ? null : $stored]);
             $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
 
             return back()->with('flash_list_id', $list->id);
@@ -274,6 +310,10 @@ class ListController extends Controller
             ] : null,
             'tag' => "[[[c:list:{$list->slug}]]]",
             'updated_at' => $list->updated_at?->timestamp,
+            // Always send the fully-resolved map (defaults merged with
+            // stored overrides) so the dashboard has a complete picture
+            // without having to know the defaults itself.
+            'chat_permissions' => $this->actions->resolveAllPermissions($list),
         ];
     }
 

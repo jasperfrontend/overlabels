@@ -148,9 +148,15 @@ class BotCommandController extends Controller
 
             $meta = $metaCommandsByUser->get($user->id);
             if ($meta && ! in_array($meta->command, $claimed, true)) {
+                // Announce 'everyone' so the bot relays every chatter's
+                // !list invocation to us; per-action gating runs server
+                // side against OptionSet->chat_permissions. If we kept
+                // the old moderator+ pre-gate here, viewers couldn't
+                // even hit the actions a streamer has opened up to them
+                // (random / search / searchall / etc).
                 $entries[] = [
                     'command' => $meta->command,
-                    'permission_level' => ListMetaCommand::PERMISSION_LEVEL,
+                    'permission_level' => 'everyone',
                     'type' => 'list_meta',
                 ];
             }

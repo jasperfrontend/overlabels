@@ -6,6 +6,7 @@ use App\Events\ListUpdated;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
 use App\Models\User;
+use App\Support\BotChatGate;
 use App\Support\ListItemTimestamps;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -40,18 +41,56 @@ class ListActionService
     ];
 
     /**
+     * Default permission level per chat-callable action. Anything not in
+     * the action list (help, slug-only, unknown action) is always allowed
+     * - those are informational replies. Streamers override these per
+     * list via OptionSet->chat_permissions; the merged map is what
+     * resolvePermission returns.
+     *
+     * Defaults intentionally lock everything to moderator+ to preserve
+     * the pre-migration behaviour. The dashboard checkbox UI exposes a
+     * binary everyone/moderator toggle today; the stored shape is full
+     * permission level strings so a richer UI (sub/vip) can land later
+     * without a migration.
+     */
+    public const array ACTION_DEFAULTS = [
+        'count' => 'moderator',
+        'first' => 'moderator',
+        'last' => 'moderator',
+        'random' => 'moderator',
+        'search' => 'moderator',
+        'searchall' => 'moderator',
+        'pop' => 'moderator',
+        'draw' => 'moderator',
+        'clear' => 'moderator',
+        'clone' => 'moderator',
+        'disable' => 'moderator',
+        'enable' => 'moderator',
+    ];
+
+    /**
      * Entry point. $rawArgs is everything the chatter typed after the
      * `!list` command (or whatever the streamer renamed it to). $invoker
      * is the user who typed it (mod or broadcaster) - used for the
      * "@user" prefix in error messages; pass the streamer themselves
      * when invoked via the dashboard buttons.
      *
+     * $badges is the chatter's lowercased IRC badges. Pass `null` to
+     * bypass the per-action permission gate entirely - that's the
+     * dashboard-buttons path, where the request has already been
+     * authorised as the owner of the list. From chat, always pass the
+     * real badges array (even an empty array for everyone-tier viewers).
+     *
      * Returns the reply string the caller should surface (write to
      * bot_chat_outbox for chat, toast/return in JSON for dashboard).
      * @throws Throwable
      */
-    public function handleInvocation(User $owner, string $rawArgs, string $invokerDisplayName = ''): string
-    {
+    public function handleInvocation(
+        User $owner,
+        string $rawArgs,
+        string $invokerDisplayName = '',
+        ?array $badges = null,
+    ): string {
         $tokens = preg_split('/\s+/', trim($rawArgs)) ?: [];
         $tokens = array_values(array_filter($tokens, static fn ($t) => $t !== ''));
 
@@ -73,6 +112,17 @@ class ListActionService
 
         $action = strtolower(array_shift($tokens));
 
+        // Per-action permission gate. Unknown actions fall through to
+        // the help message below - we don't gate "did the chatter spell
+        // the action right" behind a permission check, because that's
+        // an informational reply and gating it would be confusing.
+        if ($badges !== null && array_key_exists($action, self::ACTION_DEFAULTS)) {
+            $required = $this->resolvePermission($list, $action);
+            if (! BotChatGate::hasPermission($required, $badges)) {
+                return $this->mention($invokerDisplayName)."'$action' on '$list->slug' is $required+ only.";
+            }
+        }
+
         return match ($action) {
             'count' => $this->actionCount($list),
             'first' => $this->actionFirst($list, $tokens),
@@ -88,6 +138,51 @@ class ListActionService
             'searchall' => $this->actionSearchAll($list, $tokens, $invokerDisplayName),
             default => $this->unknownActionMessage($invokerDisplayName, $action),
         };
+    }
+
+    /**
+     * Merge the list's stored chat_permissions over ACTION_DEFAULTS and
+     * return the required permission level for $action. Unknown actions
+     * (informational helpers, typos) return 'everyone' so callers that
+     * route through here don't accidentally block help text.
+     */
+    public function resolvePermission(OptionSet $list, string $action): string
+    {
+        if (! array_key_exists($action, self::ACTION_DEFAULTS)) {
+            return 'everyone';
+        }
+
+        $stored = $list->chat_permissions ?? [];
+        $level = $stored[$action] ?? self::ACTION_DEFAULTS[$action];
+
+        // Defensive: if a stored value somehow drifts out of the known
+        // tier set, fall back to the default rather than letting an
+        // invalid level slip through (BotChatGate would just floor it
+        // to 'everyone', which is the wrong direction for safety).
+        return array_key_exists($level, BotChatGate::TIER_ORDER)
+            ? $level
+            : self::ACTION_DEFAULTS[$action];
+    }
+
+    /**
+     * Merge stored overrides over defaults so the dashboard always
+     * receives a complete map (every action has an explicit level).
+     * Used by ListController::serialize.
+     *
+     * @return array<string, string>
+     */
+    public function resolveAllPermissions(OptionSet $list): array
+    {
+        $stored = $list->chat_permissions ?? [];
+        $out = [];
+        foreach (self::ACTION_DEFAULTS as $action => $default) {
+            $level = $stored[$action] ?? $default;
+            $out[$action] = array_key_exists($level, BotChatGate::TIER_ORDER)
+                ? $level
+                : $default;
+        }
+
+        return $out;
     }
 
     // ─────────────────────────────────────────────────────────────────

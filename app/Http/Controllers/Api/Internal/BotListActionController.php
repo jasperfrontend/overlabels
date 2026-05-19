@@ -7,7 +7,6 @@ use App\Models\BotChatOutbox;
 use App\Models\ListMetaCommand;
 use App\Models\User;
 use App\Services\Lists\ListActionService;
-use App\Support\BotChatGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -15,13 +14,15 @@ use Illuminate\Support\Carbon;
 /**
  * Sibling of BotExpressionController / BotRecipeTriggerController /
  * BotListAppenderController. The bot POSTs here when a chatter fires
- * the user's `!list` meta-command. We gate (enabled + permission), hand
- * the args to ListActionService, then queue the resulting reply string
- * to bot_chat_outbox. The bot's outbox poller speaks it.
+ * the user's `!list` meta-command. We confirm the meta-command exists
+ * and is enabled, hand the args + chatter badges to ListActionService,
+ * and queue the resulting reply string to bot_chat_outbox.
  *
- * Permission is fixed at ListMetaCommand::PERMISSION_LEVEL (moderator+)
- * because the vocabulary is destructive or chat-emitting - this is not
- * an "everyone" surface.
+ * Per-action permission gating lives in ListActionService - each list
+ * keeps its own action->level map in OptionSet->chat_permissions.
+ * Defaults stay at moderator+ to match the pre-migration single gate,
+ * but streamers can open individual actions (typically count / random /
+ * search / searchall) to viewers per list.
  */
 class BotListActionController extends Controller
 {
@@ -63,16 +64,19 @@ class BotListActionController extends Controller
         }
 
         $badges = array_map('strtolower', $data['badges'] ?? []);
-
-        // Mod-or-broadcaster requirement. canFire-style logic without
-        // a cooldown - the action vocabulary self-rate-limits via the
-        // dashboard / chat invocations being a streamer concern.
-        if (! BotChatGate::hasPermission(ListMetaCommand::PERMISSION_LEVEL, $badges)) {
-            return response()->json(['fired' => false, 'reason' => 'gate']);
-        }
-
         $invoker = (string) ($data['chatter_display_name'] ?? $data['chatter_login'] ?? '');
-        $reply = $this->service->handleInvocation($owner, (string) ($data['args'] ?? ''), $invoker);
+
+        // Per-action gating happens inside the service - it knows which
+        // action was typed and what level the target list requires for
+        // that action. The bot's command-map entry announces 'everyone'
+        // for list_meta so viewer messages reach us; the service either
+        // runs the action or returns a friendly mods-only reply.
+        $reply = $this->service->handleInvocation(
+            $owner,
+            (string) ($data['args'] ?? ''),
+            $invoker,
+            $badges,
+        );
 
         if ($reply !== '') {
             BotChatOutbox::create([

@@ -112,6 +112,54 @@ it('store strips NUL bytes but preserves everything else verbatim', function () 
 // Update
 // ──────────────────────────────────────────────────────────────────────────────
 
+it('update accepts chat_permissions PATCH and drops default-level entries', function () {
+    $user = User::factory()->create(['twitch_id' => '888']);
+    $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'q', 'items' => []]);
+
+    // Mix: count -> override to 'everyone', clear -> matches default 'moderator'
+    // (should be dropped at save time so the stored JSON stays minimal),
+    // search -> override to 'vip'.
+    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+        'chat_permissions' => [
+            'count' => 'everyone',
+            'clear' => 'moderator',
+            'search' => 'vip',
+        ],
+    ])->assertRedirect();
+
+    $list->refresh();
+    expect($list->chat_permissions)->toBe(['count' => 'everyone', 'search' => 'vip']);
+});
+
+it('update accepts a fully-default chat_permissions PATCH and persists null', function () {
+    $user = User::factory()->create(['twitch_id' => '887']);
+    $list = OptionSet::create([
+        'user_id' => $user->id,
+        'slug' => 'q',
+        'items' => [],
+        'chat_permissions' => ['count' => 'everyone'],
+    ]);
+
+    // All-defaults submission -> stored as NULL (no overrides).
+    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+        'chat_permissions' => [
+            'count' => 'moderator',
+        ],
+    ])->assertRedirect();
+
+    $list->refresh();
+    expect($list->chat_permissions)->toBeNull();
+});
+
+it('update rejects unknown permission levels in chat_permissions PATCH', function () {
+    $user = User::factory()->create(['twitch_id' => '886']);
+    $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'q', 'items' => []]);
+
+    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+        'chat_permissions' => ['count' => 'gooseberry'],
+    ])->assertSessionHasErrors('chat_permissions.count');
+});
+
 it('update replaces items wholesale and broadcasts ListUpdated', function () {
     Event::fake([ListUpdated::class]);
     $user = User::factory()->create(['twitch_id' => '999']);

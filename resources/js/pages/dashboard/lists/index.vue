@@ -53,6 +53,7 @@ interface ListRow {
   recipe: { slug: string | null; name: string | null; version: number | null; instance_slug: string | null } | null;
   tag: string;
   updated_at: number | null;
+  chat_permissions: Record<string, string>;
 }
 
 const props = defineProps<{
@@ -643,6 +644,81 @@ function runClear() {
 function runPop(which: 'first' | 'last') {
   runAction('pop', which, true, `Remove the ${which} item from '${activeList.value?.slug}'?`);
 }
+// ──────────────────────────────────────────────────────────────────────────────
+// Per-action chat permissions (right column of Actions panel)
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Action groupings mirror the left column's button groups so the eye can
+// scan across (button on left, permission toggle on right). Searchall +
+// disable/enable don't have buttons today, but they're chat-callable so
+// they get permission toggles either way.
+const PERMISSION_GROUPS: { title: string; actions: { key: string; label: string }[] }[] = [
+  {
+    title: 'Inspect',
+    actions: [
+      { key: 'count', label: 'count' },
+      { key: 'first', label: 'first' },
+      { key: 'last', label: 'last' },
+      { key: 'random', label: 'random' },
+      { key: 'search', label: 'search' },
+      { key: 'searchall', label: 'searchall' },
+    ],
+  },
+  {
+    title: 'Pop/draw',
+    actions: [
+      { key: 'pop', label: 'pop first|last' },
+      { key: 'draw', label: 'draw' },
+    ],
+  },
+  {
+    title: 'Whole list',
+    actions: [
+      { key: 'clone', label: 'clone' },
+      { key: 'clear', label: 'clear' },
+    ],
+  },
+  {
+    title: 'State',
+    actions: [
+      { key: 'disable', label: 'disable' },
+      { key: 'enable', label: 'enable' },
+    ],
+  },
+];
+
+// Binary checkbox -> level. Future UI could expose subscriber/vip with
+// the same backend; for v1 we offer the two endpoints of the spectrum.
+function isActionOpen(action: string): boolean {
+  if (!activeList.value) return false;
+  return activeList.value.chat_permissions?.[action] === 'everyone';
+}
+
+const permissionSaving = ref(false);
+
+function toggleActionPermission(action: string, checked: boolean) {
+  if (!activeList.value) return;
+  // Optimistic update so the checkbox feels responsive; revert on error.
+  const previous = { ...(activeList.value.chat_permissions || {}) };
+  const next = { ...previous, [action]: checked ? 'everyone' : 'moderator' };
+  activeList.value.chat_permissions = next;
+
+  permissionSaving.value = true;
+  router.put(route('lists.update', activeList.value.id), {
+    chat_permissions: next,
+  }, {
+    preserveScroll: true,
+    onError: () => {
+      if (activeList.value) activeList.value.chat_permissions = previous;
+      toastMessage.value = 'Failed to save permission. Reverted.';
+      toastType.value = 'error';
+    },
+    onFinish: () => {
+      permissionSaving.value = false;
+    },
+  });
+}
+
 function runClone() {
   const slug = prompt(`New slug for the clone of '${activeList.value?.slug}':`, '');
   if (!slug || !slug.trim()) return;
@@ -1100,47 +1176,84 @@ onMounted(() => {
                 Same vocabulary as <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ activeList.slug }} &lt;action&gt;</span> in chat. Destructive actions snapshot first.
               </p>
             </div>
-            <div class="flex flex-col items-start gap-x-6 gap-y-3">
-              <!-- Inspect: read-only peeks -->
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="text-xs font-medium w-full tracking-wide text-foreground">Inspect</div>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runCount">
-                  <HashIcon class="h-3.5 w-3.5" /><span class="ml-1">Count</span>
-                </button>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runFirst">
-                  <ArrowUpToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">First</span>
-                </button>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runLast">
-                  <ArrowDownToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Last</span>
-                </button>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runRandom">
-                  <ShuffleIcon class="h-3.5 w-3.5" /><span class="ml-1">Random</span>
-                </button>
+            <div class="grid gap-6 md:grid-cols-2">
+              <!-- Left column: existing action buttons -->
+              <div class="flex flex-col items-start gap-x-6 gap-y-3">
+                <!-- Inspect: read-only peeks -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="text-xs font-medium w-full tracking-wide text-foreground">Inspect</div>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runCount">
+                    <HashIcon class="h-3.5 w-3.5" /><span class="ml-1">Count</span>
+                  </button>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runFirst">
+                    <ArrowUpToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">First</span>
+                  </button>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runLast">
+                    <ArrowDownToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Last</span>
+                  </button>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runRandom">
+                    <ShuffleIcon class="h-3.5 w-3.5" /><span class="ml-1">Random</span>
+                  </button>
+                </div>
+
+                <!-- Pop: remove one item -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="text-xs w-full font-medium tracking-wide text-foreground">Pop/draw</div>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('first')">
+                    <ArrowUpFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop first</span>
+                  </button>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('last')">
+                    <ArrowDownFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop last</span>
+                  </button>
+                  <button class="btn btn-primary cursor-pointer" :disabled="runningAction !== null" @click="runDraw">
+                    <DicesIcon class="h-3.5 w-3.5" /><span class="ml-1">Draw winner</span>
+                  </button>
+                </div>
+
+                <!-- Whole list -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="text-xs w-full font-medium tracking-wide text-foreground">List</div>
+                  <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runClone">
+                    <CopyPlusIcon class="h-3.5 w-3.5" /><span class="ml-1">Clone</span>
+                  </button>
+                  <button class="btn btn-chill cursor-pointer text-destructive hover:text-destructive" :disabled="runningAction !== null" @click="runClear">
+                    <EraserIcon class="h-3.5 w-3.5" /><span class="ml-1">Clear</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- Pop: remove one item -->
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="text-xs w-full font-medium tracking-wide text-foreground">Pop/draw</div>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('first')">
-                  <ArrowUpFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop first</span>
-                </button>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('last')">
-                  <ArrowDownFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop last</span>
-                </button>
-                <button class="btn btn-primary cursor-pointer" :disabled="runningAction !== null" @click="runDraw">
-                  <DicesIcon class="h-3.5 w-3.5" /><span class="ml-1">Draw winner</span>
-                </button>
-              </div>
-
-              <!-- Whole list -->
-              <div class="flex flex-wrap items-center gap-2">
-                <div class="text-xs w-full font-medium tracking-wide text-foreground">List</div>
-                <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runClone">
-                  <CopyPlusIcon class="h-3.5 w-3.5" /><span class="ml-1">Clone</span>
-                </button>
-                <button class="btn btn-chill cursor-pointer text-destructive hover:text-destructive" :disabled="runningAction !== null" @click="runClear">
-                  <EraserIcon class="h-3.5 w-3.5" /><span class="ml-1">Clear</span>
-                </button>
+              <!-- Right column: per-action chat permissions for THIS list -->
+              <div class="space-y-3">
+                <div>
+                  <div class="text-xs font-medium tracking-wide text-foreground">Allow viewers in chat</div>
+                  <p class="mt-0.5 text-xs text-muted-foreground">
+                    Unchecked = moderator+ only (default). Checked = everyone can run this action via <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ activeList.slug }} &lt;action&gt;</span>.
+                    Settings apply only to this list.
+                    <span v-if="permissionSaving" class="ml-1 italic">Saving…</span>
+                  </p>
+                </div>
+                <div
+                  v-for="group in PERMISSION_GROUPS"
+                  :key="group.title"
+                  class="space-y-1"
+                >
+                  <div class="text-xs font-medium tracking-wide text-muted-foreground">{{ group.title }}</div>
+                  <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <label
+                      v-for="action in group.actions"
+                      :key="action.key"
+                      class="flex cursor-pointer items-center gap-2 text-xs text-foreground"
+                    >
+                      <input
+                        type="checkbox"
+                        class="cursor-pointer"
+                        :checked="isActionOpen(action.key)"
+                        @change="(e) => toggleActionPermission(action.key, (e.target as HTMLInputElement).checked)"
+                      />
+                      <span class="font-mono">{{ action.label }}</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
