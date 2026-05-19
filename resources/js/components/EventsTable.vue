@@ -18,7 +18,7 @@ const confirmingId = ref<number | null>(null);
 const getEventStatus = computed(() => (event: UnifiedEvent) => {
   const status = event?.event_data?.status;
   if (status === 'fulfilled') return { class: 'text-green-400', label: 'Complete' };
-  if (status === 'unfulfilled') return { class: 'text-red-400', label: 'Refunded' };
+  if (status === 'unfulfilled') return { class: 'text-slate-400', label: 'Refunded' };
   return { class: 'hidden', label: '' };
 });
 
@@ -238,22 +238,19 @@ function relativeTime(iso: string): string {
           @keydown.space.prevent="openConfirm(event)"
         >
           <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
-            <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-[80%]">
+            <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden text-ellipsis">{{ label(event) }}</div>
-              <span v-if="details(event)">{{ details(event) }}</span>
             </div>
-            <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground/60">
+            <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground">
               <Clock class="h-3 w-3" />
               <span>{{ relativeTime(event.created_at) }}</span>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
 
-              <span :class="getEventStatus(event).class">
-                {{ getEventStatus(event).label }}
-              </span>
-
+              <span v-if="details(event)">{{ details(event) }}</span>
             </div>
+              <span :class="getEventStatus(event).class" class="text-xs ml-4">{{ getEventStatus(event).label }}</span>
           </div>
         </div>
       </PopoverTrigger>

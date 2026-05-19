@@ -245,7 +245,7 @@ function eventTypeLabel(type: string): string {
       </div>
     </div>
 
-    <div class="transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
+    <div class="transition-opacity duration-300 bg-card px-2 py-1" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.data.length > 0" :events="events.data" />
 
       <EmptyState v-else
