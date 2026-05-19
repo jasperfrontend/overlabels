@@ -200,6 +200,20 @@ const listCommands: BotCommandDoc[] = [
 // ── Misc ───────────────────────────────────────────────────────────────────
 const miscCommands: BotCommandDoc[] = [
   {
+    command: '!followage [@user]',
+    tier: 'everyone',
+    summary: 'How long the chatter (or a named user) has followed this channel.',
+    example: { chat: '!followage', reply: '@viewer you have been following for 4 years, 4 months, 11 days, 11 hours, 55 minutes' },
+    notes: 'Target a different user with !followage @someone. Returns "you don\'t follow this channel yet" if there\'s no follow relationship. The broadcaster querying their own follow date gets a friendly bounce - Twitch auto-follows broadcasters to themselves on signup.',
+  },
+  {
+    command: '!accountage [@user]',
+    tier: 'everyone',
+    summary: 'How long ago a Twitch account was created.',
+    example: { chat: '!accountage', reply: '@viewer your account was created 11 years, 7 months, 1 day, 12 minutes, 26 seconds ago' },
+    notes: 'Target a different user with !accountage @someone. Account creation dates are public Twitch data, so no broadcaster permission is needed.',
+  },
+  {
     command: '!ping',
     tier: 'everyone',
     summary: 'Liveness check. The bot says pong.',
@@ -491,10 +505,11 @@ const miscCommands: BotCommandDoc[] = [
             <span class="text-sm text-foreground">{{ cmd.summary }}</span>
           </summary>
           <div class="border-t border-sidebar bg-background/30 px-4 py-3">
-            <div v-if="cmd.example" class="rounded border border-sidebar bg-background/50 p-3 font-mono text-sm">
+            <div v-if="cmd.example" class="mb-2 rounded border border-sidebar bg-background/50 p-3 font-mono text-sm">
               <div class="text-foreground"><span class="text-muted-foreground">chat:</span> {{ cmd.example.chat }}</div>
               <div class="mt-1 text-foreground"><span class="text-muted-foreground">@overlabels:</span> {{ cmd.example.reply }}</div>
             </div>
+            <p v-if="cmd.notes" class="text-sm text-muted-foreground">{{ cmd.notes }}</p>
           </div>
         </details>
       </div>

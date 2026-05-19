@@ -43,6 +43,10 @@ A user flagged that StreamElements has these and Overlabels' bot didn't - a real
 - `tests/Feature/BotAccountageTest.php`: self via id, target via login, target no-match, missing internal secret.
 - 18 new tests, all green.
 
+### Help docs
+
+- `resources/js/pages/help/bot/Commands.vue` Miscellaneous section now lists both commands with examples + `[@user]` syntax notes. Same time: extended the misc section's template to render `cmd.notes` (it was the only command-list section dropping notes silently).
+
 ## May 19th, 2026 - Search, filter, and paginate recent events
 
 `/dashboard/recents` showed a flat list of the 50 most recent events with no way to slice it. With weeks of stream history accumulating, finding "that one Ko-fi from last Tuesday" meant scrolling. Adding proper filters + pagination.
