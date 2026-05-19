@@ -1,5 +1,20 @@
 # CHANGELOG MAY 2026
 
+## May 19th, 2026 - Optional success reply on list append
+
+Until today, list-append chat commands were silent on success by design, with the lone chat-facing exception being `args_empty_reply` for the rejection case. That left the streamer with no clean way to confirm an append to the chatter who triggered it - they had to glance at the overlay or trust silence. Added a sibling field, `success_reply`, that resolves the same template language and queues into `bot_chat_outbox` after the append commits.
+
+### What changed
+
+- Migration `2026_05_19_170904_add_success_reply_to_list_appenders` adds a nullable `string(500)` after `args_empty_reply`. NULL preserves the existing silent-by-default behaviour, so no existing appender changes shape.
+- `App\Models\ListAppender` - added `success_reply` to `$fillable` and the docblock.
+- `App\Services\Lists\ListAppendService::fire()` - after the successful append branch (history written, `last_fired_at` stamped, `ListUpdated` broadcast), resolve `success_reply` against the same `$context` used for `value_template` and write to `bot_chat_outbox` when the resolved string is non-empty. Empty resolved string still no-ops to match the `args_empty_reply` contract. New return shape `['fired' => true, 'value' => ..., 'reply' => ...]` documented in the method's docblock.
+- `App\Http\Controllers\ListAppenderController` - validation rule `success_reply => nullable|string|max:500`, persisted on `store` and `update`, threaded through `serialize()`.
+- `App\Http\Controllers\Api\Internal\BotListAppenderController` - docblock updated to reflect both outbox-bound replies (success + args-empty).
+- `database/factories/ListAppenderFactory` - defaults `success_reply` to null.
+- `resources/js/pages/dashboard/lists/index.vue` - extended the `AppenderRow` interface, form state, open/edit/save body, modal field (placed directly above the empty-args reply for natural reading order), and a chat-bubble hint line on each appender card that shows the configured reply when present.
+- 16/16 existing `ListAppenderTest` / `ListExpiryTest` / `ListReadTagsTest` cases still green.
+
 ## May 19th, 2026 - Remove the boss-gate on door damage in Chat Castle
 
 First Chat Castle stream test ran the night of May 18. Players reported the game felt unresponsive and "stopped registering commands" toward the end. The @todo on `ActionApplier::attack()` had flagged the boss-gate as a suspected cause ("this causes game crashes and I can't pinpoint yet how or why"), but the postmortem in the database doesn't support that theory and the gate had downsides anyway, so removing it.

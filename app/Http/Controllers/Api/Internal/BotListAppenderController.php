@@ -17,10 +17,11 @@ use Illuminate\Http\Request;
  * value_template, runs dedup + max_size checks, appends to the list,
  * records history, and broadcasts ListUpdated.
  *
- * Silent on chat by default. If the appender has args_empty_reply
- * configured and the fire bounces because args were empty, the resolved
- * reply is queued into bot_chat_outbox - the bot's outbox poller picks
- * it up and speaks it. Bot stays dumb either way.
+ * Silent on chat by default. If the appender has success_reply set,
+ * the resolved reply is queued into bot_chat_outbox on a successful
+ * append. Same goes for args_empty_reply when the fire bounces because
+ * args were empty. The bot's outbox poller picks these up and speaks
+ * them. Bot stays dumb either way.
  */
 class BotListAppenderController extends Controller
 {

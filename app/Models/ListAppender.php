@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * A chat command that appends to a List (option_set) when invoked.
@@ -18,10 +19,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $cooldown_seconds
  * @property string $value_template
  * @property string|null $args_empty_reply
+ * @property string|null $success_reply
  * @property string $dedup_policy      'none' | 'per_chatter' | 'per_chatter_per_stream'
  * @property int|null $max_size
  * @property bool $enabled
- * @property \Illuminate\Support\Carbon|null $last_fired_at
+ * @property Carbon|null $last_fired_at
  * @property-read OptionSet|null $targetList
  * @property-read User|null $user
  */
@@ -29,11 +31,11 @@ class ListAppender extends Model
 {
     use HasFactory;
 
-    public const DEDUP_NONE = 'none';
+    public const string DEDUP_NONE = 'none';
 
-    public const DEDUP_PER_CHATTER = 'per_chatter';
+    public const string DEDUP_PER_CHATTER = 'per_chatter';
 
-    public const DEDUP_PER_CHATTER_PER_STREAM = 'per_chatter_per_stream';
+    public const string DEDUP_PER_CHATTER_PER_STREAM = 'per_chatter_per_stream';
 
     public const array DEDUP_POLICIES = [
         self::DEDUP_NONE,
@@ -49,6 +51,7 @@ class ListAppender extends Model
         'cooldown_seconds',
         'value_template',
         'args_empty_reply',
+        'success_reply',
         'dedup_policy',
         'max_size',
         'enabled',

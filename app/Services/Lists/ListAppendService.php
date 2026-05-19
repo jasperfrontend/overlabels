@@ -24,8 +24,9 @@ use Illuminate\Support\Facades\DB;
  *
  * The value to append goes through BotExpressionResolver so the
  * template language is identical to Bot Expressions ([[[bot:from_user]]],
- * [[[c:foo:bar]]], pipe formatters, etc.). args_empty_reply, when
- * present, is resolved the same way and queued into bot_chat_outbox.
+ * [[[c:foo:bar]]], pipe formatters, etc.). args_empty_reply and
+ * success_reply, when present, are resolved the same way and queued
+ * into bot_chat_outbox.
  */
 class ListAppendService
 {
@@ -58,7 +59,8 @@ class ListAppendService
      * Fire the appender. Caller is expected to have gated via canFire().
      *
      * Possible return shapes:
-     *   ['fired' => true, 'value' => string]                            - appended
+     *   ['fired' => true, 'value' => string, 'reply' => string]         - appended, success reply queued to outbox
+     *   ['fired' => true, 'value' => string]                            - appended, silent
      *   ['fired' => false, 'reason' => 'args_empty', 'reply' => string] - empty args, reply queued to outbox
      *   ['fired' => false, 'reason' => 'args_empty']                    - empty args, silent
      *   ['fired' => false, 'reason' => 'list_full']
@@ -137,6 +139,22 @@ class ListAppendService
             $appender->forceFill(['last_fired_at' => Carbon::now()])->save();
 
             ListUpdated::dispatchFor((string) $user->twitch_id, $list->fresh());
+
+            // Optional success reply. Resolved against the same context
+            // as value_template so it can reference [[[bot:from_user]]]
+            // / [[[bot:args]]] etc. Empty resolved string -> silent (no
+            // outbox row), matching the args_empty_reply contract.
+            if ($appender->success_reply) {
+                $reply = $this->resolver->resolve($user, $appender->success_reply, $context);
+                if ($reply !== '') {
+                    BotChatOutbox::create([
+                        'user_id' => $user->id,
+                        'message' => $reply,
+                    ]);
+
+                    return ['fired' => true, 'value' => $resolvedValue, 'reply' => $reply];
+                }
+            }
 
             return ['fired' => true, 'value' => $resolvedValue];
         });

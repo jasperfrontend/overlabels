@@ -363,6 +363,7 @@ interface AppenderRow {
   cooldown_seconds: number;
   value_template: string;
   args_empty_reply: string | null;
+  success_reply: string | null;
   dedup_policy: 'none' | 'per_chatter' | 'per_chatter_per_stream';
   max_size: number | null;
   enabled: boolean;
@@ -398,6 +399,7 @@ const appenderForm = ref({
   cooldown_seconds: 0,
   value_template: '[[[bot:from_user]]]',
   args_empty_reply: '' as string,
+  success_reply: '' as string,
   dedup_policy: 'per_chatter' as 'none' | 'per_chatter' | 'per_chatter_per_stream',
   max_size: null as number | null,
   enabled: true,
@@ -413,6 +415,7 @@ function openAppenderAdd() {
     cooldown_seconds: 0,
     value_template: '[[[bot:from_user]]]',
     args_empty_reply: '',
+    success_reply: '',
     dedup_policy: 'per_chatter',
     max_size: null,
     enabled: true,
@@ -429,6 +432,7 @@ function openAppenderEdit(a: AppenderRow) {
     cooldown_seconds: a.cooldown_seconds,
     value_template: a.value_template,
     args_empty_reply: a.args_empty_reply ?? '',
+    success_reply: a.success_reply ?? '',
     dedup_policy: a.dedup_policy,
     max_size: a.max_size,
     enabled: a.enabled,
@@ -448,6 +452,7 @@ async function saveAppender() {
     cooldown_seconds: appenderForm.value.cooldown_seconds,
     value_template: appenderForm.value.value_template,
     args_empty_reply: appenderForm.value.args_empty_reply || null,
+    success_reply: appenderForm.value.success_reply || null,
     dedup_policy: appenderForm.value.dedup_policy,
     max_size: appenderForm.value.max_size || null,
     enabled: appenderForm.value.enabled,
@@ -1234,6 +1239,10 @@ onMounted(() => {
                   <p class="mt-1 font-mono text-xs text-muted-foreground truncate" :title="a.value_template">
                     appends: {{ a.value_template }}
                   </p>
+                  <p v-if="a.success_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
+                    <MessageSquareIcon class="h-3 w-3 shrink-0 mt-0.5" />
+                    <span class="truncate" :title="a.success_reply">success reply: {{ a.success_reply }}</span>
+                  </p>
                   <p v-if="a.args_empty_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
                     <MessageSquareIcon class="h-3 w-3 shrink-0 mt-0.5" />
                     <span class="truncate" :title="a.args_empty_reply">empty-args reply: {{ a.args_empty_reply }}</span>
@@ -1308,6 +1317,19 @@ onMounted(() => {
                 <Label for="ap-max">Max size (blank = unlimited)</Label>
                 <input id="ap-max" class="input-border" v-model.number="appenderForm.max_size" type="number" min="1" />
               </div>
+            </div>
+            <div>
+              <Label for="ap-success">Success reply (optional)</Label>
+              <textarea
+                id="ap-success"
+                v-model="appenderForm.success_reply"
+                rows="2"
+                class="input-border w-full text-sm"
+                placeholder="@[[[bot:from_user]]], your entry has been added to the list."
+              ></textarea>
+              <p class="mt-1 text-xs text-muted-foreground">
+                Spoken in chat after a successful append. Same template syntax as the value template. Leave blank for silent.
+              </p>
             </div>
             <div>
               <Label for="ap-empty">Empty-args reply (optional)</Label>
