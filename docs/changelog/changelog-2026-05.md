@@ -1,5 +1,48 @@
 # CHANGELOG MAY 2026
 
+## May 20th, 2026 - `!followage` and `!accountage` chat commands
+
+A user flagged that StreamElements has these and Overlabels' bot didn't - a real shortcoming for streamers who want chatters to be able to check how long they've followed or how old their Twitch account is, without having to fall back to a second bot. Adding both as proper builtins.
+
+### Helix wrappers
+
+- `TwitchApiService::getChannelFollower($accessToken, $broadcasterId, $followerUserId)` - thin wrapper around `GET helix/channels/followers?broadcaster_id=&user_id=`. Returns a single follower row (or null when the relationship doesn't exist). Pinned by `user_id` so the response is at most one row, no enrichment overhead, no pagination concern.
+- `TwitchApiService::getUserByLogin($accessToken, $login)` - resolves a typed chat handle (e.g. `targetuser`) to the full Helix user record. Used when the chatter targets someone other than themselves: `!followage @someone` or `!accountage @someone`.
+
+### Duration formatter
+
+- New `app/Support/HumanDuration.php`: `HumanDuration::between(Carbon $from, Carbon $to, int $maxUnits = 5)` returns strings like `"5 years, 4 months, 12 days, 9 hours, 4 minutes"`. Walks top-down through calendar units (year -> second), skips zero-valued units entirely, plural-correct, returns `"just now"` for a zero span. Calendar units rather than seconds-per-month math means a follow that landed on 2020-02-29 reads "5 years, 2 days" on 2025-03-02 instead of drifting from accumulated 30.44-day approximations.
+
+### `!followage`
+
+- `BotFollowageController` at `POST /api/internal/bot/followage`. Body: `{ channel_login, chatter_id, chatter_login, chatter_display_name, target_login? }`. Resolves the channel owner, optionally resolves a target user via Helix users (app token), then hits `helix/channels/followers` with the **broadcaster's** user token + the existing `moderator:read:followers` scope (no new scope migration needed - we already request it for every opted-in streamer).
+- Self-bounce: when the queried user is the broadcaster, returns `"you own this channel, so the follow date isn't all that meaningful"` (or the third-person variant for targeted lookups). Twitch auto-follows broadcasters to themselves on signup, so without this every broadcaster gets a useless follow-date readout.
+- Not-following case: `"@TargetUser doesn't follow this channel yet"` (or first-person variant for self).
+- Following case: `"@TargetUser has been following for 5 years, 4 months, 12 days"` (or first-person variant).
+- Unresolvable target login: `"no twitch user named @nobody_here"`.
+
+### `!accountage`
+
+- `BotAccountageController` at `POST /api/internal/bot/accountage`. Body: `{ chatter_id, chatter_login, chatter_display_name, target_login? }`. No channel_login needed - account age is global Twitch data. Resolves the target via Helix users with the app access token (no broadcaster scope required, account creation dates are public).
+- Self: `"your account was created 7 years, 2 months ago"`.
+- Target: `"@TargetUser's account was created 4 months ago"`.
+
+### Bot side (overlabels-bot repo)
+
+- Two new builtin handlers: `src/commands/followage.js` and `src/commands/accountage.js`, registered in `commands/handlers.js` Map. Each handler strips a leading `@` off the optional first arg, POSTs to the corresponding endpoint, and speaks the returned `reply` inline (no outbox round-trip, since these are read-only). Silent when `reply` is null - that's the server's signal for "nothing useful to say". Standard `OverlabelsApiError` handling.
+- `fetchFollowage()` and `fetchAccountage()` added to `src/overlabelsApi.js` next to the other internal-endpoint helpers.
+
+### Migration
+
+- `2026_05_20_120000_seed_followage_accountage_bot_commands` seeds both commands at `permission_level: 'everyone'` for every `bot_enabled` user. Idempotent via `firstOrCreate`. Streamers who want to lock either down can edit the row from the bot settings UI.
+
+### Tests
+
+- `tests/Unit/HumanDurationTest.php`: zero span, singular nouns, zero-unit-skipping, top-down multi-unit breakdown, max-units cap, reversed-arg swap.
+- `tests/Feature/BotFollowageTest.php`: missing channel owner, broadcaster self-query, follow-found, follow-not-found, target_login resolution, target_login no-match, missing internal secret.
+- `tests/Feature/BotAccountageTest.php`: self via id, target via login, target no-match, missing internal secret.
+- 18 new tests, all green.
+
 ## May 19th, 2026 - Search, filter, and paginate recent events
 
 `/dashboard/recents` showed a flat list of the 50 most recent events with no way to slice it. With weeks of stream history accumulating, finding "that one Ko-fi from last Tuesday" meant scrolling. Adding proper filters + pagination.

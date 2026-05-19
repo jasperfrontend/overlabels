@@ -233,6 +233,54 @@ class TwitchApiService
     }
 
     /**
+     * Look up a single follower relationship: is $followerUserId following
+     * $broadcasterId, and if so since when? Helix returns at most one row
+     * because the user_id filter pins the relationship. Returns null on
+     * "not following" so callers can branch cleanly; returns the row array
+     * (with `followed_at`) when the relationship exists.
+     *
+     * Used by !followage. Requires the broadcaster's user token with the
+     * `moderator:read:followers` scope. Skips the enrichWithProfileImages
+     * pass since chat replies don't surface avatars.
+     *
+     * @throws Exception
+     */
+    public function getChannelFollower(string $accessToken, string $broadcasterId, string $followerUserId): ?array
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'channels/followers',
+            ['broadcaster_id' => $broadcasterId, 'user_id' => $followerUserId],
+            'get single channel follower'
+        );
+
+        if (! is_array($response)) {
+            return null;
+        }
+
+        return $response['data'][0] ?? null;
+    }
+
+    /**
+     * Resolve a Twitch login (the URL slug, e.g. "jasperdiscovers") to the
+     * full user record. Used by !followage / !accountage when chat targets
+     * another user. Returns null when no user matches.
+     *
+     * @throws Exception
+     */
+    public function getUserByLogin(string $accessToken, string $login): ?array
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'users',
+            ['login' => strtolower($login)],
+            'get user by login'
+        );
+
+        return $response ? ($response['data'][0] ?? null) : null;
+    }
+
+    /**
      * @throws Exception
      */
     public function getChannelSubscribers(string $accessToken, string $userId, int $first = 20): ?array

@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\DeployWebhookController;
 use App\Http\Controllers\Api\ExternalWebhookController;
 use App\Http\Controllers\Api\GpsSessionMapController;
+use App\Http\Controllers\Api\Internal\BotAccountageController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotChatAdminController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotControlController;
 use App\Http\Controllers\Api\Internal\BotExpressionController;
+use App\Http\Controllers\Api\Internal\BotFollowageController;
 use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotListActionController;
 use App\Http\Controllers\Api\Internal\BotListAppenderController;
@@ -195,6 +197,8 @@ Route::prefix('/internal/bot')
             Route::post('/list-appenders/fire', [BotListAppenderController::class, 'fire']);
             Route::post('/list-actions/fire', [BotListActionController::class, 'fire']);
             Route::post('/manage', [BotChatAdminController::class, 'handle']);
+            Route::post('/followage', [BotFollowageController::class, 'handle']);
+            Route::post('/accountage', [BotAccountageController::class, 'handle']);
             Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
                 ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
             Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])
