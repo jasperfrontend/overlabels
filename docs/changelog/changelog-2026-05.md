@@ -1,5 +1,28 @@
 # CHANGELOG MAY 2026
 
+## May 19th, 2026 - Search, filter, and paginate recent events
+
+`/dashboard/recents` showed a flat list of the 50 most recent events with no way to slice it. With weeks of stream history accumulating, finding "that one Ko-fi from last Tuesday" meant scrolling. Adding proper filters + pagination.
+
+### Backend - unified paginated query
+
+- `DashboardController` now builds a UNION ALL across `twitch_events` and `external_events` (excluding `gps`), normalized to one shape, wrapped in `fromSub()` so cross-table `ORDER BY created_at DESC` works under Laravel's standard `paginate()`. The original `mergeRecentEvents()` helper still backs the dashboard tile (5 events, no filters), so nothing else regressed.
+- Four filter dimensions, all optional: `search` (Postgres `ILIKE` against `event_data::text` and `normalized_payload::text` so the full JSON is searchable), `source` (twitch or any external service the user has events from), `event_type` (any type the user has actually received), and `range` (hour / 24h / 7d / 30d / all). Source = `twitch` short-circuits the external query with `1 = 0` and vice versa, so the union still works but contributes zero rows from the other side.
+- New `eventFilterFacets()` helper returns the distinct sources + event_types actually present in the user's history. The frontend uses these to populate the dropdowns - no point showing a "Ko-fi" filter to someone who's never received a Ko-fi event.
+- `recentActivity` (full page) paginates at 20/page, `recentEvents` (embed) paginates at 25/page. Both call `withQueryString()` so paginator links preserve active filters.
+
+### Recents page (`dashboard/recents.vue`)
+
+- New "Filters Section" matching the visual language of `templates/index.vue`: 4-column grid on `lg`, 2-column on `md`, single column on phones. Search input is debounced 300ms; selects fire on change. URL stays canonical (defaults like `range=all` are stripped from the query string so back/forward navigation doesn't bounce between equivalent forms).
+- `watch(props.filters)` resyncs the form when Inertia restores props on browser back/forward - same pattern templates/index.vue uses.
+- Pagination component appears at the bottom only when `last_page > 1`. Empty state copy adapts to "no events match your filters" instead of the original "no events yet" since filters can now produce empty results from a non-empty history.
+
+### Embed page (`dashboard/events.vue`)
+
+- Filters live behind a "Filters" toggle button next to "Refresh", closed by default - the priority on the embed view is screen real estate for the actual event list while streaming. Opening it reveals the same 4 controls in a 2-column grid (single column on phones).
+- Pagination at the bottom of the list, like every other paginated list in the app. Same `<Pagination>` component, just sized down to fit the narrower max-width.
+- Refresh / info button behavior preserved.
+
 ## May 19th, 2026 - Per-list, per-action chat permissions for !list
 
 Until today, `!list` was gated by a single moderator+ check in `BotListActionController`, hardcoded against `ListMetaCommand::PERMISSION_LEVEL`. That was fine when the meta-command only existed for destructive operations, but with the new `search` / `searchall` / `random` verbs there's real value in letting viewers run safe lookups while keeping `clear` / `draw` / `pop` mod-only. The single hardcoded gate prevented that. Replacing it with per-action permissions configurable per list.
