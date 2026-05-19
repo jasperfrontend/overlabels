@@ -58,33 +58,33 @@ function replay(event: UnifiedEvent) {
 
 const externalEventLabels: Record<string, Record<string, string>> = {
   kofi: {
-    donation: 'Donated through Ko-fi',
-    subscription: 'Subscribed through Ko-fi',
-    shop_order: 'Ordered something from the Ko-fi shop',
-    commission: 'Ordered a Commission through Ko-fi',
+    donation: 'Ko tip-fi',
+    subscription: 'Ko-fi subscription',
+    shop_order: 'Ko-fi shop order',
+    commission: 'Ko-fi commission',
   },
   streamlabs: {
-    donation: 'Donated through Streamlabs',
-    subscription: 'Subscribed through Streamlabs',
-    shop_order: 'Ordered something from the Streamlabs shop',
-    commission: 'Ordered a Commission through Streamlabs',
+    donation: 'Streamlabs tip',
+    subscription: 'Streamlabs subscription',
+    shop_order: 'Streamlabs shop order',
+    commission: 'Streamlabs commission',
   },
   bmac: {
-    donation: 'Donated through Buy Me A Coffee',
-    recurring: 'Subscribed through Buy Me A Coffee',
-    extra: 'Ordered something extra from the Buy Me A Coffee shop',
-    membership: 'Ordered a Commission through Buy Me A Coffee',
-    wishlist: 'Ordered a Wishlist through Buy Me A Coffee',
-    commission: 'Ordered a Commission through Buy Me A Coffee',
+    donation: 'BMAC tip',
+    recurring: 'BMAC subscription',
+    extra: 'BMAC shop extra',
+    membership: 'BMAC commission',
+    wishlist: 'BMAC wishlist',
+    commission: 'BMAC commission',
   },
   fourthwall: {
-    donation: 'Donated through Fourthwall',
-    subscription: 'Subscribed through Fourthwall',
-    shop_order: 'Ordered something from the Fourthwall shop',
-    commission: 'Ordered a Commission through Fourthwall',
+    donation: 'Fourthwall tip',
+    subscription: 'Fourthwall subscription',
+    shop_order: 'Fourthwall shop order',
+    commission: 'Fourthwall commission',
   },
   streamelements: {
-    donation: 'Donated through StreamElements',
+    donation: 'StreamElements tip',
   }
 };
 
@@ -97,23 +97,23 @@ const twitchEventLabels: Record<string, string> = {
   'channel.subscription.message': 'resubscribed',
   'channel.subscription.gift': 'gifted subs',
   'channel.cheer': 'cheered',
-  'channel.raid': 'raided the channel',
-  'channel.channel_points_custom_reward_redemption.add': 'redeemed channel points',
-  'channel.channel_points_custom_reward_redemption.update': 'channel points redemption updated',
+  'channel.raid': 'raided',
+  'channel.channel_points_custom_reward_redemption.add': 'redeemed',
+  'channel.channel_points_custom_reward_redemption.update': 'redemption updated',
   'stream.online': 'went live',
   'stream.offline': 'ended the stream',
 
   // Polls
-  'channel.poll.begin': 'A poll started',
-  'channel.poll.progress': 'Active poll updated',
-  'channel.poll.end': 'Active poll ended',
+  'channel.poll.begin': 'Poll started',
+  'channel.poll.progress': 'Poll updated',
+  'channel.poll.end': 'Poll ended',
 
   // Hype train labels are computed dynamically from event data - see hypeTrainLabels()
 
   // Goals
-  'channel.goal.begin': 'A Goal started',
-  'channel.goal.progress': 'Active Goal progressed',
-  'channel.goal.end': 'Active Goal ended',
+  'channel.goal.begin': 'Goal started',
+  'channel.goal.progress': 'Goal progressed',
+  'channel.goal.end': 'Goal ended',
 };
 
 function label(event: UnifiedEvent): string {
