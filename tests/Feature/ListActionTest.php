@@ -90,6 +90,113 @@ it('first / last take a numeric arg', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Service-level: search / searchall
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('search returns the newest match, case-insensitively', function () {
+    $user = actionUser();
+    // Append order = chronology. Last item is "newest".
+    actionList($user, 'q', [
+        "Yo Jasper what's good!",
+        'Hi Jasper how are you doing?',
+        'Hello my name is Jasper and this is my quote.',
+    ]);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q search jasper', 'Mod');
+
+    expect($reply)->toBe(
+        "First search results for 'jasper' in list 'q', searched from new to old: Hello my name is Jasper and this is my quote."
+    );
+});
+
+it('search joins multi-word keywords', function () {
+    $user = actionUser();
+    actionList($user, 'q', ['nothing here', 'how are you doing today']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q search how are', 'Mod');
+
+    expect($reply)->toContain("'how are'")
+        ->and($reply)->toContain('how are you doing today');
+});
+
+it('search reports no matches cleanly', function () {
+    $user = actionUser();
+    actionList($user, 'q', ['hello world', 'goodbye world']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q search zzz', 'Mod');
+
+    expect($reply)->toBe("No matches for 'zzz' in 'q'.");
+});
+
+it('search needs a keyword', function () {
+    $user = actionUser();
+    actionList($user, 'q', ['anything']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q search', 'Mod');
+
+    expect($reply)->toContain('search needs a keyword')
+        ->and($reply)->toContain('@Mod');
+});
+
+it('search on empty list is friendly', function () {
+    $user = actionUser();
+    actionList($user, 'q', []);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q search foo', 'Mod');
+
+    expect($reply)->toBe("'q' is empty.");
+});
+
+it('searchall returns all matches numbered newest-first', function () {
+    $user = actionUser();
+    actionList($user, 'q', [
+        "Yo Jasper what's good!",
+        'Hi Jasper how are you doing?',
+        'Hello my name is Jasper and this is my quote.',
+    ]);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q searchall jasper', 'Mod');
+
+    expect($reply)->toBe(
+        "All search results for 'jasper' in 'q': [1]Hello my name is Jasper and this is my quote. [2]Hi Jasper how are you doing? [3]Yo Jasper what's good!"
+    );
+});
+
+it('searchall caps at MAX_REPLY_CHARS and appends "+N more"', function () {
+    $user = actionUser();
+    // 20 entries each containing "kw", each ~30 chars - well over 400 chars total.
+    $entries = [];
+    for ($i = 1; $i <= 20; $i++) {
+        $entries[] = "entry $i with kw inside text";
+    }
+    actionList($user, 'q', $entries);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q searchall kw', 'Mod');
+
+    expect(mb_strlen($reply))->toBeLessThanOrEqual(400)
+        ->and($reply)->toContain("All search results for 'kw'")
+        ->and($reply)->toMatch('/\(\+\d+ more\)$/');
+});
+
+it('searchall reports no matches cleanly', function () {
+    $user = actionUser();
+    actionList($user, 'q', ['hello world']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q searchall zzz', 'Mod');
+
+    expect($reply)->toBe("No matches for 'zzz' in 'q'.");
+});
+
+it('searchall needs a keyword', function () {
+    $user = actionUser();
+    actionList($user, 'q', ['anything']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'q searchall', 'Mod');
+
+    expect($reply)->toContain('searchall needs a keyword');
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Service-level: help messages
 // ──────────────────────────────────────────────────────────────────────────────
 

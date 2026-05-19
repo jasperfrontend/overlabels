@@ -1,5 +1,31 @@
 # CHANGELOG MAY 2026
 
+## May 19th, 2026 - !list search / searchall for quotes-style lookups
+
+A viewer on stream today tried `!list q search <name>` after adding a quote via a chat-append command, expecting the same search vocabulary they'd had on their previous bot (Wizebot's `!quote search`). The Overlabels meta-command didn't have a `search` verb, so the lookup silently failed and they had to scroll the dashboard. Adding `search` + `searchall` to `ListActionService` so the meta-command speaks that vocabulary too.
+
+### Behaviour
+
+- Syntax: `!list <slug> search <keyword>` (top match) and `!list <slug> searchall <keyword>` (all matches).
+- Keyword is everything after the action verb; multi-word keywords join with spaces (`!list q search how are` searches for the literal `"how are"`).
+- Case-insensitive substring (`stripos`). Not fuzzy/Levenshtein - the streamer's mental model of "find quotes containing X" is far closer to grep than to spell-correct, and similar-but-wrong matches would just be noise for quote/raffle/copypasta lists.
+- Iteration is newest-first (end of the `items` array, which is append-order). So `[1]` is always the most recent match.
+
+### Output shape
+
+```
+search   -> First search results for 'jasper' in list 'q', searched from new to old: Hello my name is Jasper and this is my quote.
+searchall -> All search results for 'jasper' in 'q': [1]Hello my name is Jasper... [2]Hi Jasper how are... [3]Yo Jasper what's good!
+```
+
+`searchall` packs entries in newest-first order until the next entry would push the reply past the existing 400-char `MAX_REPLY_CHARS` cap, then appends `(+N more)` so the viewer knows the list is truncated rather than missing matches.
+
+### What changed
+
+- `app/Services/Lists/ListActionService.php` - added `search` and `searchall` to the `ACTIONS` array, two cases in the `match` dispatch, two new private methods, and updated both help messages (`helpMessage` and `listHelpMessage`) so `!list` and `!list <slug>` advertise the new verbs.
+- `tests/Feature/ListActionTest.php` - 8 new cases covering: newest-first top match, multi-word keyword join, no-matches reply, empty-keyword help, empty-list friendly reply, newest-first numbered output, MAX_REPLY_CHARS cap + `(+N more)` suffix, and the two empty/keyword guards for `searchall`. All 39 tests in the file pass.
+- No frontend changes - the dashboard's Actions section already routes through the same `runAction` web endpoint, so streamers can hit `search` from the dashboard via the same vocabulary (button UI deferred until someone actually asks for it).
+
 ## May 19th, 2026 - Optional success reply on list append
 
 Until today, list-append chat commands were silent on success by design, with the lone chat-facing exception being `args_empty_reply` for the rejection case. That left the streamer with no clean way to confirm an append to the chatter who triggered it - they had to glance at the overlay or trust silence. Added a sibling field, `success_reply`, that resolves the same template language and queues into `bot_chat_outbox` after the append commits.

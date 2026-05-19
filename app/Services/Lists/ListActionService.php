@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\ListItemTimestamps;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * Action runner behind the `!list` meta-command + the dashboard action
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  * Self-documentation is built in: bare `!list`, `!list <slug>`, and
  * unknown actions all reply with help instead of erroring silently.
  *
- * Permission gating + bot routing lives in the controller; this
+ * Permission gating and bot routing lives in the controller; this
  * service assumes the caller has already verified the invoker is
  * allowed to run actions.
  */
@@ -31,11 +32,11 @@ class ListActionService
      * some slack for the bot's "@user " prefix it may add and any
      * trailing emoji.
      */
-    private const MAX_REPLY_CHARS = 400;
+    private const int MAX_REPLY_CHARS = 400;
 
-    private const ACTIONS = [
+    private const array ACTIONS = [
         'draw', 'clear', 'disable', 'enable', 'pop', 'clone',
-        'count', 'first', 'last', 'random',
+        'count', 'first', 'last', 'random', 'search', 'searchall',
     ];
 
     /**
@@ -47,6 +48,7 @@ class ListActionService
      *
      * Returns the reply string the caller should surface (write to
      * bot_chat_outbox for chat, toast/return in JSON for dashboard).
+     * @throws Throwable
      */
     public function handleInvocation(User $owner, string $rawArgs, string $invokerDisplayName = ''): string
     {
@@ -62,7 +64,7 @@ class ListActionService
         /** @var OptionSet|null $list */
         $list = OptionSet::where('user_id', $owner->id)->where('slug', $slug)->first();
         if (! $list) {
-            return $this->mention($invokerDisplayName)."no list named '{$slug}'. Check your lists at /dashboard/lists.";
+            return $this->mention($invokerDisplayName)."no list named '$slug'. Check your lists at /dashboard/lists.";
         }
 
         if ($tokens === []) {
@@ -79,9 +81,11 @@ class ListActionService
             'clear' => $this->actionClear($owner, $list),
             'disable' => $this->actionDisable($owner, $list),
             'enable' => $this->actionEnable($owner, $list),
-            'draw' => $this->actionDraw($owner, $list, $invokerDisplayName),
+            'draw' => $this->actionDraw($owner, $list),
             'pop' => $this->actionPop($owner, $list, $tokens, $invokerDisplayName),
             'clone' => $this->actionClone($owner, $list, $tokens, $invokerDisplayName),
+            'search' => $this->actionSearch($list, $tokens, $invokerDisplayName),
+            'searchall' => $this->actionSearchAll($list, $tokens, $invokerDisplayName),
             default => $this->unknownActionMessage($invokerDisplayName, $action),
         };
     }
@@ -92,22 +96,22 @@ class ListActionService
 
     private function helpMessage(string $invokerName): string
     {
-        return $this->mention($invokerName).'List actions: draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N]. Usage: !list <slug> <action>';
+        return $this->mention($invokerName).'List actions: draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], search <keyword>, searchall <keyword>. Usage: !list <slug> <action>';
     }
 
     private function listHelpMessage(string $invokerName, string $slug): string
     {
-        return $this->mention($invokerName)."Actions for '{$slug}': draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N]";
+        return $this->mention($invokerName)."Actions for '$slug': draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], search <keyword>, searchall <keyword>";
     }
 
     private function unknownActionMessage(string $invokerName, string $action): string
     {
-        return $this->mention($invokerName)."'{$action}' isn't a valid action. Try: ".implode(', ', self::ACTIONS);
+        return $this->mention($invokerName)."'$action' isn't a valid action. Try: ".implode(', ', self::ACTIONS);
     }
 
     private function mention(string $invokerName): string
     {
-        return $invokerName === '' ? '' : "@{$invokerName} - ";
+        return $invokerName === '' ? '' : "@$invokerName - ";
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -119,8 +123,8 @@ class ListActionService
         $count = count($list->items ?? []);
 
         return $count === 0
-            ? "'{$list->slug}' is empty."
-            : "'{$list->slug}' has {$count} ".($count === 1 ? 'entry.' : 'entries.');
+            ? "'$list->slug' is empty."
+            : "'$list->slug' has $count ".($count === 1 ? 'entry.' : 'entries.');
     }
 
     /**
@@ -146,7 +150,7 @@ class ListActionService
     {
         $items = array_values($list->items ?? []);
         if ($items === []) {
-            return "'{$list->slug}' is empty.";
+            return "'$list->slug' is empty.";
         }
 
         $n = $this->parseCountToken($tokens, count($items));
@@ -155,7 +159,7 @@ class ListActionService
         $picked = array_map(static fn ($k) => $items[$k], $keys);
 
         $label = count($picked) === 1
-            ? "Random from '{$list->slug}': "
+            ? "Random from '$list->slug': "
             : count($picked).' from \''.$list->slug.'\': ';
 
         return $this->truncate($label.implode(', ', $picked));
@@ -170,7 +174,7 @@ class ListActionService
     {
         $items = array_values($list->items ?? []);
         if ($items === []) {
-            return "'{$list->slug}' is empty.";
+            return "'$list->slug' is empty.";
         }
 
         $n = $this->parseCountToken($tokens, count($items));
@@ -179,8 +183,8 @@ class ListActionService
             : array_slice($items, -$n);
 
         $label = $n === 1
-            ? ucfirst($which)." of '{$list->slug}': "
-            : ucfirst($which)." {$n} of '{$list->slug}': ";
+            ? ucfirst($which)." of '$list->slug': "
+            : ucfirst($which)." $n of '$list->slug': ";
 
         return $this->truncate($label.implode(', ', $slice));
     }
@@ -203,14 +207,110 @@ class ListActionService
     }
 
     // ─────────────────────────────────────────────────────────────────
+    // Search actions (case-insensitive substring, newest-first)
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Top match, searching from newest entry to oldest. Newest = end of
+     * the items array, which is append-order (chat appends push there,
+     * dashboard edits preserve order).
+     *
+     * @param  array<int, string>  $tokens
+     */
+    private function actionSearch(OptionSet $list, array $tokens, string $invokerName): string
+    {
+        if ($tokens === []) {
+            return $this->mention($invokerName)."search needs a keyword: !list $list->slug search <keyword>";
+        }
+
+        $items = array_values($list->items ?? []);
+        if ($items === []) {
+            return "'$list->slug' is empty.";
+        }
+
+        $keyword = implode(' ', $tokens);
+
+        // Iterate newest-first. stripos handles case-insensitivity and
+        // multibyte-safe-enough for typical chat content (Twitch chat is
+        // mostly ASCII anyway).
+        foreach (array_reverse($items) as $item) {
+            if (stripos((string) $item, $keyword) !== false) {
+                return $this->truncate("First search results for '$keyword' in list '$list->slug', searched from new to old: $item");
+            }
+        }
+
+        return "No matches for '$keyword' in '$list->slug'.";
+    }
+
+    /**
+     * All matches with [N] prefix, newest-first. Truncates at the
+     * MAX_REPLY_CHARS boundary - drops trailing matches and appends a
+     * "(+N more)" suffix so the reader knows there's more.
+     *
+     * @param  array<int, string>  $tokens
+     */
+    private function actionSearchAll(OptionSet $list, array $tokens, string $invokerName): string
+    {
+        if ($tokens === []) {
+            return $this->mention($invokerName)."searchall needs a keyword: !list $list->slug searchall <keyword>";
+        }
+
+        $items = array_values($list->items ?? []);
+        if ($items === []) {
+            return "'$list->slug' is empty.";
+        }
+
+        $keyword = implode(' ', $tokens);
+
+        $matches = [];
+        foreach (array_reverse($items) as $item) {
+            if (stripos((string) $item, $keyword) !== false) {
+                $matches[] = (string) $item;
+            }
+        }
+
+        if ($matches === []) {
+            return "No matches for '$keyword' in '$list->slug'.";
+        }
+
+        $prefix = "All search results for '$keyword' in '$list->slug': ";
+        $body = $prefix;
+        $included = 0;
+        foreach ($matches as $i => $m) {
+            $chunk = ($i === 0 ? '' : ' ').'['.($i + 1).']'.$m;
+            if (mb_strlen($body.$chunk) > self::MAX_REPLY_CHARS) {
+                break;
+            }
+            $body .= $chunk;
+            $included++;
+        }
+
+        // The very-first-match-too-long edge case: fall back to the
+        // ellipsis truncate helper so we never return a bare prefix.
+        if ($included === 0) {
+            return $this->truncate($prefix.'[1]'.$matches[0]);
+        }
+
+        $omitted = count($matches) - $included;
+        if ($omitted > 0) {
+            $body .= " (+$omitted more)";
+        }
+
+        return $body;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
     // Destructive actions (snapshot before, broadcast after)
     // ─────────────────────────────────────────────────────────────────
 
+    /**
+     * @throws Throwable
+     */
     private function actionClear(User $owner, OptionSet $list): string
     {
         $items = $list->items ?? [];
         if ($items === []) {
-            return "'{$list->slug}' was already empty.";
+            return "'$list->slug' was already empty.";
         }
 
         return DB::transaction(function () use ($owner, $list, $items) {
@@ -220,22 +320,25 @@ class ListActionService
             $locked->update(['items' => [], 'item_added_at' => []]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "Cleared '{$locked->slug}' ({$count} ".($count === 1 ? 'entry' : 'entries').' archived to snapshot).';
+            return "Cleared '$locked->slug' ($count ".($count === 1 ? 'entry' : 'entries').' archived to snapshot).';
         });
     }
 
-    private function actionDraw(User $owner, OptionSet $list, string $invokerName): string
+    /**
+     * @throws Throwable
+     */
+    private function actionDraw(User $owner, OptionSet $list): string
     {
         $items = array_values($list->items ?? []);
         if ($items === []) {
-            return "Can't draw - '{$list->slug}' is empty.";
+            return "Can't draw - '$list->slug' is empty.";
         }
 
         return DB::transaction(function () use ($owner, $list) {
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $current = array_values($locked->items ?? []);
             if ($current === []) {
-                return "Can't draw - '{$locked->slug}' is empty.";
+                return "Can't draw - '$locked->slug' is empty.";
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_DRAW, $owner->id);
             $winnerIdx = array_rand($current);
@@ -248,29 +351,30 @@ class ListActionService
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "🎰 Winner of '{$locked->slug}': {$winner}";
+            return "🎰 Winner of '$locked->slug': $winner";
         });
     }
 
     /**
-     * @param  array<int, string>  $tokens
+     * @param array<int, string> $tokens
+     * @throws Throwable
      */
     private function actionPop(User $owner, OptionSet $list, array $tokens, string $invokerName): string
     {
         if ($tokens === []) {
-            return $this->mention($invokerName)."pop needs first or last: !list {$list->slug} pop first  OR  !list {$list->slug} pop last";
+            return $this->mention($invokerName)."pop needs first or last: !list $list->slug pop first  OR  !list $list->slug pop last";
         }
 
         $which = strtolower($tokens[0]);
         if ($which !== 'first' && $which !== 'last') {
-            return $this->mention($invokerName)."pop needs first or last (got '{$which}'): !list {$list->slug} pop first  OR  !list {$list->slug} pop last";
+            return $this->mention($invokerName)."pop needs first or last (got '$which'): !list $list->slug pop first  OR  !list $list->slug pop last";
         }
 
         return DB::transaction(function () use ($owner, $list, $which) {
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $current = array_values($locked->items ?? []);
             if ($current === []) {
-                return "Can't pop - '{$locked->slug}' is empty.";
+                return "Can't pop - '$locked->slug' is empty.";
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_POP, $owner->id);
 
@@ -289,7 +393,7 @@ class ListActionService
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "Popped {$which} from '{$locked->slug}': {$popped}";
+            return "Popped $which from '$locked->slug': $popped";
         });
     }
 
@@ -299,16 +403,16 @@ class ListActionService
     private function actionClone(User $owner, OptionSet $list, array $tokens, string $invokerName): string
     {
         if ($tokens === []) {
-            return $this->mention($invokerName)."clone needs a new slug: !list {$list->slug} clone <new_slug>";
+            return $this->mention($invokerName)."clone needs a new slug: !list $list->slug clone <new_slug>";
         }
 
         $newSlug = strtolower($tokens[0]);
         if (! preg_match(OptionSet::SLUG_PATTERN, $newSlug)) {
-            return $this->mention($invokerName)."'{$newSlug}' isn't a valid slug. Use lowercase letters, digits, underscores; start with a letter.";
+            return $this->mention($invokerName)."'$newSlug' isn't a valid slug. Use lowercase letters, digits, underscores; start with a letter.";
         }
 
         if (OptionSet::where('user_id', $owner->id)->where('slug', $newSlug)->exists()) {
-            return $this->mention($invokerName)."you already have a list named '{$newSlug}'. Pick a different slug.";
+            return $this->mention($invokerName)."you already have a list named '$newSlug'. Pick a different slug.";
         }
 
         $count = count($list->items ?? []);
@@ -338,7 +442,7 @@ class ListActionService
         // to see new lists appearing, but the contents are correct.)
         ListUpdated::dispatchFor((string) $owner->twitch_id, $newList);
 
-        return "Cloned '{$list->slug}' to '{$newSlug}' ({$count} ".($count === 1 ? 'item' : 'items').').';
+        return "Cloned '$list->slug' to '$newSlug' ($count ".($count === 1 ? 'item' : 'items').').';
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -348,23 +452,23 @@ class ListActionService
     private function actionDisable(User $owner, OptionSet $list): string
     {
         if ($list->disabled_at !== null) {
-            return "'{$list->slug}' is already disabled.";
+            return "'$list->slug' is already disabled.";
         }
         $list->update(['disabled_at' => Carbon::now()]);
         $this->broadcast($owner, $list->fresh());
 
-        return "Disabled '{$list->slug}'. Chat appenders will silently no-op until re-enabled.";
+        return "Disabled '$list->slug'. Chat appenders will silently no-op until re-enabled.";
     }
 
     private function actionEnable(User $owner, OptionSet $list): string
     {
         if ($list->disabled_at === null) {
-            return "'{$list->slug}' is already enabled.";
+            return "'$list->slug' is already enabled.";
         }
         $list->update(['disabled_at' => null]);
         $this->broadcast($owner, $list->fresh());
 
-        return "Enabled '{$list->slug}'.";
+        return "Enabled '$list->slug'.";
     }
 
     // ─────────────────────────────────────────────────────────────────
