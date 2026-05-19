@@ -29,7 +29,7 @@ class ListController extends Controller
      * Tag-safe slug pattern, matching the rest of the c:* namespace
      * conventions. Lowercase, must start with a letter, max 50 chars.
      */
-    private const SLUG_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
+    private const string SLUG_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
     /**
      * GET /dashboard/lists

@@ -1,4 +1,4 @@
-when someone follows your channel.
+The template tags available in your alerts when you get a new follower.
 
 ### User Information
 - `[[[event.user_id]]]` :: Follower's Twitch ID
@@ -10,3 +10,5 @@ when someone follows your channel.
 - `[[[event.broadcaster_user_name]]]` :: Your display name
 
 note: maps to the Twitch EventSub event `channel.follow`.
+### tags
+#channel #follower #follow #template-tags 
