@@ -890,41 +890,6 @@ onMounted(() => {
       <p class="text-sm">Reusable lists you can reference from any overlay via [[[c:list:&lt;slug&gt;]]] or loop with [[[foreach:c:list:&lt;slug&gt; as item]]]. Lists are lists - we preserve exactly what you type, empties and duplicates included.</p>
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
-      <!-- Meta-command settings: opt into !list (mod+) for chat actions -->
-      <Card class="border-sidebar-border mb-6 bg-sidebar-accent">
-        <CardContent>
-          <div class="flex items-start gap-3">
-            <TerminalIcon class="mt-0.5 h-5 w-5 shrink-0" />
-            <div class="min-w-0 flex-1 space-y-2">
-              <div>
-                <h3 class="text-sm font-semibold text-foreground">!list meta-command (mod+ in chat)</h3>
-                <p class="mt-0.5 text-xs text-muted-foreground">
-                  By default, mod actions live under <span class="text-foreground">!list</span>. If that doesn't work with your stream
-                  configuration, you can set another command here.
-                </p>
-              </div>
-              <Label for="meta-cmd" class="text-xs">Command name</Label>
-              <div class="flex flex-wrap items-center gap-2">
-                <div>
-                  <div class="flex items-center gap-1">
-                    <span class="font-mono text-sm text-muted-foreground">!</span>
-                    <input id="meta-cmd" v-model="metaForm.command" class="w-32 h-8 font-mono input-border" />
-                  </div>
-                </div>
-
-                <button size="sm" class="btn h-8 btn-primary cursor-pointer" :disabled="savingMeta" @click="saveMeta">
-                  {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
-                </button>
-              </div>
-              <p v-if="metaError" class="text-xs text-destructive">{{ metaError }}</p>
-              <p v-else-if="metaCommand?.enabled" class="text-xs text-muted-foreground">
-                Active in chat: <span class="font-mono">!{{ metaCommand.command }}</span>
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <Card v-if="showCreate" class="border-sidebar-border">
         <CardContent class="space-y-6">
           <div class="grid gap-3 md:grid-cols-2">
@@ -971,15 +936,15 @@ onMounted(() => {
         </p>
       </div>
 
-      <div v-else class="grid gap-4 md:grid-cols-[260px_1fr]">
+      <div v-else class="grid gap-4 md:grid-cols-[300px_1fr]">
         <!-- Left: list of lists -->
-        <div class="space-y-2">
+        <div class="space-y-1">
           <button
             v-for="list in lists"
             :key="list.id"
             type="button"
-            class="flex w-full cursor-pointer items-start justify-between gap-2 border border-sidebar-border p-2 text-left text-sm transition hover:bg-sidebar-accent"
-            :class="{ 'bg-sidebar-accent border-violet-400/40': activeId === list.id }"
+            class="flex w-full cursor-pointer items-start justify-between border border-sidebar-border p-2 text-left text-sm transition hover:bg-sidebar-accent"
+            :class="{ 'bg-sidebar-accent border-violet-400': activeId === list.id }"
             @click="activeId = list.id"
           >
             <div class="min-w-0">
@@ -991,10 +956,46 @@ onMounted(() => {
               <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">{{ list.slug }}</div>
               <div class="mt-0.5 text-[11px] text-muted-foreground">
                 {{ list.items.length }} item{{ list.items.length === 1 ? '' : 's' }}
-                <span v-if="list.recipe" class="ml-1">• {{ list.recipe.name }}</span>
+                <span v-if="list.recipe">• {{ list.recipe.name }}</span>
               </div>
             </div>
           </button>
+
+
+          <!-- Meta-command settings: opt into !list (mod+) for chat actions -->
+          <Card class="border-sidebar-border mb-6 bg-sidebar-accent">
+            <CardContent>
+              <div class="flex items-start gap-3">
+                <div class="min-w-0 flex-1 space-y-2">
+                  <div>
+                    <h3 class="text-sm font-semibold text-foreground">!list meta-command</h3>
+                    <p class="mt-0.5 text-xs text-muted-foreground">
+                      By default, List actions live under <span class="text-foreground">!list</span>. If that doesn't work with your stream
+                      configuration, you can set another command here.
+                    </p>
+                  </div>
+                  <Label for="meta-cmd" class="text-xs">Command name</Label>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div>
+                      <div class="flex items-center gap-1">
+                        <span class="font-mono text-sm text-muted-foreground">!</span>
+                        <input id="meta-cmd" v-model="metaForm.command" class="w-32 h-8 font-mono input-border" />
+                      </div>
+                    </div>
+
+                    <button size="sm" class="btn h-8 btn-primary cursor-pointer" :disabled="savingMeta" @click="saveMeta">
+                      {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
+                    </button>
+                  </div>
+                  <p v-if="metaError" class="text-xs text-destructive">{{ metaError }}</p>
+                  <p v-else-if="metaCommand?.enabled" class="text-xs text-muted-foreground">
+                    Active in chat: <span class="font-mono">!{{ metaCommand.command }}</span>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
 
         <!-- Right: editor for the active list -->
