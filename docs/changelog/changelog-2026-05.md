@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 20th, 2026 - UX: drop the screenshot gate on overlay creation
+
+Creating an overlay no longer requires a screenshot first. The previous "Add a screenshot to enable Create" gate was backwards: you can't screenshot a finished overlay until you've saved it at least once, so it blocked the exact first save it depended on. Screenshots are now optional at create time and can be added any moment after, as they always could on the edit page.
+
+- `create.vue`: removed the `screenshot_url` short-circuit in `submitForm`, the disabled-until-screenshot state on both Create buttons, and the "Add a screenshot to enable Create" hint. The Screenshot tab copy now reads "Optional" instead of "Required" and drops the asterisk.
+- `OverlayTemplateController::store`: `screenshot_url` validation relaxed from `required` to `nullable`, and the Cloudinary `claim()` call is now guarded so it only runs when a URL is actually present.
+- `TemplateCodeEditor.vue`: `template` prop made optional so the create page (which has no saved template yet) can mount the editor. Fixes a TS2345 error. The OBS tab - which generates a browser-source URL that can't exist before save - is now hidden when no template is present.
+
 ## May 20th, 2026 - UX: post-delete redirect always matches the breadcrumb
 
 Follow-up to the April 4th contextual breadcrumbs work. Deleting a template from show/edit was supposed to return you to the filtered list you came from (e.g. "My static overlays"), but in some situations it dumped you on the unfiltered `/templates`. Root cause: the breadcrumb read the saved list context once at mount, while the delete redirect re-read `sessionStorage` live at click time, and that key is only ever (re)written by the index page. Any path that re-filtered the index after you landed (notably browser back -> change filter -> forward), or that entered show/edit from a non-index page (kit page, events list, dashboard), let the two reads drift apart, so the breadcrumb could say "My static overlays" while the redirect went to `/templates`.

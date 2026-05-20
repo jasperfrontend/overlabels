@@ -15,7 +15,7 @@ const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
 
 const props = defineProps<{
-  template: { id: number; name: string; slug: string };
+  template?: { id: number; name: string; slug: string };
   templateType?: string;
 }>();
 
@@ -45,6 +45,9 @@ const editorTabs = [
 ] as const;
 
 type CodeTab = (typeof editorTabs)[number]['key'];
+
+// OBS tab generates a browser-source URL, which only exists once the overlay is saved
+const visibleTabs = computed(() => editorTabs.filter((tab) => tab.key !== 'add-to-obs' || props.template));
 
 const codeTab = ref<CodeTab>('body');
 const isExpanded = ref(false);
@@ -89,7 +92,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
         <!-- Vertical file tabs -->
         <div class="flex flex-col bg-sidebar text-sidebar-foreground">
           <button
-            v-for="tab in editorTabs"
+            v-for="tab in visibleTabs"
             :key="tab.key"
             type="button"
             @click="codeTab = tab.key"
@@ -239,6 +242,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
           <!-- Add to OBS panel -->
           <div
             v-show="codeTab === 'add-to-obs' && props.templateType === 'static'"
+            v-if="props.template"
             class="absolute inset-0 overflow-auto p-6 text-sm text-foreground"
           >
             <div class="mx-auto max-w-2xl space-y-4">

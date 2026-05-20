@@ -770,7 +770,7 @@ class OverlayTemplateController extends Controller
             'compiled_css' => 'nullable|string',
             'type' => 'required|in:static,alert',
             'is_public' => 'boolean',
-            'screenshot_url' => 'required|url|max:2048',
+            'screenshot_url' => 'nullable|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'nullable|url|max:2048',
@@ -784,7 +784,9 @@ class OverlayTemplateController extends Controller
         $template->template_tags = $template->extractTemplateTags($request->user()->foreachCaps());
         $template->save();
 
-        $cloudinary->claim($validated['screenshot_url']);
+        if (! empty($validated['screenshot_url'])) {
+            $cloudinary->claim($validated['screenshot_url']);
+        }
 
         // For Inertia requests, redirect to the show page
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
