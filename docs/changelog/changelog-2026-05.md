@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 20th, 2026 - npm security: patch `ws` (Dependabot) + `brace-expansion`
+
+Dependabot flagged `ws` (GHSA-58qx-3vcg-4xpx, "uninitialized memory disclosure", medium) on the default branch. It's a transitive dep: `socket.io-client -> engine.io-client -> ws@8.18.3`, used server-side by the StreamLabs/StreamElements Node listeners (the browser uses native WebSocket, so the bundle is unaffected).
+
+- `engine.io-client@6.6.4` pins `ws` at `~8.18.3` (< 8.19.0), so a plain `npm update` can't reach the patched 8.20.1. Forced it via an npm `overrides` entry: `"ws": "^8.20.1"`. `ws` 8.18 -> 8.20 is a same-major patch bump, API-compatible.
+- While in the lockfile, `npm audit fix` also cleared `brace-expansion` (GHSA-f886-m6hf-6m8v / GHSA-jxxr-4gwj-5jf2, ReDoS/DoS), a dev-only transitive of eslint and vue-language-core - not shipped to production.
+- `npm audit` now reports 0 vulnerabilities. `npm run build` green.
+
 ## May 20th, 2026 - Laravel 13 upgrade
 
 Laravel 12 drops to security-only fixes after Aug 13, 2026 (EOL Feb 4, 2027), so moving to Laravel 13 ahead of that. The upgrade turned out unusually clean: every third-party package already ships Laravel 13 support at its current version, so only the framework itself and tinker needed constraint changes.
