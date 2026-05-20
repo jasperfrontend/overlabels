@@ -10,6 +10,7 @@ import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import type { AppPageProps } from '@/types';
+import { recordListContext } from '@/composables/useListContext';
 
 interface FiltersShape {
   filter?: string;
@@ -106,10 +107,10 @@ watchEffect(() => {
   Object.entries(filters.value).forEach(([key, val]) => {
     if (val) params.set(key, String(val));
   });
-  sessionStorage.setItem('templates_list_context', JSON.stringify({
+  recordListContext({
     title: pageTitle.value,
     href: `${route('templates.index')}?${params.toString()}`
-  }));
+  });
 });
 
 const breadcrumbs: BreadcrumbItem[] = [

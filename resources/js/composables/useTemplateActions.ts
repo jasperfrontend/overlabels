@@ -1,8 +1,17 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { clearListContext } from '@/composables/useListContext';
 
-export function useTemplateActions(template: any) {
+interface TemplateActionOptions {
+  // Resolves the URL to return to after a successful delete. Provided by the
+  // page (show/edit) so the redirect uses the SAME frozen list context the
+  // breadcrumb shows - the two can never drift apart. Falls back to the
+  // unfiltered templates index when omitted.
+  redirectAfterDelete?: () => string;
+}
+
+export function useTemplateActions(template: any, options: TemplateActionOptions = {}) {
   const toastMessage = ref('');
   const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
   const showToast = ref(false);
@@ -68,25 +77,17 @@ export function useTemplateActions(template: any) {
     if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
 
     // Use plain axios (not router.delete) so we don't follow the controller's
-    // Inertia redirect to /templates - we want to honor the
-    // templates_list_context sessionStorage entry that the index page sets,
-    // so deleting from show/edit returns the user to the filtered list they
-    // came from instead of resetting to the unfiltered index.
+    // Inertia redirect to /templates - we want to return the user to the
+    // filtered list they came from. The target is the same frozen list context
+    // the breadcrumb renders (see useListContext), so the redirect can't drift
+    // from what the breadcrumb showed.
     try {
       await axios.delete(route('templates.destroy', template), {
         headers: { Accept: 'application/json' },
       });
 
-      let target = route('templates.index');
-      try {
-        const stored = sessionStorage.getItem('templates_list_context');
-        if (stored) {
-          const ctx = JSON.parse(stored);
-          if (typeof ctx?.href === 'string') target = ctx.href;
-        }
-      } catch {
-        // fall through to default
-      }
+      const target = options.redirectAfterDelete?.() ?? route('templates.index');
+      clearListContext(template?.id);
       router.visit(target);
     } catch (error: any) {
       const msg = error?.response?.data?.error ?? 'Failed to delete template.';

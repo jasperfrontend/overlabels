@@ -37,6 +37,7 @@ import {
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+import { captureListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
 
@@ -158,7 +159,7 @@ const {
   forkWizardRequiredServices,
   forkWizardConnectedServices,
   openWizardFromPayload,
-} = useTemplateActions(props.template);
+} = useTemplateActions(props.template, { redirectAfterDelete: () => listContext.href });
 
 // Non-AJAX fork entry points (the Copy button on /overlay/{slug}/public,
 // the dropdown items in TemplateCard/TemplateList/TemplateTable that use
@@ -182,16 +183,10 @@ const copyToClipboard = (url: string, shownValue: string) => {
   showToast.value = true;
 };
 
-function getListContext(): { title: string; href: string } {
-  try {
-    const stored = sessionStorage.getItem('templates_list_context');
-    if (stored) return JSON.parse(stored);
-  } catch { /* ignore */
-  }
-  return { title: 'My overlays', href: route('templates.index') };
-}
-
-const listContext = getListContext();
+// Freeze the list we came from for this template, so the breadcrumb and the
+// post-delete redirect (see useTemplateActions) always agree, even after the
+// index is re-filtered or restored via browser back/forward.
+const listContext = captureListContext(props.template?.id);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {

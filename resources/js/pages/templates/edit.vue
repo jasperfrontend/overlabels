@@ -47,6 +47,7 @@ import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+import { captureListContext } from '@/composables/useListContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,7 +147,7 @@ const {
   forkWizardSourceControls,
   forkWizardRequiredServices,
   forkWizardConnectedServices
-} = useTemplateActions(props.template);
+} = useTemplateActions(props.template, { redirectAfterDelete: () => listContext.href });
 
 const form = useForm({
   name: props?.template?.name,
@@ -161,16 +162,10 @@ const form = useForm({
   alert_sound_url: props?.template?.alert_sound_url || '',
 });
 
-function getListContext(): { title: string; href: string } {
-  try {
-    const stored = sessionStorage.getItem('templates_list_context');
-    if (stored) return JSON.parse(stored);
-  } catch { /* ignore */
-  }
-  return { title: 'My overlays', href: route('templates.index') };
-}
-
-const listContext = getListContext();
+// Freeze the list we came from for this template, so the breadcrumb and the
+// post-delete redirect (see useTemplateActions) always agree, even after the
+// index is re-filtered or restored via browser back/forward.
+const listContext = captureListContext(props.template?.id);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {

@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 20th, 2026 - UX: post-delete redirect always matches the breadcrumb
+
+Follow-up to the April 4th contextual breadcrumbs work. Deleting a template from show/edit was supposed to return you to the filtered list you came from (e.g. "My static overlays"), but in some situations it dumped you on the unfiltered `/templates`. Root cause: the breadcrumb read the saved list context once at mount, while the delete redirect re-read `sessionStorage` live at click time, and that key is only ever (re)written by the index page. Any path that re-filtered the index after you landed (notably browser back -> change filter -> forward), or that entered show/edit from a non-index page (kit page, events list, dashboard), let the two reads drift apart, so the breadcrumb could say "My static overlays" while the redirect went to `/templates`.
+
+- New `useListContext` composable owns the single sessionStorage key and the read/write/freeze logic (previously duplicated inline across `index.vue`, `show.vue`, and `edit.vue`).
+- show/edit now FREEZE the list context into a per-template key (`template_origin:<id>`) on first mount. The frozen value is immune to later index re-filtering and to Inertia re-running `setup()` on browser back/forward.
+- The breadcrumb and the post-delete redirect now read that same frozen value, so they can no longer disagree. The redirect target is passed from the page into `useTemplateActions` via `redirectAfterDelete` instead of being re-read from sessionStorage.
+- The per-template key is cleared after a successful delete.
+
 ## May 20th, 2026 - npm security: patch `ws` (Dependabot) + `brace-expansion`
 
 Dependabot flagged `ws` (GHSA-58qx-3vcg-4xpx, "uninitialized memory disclosure", medium) on the default branch. It's a transitive dep: `socket.io-client -> engine.io-client -> ws@8.18.3`, used server-side by the StreamLabs/StreamElements Node listeners (the browser uses native WebSocket, so the bundle is unaffected).
