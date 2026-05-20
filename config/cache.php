@@ -105,4 +105,20 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Cache Classes
+    |--------------------------------------------------------------------------
+    |
+    | Laravel 13 hardens cache deserialization by refusing to unserialize
+    | arbitrary PHP objects unless they are explicitly allow-listed here.
+    | We only ever cache arrays and scalars (webhook logs, lockdown state,
+    | rate-limit buckets, slugs, tokens), so "false" locks this down with
+    | no behavioral change. Add class names here only if we start caching
+    | objects.
+    |
+    */
+
+    'serializable_classes' => false,
+
 ];

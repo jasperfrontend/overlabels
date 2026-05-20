@@ -8,6 +8,32 @@ Dependabot flagged `ws` (GHSA-58qx-3vcg-4xpx, "uninitialized memory disclosure",
 - While in the lockfile, `npm audit fix` also cleared `brace-expansion` (GHSA-f886-m6hf-6m8v / GHSA-jxxr-4gwj-5jf2, ReDoS/DoS), a dev-only transitive of eslint and vue-language-core - not shipped to production.
 - `npm audit` now reports 0 vulnerabilities. `npm run build` green.
 
+## May 20th, 2026 - Laravel 13 upgrade
+
+Laravel 12 drops to security-only fixes after Aug 13, 2026 (EOL Feb 4, 2027), so moving to Laravel 13 ahead of that. The upgrade turned out unusually clean: every third-party package already ships Laravel 13 support at its current version, so only the framework itself and tinker needed constraint changes.
+
+### Dependency changes (`composer.json`)
+
+- `laravel/framework` `^12.0` -> `^13.0` (resolved to v13.11.2)
+- `laravel/tinker` `^2.10.1` -> `^3.0` (resolved to v3.0.2)
+- Transitive: Symfony 7.4 -> 8.0 across the stack, guzzle/flysystem/prompts minor bumps. Nothing else moved - sanctum, socialite, inertia, reverb, telescope, banhammer, stevebauman/location, ziggy, collision, ide-helper, pest, and phpunit were all already L13-compatible.
+
+### Code/config changes
+
+The upgrade guide's breaking changes almost entirely missed our surface area (no `upsert`, no `JobAttempted`/`QueueBusy` listeners, no domain routes, PostgreSQL not MySQL, no Bootstrap pagination, no morph pivots, no custom contract implementations, OAuth auth so no password-reset flow). Two deliberate config touch-ups:
+
+- `config/sanctum.php`: swapped the deprecated `ValidateCsrfToken` alias for the new `PreventRequestForgery` middleware class (L13's CSRF middleware rename).
+- `config/cache.php`: added `'serializable_classes' => false` to match L13's hardened default. Safe because we only cache arrays/scalars (webhook logs, lockdown state, rate-limit buckets, slugs, tokens), never PHP objects.
+
+### Not changed (deploy notes)
+
+- Cache/session key prefixes left on the explicit underscore form. L13's default switches to hyphenated suffixes; adopting that would rename the session cookie and log everyone out, so `SESSION_COOKIE`/`CACHE_PREFIX` stay pinned via existing config.
+
+### Verification
+
+- Full Pest suite green under Laravel 13.11.2: 780 passed, 2129 assertions.
+- `composer audit` clean; `php artisan route:list` resolves all 326 routes; Pint clean on changed files.
+
 ## May 20th, 2026 - Symfony security patch (8 CVEs)
 
 `composer audit` flagged 8 advisories published today against the Symfony 7.4.8 components Laravel 12 pulls in. Patched ahead of the planned Laravel 13 upgrade since these affect the current production stack and shouldn't wait.
