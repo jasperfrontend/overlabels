@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 20th, 2026 - Symfony security patch (8 CVEs)
+
+`composer audit` flagged 8 advisories published today against the Symfony 7.4.8 components Laravel 12 pulls in. Patched ahead of the planned Laravel 13 upgrade since these affect the current production stack and shouldn't wait.
+
+- `composer update "symfony/*" --with-all-dependencies` - no `composer.json` constraint changes, lock-only bump within Laravel 12's allowed ranges. Notably `symfony/http-kernel` 7.4.8 -> 7.4.12, `symfony/yaml` -> 8.0.12, plus console/mailer/mime/routing/translation/string.
+- CVEs closed: CVE-2026-45075 (HEAD request bypasses `methods` filter on `#[IsGranted]`/`#[IsCsrfTokenValid]`), CVE-2026-45068 (argument injection in SendmailTransport), CVE-2026-45070 + CVE-2026-45067 (email header / SMTP command injection via Mime), CVE-2026-45065 (UrlGenerator route-requirement bypass -> off-site URL injection), CVE-2026-45304 (symfony/yaml).
+- `composer audit` now reports no advisories. Full Pest suite green (780 passed, 2129 assertions).
+
 ## May 20th, 2026 - `!followage` and `!accountage` chat commands
 
 A user flagged that StreamElements has these and Overlabels' bot didn't - a real shortcoming for streamers who want chatters to be able to check how long they've followed or how old their Twitch account is, without having to fall back to a second bot. Adding both as proper builtins.
