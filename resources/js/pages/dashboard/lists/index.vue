@@ -34,7 +34,6 @@ import {
   HistoryIcon,
   PinIcon,
   RotateCcwIcon,
-  TerminalIcon,
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
