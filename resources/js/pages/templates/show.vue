@@ -37,7 +37,7 @@ import {
 } from 'lucide-vue-next';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext } from '@/composables/useListContext';
+import { captureListContext, deriveListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
 
@@ -185,8 +185,13 @@ const copyToClipboard = (url: string, shownValue: string) => {
 
 // Freeze the list we came from for this template, so the breadcrumb and the
 // post-delete redirect (see useTemplateActions) always agree, even after the
-// index is re-filtered or restored via browser back/forward.
-const listContext = captureListContext(props.template?.id);
+// index is re-filtered or restored via browser back/forward. When there's no
+// recorded navigation (direct URL, fresh tab, straight after create), fall back
+// to a crumb derived from the template's own type + ownership.
+const listContext = captureListContext(
+  props.template?.id,
+  deriveListContext({ type: props.template?.type, ownedByMe: props.canEdit }),
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {

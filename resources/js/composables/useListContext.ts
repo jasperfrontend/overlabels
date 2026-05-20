@@ -21,6 +21,30 @@ function fallback(): ListContext {
   return { title: 'My overlays', href: route('templates.index') };
 }
 
+// Build a deterministic breadcrumb context from a template's own attributes, for
+// when there is no recorded navigation history (direct URL, fresh tab, or
+// straight after create - sessionStorage is per-tab and dies with the tab).
+// Mirrors the index page's filter labels (ownerMap/typeMap) so the crumb reads
+// identically to the filtered list it links to.
+export function deriveListContext(template: { type?: string | null; ownedByMe: boolean }): ListContext {
+  const owner = template.ownedByMe ? 'My' : 'Public';
+  const filterParam = template.ownedByMe ? 'mine' : 'public';
+  const typeLabels: Record<string, string> = {
+    static: 'static overlays',
+    alert: 'event alerts',
+  };
+  const type = template.type ?? '';
+  const typeLabel = typeLabels[type] ?? 'overlays';
+
+  const params = new URLSearchParams({ filter: filterParam });
+  if (type) params.set('type', type);
+
+  return {
+    title: `${owner} ${typeLabel}`,
+    href: `${route('templates.index')}?${params.toString()}`,
+  };
+}
+
 function read(key: string): ListContext | null {
   try {
     const stored = sessionStorage.getItem(key);
@@ -52,11 +76,17 @@ export function recordListContext(ctx: ListContext): void {
 // Called once at mount on show/edit. Returns the context frozen for this
 // template, freezing the current global context on first visit. Subsequent
 // mounts for the same template (refresh, back/forward) return the frozen value.
-export function captureListContext(templateId: number | string): ListContext {
+//
+// Precedence: a previously frozen origin wins, then the live list you navigated
+// from (GLOBAL_KEY), then `derived` (built from the template itself for cold
+// direct-paste / post-create), then the generic fallback. This keeps the "came
+// from this list" semantic when you actually arrived via the index, while giving
+// a direct visit an accurate contextual crumb instead of the generic one.
+export function captureListContext(templateId: number | string, derived?: ListContext): ListContext {
   const frozen = read(originKey(templateId));
   if (frozen) return frozen;
 
-  const current = read(GLOBAL_KEY) ?? fallback();
+  const current = read(GLOBAL_KEY) ?? derived ?? fallback();
   write(originKey(templateId), current);
   return current;
 }

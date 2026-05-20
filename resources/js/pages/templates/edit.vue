@@ -47,7 +47,7 @@ import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext } from '@/composables/useListContext';
+import { captureListContext, deriveListContext } from '@/composables/useListContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,8 +164,13 @@ const form = useForm({
 
 // Freeze the list we came from for this template, so the breadcrumb and the
 // post-delete redirect (see useTemplateActions) always agree, even after the
-// index is re-filtered or restored via browser back/forward.
-const listContext = captureListContext(props.template?.id);
+// index is re-filtered or restored via browser back/forward. When there's no
+// recorded navigation (direct URL, fresh tab), fall back to a crumb derived from
+// the template itself. The edit page is owner-only, so ownership is always "My".
+const listContext = captureListContext(
+  props.template?.id,
+  deriveListContext({ type: props.template?.type, ownedByMe: true }),
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
   {

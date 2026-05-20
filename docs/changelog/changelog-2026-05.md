@@ -1,5 +1,15 @@
 # CHANGELOG MAY 2026
 
+## May 21st, 2026 - UX: contextual breadcrumb on directly-opened templates
+
+Opening a template with no recorded navigation - a fresh tab, a pasted `/templates/505` URL, or the redirect straight after creating one - collapsed the first breadcrumb crumb to the generic "My overlays". The list context that powers that crumb lives in `sessionStorage`, which is per-tab and dies when the tab closes, so any direct visit had nothing to read and fell back to the generic label. There was never a recoverable "My static overlays" history in those flows; it only ever existed if you arrived via the filtered index page.
+
+Rather than lean on fragile session state, the crumb is now *derived* from the template itself when no navigation was recorded.
+
+- New `deriveListContext()` in `useListContext.ts` builds a `{ title, href }` from the template's `type` + ownership, mirroring the index page's own filter labels (`ownerMap`/`typeMap`). A directly-opened static overlay you own now reads "My static overlays > name" and links to `/templates?filter=mine&type=static`; someone else's public alert reads "Public event alerts > name".
+- `captureListContext()` gained an optional `derived` argument. Precedence is unchanged where it matters: a previously frozen origin wins, then the live list you navigated from (`GLOBAL_KEY`), then the derived crumb, then the generic fallback. So the "came from this list" semantic still holds when you actually arrived via the index - the derived crumb only fills the gap on a cold visit.
+- `show.vue` passes `ownedByMe: props.canEdit` (which is exactly `auth id === owner_id`); `edit.vue` passes `ownedByMe: true` since the edit page is owner-only.
+
 ## May 20th, 2026 - UX: drop the screenshot gate on overlay creation
 
 Creating an overlay no longer requires a screenshot first. The previous "Add a screenshot to enable Create" gate was backwards: you can't screenshot a finished overlay until you've saved it at least once, so it blocked the exact first save it depended on. Screenshots are now optional at create time and can be added any moment after, as they always could on the edit page.
