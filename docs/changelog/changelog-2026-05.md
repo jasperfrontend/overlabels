@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 21st, 2026 - fix(gamejam): bounded game log so the live broadcast can't exceed Reverb's limit
+
+Chat Castle froze mid-stream in room 5 (round 49) when chat was hammering the door with `!a`. Root cause: `GameStateChanged` broadcasts the full game snapshot every round, and that snapshot embeds `Game::$log`. `GameLog::append()` was documented as a "rolling window for the live ticker" but never actually trimmed `log` - it grew append-only, identical to `recap`. By room 5's end the snapshot's wrapped Reverb events request was sitting at ~9.5 KB (95% of the default 10 KB `max_request_size`), so the busy door-attack round - with every active joiner's vote populated - tipped it over. Reverb returned 413, the `BroadcastException` ("Payload too large") propagated out of `ResolveGameRound` after the round's state had already committed, the job failed, and the overlay never got the frame. The authoritative state advanced but the on-stream board froze.
+
+- `GameLog::append()` now trims `log` to the last `GameLog::LIVE_LOG_LIMIT` (30) entries, so the broadcast snapshot stays bounded regardless of game length. `recap` remains append-only for the end-of-game post-mortem. This is the behavior the docblock already promised; it just was never implemented.
+- `ResolveGameRound::handle()` now wraps `GameStateChanged::dispatch()` in a try/catch. The round's state is committed before the broadcast, so a broadcast failure (oversized payload, transient Reverb hiccup) now costs at most one stale overlay frame instead of failing the job and freezing the game. Failures log as `gamejam.broadcast.failed`.
+- The frontend live ticker (`gamejam/live.vue`) replaces its log from each snapshot and auto-scrolls to newest, so a 30-entry rolling window is exactly the intended behavior.
+- Tests: the old `GameLogTest` case that asserted "log and recap both grow unbounded" (it encoded the bug) is replaced with one asserting `log` is capped while `recap` keeps the full history, plus a case verifying the newest entries are kept and the oldest roll off.
+
 ## May 21st, 2026 - UX: contextual breadcrumb on directly-opened templates
 
 Opening a template with no recorded navigation - a fresh tab, a pasted `/templates/505` URL, or the redirect straight after creating one - collapsed the first breadcrumb crumb to the generic "My overlays". The list context that powers that crumb lives in `sessionStorage`, which is per-tab and dies when the tab closes, so any direct visit had nothing to read and fell back to the generic label. There was never a recoverable "My static overlays" history in those flows; it only ever existed if you arrived via the filtered index page.

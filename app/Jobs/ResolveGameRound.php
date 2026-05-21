@@ -170,7 +170,18 @@ class ResolveGameRound implements ShouldQueue
 
         $preDispatchMs = (int) (microtime(true) * 1000);
 
-        GameStateChanged::dispatch($game);
+        // The round's state is already committed above. A broadcast failure here
+        // (e.g. Reverb rejecting an oversized payload) must NOT fail the job and
+        // freeze the game - it would only cost one stale frame on the overlay.
+        try {
+            GameStateChanged::dispatch($game);
+        } catch (Throwable $e) {
+            Log::error('gamejam.broadcast.failed', [
+                'game_id' => $game->id,
+                'round' => $this->expectedRound,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $postDispatchMs = (int) (microtime(true) * 1000);
 
@@ -186,7 +197,7 @@ class ResolveGameRound implements ShouldQueue
         if ($gameEnded) {
             BotChatOutbox::create([
                 'user_id' => $game->user_id,
-                'message' => "The game has ended at round $this->expectedRound."
+                'message' => "The game has ended at round $this->expectedRound.",
             ]);
         }
         if (! $gameEnded) {

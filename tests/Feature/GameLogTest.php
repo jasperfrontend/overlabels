@@ -7,6 +7,7 @@ use App\Models\GameHidingSpot;
 use App\Models\GameZombie;
 use App\Models\User;
 use App\Services\Gamejam\ActionApplier;
+use App\Services\Gamejam\GameLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -52,7 +53,7 @@ test('reveals are logged with content type and weapon pickup', function () {
 
     $game->load('hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
-    (new ActionApplier())->apply($game, 'p:right');
+    (new ActionApplier)->apply($game, 'p:right');
 
     expect(logTypes($game))->toContain('hidden_reveal', 'weapon_pickup');
 });
@@ -79,7 +80,7 @@ test('attacking a zombie logs player_attack and zombie_killed on kill', function
 
     $game->load('hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
-    (new ActionApplier())->apply($game, 'a:2');
+    (new ActionApplier)->apply($game, 'a:2');
 
     $types = logTypes($game);
     expect($types)->toContain('player_attack', 'zombie_killed');
@@ -117,7 +118,7 @@ test('door takes damage even when a boss is alive elsewhere in the room', functi
 
     $game->load('hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
-    (new ActionApplier())->apply($game, 'a');
+    (new ActionApplier)->apply($game, 'a');
 
     expect(logTypes($game))->toContain('door_damage');
 });
@@ -134,12 +135,12 @@ test('hide action emits a hide entry', function () {
 
     $game->load('hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
 
-    (new ActionApplier())->apply($game, 'h');
+    (new ActionApplier)->apply($game, 'h');
 
     expect(logTypes($game))->toContain('hide');
 });
 
-test('log and recap both grow unbounded with each event', function () {
+test('the live log is capped while recap keeps the full history', function () {
     $game = makeLoggedGame();
 
     GameHidingSpot::create([
@@ -150,13 +151,34 @@ test('log and recap both grow unbounded with each event', function () {
     ]);
 
     $game->load('hiddenTiles', 'doors', 'hidingSpots', 'blockers', 'zombies');
-    $applier = new ActionApplier();
+    $applier = new ActionApplier;
 
-    for ($i = 0; $i < 50; $i++) {
+    $total = GameLog::LIVE_LOG_LIMIT + 20;
+    for ($i = 0; $i < $total; $i++) {
         $applier->apply($game, 'h');
     }
 
     $game->refresh();
-    expect(count($game->log))->toBe(50)
-        ->and(count($game->recap))->toBe(50);
+    // The live ticker stays bounded so the broadcast snapshot never exceeds
+    // Reverb's per-message limit; recap keeps every entry for the post-mortem.
+    expect(count($game->log))->toBe(GameLog::LIVE_LOG_LIMIT)
+        ->and(count($game->recap))->toBe($total);
+});
+
+test('the live log keeps the newest entries and rolls the oldest off', function () {
+    $game = makeLoggedGame();
+
+    $total = GameLog::LIVE_LOG_LIMIT + 5;
+    for ($i = 0; $i < $total; $i++) {
+        GameLog::append($game, 'tick', ['seq' => $i]);
+    }
+
+    $game->refresh();
+
+    $logSeqs = array_column(array_column($game->log, 'data'), 'seq');
+    $recapSeqs = array_column(array_column($game->recap, 'data'), 'seq');
+
+    // Oldest five (0-4) rolled off the live window; recap retains everything.
+    expect($logSeqs)->toBe(range(5, $total - 1))
+        ->and($recapSeqs)->toBe(range(0, $total - 1));
 });
