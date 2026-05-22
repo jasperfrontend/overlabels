@@ -125,7 +125,7 @@ interface Props {
   freesoundLibrary?: FreesoundLibraryRow[];
 }
 
-const FREESOUND_LIBRARY_CAP = 10;
+const FREESOUND_LIBRARY_CAP = 100;
 
 const props = withDefaults(defineProps<Props>(), {
   template: Object
@@ -505,7 +505,7 @@ onMounted(() => {
           <div
             class="flex dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
             <button
-              v-for="(tab, index) in mainTabs"
+              v-for="(tab) in mainTabs"
               :key="tab.key"
               type="button"
               @click="mainTab = tab.key"
