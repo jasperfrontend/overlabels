@@ -342,7 +342,15 @@ class TemplateTagController extends Controller
             $cacheDuration = 3600; // 1 hour
 
             $tags = cache()->remember($cacheKey, $cacheDuration, function () use ($user) {
-                return $this->parser->getOrganizedTemplateTagsForUser($user->id);
+                $organized = $this->parser->getOrganizedTemplateTagsForUser($user->id);
+
+                // Normalize Eloquent models/Collections to plain arrays before caching.
+                // config/cache.php sets serializable_classes => false (Laravel 13
+                // hardening), so cached objects come back as __PHP_Incomplete_Class and
+                // serialize to broken JSON - the tags Collection becomes {} instead of [],
+                // and the frontend's Array.isArray() check then drops every category.
+                // Caching arrays/scalars only keeps the response shape identical and safe.
+                return json_decode(json_encode($organized), true);
             });
 
             return response()->json([

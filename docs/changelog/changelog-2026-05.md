@@ -1,5 +1,15 @@
 # CHANGELOG MAY 2026
 
+## May 23rd, 2026 - fix(tags): TemplateTagsList showed no tags after the Laravel 13 upgrade
+
+The tag picker in the template editor (Tags tab on `/templates/*/edit` and `/create`) rendered "No tags available" for everyone, on localhost and prod alike, even though the underlying tags were intact - the `/tags` generator page listed them fine. Root cause was the Laravel 13 upgrade setting `serializable_classes => false` in `config/cache.php` (a hardening default). `TemplateTagController::getAllTags()` caches the output of `getOrganizedTemplateTagsForUser()`, which contains Eloquent models (`'category' => $category`) and a `Collection` (`'tags' => ...->map()`). With object deserialization refused, the cache read those back as `__PHP_Incomplete_Class`, so the JSON response emitted `"tags": {"__PHP_Incomplete_Class_Name":"Illuminate\\Support\\Collection"}` - an object, not an array. The frontend's `Array.isArray(categoryData.tags)` guard in `processTags()` then dropped every category, leaving the list empty.
+
+Why it hid so well: the `/tags` page calls the parser directly (no cache), so it was never affected, and the test suite runs `CACHE_STORE=array` (the array driver never serializes), so all 52 tag tests passed against the broken code. Only the serializing drivers used in dev/prod (`database`) tripped it.
+
+- `getAllTags()` now normalizes the parser output with `json_decode(json_encode($organized), true)` before caching, so the cached payload is arrays and scalars only. This honors the `serializable_classes => false` lockdown, round-trips cleanly through any cache driver, and produces a byte-identical response shape to before the upgrade.
+- Verified the other `Cache::remember`/`put` sites are object-free: the Twitch snapshot caches decoded-JSON arrays, the GPS GeoJSON builds a pure nested array (the `DB::select` stdClass rows are only read for scalars), and help/lockdown/slug caches store arrays or scalars. The tags cache was the only casualty.
+- Existing poisoned cache entries persist until their 1-hour TTL expires. Dev caches were cleared during the fix; prod needs `php artisan cache:clear` after deploy (or it self-heals within the hour).
+
 ## May 21st, 2026 - fix(gamejam): bounded game log so the live broadcast can't exceed Reverb's limit
 
 Chat Castle froze mid-stream in room 5 (round 49) when chat was hammering the door with `!a`. Root cause: `GameStateChanged` broadcasts the full game snapshot every round, and that snapshot embeds `Game::$log`. `GameLog::append()` was documented as a "rolling window for the live ticker" but never actually trimmed `log` - it grew append-only, identical to `recap`. By room 5's end the snapshot's wrapped Reverb events request was sitting at ~9.5 KB (95% of the default 10 KB `max_request_size`), so the busy door-attack round - with every active joiner's vote populated - tipped it over. Reverb returned 413, the `BroadcastException` ("Payload too large") propagated out of `ResolveGameRound` after the round's state had already committed, the job failed, and the overlay never got the frame. The authoritative state advanced but the on-stream board froze.
