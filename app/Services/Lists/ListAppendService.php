@@ -10,11 +10,11 @@ use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Bot\BotExpressionResolver;
 use App\Services\Bot\BotExpressionService;
-use App\Services\StreamSessionService;
 use App\Support\BotChatGate;
 use App\Support\ListItemTimestamps;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * Mirrors the canFire / fire pattern of BotExpressionService and
@@ -24,15 +24,15 @@ use Illuminate\Support\Facades\DB;
  *
  * The value to append goes through BotExpressionResolver so the
  * template language is identical to Bot Expressions ([[[bot:from_user]]],
- * [[[c:foo:bar]]], pipe formatters, etc.). args_empty_reply and
+ * [[[c:foo:bar]]], pipe formatters, etc.). Args_empty_reply and
  * success_reply, when present, are resolved the same way and queued
  * into bot_chat_outbox.
  */
-class ListAppendService
+readonly class ListAppendService
 {
     public function __construct(
-        private readonly BotExpressionResolver $resolver,
-        private readonly BotExpressionService $expressionService,
+        private BotExpressionResolver $resolver,
+        private BotExpressionService  $expressionService,
     ) {}
 
     /**
@@ -67,8 +67,9 @@ class ListAppendService
      *   ['fired' => false, 'reason' => 'already_in_list']
      *   ['fired' => false, 'reason' => 'list_gone']
      *
-     * @param  array<string,mixed>  $payload  bot payload (chatter_id, chatter_login, chatter_display_name, args, channel_login)
+     * @param array<string,mixed> $payload bot payload (chatter_id, chatter_login, chatter_display_name, args, channel_login)
      * @return array<string,mixed>
+     * @throws Throwable
      */
     public function fire(ListAppender $appender, User $user, array $payload): array
     {
