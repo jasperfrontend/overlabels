@@ -9,10 +9,10 @@ use Illuminate\Http\Request;
 use RuntimeException;
 
 /**
- * Search + library endpoints for the Freesound integration.
+ * Search and library endpoints for the Freesound integration.
  *
  * Pure proxy on the read side: the controller adds the user's auth context
- * and the license-safe filter, hits Freesound via FreesoundClient, returns
+ * and the licence-safe filter, hits Freesound via FreesoundClient, returns
  * the shape the frontend modal expects. Mutating endpoints write to
  * user_freesound_sounds (metadata only - no audio bytes).
  *
@@ -21,7 +21,7 @@ use RuntimeException;
  */
 class FreesoundController extends Controller
 {
-    private const LIBRARY_CAP = 10;
+    private const int LIBRARY_CAP = 100;
 
     public function __construct(private readonly FreesoundClient $client) {}
 
@@ -42,7 +42,6 @@ class FreesoundController extends Controller
             $results = $this->client->search(
                 query: $validated['q'],
                 page: (int) ($validated['page'] ?? 1),
-                pageSize: 15,
                 sort: $validated['sort'] ?? 'score',
             );
         } catch (RuntimeException $e) {
