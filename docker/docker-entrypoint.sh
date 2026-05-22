@@ -14,6 +14,18 @@ if [ "${ENTRYPOINT_SKIP_CACHE:-0}" != "1" ]; then
     php artisan event:cache
 fi
 
+# Flush the Redis application cache once per deploy (web role only).
+# A code change can alter the SHAPE of a cached value - e.g. the tag picker
+# cache stored Eloquent objects that Laravel 13's serializable_classes=false
+# could no longer rebuild - leaving stale entries that poison the new code
+# until their TTL lapses. Clearing here makes deploys self-correcting.
+# Safe because sessions live in Postgres (SESSION_DRIVER=database, no logout)
+# and Redis is already non-persistent (--save "" + allkeys-lru), so the app
+# already tolerates a cold cache; the cost is a lazy per-user re-fetch.
+if [ "${ENTRYPOINT_RUN_CACHE_CLEAR:-0}" = "1" ]; then
+    php artisan cache:clear || echo "cache:clear failed (continuing - stale entries self-heal on TTL)"
+fi
+
 # Migrations run only on the role flagged with ENTRYPOINT_RUN_MIGRATIONS=1.
 # Set this on the `web` role only so it happens once per deploy.
 if [ "${ENTRYPOINT_RUN_MIGRATIONS:-0}" = "1" ]; then

@@ -36,6 +36,7 @@ servers:
       clear:
         ROLE: web
         ENTRYPOINT_RUN_MIGRATIONS: "1"
+        ENTRYPOINT_RUN_CACHE_CLEAR: "1"
         ENTRYPOINT_RUN_HELP_INDEX: "1"
         ENTRYPOINT_RUN_OG_GENERATE: "1"
         # Creates public/storage -> storage/app/public symlink so the public

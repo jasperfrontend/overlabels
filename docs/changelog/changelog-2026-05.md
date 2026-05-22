@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 23rd, 2026 - ops(deploy): flush the Redis app cache automatically on every deploy
+
+The tag-picker bug below was only "fixed" in prod after a manual `php artisan cache:clear` - the code fix alone left stale, shape-incompatible entries serving from Redis until their TTL lapsed. That manual step is exactly the kind of thing that gets forgotten, so deploys now self-correct.
+
+- `docker-entrypoint.sh` gained an `ENTRYPOINT_RUN_CACHE_CLEAR` flag block (same pattern as migrations / storage:link / help-index / og-generate). When set it runs `php artisan cache:clear`, tolerant of failure so a clear hiccup never blocks a deploy.
+- The flag is set on the `web` role only in `config/deploy.yml`, so it fires once per deploy rather than on every role's container boot.
+- Safe in this topology: `SESSION_DRIVER=database` means sessions live in Postgres, so clearing the cache never logs anyone out; and Redis already runs `--save "" --maxmemory-policy allkeys-lru`, so the cache is non-persistent and evictable - the app already tolerates a cold cache on any Redis restart. The only cost is a lazy, per-user re-fetch of the long-lived Twitch snapshot after a deploy, which already happened on restarts anyway.
+- Replaces the short-lived `cache-clear` kamal alias idea, which was redundant - the clear belongs in the deploy lifecycle, not as a command someone has to remember to run.
+
 ## May 23rd, 2026 - fix(tags): TemplateTagsList showed no tags after the Laravel 13 upgrade
 
 The tag picker in the template editor (Tags tab on `/templates/*/edit` and `/create`) rendered "No tags available" for everyone, on localhost and prod alike, even though the underlying tags were intact - the `/tags` generator page listed them fine. Root cause was the Laravel 13 upgrade setting `serializable_classes => false` in `config/cache.php` (a hardening default). `TemplateTagController::getAllTags()` caches the output of `getOrganizedTemplateTagsForUser()`, which contains Eloquent models (`'category' => $category`) and a `Collection` (`'tags' => ...->map()`). With object deserialization refused, the cache read those back as `__PHP_Incomplete_Class`, so the JSON response emitted `"tags": {"__PHP_Incomplete_Class_Name":"Illuminate\\Support\\Collection"}` - an object, not an array. The frontend's `Array.isArray(categoryData.tags)` guard in `processTags()` then dropped every category, leaving the list empty.
