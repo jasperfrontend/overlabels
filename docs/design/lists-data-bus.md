@@ -230,9 +230,11 @@ change does not quietly violate one.
 
 ---
 
-## 8. Decisions you need to weigh in on
+## 8. Decisions (D1-D5)
 
-The forks I could not just settle. Each has my pick so the default is "yes, that one."
+The forks I could not just settle. **D1-D4 are locked (2026-05-24); D5 is open with a default that
+holds until items-as-objects is worth pulling forward.** Each entry below now reads "Decided" instead
+of "my pick" where it has been settled.
 
 ### D1 - Do we ship `before`, and do we add gap-resilience now?
 - **Option A - Supabase-faithful:** ship `before` + `after`. Stateless consumers, simplest consumer
@@ -247,8 +249,9 @@ The forks I could not just settle. Each has my pick so the default is "yes, that
   refetches. This is the "correct" distributed answer and not much code, but it is real scope on top
   of B (a column, a bump, consumer resync logic) and pushes past ~1 day.
 
-**My recommendation:** ship **B** now, design the envelope so **C** is a pure addition later (reserve
-a `version` field, leave it null in v1). Do not ship A; `before` is the payload killer for the one
+**Decided (2026-05-24):** ship **B** - drop `before`, send the surgical `op` + a size-guarded `after`.
+The envelope reserves a `version` field, left null in v1, so **C** (sequence number + resync) is a
+pure addition the day scale demands it. A is rejected; `before` is the payload killer for the one
 benefit we do not need.
 
 ### D2 - How do external consumers authenticate to a list channel?
@@ -259,8 +262,10 @@ benefit we do not need.
   lists"), finer-grained revocation. Cost: a second token system to build, store, document, and
   secure.
 
-**My recommendation:** A for v1. If list-sharing-as-a-product grows up, B becomes worth it, but it is
-its own milestone.
+**Decided (2026-05-24):** A - reuse the OverlayAccessToken model. One access model across the product,
+the `sha256`/fragment security story already exists, and "share my list" == "share my overlay URL."
+If list-sharing-as-a-product ever grows up, B (a dedicated list-scoped read token) becomes its own
+milestone.
 
 ### D3 - Touch the overlay renderer, or leave it alone?
 - **Leave it alone (my pick):** `ListUpdated` keeps firing on `alerts.{twitch}`; the renderer is
@@ -270,8 +275,9 @@ its own milestone.
   `ListUpdated`. Cleaner end state, but it is a refactor of a working hot path for no user-visible
   gain right now.
 
-**My recommendation:** leave it alone for M8. Note "consolidate onto one channel" as a later cleanup
-once external consumers have proven the diff format in the wild.
+**Decided (2026-05-24):** leave the renderer alone for M8 (purely additive). "Consolidate onto one
+channel and retire `ListUpdated`" is a later cleanup, once external consumers have proven the diff
+format in the wild.
 
 ### D4 - `replace` / `restore` payload strategy
 - **Full array + size guard (my pick):** simplest, correct, and the size guard already exists for
@@ -280,8 +286,8 @@ once external consumers have proven the diff format in the wild.
   textarea save could animate. Cost: the only genuinely non-trivial algorithm in the whole feature,
   for the least animation-critical path (a human typing in a box). Over-engineering.
 
-**My recommendation:** full array + guard. The surgical ops (append/draw/pop/sweep) are where
-animation matters and those are already precise.
+**Decided (2026-05-24):** full array + size guard. The surgical ops (append/draw/pop/sweep) are where
+animation matters, and those are already precise.
 
 ### D5 - Item identity for v1
 - **Strings + index (my pick, forced by current schema):** animate by value and position. Cannot
@@ -290,8 +296,9 @@ animation matters and those are already precise.
   cooking" unlock. But it is a schema migration touching every mutator, the renderer's `:sum`/`.N`
   derivation, the recipe manifest, and chat append semantics. That is its own milestone-sized change.
 
-**My recommendation:** strings + index for M8; items-as-objects is the named follow-up (§9), and the
-diff API is precisely the thing that makes objects worth doing.
+**Default (open):** strings + index for M8; items-as-objects is the named follow-up (§9), and the
+diff API is precisely the thing that makes objects worth doing. This stays open - it is the one
+decision still worth your gut - but the schema forces the default anyway, so nothing blocks on it.
 
 ---
 
