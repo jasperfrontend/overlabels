@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 24th, 2026 - docs(milestones): refresh the roadmap to match reality and capture outstanding work
+
+`MILESTONES.md` had drifted badly out of date (last touched May 4th) - it still listed the Twitch bot as pending and didn't mention the donation integrations, the Stream State Machine, Controls, Lists, Recipes, or Alert Targeting at all. Rewrote it from a memory + code sweep so the doc reflects what actually shipped and what's genuinely outstanding.
+
+- Brought the Completed section up to date: added collapsed entries for the StreamLabs/StreamElements/Fourthwall integrations, the Stream State Machine, the Controls/Alert-Targeting/Lists core, and the Recipes engine (steps 1-5); moved the Twitch Bot to Completed.
+- Added a priority-ordered Active Roadmap: M8 Lists realtime data bus (top priority - the before/after/op diff broadcast), M9 Recipes producer layer + Bot Expression hardening, M10 Flows, M11 Patreon, M6 Community, M7 IRL/GPS.
+- Added a Backlog section for loose bugs and polish, with a "Recently cleared" line recording the recent fixes: GDPR admin delete, RAF/60 FPS in every browser, idle Expression Controls no longer recalculating, and the stream-sessions aggregation discrepancy (a query bug multiplying output numbers per event).
+- Converted em dashes to spaced hyphens per house style.
+
 ## May 23rd, 2026 - ops(deploy): flush the Redis app cache automatically on every deploy
 
 The tag-picker bug below was only "fixed" in prod after a manual `php artisan cache:clear` - the code fix alone left stale, shape-incompatible entries serving from Redis until their TTL lapsed. That manual step is exactly the kind of thing that gets forgotten, so deploys now self-correct.
