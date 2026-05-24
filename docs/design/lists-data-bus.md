@@ -85,6 +85,10 @@ second, on a separate channel, so neither audience pays for the other.
 
 ## 4. The wire format
 
+> **Superseded by §13.6 (D5).** The envelope below is described in string-era terms (op carries
+> value + index). With items-as-objects, ops carry whole items keyed by `id` and indices are dropped.
+> Read §13.6 for the authoritative payloads; the envelope structure (op + size-guarded after) is unchanged.
+
 A new event, `App\Events\ListMutated`, published per mutation. One envelope:
 
 ```jsonc
@@ -135,6 +139,9 @@ mix.
 ---
 
 ## 5. The op catalog
+
+> **Superseded by §13.6 (D5).** The op *types* below are final; their *payloads* now carry item
+> objects (and `ids[]` on remove) instead of values + indices. See §13.6.
 
 Every op type, the mutator that emits it, and the surgical fields. This is the whole vocabulary.
 
@@ -224,9 +231,9 @@ change does not quietly violate one.
 3. **Tags parse exactly once per render.** The diff stream updates *data slots*, never re-runs the
    template parser. The existing renderer already obeys this; `ListMutated` consumers are external
    and never touch our parser at all.
-4. **Items are strings today.** Animations key off value + index, not a stable per-item id. That is
-   good enough for "remove index 4" but not for "this exact entrant, even if their name repeats."
-   True identity waits for items-as-objects - see D5 and §9.
+4. **Items are objects (D5 resolved).** Each item carries a stable `id`; animations key off it, which
+   solves the "two identical names" problem at the root. The string-era assumptions in §2, §4, and §5
+   are superseded by §13.
 
 ---
 
@@ -296,16 +303,22 @@ animation matters, and those are already precise.
   cooking" unlock. But it is a schema migration touching every mutator, the renderer's `:sum`/`.N`
   derivation, the recipe manifest, and chat append semantics. That is its own milestone-sized change.
 
-**Default (open):** strings + index for M8; items-as-objects is the named follow-up (§9), and the
-diff API is precisely the thing that makes objects worth doing. This stays open - it is the one
-decision still worth your gut - but the schema forces the default anyway, so nothing blocks on it.
+**Decided (2026-05-24):** **items as objects, now** - not strings + index. Doing it right beats
+migrating live list data later, and moving the timestamp into the item collapses the fragile
+parallel `item_added_at` array that every mutator currently juggles. This is a real scope increase
+(schema migration, every mutator, the tag-projection layer, and the wire format all change) and
+turns M8 from ~1 day into a multi-day foundation piece. Three follow-on decisions fall out of it:
+the **object shape** (being chosen now), the **tag backward-compat contract** (bare `c:list:slug.0`
+must still render the item's value string), and the **data migration**. The id strategy is settled:
+a per-list integer counter (smallest on the wire, stable, never reused). The full items-as-objects
+design lands in a new section once the object shape is locked - which supersedes the "out of scope"
+note for it in §9.
 
 ---
 
 ## 9. Out of scope for v1 (named so they are not silently forgotten)
 
-- **Items as objects** (`{id, label, weight, color, ...}`). The natural next step once the diff API
-  exists, and the point where typed ops on structured items let consumers do real work. Gated on D5.
+- ~~Items as objects~~ - **pulled into M8 (D5 resolved 2026-05-24, fixed rich schema). Designed in §13.**
 - **A monotonic version / sequence number and gap-driven resync** (D1 Option C). Envelope leaves room
   for it; v1 does not implement it.
 - **A per-user firehose channel** (`lists.{twitch_id}` carrying all slugs). Per-slug only for v1.
@@ -368,4 +381,123 @@ that carries intent instead of just state.
 
 ---
 
-*Strawman drafted 2026-05-24. Reacts welcome anywhere. Nothing is built until you say go.*
+## 13. Items as objects (D5 build-out, fixed rich schema)
+
+D5 resolved to items-as-objects with a fixed, validated schema. This section is the authoritative item
+model. Where sections 2, 4, and 5 assume bare strings, this supersedes them.
+
+### 13.1 The item shape
+
+Every entry in `option_sets.items` is an object:
+
+```jsonc
+{
+  "id": 7,                 // int, server-assigned, stable for the item's life, unique-in-list, never reused
+  "value": "Tacos",        // string, the primary content (REQUIRED; may be empty - we never strip user content)
+  "added_at": 1716500000,  // int unix seconds, when it was appended (honors the _at contract)
+  "label": null,           // string|null, optional human display label
+  "weight": 1,             // number, picker weight; defaults to 1 (equal), always present
+  "color": null            // string|null, optional hex (#rgb / #rrggbb), validated when present
+}
+```
+
+- `id`, `value`, `added_at` are system-owned and always present. `value` is the backward-compat anchor:
+  every scalar tag, plus the chat / search / sum surface, reads it.
+- `label`, `color` are nullable - null means absent, and per the null-over-placeholder rule a null
+  field renders nothing (no dash, no "N/A"), never a fabricated default.
+- `weight` is the one rich field that defaults rather than nulls: `1` = equal weight, always present, so
+  weighted-picker math is `total / weight` with no null branch. Validated as a positive number.
+- **Accepted tradeoff (chosen at D5):** the schema is closed. A future field (`avatar_url`, `emote_id`, ...)
+  is a migration, not a config change. That was the explicit cost of "validated up front," and it is on
+  the record as accepted.
+
+### 13.2 id strategy
+
+A per-list monotonic integer counter, `option_sets.next_item_id`, incremented on every append. Ids are
+small (cheap on the wire), strictly increasing (free insertion order), unique within the list, and never
+reused even after a draw/pop. No UUIDs/ULIDs - lists never merge across users, so global uniqueness buys
+nothing and costs payload weight.
+
+### 13.3 The parallel timestamp array goes away
+
+`item_added_at` is deleted; `added_at` lives inside each item. This removes the `ListItemTimestamps`
+helper and the `stamp ?? null` / `removeAt` / `preserveByValue` juggling from every mutator and the
+sweeper - a net simplification that pays for part of the objects work. The entry-TTL sweep reads
+`item.added_at` directly.
+
+### 13.4 Tag backward-compat contract (the fork, resolved)
+
+Existing overlay templates must not break, so scalar access keeps projecting to `value`:
+
+| Tag | Resolves to |
+|-----|-------------|
+| `[[[c:list:slug.0]]]` | item 0's `value` (string) - unchanged |
+| `[[[c:list:slug:first]]]` / `:last` | first / last item's `value` |
+| `[[[c:list:slug:sum]]]` | sum of numeric `value`s |
+| `[[[c:list:slug:count]]]` / `.count` | item count - unchanged |
+| `[[[foreach:c:list:slug as item]]] ... [[[item]]]` | bare `[[[item]]]` -> `value` (string) - unchanged |
+
+New field access via a dotted suffix (the power objects unlock):
+
+- `[[[c:list:slug.0.label]]]`, `.weight`, `.color`, and also `.id` / `.added_at` (useful for keying/animation)
+- inside foreach: `[[[item.label]]]`, `[[[item.weight]]]`, `[[[item.color]]]`, `[[[item.id]]]`
+
+The one bare-tag sub-choice: `[[[c:list:slug]]]` (the JSON-array tag) stays an **array of value strings**
+for backward compatibility; a new `[[[c:list:slug:json]]]` returns the **array of full objects**. (My
+pick; trivial to flip to bare = objects if you'd rather.)
+
+Both the server-side initial tag resolution (render time, parsed once - tags never reparse) and the
+client-side renderer patch apply this projection identically - the same server/client mirror discipline
+`computeListSum` already follows.
+
+### 13.5 Consequence for the renderer (relates to D3)
+
+D3 ("leave the renderer alone") meant "do not move it to the diff channel," and that still holds. But
+the renderer must learn the object shape because the data it consumes changed:
+`OverlayRenderer.vue::handleListUpdated()` derives `.N` from `item.value` and additionally exposes
+`.N.label/.weight/.color`. This is real renderer work the strings version would not have needed. It does
+not move the renderer onto the diff channel - `ListUpdated` keeps carrying the (now object) array on the
+existing `alerts.{twitch}` channel.
+
+### 13.6 Wire format in object terms (supersedes §4 / §5)
+
+`ListMutated` ops carry whole items by `id` instead of value + index:
+
+- `append` -> `op: { type: "append", item: { id, value, added_at, label, weight, color } }`. No index;
+  consumers append or insert by id order.
+- `remove` -> `op: { type: "remove", ids: [7], items: [ {…} ], reason }`. `ids` is the animation key; the
+  full removed objects ride along so a consumer can animate the thing leaving without having cached it.
+- `replace` / `restore` / `clone_create` -> carry the new array of objects, size-guarded as before.
+- `clear` / `state` / `meta_change` / `delete` -> unchanged (no per-item payload).
+- `after.items` (the size-guarded convenience snapshot) is now an array of objects.
+
+Indices are dropped from the wire entirely: `id` is the stable key that indices were only ever a weak
+stand-in for. That substitution is the whole reason objects were worth doing.
+
+### 13.7 Migration
+
+A schema migration converts existing data in place:
+
+- `option_sets.items`: `["A","B"]` + `item_added_at: [t1,t2]` becomes
+  `[{id:1,value:"A",added_at:t1,label:null,weight:1,color:null}, {id:2,value:"B",added_at:t2,…}]`.
+  Missing stamps fall back to the row's `created_at`.
+- add `option_sets.next_item_id` = count + 1; drop `item_added_at`.
+- `list_snapshots.items` migrate the same way (string arrays today) so restore stays consistent.
+- Recipe manifests still author `items: ["Heads","Tails"]` as friendly string arrays; the installer
+  wraps them into objects at install time. **The recipe manifest schema is unchanged.**
+- Chat append + list_writer still take a value string and wrap it: `{id: next, value, added_at: now,
+  label: null, weight: 1, color: null}`.
+
+Per the no-prod-writes rule, this migration runs against prod only on your explicit go, with rollback
+tested locally first (the CLAUDE.md DB-change discipline).
+
+### 13.8 Updated scope
+
+On top of the §10 build sequence, items-as-objects adds: the migration (13.7), the object-aware tag
+resolver on both server and client (13.4-13.5), and the object-shaped wire payloads (13.6). The
+op-wiring and channel / auth / REST work from §10 still stands - it just carries objects now. Realistic
+shape: a few days, not one, with the migration as the single riskiest step.
+
+---
+
+*Strawman drafted 2026-05-24, D1-D5 resolved same day. Reacts welcome anywhere. Nothing is built until you say go.*

@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 24th, 2026 - docs(design): M8 D5 resolved - List items become objects (fixed rich schema)
+
+Resolved the last open fork in the Lists data-bus design: items move from bare strings to a fixed, validated object schema `{id, value, added_at, label, weight, color}`. Doing it now avoids migrating live list data later, and folding the timestamp into the item kills the fragile parallel `item_added_at` array that every mutator currently juggles.
+
+- New §13 in `docs/design/lists-data-bus.md` is the authoritative object spec: the item shape and field rules, the per-list integer `id` counter, the dropped parallel timestamp array, the tag backward-compat contract (scalar tags still render `value`; new `.label/.weight/.color` dotted accessors; `:json` for the full-object array), the object-shaped wire payloads (ops keyed by `id`, indices dropped), the renderer consequence, and the in-place data migration.
+- Flagged the honest cost: this turns M8 from ~1 day into a multi-day foundation piece, with the prod data migration as the single riskiest step (runs only on explicit go, rollback tested locally first).
+- Marked §4/§5/§7/§9 as superseded by §13 where they assumed strings; D5 in §8 now reads "Decided".
+
 ## May 24th, 2026 - docs(design): Lists data-bus (M8) design strawman
 
 Cooked the full A-to-Z design for M8 (Lists realtime diff broadcasts) into a standalone strawman at `docs/design/lists-data-bus.md`, so the idea can be reviewed cold before any code is written. Grounded it in a sweep of the actual Lists subsystem (every mutator, the snapshot system, the current `ListUpdated` broadcast, and how `OverlayRenderer.vue` consumes it).
