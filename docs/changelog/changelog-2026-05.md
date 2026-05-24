@@ -1,5 +1,12 @@
 # CHANGELOG MAY 2026
 
+## May 24th, 2026 - fix(security): bump qs to 6.15.2 (CVE-2026-8723, transitive via Inertia)
+
+Dependabot flagged `qs@6.15.0` (GHSA-q8mj-m7cp-5q26 / CVE-2026-8723, medium, CVSS 5.3): `qs.stringify` throws a `TypeError` on `null`/`undefined` entries in comma-format arrays when called with `arrayFormat: 'comma'` and `encodeValuesOnly: true` (both non-default). It is a transitive frontend dep, pulled only through `@inertiajs/vue3` -> `@inertiajs/core` (which requires `qs: ^6.15.0`).
+
+- Real-world risk is low: non-default option combo, not reachable from standard HTML form posts, and in a normal request path it surfaces as a 500 rather than a worker crash (EPSS 0.04%). Patched anyway since the fix is free.
+- `npm update qs` -> `6.15.2` (first patched version). It satisfies `@inertiajs/core`'s `^6.15.0` range, so no `package.json` change and no `overrides` entry were needed. `npm audit` now reports 0 vulnerabilities. Lockfile-only change.
+
 ## May 24th, 2026 - docs(design): M8 D5 resolved - List items become objects (fixed rich schema)
 
 Resolved the last open fork in the Lists data-bus design: items move from bare strings to a fixed, validated object schema `{id, value, added_at, label, weight, color}`. Doing it now avoids migrating live list data later, and folding the timestamp into the item kills the fragile parallel `item_added_at` array that every mutator currently juggles.
