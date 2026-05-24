@@ -165,10 +165,13 @@ Milestone numbers are stable identifiers, not a strict sequence. Work the **Prio
 ---
 
 ### ★ Milestone 8 - Lists as a Realtime Data Bus (diff broadcasts)
-> *TOP PRIORITY (vision locked 2026-05-14). Replace the after-only `ListUpdated` payload with*
-> *Supabase-style `{before, after, op}` diffs so external consumers (Lottie via dotlottie-wc,*
-> *Web Components, external Bun scripts, custom Vue) can do their own choreography. Once shipped,*
-> *Overlabels becomes the bus and the wheel-of-fortune-style visual problems stop being ours.*
+> *TOP PRIORITY (vision locked 2026-05-14). Alongside the after-only `ListUpdated` payload, publish*
+> *Supabase-style change diffs (surgical `op` + a size-guarded `after`) on a per-list channel so*
+> *external consumers (Lottie via dotlottie-wc, Web Components, external Bun scripts, custom Vue)*
+> *can do their own choreography. Once shipped, Overlabels becomes the bus and the*
+> *wheel-of-fortune-style visual problems stop being ours.*
+
+**📐 Full design strawman: [`docs/design/lists-data-bus.md`](design/lists-data-bus.md)** - the A-to-Z, with the open decisions (D1-D5) called out and my picks attached. Read that before starting; the bullets below are just the headline shape.
 
 **Core (~1 day with tests)**
 - Wire format `{slug, before, after, op: {type, ...details}, timestamp}` where `op` is a tagged union covering:

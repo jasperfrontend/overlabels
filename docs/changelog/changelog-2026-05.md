@@ -1,5 +1,14 @@
 # CHANGELOG MAY 2026
 
+## May 24th, 2026 - docs(design): Lists data-bus (M8) design strawman
+
+Cooked the full A-to-Z design for M8 (Lists realtime diff broadcasts) into a standalone strawman at `docs/design/lists-data-bus.md`, so the idea can be reviewed cold before any code is written. Grounded it in a sweep of the actual Lists subsystem (every mutator, the snapshot system, the current `ListUpdated` broadcast, and how `OverlayRenderer.vue` consumes it).
+
+- Documents the wire format (a new `ListMutated` event: surgical `op` + size-guarded `after`, no `before`), the full op catalog mapped to the exact mutator that emits each delta, the new per-list channel `lists.{twitch_id}.{slug}`, and the external-consumer auth + REST-bootstrap story.
+- Two deliberate deviations from the original memory note, both justified in-doc: dropped `before` from the wire (redundant for stateful consumers, and the main Reverb 10 KB payload risk), and reused the OverlayAccessToken model for external-consumer channel auth (the memory never addressed how a third party gets onto a private channel).
+- Calls out five real decisions (D1-D5) with options, my pick, and the tradeoff, plus an honest scope note: the "~1 day" core is only the half that talks to our own renderer; the channel + auth + REST bootstrap + reference consumer is the part that actually makes it a bus.
+- Linked from MILESTONES.md M8.
+
 ## May 24th, 2026 - docs(milestones): refresh the roadmap to match reality and capture outstanding work
 
 `MILESTONES.md` had drifted badly out of date (last touched May 4th) - it still listed the Twitch bot as pending and didn't mention the donation integrations, the Stream State Machine, Controls, Lists, Recipes, or Alert Targeting at all. Rewrote it from a memory + code sweep so the doc reflects what actually shipped and what's genuinely outstanding.
