@@ -58,3 +58,9 @@ yarn-error.log
 /resources/help/reference/.obsidian/
 __history/
 *.~[0-9]*~
+/public/cleanup-minecraft-texturepacks.bat
+/public/css classes.txt
+/resources/help/reference/todo-overlabels/TODO Overlabels & Overlabels GPS.md
+/resources/help/reference/All Ko-fi Events.md
+/resources/help/reference/Pasted image 20260516172641.png
+/resources/recipes/overlabels_recipe_manifest.schema
