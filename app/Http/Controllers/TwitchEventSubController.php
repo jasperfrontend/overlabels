@@ -22,6 +22,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Random\RandomException;
 use Throwable;
 
@@ -492,6 +493,18 @@ class TwitchEventSubController extends Controller
                 $data['event'] = $event;
             }
 
+            // Decorate the payload with profile_image_url for every user the
+            // event references (acting user, broadcaster, raid source, hype
+            // train top_contributions[] and last_contribution, ...). Single
+            // batched lookup, memoised per user id, then mutates $event so
+            // DB persist, alert render, raw broadcast, and tts expression
+            // all see the same `<prefix>_avatar` keys.
+            $enrichmentToken = $user?->access_token ?: $this->eventSubService->getAppAccessToken();
+            if ($enrichmentToken) {
+                $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
+                $data['event'] = $event;
+            }
+
             // Store the event in the database
             TwitchEvent::create([
                 'user_id' => $user?->id,
@@ -600,7 +613,7 @@ class TwitchEventSubController extends Controller
                 $templateData,
             );
 
-            $alertId = (string) \Illuminate\Support\Str::uuid();
+            $alertId = (string) Str::uuid();
 
             // Broadcast alert data to overlay
             broadcast(new AlertTriggered(

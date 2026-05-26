@@ -4,6 +4,7 @@ when the title, category, or content labels change mid-stream.
 - `[[[event.broadcaster_user_id]]]` :: Your Twitch ID
 - `[[[event.broadcaster_user_login]]]` :: Your username
 - `[[[event.broadcaster_user_name]]]` :: Your display name
+- `[[[event.broadcaster_user_avatar]]]` :: Your profile image URL
 
 ### Updated Fields
 - `[[[event.title]]]` :: New stream title

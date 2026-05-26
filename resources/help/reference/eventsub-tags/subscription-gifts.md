@@ -4,6 +4,7 @@ when someone gifts subscriptions.
 - `[[[event.user_id]]]` :: Gifter's Twitch ID
 - `[[[event.user_login]]]` :: Gifter's username
 - `[[[event.user_name]]]` :: Gifter's display name
+- `[[[event.user_avatar]]]` :: Gifter's profile image URL
 
 ### Gift Data
 - `[[[event.total]]]` :: Number of subs gifted

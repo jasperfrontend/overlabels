@@ -9,9 +9,11 @@ a new contribution lands during an active train :: fires frequently, budget for 
 
 ### Top & Last Contributor
 - `[[[event.last_contribution.user_name]]]` :: Who just contributed
+- `[[[event.last_contribution.user_avatar]]]` :: Their profile image URL
 - `[[[event.last_contribution.type]]]` :: "bits", "subscription", or "other"
 - `[[[event.last_contribution.total]]]` :: Their contribution amount
 - `[[[event.top_contributions.0.user_name]]]` :: #1 contributor (also .1 and .2)
+- `[[[event.top_contributions.0.user_avatar]]]` :: #1 contributor's profile image URL
 - `[[[event.top_contributions.0.total]]]` :: #1 contribution total
 
 example:

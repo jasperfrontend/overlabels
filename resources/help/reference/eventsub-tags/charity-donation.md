@@ -3,6 +3,7 @@ a viewer donated to the active charity campaign.
 ### Donor & Campaign
 - `[[[event.user_name]]]` :: Donor's display name
 - `[[[event.user_login]]]` :: Donor's username
+- `[[[event.user_avatar]]]` :: Donor's profile image URL
 - `[[[event.charity_name]]]` :: Charity being donated to
 - `[[[event.charity_description]]]` :: Charity description
 - `[[[event.charity_logo]]]` :: Charity logo URL

@@ -20,6 +20,7 @@ export function normalizeEvent(raw: any): NormalizedEvent {
   let user_id: string | null;
   let user_login: string | null;
   let user_name: string | null;
+  let user_avatar: string | null = null;
   let gifter_name: string | null = null;
   let tier: string | null = null;
   let is_gift: boolean | null = null;
@@ -31,6 +32,7 @@ export function normalizeEvent(raw: any): NormalizedEvent {
       user_id = e?.user_id;
       user_login = e?.user_login;
       user_name = e?.user_name;
+      user_avatar = e?.user_avatar ?? null;
       tier = e?.tier;
       is_gift = e?.is_gift ?? false;
       break;
@@ -39,6 +41,7 @@ export function normalizeEvent(raw: any): NormalizedEvent {
       user_id = e?.user_id;
       user_login = e?.user_login;
       user_name = e?.user_name;
+      user_avatar = e?.user_avatar ?? null;
       gifter_name = e?.user_name;
       tier = e?.tier;
       is_gift = true;
@@ -49,30 +52,37 @@ export function normalizeEvent(raw: any): NormalizedEvent {
       user_id = e?.user_id;
       user_login = e?.user_login;
       user_name = e?.user_name;
+      user_avatar = e?.user_avatar ?? null;
       break;
 
     case 'channel.raid':
       user_id = e?.from_broadcaster_user_id;
       user_login = e?.from_broadcaster_user_login;
       user_name = e?.from_broadcaster_user_name;
+      user_avatar = e?.from_broadcaster_user_avatar ?? null;
       break;
 
     case 'channel.cheer':
       user_id = e?.user_id ?? (e?.is_anonymous ? null : e?.user_id);
       user_login = e?.user_login ?? (e?.is_anonymous ? null : e?.user_login);
       user_name = e?.user_name ?? (e?.is_anonymous ? 'Anonymous' : e?.user_name);
+      user_avatar = e?.user_avatar ?? null;
       break;
 
     default:
       user_id = pick('user_id');
       user_login = pick('user_login');
       user_name = pick('user_name');
+      user_avatar = pick('user_avatar');
       break;
   }
 
   const broadcaster_user_id = pick('broadcaster_user_id', 'to_broadcaster_user_id');
   const broadcaster_user_login = pick('broadcaster_user_login', 'to_broadcaster_user_login');
   const broadcaster_user_name = pick('broadcaster_user_name', 'to_broadcaster_user_name');
+  const broadcaster_user_avatar = pick('broadcaster_user_avatar', 'to_broadcaster_user_avatar');
+  const from_broadcaster_user_avatar = pick('from_broadcaster_user_avatar');
+  const to_broadcaster_user_avatar = pick('to_broadcaster_user_avatar');
 
   const timestamps = [
     e?.followed_at,
@@ -94,6 +104,9 @@ export function normalizeEvent(raw: any): NormalizedEvent {
     broadcaster_user_id: broadcaster_user_id ?? undefined,
     broadcaster_user_login: broadcaster_user_login ?? undefined,
     broadcaster_user_name: broadcaster_user_name ?? undefined,
+    broadcaster_user_avatar: broadcaster_user_avatar ?? undefined,
+    from_broadcaster_user_avatar: from_broadcaster_user_avatar ?? undefined,
+    to_broadcaster_user_avatar: to_broadcaster_user_avatar ?? undefined,
     gifter_name: gifter_name ?? undefined,
     id: String(id),
     type: eventType,
@@ -101,6 +114,7 @@ export function normalizeEvent(raw: any): NormalizedEvent {
     user_login: user_login ?? undefined,
     user_name: user_name ?? undefined,
     user_id: user_id ?? undefined,
+    user_avatar: user_avatar ?? undefined,
     tier: tier ?? undefined,
     is_gift: is_gift ?? undefined,
     gift_count: gift_count ?? undefined,

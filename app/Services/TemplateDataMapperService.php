@@ -470,13 +470,13 @@ class TemplateDataMapperService
                 'display_name' => 'Event Data',
                 'description' => 'Dynamic event data from Twitch EventSub',
                 'tags' => [
-                    'event.type', 'event.user_id', 'event.user_login', 'event.user_name',
-                    'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name',
+                    'event.type', 'event.user_id', 'event.user_login', 'event.user_name', 'event.user_avatar',
+                    'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name', 'event.broadcaster_user_avatar',
                     'event.tier', 'event.tier_display', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
                     'event.message', 'event.bits', 'event.viewers', 'event.from_broadcaster_user_id',
-                    'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name',
-                    'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name',
-                    'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name',
+                    'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name', 'event.from_broadcaster_user_avatar',
+                    'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name', 'event.to_broadcaster_user_avatar',
+                    'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name', 'event.moderator_user_avatar',
                     'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
                     'event.reward_id', 'event.reward.title', 'event.reward.prompt', 'event.reward.cost',
                     'event.user_input', 'event.status', 'event.redeemed_at',
@@ -484,8 +484,8 @@ class TemplateDataMapperService
                     'event.level', 'event.progress', 'event.goal', 'event.started_at', 'event.expires_at',
                     'event.ended_at', 'event.cooldown_ends_at',
                     'event.top_contributions.count',
-                    'event.top_contributions.0.user_name', 'event.top_contributions.0.type', 'event.top_contributions.0.total',
-                    'event.last_contribution.user_name', 'event.last_contribution.type', 'event.last_contribution.total',
+                    'event.top_contributions.0.user_name', 'event.top_contributions.0.user_avatar', 'event.top_contributions.0.type', 'event.top_contributions.0.total',
+                    'event.last_contribution.user_name', 'event.last_contribution.user_avatar', 'event.last_contribution.type', 'event.last_contribution.total',
                     // Charity
                     'event.charity_name', 'event.charity_description', 'event.charity_logo', 'event.charity_website',
                     'event.amount.value', 'event.amount.decimal_places', 'event.amount.currency', 'event.amount.formatted',
@@ -793,5 +793,4 @@ class TemplateDataMapperService
 
         return trim($currency.' '.$formatted);
     }
-
 }

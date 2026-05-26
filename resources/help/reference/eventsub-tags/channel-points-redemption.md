@@ -4,6 +4,7 @@ when someone redeems a channel points reward.
 - `[[[event.user_id]]]` :: Redeemer's Twitch ID
 - `[[[event.user_login]]]` :: Redeemer's username
 - `[[[event.user_name]]]` :: Redeemer's display name
+- `[[[event.user_avatar]]]` :: Redeemer's profile image URL
 - `[[[event.user_input]]]` :: User's input text
 
 ### Reward Data

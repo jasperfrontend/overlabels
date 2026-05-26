@@ -58,9 +58,11 @@ export type NormalizedEvent = {
   broadcaster_user_id: string;
   broadcaster_user_login: string;
   broadcaster_user_name: string;
+  broadcaster_user_avatar?: string;
   user_login?: string;
   user_name?: string;
   user_id?: string;
+  user_avatar?: string;
   gifter_name: string | undefined;
   tier?: '1000'|'2000'|'3000' | string | undefined;
   is_gift?: boolean;
@@ -69,9 +71,11 @@ export type NormalizedEvent = {
   to_broadcaster_user_id?: string;
   to_broadcaster_user_login?: string;
   to_broadcaster_user_name?: string;
+  to_broadcaster_user_avatar?: string;
   from_broadcaster_user_id?: string;
   from_broadcaster_user_login?: string;
   from_broadcaster_user_name?: string;
+  from_broadcaster_user_avatar?: string;
   viewers?: number;
   raw: any;                 // keep original for debugging
 }

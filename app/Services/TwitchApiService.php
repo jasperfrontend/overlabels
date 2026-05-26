@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class TwitchApiService
 {
@@ -358,6 +359,164 @@ class TwitchApiService
         unset($row);
 
         return $response;
+    }
+
+    /**
+     * Walk an EventSub `event` payload and inject `<prefix>_avatar` next to every
+     * sibling-key trigram (`<prefix>_id`, `<prefix>_login`, `<prefix>_name`) where
+     * all three are present and the `_id` is a non-empty string. Bare `user_id`
+     * / `user_login` / `user_name` (no prefix) is treated as the `user_` family
+     * with output key `user_avatar`.
+     *
+     * Covers top-level (`user_*`, `broadcaster_user_*`, `from_broadcaster_user_*`,
+     * `moderator_user_*`), nested arrays (`top_contributions[]`), and nested
+     * objects (`last_contribution`). Profile lookups are batched into a single
+     * `getUsersInfo` call across the whole tree, then memoised per user id for
+     * 60s so gift bombs and hype trains don't hammer Helix /users.
+     *
+     * Defensive by design: any failure (token expired, Helix down, malformed
+     * payload) is logged and the original `$event` is returned unchanged. Event
+     * processing must never break because enrichment failed.
+     */
+    public function enrichEventWithUserAvatars(string $accessToken, array $event): array
+    {
+        try {
+            $detected = [];
+            $this->collectUserTrigrams($event, $detected);
+
+            if (empty($detected)) {
+                return $event;
+            }
+
+            $idToAvatar = [];
+            $idsToFetch = [];
+            foreach ($detected as $id) {
+                $cached = Cache::get("twitch_event_avatar_$id");
+                if ($cached !== null) {
+                    $idToAvatar[$id] = $cached;
+                } else {
+                    $idsToFetch[] = $id;
+                }
+            }
+
+            if (! empty($idsToFetch)) {
+                $users = $this->getUsersInfo($accessToken, $idsToFetch);
+                foreach ($idsToFetch as $id) {
+                    $avatar = (string) ($users[$id]['profile_image_url'] ?? '');
+                    $idToAvatar[$id] = $avatar;
+                    Cache::put("twitch_event_avatar_$id", $avatar, now()->addSeconds(60));
+                }
+            }
+
+            $this->injectAvatars($event, $idToAvatar);
+
+            return $event;
+        } catch (Throwable $e) {
+            Log::warning('EventSub avatar enrichment failed; returning event unchanged', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $event;
+        }
+    }
+
+    /**
+     * Pass 1 of avatar enrichment: walk the payload and collect every user id
+     * referenced by a complete `<prefix>_id` + `<prefix>_login` + `<prefix>_name`
+     * trigram. Bare `user_id`/`user_login`/`user_name` (no prefix) is treated as
+     * the `user_` family. Output is a deduped list of string ids.
+     *
+     * @param  array<int, string>  $out  Accumulator, mutated by reference.
+     */
+    private function collectUserTrigrams(mixed $node, array &$out): void
+    {
+        if (! is_array($node)) {
+            return;
+        }
+
+        if (! array_is_list($node)) {
+            foreach ($this->trigramPrefixes($node) as $prefix) {
+                $id = $node[$prefix.'id'] ?? null;
+                if (is_string($id) && $id !== '' && ! in_array($id, $out, true)) {
+                    $out[] = $id;
+                }
+            }
+        }
+
+        foreach ($node as $value) {
+            if (is_array($value)) {
+                $this->collectUserTrigrams($value, $out);
+            }
+        }
+    }
+
+    /**
+     * Pass 2 of avatar enrichment: walk the payload and inject `<prefix>_avatar`
+     * (or `user_avatar` for the bare trigram) into every object that owns a
+     * complete trigram. Missing avatars resolve to an empty string so templates
+     * see a stable key shape (matches the Helix enrichment behaviour).
+     *
+     * @param  array<string, string>  $idToAvatar
+     */
+    private function injectAvatars(array &$node, array $idToAvatar): void
+    {
+        if (! array_is_list($node)) {
+            foreach ($this->trigramPrefixes($node) as $prefix) {
+                $id = $node[$prefix.'id'] ?? null;
+                if (! is_string($id) || $id === '') {
+                    continue;
+                }
+                $node[$prefix.'avatar'] = $idToAvatar[$id] ?? '';
+            }
+        }
+
+        foreach ($node as &$value) {
+            if (is_array($value)) {
+                $this->injectAvatars($value, $idToAvatar);
+            }
+        }
+        unset($value);
+    }
+
+    /**
+     * Return every prefix in `$node` that has a complete trigram. A prefix is
+     * the part of the key before the `_id`/`_login`/`_name` suffix - the bare
+     * `user_id` trigram returns prefix `user_` (i.e. output key `user_avatar`).
+     *
+     * @param  array<string, mixed>  $node
+     * @return array<int, string>
+     */
+    private function trigramPrefixes(array $node): array
+    {
+        $prefixes = [];
+
+        foreach ($node as $key => $_) {
+            if (! is_string($key)) {
+                continue;
+            }
+            if (! str_ends_with($key, '_id')) {
+                continue;
+            }
+
+            $prefix = substr($key, 0, -2); // keeps trailing `_`; e.g. `broadcaster_user_id` -> `broadcaster_user_`
+            if ($prefix === '') {
+                continue;
+            }
+
+            // Bare `user_id` lives alongside `user_login`/`user_name` - prefix
+            // would be `user_` which already matches that pattern. So a single
+            // rule works for both cases.
+            if (! array_key_exists($prefix.'login', $node)) {
+                continue;
+            }
+            if (! array_key_exists($prefix.'name', $node)) {
+                continue;
+            }
+
+            $prefixes[] = $prefix;
+        }
+
+        return $prefixes;
     }
 
     /**

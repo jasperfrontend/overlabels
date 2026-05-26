@@ -4,6 +4,7 @@ when someone subscribes to your channel.
 - `[[[event.user_id]]]` :: Subscriber's Twitch ID
 - `[[[event.user_login]]]` :: Subscriber's username
 - `[[[event.user_name]]]` :: Subscriber's display name
+- `[[[event.user_avatar]]]` :: Subscriber's profile image URL
 
 ### Subscription Data
 - `[[[event.tier]]]` :: Sub tier (1000, 2000, 3000) :: DON'T USE

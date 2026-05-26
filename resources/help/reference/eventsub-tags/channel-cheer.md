@@ -4,6 +4,7 @@ when someone cheers bits.
 - `[[[event.user_id]]]` :: Cheerer's Twitch ID
 - `[[[event.user_login]]]` :: Cheerer's username
 - `[[[event.user_name]]]` :: Cheerer's display name
+- `[[[event.user_avatar]]]` :: Cheerer's profile image URL (blank when anonymous)
 
 ### Cheer Data
 - `[[[event.bits]]]` :: Number of bits cheered
