@@ -2,7 +2,7 @@ import { onMounted, ref } from 'vue';
 
 type Appearance = 'light' | 'dark' | 'sepia' | 'system';
 
-const THEME_CLASSES = ['dark', 'sepia'] as const;
+const THEME_CLASSES = ['dark', 'theme-sepia'] as const;
 
 function applyClasses(classes: readonly string[]) {
     const root = document.documentElement;
@@ -19,8 +19,9 @@ export function updateTheme(value: Appearance) {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         applyClasses(prefersDark ? ['dark'] : []);
     } else if (value === 'sepia') {
-        // Sepia rides on .dark so all dark: variants and classList.contains('dark') checks keep working
-        applyClasses(['dark', 'sepia']);
+        // Sepia rides on .dark so all dark: variants and classList.contains('dark') checks keep working.
+        // Class is .theme-sepia (not .sepia) to avoid Tailwind's built-in sepia filter utility.
+        applyClasses(['dark', 'theme-sepia']);
     } else if (value === 'dark') {
         applyClasses(['dark']);
     } else {

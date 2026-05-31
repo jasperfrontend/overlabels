@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 31st, 2026 - fix(theme): namespace sepia class to .theme-sepia to avoid Tailwind collision
+
+Shipping the sepia theme an hour ago set `<html class="dark sepia">`, which inadvertently invoked Tailwind's built-in `.sepia` filter utility (`filter: sepia(100%)`). The entire page got an actual sepia CSS filter applied on top of the themed tokens, which mauled CodeMirror's hardcoded syntax highlight colors and bled through to any in-page browser-extension overlays. Renamed the theme class to `.theme-sepia` so it sits in our own namespace. Future themes follow `.theme-cyan`, `.theme-ocean`.
+
+- `resources/css/app.css`: `.sepia` block -> `.theme-sepia`, `@custom-variant sepia (&:is(.sepia *))` -> `@custom-variant sepia (&:is(.theme-sepia *))`. Variant prefix (`sepia:`) is unchanged, only the matching selector moved. Comment expanded to explain the namespacing rule.
+- `useAppearance.ts`: `THEME_CLASSES` and the `applyClasses` call for `'sepia'` mode now operate on `'theme-sepia'`. The user-facing `Appearance` union value, cookie value, and localStorage value all stay `'sepia'` so existing settings carry over without migration.
+- `app.blade.php` + `layouts/help.blade.php`: `@class` directive emits `theme-sepia` instead of `sepia`; inline `html.sepia` background rule renamed to `html.theme-sepia`. Pairing logic (sepia implies dark) is unchanged.
+
 ## May 31st, 2026 - feat(theme): add Sepia as a peer theme alongside Light/Dark/System
 
 Got far enough into burnout on the existing dark purple theme that Dark Reader's auto-sepia overlay started looking more polished than the real thing. Decided to ship Sepia as a first-class option rather than redo dark mode wholesale. Picked a peer model (Light / Dark / Sepia / System) over making Sepia a dark variant so future warm/cool themes (cyan/ocean) drop into the same slot without architectural rework.

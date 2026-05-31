@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => in_array($appearance ?? 'system', ['dark', 'sepia']), 'sepia' => ($appearance ?? 'system') === 'sepia'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => in_array($appearance ?? 'system', ['dark', 'sepia']), 'theme-sepia' => ($appearance ?? 'system') === 'sepia'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,7 +29,7 @@
                 background-color: oklch(0.145 0 0);
             }
 
-            html.sepia {
+            html.theme-sepia {
                 background-color: hsl(30 7% 8%);
             }
         </style>

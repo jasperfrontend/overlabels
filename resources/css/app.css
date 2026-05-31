@@ -8,7 +8,7 @@
 @source '../../storage/framework/views/*.php';
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant sepia (&:is(.sepia *));
+@custom-variant sepia (&:is(.theme-sepia *));
 
 @theme inline {
     --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -162,12 +162,13 @@
 }
 
 /*
-  Sepia is a peer theme that pairs with .dark on <html> (e.g. class="dark sepia").
+  Sepia is a peer theme that pairs with .dark on <html> (e.g. class="dark theme-sepia").
   Pairing means: every `dark:` Tailwind variant + every classList.contains('dark')
-  check (CodeMirror, etc.) keeps working, and .sepia just re-skins the tokens.
-  Future warm/cool variants (cyan, ocean) follow the same pattern.
+  check (CodeMirror, etc.) keeps working, and .theme-sepia just re-skins the tokens.
+  The class is namespaced (`theme-sepia` not `sepia`) to avoid collision with
+  Tailwind's built-in `.sepia` filter utility. Future variants follow `.theme-<name>`.
 */
-.sepia {
+.theme-sepia {
     --background: hsl(30 7% 8%);
     --foreground: hsl(35 12% 92%);
     --card: hsl(28 9% 10%);
