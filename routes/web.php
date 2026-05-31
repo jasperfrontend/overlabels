@@ -501,6 +501,11 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/meta-command', [ListActionWebController::class, 'getMeta'])->name('meta-command.get');
         Route::put('/meta-command', [ListActionWebController::class, 'saveMeta'])->name('meta-command.save');
 
+        // Single-list detail page. Registered after the literal routes above so
+        // the {slug} segment can't swallow 'meta-command'. Resolved scoped to
+        // the user inside the controller (slugs are per-user, not global).
+        Route::get('/{slug}', [ListController::class, 'show'])->name('show');
+
         Route::put('/{list}', [ListController::class, 'update'])->name('update');
         Route::delete('/{list}', [ListController::class, 'destroy'])->name('destroy');
 

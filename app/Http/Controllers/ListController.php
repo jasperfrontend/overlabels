@@ -56,6 +56,26 @@ class ListController extends Controller
     }
 
     /**
+     * GET /dashboard/lists/{slug}
+     *
+     * Single-list detail page. Slugs are unique per user (not globally), so
+     * we resolve scoped to the authenticated user rather than using implicit
+     * {list:slug} route-model binding, which would match globally and could
+     * surface another user's row.
+     */
+    public function show(Request $request, string $slug): Response
+    {
+        $list = OptionSet::with('recipeInstance.recipe')
+            ->where('user_id', $request->user()->id)
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        return Inertia::render('dashboard/lists/show', [
+            'list' => $this->serialize($list),
+        ]);
+    }
+
+    /**
      * POST /dashboard/lists
      */
     public function store(Request $request): RedirectResponse
@@ -94,7 +114,9 @@ class ListController extends Controller
 
         $this->broadcastUpdate($request->user()->twitch_id, $list);
 
-        return back()->with('flash_list_id', $list->id);
+        // Land the streamer on the list they just made, rather than bouncing
+        // back to the collection where the new row isn't focused.
+        return redirect()->route('lists.show', $list->slug);
     }
 
     /**
@@ -263,7 +285,9 @@ class ListController extends Controller
             null,
         );
 
-        return back();
+        // The show page for this list no longer exists; return to the
+        // collection.
+        return redirect()->route('lists.index');
     }
 
     private function authorize(Request $request, OptionSet $list): void
