@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sun, Moon, Monitor } from 'lucide-vue-next';
+import { Sun, Moon, Coffee, Monitor } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -29,6 +29,10 @@ const { updateAppearance } = useAppearance();
       <DropdownMenuItem @click="updateAppearance('dark')" class="cursor-pointer">
         <Moon class="mr-2 size-4" />
         Dark
+      </DropdownMenuItem>
+      <DropdownMenuItem @click="updateAppearance('sepia')" class="cursor-pointer">
+        <Coffee class="mr-2 size-4" />
+        Sepia
       </DropdownMenuItem>
       <DropdownMenuItem @click="updateAppearance('system')" class="cursor-pointer">
         <Monitor class="mr-2 size-4" />

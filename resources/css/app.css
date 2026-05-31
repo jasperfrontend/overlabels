@@ -161,6 +161,52 @@
     --gradient-base: #1d0b30;
 }
 
+/*
+  Sepia is a peer theme that pairs with .dark on <html> (e.g. class="dark sepia").
+  Pairing means: every `dark:` Tailwind variant + every classList.contains('dark')
+  check (CodeMirror, etc.) keeps working, and .sepia just re-skins the tokens.
+  Future warm/cool variants (cyan, ocean) follow the same pattern.
+*/
+.sepia {
+    --background: hsl(30 7% 8%);
+    --foreground: hsl(35 12% 92%);
+    --card: hsl(28 9% 10%);
+    --card-foreground: var(--foreground);
+    --popover: var(--primary-foreground);
+    --popover-foreground: var(--foreground);
+    --primary: var(--foreground);
+    --primary-foreground: hsl(30 7% 12%);
+    --secondary: hsl(32 8% 22%);
+    --secondary-foreground: var(--foreground);
+    --muted: hsl(30 7% 15%);
+    --muted-foreground: hsl(35 9% 78%);
+    --accent: hsl(28 9% 18%);
+    --accent-foreground: var(--foreground);
+    --destructive: hsl(0 70% 55%);
+    --destructive-foreground: var(--foreground);
+    --border: var(--secondary);
+    --input: var(--secondary);
+    --ring: var(--muted-foreground);
+    --chart-1: hsl(25 75% 55%);
+    --chart-2: hsl(40 65% 50%);
+    --chart-3: hsl(15 70% 50%);
+    --chart-4: hsl(50 60% 55%);
+    --chart-5: hsl(30 80% 60%);
+    --sidebar-background: hsl(28 10% 12%);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--foreground);
+    --sidebar-primary-foreground: var(--foreground);
+    --sidebar-accent: hsl(30 8% 20%);
+    --sidebar-accent-foreground: hsl(35 10% 92%);
+    --sidebar-border: hsl(30 9% 22%);
+    --sidebar-ring: hsl(30 25% 55%);
+    --sidebar: hsl(30 7% 10%);
+    --gradient-spot-1: transparent;
+    --gradient-spot-2: transparent;
+    --gradient-spot-3: transparent;
+    --gradient-base: hsl(30 7% 8%);
+}
+
 html {scroll-behavior: smooth;}
 
 @layer base {

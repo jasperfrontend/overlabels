@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => in_array($appearance ?? 'system', ['dark', 'sepia']), 'sepia' => ($appearance ?? 'system') === 'sepia'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,6 +27,10 @@
 
             html.dark {
                 background-color: oklch(0.145 0 0);
+            }
+
+            html.sepia {
+                background-color: hsl(30 7% 8%);
             }
         </style>
         <link rel="icon" href="/favicon.png" sizes="any">

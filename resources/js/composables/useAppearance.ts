@@ -1,6 +1,14 @@
 import { onMounted, ref } from 'vue';
 
-type Appearance = 'light' | 'dark' | 'system';
+type Appearance = 'light' | 'dark' | 'sepia' | 'system';
+
+const THEME_CLASSES = ['dark', 'sepia'] as const;
+
+function applyClasses(classes: readonly string[]) {
+    const root = document.documentElement;
+    THEME_CLASSES.forEach((c) => root.classList.remove(c));
+    classes.forEach((c) => root.classList.add(c));
+}
 
 export function updateTheme(value: Appearance) {
     if (typeof window === 'undefined') {
@@ -8,12 +16,15 @@ export function updateTheme(value: Appearance) {
     }
 
     if (value === 'system') {
-        const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-        const systemTheme = mediaQueryList.matches ? 'dark' : 'light';
-
-        document.documentElement.classList.toggle('dark', systemTheme === 'dark');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyClasses(prefersDark ? ['dark'] : []);
+    } else if (value === 'sepia') {
+        // Sepia rides on .dark so all dark: variants and classList.contains('dark') checks keep working
+        applyClasses(['dark', 'sepia']);
+    } else if (value === 'dark') {
+        applyClasses(['dark']);
     } else {
-        document.documentElement.classList.toggle('dark', value === 'dark');
+        applyClasses([]);
     }
 }
 
