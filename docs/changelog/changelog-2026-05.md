@@ -1,5 +1,12 @@
 # CHANGELOG MAY 2026
 
+## May 31st, 2026 - fix(security): bump symfony/polyfill-intl-idn to 1.38.1 (CVE-2026-46644, transitive)
+
+Dependabot flagged `symfony/polyfill-intl-idn@1.37.0` (GHSA-2xf4-cg6j-vhgq / CVE-2026-46644, low, CVSS 4.0 score 2.7): `Idn::process()` accepts `xn--` Punycode labels whose payload decodes to empty or ASCII-only strings (e.g. `xn--kc1zs4-` -> `kc1zs4`), while native `ext-intl` correctly rejects them with `IDNA_ERROR_INVALID_ACE_LABEL` per UTS #46 revision 33 step 4.1.2. Inconsistency between the polyfill and ext-intl can lead to blocklist bypass or SSRF in code that canonicalises hostnames. It is a transitive composer dep, pulled via Symfony Mailer + Egulias EmailValidator.
+
+- Real-world risk is low for this app: the polyfill is inert whenever `ext-intl` is loaded (local PHP has it; FrankenPHP's image ships with intl too), and Overlabels does not use IDN-decoded hostnames as a security boundary. Patched anyway since the fix is free.
+- `composer update symfony/polyfill-intl-idn` -> `v1.38.1` (first patched version). Lockfile-only change, no `composer.json` edit needed.
+
 ## May 31st, 2026 - fix(theme): namespace sepia class to .theme-sepia to avoid Tailwind collision
 
 Shipping the sepia theme an hour ago set `<html class="dark sepia">`, which inadvertently invoked Tailwind's built-in `.sepia` filter utility (`filter: sepia(100%)`). The entire page got an actual sepia CSS filter applied on top of the themed tokens, which mauled CodeMirror's hardcoded syntax highlight colors and bled through to any in-page browser-extension overlays. Renamed the theme class to `.theme-sepia` so it sits in our own namespace. Future themes follow `.theme-cyan`, `.theme-ocean`.
