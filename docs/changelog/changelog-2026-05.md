@@ -1,5 +1,13 @@
 # CHANGELOG MAY 2026
 
+## May 31st, 2026 - fix(security): bump symfony/http-foundation + symfony/routing to 8.1.0 (CVE-2026-48736, CVE-2026-48784)
+
+Two new Symfony advisories surfaced in `composer audit` while patching the IDN polyfill. Bumped preemptively before Dependabot formally alerts, same playbook as the polyfill and `qs` bumps.
+
+- **CVE-2026-48736** (`symfony/http-foundation`, low): `IpUtils::PRIVATE_SUBNETS` omits IPv6 transition forms (6to4, NAT64, Teredo, IPv4-compatible). SSRF bypass in `NoPrivateNetworkHttpClient`, which is what reads that subnet list. **Practical risk for Overlabels: nil**. Grepped the repo: zero matches for `NoPrivateNetworkHttpClient`, zero for `IpUtils::PRIVATE_SUBNETS` / `IpUtils::checkIp`. We do not wrap any HttpClient with private-network blocking, so the bypass cannot fire in any code path we execute.
+- **CVE-2026-48784** (`symfony/routing`, low): `UrlGenerator` dot-segment encoding skips every other chained `../` or `./`, so a generated URL can collapse off-route under RFC 3986 normalization. **Practical risk: vanishingly low**. Requires user-supplied path segments fed through Symfony's `UrlGenerator` and dependent on RFC 3986 normalization downstream. Laravel sits on top of Symfony routing with its own URL generator, and Overlabels does not generate URLs from untrusted `../` chains.
+- `composer update symfony/http-foundation symfony/routing` -> both packages went from `v8.0.8` / `v8.0.12` to `v8.1.0`. Composer chose the minor bump because the existing constraint allows it; the diff is 29 lines in `composer.lock` scoped to just these two packages, no transitive ripple. Symfony honors semver for minor releases inside an 8.x major. `composer audit` now reports "No security vulnerability advisories found."
+
 ## May 31st, 2026 - fix(security): bump symfony/polyfill-intl-idn to 1.38.1 (CVE-2026-46644, transitive)
 
 Dependabot flagged `symfony/polyfill-intl-idn@1.37.0` (GHSA-2xf4-cg6j-vhgq / CVE-2026-46644, low, CVSS 4.0 score 2.7): `Idn::process()` accepts `xn--` Punycode labels whose payload decodes to empty or ASCII-only strings (e.g. `xn--kc1zs4-` -> `kc1zs4`), while native `ext-intl` correctly rejects them with `IDNA_ERROR_INVALID_ACE_LABEL` per UTS #46 revision 33 step 4.1.2. Inconsistency between the polyfill and ext-intl can lead to blocklist bypass or SSRF in code that canonicalises hostnames. It is a transitive composer dep, pulled via Symfony Mailer + Egulias EmailValidator.
