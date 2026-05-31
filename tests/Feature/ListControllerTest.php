@@ -64,7 +64,7 @@ it('store creates a user-authored list preserving exactly what was sent', functi
         'slug' => 'pizza',
         'label' => 'Pizza toppings',
         'items' => ['Pepperoni', 'Mushroom', '', 'Mushroom', ' '],
-    ])->assertRedirect();
+    ])->assertRedirect(route('lists.show', 'pizza'));
 
     $list = OptionSet::where('user_id', $user->id)->where('slug', 'pizza')->first();
     expect($list)->not->toBeNull()

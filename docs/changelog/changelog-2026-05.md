@@ -1,5 +1,15 @@
 # CHANGELOG MAY 2026
 
+## May 31st, 2026 - refactor(lists): split the Lists dashboard into index + show pages
+
+The Lists dashboard crammed the whole feature onto one ~1475-line page: a left rail of every list plus a right pane editing the selected one. It was cramped, and a single list can be as elaborate as an overlay. Worse, creating a list bounced you back to the collection with the first row selected instead of the list you just made. Split it into a collection page and a per-list detail page, mirroring the overlays (`/templates`) UX.
+
+- **`/dashboard/lists` (index)** rewritten as a slim collection view: a search box that filters client-side by slug, label, AND item contents (a content-only hit shows a "matches: ..." line so it's visible); compact rows that link to the detail page; the lightweight "New list" create modal; and the global `!list` meta-command settings panel (it's one-per-user, so it belongs with the collection, not any single list). Echo subscription kept so rows stay live as chat appenders mutate/create/delete lists.
+- **`/dashboard/lists/{slug}` (show)** is the new per-list page holding everything you can do to one list: items editor, disable toggle, expiry (per-item TTL + whole-list deadline with live countdown), actions (count/first/last/random/pop/draw/clone/clear) with per-action chat-permission checkboxes, snapshots, and append commands. No separate edit page - show does it all.
+- `ListController`: new `show(string $slug)` resolves the slug scoped to the authenticated user (slugs are per-user, not global, so implicit `{list:slug}` binding is unsafe - it would match across users). `store()` now redirects to `lists.show` for the new slug (fixes the "didn't return to the list I just saved" complaint); `destroy()` redirects to `lists.index`. The existing per-list JSON/mutation endpoints (update, actions, snapshots, appenders) are unchanged - they key off list id via axios.
+- `routes/web.php`: added `GET /{slug}` named `lists.show`, registered after the literal `meta-command` routes so the segment can't swallow them.
+- Test: `ListControllerTest` store case now asserts the redirect lands on `lists.show`. All 98 list feature tests pass.
+
 ## May 31st, 2026 - fix(security): bump symfony/http-foundation + symfony/routing to 8.1.0 (CVE-2026-48736, CVE-2026-48784)
 
 Two new Symfony advisories surfaced in `composer audit` while patching the IDN polyfill. Bumped preemptively before Dependabot formally alerts, same playbook as the polyfill and `qs` bumps.
