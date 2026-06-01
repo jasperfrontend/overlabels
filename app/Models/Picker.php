@@ -6,6 +6,7 @@ use App\Events\PickerLanded;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Random\RandomException;
 use RuntimeException;
@@ -32,10 +33,10 @@ use RuntimeException;
  * @property string $concurrency
  * @property bool $user_editable
  * @property string|null $last_result
- * @property \Illuminate\Support\Carbon|null $last_result_at
+ * @property Carbon|null $last_result_at
  * @property bool $is_running
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read User|null $user
  * @property-read OptionSet|null $optionSet
  * @property-read RecipeInstance|null $recipeInstance
@@ -136,7 +137,11 @@ class Picker extends Model
             }
 
             $pickedIndex = $availableIndices[random_int(0, count($availableIndices) - 1)];
-            $result = (string) $items[$pickedIndex];
+            // OptionSet items are objects ({id,value,...}); the picker keys
+            // off array index (consumed_indices are indices) and resolves
+            // the item's value for the result.
+            $pickedItem = $items[$pickedIndex];
+            $result = (string) (is_array($pickedItem) ? ($pickedItem['value'] ?? '') : $pickedItem);
             $resultAt = now();
 
             $locked->last_result = $result;

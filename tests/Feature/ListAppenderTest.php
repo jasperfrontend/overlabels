@@ -2,12 +2,14 @@
 
 use App\Events\ListUpdated;
 use App\Models\BotChatOutbox;
+use App\Models\BotCommand;
 use App\Models\ListAppender;
 use App\Models\ListAppendHistory;
 use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Lists\ListAppendService;
 use App\Services\TwitchApiService;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
@@ -41,10 +43,13 @@ function appenderUser(string $login = 'streamer_a'): User
 
 function appenderList(User $user, string $slug = 'raffle_pool', array $items = []): OptionSet
 {
+    $built = ListItems::freshFromValues($items, 1);
+
     return OptionSet::create([
         'user_id' => $user->id,
         'slug' => $slug,
-        'items' => $items,
+        'items' => $built['items'],
+        'next_item_id' => $built['next_id'],
         'min_items' => 0,
         'user_editable' => true,
     ]);
@@ -100,10 +105,10 @@ it('appends a resolved value to the list and writes history', function () {
 
     expect($result['fired'])->toBeTrue()
         ->and($result['value'])->toBe('Alice')
-        ->and($list->fresh()->items)->toBe(['Alice'])
+        ->and(ListItems::values($list->fresh()->items))->toBe(['Alice'])
         ->and(ListAppendHistory::where('list_appender_id', $appender->id)->count())->toBe(1);
 
-    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'raffle_pool' && $e->items === ['Alice']);
+    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'raffle_pool' && ListItems::values($e->items) === ['Alice']);
 });
 
 it('deduplicates per chatter when dedup_policy = per_chatter', function () {
@@ -117,7 +122,7 @@ it('deduplicates per chatter when dedup_policy = per_chatter', function () {
 
     expect($r2['fired'])->toBeFalse()
         ->and($r2['reason'])->toBe('already_in_list')
-        ->and($list->fresh()->items)->toBe(['Alice']);
+        ->and(ListItems::values($list->fresh()->items))->toBe(['Alice']);
 });
 
 it('allows duplicates when dedup_policy = none', function () {
@@ -129,7 +134,7 @@ it('allows duplicates when dedup_policy = none', function () {
     $svc->fire($appender, $user, appenderFirePayload());
     $svc->fire($appender, $user, appenderFirePayload());
 
-    expect($list->fresh()->items)->toBe(['Alice', 'Alice']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['Alice', 'Alice']);
 });
 
 it('refuses silently when the list is at max_size', function () {
@@ -141,7 +146,7 @@ it('refuses silently when the list is at max_size', function () {
 
     expect($result['fired'])->toBeFalse()
         ->and($result['reason'])->toBe('list_full')
-        ->and($list->fresh()->items)->toBe(['prefilled']);
+        ->and(ListItems::values($list->fresh()->items))->toBe(['prefilled']);
 });
 
 it('queues args_empty_reply to bot_chat_outbox when args required but empty', function () {
@@ -157,7 +162,7 @@ it('queues args_empty_reply to bot_chat_outbox when args required but empty', fu
     expect($result['fired'])->toBeFalse()
         ->and($result['reason'])->toBe('args_empty')
         ->and(BotChatOutbox::where('user_id', $user->id)->latest()->first()->message)
-            ->toBe('@Alice add something after !raffle, like !raffle salami');
+        ->toBe('@Alice add something after !raffle, like !raffle salami');
 });
 
 it('is silent on empty args when no args_empty_reply is set', function () {
@@ -204,7 +209,7 @@ it('fire endpoint routes through the service and appends', function () {
         ->assertOk()
         ->assertJson(['fired' => true, 'value' => 'Alice']);
 
-    expect($list->fresh()->items)->toBe(['Alice']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['Alice']);
 });
 
 it('fire endpoint returns channel_not_found for unknown channel', function () {
@@ -268,7 +273,7 @@ it('builtin wins on command-name collision with an appender', function () {
     $user = appenderUser('streamer_collide');
     $list = appenderList($user);
     appenderRow($user, $list, ['command' => 'raffle']);
-    \App\Models\BotCommand::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'raffle',
         'permission_level' => 'broadcaster',

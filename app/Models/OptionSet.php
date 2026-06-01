@@ -19,15 +19,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $recipe_instance_id
  * @property string $slug
  * @property string|null $label
- * @property array<int, string> $items
- * @property array<int, int> $item_added_at Parallel array to items; Unix seconds per item
+ * @property array<int, array{id:int,value:string,added_at:int,label:?string,weight:int|float,color:?string}> $items
+ * @property int $next_item_id Per-list id counter; the id to assign to the next appended item
  * @property int $min_items
  * @property int|null $max_items
  * @property bool $user_editable
  * @property Carbon|null $disabled_at
  * @property int|null $entry_ttl_seconds
  * @property Carbon|null $expires_at
- * @property array<string, string>|null $chat_permissions  Action -> permission level overrides; NULL means use defaults
+ * @property array<string, string>|null $chat_permissions Action -> permission level overrides; NULL means use defaults
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read RecipeInstance|null $recipeInstance
@@ -44,7 +44,7 @@ class OptionSet extends Model
         'slug',
         'label',
         'items',
-        'item_added_at',
+        'next_item_id',
         'min_items',
         'max_items',
         'user_editable',
@@ -56,7 +56,7 @@ class OptionSet extends Model
 
     protected $casts = [
         'items' => 'array',
-        'item_added_at' => 'array',
+        'next_item_id' => 'integer',
         'min_items' => 'integer',
         'max_items' => 'integer',
         'user_editable' => 'boolean',

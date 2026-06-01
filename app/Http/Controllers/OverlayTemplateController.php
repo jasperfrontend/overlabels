@@ -18,6 +18,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
+use App\Support\ListItems;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -533,7 +534,12 @@ class OverlayTemplateController extends Controller
             $userLists = OptionSet::where('user_id', $user->id)->get();
             $listData = [];
             foreach ($userLists as $list) {
-                $items = array_values($list->items ?? []);
+                // Items are objects ({id,value,...}); every scalar list tag
+                // (.N, :first, :last, :random, :sum, the bare JSON-array
+                // tag) projects to the value string for backward
+                // compatibility. Rich field access (.N.label etc.) is a
+                // later, additive slice.
+                $items = ListItems::values($list->items ?? []);
                 $baseKey = 'c:list:'.$list->slug;
                 $count = count($items);
 

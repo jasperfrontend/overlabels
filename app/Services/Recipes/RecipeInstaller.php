@@ -11,6 +11,7 @@ use App\Models\Recipe;
 use App\Models\RecipeChatTrigger;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Support\ListItems;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -38,13 +39,13 @@ class RecipeInstaller
      * Install a Recipe for a User under the given instance slug.
      *
      * @throws InvalidArgumentException when inputs are malformed
-     * @throws RuntimeException         when install constraints are violated
+     * @throws RuntimeException when install constraints are violated
      */
     public function install(Recipe $recipe, User $user, string $instanceSlug, ?string $label = null): RecipeInstance
     {
         if (! preg_match(RecipeInstance::SLUG_PATTERN, $instanceSlug)) {
             throw new InvalidArgumentException(
-                "Instance slug must match ".RecipeInstance::SLUG_PATTERN
+                'Instance slug must match '.RecipeInstance::SLUG_PATTERN
             );
         }
 
@@ -97,12 +98,17 @@ class RecipeInstaller
             $primitiveMap = ['option_sets' => [], 'pickers' => []];
 
             foreach ($manifest['primitives']['option_sets'] as $os) {
+                // The manifest authors plain string arrays; wrap them into
+                // item objects at install time. The manifest schema is
+                // unchanged.
+                $built = ListItems::freshFromValues($os['items'] ?? [], 1);
                 $row = OptionSet::create([
                     'user_id' => $user->id,
                     'recipe_instance_id' => $instance->id,
                     'slug' => $this->primitiveSlug($instanceSlug, $os['ref']),
                     'label' => $os['label'],
-                    'items' => $os['items'] ?? [],
+                    'items' => $built['items'],
+                    'next_item_id' => $built['next_id'],
                     'min_items' => $os['min_items'] ?? 1,
                     'max_items' => $os['max_items'] ?? null,
                     'user_editable' => $os['user_editable'] ?? true,

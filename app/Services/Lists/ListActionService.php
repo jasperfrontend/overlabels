@@ -7,7 +7,7 @@ use App\Models\ListSnapshot;
 use App\Models\OptionSet;
 use App\Models\User;
 use App\Support\BotChatGate;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -83,6 +83,7 @@ class ListActionService
      *
      * Returns the reply string the caller should surface (write to
      * bot_chat_outbox for chat, toast/return in JSON for dashboard).
+     *
      * @throws Throwable
      */
     public function handleInvocation(
@@ -243,7 +244,7 @@ class ListActionService
      */
     private function actionRandom(OptionSet $list, array $tokens): string
     {
-        $items = array_values($list->items ?? []);
+        $items = ListItems::values($list->items ?? []);
         if ($items === []) {
             return "'$list->slug' is empty.";
         }
@@ -267,7 +268,7 @@ class ListActionService
      */
     private function actionSliceRead(OptionSet $list, array $tokens, string $which): string
     {
-        $items = array_values($list->items ?? []);
+        $items = ListItems::values($list->items ?? []);
         if ($items === []) {
             return "'$list->slug' is empty.";
         }
@@ -318,7 +319,7 @@ class ListActionService
             return $this->mention($invokerName)."search needs a keyword: !list $list->slug search <keyword>";
         }
 
-        $items = array_values($list->items ?? []);
+        $items = ListItems::values($list->items ?? []);
         if ($items === []) {
             return "'$list->slug' is empty.";
         }
@@ -350,7 +351,7 @@ class ListActionService
             return $this->mention($invokerName)."searchall needs a keyword: !list $list->slug searchall <keyword>";
         }
 
-        $items = array_values($list->items ?? []);
+        $items = ListItems::values($list->items ?? []);
         if ($items === []) {
             return "'$list->slug' is empty.";
         }
@@ -408,11 +409,13 @@ class ListActionService
             return "'$list->slug' was already empty.";
         }
 
-        return DB::transaction(function () use ($owner, $list, $items) {
+        return DB::transaction(function () use ($owner, $list) {
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $count = count($locked->items ?? []);
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_CLEAR, $owner->id);
-            $locked->update(['items' => [], 'item_added_at' => []]);
+            // Clear empties the items but leaves next_item_id where it is -
+            // ids are never reused, even across a clear.
+            $locked->update(['items' => []]);
             $this->broadcast($owner, $locked->fresh());
 
             return "Cleared '$locked->slug' ($count ".($count === 1 ? 'entry' : 'entries').' archived to snapshot).';
@@ -437,21 +440,19 @@ class ListActionService
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_DRAW, $owner->id);
             $winnerIdx = array_rand($current);
-            $winner = $current[$winnerIdx];
-            unset($current[$winnerIdx]);
-            $newTimestamps = ListItemTimestamps::removeAt($locked->item_added_at ?? [], $winnerIdx);
+            $winnerValue = ListItems::values($current)[$winnerIdx];
             $locked->update([
-                'items' => array_values($current),
-                'item_added_at' => $newTimestamps,
+                'items' => ListItems::removeAt($current, $winnerIdx),
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "🎰 Winner of '$locked->slug': $winner";
+            return "🎰 Winner of '$locked->slug': $winnerValue";
         });
     }
 
     /**
-     * @param array<int, string> $tokens
+     * @param  array<int, string>  $tokens
+     *
      * @throws Throwable
      */
     private function actionPop(User $owner, OptionSet $list, array $tokens, string $invokerName): string
@@ -473,22 +474,15 @@ class ListActionService
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_POP, $owner->id);
 
-            $oldTimestamps = $locked->item_added_at ?? [];
-            if ($which === 'first') {
-                $popped = array_shift($current);
-                $newTimestamps = ListItemTimestamps::removeAt($oldTimestamps, 0);
-            } else {
-                $popped = array_pop($current);
-                $newTimestamps = ListItemTimestamps::removeAt($oldTimestamps, count($oldTimestamps) - 1);
-            }
+            $idx = $which === 'first' ? 0 : count($current) - 1;
+            $poppedValue = ListItems::values($current)[$idx];
 
             $locked->update([
-                'items' => $current,
-                'item_added_at' => $newTimestamps,
+                'items' => ListItems::removeAt($current, $idx),
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "Popped $which from '$locked->slug': $popped";
+            return "Popped $which from '$locked->slug': $poppedValue";
         });
     }
 
@@ -521,12 +515,14 @@ class ListActionService
             // If they want a different display label, the lists page
             // has a label input.
             'label' => $list->label,
+            // Copy the items verbatim - the clone is intended as a snapshot,
+            // so each item's id and per-entry age (added_at) carry over. If
+            // the streamer is using entry-TTL on the parent and clones
+            // mid-stream, the clone inherits the same "time-left" per entry.
             'items' => $list->items ?? [],
-            // Inherit item timestamps too - the clone is intended as a
-            // snapshot, so per-entry ages carry over. If the streamer
-            // is using entry-TTL on the parent and clones mid-stream,
-            // the clone inherits the same "time-left" for each entry.
-            'item_added_at' => $list->item_added_at ?? [],
+            // Inherit the id counter so a future append to the clone can't
+            // mint an id that a copied item already holds.
+            'next_item_id' => $list->next_item_id,
             'min_items' => 0,
             'max_items' => null,
             'user_editable' => true,

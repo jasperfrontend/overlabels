@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Controls\ExpressionEngineClient;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -31,10 +32,15 @@ function lwTemplate(User $user): OverlayTemplate
 
 function lwList(User $user, array $overrides = []): OptionSet
 {
+    $values = $overrides['items'] ?? [];
+    $built = ListItems::freshFromValues($values, 1);
+    unset($overrides['items']);
+
     return OptionSet::create(array_merge([
         'user_id' => $user->id,
         'slug' => 'recorded',
-        'items' => [],
+        'items' => $built['items'],
+        'next_item_id' => $built['next_id'],
         'min_items' => 0,
         'user_editable' => true,
     ], $overrides));
@@ -170,7 +176,7 @@ it('appends source value to target list when source updates', function () {
         (string) $user->twitch_id,
     );
 
-    expect($list->fresh()->items)->toBe(['7']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['7']);
 });
 
 it('appends a service-managed control value via namespaced broadcast key', function () {
@@ -188,7 +194,7 @@ it('appends a service-managed control value via namespaced broadcast key', funct
         (string) $user->twitch_id,
     );
 
-    expect($list->fresh()->items)->toBe(['Alice']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['Alice']);
 });
 
 it('FIFO drops oldest when max_items is exceeded', function () {
@@ -204,7 +210,7 @@ it('FIFO drops oldest when max_items is exceeded', function () {
 
     ControlValueUpdated::dispatch($template->slug, 'mood', 'counter', 'd', (string) $user->twitch_id);
 
-    expect($list->fresh()->items)->toBe(['b', 'c', 'd']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['b', 'c', 'd']);
 });
 
 it('skips disabled lists', function () {
@@ -279,7 +285,7 @@ it('recomputes an Expression Control when its dependency updates and appends to 
     ControlValueUpdated::dispatch($template->slug, 'wins', 'counter', '5', (string) $user->twitch_id);
 
     expect($expr->fresh()->value)->toBe('10')
-        ->and($list->fresh()->items)->toBe(['10'])
+        ->and(ListItems::values($list->fresh()->items))->toBe(['10'])
         ->and($fake->calls)->toHaveCount(1)
         ->and($fake->calls[0]['expression'])->toBe('c.wins * 2');
 });
@@ -308,7 +314,7 @@ it('cascades through chained expression controls (A -> B)', function () {
 
     expect($a->fresh()->value)->toBe('4')
         ->and($b->fresh()->value)->toBe('40')
-        ->and($list->fresh()->items)->toBe(['40']);
+        ->and(ListItems::values($list->fresh()->items))->toBe(['40']);
 });
 
 it('skips recompute when sidecar returns null (down or error)', function () {

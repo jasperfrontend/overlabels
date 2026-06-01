@@ -6,9 +6,10 @@ use App\Events\ListUpdated;
 use App\Models\OptionSet;
 use App\Services\Lists\ListActionService;
 use App\Support\BotChatGate;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -99,14 +100,14 @@ class ListController extends Controller
             'items.*' => 'string',
         ]);
 
-        $items = $this->sanitiseItems($validated['items'] ?? []);
+        $built = ListItems::freshFromValues($this->sanitiseItems($validated['items'] ?? []), 1);
         $list = OptionSet::create([
             'user_id' => $userId,
             'recipe_instance_id' => null,
             'slug' => $validated['slug'],
             'label' => $validated['label'] ?? null,
-            'items' => $items,
-            'item_added_at' => ListItemTimestamps::freshFor($items),
+            'items' => $built['items'],
+            'next_item_id' => $built['next_id'],
             'min_items' => 0,
             'max_items' => null,
             'user_editable' => true,
@@ -206,7 +207,7 @@ class ListController extends Controller
                 // to null to "reopen" a list, which feels more natural
                 // than having to also click the Enable button.
                 $expiresAt = $validated['expires_at'] !== null
-                    ? \Illuminate\Support\Carbon::createFromTimestamp($validated['expires_at'])
+                    ? Carbon::createFromTimestamp($validated['expires_at'])
                     : null;
                 $updates['expires_at'] = $expiresAt;
                 if ($expiresAt === null && $list->disabled_at !== null) {
@@ -219,7 +220,7 @@ class ListController extends Controller
             return back()->with('flash_list_id', $list->id);
         }
 
-        $newItems = $this->sanitiseItems($validated['items'] ?? []);
+        $newValues = $this->sanitiseItems($validated['items'] ?? []);
 
         // Recipe-installed lists may declare min/max bounds and a locked
         // flag. Refuse out-of-bounds edits with a clear error rather than
@@ -232,28 +233,25 @@ class ListController extends Controller
             );
         }
 
-        if ($list->min_items > 0 && count($newItems) < $list->min_items) {
+        if ($list->min_items > 0 && count($newValues) < $list->min_items) {
             throw new HttpException(422, "This list requires at least {$list->min_items} items.");
         }
 
-        if ($list->max_items !== null && count($newItems) > $list->max_items) {
+        if ($list->max_items !== null && count($newValues) > $list->max_items) {
             throw new HttpException(422, "This list allows at most {$list->max_items} items.");
         }
 
-        // Preserve timestamps for items that match by value (oldest
-        // match wins for duplicates); items removed lose their stamps;
-        // new items get current time. So reordering doesn't reset the
-        // entry-TTL clock, but renames or new entries do.
-        $newTimestamps = ListItemTimestamps::preserveByValue(
-            $list->items ?? [],
-            $list->item_added_at ?? [],
-            $newItems,
-        );
+        // Reconcile the submitted values against the existing item objects:
+        // an item matched by value keeps its id, age, label, weight and
+        // color (oldest match wins for duplicates); removed values drop;
+        // new values mint fresh items. So reordering doesn't reset the
+        // entry-TTL clock or lose rich fields, but renames/new entries do.
+        $built = ListItems::reconcileByValue($list->items ?? [], $newValues, $list->next_item_id);
 
         $list->update([
             'label' => $validated['label'] ?? $list->label,
-            'items' => $newItems,
-            'item_added_at' => $newTimestamps,
+            'items' => $built['items'],
+            'next_item_id' => $built['next_id'],
         ]);
 
         $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
@@ -318,7 +316,11 @@ class ListController extends Controller
             'id' => $list->id,
             'slug' => $list->slug,
             'label' => $list->label,
-            'items' => $list->items ?? [],
+            // The dashboard editor is a value textarea; expose plain value
+            // strings so it (and the index page's content search) keep
+            // working unchanged. The rich object fields are not edited here
+            // yet - that is a later, frontend-facing slice.
+            'items' => ListItems::values($list->items ?? []),
             'min_items' => $list->min_items,
             'max_items' => $list->max_items,
             'user_editable' => $list->user_editable,

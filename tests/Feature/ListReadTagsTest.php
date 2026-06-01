@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\OverlayTemplateController;
 use App\Models\ListAppender;
 use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Lists\ListAppendService;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -19,7 +21,7 @@ uses(DatabaseTransactions::class);
 function buildListData(User $user): array
 {
     $userLists = OptionSet::where('user_id', $user->id)->get();
-    $controller = app(\App\Http\Controllers\OverlayTemplateController::class);
+    $controller = app(OverlayTemplateController::class);
     $reflection = new ReflectionClass($controller);
     $sumMethod = $reflection->getMethod('sumListItems');
 
@@ -223,7 +225,7 @@ it('fire works again after the list is re-enabled', function () {
     ]);
 
     expect($result['fired'])->toBeTrue()
-        ->and($list->fresh()->items)->toBe(['Alice']);
+        ->and(ListItems::values($list->fresh()->items))->toBe(['Alice']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

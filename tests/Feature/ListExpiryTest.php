@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Services\Lists\ListActionService;
 use App\Services\Lists\ListAppendService;
 use App\Services\Lists\ListExpirySweeper;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
@@ -20,56 +20,22 @@ beforeEach(function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// item_added_at sync across mutators
+// per-item added_at across mutators
+//
+// The per-item timestamp now lives inside each item object (item['added_at']);
+// the old parallel item_added_at column is gone. (The pure-unit coverage of
+// timestamp stamping/preservation lives in tests/Unit/ListItemsTest.php against
+// ListItems::freshFromValues + reconcileByValue.)
 // ──────────────────────────────────────────────────────────────────────────────
-
-it('stamps fresh timestamps on store', function () {
-    $user = User::factory()->create();
-    $before = now()->timestamp;
-    $list = OptionSet::create([
-        'user_id' => $user->id,
-        'slug' => 'fresh',
-        'items' => ['a', 'b', 'c'],
-        'item_added_at' => ListItemTimestamps::freshFor(['a', 'b', 'c']),
-    ]);
-
-    expect($list->item_added_at)->toHaveCount(3);
-    foreach ($list->item_added_at as $ts) {
-        expect($ts)->toBeGreaterThanOrEqual($before);
-    }
-});
-
-it('preserves timestamps when items are reordered or partially removed', function () {
-    $user = User::factory()->create();
-    $now = now()->timestamp;
-    $list = OptionSet::create([
-        'user_id' => $user->id,
-        'slug' => 'pres',
-        'items' => ['a', 'b', 'c'],
-        'item_added_at' => [$now - 100, $now - 50, $now - 10],
-    ]);
-
-    // Reorder + drop 'a' + add 'd'
-    $newItems = ['c', 'b', 'd'];
-    $newTs = ListItemTimestamps::preserveByValue(
-        $list->items,
-        $list->item_added_at,
-        $newItems,
-        $now,
-    );
-
-    expect($newTs[0])->toBe($now - 10) // c kept its stamp
-        ->and($newTs[1])->toBe($now - 50) // b kept its stamp
-        ->and($newTs[2])->toBe($now); // d is brand new
-});
 
 it('appends a fresh timestamp via ListAppendService', function () {
     $user = User::factory()->create();
+    $oldTs = now()->timestamp - 100;
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'raffle',
-        'items' => ['existing'],
-        'item_added_at' => [now()->timestamp - 100],
+        'items' => [ListItems::make(1, 'existing', $oldTs)],
+        'next_item_id' => 2,
     ]);
     $appender = ListAppender::create([
         'user_id' => $user->id,
@@ -92,26 +58,27 @@ it('appends a fresh timestamp via ListAppendService', function () {
     ]);
 
     $list->refresh();
-    expect($list->items)->toBe(['existing', 'Newbie'])
-        ->and($list->item_added_at)->toHaveCount(2)
-        ->and($list->item_added_at[0])->toBe($before - 100) // old stamp preserved
-        ->and($list->item_added_at[1])->toBeGreaterThanOrEqual($before); // new stamp fresh
+    $items = $list->items;
+    expect(ListItems::values($items))->toBe(['existing', 'Newbie'])
+        ->and($items)->toHaveCount(2)
+        ->and($items[0]['added_at'])->toBe($oldTs) // old stamp preserved
+        ->and($items[1]['added_at'])->toBeGreaterThanOrEqual($before); // new stamp fresh
 });
 
 it('clears timestamps via clear action', function () {
     $user = User::factory()->create();
+    $built = ListItems::freshFromValues(['a', 'b'], 1);
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'clearme',
-        'items' => ['a', 'b'],
-        'item_added_at' => [1000, 2000],
+        'items' => $built['items'],
+        'next_item_id' => $built['next_id'],
     ]);
 
     app(ListActionService::class)->handleInvocation($user, 'clearme clear');
 
     $list->refresh();
-    expect($list->items)->toBe([])
-        ->and($list->item_added_at)->toBe([]);
+    expect($list->items)->toBe([]);
 });
 
 it('removes correct timestamp on draw', function () {
@@ -119,15 +86,14 @@ it('removes correct timestamp on draw', function () {
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'draw_test',
-        'items' => ['only_one'],
-        'item_added_at' => [1234567890],
+        'items' => [ListItems::make(1, 'only_one', 1234567890)],
+        'next_item_id' => 2,
     ]);
 
     app(ListActionService::class)->handleInvocation($user, 'draw_test draw');
 
     $list->refresh();
-    expect($list->items)->toBe([])
-        ->and($list->item_added_at)->toBe([]);
+    expect($list->items)->toBe([]);
 });
 
 it('removes correct timestamp on pop first vs last', function () {
@@ -135,19 +101,25 @@ it('removes correct timestamp on pop first vs last', function () {
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'popme',
-        'items' => ['a', 'b', 'c'],
-        'item_added_at' => [100, 200, 300],
+        'items' => [
+            ListItems::make(1, 'a', 100),
+            ListItems::make(2, 'b', 200),
+            ListItems::make(3, 'c', 300),
+        ],
+        'next_item_id' => 4,
     ]);
 
     app(ListActionService::class)->handleInvocation($user, 'popme pop first');
     $list->refresh();
-    expect($list->items)->toBe(['b', 'c'])
-        ->and($list->item_added_at)->toBe([200, 300]);
+    // Head 'a' (added_at 100) dropped; 'b'/'c' survive with their stamps.
+    expect(ListItems::values($list->items))->toBe(['b', 'c'])
+        ->and(array_column($list->items, 'added_at'))->toBe([200, 300]);
 
     app(ListActionService::class)->handleInvocation($user, 'popme pop last');
     $list->refresh();
-    expect($list->items)->toBe(['b'])
-        ->and($list->item_added_at)->toBe([200]);
+    // Tail 'c' (added_at 300) dropped; only 'b' (added_at 200) survives.
+    expect(ListItems::values($list->items))->toBe(['b'])
+        ->and(array_column($list->items, 'added_at'))->toBe([200]);
 });
 
 it('inherits timestamps verbatim on clone', function () {
@@ -155,15 +127,18 @@ it('inherits timestamps verbatim on clone', function () {
     OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'orig',
-        'items' => ['a', 'b'],
-        'item_added_at' => [111, 222],
+        'items' => [
+            ListItems::make(1, 'a', 111),
+            ListItems::make(2, 'b', 222),
+        ],
+        'next_item_id' => 3,
     ]);
 
     app(ListActionService::class)->handleInvocation($user, 'orig clone cloned');
 
     $cloned = OptionSet::where('user_id', $user->id)->where('slug', 'cloned')->first();
-    expect($cloned->items)->toBe(['a', 'b'])
-        ->and($cloned->item_added_at)->toBe([111, 222]);
+    expect(ListItems::values($cloned->items))->toBe(['a', 'b'])
+        ->and(array_column($cloned->items, 'added_at'))->toBe([111, 222]);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -176,16 +151,20 @@ it('drops items older than entry_ttl_seconds and keeps young ones', function () 
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'aging',
-        'items' => ['old', 'older', 'fresh'],
-        'item_added_at' => [$now - 120, $now - 90, $now - 5],
+        'items' => [
+            ListItems::make(1, 'old', $now - 120),
+            ListItems::make(2, 'older', $now - 90),
+            ListItems::make(3, 'fresh', $now - 5),
+        ],
+        'next_item_id' => 4,
         'entry_ttl_seconds' => 60,
     ]);
 
     $result = app(ListExpirySweeper::class)->run();
 
     $list->refresh();
-    expect($list->items)->toBe(['fresh'])
-        ->and($list->item_added_at)->toHaveCount(1)
+    expect(ListItems::values($list->items))->toBe(['fresh'])
+        ->and($list->items)->toHaveCount(1)
         ->and($result['lists_swept'])->toBe(1)
         ->and($result['items_removed'])->toBe(2);
 });
@@ -196,8 +175,8 @@ it('broadcasts ListUpdated when entries are swept', function () {
     OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'broadcasty',
-        'items' => ['stale'],
-        'item_added_at' => [$now - 9999],
+        'items' => [ListItems::make(1, 'stale', $now - 9999)],
+        'next_item_id' => 2,
         'entry_ttl_seconds' => 60,
     ]);
 
@@ -231,11 +210,12 @@ it('no-ops when nothing has aged out yet', function () {
 it('snapshots, clears, and disables an expired list', function () {
     $user = User::factory()->create();
     $past = Carbon::now()->subMinute();
+    $built = ListItems::freshFromValues(['a', 'b', 'c'], 1);
     $list = OptionSet::create([
         'user_id' => $user->id,
         'slug' => 'dying',
-        'items' => ['a', 'b', 'c'],
-        'item_added_at' => [1, 2, 3],
+        'items' => $built['items'],
+        'next_item_id' => $built['next_id'],
         'expires_at' => $past,
     ]);
 
@@ -243,13 +223,12 @@ it('snapshots, clears, and disables an expired list', function () {
 
     $list->refresh();
     expect($list->items)->toBe([])
-        ->and($list->item_added_at)->toBe([])
         ->and($list->disabled_at?->timestamp)->toBe($past->timestamp)
         ->and($result['lists_expired'])->toBe(1);
 
     $snap = ListSnapshot::where('list_id', $list->id)->where('reason', 'before_clear')->first();
     expect($snap)->not->toBeNull()
-        ->and($snap->items)->toBe(['a', 'b', 'c']);
+        ->and(ListItems::values($snap->items))->toBe(['a', 'b', 'c']);
 });
 
 it('does not expire a list whose expires_at is in the future', function () {
@@ -442,7 +421,7 @@ it('prunes unpinned snapshots older than 30 days and keeps pinned ones', functio
         'created_at' => now()->subDays(5),
     ]);
 
-    \App\Models\ListSnapshot::where('pinned', false)
+    ListSnapshot::where('pinned', false)
         ->where('created_at', '<', now()->subDays(30))
         ->delete();
 

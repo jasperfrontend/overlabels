@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Events\ListUpdated;
+use App\Models\BotCommand;
+use App\Models\BotExpression;
+use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
+use App\Models\RecipeChatTrigger;
 use App\Services\Lists\ListActionService;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -79,7 +83,9 @@ class ListActionWebController extends Controller
             ->map(fn (ListSnapshot $s) => [
                 'id' => $s->id,
                 'reason' => $s->reason,
-                'items' => $s->items ?? [],
+                // Snapshot items are objects; the dashboard preview shows
+                // values, mirroring the list editor.
+                'items' => ListItems::values($s->items ?? []),
                 'item_count' => count($s->items ?? []),
                 'pinned' => $s->pinned,
                 'created_at' => $s->created_at->timestamp,
@@ -122,13 +128,16 @@ class ListActionWebController extends Controller
         $this->authorizeSnapshot($list, $snapshot);
 
         $this->service->snapshot($list, ListSnapshot::REASON_BEFORE_RESTORE, $request->user()->id);
-        // Restored items get fresh timestamps so an old snapshot doesn't
-        // immediately get swept by a short entry-TTL. Restoration is
-        // semantically equivalent to "add these items again now."
-        $restoredItems = $snapshot->items ?? [];
+        // Adopt the snapshot's item objects: keep their ids and rich fields
+        // (label/weight/color) but refresh added_at to now, so an old
+        // snapshot doesn't immediately get swept by a short entry-TTL.
+        // Restoration is semantically "add these items again now."
+        // next_item_id advances past any restored id so later appends stay
+        // collision-free.
+        $built = ListItems::adopt($snapshot->items ?? [], $list->next_item_id, refreshAddedAt: true);
         $list->update([
-            'items' => $restoredItems,
-            'item_added_at' => ListItemTimestamps::freshFor($restoredItems),
+            'items' => $built['items'],
+            'next_item_id' => $built['next_id'],
         ]);
 
         ListUpdated::dispatchFor((string) $request->user()->twitch_id, $list->fresh());
@@ -198,22 +207,22 @@ class ListActionWebController extends Controller
                 'required', 'string', 'max:30', 'regex:/^[a-z][a-z0-9_]*$/',
                 function ($attribute, $value, $fail) use ($userId) {
                     $cmd = strtolower($value);
-                    if (\App\Models\BotCommand::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                    if (BotCommand::where('user_id', $userId)->where('command', $cmd)->exists()) {
                         $fail("'{$cmd}' collides with an existing built-in command.");
 
                         return;
                     }
-                    if (\App\Models\BotExpression::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                    if (BotExpression::where('user_id', $userId)->where('command', $cmd)->exists()) {
                         $fail("'{$cmd}' collides with an existing Bot Expression.");
 
                         return;
                     }
-                    if (\App\Models\RecipeChatTrigger::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                    if (RecipeChatTrigger::where('user_id', $userId)->where('command', $cmd)->exists()) {
                         $fail("'{$cmd}' collides with an existing recipe trigger.");
 
                         return;
                     }
-                    if (\App\Models\ListAppender::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                    if (ListAppender::where('user_id', $userId)->where('command', $cmd)->exists()) {
                         $fail("'{$cmd}' collides with an existing list append command.");
                     }
                 },

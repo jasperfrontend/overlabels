@@ -1,7 +1,6 @@
 <?php
 
 use App\Events\ControlValueUpdated;
-use App\Events\PickerLanded;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\Picker;
@@ -9,6 +8,7 @@ use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 
@@ -78,7 +78,7 @@ it('installs Coin Flip end-to-end with correct primitives + controls', function 
     $optionSet = OptionSet::where('recipe_instance_id', $instance->id)->first();
     expect($optionSet)->not->toBeNull()
         ->and($optionSet->slug)->toBe('main_coin')
-        ->and($optionSet->items)->toBe(['Heads', 'Tails']);
+        ->and(ListItems::values($optionSet->items))->toBe(['Heads', 'Tails']);
 
     $picker = Picker::where('recipe_instance_id', $instance->id)->first();
     expect($picker)->not->toBeNull()
@@ -194,7 +194,7 @@ it('installs the Dice recipe with the same shape and a six-face option set', fun
 
     $optionSet = $instance->optionSets->first();
     expect($optionSet->slug)->toBe('d6_faces')
-        ->and($optionSet->items)->toBe(['1', '2', '3', '4', '5', '6']);
+        ->and(ListItems::values($optionSet->items))->toBe(['1', '2', '3', '4', '5', '6']);
 
     $picker = $instance->pickers->first();
     expect($picker->slug)->toBe('d6_roller');

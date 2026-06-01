@@ -180,6 +180,47 @@ final class ListItems
     }
 
     /**
+     * Re-ingest a set of existing item objects (e.g. a snapshot being
+     * restored) into a live list. Each object is re-normalized through
+     * make() so a stale/foreign shape is healed; ids are preserved when
+     * present and minted from $currentNextId otherwise. The returned
+     * next_id is advanced past the highest id seen so a later append can
+     * never collide with a restored id.
+     *
+     * $refreshAddedAt = true stamps every adopted item with `now`, which is
+     * what snapshot-restore wants: an old snapshot must not be instantly
+     * swept by a short entry-TTL (restore is semantically "add these again
+     * now"). The rich fields (label/weight/color) are always preserved.
+     *
+     * @param  array<int, mixed>  $items
+     * @return array{items: array<int, array{id:int,value:string,added_at:int,label:?string,weight:int|float,color:?string}>, next_id: int}
+     */
+    public static function adopt(array $items, int $currentNextId, ?int $now = null, bool $refreshAddedAt = false): array
+    {
+        $now ??= now()->timestamp;
+        $fallbackId = $currentNextId;
+        $maxId = $currentNextId - 1;
+        $result = [];
+        foreach (array_values($items) as $raw) {
+            if (is_array($raw)) {
+                $id = isset($raw['id']) && is_numeric($raw['id']) ? (int) $raw['id'] : $fallbackId++;
+                $addedAt = $refreshAddedAt
+                    ? $now
+                    : (isset($raw['added_at']) && is_numeric($raw['added_at']) ? (int) $raw['added_at'] : $now);
+                $item = self::make($id, $raw['value'] ?? '', $addedAt, $raw['label'] ?? null, $raw['weight'] ?? self::DEFAULT_WEIGHT, $raw['color'] ?? null);
+            } else {
+                // Defensive: a legacy string-array snapshot that predates the
+                // object migration. Wrap it like a fresh value.
+                $item = self::make($fallbackId++, $raw, $now);
+            }
+            $result[] = $item;
+            $maxId = max($maxId, $item['id']);
+        }
+
+        return ['items' => $result, 'next_id' => max($currentNextId, $maxId + 1)];
+    }
+
+    /**
      * Remove the item at $index and reindex. Used by draw and pop. With
      * objects there is no parallel array to keep in sync, so this is a plain
      * splice - the named helper just keeps the reindex discipline in one place

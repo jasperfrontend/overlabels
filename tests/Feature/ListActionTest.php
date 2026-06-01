@@ -1,11 +1,13 @@
 <?php
 
 use App\Models\BotChatOutbox;
+use App\Models\BotCommand;
 use App\Models\ListMetaCommand;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Lists\ListActionService;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Testing\TestResponse;
 
@@ -26,10 +28,13 @@ function actionUser(string $login = 'streamer_a'): User
 
 function actionList(User $user, string $slug = 'raffle', array $items = []): OptionSet
 {
+    $built = ListItems::freshFromValues($items, 1);
+
     return OptionSet::create([
         'user_id' => $user->id,
         'slug' => $slug,
-        'items' => $items,
+        'items' => $built['items'],
+        'next_item_id' => $built['next_id'],
         'min_items' => 0,
         'user_editable' => true,
     ]);
@@ -347,7 +352,7 @@ it('pop first removes the head and snapshots', function () {
     $reply = app(ListActionService::class)->handleInvocation($user, 'raffle pop first', 'Mod');
 
     expect($reply)->toBe("Popped first from 'raffle': a")
-        ->and($list->fresh()->items)->toBe(['b', 'c'])
+        ->and(ListItems::values($list->fresh()->items))->toBe(['b', 'c'])
         ->and(ListSnapshot::where('list_id', $list->id)->where('reason', 'before_pop')->count())->toBe(1);
 });
 
@@ -357,7 +362,7 @@ it('pop last removes the tail', function () {
 
     app(ListActionService::class)->handleInvocation($user, 'raffle pop last', 'Mod');
 
-    expect($list->fresh()->items)->toBe(['a', 'b']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['a', 'b']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -383,11 +388,11 @@ it('clone creates a new list with the same items and inherits the label verbatim
     $clone = OptionSet::where('user_id', $user->id)->where('slug', 'snap1')->first();
     expect($reply)->toBe("Cloned 'src' to 'snap1' (3 items).")
         ->and($clone)->not->toBeNull()
-        ->and($clone->items)->toBe(['a', 'b', 'c'])
+        ->and(ListItems::values($clone->items))->toBe(['a', 'b', 'c'])
         // Label inherited verbatim - no "Copy of" prefix. Streamer
         // already picked a unique slug; auto-prefixing creates rename chores.
         ->and($clone->label)->toBe('My Pizza List')
-        ->and($src->fresh()->items)->toBe(['a', 'b', 'c']); // source untouched
+        ->and(ListItems::values($src->fresh()->items))->toBe(['a', 'b', 'c']); // source untouched
 });
 
 it('clone refuses an already-used slug', function () {
@@ -576,7 +581,7 @@ it('snapshot restore writes the snapshot items back and snapshots first', functi
     $this->actingAs($user)->postJson("/dashboard/lists/{$list->id}/snapshots/{$snap->id}/restore")
         ->assertOk();
 
-    expect($list->fresh()->items)->toBe(['a', 'b', 'c'])
+    expect(ListItems::values($list->fresh()->items))->toBe(['a', 'b', 'c'])
         ->and(ListSnapshot::where('list_id', $list->id)->where('reason', 'before_restore')->count())->toBe(1);
 });
 
@@ -616,7 +621,7 @@ it('meta-command rejects collisions with existing commands', function () {
     // with whatever the BotCommand seeder/observer auto-creates for
     // new bot-enabled users. The collision check itself is what we're
     // testing here, not the row creation.
-    \App\Models\BotCommand::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'mycustomcmd',
         'permission_level' => 'everyone',

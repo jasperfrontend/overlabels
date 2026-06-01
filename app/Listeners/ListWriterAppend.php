@@ -7,7 +7,7 @@ use App\Events\ListUpdated;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\User;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -132,25 +132,22 @@ class ListWriterAppend
                 return;
             }
 
-            $items = array_values($list->items ?? []);
-            $stamps = $list->item_added_at ?? [];
-
-            $items[] = $value;
-            $stamps = ListItemTimestamps::append($stamps);
+            $itemId = $list->next_item_id;
+            $items = ListItems::appendValue($list->items ?? [], $value, $itemId);
 
             // FIFO drop when capped. The streamer's intent with a capped
             // binding is "keep latest N" - silent refusal (chat appender
             // behaviour) would be wrong here since there's no chatter to
-            // tell about the rejection.
+            // tell about the rejection. Dropping from the front does not
+            // free the ids - next_item_id only ever moves forward.
             if ($list->max_items !== null && count($items) > $list->max_items) {
                 $overflow = count($items) - $list->max_items;
-                $items = array_slice($items, $overflow);
-                $stamps = array_slice($stamps, $overflow);
+                $items = array_values(array_slice($items, $overflow));
             }
 
             $list->update([
                 'items' => $items,
-                'item_added_at' => $stamps,
+                'next_item_id' => $itemId + 1,
             ]);
 
             ListUpdated::dispatchFor((string) $user->twitch_id, $list->fresh());

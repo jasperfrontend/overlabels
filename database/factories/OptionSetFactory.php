@@ -21,7 +21,7 @@ class OptionSetFactory extends Factory
             'slug' => $this->faker->unique()->lexify('list_???'),
             'label' => null,
             'items' => [],
-            'item_added_at' => [],
+            'next_item_id' => 1,
             'min_items' => 0,
             'max_items' => null,
             'user_editable' => true,

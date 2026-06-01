@@ -188,6 +188,43 @@ it('handles a legacy empty list', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// adopt() - snapshot restore
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('preserves ids and rich fields when adopting objects, reseating next_id past the max', function () {
+    $snapshot = [
+        ListItems::make(3, 'a', 100, 'Label', 5, '#abcdef'),
+        ListItems::make(7, 'b', 200),
+    ];
+    $out = ListItems::adopt($snapshot, 4, 999);
+
+    expect(array_column($out['items'], 'id'))->toBe([3, 7])
+        ->and($out['items'][0]['color'])->toBe('#abcdef')
+        ->and($out['items'][0]['weight'])->toBe(5)
+        ->and($out['items'][0]['added_at'])->toBe(100)
+        ->and($out['next_id'])->toBe(8); // max(4, 7+1)
+});
+
+it('refreshes added_at but keeps ids/rich fields when asked', function () {
+    $snapshot = [ListItems::make(2, 'a', 100, 'L', 3, '#fff')];
+    $out = ListItems::adopt($snapshot, 5, 999, refreshAddedAt: true);
+
+    expect($out['items'][0]['id'])->toBe(2)
+        ->and($out['items'][0]['added_at'])->toBe(999) // refreshed to now
+        ->and($out['items'][0]['weight'])->toBe(3)
+        ->and($out['items'][0]['color'])->toBe('#fff')
+        ->and($out['next_id'])->toBe(5); // max(5, 2+1)
+});
+
+it('mints ids for legacy string-array snapshots', function () {
+    $out = ListItems::adopt(['a', 'b'], 5, 999);
+
+    expect(array_column($out['items'], 'id'))->toBe([5, 6])
+        ->and(array_column($out['items'], 'value'))->toBe(['a', 'b'])
+        ->and($out['next_id'])->toBe(7);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // removeAt() - draw / pop
 // ──────────────────────────────────────────────────────────────────────────────
 

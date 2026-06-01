@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\DB;
  * Two sweeps, run together each tick:
  *
  *  1. Entry-TTL: for any list with entry_ttl_seconds set, drop items
- *     whose item_added_at is older than now() - ttl. Broadcasts a
+ *     whose own added_at is older than now() - ttl. Broadcasts a
  *     ListUpdated when at least one entry was removed.
  *
  *  2. List expiry: for any list with expires_at <= now() AND
  *     disabled_at IS NULL, snapshot the current state (before_clear),
- *     clear items + item_added_at, and set disabled_at = expires_at so
- *     chat appenders silently no-op. Broadcasts a ListUpdated.
+ *     clear items, and set disabled_at = expires_at so chat appenders
+ *     silently no-op. Broadcasts a ListUpdated.
  *
  * Both sweeps are idempotent. Re-running on a freshly expired list is a
  * no-op because disabled_at is now non-null; re-running on an entry-TTL
@@ -107,26 +107,24 @@ class ListExpirySweeper
             }
 
             $items = array_values($locked->items ?? []);
-            $stamps = array_values($locked->item_added_at ?? []);
             if ($items === []) {
                 return 0;
             }
 
             $cutoff = $nowTs - $ttl;
             $keptItems = [];
-            $keptStamps = [];
             $removed = 0;
 
-            foreach ($items as $i => $item) {
-                // Items without a timestamp (legacy backfill ceiling)
-                // get a free pass - they're treated as "infinitely
-                // young" until the next mutation refreshes them. This
-                // prevents a backfill from accidentally sweeping the
-                // entire pre-feature population on first tick.
-                $stamp = $stamps[$i] ?? null;
+            foreach ($items as $item) {
+                // Each item carries its own added_at. An item with a
+                // missing / non-numeric stamp gets a free pass - treated
+                // as "infinitely young" until the next mutation refreshes
+                // it - so a malformed row can never sweep itself away.
+                $stamp = is_array($item) && is_numeric($item['added_at'] ?? null)
+                    ? (int) $item['added_at']
+                    : null;
                 if ($stamp === null || $stamp > $cutoff) {
                     $keptItems[] = $item;
-                    $keptStamps[] = $stamp ?? $nowTs;
 
                     continue;
                 }
@@ -138,8 +136,7 @@ class ListExpirySweeper
             }
 
             $locked->update([
-                'items' => $keptItems,
-                'item_added_at' => $keptStamps,
+                'items' => array_values($keptItems),
             ]);
 
             ListUpdated::dispatchFor((string) ($locked->user?->twitch_id ?? ''), $locked->fresh());
@@ -175,7 +172,6 @@ class ListExpirySweeper
 
             $locked->update([
                 'items' => [],
-                'item_added_at' => [],
                 'disabled_at' => $locked->expires_at,
             ]);
 

@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Services\Bot\BotExpressionResolver;
 use App\Services\Bot\BotExpressionService;
 use App\Support\BotChatGate;
-use App\Support\ListItemTimestamps;
+use App\Support\ListItems;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -32,7 +32,7 @@ readonly class ListAppendService
 {
     public function __construct(
         private BotExpressionResolver $resolver,
-        private BotExpressionService  $expressionService,
+        private BotExpressionService $expressionService,
     ) {}
 
     /**
@@ -67,8 +67,9 @@ readonly class ListAppendService
      *   ['fired' => false, 'reason' => 'already_in_list']
      *   ['fired' => false, 'reason' => 'list_gone']
      *
-     * @param array<string,mixed> $payload bot payload (chatter_id, chatter_login, chatter_display_name, args, channel_login)
+     * @param  array<string,mixed>  $payload  bot payload (chatter_id, chatter_login, chatter_display_name, args, channel_login)
      * @return array<string,mixed>
+     *
      * @throws Throwable
      */
     public function fire(ListAppender $appender, User $user, array $payload): array
@@ -120,11 +121,11 @@ readonly class ListAppendService
                 return ['fired' => false, 'reason' => 'already_in_list'];
             }
 
-            $newItems = array_merge(array_values($currentItems), [$resolvedValue]);
-            $newTimestamps = ListItemTimestamps::append($list->item_added_at ?? []);
+            $itemId = $list->next_item_id;
+            $newItems = ListItems::appendValue($currentItems, $resolvedValue, $itemId);
             $list->update([
                 'items' => $newItems,
-                'item_added_at' => $newTimestamps,
+                'next_item_id' => $itemId + 1,
             ]);
 
             ListAppendHistory::create([

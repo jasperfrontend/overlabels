@@ -5,6 +5,7 @@ use App\Models\OptionSet;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Support\ListItems;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 
@@ -70,11 +71,11 @@ it('store creates a user-authored list preserving exactly what was sent', functi
     expect($list)->not->toBeNull()
         // Lists are lists: empties, duplicates, and whitespace-only entries
         // are intentional content. The controller does NOT dedupe or strip.
-        ->and($list->items)->toBe(['Pepperoni', 'Mushroom', '', 'Mushroom', ' '])
+        ->and(ListItems::values($list->items))->toBe(['Pepperoni', 'Mushroom', '', 'Mushroom', ' '])
         ->and($list->recipe_instance_id)->toBeNull()
         ->and($list->user_editable)->toBeTrue();
 
-    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'pizza' && $e->items === ['Pepperoni', 'Mushroom', '', 'Mushroom', ' ']);
+    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'pizza' && ListItems::values($e->items) === ['Pepperoni', 'Mushroom', '', 'Mushroom', ' ']);
 });
 
 it('store rejects a slug that already exists for this user', function () {
@@ -101,11 +102,11 @@ it('store strips NUL bytes but preserves everything else verbatim', function () 
 
     $this->actingAs($user)->post('/dashboard/lists', [
         'slug' => 'weird',
-        'items' => ["clean", "with\0null", "  spaces  ", "🌮"],
+        'items' => ['clean', "with\0null", '  spaces  ', '🌮'],
     ]);
 
     $list = OptionSet::where('user_id', $user->id)->where('slug', 'weird')->first();
-    expect($list->items)->toBe(['clean', 'withnull', '  spaces  ', '🌮']);
+    expect(ListItems::values($list->items))->toBe(['clean', 'withnull', '  spaces  ', '🌮']);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -171,10 +172,10 @@ it('update replaces items wholesale and broadcasts ListUpdated', function () {
     ])->assertRedirect();
 
     $list->refresh();
-    expect($list->items)->toBe(['b', 'c'])
+    expect(ListItems::values($list->items))->toBe(['b', 'c'])
         ->and($list->label)->toBe('new label');
 
-    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'pizza' && $e->items === ['b', 'c']);
+    Event::assertDispatched(ListUpdated::class, fn (ListUpdated $e) => $e->slug === 'pizza' && ListItems::values($e->items) === ['b', 'c']);
 });
 
 it('update refuses recipe-locked lists', function () {
@@ -237,7 +238,7 @@ it('update allows recipe-installed lists when user_editable is true', function (
         'items' => ['b', 'c'],
     ])->assertRedirect();
 
-    expect($list->fresh()->items)->toBe(['b', 'c']);
+    expect(ListItems::values($list->fresh()->items))->toBe(['b', 'c']);
 });
 
 it('update enforces min/max bounds when set', function () {
