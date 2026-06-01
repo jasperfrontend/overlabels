@@ -63,6 +63,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <li><a href="#what" class="text-violet-400 hover:underline">What is a List?</a></li>
             <li><a href="#creating" class="text-violet-400 hover:underline">Creating and editing Lists</a></li>
             <li><a href="#reading" class="text-violet-400 hover:underline">Reading from a List in your overlay</a></li>
+            <li><a href="#data-model" class="text-violet-400 hover:underline">The item data model and <code>:json</code></a></li>
             <li><a href="#foreach" class="text-violet-400 hover:underline">Iterating with <code>foreach</code></a></li>
             <li><a href="#appenders" class="text-violet-400 hover:underline">Chat appenders - viewers grow your List</a></li>
             <li><a href="#meta" class="text-violet-400 hover:underline">The <code>!list</code> meta-command</a></li>
@@ -145,7 +146,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               <tbody class="divide-y divide-sidebar">
                 <tr>
                   <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">[[[c:list:donors]]]</code></td>
-                  <td class="p-3 text-foreground"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">["Alice","Bob","Carol"]</code> (full array as JSON string)</td>
+                  <td class="p-3 text-foreground"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">["Alice","Bob","Carol"]</code> (the <strong>values</strong> as a JSON string)</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">[[[c:list:donors:json]]]</code></td>
+                  <td class="p-3 text-foreground">The full item <strong>objects</strong> as a JSON string. See <a href="#data-model" class="text-violet-400 hover:underline">the item data model</a>.</td>
                 </tr>
                 <tr>
                   <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">[[[c:list:donors:first]]]</code></td>
@@ -189,6 +194,160 @@ const breadcrumbs: BreadcrumbItem[] = [
           </p>
         </section>
 
+        <!-- Data model -->
+        <section class="mb-14" id="data-model">
+          <h2 class="mb-4 text-2xl font-bold">The item data model and <code class="rounded bg-background px-2 py-0.5 font-mono text-xl">:json</code></h2>
+          <p class="mb-4 text-foreground">
+            Under the hood, a List item is no longer just a bare string - it is a small <strong>object</strong> with a
+            stable identity and room for richer data. You don't have to think about this for everyday use: every tag and
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">foreach</code> on this page keeps working
+            exactly as before, projecting to the item's value. This section is for when you want to build something
+            richer on top of a List - a custom wheel, an animated leaderboard, a web component - and need the full data.
+          </p>
+
+          <div class="mb-6 border border-violet-500/40 bg-violet-500/5 p-6">
+            <h3 class="mb-2 text-lg font-semibold">Nothing you already built changes</h3>
+            <p class="text-foreground">
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:list:slug]]]</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">.first</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:last</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:sum</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:count</code>, and
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[foreach:c:list:slug as item]]][[[item]]]</code>
+              all still resolve to value strings, exactly as they always have. The object model is purely additive - it
+              adds the new <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> tag and gives
+              every item a stable id, without touching any tag you're already using.
+            </p>
+          </div>
+
+          <h3 class="mb-3 text-xl font-semibold">The item shape</h3>
+          <p class="mb-4 text-foreground">
+            Each item carries six fields:
+          </p>
+          <div class="mb-6 overflow-x-auto border border-sidebar-accent bg-card">
+            <table class="w-full text-sm">
+              <thead class="border-b border-sidebar text-left">
+                <tr>
+                  <th class="p-3 font-semibold">Field</th>
+                  <th class="p-3 font-semibold">Meaning</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-sidebar">
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">id</code></td>
+                  <td class="p-3 text-foreground">A whole number assigned by the server, unique within the List, stable for the life of the item, and <strong>never reused</strong> - even after the item is drawn, popped, or the List is cleared. This is the reliable key for animation: two items with the same value still have different ids.</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">value</code></td>
+                  <td class="p-3 text-foreground">The content you typed (or a viewer appended). The string every scalar tag projects to. Always present; may be empty - we never strip your content.</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">added_at</code></td>
+                  <td class="p-3 text-foreground">Unix seconds for when the item was added. This is what per-item age-out measures against, and it's handy for "added 3 minutes ago" displays.</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">label</code></td>
+                  <td class="p-3 text-foreground"><span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-300">reserved</span> Optional display label. Always <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">null</code> today.</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">weight</code></td>
+                  <td class="p-3 text-foreground"><span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-300">reserved</span> Picker weight for weighted draws. Always <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">1</code> today.</td>
+                </tr>
+                <tr>
+                  <td class="p-3"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">color</code></td>
+                  <td class="p-3 text-foreground"><span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-300">reserved</span> Optional hex color (<code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">#rgb</code> / <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">#rrggbb</code>). Always <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">null</code> today.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mb-6 border border-amber-500/40 bg-amber-500/5 p-6">
+            <h3 class="mb-2 text-lg font-semibold">About the <span class="text-amber-300">reserved</span> fields</h3>
+            <p class="text-foreground">
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">label</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">weight</code>, and
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">color</code> are part of the data shape
+              and ship in <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code>, but there is
+              <strong>no way to set them yet</strong> - every item is created with
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">label: null</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">weight: 1</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">color: null</code>. They're reserved so
+              the editing UI for them can land later without another data migration. Build against
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>,
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">value</code>, and
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">added_at</code> today; treat the rest as
+              defaults until weighted/colored editing ships.
+            </p>
+          </div>
+
+          <h3 class="mb-3 text-xl font-semibold">The <code class="rounded bg-background px-2 py-0.5 font-mono text-lg">:json</code> tag</h3>
+          <p class="mb-4 text-foreground">
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:list:donors:json]]]</code> resolves to
+            the full array of item objects as a JSON string. For a List with items
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">Alice, Bob, Carol</code>:
+          </p>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">[
+  { "id": 1, "value": "Alice", "added_at": 1730000000, "label": null, "weight": 1, "color": null },
+  { "id": 2, "value": "Bob",   "added_at": 1730000060, "label": null, "weight": 1, "color": null },
+  { "id": 3, "value": "Carol", "added_at": 1730000120, "label": null, "weight": 1, "color": null }
+]</pre>
+          <p class="mb-4 text-foreground">
+            It updates live like every other List tag - append, draw, edit, or age-out, and the
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> payload re-renders with the
+            new objects. The bare <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:list:slug]]]</code>
+            tag stays an array of value <em>strings</em> for backward compatibility;
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> is the opt-in that gives you
+            the objects.
+          </p>
+
+          <h3 class="mb-3 text-xl font-semibold">Why this matters: stable identity</h3>
+          <p class="mb-4 text-foreground">
+            The single biggest reason items became objects is the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>.
+            A wheel, a leaderboard, or any animated consumer needs to answer "is this the same item I drew last frame, or a
+            new one that happens to have the same name?" With bare strings you couldn't - two viewers both named
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">guest</code> were indistinguishable. With ids,
+            you key your DOM and your animations off <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">item.id</code>
+            and the ambiguity is gone at the root.
+          </p>
+
+          <h3 class="mb-3 text-xl font-semibold">Worked example: feeding a custom wheel</h3>
+          <p class="mb-4 text-foreground">
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> is the data rail a custom
+            renderer reads from. Drop the objects into an attribute your own script or web component reads:
+          </p>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">&lt;spin-the-wheel data-items='[[[c:list:wheel:json]]]'&gt;&lt;/spin-the-wheel&gt;
+
+&lt;script&gt;
+  class SpinTheWheel extends HTMLElement {
+    connectedCallback() { this.render(); }
+    // Re-read when the overlay patches the attribute on a live update.
+    static get observedAttributes() { return ['data-items']; }
+    attributeChangedCallback() { this.render(); }
+
+    render() {
+      const items = JSON.parse(this.getAttribute('data-items') || '[]');
+      // items: [{ id, value, added_at, label, weight, color }, ...]
+      // Key each slice by item.id so two identical names never collide,
+      // and so an item that survives a draw keeps its slice/animation.
+      this.replaceChildren(...items.map(it =&gt; {
+        const slice = document.createElement('div');
+        slice.dataset.id = it.id;
+        slice.textContent = it.value;
+        return slice;
+      }));
+    }
+  }
+  customElements.define('spin-the-wheel', SpinTheWheel);
+&lt;/script&gt;</pre>
+          <p class="text-foreground">
+            That's the whole pattern: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> in,
+            objects out, render however you like, key by <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>.
+            Once weighted and colored editing lands, the same component reads
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">it.weight</code> and
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">it.color</code> with no markup change -
+            that's exactly why those fields are already in the shape.
+          </p>
+        </section>
+
         <!-- Foreach -->
         <section class="mb-14" id="foreach">
           <h2 class="mb-4 text-2xl font-bold">Iterating with <code class="rounded bg-background px-2 py-0.5 font-mono text-xl">foreach</code></h2>
@@ -203,9 +362,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 &lt;/ul&gt;</pre>
           <p class="mb-4 text-foreground">
             Inside the loop, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[donor]]]</code>
-            resolves to each item in turn. The loop body can use any other tag the overlay knows about, and the
-            template engine materialises one block per item.
+            resolves to each item's <strong>value</strong> in turn. The loop body can use any other tag the overlay knows
+            about, and the template engine materialises one block per item.
           </p>
+          <div class="mb-4 border border-sidebar-accent bg-card p-6">
+            <h3 class="mb-2 text-lg font-semibold">Per-item field access in a loop is not available yet</h3>
+            <p class="text-foreground">
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[donor]]]</code> gives you the value;
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[donor.color]]]</code> and friends are
+              <strong>not</strong> wired up yet (it needs a change to how <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">foreach</code>
+              materialises items). If you need each item's <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>
+              or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">added_at</code> today, read
+              <a href="#data-model" class="text-violet-400 hover:underline"><code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code></a>
+              and iterate it in your own script instead.
+            </p>
+          </div>
           <p class="text-foreground">
             See the <Link href="/help/reference" class="text-violet-400 hover:underline">Reference page</Link> for
             the full <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">foreach</code> syntax,
@@ -700,7 +871,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         <section class="mb-14" id="quick-ref">
           <h2 class="mb-4 text-2xl font-bold">Quick reference card</h2>
           <pre class="overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm leading-relaxed text-foreground">Tags
-  [[[c:list:slug]]]              JSON array string
+  [[[c:list:slug]]]              JSON array of value strings
+  [[[c:list:slug:json]]]         JSON array of item objects {id,value,added_at,label,weight,color}
   [[[c:list:slug:first]]]        first item
   [[[c:list:slug:last]]]         last item
   [[[c:list:slug:count]]]        item count

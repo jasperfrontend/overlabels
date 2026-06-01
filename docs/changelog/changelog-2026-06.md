@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 2nd, 2026 - docs(lists): document the item object model and :json in the Lists help page
+
+User-facing documentation for the items-as-objects change. Extended the Lists help page (`resources/js/pages/help/Lists.vue`) with a major new section rather than a separate doc, since it's the canonical Lists reference and where anyone reading about Lists looks.
+
+- New "The item data model and `:json`" section: the six-field item shape (`{id, value, added_at, label, weight, color}`), an up-front reassurance that every existing tag and `foreach` is unchanged (the model is purely additive), the `:json` tag with a worked payload, why stable `id` matters (kills the two-identical-names ambiguity at the root), and a full worked example feeding `:json` into a custom `<spin-the-wheel>` web component keyed by `id`.
+- Honesty guardrail: `label`/`weight`/`color` are documented as **reserved** - they ship in `:json` but there is no way to set them yet (every item is `weight:1, color:null, label:null`), so the doc tells builders to build against `id`/`value`/`added_at` today and treat the rest as defaults until weighted/colored editing lands. Avoids implying a colored/weighted wheel users can't actually populate.
+- Smaller updates: `:json` row added to the read-tags table; the bare-tag description clarified to "values as a JSON string"; a note in the `foreach` section that per-item field access (`[[[item.color]]]`) is not wired up yet and to use `:json` for rich data; `:json` added to the quick-reference card.
+- ESLint clean; `npm run build` compiles.
+
 ## June 2nd, 2026 - feat(lists): mirror object items in the Vue clients + expose :json (items-as-objects, slice 4 of M8 foundation)
 
 The client mirror. The `ListUpdated` broadcast now carries item objects, so the three Vue consumers had to learn the shape: the overlay renderer and the two dashboard pages. With this, the feature is usable end to end in dev - a chat append or draw updates overlays and the dashboard live, on the object data, without breakage.
