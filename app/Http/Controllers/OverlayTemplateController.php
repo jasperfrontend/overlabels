@@ -537,13 +537,20 @@ class OverlayTemplateController extends Controller
                 // Items are objects ({id,value,...}); every scalar list tag
                 // (.N, :first, :last, :random, :sum, the bare JSON-array
                 // tag) projects to the value string for backward
-                // compatibility. Rich field access (.N.label etc.) is a
-                // later, additive slice.
+                // compatibility, so existing templates and
+                // [[[foreach:c:list:slug as item]]] keep iterating scalar
+                // values. The full item objects are exposed separately under
+                // the colon-namespaced :json tag (invisible to the foreach
+                // index synthesiser), which is the rail a richer consumer
+                // (a custom wheel/leaderboard) reads label/weight/color off.
+                // Per-index rich field access (.N.label etc.) needs a
+                // foreach-resolver rework and is a later slice.
                 $items = ListItems::values($list->items ?? []);
                 $baseKey = 'c:list:'.$list->slug;
                 $count = count($items);
 
                 $listData[$baseKey] = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $listData[$baseKey.':json'] = json_encode(array_values($list->items ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 $listData[$baseKey.'.count'] = (string) $count;
                 $listData[$baseKey.':count'] = (string) $count;
                 foreach ($items as $i => $item) {

@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 2nd, 2026 - feat(lists): mirror object items in the Vue clients + expose :json (items-as-objects, slice 4 of M8 foundation)
+
+The client mirror. The `ListUpdated` broadcast now carries item objects, so the three Vue consumers had to learn the shape: the overlay renderer and the two dashboard pages. With this, the feature is usable end to end in dev - a chat append or draw updates overlays and the dashboard live, on the object data, without breakage.
+
+- **New `resources/js/utils/listItems.ts`**: `listItemValues()` (+ the `ListItem` type), the client mirror of `App\Support\ListItems::values`. One place to turn item objects into value strings so the broadcast-update path produces exactly the value-based projection the initial server render does.
+- **`OverlayRenderer.vue::handleListUpdated`**: extracts values from the object payload, so the bare `c:list:slug` tag, `.N`, `:first`, `:last`, `:sum`, `:count` all stay value strings - existing templates and `[[[foreach:c:list:slug as item]]]` keep working unchanged. `computeListSum` now runs on values.
+- **`:json` tag (the rich rail)**: both server (`OverlayTemplateController` projection) and client now emit `[[[c:list:slug:json]]]` = the full item objects (`{id,value,added_at,label,weight,color}`) as a JSON string. This is the foreach-safe rail a custom consumer (a spin-the-wheel with weighted/colored slices, a leaderboard) reads the rich fields off - colon-namespaced so the foreach index synthesiser never sees it. The bare tag stays an array of value strings for backward compatibility.
+- **Dashboard `index.vue` + `show.vue`**: their `.list.updated` Echo handlers now run the object payload through `listItemValues` before storing, matching the value-string shape the Inertia payload and the textarea editor expect (the initial-render path was already values via `serialize()`; only the live broadcast carried objects). Payload types updated to `(ListItem | string)[]`.
+- **Deliberately deferred**: per-index rich field tags (`[[[c:list:slug.0.label]]]`) and `foreach` alias field access (`[[[item.color]]]`). Emitting `.N.label` flat keys would make the foreach index synthesiser (`resolveIterable`) treat each element as an object and break every existing `[[[item]]]` loop, so that access needs a proper foreach-resolver rework - its own slice. `:json` covers the immediate "build a custom wheel off the rich data" need without that risk.
+- Verified: full List/Recipe suite green (215 passed); `npm run build` compiles; ESLint clean on the touched files. Frontend has no JS unit-test runner, so the renderer mirror is covered by build + lint + parity with the server projection it mirrors.
+
 ## June 2nd, 2026 - feat(lists): rewire all mutators and readers to object items (items-as-objects, slice 3 of M8 foundation)
 
 The muscle slice: every List mutator and server-side reader now speaks the object shape, `ListItemTimestamps` is deleted, and the `item_added_at` column is dropped. After this, the backend is fully on objects; only the Vue client mirror (overlay renderer + dashboard live-update handler) remains, which is the next slice.

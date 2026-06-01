@@ -44,6 +44,7 @@ import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
 import { EVENT_RULES } from '@/composables/useTwitchEventRules';
 import { compileCssBindings, replaceTagsWithFormatting } from '@/utils/tagParser';
+import { listItemValues } from '@/utils/listItems';
 
 // Canonical set of tag names declared by EVENT_RULES. These are the "twitch"
 // (t.*) values exposed to the expression engine; other bare-keyed snapshot
@@ -741,7 +742,13 @@ function handleListUpdated(event: any) {
   if (!event?.slug) return;
 
   const baseKey = `c:list:${event.slug}`;
+  // Items arrive as objects ({id,value,...}). Every scalar tag projects to
+  // the value string (mirroring the server's OverlayTemplateController
+  // projection), so the bare tag and .N / :first / :last / :sum stay
+  // backward compatible and foreach keeps iterating scalar values. The full
+  // objects are exposed separately under :json for richer consumers.
   const items: any[] = Array.isArray(event.items) ? event.items : [];
+  const values = listItemValues(items);
 
   // Recompute the derived read tags (:first, :last, :empty, :sum)
   // alongside the index + count keys so [[[c:list:slug:first]]] and
@@ -750,16 +757,17 @@ function handleListUpdated(event: any) {
   // server picked at overlay mount so it doesn't flicker on every
   // append. If you want a re-roll, reload the overlay.
   const patch: Record<string, any> = {
-    [baseKey]: JSON.stringify(items),
-    [`${baseKey}.count`]: String(items.length),
-    [`${baseKey}:count`]: String(items.length),
-    [`${baseKey}:first`]: items.length > 0 ? String(items[0]) : '',
-    [`${baseKey}:last`]: items.length > 0 ? String(items[items.length - 1]) : '',
-    [`${baseKey}:empty`]: items.length === 0 ? '1' : '0',
-    [`${baseKey}:sum`]: computeListSum(event.slug, items),
+    [baseKey]: JSON.stringify(values),
+    [`${baseKey}:json`]: JSON.stringify(items),
+    [`${baseKey}.count`]: String(values.length),
+    [`${baseKey}:count`]: String(values.length),
+    [`${baseKey}:first`]: values.length > 0 ? values[0] : '',
+    [`${baseKey}:last`]: values.length > 0 ? values[values.length - 1] : '',
+    [`${baseKey}:empty`]: values.length === 0 ? '1' : '0',
+    [`${baseKey}:sum`]: computeListSum(event.slug, values),
   };
-  items.forEach((item, i) => {
-    patch[`${baseKey}.${i}`] = String(item);
+  values.forEach((value, i) => {
+    patch[`${baseKey}.${i}`] = value;
   });
 
   // Expiry: server ships expires_at as Unix seconds (or null when the

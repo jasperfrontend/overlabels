@@ -18,6 +18,7 @@ import {
   SearchIcon,
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+import { listItemValues, type ListItem } from '@/utils/listItems';
 
 interface ListRow {
   id: number;
@@ -142,7 +143,7 @@ const page = usePage();
 
 interface ListUpdatedPayload {
   slug: string;
-  items: string[] | null;
+  items: (ListItem | string)[] | null;
   updated_at: number | null;
   expires_at?: number | null;
   disabled_at?: number | null;
@@ -158,7 +159,9 @@ function applyListUpdated(payload: ListUpdatedPayload) {
   }
   lists.value[idx] = {
     ...lists.value[idx],
-    items: payload.items ?? [],
+    // The broadcast carries item objects; the collection view (and its
+    // content search) work in value strings, matching the Inertia payload.
+    items: listItemValues(payload.items ?? []),
     updated_at: payload.updated_at,
     expires_at: payload.expires_at !== undefined ? payload.expires_at : lists.value[idx].expires_at,
     disabled_at: payload.disabled_at !== undefined ? payload.disabled_at : lists.value[idx].disabled_at,

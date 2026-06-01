@@ -32,6 +32,7 @@ import {
   ArrowLeftIcon,
 } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
+import { listItemValues, type ListItem } from '@/utils/listItems';
 
 interface ListRow {
   id: number;
@@ -444,7 +445,7 @@ const page = usePage();
 
 interface ListUpdatedPayload {
   slug: string;
-  items: string[] | null;
+  items: (ListItem | string)[] | null;
   updated_at: number | null;
   expires_at?: number | null;
   disabled_at?: number | null;
@@ -452,9 +453,12 @@ interface ListUpdatedPayload {
 
 function applyListUpdated(payload: ListUpdatedPayload) {
   if (payload.slug !== list.value.slug) return;
+  // The broadcast carries item objects; the detail view works in value
+  // strings (matching the Inertia payload and the value textarea editor).
+  const values = listItemValues(payload.items ?? []);
   list.value = {
     ...list.value,
-    items: payload.items ?? [],
+    items: values,
     updated_at: payload.updated_at,
     expires_at: payload.expires_at !== undefined ? payload.expires_at : list.value.expires_at,
     disabled_at: payload.disabled_at !== undefined ? payload.disabled_at : list.value.disabled_at,
@@ -464,7 +468,7 @@ function applyListUpdated(payload: ListUpdatedPayload) {
   // edits win until they save or navigate away. Otherwise refresh it so a
   // chatter's append shows up in their view too.
   if (!isDirty.value) {
-    draftItemsText.value = (payload.items ?? []).join('\n');
+    draftItemsText.value = values.join('\n');
   }
 }
 
