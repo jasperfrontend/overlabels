@@ -340,8 +340,29 @@ const breadcrumbs: BreadcrumbItem[] = [
           <p class="text-foreground">
             It's read-only and cross-origin (CORS-open), so a browser page on any host can fetch it. Note this does
             <strong>not</strong> break the "overlays never phone home" rule - the overlay isn't calling anything (it
-            can't, no JS); a separate page <em>you</em> control is, and only to read. Live updates (a draw or append
-            reflecting on your wheel) will come from a WebSocket layer later; for now, fetch once or poll.
+            can't, no JS); a separate page <em>you</em> control is, and only to read.
+          </p>
+
+          <h3 class="mb-3 mt-6 text-xl font-semibold">Live updates (no polling)</h3>
+          <p class="mb-4 text-foreground">
+            The response also carries a <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">realtime</code>
+            block - everything your page needs to <strong>subscribe</strong> to live changes instead of polling:
+          </p>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">"realtime": {
+  "channel": "lists.&lt;your twitch id&gt;.wheel",
+  "event": "list.updated",
+  "auth_endpoint": "https://overlabels.com/api/overlay/broadcasting/auth",
+  "key": "...", "host": "...", "port": 443, "scheme": "https"
+}</pre>
+          <p class="text-foreground">
+            Point a Pusher/Echo client at <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">key/host/port</code>,
+            authorize the channel by POSTing your token to
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">auth_endpoint</code> (the same token gates
+            both the read and the subscribe), and every chat append, draw, edit, or age-out pushes the new state to your
+            page instantly - a chatter types <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!raffle</code>
+            and your wheel grows a slice in real time. The copy-paste consumer at
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">docs/examples/list-data-consumer.html</code>
+            does the full bootstrap-then-subscribe dance.
           </p>
 
           <h3 class="mb-3 text-xl font-semibold">Why this matters: stable identity</h3>

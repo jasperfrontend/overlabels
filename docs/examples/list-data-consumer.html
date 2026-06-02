@@ -8,72 +8,52 @@
   host a page like this one anywhere (GitHub Pages, tiiny.host, your own host),
   and add ITS url as a separate Browser Source in OBS.
 
-  It reads a List as JSON from the public read endpoint:
+  It does two things:
+    1. BOOTSTRAP - fetch the List once as JSON:
+         GET https://overlabels.com/api/lists/{slug}?token={overlay token}
+    2. SUBSCRIBE - using the `realtime` block the endpoint returns, connect to
+       the per-list WebSocket channel and re-render whenever the List changes
+       (a chat append, a draw, an edit) - no polling.
 
-      GET https://overlabels.com/api/lists/{slug}?token={overlay token}
-
-  - {slug}  is your List's slug.
-  - {token} is an Overlay Access Token from your Overlabels dashboard. Treat it
-            like sharing your overlay URL: anyone with it can read this list.
-
-  Pass them in the page url so you can reuse the same file for any list:
+  Pass slug + token in the page url so you can reuse the same file:
 
       list-data-consumer.html?base=https://overlabels.com&slug=wheel&token=abc...
 
-  The endpoint returns the full item objects:
-      { id, value, added_at, label, weight, color }
-  Today label is always null, weight always 1, color always null - those are
-  reserved for when per-item editing ships. Build against id / value / added_at.
+  Items are full objects: { id, value, added_at, label, weight, color }.
+  Today label is null, weight is 1, color is null - reserved for when per-item
+  editing ships. Build against id / value / added_at; key DOM by `id` so two
+  identical values never collide and a survivor keeps its element.
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Overlabels List consumer</title>
+  <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
   <style>
     body { margin: 0; font-family: system-ui, sans-serif; background: transparent; }
     #wheel { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; }
-    .slice {
-      padding: 8px 14px; border-radius: 8px; font-size: 18px; color: #fff;
-      background: #6d28d9; /* falls back to a default when item.color is null */
-    }
+    .slice { padding: 8px 14px; border-radius: 8px; font-size: 18px; color: #fff; background: #6d28d9; }
+    #status { padding: 8px 16px; font: 12px monospace; color: #9ca3af; }
     #err { color: #f87171; padding: 16px; font-family: monospace; }
   </style>
 </head>
 <body>
+  <div id="status">starting...</div>
   <div id="wheel"></div>
   <div id="err"></div>
 
   <script>
-    // --- config: from the page url, with sensible fallbacks ---------------
     const params = new URLSearchParams(location.search);
     const BASE = params.get('base') || 'https://overlabels.com';
     const SLUG = params.get('slug') || 'wheel';
     const TOKEN = params.get('token') || '';
-    const POLL_MS = Number(params.get('poll') || 0); // 0 = fetch once
 
     const wheelEl = document.getElementById('wheel');
+    const statusEl = document.getElementById('status');
     const errEl = document.getElementById('err');
 
-    async function load() {
-      try {
-        const url = `${BASE}/api/lists/${encodeURIComponent(SLUG)}?token=${encodeURIComponent(TOKEN)}`;
-        const res = await fetch(url);
-        if (!res.ok) {
-          errEl.textContent = `Could not load list '${SLUG}': HTTP ${res.status}. Check the slug and token.`;
-          return;
-        }
-        errEl.textContent = '';
-        const data = await res.json();
-        render(data.items || []);
-      } catch (e) {
-        errEl.textContent = `Fetch failed: ${e}. If this is a browser source, the page must be served over https.`;
-      }
-    }
-
     function render(items) {
-      // Key each slice by item.id - stable, unique, never reused. Two items
-      // with the same value (two viewers both named "guest") stay distinct,
-      // and an item that survives a draw keeps its slice.
+      // Key each slice by item.id - stable, unique, never reused.
       wheelEl.replaceChildren(...items.map((it) => {
         const slice = document.createElement('div');
         slice.className = 'slice';
@@ -84,8 +64,47 @@
       }));
     }
 
-    load();
-    if (POLL_MS > 0) setInterval(load, POLL_MS);
+    async function start() {
+      // 1. BOOTSTRAP: fetch current state + how to subscribe.
+      let data;
+      try {
+        const url = `${BASE}/api/lists/${encodeURIComponent(SLUG)}?token=${encodeURIComponent(TOKEN)}`;
+        const res = await fetch(url);
+        if (!res.ok) { errEl.textContent = `Could not load '${SLUG}': HTTP ${res.status}.`; return; }
+        data = await res.json();
+      } catch (e) { errEl.textContent = `Fetch failed: ${e}`; return; }
+
+      render(data.items || []);
+      statusEl.textContent = `loaded ${data.count} items`;
+
+      // 2. SUBSCRIBE: live updates over the per-list channel.
+      const rt = data.realtime;
+      if (!rt || !rt.key) { statusEl.textContent += ' (no realtime config; static only)'; return; }
+
+      const pusher = new Pusher(rt.key, {
+        wsHost: rt.host,
+        wsPort: rt.port,
+        wssPort: rt.port,
+        forceTLS: rt.scheme === 'https',
+        enabledTransports: ['ws', 'wss'],
+        cluster: 'mt1', // unused by self-hosted Reverb, but pusher-js wants a value
+        authorizer: (channel) => ({
+          authorize: (socketId, cb) => {
+            fetch(rt.auth_endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ socket_id: socketId, channel_name: channel.name, token: TOKEN, slug: SLUG }),
+            }).then((r) => r.json()).then((d) => cb(null, d)).catch((e) => cb(e, null));
+          },
+        }),
+      });
+
+      const channel = pusher.subscribe('private-' + rt.channel);
+      channel.bind('pusher:subscription_succeeded', () => { statusEl.textContent += ' - live'; });
+      channel.bind(rt.event, (payload) => { render(payload.items || []); });
+    }
+
+    start();
   </script>
 </body>
 </html>

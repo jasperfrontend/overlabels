@@ -1,5 +1,17 @@
 # CHANGELOG JUNE 2026
 
+## June 3rd, 2026 - feat(lists): live per-list WebSocket channel for external consumers
+
+The REST endpoint gives external consumers (a custom wheel page) a one-shot read; this adds the live half so they can subscribe instead of poll. A chatter types `!raffle` and the wheel grows a slice in real time. Built as option 1 from the design discussion - the existing `ListUpdated` after-state fanned out to a list-scoped channel, with consumers diffing by the stable item `id` rather than a surgical-op protocol (that richer `ListMutated` layer stays a future option).
+
+- **`ListUpdated` now broadcasts on two channels**: the existing `alerts.{twitch}` firehose (untouched - the internal renderer + dashboard keep using it) AND a new list-scoped `lists.{twitch}.{slug}`, so an external consumer receives just one list's updates, not the whole alert stream. Same event, same payload, no second event type.
+- **`OverlayBroadcastingAuthController` extended** to authorize `private-lists.{twitch}.{slug}` for a valid overlay token. The `{twitch}` segment is fixed to the token's owner, so a token can only ever sign its own lists' channels - it can never subscribe to another user's lists or alerts. Slug just has to be well-formed; an unknown slug subscribes to silence, not data.
+- **Read endpoint is now self-describing**: `GET /api/lists/{slug}` returns a `realtime` block (`channel`, `event`, `auth_endpoint`, and the browser-public Reverb `key`/`host`/`port`/`scheme` - never the secret). Fetch state once, then subscribe with the same token. No separate config step for the consumer.
+- **Reference consumer upgraded** (`docs/examples/list-data-consumer.html`): full bootstrap-then-subscribe via pusher-js - fetch the endpoint, render, then live-update on every broadcast, keyed by item `id`.
+- **Proven live end-to-end**, browser-free: an external client speaking the Pusher protocol authenticated to `private-lists.{twitch}.wheel` with only a token (cross-origin, CORS `*`), Reverb accepted the token-derived signature, and a real append was delivered to it with object items. The token->private-channel auth path and the dedicated channel both verified against the running Reverb.
+- 7 feature tests (dual-channel fan-out, the realtime block, auth signs own list channel / refuses another user's id / malformed slug / unrelated namespace). Full List suite green (184).
+- Known limit (inherited, not new): this carries the full after-state per change, so a very large list approaches the Reverb 10 KB payload cap. The surgical-op `ListMutated` layer is the eventual answer there; for now, lists in the normal size range are fine, and the consumer can refetch via REST on any gap.
+
 ## June 3rd, 2026 - feat(lists): public JSON read endpoint for external consumers (GET /api/lists/{slug})
 
 The `:json` tag exposed item objects, but inline in an overlay it's just printed text - overlay templates run no JavaScript (the sanitizer strips `<script>`), so nothing can parse it there. The fix: read List data from *outside* the overlay. New token-authed REST endpoint, the §6 "REST bootstrap" rail from `docs/design/lists-data-bus.md`, shippable standalone with no WebSocket layer.

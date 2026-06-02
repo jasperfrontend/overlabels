@@ -10,14 +10,24 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Broadcast when a user saves or deletes a List. The frontend overlay
- * renderer listens for this on the user-scoped `alerts.{twitch_id}`
- * channel and patches its in-memory data store so any
- * [[[c:list:<slug>]]] tags or [[[foreach:c:list:<slug> as item]]] loops
- * update without a page refresh.
+ * Broadcast when a user saves or deletes a List. Fires on two channels:
  *
- * A delete is signalled by `items === null`; otherwise `items` is the
- * full current array.
+ *   - `alerts.{twitch_id}` - the user-scoped firehose the internal overlay
+ *     renderer + dashboard already listen on; they patch their in-memory
+ *     data store so [[[c:list:<slug>]]] tags / foreach loops update live.
+ *   - `lists.{twitch_id}.{slug}` - a list-scoped channel that EXTERNAL
+ *     consumers (a custom wheel page, a web component) subscribe to, so they
+ *     receive only this one list's updates instead of the whole alert
+ *     stream. Authorized by OverlayBroadcastingAuthController via an
+ *     OverlayAccessToken.
+ *
+ * Same event, same payload, both channels - no second event type. (The
+ * richer surgical-diff layer, ListMutated with per-op payloads, is a
+ * separate future addition; this carries the full after-state and lets a
+ * consumer diff by item id.)
+ *
+ * A delete is signalled by `items === null`; otherwise `items` is the full
+ * current array of item objects.
  */
 class ListUpdated implements ShouldBroadcast
 {
@@ -42,6 +52,7 @@ class ListUpdated implements ShouldBroadcast
     {
         return [
             new PrivateChannel('alerts.'.$this->broadcasterId),
+            new PrivateChannel('lists.'.$this->broadcasterId.'.'.$this->slug),
         ];
     }
 

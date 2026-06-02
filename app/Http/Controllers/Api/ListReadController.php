@@ -72,6 +72,20 @@ class ListReadController extends Controller
             'entry_ttl_seconds' => $list->entry_ttl_seconds,
             'updated_at' => $list->updated_at?->timestamp,
             'ts' => now()->timestamp,
+            // Everything a consumer needs to ALSO subscribe to live updates:
+            // the per-list private channel, the public Reverb connection
+            // params, the token-auth endpoint, and the event name. Fetch
+            // state once, then subscribe - no polling. (key/host/port are the
+            // browser-public Pusher params; the secret is never exposed.)
+            'realtime' => [
+                'channel' => 'lists.'.$accessToken->user->twitch_id.'.'.$list->slug,
+                'event' => 'list.updated',
+                'auth_endpoint' => url('/api/overlay/broadcasting/auth'),
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('broadcasting.connections.reverb.options.host'),
+                'port' => config('broadcasting.connections.reverb.options.port'),
+                'scheme' => config('broadcasting.connections.reverb.options.scheme'),
+            ],
         ]);
     }
 }
