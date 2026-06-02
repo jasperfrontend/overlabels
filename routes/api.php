@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Internal\BotOutboxController;
 use App\Http\Controllers\Api\Internal\BotRecipeTriggerController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
+use App\Http\Controllers\Api\ListReadController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayBroadcastingAuthController;
 use App\Http\Controllers\OverlayTemplateController;
@@ -38,6 +39,20 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+// Public, read-only JSON view of a List for external consumers (custom wheel
+// pages, web components, scripts). Token-authed via the same OverlayAccessToken
+// overlays use, passed as a ?token= query param so it drops into a browser-
+// source URL. Lives under /api/* on purpose: that's the only path Laravel's
+// default CORS covers, so a cross-origin browser fetch works; a web.php route
+// would be CORS-blocked and dragged into Sanctum's stateful handling. Stateless
+// (token, not session), so EnsureFrontendRequestsAreStateful is shed like the
+// overlay render route. See App\Http\Controllers\Api\ListReadController.
+Route::get('/lists/{slug}', [ListReadController::class, 'show'])
+    ->name('api.lists.show')
+    ->where('slug', '[a-z][a-z0-9_]{0,49}')
+    ->middleware(['throttle:overlay', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
 Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])

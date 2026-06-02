@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 3rd, 2026 - feat(lists): public JSON read endpoint for external consumers (GET /api/lists/{slug})
+
+The `:json` tag exposed item objects, but inline in an overlay it's just printed text - overlay templates run no JavaScript (the sanitizer strips `<script>`), so nothing can parse it there. The fix: read List data from *outside* the overlay. New token-authed REST endpoint, the §6 "REST bootstrap" rail from `docs/design/lists-data-bus.md`, shippable standalone with no WebSocket layer.
+
+- **`GET /api/lists/{slug}?token=<overlay token>`** (`App\Http\Controllers\Api\ListReadController`): returns the List as `{slug, label, count, items: [full objects], disabled_at, expires_at, entry_ttl_seconds, updated_at, ts}`. Read-only. Authed by the same `OverlayAccessToken` overlays use, passed as a query param so it drops into a browser-source URL; the token resolves to its owner, so a token only ever reads its own Lists (a foreign slug 404s).
+- **Why `/api/*`, not `web.php`:** the caller is a third-party page on another origin (a custom wheel, a web component, a script). `/api/*` is the only path Laravel's CORS covers, so a cross-origin browser `fetch` works - a `web.php` route would be CORS-blocked and dragged into Sanctum's stateful-session handling. The route sheds `EnsureFrontendRequestsAreStateful` exactly like `/api/overlay/render`. (The earlier "use web.php" instinct was right for *first-party* Inertia calls; this is the opposite caller.)
+- **`config/cors.php` published** so the open policy is intentional, not inherited: `paths: api/*`, `allowed_origins: *`, `supports_credentials: false`. The token is the real gate; a finer-grained origin allowlist is a one-line change here if list-sharing ever needs it.
+- **Not a "phone home" violation:** the overlay never calls this (it has no JS and couldn't); only an external page the streamer controls does, GET-only, server-to-client. Live updates (a draw reflecting on the wheel) are a later WebSocket layer; for now, fetch once or poll.
+- 7 feature tests (object shape, metadata, missing/malformed/unknown token → 401, owner-scoping, unknown slug → 404, open CORS header). Verified over real HTTP cross-origin against the live dev server: `200`, `Access-Control-Allow-Origin: *`, full objects, no Twitch wall.
+- **Help doc corrected:** the `/help/lists` data-model section previously implied a `<script>` web component runs *in your overlay* - it can't. Reframed: overlays run no JS, `:json` inline is a debug view, and the rich data is consumed by an external page via this endpoint. Added a copy-paste reference consumer at `docs/examples/list-data-consumer.html`.
+
 ## June 2nd, 2026 - docs(lists): document the item object model and :json in the Lists help page
 
 User-facing documentation for the items-as-objects change. Extended the Lists help page (`resources/js/pages/help/Lists.vue`) with a major new section rather than a separate doc, since it's the canonical Lists reference and where anyone reading about Lists looks.

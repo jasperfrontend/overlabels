@@ -299,6 +299,51 @@ const breadcrumbs: BreadcrumbItem[] = [
             the objects.
           </p>
 
+          <div class="mb-6 border border-rose-500/40 bg-rose-500/5 p-6">
+            <h3 class="mb-2 text-lg font-semibold">Important: overlays run no JavaScript</h3>
+            <p class="mb-3 text-foreground">
+              Overlay templates are display-only HTML and CSS - we strip
+              <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">&lt;script&gt;</code>, inline event
+              handlers, and <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">&lt;iframe&gt;</code> on save.
+              So dropping <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:list:slug:json]]]</code>
+              into a template just prints the JSON as <em>text</em>. Useful for a quick peek at the data; useless for
+              building a wheel, because there's no way to parse it <em>inside</em> the overlay.
+            </p>
+            <p class="text-foreground">
+              To actually <strong>use</strong> the rich data, read it from <strong>outside</strong> the overlay - a small
+              page you host yourself, where JavaScript is allowed. That's what the read endpoint below is for.
+            </p>
+          </div>
+
+          <h3 class="mb-3 text-xl font-semibold">Reading a List from outside: the JSON endpoint</h3>
+          <p class="mb-4 text-foreground">
+            Every List is also readable as pure JSON from a public, token-authed endpoint:
+          </p>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-sm text-foreground">GET https://overlabels.com/api/lists/&lt;slug&gt;?token=&lt;your overlay token&gt;</pre>
+          <p class="mb-4 text-foreground">
+            The <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">token</code> is an Overlay Access Token
+            from your dashboard - the same kind your overlay URLs use. It identifies you, so you only ever read your own
+            Lists (treat it like sharing an overlay URL: anyone who has it can read that List). The response is the full
+            item objects plus a little metadata:
+          </p>
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">{
+  "slug": "wheel",
+  "label": null,
+  "count": 2,
+  "items": [
+    { "id": 1, "value": "Pizza", "added_at": 1730000000, "label": null, "weight": 1, "color": null },
+    { "id": 2, "value": "Tacos", "added_at": 1730000060, "label": null, "weight": 1, "color": null }
+  ],
+  "disabled_at": null, "expires_at": null, "entry_ttl_seconds": null,
+  "updated_at": 1730000060, "ts": 1730000061
+}</pre>
+          <p class="text-foreground">
+            It's read-only and cross-origin (CORS-open), so a browser page on any host can fetch it. Note this does
+            <strong>not</strong> break the "overlays never phone home" rule - the overlay isn't calling anything (it
+            can't, no JS); a separate page <em>you</em> control is, and only to read. Live updates (a draw or append
+            reflecting on your wheel) will come from a WebSocket layer later; for now, fetch once or poll.
+          </p>
+
           <h3 class="mb-3 text-xl font-semibold">Why this matters: stable identity</h3>
           <p class="mb-4 text-foreground">
             The single biggest reason items became objects is the <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>.
@@ -311,39 +356,42 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <h3 class="mb-3 text-xl font-semibold">Worked example: feeding a custom wheel</h3>
           <p class="mb-4 text-foreground">
-            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> is the data rail a custom
-            renderer reads from. Drop the objects into an attribute your own script or web component reads:
+            The wheel is a small page <strong>you host yourself</strong> (GitHub Pages, tiiny.host, anywhere) and add to
+            OBS as <strong>its own</strong> Browser Source - separate from your Overlabels overlay. It fetches the
+            endpoint and renders however you like, in plain JavaScript:
           </p>
-          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">&lt;spin-the-wheel data-items='[[[c:list:wheel:json]]]'&gt;&lt;/spin-the-wheel&gt;
-
+          <pre class="mb-4 overflow-x-auto border border-sidebar-border bg-sidebar-accent p-4 font-mono text-xs leading-relaxed text-foreground">&lt;div id="wheel"&gt;&lt;/div&gt;
 &lt;script&gt;
-  class SpinTheWheel extends HTMLElement {
-    connectedCallback() { this.render(); }
-    // Re-read when the overlay patches the attribute on a live update.
-    static get observedAttributes() { return ['data-items']; }
-    attributeChangedCallback() { this.render(); }
+  const TOKEN = '...'; // an Overlay Access Token from your dashboard
+  const URL = `https://overlabels.com/api/lists/wheel?token=${TOKEN}`;
 
-    render() {
-      const items = JSON.parse(this.getAttribute('data-items') || '[]');
-      // items: [{ id, value, added_at, label, weight, color }, ...]
-      // Key each slice by item.id so two identical names never collide,
-      // and so an item that survives a draw keeps its slice/animation.
-      this.replaceChildren(...items.map(it =&gt; {
-        const slice = document.createElement('div');
-        slice.dataset.id = it.id;
-        slice.textContent = it.value;
-        return slice;
-      }));
-    }
+  async function load() {
+    const res = await fetch(URL);
+    const { items } = await res.json();
+    // items: [{ id, value, added_at, label, weight, color }, ...]
+    // Key each slice by item.id so two identical names never collide,
+    // and so an item that survives a draw keeps its slice.
+    document.getElementById('wheel').replaceChildren(...items.map(it =&gt; {
+      const slice = document.createElement('div');
+      slice.dataset.id = it.id;
+      slice.textContent = it.value;
+      return slice;
+    }));
   }
-  customElements.define('spin-the-wheel', SpinTheWheel);
+
+  load();
+  // Fetch once, or poll for now: setInterval(load, 5000)
 &lt;/script&gt;</pre>
+          <p class="mb-4 text-foreground">
+            That's the whole pattern: fetch the endpoint, objects out, render however you like, key by
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>. A copy-paste-ready version of
+            this page lives in the repo at
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">docs/examples/list-data-consumer.html</code>.
+          </p>
           <p class="text-foreground">
-            That's the whole pattern: <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">:json</code> in,
-            objects out, render however you like, key by <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">id</code>.
-            Once weighted and colored editing lands, the same component reads
+            Once weighted and colored editing lands, the same page reads
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">it.weight</code> and
-            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">it.color</code> with no markup change -
+            <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">it.color</code> with no other change -
             that's exactly why those fields are already in the shape.
           </p>
         </section>
