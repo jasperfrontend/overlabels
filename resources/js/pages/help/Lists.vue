@@ -364,6 +364,14 @@ const breadcrumbs: BreadcrumbItem[] = [
             <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">docs/examples/list-data-consumer.html</code>
             does the full bootstrap-then-subscribe dance.
           </p>
+          <div class="mb-6 border border-violet-500/40 bg-violet-500/5 p-6">
+            <p class="text-foreground">
+              <strong>Want the full walkthrough?</strong> The
+              <Link href="/help/lists-realtime" class="text-violet-400 hover:underline">Lists in realtime</Link> guide
+              takes you end to end: get a token, read the list, render it, subscribe to live updates, and add your page
+              to OBS - with a troubleshooting table for when it doesn't work the first time.
+            </p>
+          </div>
 
           <h3 class="mb-3 text-xl font-semibold">Why this matters: stable identity</h3>
           <p class="mb-4 text-foreground">

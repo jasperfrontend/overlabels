@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Radio, Sigma, SlidersHorizontal, Sparkles, Swords } from 'lucide-vue-next';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -69,6 +69,12 @@ const pages = [
     description: 'User-owned arrays of values. Raffles, queues, quote walls, leaderboards, donation goals - all driven from the dashboard or chat with one primitive and ten verbs.',
     href: '/help/lists',
     icon: ListChecks,
+  },
+  {
+    title: 'Lists in realtime',
+    description: 'The builder guide: read a List as JSON, subscribe to live updates over WebSocket, and add your own custom page (a wheel, a leaderboard) to OBS. Step by step.',
+    href: '/help/lists-realtime',
+    icon: Radio,
   },
   {
     title: 'Formatting Pipes',

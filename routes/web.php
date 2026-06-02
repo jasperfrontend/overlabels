@@ -140,6 +140,10 @@ Route::get('/help/lists', function () {
     return Inertia::render('help/Lists');
 })->name('help.lists');
 
+Route::get('/help/lists-realtime', function () {
+    return Inertia::render('help/ListsRealtime');
+})->name('help.lists-realtime');
+
 Route::get('/help/math', function () {
     return Inertia::render('help/Math');
 })->name('help.math');

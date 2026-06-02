@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 3rd, 2026 - docs(lists): "Lists in realtime" builder guide (/help/lists-realtime)
+
+A dedicated, step-by-step help page for the new external-consumer stack - separate from the streamer-facing `/help/lists` reference because it's a different audience (someone building a page) in a different mode (a do-this-then-this tutorial). The reference page was already ~900 lines and streamer-focused; a long copy-paste walkthrough belonged on its own.
+
+- **New `resources/js/pages/help/ListsRealtime.vue`** at `/help/lists-realtime`: the mental model (overlays run no JS; your consumer lives outside; two rails - REST read + WS channel, with a little flow diagram), then five concrete steps - get a token, read the list (`curl` + annotated response), render it (minimal JS keyed by `id`), go live (pusher-js + the `realtime` block, the token-auth flow explained), and put it in OBS (host over https, add a browser source). Plus a troubleshooting table (mixed content, 401/404, no live updates, 403 "Channel not permitted", OBS vs browser), an honest limits section (reserved `label`/`weight`/`color`, the payload cap on huge lists, the polling fallback), and a quick-reference card.
+- Wired in: route in `web.php` (`help.lists-realtime`), a card on the help index (`Radio` icon), and a cross-link from the `/help/lists` data-model section. Links point at the real `/tokens` page.
+- Same honesty discipline as the rest: nothing implies you can color/weight a wheel yet, and the token-is-a-read-key trade-off is called out.
+- ESLint clean; `npm run build` compiles; the page serves `200`.
+
 ## June 3rd, 2026 - feat(lists): live per-list WebSocket channel for external consumers
 
 The REST endpoint gives external consumers (a custom wheel page) a one-shot read; this adds the live half so they can subscribe instead of poll. A chatter types `!raffle` and the wheel grows a slice in real time. Built as option 1 from the design discussion - the existing `ListUpdated` after-state fanned out to a list-scoped channel, with consumers diffing by the stable item `id` rather than a surgical-op protocol (that richer `ListMutated` layer stays a future option).
