@@ -201,7 +201,7 @@ const mainTabs = computed(() => {
   if (props.template.type === 'alert') {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
-    tabs.push({ key: 'tts', label: 'Sound', icon: Volume2 });
+    tabs.push({ key: 'tts', label: 'Effects', icon: Volume2 });
   }
   return tabs;
 });
@@ -512,7 +512,7 @@ onMounted(() => {
               type="button"
               @click="mainTab = tab.key"
               :class="[
-                'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+                'flex cursor-pointer items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background',
                 mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
               ]"
             >
@@ -614,7 +614,7 @@ onMounted(() => {
             <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
           </div>
 
-          <!-- Sound Tab (alert templates only): alert sound + TTS -->
+          <!-- Effects Tab (alert templates only): alert sound + TTS + bot chat message -->
           <div v-if="mainTab === 'tts'" class="p-4">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <!-- Left column (2/3): alert sound + TTS -->
