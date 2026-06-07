@@ -103,6 +103,7 @@ interface Props {
     fork_count: number;
     template_tags: string[] | null | undefined;
     tts_expression: string | null;
+    bot_message_expression: string | null;
     tts_delay_ms: number | null;
     alert_sound_url: string | null;
   };
@@ -158,6 +159,7 @@ const form = useForm({
   compiled_css: props?.template?.compiled_css || '',
   is_public: props?.template?.is_public,
   tts_expression: props?.template?.tts_expression || '',
+  bot_message_expression: props?.template?.bot_message_expression || '',
   tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
   alert_sound_url: props?.template?.alert_sound_url || '',
 });
@@ -735,6 +737,46 @@ onMounted(() => {
                       alerts. Turn it on or remove the control to resume.
                     </p>
                   </details>
+                </section>
+
+                <hr class="border-sidebar-border" />
+
+                <section>
+                  <header class="mb-3">
+                    <h3 class="text-base font-semibold text-accent-foreground">Bot chat message</h3>
+                    <p class="text-xs text-foreground/80">
+                      Posted to your channel chat when this alert fires - handy when the alert sound is muted or missed.
+                      Empty disables it. Requires the Overlabels bot to be enabled.
+                    </p>
+                  </header>
+
+                  <label for="bot_message_expression" class="mb-1 block text-xs font-medium text-accent-foreground">
+                    Message
+                  </label>
+                  <textarea
+                    id="bot_message_expression"
+                    v-model="form.bot_message_expression"
+                    rows="3"
+                    maxlength="500"
+                    class="input-border w-full font-mono text-sm"
+                    placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months! Thank you!"
+                  />
+                  <div v-if="form.errors.bot_message_expression" class="mt-1 text-sm text-red-600">{{ form.errors.bot_message_expression }}</div>
+                  <p class="mt-1 text-xs text-foreground/70">
+                    Same tags as TTS. No <code class="rounded bg-muted px-1">[[[if]]]</code> logic - plain text and tags only. Capped at 500 characters (Twitch's chat limit).
+                  </p>
+
+                  <div v-if="template.template_tags && template.template_tags.length" class="mt-3">
+                    <p class="mb-1.5 text-xs font-medium text-foreground/80">Tags from this alert</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      <code
+                        v-for="tag in template.template_tags"
+                        :key="tag"
+                        class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
+                        @click="form.bot_message_expression = (form.bot_message_expression || '') + `[[[${tag}]]]`"
+                      >[[[{{ tag }}]]]</code>
+                    </div>
+                  </div>
                 </section>
               </div>
 

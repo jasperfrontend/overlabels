@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 7th, 2026 - feat(alerts): post a bot chat message when an alert fires
+
+A streamer forgot to turn his speaker on, missed a sound alert, and found there was no quick way to see in chat that something had happened. Alerts can now carry an optional bot chat message - a free-text + tag expression, parsed exactly like the TTS field, that the Overlabels bot posts to the streamer's own chat when the alert fires. Unopinionated by design: it sends whatever the streamer types, no presets.
+
+- **New `overlay_templates.bot_message_expression`** (nullable text, migration `2026_06_07_120000`): the per-alert message template. Same `[[[tag]]]` / `[[[c:key]]]` / pipe-formatter syntax as `tts_expression`, no `[[[if]]]` logic - plain text and tags only, matching the day-one "tags never reparse" rule.
+- **`AlertExpressionRenderer` gains `renderMessage()`**: shares the exact single-pass tag substitution and 500-char cap (which doubles as Twitch's chat limit) with `render()`, but skips the `tts` mute gate. Bot chat messages are gated only by the user's `bot_enabled` flag - the `tts` control mutes speech, not chat.
+- **Queued at all three alert-dispatch sites** (`TwitchEventSubController::renderEventAlert`, `ExternalAlertService::dispatch`, `ExternalEventController::replay`): if the user has `bot_enabled` and the expression resolves to a non-empty string, a `BotChatOutbox` row is created for the bot to post. Gating on `bot_enabled` avoids enqueuing messages the bot can never deliver (it only joins channels where the flag is on). The message path is server-only - it never touches the overlay, unlike TTS.
+- **Editor UI**: a "Bot chat message" section under Text-to-speech on the alert's Sound tab - a 500-char textarea bound to `bot_message_expression`, click-to-insert tag chips, and copy spelling out the no-`if` / bot-required rules. Validated `nullable|string|max:500` on store and update.
+- 5 feature tests in `AlertBotMessageTest`: queues a resolved message when bot enabled, skips when bot disabled / expression null / expression resolves empty, and confirms the `tts` mute control does NOT suppress the chat message. Full bot-message + TTS suite green (23 passed); `edit.vue` lints clean.
+
 ## June 3rd, 2026 - docs(lists): "Lists in realtime" builder guide (/help/lists-realtime)
 
 A dedicated, step-by-step help page for the new external-consumer stack - separate from the streamer-facing `/help/lists` reference because it's a different audience (someone building a page) in a different mode (a do-this-then-this tutorial). The reference page was already ~900 lines and streamer-focused; a long copy-paste walkthrough belonged on its own.

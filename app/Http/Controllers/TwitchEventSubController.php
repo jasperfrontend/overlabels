@@ -6,6 +6,7 @@ use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
+use App\Models\BotChatOutbox;
 use App\Models\EventTemplateMapping;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
@@ -635,6 +636,23 @@ class TwitchEventSubController extends Controller
             // schedules playback after tts_delay_ms.
             if ($ttsText !== null) {
                 SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+            }
+
+            // Optional bot chat message - queued for the bot to post. Gated on
+            // bot_enabled so we never enqueue a message the bot can't deliver
+            // (it only joins channels where the flag is on).
+            if ($user->bot_enabled) {
+                $botMessage = app(AlertExpressionRenderer::class)->renderMessage(
+                    $user,
+                    $mapping->template->bot_message_expression,
+                    $templateData,
+                );
+                if ($botMessage !== null) {
+                    BotChatOutbox::create([
+                        'user_id' => $user->id,
+                        'message' => $botMessage,
+                    ]);
+                }
             }
 
         } catch (Exception $e) {

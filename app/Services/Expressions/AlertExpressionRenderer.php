@@ -42,11 +42,34 @@ class AlertExpressionRenderer
      */
     public function render(User $user, ?string $expression, array $templateData): ?string
     {
-        if ($expression === null || trim($expression) === '') {
+        if ($this->isGatedOff($user)) {
             return null;
         }
 
-        if ($this->isGatedOff($user)) {
+        return $this->resolve($user, $expression, $templateData);
+    }
+
+    /**
+     * Render an expression for posting to chat via BotChatOutbox. Identical tag
+     * resolution to render(), but WITHOUT the `tts` mute gate - bot chat
+     * messages are gated only by the user's `bot_enabled` flag, checked at the
+     * dispatch site. The 500-char cap doubles as a fit for Twitch's chat limit.
+     *
+     * @param  array<string,mixed>  $templateData
+     */
+    public function renderMessage(User $user, ?string $expression, array $templateData): ?string
+    {
+        return $this->resolve($user, $expression, $templateData);
+    }
+
+    /**
+     * Core single-pass tag substitution shared by render() and renderMessage().
+     *
+     * @param  array<string,mixed>  $templateData
+     */
+    private function resolve(User $user, ?string $expression, array $templateData): ?string
+    {
+        if ($expression === null || trim($expression) === '') {
             return null;
         }
 

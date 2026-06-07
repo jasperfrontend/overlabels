@@ -785,6 +785,7 @@ class OverlayTemplateController extends Controller
             'is_public' => 'boolean',
             'screenshot_url' => 'nullable|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
+            'bot_message_expression' => 'nullable|string|max:500',
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'nullable|url|max:2048',
         ]);
@@ -833,6 +834,7 @@ class OverlayTemplateController extends Controller
             'type' => 'sometimes|in:static,alert',
             'is_public' => 'sometimes|boolean',
             'tts_expression' => 'sometimes|nullable|string|max:2000',
+            'bot_message_expression' => 'sometimes|nullable|string|max:500',
             'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'sometimes|nullable|url|max:2048',
         ]);

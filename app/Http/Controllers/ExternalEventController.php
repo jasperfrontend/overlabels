@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\AlertTriggered;
 use App\Jobs\SynthesizeAlertTts;
+use App\Models\BotChatOutbox;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Services\Expressions\AlertExpressionRenderer;
@@ -67,6 +68,22 @@ class ExternalEventController extends Controller
 
         if ($ttsText !== null) {
             SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+        }
+
+        // Optional bot chat message - queued for the bot to post. Gated on
+        // bot_enabled so we never enqueue a message the bot can't deliver.
+        if ($user->bot_enabled) {
+            $botMessage = app(AlertExpressionRenderer::class)->renderMessage(
+                $user,
+                $template->bot_message_expression,
+                $data,
+            );
+            if ($botMessage !== null) {
+                BotChatOutbox::create([
+                    'user_id' => $user->id,
+                    'message' => $botMessage,
+                ]);
+            }
         }
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';

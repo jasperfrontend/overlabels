@@ -103,6 +103,7 @@ class OverlayTemplate extends Model
         'compiled_css',
         'js',
         'tts_expression',
+        'bot_message_expression',
         'tts_delay_ms',
         'alert_sound_url',
         'is_public',
