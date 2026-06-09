@@ -404,6 +404,40 @@ test('resolver applies uppercase formatter', function () {
     expect($resolver->resolve($user, '[[[bot:from_user|uppercase]]]', $context))->toBe('ALICE');
 });
 
+test('resolver login formatter strips the @ for URLs, mention keeps it', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // Chatter typed "!so @Johnny45" - args arrives with the @ already attached.
+    $context = ['args.0' => '@Johnny45'];
+
+    expect($resolver->resolve($user, 'https://twitch.tv/[[[bot:args.0|login]]]', $context))
+        ->toBe('https://twitch.tv/Johnny45')
+        ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', $context))
+        ->toBe('@Johnny45');
+});
+
+test('mention formatter adds the @ when the chatter omitted it', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // Chatter typed "!so Johnny45" - no @.
+    $context = ['args.0' => 'Johnny45'];
+
+    expect($resolver->resolve($user, '[[[bot:args.0|mention]]]', $context))
+        ->toBe('@Johnny45')
+        ->and($resolver->resolve($user, 'https://twitch.tv/[[[bot:args.0|login]]]', $context))
+        ->toBe('https://twitch.tv/Johnny45');
+});
+
+test('login and mention formatters leave empty args empty', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    expect($resolver->resolve($user, '[[[bot:args.0|login]]]', []))->toBe('')
+        ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', []))->toBe('');
+});
+
 test('resolver does not re-scan substituted values for tags (single-pass)', function () {
     $user = makeOptedInBotUser();
     OverlayControl::create([

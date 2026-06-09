@@ -30,6 +30,8 @@ class ExpressionFormatter
             'date' => self::date($value, $args),
             'uppercase' => mb_strtoupper($value),
             'lowercase' => mb_strtolower($value),
+            'login' => self::login($value),
+            'mention' => self::mention($value),
             'distance' => self::distance($value, $args),
             'duration' => self::duration($value, $args),
             default => $value,
@@ -99,6 +101,29 @@ class ExpressionFormatter
         ];
 
         return strtr($pattern, $map);
+    }
+
+    /**
+     * Bare Twitch login: strip leading '@' chars and surrounding whitespace.
+     * For URLs like https://twitch.tv/[[[bot:args.0|login]]] where a chatter's
+     * "@name" mention would 404. Strip-and-trim only - no case or punctuation
+     * normalization, so it stays predictable and unopinionated.
+     */
+    private static function login(string $value): string
+    {
+        return ltrim(trim($value), '@');
+    }
+
+    /**
+     * Chat mention: ensure exactly one leading '@', so a chatter who omits it
+     * still pings and '@@' collapses to one. Empty stays empty (never a bare
+     * '@'). The inverse of login() - use it where you want the ping form.
+     */
+    private static function mention(string $value): string
+    {
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? '' : '@'.ltrim($trimmed, '@');
     }
 
     private static function distance(string $value, string $args): string

@@ -252,6 +252,12 @@ function insertSnippet(snippet: string) {
                 <code class="text-foreground/80">|uppercase</code>,
                 <code class="text-foreground/80">|date:HH:mm</code>.
               </p>
+              <p class="text-foreground/60">
+                For shoutouts: <code class="text-foreground/80">|mention</code> keeps the
+                <code class="text-foreground/80">@</code> so it pings,
+                <code class="text-foreground/80">|login</code> strips it for URLs like
+                <code class="text-foreground/80">twitch.tv/[[[bot:args.0|login]]]</code>.
+              </p>
             </div>
           </details>
 

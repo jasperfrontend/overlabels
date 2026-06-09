@@ -118,6 +118,19 @@ Scoped to the single command invocation. **Not** persisted as a control; compute
 
 The colon-then-dot pattern in `bot:args.0` matches the existing `event.choices.0.title` precedent: colons separate namespaces, dots index into structured data.
 
+#### Mentions vs URLs: `|mention` and `|login`
+
+Twitch prefixes tagged usernames with `@`, so `!so @Johnny45` arrives with the `@` already attached. That `@` pings the user in chat (good) but breaks a profile URL (`twitch.tv/@Johnny45` -> 404). Two pipe formatters let one value serve both roles in the same template:
+
+- `|mention` ensures exactly one leading `@` (a chatter who forgot it still pings; `@@` collapses to one).
+- `|login` strips the leading `@`, giving the bare login for URLs.
+
+```
+Everybody go follow [[[bot:args.0|mention]]] over at https://twitch.tv/[[[bot:args.0|login]]]
+```
+
+Use `bot:args.0` (the first token) rather than `bot:args` for the URL, so a multi-word tail doesn't leave spaces in the link.
+
 `bot:` tags resolve only inside Bot Expression evaluation. They do not exist in overlay templates or in Expression Controls.
 
 ## Permissions

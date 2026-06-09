@@ -24,6 +24,8 @@
  *   |speed:mph    — convert m/s to mph, locale-formatted (input assumed m/s)
  *   |uppercase    — text transform
  *   |lowercase    — text transform
+ *   |login        — bare Twitch login: strip a leading @ (for URLs)
+ *   |mention      — chat mention: ensure exactly one leading @ (for pings)
  */
 
 const DEFAULT_LOCALE = 'en-US';
@@ -92,6 +94,10 @@ export function applyFormatter(rawValue: string, pipe: string, locale?: string):
       return rawValue.toUpperCase();
     case 'lowercase':
       return rawValue.toLowerCase();
+    case 'login':
+      return formatLogin(rawValue);
+    case 'mention':
+      return formatMention(rawValue);
     default:
       // Unknown formatter — return value unchanged
       return rawValue;
@@ -328,4 +334,25 @@ function formatSpeed(value: string, args?: string, locale?: string): string {
   const converted = unit === 'mph' ? kmh / 1.609344 : kmh;
 
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(converted);
+}
+
+/**
+ * Bare Twitch login: strip leading @ chars and surrounding whitespace.
+ * For URLs like https://twitch.tv/[[[bot:args.0|login]]] where a chatter's
+ * "@name" mention would 404. Strip-and-trim only — predictable, unopinionated.
+ * Mirrors ExpressionFormatter::login() on the PHP side.
+ */
+function formatLogin(value: string): string {
+  return value.trim().replace(/^@+/, '');
+}
+
+/**
+ * Chat mention: ensure exactly one leading @, so a chatter who omits it still
+ * pings and @@ collapses to one. Empty stays empty (never a bare @).
+ * Mirrors ExpressionFormatter::mention() on the PHP side.
+ */
+function formatMention(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed === '') return '';
+  return '@' + trimmed.replace(/^@+/, '');
 }

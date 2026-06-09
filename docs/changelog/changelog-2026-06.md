@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 10th, 2026 - feat(bot): |login and |mention formatters for shoutout commands
+
+Twitch prefixes a tagged username with `@`, so `!so @Johnny45` arrives with the `@` already attached. That `@` is wanted in a chat mention (it pings) but poison in a URL (`twitch.tv/@Johnny45` -> 404). The same captured value needs both forms in one template, so the fix lives at the point of use - two pipe formatters - not at capture. `bot:args` stays the raw tail the chatter typed; the author opts into each form per site.
+
+- **`|login`**: strips leading `@` chars and trims. `@Johnny45` -> `Johnny45`. For URLs like `https://twitch.tv/[[[bot:args.0|login]]]`. Strip-and-trim only, no case or punctuation normalization, so it stays predictable.
+- **`|mention`**: ensures exactly one leading `@`, so a chatter who forgets it (`!so Johnny45`) still pings and `@@` collapses to one. Empty stays empty - never a bare `@`.
+- Added to the shared `ExpressionFormatter` (covers Bot Expressions AND alert TTS) and mirrored in `resources/js/utils/formatters.ts` per the format-identically contract. Both pass unknown formatters through unchanged, so no validator/allowlist change was needed.
+- The canonical shoutout now works both ways: `Everybody go follow [[[bot:args.0|mention]]] over at https://twitch.tv/[[[bot:args.0|login]]]`. Uses `bot:args.0` (first token) not `bot:args` so a multi-word tail can't leave spaces in the link.
+- Documented in the Bot Expressions reference (a dedicated "Mentions vs URLs" subsection) and surfaced in the expression editor's formatter helper. 3 new resolver tests (strip-for-URL, add-when-omitted, empty-stays-empty); bot expression suite green.
+
 ## June 7th, 2026 - feat(alerts): post a bot chat message when an alert fires
 
 A streamer forgot to turn his speaker on, missed a sound alert, and found there was no quick way to see in chat that something had happened. Alerts can now carry an optional bot chat message - a free-text + tag expression, parsed exactly like the TTS field, that the Overlabels bot posts to the streamer's own chat when the alert fires. Unopinionated by design: it sends whatever the streamer types, no presets.
