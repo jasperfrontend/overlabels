@@ -25,6 +25,31 @@ class TwitchApiService
         'goals' => 'twitch_goals_',
     ];
 
+    /**
+     * Per-type cache TTLs in seconds. Volatile reads (latest follower, subs,
+     * goal progress) get short windows so cold consumers - notably Bot
+     * Expressions, which read the cache without the overlay's live EventSub
+     * patching - see current data. Near-static reads (profile, follow list)
+     * keep longer windows. Replaces the old blanket 365-day TTL that let a
+     * single failed fetch poison a key for a year.
+     */
+    private const array CACHE_TTL = [
+        'user' => 21600,             // 6h  - profile/bio rarely changes
+        'channel' => 300,            // 5m  - title/game can change mid-stream
+        'followed_channels' => 3600, // 1h  - changes slowly
+        'channel_followers' => 120,  // 2m  - "latest follower" is volatile
+        'subscribers' => 300,        // 5m  - volatile
+        'goals' => 300,              // 5m  - volatile
+    ];
+
+    /**
+     * Negative-cache window: how long a null/empty fetch is held before a
+     * retry. Long enough to shield Twitch from a hammer during an outage,
+     * short enough that a transient failure self-heals in seconds instead of
+     * persisting for the full positive TTL.
+     */
+    private const int EMPTY_CACHE_TTL = 30;
+
     public function __construct()
     {
         $this->clientId = config('services.twitch.client_id');
@@ -113,9 +138,28 @@ class TwitchApiService
     {
         $fullCacheKey = self::CACHE_KEYS[$cacheKey].$userId;
 
-        return Cache::remember($fullCacheKey, now()->addDays(365), function () use ($dataCallback) {
-            return $dataCallback() ?? [];
-        });
+        $cached = Cache::get($fullCacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $data = $dataCallback();
+
+        // A null result means the fetch failed (e.g. transient 401/429/5xx, or
+        // an inner channel-info lookup hiccup). Hold the empty result only
+        // briefly so the next read retries, instead of caching the failure for
+        // the full TTL. A genuinely empty-but-successful response (e.g. a
+        // streamer with zero followers) is a non-empty array - {total:0,data:[]}
+        // - so it takes the positive path and caches normally.
+        if ($data === null || $data === []) {
+            Cache::put($fullCacheKey, [], self::EMPTY_CACHE_TTL);
+
+            return [];
+        }
+
+        Cache::put($fullCacheKey, $data, self::CACHE_TTL[$cacheKey]);
+
+        return $data;
     }
 
     /**

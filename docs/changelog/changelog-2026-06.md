@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 10th, 2026 - fix(twitch): stop caching failed fetches for a year; per-type TTLs
+
+A Bot Expression using `[[[followers_latest_user_name]]]` rendered an empty gap in chat while the tag was perfectly valid. The hunt led to `TwitchApiService::getCachedData()`, not the resolver: it wrapped every fetch in `Cache::remember(..., now()->addDays(365), fn () => $dataCallback() ?? [])`. So any transient failure (a 429 that exhausted retries, a 5xx, an inner channel-info hiccup that made `getChannelFollowers` return null) cached an empty array under the data key **for a year**. Every later read - `channel_followers.data.0.user_name` -> null -> `getDefaultValue` -> empty string - stayed blank until the TTL lapsed.
+
+Why it surfaced on the bot and not overlays: overlays seed from the same cache but then live-patch `followers_latest_user_name` from each `channel.follow` EventSub event (`useTwitchEventRules.ts`), so one follow during a stream masks a poisoned cache. Bot Expressions read the cache cold on each fire - no live patch, no mask. The bot was just the first consumer to read the raw cache without a safety net.
+
+- **Per-type TTLs replace the blanket 365 days** (`CACHE_TTL`): volatile reads get short windows so cold consumers see current data - `channel_followers` 2m, `subscribers`/`goals`/`channel` 5m, `followed_channels` 1h - while near-static `user` keeps 6h. The old single 365-day TTL was wrong for "latest follower" even without the poisoning bug.
+- **Failures are negative-cached for 30s, not the full TTL** (`EMPTY_CACHE_TTL`): a null/empty fetch is held briefly to shield Twitch during an outage, then retried - self-healing in seconds instead of persisting for a year. A genuinely empty-but-successful response (a streamer with zero followers returns `{total:0,data:[]}`, a non-empty array) takes the positive path and caches normally, so legit-empty is never mistaken for failure.
+- 3 unit tests in `TwitchApiCacheTest` (negative-cache-then-retry, positive per-type TTL expiry, legit-empty-is-not-a-failure), driven via reflection on the private method - the actual unit under change - rather than mocking six Helix endpoints.
+
 ## June 10th, 2026 - feat(bot): |login and |mention formatters for shoutout commands
 
 Twitch prefixes a tagged username with `@`, so `!so @Johnny45` arrives with the `@` already attached. That `@` is wanted in a chat mention (it pings) but poison in a URL (`twitch.tv/@Johnny45` -> 404). The same captured value needs both forms in one template, so the fix lives at the point of use - two pipe formatters - not at capture. `bot:args` stays the raw tail the chatter typed; the author opts into each form per site.
