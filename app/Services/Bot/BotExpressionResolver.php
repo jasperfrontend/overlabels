@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Expressions\ExpressionFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
+use App\Services\TwitchTokenService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -36,6 +37,7 @@ class BotExpressionResolver
     public function __construct(
         private readonly TwitchApiService $twitch,
         private readonly TemplateDataMapperService $mapper,
+        private readonly TwitchTokenService $tokens,
     ) {}
 
     /**
@@ -130,6 +132,21 @@ class BotExpressionResolver
     private function loadTwitchTags(User $user): array
     {
         if (! $user->access_token || ! $user->twitch_id) {
+            return [];
+        }
+
+        // Refresh a stale token before fetching, exactly like every other Twitch
+        // consumer (overlay render, ExpressionTagController, BotFollowageController).
+        // The bot fire path authenticates on the bot.internal secret, not a user
+        // session, so it never passes through EnsureValidTwitchToken middleware -
+        // the refresh has to happen here. Without it an expired token 401s and
+        // EVERY Twitch tag (followers_latest_user_name, channel_title, ...)
+        // resolves to empty, while bot: and c: tags keep working because they
+        // need no token. ensureValidToken() mutates $user in place, so the
+        // fetch below uses the freshly refreshed access_token.
+        if (! $this->tokens->ensureValidToken($user)) {
+            Log::warning('bot_expression.token_refresh_failed', ['user_id' => $user->id]);
+
             return [];
         }
 

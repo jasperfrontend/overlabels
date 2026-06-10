@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 10th, 2026 - fix(bot): refresh the streamer's Twitch token before resolving Helix tags
+
+The real cause of `[[[followers_latest_user_name]]]` (and every other Helix tag) rendering blank in Bot Expressions while working fine in overlays. `BotExpressionResolver::loadTwitchTags()` was the **only** Twitch-data consumer in the app that called `getExtendedUserData()` without first calling `TwitchTokenService::ensureValidToken()` - overlay render (`OverlayTemplateController`), `ExpressionTagController`, and the sibling `BotFollowageController` all refresh first. The bot fire endpoint authenticates on the `bot.internal` secret, not a user session, so it never passes through the `EnsureValidTwitchToken` middleware either - nothing refreshed the token on this path.
+
+Result: when the streamer's stored `access_token` was expired at fire time, `getExtendedUserData()` 401'd, the resolver swallowed the exception, and **every** `bot:`-context-free Helix tag resolved to an empty default. The tell was that `!so` (which uses only `[[[bot:args.0]]]`, no token) worked perfectly while `!latestfollower` (a Helix tag) came back blank, and the same tag rendered fine in the overlay (a path that refreshes the token). The cache fix shipped alongside this was a real latent bug but not this symptom.
+
+- **`loadTwitchTags()` now calls `ensureValidToken($user)` before the fetch**, matching every other consumer. `ensureValidToken` mutates the user model in place, so the subsequent `getExtendedUserData` uses the freshly minted access token. A failed refresh logs `bot_expression.token_refresh_failed` and returns no Twitch tags (rather than 401-ing mid-fetch).
+- 2 feature tests in `BotExpressionsApiTest`: a successful refresh resolves a bare Helix tag end to end; a failed refresh short-circuits to empty **even when the fetch would have returned data** - the exact regression guard for this bug.
+
 ## June 10th, 2026 - fix(twitch): stop caching failed fetches for a year; per-type TTLs
 
 A Bot Expression using `[[[followers_latest_user_name]]]` rendered an empty gap in chat while the tag was perfectly valid. The hunt led to `TwitchApiService::getCachedData()`, not the resolver: it wrapped every fetch in `Cache::remember(..., now()->addDays(365), fn () => $dataCallback() ?? [])`. So any transient failure (a 429 that exhausted retries, a 5xx, an inner channel-info hiccup that made `getChannelFollowers` return null) cached an empty array under the data key **for a year**. Every later read - `channel_followers.data.0.user_name` -> null -> `getDefaultValue` -> empty string - stayed blank until the TTL lapsed.

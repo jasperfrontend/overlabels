@@ -438,6 +438,66 @@ test('login and mention formatters leave empty args empty', function () {
         ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', []))->toBe('');
 });
 
+test('resolver refreshes the token then resolves bare Twitch tags', function () {
+    $user = makeOptedInBotUser();
+    $user->forceFill(['access_token' => 'stale-token'])->save();
+
+    // Token refresh succeeds -> the fetch runs and the tag resolves.
+    app()->instance(App\Services\TwitchTokenService::class, new class extends App\Services\TwitchTokenService
+    {
+        public function __construct() {}
+
+        public function ensureValidToken(User $user): bool
+        {
+            return true;
+        }
+    });
+    app()->instance(TwitchApiService::class, new class extends TwitchApiService
+    {
+        public function __construct() {}
+
+        public function getExtendedUserData(string $accessToken, string $twitchId): array
+        {
+            return ['channel_followers' => ['total' => 9, 'data' => [['user_name' => 'Zoe']]]];
+        }
+    });
+
+    $resolver = app(BotExpressionResolver::class);
+
+    expect($resolver->resolve($user, 'latest: [[[followers_latest_user_name]]]'))->toBe('latest: Zoe');
+});
+
+test('resolver leaves Twitch tags empty when the token cannot be refreshed', function () {
+    $user = makeOptedInBotUser();
+    $user->forceFill(['access_token' => 'stale-token'])->save();
+
+    // Refresh fails. Even though getExtendedUserData WOULD return data, the
+    // failed refresh must short-circuit before the fetch - this is the bug:
+    // pre-fix, a stale token 401'd inside the fetch and emptied every tag.
+    app()->instance(App\Services\TwitchTokenService::class, new class extends App\Services\TwitchTokenService
+    {
+        public function __construct() {}
+
+        public function ensureValidToken(User $user): bool
+        {
+            return false;
+        }
+    });
+    app()->instance(TwitchApiService::class, new class extends TwitchApiService
+    {
+        public function __construct() {}
+
+        public function getExtendedUserData(string $accessToken, string $twitchId): array
+        {
+            return ['channel_followers' => ['total' => 9, 'data' => [['user_name' => 'Zoe']]]];
+        }
+    });
+
+    $resolver = app(BotExpressionResolver::class);
+
+    expect($resolver->resolve($user, 'latest: [[[followers_latest_user_name]]]'))->toBe('latest: ');
+});
+
 test('resolver does not re-scan substituted values for tags (single-pass)', function () {
     $user = makeOptedInBotUser();
     OverlayControl::create([
