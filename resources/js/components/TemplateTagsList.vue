@@ -8,11 +8,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Configure axios to include CSRF token and credentials
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-axios.defaults.withCredentials = true;
-
-// Get CSRF token from the meta-tag if it exists
+// XHR + withCredentials defaults are configured globally in app.ts.
+// Add the CSRF token from the meta tag if it's present.
 const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
   axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');

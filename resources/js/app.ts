@@ -7,8 +7,37 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import axios from 'axios';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+
+// Global axios defaults: send the session cookie and mark requests as XHR so
+// Laravel treats them as stateful. (Previously set ad-hoc inside a component.)
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// When the session dies mid-visit (expired, cookies cleared by a cleanup tool,
+// etc.), the next request comes back 401 (unauthenticated) or 419 (stale CSRF
+// token). Without this, those reject into each caller's catch block as bare
+// console errors and the UI just sits there. Bounce to login instead, keeping
+// the current URL so the user lands back where they were after re-auth. This
+// covers every direct axios call AND Inertia's own requests (it uses this same
+// axios instance); Inertia auth redirects come back as 409 + X-Inertia-Location
+// and are handled natively, so they never reach this branch.
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error.response?.status;
+        const onLoginPage = window.location.pathname.startsWith('/login');
+        if ((status === 401 || status === 419) && !onLoginPage) {
+            window.location.href = '/login?redirect_to=' + encodeURIComponent(window.location.href);
+            // We're navigating away - swallow the rejection so callers don't
+            // also flash their own error UI on the way out.
+            return new Promise(() => {});
+        }
+        return Promise.reject(error);
+    },
+);
 
 const pinia = createPinia()
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
