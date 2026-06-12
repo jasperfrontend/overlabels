@@ -189,13 +189,13 @@ test('save rejects URL-format NC licenses', function () {
     $this->assertDatabaseMissing('user_freesound_sounds', ['freesound_id' => 702]);
 });
 
-test('save rejects beyond the 10-sound cap', function () {
+test('save rejects beyond the 100-sound cap', function () {
     Http::fake(fn () => Http::response(fakeSoundPayload(999), 200));
 
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    for ($i = 1; $i <= 10; $i++) {
+    for ($i = 1; $i <= 100; $i++) {
         UserFreesoundSound::create([
             'user_id' => $user->id,
             'freesound_id' => $i,
@@ -209,7 +209,7 @@ test('save rejects beyond the 10-sound cap', function () {
     $response = $this->postJson('/freesound/library', ['freesound_id' => 999]);
 
     $response->assertStatus(422)
-        ->assertJsonFragment(['message' => 'Your sound library is full (10 sounds). Remove one before adding another.']);
+        ->assertJsonFragment(['message' => 'Your sound library is full (100 sounds). Remove one before adding another.']);
 });
 
 test('destroy removes a sound owned by the user', function () {

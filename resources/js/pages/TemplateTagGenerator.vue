@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Copy, Eye, RefreshCw, Trash2, AlertCircle, Sparkles } from 'lucide-vue-next';
+import { Copy, Eye, RefreshCw, Trash2, AlertCircle, Sparkles } from '@lucide/vue';
 
 // Define interfaces for better TypeScript support
 interface TemplateTag {

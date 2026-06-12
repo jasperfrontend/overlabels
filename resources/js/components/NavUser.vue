@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import type { User } from '@/types';
 import { usePage } from '@inertiajs/vue3';
-import { ChevronsUpDown, Wrench } from 'lucide-vue-next';
+import { ChevronsUpDown, Wrench } from '@lucide/vue';
 
 const page = usePage();
 const user = page.props.auth.user as User;

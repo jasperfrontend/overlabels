@@ -20,7 +20,7 @@ import {
   ComboboxLabel,
   ComboboxTrigger,
 } from '@/components/ui/combobox';
-import { ChevronsUpDownIcon } from 'lucide-vue-next';
+import { ChevronsUpDownIcon } from '@lucide/vue';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
   KOFI_PRESETS,

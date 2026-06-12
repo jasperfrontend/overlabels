@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
-import { Swords, Heart, Clock, Dices, DoorOpen, Skull, Ghost } from 'lucide-vue-next';
+import { Swords, Heart, Clock, Dices, DoorOpen, Skull, Ghost } from '@lucide/vue';
 import { gameCommands } from '@/lib/game-commands';
 
 const breadcrumbs: BreadcrumbItem[] = [

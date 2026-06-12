@@ -4,7 +4,7 @@ import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import LoginSocial from '@/components/LoginSocial.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
 const lastUpdated = 'May 14, 2026';
 </script>

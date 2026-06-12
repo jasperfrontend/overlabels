@@ -20,7 +20,7 @@ import {
   GitFork,
   ImageOff,
   PaletteIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 
 interface OwnerInfo {

@@ -2,7 +2,7 @@
 import { ref, toRef, onMounted } from 'vue';
 import { LMap, LTileLayer, LPolyline, LCircleMarker, LPopup } from '@vue-leaflet/vue-leaflet';
 import type { LatLngBoundsExpression } from 'leaflet';
-import { Clock, MapPin, Gauge, Mountain, Battery, Radio } from 'lucide-vue-next';
+import { Clock, MapPin, Gauge, Mountain, Battery, Radio } from '@lucide/vue';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
 
 const props = defineProps<{

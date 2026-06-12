@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { BookOpen, Code, Blocks, Grid2x2Check, LogOut, Megaphone, Shield, ShieldAlert, SunMoon, Terminal } from 'lucide-vue-next';
+import { BookOpen, Code, Blocks, Grid2x2Check, LogOut, Megaphone, Shield, ShieldAlert, SunMoon, Terminal } from '@lucide/vue';
 
 const settingsItems = [
   { label: 'Account Settings', href: route('settings.account'), icon: SunMoon },

@@ -5,7 +5,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
-import { PencilIcon, PlusIcon, Trash2 } from 'lucide-vue-next';
+import { PencilIcon, PlusIcon, Trash2 } from '@lucide/vue';
 import type { Update } from '@/types';
 
 interface Paginator {

@@ -42,19 +42,19 @@ export default defineConfig(({ isSsrBuild }) => ({
             output: isSsrBuild
                 ? {}
                 : {
-                      manualChunks: {
-                          codemirror: [
-                              'vue-codemirror',
-                              'codemirror',
-                              '@codemirror/lang-html',
-                              '@codemirror/lang-css',
-                              '@codemirror/lang-javascript',
-                              '@codemirror/theme-one-dark',
-                              '@codemirror/view',
-                              '@codemirror/state',
-                          ],
-                          websocket: ['pusher-js', 'laravel-echo'],
-                          leaflet: ['leaflet'],
+                      // Rolldown (Vite 8) only accepts the function form of manualChunks.
+                      // Match by node_modules path to preserve the previous object grouping.
+                      manualChunks(id) {
+                          if (!id.includes('node_modules')) return;
+                          if (id.includes('/vue-codemirror/') || id.includes('/codemirror/') || id.includes('/@codemirror/')) {
+                              return 'codemirror';
+                          }
+                          if (id.includes('/pusher-js/') || id.includes('/laravel-echo/')) {
+                              return 'websocket';
+                          }
+                          if (id.includes('/leaflet/')) {
+                              return 'leaflet';
+                          }
                       },
                   },
         },

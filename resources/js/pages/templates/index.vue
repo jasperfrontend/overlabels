@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
 import debounce from 'lodash/debounce';
-import { PlusIcon, Layers, Bell } from 'lucide-vue-next';
+import { PlusIcon, Layers, Bell } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';

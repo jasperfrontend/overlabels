@@ -9,7 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import ImageDropZone from '@/components/ImageDropZone.vue';
-import { Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from 'lucide-vue-next';
+import { Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from '@lucide/vue';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';

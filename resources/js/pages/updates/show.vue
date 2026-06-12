@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { marked } from 'marked';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ArrowLeft, PencilIcon } from 'lucide-vue-next';
+import { ArrowLeft, PencilIcon } from '@lucide/vue';
 import type { BreadcrumbItem, Update, AppPageProps } from '@/types';
 
 const props = defineProps<{

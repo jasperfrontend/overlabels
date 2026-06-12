@@ -16,7 +16,7 @@ import {
   List,
   PowerOffIcon,
   SearchIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 

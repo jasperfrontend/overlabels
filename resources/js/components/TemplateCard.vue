@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, ChevronRight, LinkIcon } from 'lucide-vue-next';
+import { Eye, GitFork, ExternalLinkIcon, PencilIcon, MoreVertical, Clock, ChevronRight, LinkIcon } from '@lucide/vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';

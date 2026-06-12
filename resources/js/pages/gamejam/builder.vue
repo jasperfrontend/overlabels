@@ -4,7 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save, Eraser, Paintbrush, RefreshCw } from 'lucide-vue-next';
+import { Save, Eraser, Paintbrush, RefreshCw } from '@lucide/vue';
 
 interface RoomCell {
   bg?: string;

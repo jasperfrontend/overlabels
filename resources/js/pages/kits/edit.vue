@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { ArrowLeft, Package } from 'lucide-vue-next';
+import { ArrowLeft, Package } from '@lucide/vue';
 import PublicToggle from '@/components/PublicToggle.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';

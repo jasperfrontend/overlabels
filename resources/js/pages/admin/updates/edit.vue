@@ -9,7 +9,7 @@ import { html as cmHtml } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { marked } from 'marked';
-import { ArrowLeft, Save, Trash2, ExternalLink } from 'lucide-vue-next';
+import { ArrowLeft, Save, Trash2, ExternalLink } from '@lucide/vue';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
 

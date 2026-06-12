@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { Globe, Lock, Eye, GitFork, Package, Trash2, BookCopy, Pencil } from 'lucide-vue-next';
+import { Globe, Lock, Eye, GitFork, Package, Trash2, BookCopy, Pencil } from '@lucide/vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Kit {

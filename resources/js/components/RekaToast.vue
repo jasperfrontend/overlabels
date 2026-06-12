@@ -36,7 +36,7 @@
 </template>
 
 <script lang="ts" setup>
-import { AlertTriangle, Check, Info, X } from 'lucide-vue-next';
+import { AlertTriangle, Check, Info, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps({

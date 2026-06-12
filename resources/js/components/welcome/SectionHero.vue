@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight } from '@lucide/vue';
 import { Link } from '@inertiajs/vue3';
 import TwitchIcon from '@/components/TwitchIcon.vue';
 </script>

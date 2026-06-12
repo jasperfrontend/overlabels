@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Menu, X } from 'lucide-vue-next';
+import { ArrowRight, Menu, X } from '@lucide/vue';
 import LoginSocial from '@/components/LoginSocial.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { Link } from '@inertiajs/vue3';

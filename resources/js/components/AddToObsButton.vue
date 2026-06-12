@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from 'reka-ui';
 import { useLinkWarning } from '@/composables/useLinkWarning';
-import { CheckIcon, CopyIcon, Loader2 } from 'lucide-vue-next';
+import { CheckIcon, CopyIcon, Loader2 } from '@lucide/vue';
 
 const props = defineProps<{
   template: { id: number; name: string; slug: string };

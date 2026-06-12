@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { DollarSign } from 'lucide-vue-next';
+import { DollarSign } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { ref } from 'vue';
 

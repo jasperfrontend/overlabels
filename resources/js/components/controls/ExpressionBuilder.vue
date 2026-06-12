@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ExternalLink, FunctionSquare } from 'lucide-vue-next';
+import { ExternalLink, FunctionSquare } from '@lucide/vue';
 import { buildContext, evaluate, ARG_FUNCTIONS, SUPPORTED_FUNCTIONS } from '@/composables/useExpressionEngine';
 import type { OverlayControl } from '@/types';
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ImageIcon, Trash2, Upload, Loader2 } from 'lucide-vue-next';
+import { ImageIcon, Trash2, Upload, Loader2 } from '@lucide/vue';
 
 const props = withDefaults(defineProps<{
   modelValue: string | null;

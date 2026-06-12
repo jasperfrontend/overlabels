@@ -6,7 +6,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
-import {CheckIcon} from 'lucide-vue-next';
+import {CheckIcon} from '@lucide/vue';
 
 interface User {
   id: number;

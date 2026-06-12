@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useVersionCheck } from '@/composables/useVersionCheck';
-import { RefreshCw } from 'lucide-vue-next';
+import { RefreshCw } from '@lucide/vue';
 
 const { hasNewVersion, refresh } = useVersionCheck();
 </script>

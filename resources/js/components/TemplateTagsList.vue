@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { onMounted, ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from 'lucide-vue-next';
+import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

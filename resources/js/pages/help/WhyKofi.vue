@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { EyeIcon, UserKey, Webhook, TriangleAlertIcon } from 'lucide-vue-next';
+import { EyeIcon, UserKey, Webhook, TriangleAlertIcon } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [

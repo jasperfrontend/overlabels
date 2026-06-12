@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Heading from '@/components/Heading.vue';
-import { List, Plus } from 'lucide-vue-next';
+import { List, Plus } from '@lucide/vue';
 
 defineProps<{
   title: string;

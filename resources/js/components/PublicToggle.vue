@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCheck, Square } from 'lucide-vue-next';
+import { CheckCheck, Square } from '@lucide/vue';
 
 const model = defineModel<boolean>({ required: true });
 

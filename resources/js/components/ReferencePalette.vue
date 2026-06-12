@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useHelpReference, type HelpEntry } from '@/composables/useHelpReference';
-import { BookOpen, Search } from 'lucide-vue-next';
+import { BookOpen, Search } from '@lucide/vue';
 
 const { search } = useHelpReference();
 

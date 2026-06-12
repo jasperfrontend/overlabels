@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Hash, SlidersHorizontal, Timer, ToggleLeft, Type } from 'lucide-vue-next';
+import { Calendar, Hash, SlidersHorizontal, Timer, ToggleLeft, Type } from '@lucide/vue';
 
 const controlTypes = [
   {

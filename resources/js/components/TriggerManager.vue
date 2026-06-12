@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { Save, Zap } from 'lucide-vue-next';
+import { Save, Zap } from '@lucide/vue';
 import FilterableGroupedList, { type FilterableGroup } from '@/components/FilterableGroupedList.vue';
 import TriggerRow from '@/components/TriggerRow.vue';
 import { SERVICE_LABELS } from '@/utils/services';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Component } from 'vue';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, CircleDot, CircleDashed } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, CircleDot, CircleDashed } from '@lucide/vue';
 import { floorFor, themeFor, type RoomTheme } from './themes';
 import GameResultBanner from '@/components/gamejam/GameResultBanner.vue';
 import GameStatusCard from '@/components/gamejam/GameStatusCard.vue';

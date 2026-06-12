@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Modal from '@/components/Modal.vue';
-import { Search, Loader2, Play, Pause, Plus, ExternalLink, X } from 'lucide-vue-next';
+import { Search, Loader2, Play, Pause, Plus, ExternalLink, X } from '@lucide/vue';
 
 interface FreesoundHit {
   id: number;

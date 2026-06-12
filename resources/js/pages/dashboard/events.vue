@@ -5,7 +5,7 @@ import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal } from '@lucide/vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import type { AppPageProps } from '@/types';

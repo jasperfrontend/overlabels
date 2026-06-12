@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link, router } from '@inertiajs/vue3';
-import { Check, Eye, LinkIcon, MoreVertical, PencilIcon, Trash2 } from 'lucide-vue-next';
+import { Check, Eye, LinkIcon, MoreVertical, PencilIcon, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import type { Update } from '@/types';

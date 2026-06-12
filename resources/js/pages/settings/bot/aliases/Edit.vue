@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { type BreadcrumbItem } from '@/types';
-import { ChevronLeft, ArrowRight, Info } from 'lucide-vue-next';
+import { ChevronLeft, ArrowRight, Info } from '@lucide/vue';
 
 interface BotAlias {
   id: number;

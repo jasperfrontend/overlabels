@@ -6,7 +6,7 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2, ExternalLink } from 'lucide-vue-next';
+import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2, ExternalLink } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
 

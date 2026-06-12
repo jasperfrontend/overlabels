@@ -7,7 +7,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Play, Loader2, ChefHat } from 'lucide-vue-next';
+import { Copy, Play, Loader2, ChefHat } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 
 interface RecipeButton {

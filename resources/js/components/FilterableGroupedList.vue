@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TItem">
 import { computed, ref } from 'vue';
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search } from 'lucide-vue-next';
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search } from '@lucide/vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export interface FilterableGroup<T> {

@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   Radio,
   MessageSquareQuote,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { ref } from 'vue';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';

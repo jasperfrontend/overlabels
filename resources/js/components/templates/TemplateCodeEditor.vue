@@ -6,7 +6,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind, Video } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind, Video } from '@lucide/vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import { Badge } from '@/components/ui/badge';
 

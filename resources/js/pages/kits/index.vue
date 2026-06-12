@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { PlusIcon, Package, LayoutGrid } from 'lucide-vue-next';
+import { PlusIcon, Package, LayoutGrid } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
 import EmptyState from '@/components/EmptyState.vue';

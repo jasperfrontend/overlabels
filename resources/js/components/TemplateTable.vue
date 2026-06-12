@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { ExternalLinkIcon, PencilIcon, MoreVertical, ChevronRight, LinkIcon, Trash2, GitFork, Eye } from 'lucide-vue-next';
+import { ExternalLinkIcon, PencilIcon, MoreVertical, ChevronRight, LinkIcon, Trash2, GitFork, Eye } from '@lucide/vue';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useEventColors, EVENT_TYPE_LABELS } from '@/composables/useEventColors';

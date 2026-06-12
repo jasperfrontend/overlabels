@@ -30,7 +30,7 @@ import {
   PinIcon,
   RotateCcwIcon,
   ArrowLeftIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 
