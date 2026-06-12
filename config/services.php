@@ -25,8 +25,10 @@ return [
         'url' => env('CLOUDINARY_URL'),
     ],
     'twitch' => [
-        'client_id' => env('TWITCH_CLIENT_ID'),
-        'client_secret' => env('TWITCH_CLIENT_SECRET'),
+        // Default to '' so secret-less environments (CI, fresh installs) don't
+        // fatal when services type these into non-nullable string properties.
+        'client_id' => env('TWITCH_CLIENT_ID', ''),
+        'client_secret' => env('TWITCH_CLIENT_SECRET', ''),
         'redirect' => env('TWITCH_REDIRECT_URI'),
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10),
     ],

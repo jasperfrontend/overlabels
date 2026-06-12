@@ -8,7 +8,6 @@ import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind, Video } from '@lucide/vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
-import { Badge } from '@/components/ui/badge';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });

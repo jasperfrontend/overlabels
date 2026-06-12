@@ -2,9 +2,9 @@
 
 use App\Models\OverlayAccessToken;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     config()->set('broadcasting.connections.reverb.key', 'test-key');

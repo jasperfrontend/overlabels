@@ -3,9 +3,9 @@
 use App\Models\User;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchScopeService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 test('null twitch_scopes falls back to legacy scope set', function () {
     $user = User::factory()->create(['twitch_scopes' => null]);
