@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { FlaskConical, Power, PowerOff, ZapOff } from 'lucide-vue-next';
+import { FlaskConical, Power, PowerOff, ZapOff } from '@lucide/vue';
 
 interface ServiceInfo {
   key: string;

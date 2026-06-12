@@ -5,7 +5,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-vue-next';
+import { Star } from '@lucide/vue';
 
 interface Kit {
   id: number;

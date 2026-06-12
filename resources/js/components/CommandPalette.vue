@@ -23,7 +23,7 @@ import {
   Shield,
   SlidersHorizontal,
   Terminal,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 
 const page = usePage<AppPageProps>();
 const isAdmin = computed(() => page.props.isAdmin);

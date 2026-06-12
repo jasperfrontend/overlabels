@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight } from '@lucide/vue';
 import LoginSocial from '@/components/LoginSocial.vue';
 import { Link } from '@inertiajs/vue3';
 </script>

@@ -38,7 +38,7 @@ import {
   Sigma,
   SlidersHorizontal,
   Users
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';

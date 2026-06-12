@@ -7,7 +7,7 @@ import UpdatesList from '@/components/UpdatesList.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
-import { Newspaper } from 'lucide-vue-next';
+import { Newspaper } from '@lucide/vue';
 import type { BreadcrumbItem, Update, AppPageProps } from '@/types';
 
 interface FiltersShape {

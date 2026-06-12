@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from 'lucide-vue-next';
+import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from '@lucide/vue';
 import { ref, computed } from 'vue';
 
 const props = defineProps<{

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { AlertTriangle, GitFork, Layers, Shield } from 'lucide-vue-next';
+import { AlertTriangle, GitFork, Layers, Shield } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 </script>
 

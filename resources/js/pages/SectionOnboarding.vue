@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { Code2, Zap } from 'lucide-vue-next';
+import { Code2, Zap } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 </script>
 

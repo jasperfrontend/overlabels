@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import LoginSocial from '@/components/LoginSocial.vue';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
 const lastUpdated = 'January 13, 2025';
 const effectiveDate = 'January 13, 2025';

@@ -25,7 +25,7 @@ import {
   Sparkles,
   Tv,
   type LucideIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [

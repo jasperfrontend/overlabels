@@ -34,7 +34,7 @@ import {
   TargetIcon,
   ImageIcon,
   Zap,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { captureListContext, deriveListContext } from '@/composables/useListContext';

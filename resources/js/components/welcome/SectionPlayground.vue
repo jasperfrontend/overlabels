@@ -7,7 +7,7 @@ import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { Badge } from '@/components/ui/badge';
 import { replaceTagsWithFormatting } from '@/utils/tagParser';
-import { MousePointerClick, Sparkles, Eye } from 'lucide-vue-next';
+import { MousePointerClick, Sparkles, Eye } from '@lucide/vue';
 
 type SampleData = Record<string, string | number | boolean>;
 

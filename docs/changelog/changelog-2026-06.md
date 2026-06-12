@@ -1,5 +1,18 @@
 # CHANGELOG JUNE 2026
 
+## June 12th, 2026 - chore(deps): update Composer and npm packages, including framework majors
+
+A full dependency sweep: every direct Composer and npm package taken to its latest compatible version, with the breaking changes from the major bumps fixed and the whole suite (tests, build, typecheck) kept green. No application behavior changes - this is maintenance.
+
+- **Composer minors/patches**: `laravel/framework` 13.11 -> 13.15, plus `reverb`, `sanctum`, `pest`, `sail` and transitive deps (carbon, psysh, firebase/php-jwt, phpseclib). No code changes needed.
+- **Composer majors**: `inertiajs/inertia-laravel` 2 -> 3 and `intervention/image` 3 -> 4. The full feature suite (840 passing, the one pre-existing `FreesoundLibraryTest` 10-sound-cap failure unchanged) exercises Inertia's server-side rendering and stayed green - no controller or middleware changes required. intervention/image isn't imported anywhere in app code (leftover direct dependency), so its v4 bump is inert.
+- **npm majors**: `vite` 6 -> 8, `@vitejs/plugin-vue` 5 -> 6, `laravel-vite-plugin` 1 -> 3, `@inertiajs/vue3` 2 -> 3, `@vueuse/core` 12 -> 14, `typescript` 5 -> 6, `vue-tsc` 2 -> 3, `eslint-plugin-vue` 9 -> 10, `concurrently` 9 -> 10 (clears the `shell-quote` advisory - `npm audit` now reports 0 vulnerabilities), `@types/node` 22 -> 25, `prettier-plugin-tailwindcss` 0.6 -> 0.8, `katex` 0.16 -> 0.17.
+- **Vite 8 / Rolldown - `manualChunks`**: Vite 8 ships Rolldown, which only accepts the function form of `manualChunks`. Converted the object map in `vite.config.mts` to a path-matching function that preserves the exact same `codemirror` / `websocket` / `leaflet` chunk grouping.
+- **TypeScript 6 - `baseUrl`**: TS 6 makes the deprecated `baseUrl` a hard error (removed in TS 7). Dropped it from `tsconfig.json` and rewrote the `@/*` path mapping to be project-root-relative (`./resources/js/*`) - equivalent resolution under `moduleResolution: "bundler"`, no import changes.
+- **`list_writer` type gap**: with vue-tsc 3 / TS 6 type-checking the `OverlayControl.type` union (in `types/index.d.ts`) was missing `'list_writer'` - a legitimate control type present in `OverlayControl::TYPES` and compared against in `ControlsManager.vue` / `ControlFormModal.vue`. Added it; this was a latent inconsistency, not a regression (vue-tsc isn't in the build or CI).
+- **lucide rename**: `lucide-vue-next` published its final v1.0.0 as a deprecation tombstone pointing at the renamed `@lucide/vue` package. Migrated all 100 import sites from `lucide-vue-next` to `@lucide/vue@1.18` - a pure module-specifier rename; the icon-component and `LucideIcon` type API are identical.
+- **Held back - ESLint 10**: the `typescript-eslint` + `@vue/eslint-config-typescript` stack still peer-depends on ESLint 9, so ESLint core stays at 9 until that ecosystem catches up. (The lint CI workflow has been failing/dormant since July 2025 independently of this.)
+
 ## June 10th, 2026 - fix(bot): refresh the streamer's Twitch token before resolving Helix tags
 
 The real cause of `[[[followers_latest_user_name]]]` (and every other Helix tag) rendering blank in Bot Expressions while working fine in overlays. `BotExpressionResolver::loadTwitchTags()` was the **only** Twitch-data consumer in the app that called `getExtendedUserData()` without first calling `TwitchTokenService::ensureValidToken()` - overlay render (`OverlayTemplateController`), `ExpressionTagController`, and the sibling `BotFollowageController` all refresh first. The bot fire endpoint authenticates on the `bot.internal` secret, not a user session, so it never passes through the `EnsureValidTwitchToken` middleware either - nothing refreshed the token on this path.

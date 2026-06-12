@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Target } from 'lucide-vue-next';
+import { Target } from '@lucide/vue';
 import FilterableGroupedList, { type FilterableGroup } from '@/components/FilterableGroupedList.vue';
 
 interface OverlayOption {

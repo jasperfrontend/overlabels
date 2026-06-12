@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap } from 'lucide-vue-next';
+import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';

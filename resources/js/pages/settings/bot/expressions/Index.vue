@@ -5,7 +5,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
-import { Plus, Pencil, Trash2, MessageSquare } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2, MessageSquare } from '@lucide/vue';
 
 interface BotExpression {
   id: number;

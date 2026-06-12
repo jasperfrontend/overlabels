@@ -13,7 +13,7 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   LockIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ControlFormModal from '@/components/ControlFormModal.vue';

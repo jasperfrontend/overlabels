@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
 import { type BreadcrumbItem } from '@/types';
-import { EyeIcon, CodeSquareIcon, CalendarIcon, ClockArrowUpIcon, AlarmClockOffIcon } from 'lucide-vue-next';
+import { EyeIcon, CodeSquareIcon, CalendarIcon, ClockArrowUpIcon, AlarmClockOffIcon } from '@lucide/vue';
 
 /** Types */
 type TokenAbility = 'read' | 'write';

@@ -18,7 +18,7 @@ import { getInitials } from '@/composables/useInitials';
 import { useStreamState } from '@/composables/useStreamState';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Search } from '@lucide/vue';
 import { computed } from 'vue';
 
 const { isLive, isTransitioning, uptime } = useStreamState();

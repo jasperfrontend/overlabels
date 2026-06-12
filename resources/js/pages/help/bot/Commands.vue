@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
-import { ShieldAlert, ChevronRight } from 'lucide-vue-next';
+import { ShieldAlert, ChevronRight } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import Heading from '@/components/Heading.vue';
 

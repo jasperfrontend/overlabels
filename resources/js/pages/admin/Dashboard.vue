@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Layers, Zap, Clock, FlaskConical, Grid2x2, ShieldBan } from 'lucide-vue-next';
+import { Users, Layers, Zap, Clock, FlaskConical, Grid2x2, ShieldBan } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 
 interface StatCards {

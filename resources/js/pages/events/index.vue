@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
-import { ExternalLink, Megaphone } from 'lucide-vue-next';
+import { ExternalLink, Megaphone } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
 

@@ -6,7 +6,7 @@ import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { ExternalLink, Radio, RefreshCw } from 'lucide-vue-next';
+import { ExternalLink, Radio, RefreshCw } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';

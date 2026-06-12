@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { type BreadcrumbItem } from '@/types';
-import { ChevronLeft, Sparkles, AlertTriangle } from 'lucide-vue-next';
+import { ChevronLeft, Sparkles, AlertTriangle } from '@lucide/vue';
 
 interface BotExpression {
   id: number;

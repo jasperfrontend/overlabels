@@ -8,7 +8,7 @@ import TemplateList from '@/components/TemplateList.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 import type { AppPageProps, OverlayTemplate, Update } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';

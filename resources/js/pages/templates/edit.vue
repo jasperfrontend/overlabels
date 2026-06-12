@@ -39,7 +39,7 @@ import {
   Pause,
   Trash2,
   ExternalLink as ExternalLinkIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import axios from 'axios';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';

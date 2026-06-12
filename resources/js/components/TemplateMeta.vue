@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { CalendarIcon, Copy, EyeIcon, UserStar } from 'lucide-vue-next';
+import { CalendarIcon, Copy, EyeIcon, UserStar } from '@lucide/vue';
 
 const page = usePage();
 const userLocale = computed<string | undefined>(() => {
