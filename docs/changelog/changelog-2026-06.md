@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 12th, 2026 - fix(auth): redirect to login when the session dies mid-visit instead of sitting on dead console errors
+
+When an authenticated session was lost mid-visit (expired, cookies cleared by a browser cleanup tool, etc.), the app didn't recover: clicking around only produced console errors and the UI sat there. Plain Inertia navigation already bounced to login (`RedirectIfUnauthenticated` returns `Inertia::location`), but two paths fell through:
+
+- **Direct `axios` calls** (20 components - controls, freesound, expression builder, fork wizard, etc.) got a `401` with no global handler, so each rejected into its own catch as a bare console error.
+- **State-changing requests after the cookie was gone** threw `419` (stale CSRF) before reaching the auth middleware, and the empty `withExceptions` block left Inertia stuck on a response it couldn't parse.
+
+- **Global axios response interceptor** (`resources/js/app.ts`): on `401` or `419`, bounce to `/login?redirect_to=<current url>` and swallow the rejection so callers don't also flash their own error UI. Covers every direct axios call and Inertia's own requests (same axios instance); Inertia auth redirects come back as `409 + X-Inertia-Location` and are handled natively, so they never hit this branch. Also centralizes the `withCredentials` / `X-Requested-With` defaults that previously lived ad-hoc in `TemplateTagsList.vue`.
+- **Server-side `419` handling** (`bootstrap/app.php`): a `419` on an Inertia request is converted to `Inertia::location(login)` (preserving the current URL), so CSRF-expired form posts redirect cleanly instead of erroring. Non-Inertia requests keep Laravel's default `419` page.
+- 2 feature tests in `AuthRedirectTest`: a `419` on an Inertia request becomes a `409` login location redirect; a `419` on a non-Inertia request stays a plain `419`. Full suite green (843 passing).
+
 ## June 12th, 2026 - ci: re-enable the tests + lint workflows, isolate the test DB
 
 The `tests` and `linter` GitHub Actions workflows had been `disabled_manually` (since the backend was rough and the test job couldn't even connect to a database). The backend is in good shape now, so both are back on - with the bugs that kept them red fixed.

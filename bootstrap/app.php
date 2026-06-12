@@ -15,8 +15,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -73,5 +76,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // A 419 means the CSRF/session token expired - usually a cleared cookie
+        // or a session that died mid-visit. For an Inertia request, returning the
+        // raw 419 leaves the SPA stuck on a response it can't parse. Convert it
+        // into an Inertia full-page redirect to login (preserving where the user
+        // was) so they re-authenticate instead of clicking into dead console
+        // errors. Non-Inertia requests keep Laravel's default 419 page.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            if ($response->getStatusCode() === 419 && $request->header('X-Inertia')) {
+                return Inertia::location(route('login').'?redirect_to='.urlencode($request->fullUrl()));
+            }
+
+            return $response;
+        });
     })->create();
