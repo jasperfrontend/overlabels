@@ -41,6 +41,12 @@ jobs:
       DB_DATABASE: laravel_foxes_test
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
+      # Keep non-DB stores off the database so the post-autoload-dump scripts
+      # (package:discover, help:build-index) and migrate don't touch tables that
+      # don't exist yet. Mirrors phpunit.xml's test environment.
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
 
     steps:
       - name: Checkout
