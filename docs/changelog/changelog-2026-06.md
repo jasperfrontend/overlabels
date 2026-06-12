@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 12th, 2026 - ci: re-enable the tests + lint workflows, isolate the test DB
+
+The `tests` and `linter` GitHub Actions workflows had been `disabled_manually` (since the backend was rough and the test job couldn't even connect to a database). The backend is in good shape now, so both are back on - with the bugs that kept them red fixed.
+
+- **`tests.yml` had a fatal gap: no database.** `phpunit.xml` forces `DB_CONNECTION=pgsql` / `DB_DATABASE=laravel_foxes_test`, but the workflow spun up no Postgres, so the suite could never connect on CI. Added a throwaway `postgres:16` service container (DB `laravel_foxes_test`, user/pass `postgres`), the `pdo_pgsql` extension, and job-level `DB_*` env so both `artisan migrate` and pest target it. Switched `coverage: xdebug` -> `coverage: none` (no coverage was being collected; xdebug just slowed the run 2-3x).
+- **Removed `RefreshDatabase` from the test suite entirely.** It lived in only 2 files (`EventSubExpansionTest`, `OverlayBroadcastingAuthTest`); every other test already uses `DatabaseTransactions` (rollback-only, never drops tables). Converted those two to match, and deleted the commented-out global `RefreshDatabase` line in `tests/Pest.php`. Nothing in the suite now does a `migrate:fresh`. Tests were always isolated to `laravel_foxes_test` (separate from dev `laravel_foxes`) via the phpunit override + immutable `.env` loading - this just removes the footgun outright.
+- **CI migrates the test DB up front.** Because the suite is now rollback-only (nothing auto-migrates the schema), `tests.yml` runs `php artisan migrate --force` against the fresh container before pest, so tables exist regardless of test order. Note for local runs: after adding a new migration, migrate `laravel_foxes_test` once (`$env:DB_DATABASE='laravel_foxes_test'; php artisan migrate; Remove-Item Env:DB_DATABASE`) or it'll be stale.
+- **Cleared the 17 lint errors** that would have kept `linter` red - all unused imports/vars in `gpslogger.vue` (a deprecated stub), `TemplateCodeEditor.vue`, `admin/updates/edit.vue`, and an unused `v-for` index in `templates/show.vue`. ESLint, vue-tsc, and the build are all clean.
+
 ## June 12th, 2026 - chore(deps): update Composer and npm packages, including framework majors
 
 A full dependency sweep: every direct Composer and npm package taken to its latest compatible version, with the breaking changes from the major bumps fixed and the whole suite (tests, build, typecheck) kept green. No application behavior changes - this is maintenance.

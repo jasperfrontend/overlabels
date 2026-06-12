@@ -1,16 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
-import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
-import QRCode from 'qrcode';
+import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
@@ -22,7 +14,7 @@ interface IntegrationData {
   has_token: boolean;
 }
 
-const props = defineProps<{
+defineProps<{
   integration: IntegrationData;
 }>();
 

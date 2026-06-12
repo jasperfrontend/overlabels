@@ -2,7 +2,6 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Input } from '@/components/ui/input';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Codemirror } from 'vue-codemirror';
 import { html as cmHtml } from '@codemirror/lang-html';

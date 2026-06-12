@@ -14,6 +14,34 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # Throwaway Postgres for the test run. Matches phpunit.xml, which forces
+    # DB_CONNECTION=pgsql and DB_DATABASE=laravel_foxes_test. This container is
+    # created fresh for the job and destroyed after - it never touches anything real.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: laravel_foxes_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Connection coordinates for both `artisan migrate` and pest. phpunit.xml
+    # supplies DB_CONNECTION + DB_DATABASE; these provide host/port/credentials.
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: laravel_foxes_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +51,8 @@ jobs:
         with:
           php-version: 8.4
           tools: composer:v2
-          coverage: xdebug
+          extensions: pdo, pdo_pgsql, pgsql
+          coverage: none
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -48,6 +77,12 @@ jobs:
 
       - name: Build Assets
         run: npm run build
+
+      # The suite uses DatabaseTransactions (rollback-only), so nothing migrates
+      # the schema on its own. Migrate the throwaway test DB up front so tables
+      # exist before any test runs, regardless of test order.
+      - name: Migrate Test Database
+        run: php artisan migrate --force
 
       - name: Tests
         run: ./vendor/bin/pest

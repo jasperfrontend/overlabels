@@ -276,7 +276,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div
           class="flex max-w-full touch-pan-x lg:touch-none overflow-auto">
           <button
-            v-for="(tab, index) in mainTabs"
+            v-for="tab in mainTabs"
             :key="tab.key"
             type="button"
             @click="mainTab = tab.key"
