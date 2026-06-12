@@ -104,14 +104,14 @@ class ExpressionFormatter
     }
 
     /**
-     * Bare Twitch login: strip leading '@' chars and surrounding whitespace.
+     * Bare Twitch login: strip leading '@' chars, trim, and lowercase.
      * For URLs like https://twitch.tv/[[[bot:args.0|login]]] where a chatter's
-     * "@name" mention would 404. Strip-and-trim only - no case or punctuation
-     * normalization, so it stays predictable and unopinionated.
+     * "@name" mention would 404. Twitch logins are case-insensitive and their
+     * canonical profile URL is lowercase, so @UserName56 -> username56.
      */
     private static function login(string $value): string
     {
-        return ltrim(trim($value), '@');
+        return mb_strtolower(ltrim(trim($value), '@'));
     }
 
     /**

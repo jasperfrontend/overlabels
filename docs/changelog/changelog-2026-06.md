@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 13th, 2026 - fix(bot): |login formatter lowercases for canonical Twitch URLs
+
+The `|login` formatter stripped the leading `@` but left the original casing, so `!so @UserName56` produced `https://twitch.tv/UserName56`. That redirects, but it isn't the canonical profile URL. Twitch logins are case-insensitive and their canonical URL is lowercase, so `|login` now lowercases as part of the same strip-and-trim step: `@UserName56` -> `username56`. The canonical shoutout now reads `Everybody go follow @UserName56 over at https://twitch.tv/username56`.
+
+- `|mention` is untouched - it preserves the chatter's casing so the ping shows the display name as typed.
+- Fixed in the shared `ExpressionFormatter::login()` (covers Bot Expressions AND alert TTS) and mirrored in `resources/js/utils/formatters.ts` per the format-identically contract.
+- Updated the Bot Expressions reference, the expression editor's formatter helper, and the resolver tests; added a mixed-case test (`@UserName56` -> `username56`). Bot expression suite green (30 passed).
+
 ## June 12th, 2026 - fix(auth): redirect to login when the session dies mid-visit instead of sitting on dead console errors
 
 When an authenticated session was lost mid-visit (expired, cookies cleared by a browser cleanup tool, etc.), the app didn't recover: clicking around only produced console errors and the UI sat there. Plain Inertia navigation already bounced to login (`RedirectIfUnauthenticated` returns `Inertia::location`), but two paths fell through:

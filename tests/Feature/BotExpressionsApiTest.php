@@ -411,8 +411,9 @@ test('resolver login formatter strips the @ for URLs, mention keeps it', functio
     // Chatter typed "!so @Johnny45" - args arrives with the @ already attached.
     $context = ['args.0' => '@Johnny45'];
 
+    // login strips the @ AND lowercases, so the profile URL is canonical.
     expect($resolver->resolve($user, 'https://twitch.tv/[[[bot:args.0|login]]]', $context))
-        ->toBe('https://twitch.tv/Johnny45')
+        ->toBe('https://twitch.tv/johnny45')
         ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', $context))
         ->toBe('@Johnny45');
 });
@@ -427,7 +428,20 @@ test('mention formatter adds the @ when the chatter omitted it', function () {
     expect($resolver->resolve($user, '[[[bot:args.0|mention]]]', $context))
         ->toBe('@Johnny45')
         ->and($resolver->resolve($user, 'https://twitch.tv/[[[bot:args.0|login]]]', $context))
-        ->toBe('https://twitch.tv/Johnny45');
+        ->toBe('https://twitch.tv/johnny45');
+});
+
+test('login formatter lowercases mixed-case names for clean URLs', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // Chatter typed "!so @UserName56".
+    $context = ['args.0' => '@UserName56'];
+
+    expect($resolver->resolve($user, 'https://twitch.tv/[[[bot:args.0|login]]]', $context))
+        ->toBe('https://twitch.tv/username56')
+        ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', $context))
+        ->toBe('@UserName56');
 });
 
 test('login and mention formatters leave empty args empty', function () {

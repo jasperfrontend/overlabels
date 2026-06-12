@@ -123,7 +123,7 @@ The colon-then-dot pattern in `bot:args.0` matches the existing `event.choices.0
 Twitch prefixes tagged usernames with `@`, so `!so @Johnny45` arrives with the `@` already attached. That `@` pings the user in chat (good) but breaks a profile URL (`twitch.tv/@Johnny45` -> 404). Two pipe formatters let one value serve both roles in the same template:
 
 - `|mention` ensures exactly one leading `@` (a chatter who forgot it still pings; `@@` collapses to one).
-- `|login` strips the leading `@`, giving the bare login for URLs.
+- `|login` strips the leading `@` and lowercases, giving the canonical bare login for URLs (`@UserName56` -> `username56`). Twitch logins are case-insensitive, so the lowercase form is always the working profile URL.
 
 ```
 Everybody go follow [[[bot:args.0|mention]]] over at https://twitch.tv/[[[bot:args.0|login]]]

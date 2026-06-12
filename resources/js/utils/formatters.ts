@@ -24,7 +24,7 @@
  *   |speed:mph    — convert m/s to mph, locale-formatted (input assumed m/s)
  *   |uppercase    — text transform
  *   |lowercase    — text transform
- *   |login        — bare Twitch login: strip a leading @ (for URLs)
+ *   |login        — bare Twitch login: strip a leading @ and lowercase (for URLs)
  *   |mention      — chat mention: ensure exactly one leading @ (for pings)
  */
 
@@ -337,13 +337,14 @@ function formatSpeed(value: string, args?: string, locale?: string): string {
 }
 
 /**
- * Bare Twitch login: strip leading @ chars and surrounding whitespace.
+ * Bare Twitch login: strip leading @ chars, trim, and lowercase.
  * For URLs like https://twitch.tv/[[[bot:args.0|login]]] where a chatter's
- * "@name" mention would 404. Strip-and-trim only — predictable, unopinionated.
+ * "@name" mention would 404. Twitch logins are case-insensitive and their
+ * canonical profile URL is lowercase, so @UserName56 -> username56.
  * Mirrors ExpressionFormatter::login() on the PHP side.
  */
 function formatLogin(value: string): string {
-  return value.trim().replace(/^@+/, '');
+  return value.trim().replace(/^@+/, '').toLowerCase();
 }
 
 /**
