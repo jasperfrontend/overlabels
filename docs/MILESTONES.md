@@ -143,7 +143,21 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Chat-command + dashboard-button triggers (`RecipeChatTriggerService`, `BotRecipeTriggerController`)
 - First-party recipes shipped: **Coin Flip** and **Dice** (validated the abstraction held across two shapes)
 - `/dashboard/recipes` page lists installed instances and fires dashboard buttons
-- **The shippable surface (browse / install / publish / gallery) is NOT done - see Milestone 8 below.**
+- **The shippable surface (browse / install / publish / gallery) is NOT done - see Milestone 9 below.**
+</details>
+
+<details>
+<summary><strong>Milestone 8 - Lists as a Realtime Data Bus (diff broadcasts)</strong></summary>
+
+Vision locked 2026-05-14, shipped 2026-06. Alongside the full-replace `ListUpdated` payload, Lists now publish Supabase-style change diffs (a tagged `op` + size-guarded `after`) on a per-list channel `lists.{twitch_id}.{slug}`, so external consumers (Lottie via dotlottie-wc, Web Components, Bun scripts, custom Vue) drive their own choreography. Overlabels becomes the bus; the wheel-of-fortune-style visual problems stop being ours.
+
+- Design strawman: [`docs/design/lists-data-bus.md`](design/lists-data-bus.md)
+- `op` tagged union: `append`, `replace` (structural sequence diff for the textarea-save path), `remove` (with `reason`: draw|pop_first|pop_last|sweep_ttl|sweep_expiry), `clear`, `restore`, `clone_create`, `state` (enable/disable), `delete`, `meta_change`
+- Per-list channel `lists.{twitch_id}.{slug}` alongside `alerts.{twitch_id}`; the overlay renderer keeps its dumb full-replace behaviour on the existing channel, new consumers subscribe to the diff channel
+- Diff payload bounded against the Reverb 10 KB cap (the surface that crashed the gamejam)
+- List items as objects (fixed rich schema, not just strings) so typed ops let consumers really cook
+- Follow-ups not in core (snapshot retention sweep cron for unpinned > 30 days, "Extend by N" UI) live in the Backlog
+- Stretch/vision still open: "Overlabels as your API provider, Supabase-style" - JSON data export from Lists; every loop over any data becoming a List
 </details>
 
 ---
@@ -154,47 +168,13 @@ Milestone numbers are stable identifiers, not a strict sequence. Work the **Prio
 
 | Priority | Milestone                                               | Status                                      |
 |----------|---------------------------------------------------------|---------------------------------------------|
-| 1 (NOW)  | M8 - Lists as a Realtime Data Bus                       | Designed, ~1 day                            |
-| 2 (NEXT) | M9 - Recipes: Producer Layer + Bot Expression Hardening | Engine shipped, surface + follow-ups remain |
-| 3 (THEN) | M10 - Flows: Reactive Stream-Processing Engine          | Fully designed, no code                     |
+| 1 (NOW)  | M9 - Recipes: Producer Layer + Bot Expression Hardening | Engine shipped, surface + follow-ups remain |
+| 2 (NEXT) | M10 - Flows: Reactive Stream-Processing Engine          | Fully designed, no code                     |
 | later    | M11 - Patreon Integration                               | Parked, path-of-least-resistance            |
+| later    | M12 - Broadcast Metering: Enforcement & Monetization    | Foundation live (observe-only); rest parked |
 | later    | M6 - Community (Rebuilt Properly)                       | Parked                                      |
 | later    | M7 - IRL / GPS Session Extensions                       | Parked during code freeze                   |
 | ongoing  | Backlog - loose bugs & polish                           | See bottom                                  |
-
----
-
-### ★ Milestone 8 - Lists as a Realtime Data Bus (diff broadcasts)
-> *TOP PRIORITY (vision locked 2026-05-14). Alongside the after-only `ListUpdated` payload, publish*
-> *Supabase-style change diffs (surgical `op` + a size-guarded `after`) on a per-list channel so*
-> *external consumers (Lottie via dotlottie-wc, Web Components, external Bun scripts, custom Vue)*
-> *can do their own choreography. Once shipped, Overlabels becomes the bus and the*
-> *wheel-of-fortune-style visual problems stop being ours.*
-
-**📐 Full design strawman: [`docs/design/lists-data-bus.md`](design/lists-data-bus.md)** - the A-to-Z, with the open decisions (D1-D5) called out and my picks attached. Read that before starting; the bullets below are just the headline shape.
-
-**Core (~1 day with tests)**
-- Wire format `{slug, before, after, op: {type, ...details}, timestamp}` where `op` is a tagged union covering:
-  - `append` (item, position) - `ListAppendService::fire`
-  - `replace` (items) - dashboard textarea save (`ListController::update`); needs a structural sequence diff helper
-  - `remove` (items, indices, reason: draw|pop_first|pop_last|sweep_ttl|sweep_expiry) - `ListActionService` + `ListExpirySweeper`
-  - `clear` - `ListActionService::actionClear`
-  - `restore` (from_snapshot_id) - `ListActionWebController::restoreSnapshot`
-  - `clone_create` (source_slug) - `ListActionService::actionClone`
-  - `state` (disabled: bool) - enable/disable
-  - `delete` - `ListController::destroy`
-  - `meta_change` (changed: [expires_at, entry_ttl_seconds]) - focused PATCH paths
-- Add a per-list channel `lists.{twitch_id}.{slug}` alongside `alerts.{twitch_id}`. The overlay renderer keeps its dumb full-replace behaviour on the existing channel; new consumers subscribe to the new one.
-- All before-state is already in scope in every mutator; the only non-trivial piece is the structural diff for the textarea-save path.
-- Watch the **Reverb 10 KB payload cap** - escaped data inflates ~20%, and this is exactly the surface that crashed the gamejam. Bound the diff payload.
-
-**Follow-ups (natural sequence after the diff API exists)**
-- **List items as objects, not just strings** (`{label, weight, color}`) - this is when typed ops let consumers really cook.
-- Snapshot retention sweep cron for unpinned snapshots > 30 days (schema + pin behaviour already exist).
-- "Extend by N" UI for nudging `expires_at` without resetting from scratch.
-
-**Stretch / vision**
-- "Overlabels as your API provider, Supabase-style" - `import overlabels from ...; const ol = overlabels`. The endgame the user wants: every loop over any data should be able to become a List (even an immutable one). JSON data export from Lists.
 
 ---
 
@@ -268,6 +248,30 @@ Milestone numbers are stable identifiers, not a strict sequence. Work the **Prio
 - First-party Composer package + documented OAuth; would follow the Fourthwall shape almost 1:1 (driver, API client, add to `SERVICE_EVENT_TYPES`, help-page entry).
 - OAuth registration UX matches Fourthwall + StreamLabs.
 - **Throne is explicitly skipped** until it ships a real public API (only an unofficial Docker image exists today).
+
+---
+
+### Milestone 12 - Broadcast Metering: Enforcement & Monetization
+> *Reverb fan-out is the one defacto usage limit in Overlabels - everything else is free. The*
+> *metering foundation is LIVE in prod (observe-only) as of 2026-06-13 (PRs #114, #115): every*
+> *per-user broadcast is counted into Redis and shown on the dashboard + Settings -> Usage page,*
+> *but nothing is suppressed. This milestone is the rest of the arc: pick the number, make the*
+> *counters trustworthy, then enforce and charge.*
+
+**Phase A - Read the data (cheap, just needs time)**
+- Let observe-only run for a few weeks across real streams. DON'T guess the free-tier number - a 60s timer Control alone emits ~3600 updates/hr and a raid spikes Twitch events unpredictably.
+- Set `METERING_FREE_MONTHLY_BROADCASTS` from real p50/p90 so casual streamers clear it but power users convert. This is just an `env.clear` value + deploy; the UI (progress bar, percentage) turns on automatically once it's a number.
+
+**Phase B - Harden the counter store (PREREQUISITE for any enforcement)**
+- Today the counters live in the shared prod Redis, which runs `--maxmemory-policy allkeys-lru --save ""`: counters can be **evicted under memory pressure** and **reset to zero on any Redis restart**. Lossy - fine for observe-only signal, NOT for billing.
+- Eviction policy + persistence are per-instance (not per-DB), and a cache *wants* LRU eviction while a counter *must not* evict - opposite needs. So the fix is a **second, tiny Redis accessory on the same Linode VM** (no new server, ~30-50 MB RAM): `redis:7-alpine`, `--maxmemory 64mb --maxmemory-policy noeviction --appendonly yes`, own volume.
+- Then a `metering` connection in `config/database.php` + `METERING_REDIS_CONNECTION=metering` in `env.clear`. No app-code change - `BroadcastMeter` already reads `config('metering.redis_connection')`. ~5 lines of YAML + one env var.
+- Alternative considered and rejected for now: snapshot Redis counters into Postgres on a cron (more moving parts than a tiny dedicated Redis; a DB write per broadcast on the hot path is a non-starter).
+
+**Phase C - Enforcement + paid tier**
+- Decide over-limit behaviour: hard freeze + OBS-visible banner, or soft degrade (keep alerts/stream-status flowing, drop high-frequency control/list churn). `MeteredBroadcaster` is the one chokepoint to gate, and overlays already have a banner channel for streamer-only messaging.
+- Build the paid tier - **no billing scaffolding exists yet**: a plan/tier model on `users`, a payment provider (Stripe-shaped), upgrade UI, and wiring the limit to plan.
+- Tuning knobs all live in `config/metering.php`; `BROADCAST_CONNECTION=reverb` is the instant kill-switch.
 
 ---
 
