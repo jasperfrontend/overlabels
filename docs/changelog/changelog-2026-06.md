@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 13th, 2026 - fix(gps): stop GPS distance running away, and split session vs lifetime reset
+
+A streamer's `c:gps:session_distance` showed 5785 km after 18 metres of actual movement. Tracing prod data, the cause was a class of bugs around the GPS distance accumulators, not a single typo: the phone occasionally emits garbage fixes (confirmed in prod: `lat=1, lon=1e150`, and near-null-island coordinates), and nothing on the backend defended against them. A single bad fix near latitude 0 differenced against a real location in NL injects ~5783 km in one haversine delta - which is exactly the magic number that kept appearing.
+
+- **Bad-fix validation gate** (`GpsServiceDriver::beforeControlUpdates`). Pings are now rejected when the coordinate is out of range (catches `lon=1e150`), is exact `(0,0)` null-island, or implies a physically impossible speed from the previous fix (> 400 km/h - a teleport). Rejected fixes don't touch distance, don't advance the last position, and aren't broadcast. A new `last_fix_at_unix` is stored to power the speed check.
+- **Clean per-session baseline.** `resetSessionState()` now also clears `last_lat`/`last_lng`, so the first ping of a new session establishes its own baseline instead of differencing against where the previous session ended (that was adding hundreds of phantom km per session, e.g. a London->NL session boundary = +326 km). Confirmed: a new `session_start` (or the first ping of a new `session_id`) resets `session_distance` to 0.
+- **Lost-update race fixed.** All reads-and-writes of the integration's `settings` JSONB now go through `mutateSettingsLocked()` (transaction + `lockForUpdate`), so overlapping webhook requests can't clobber each other - which is how a session reset silently got reverted and the counter ran away.
+- **Reset split into two actions** (was one casually-worded button that quietly wiped everything). `reset-session` (low-stakes: zeroes the current session's distance/speed/duration, leaves the lifetime odometer and last position alone) and `reset-lifetime` (destructive: zeroes the all-time cumulative distance only). The lifetime reset lives in a red-bordered box and is gated behind a type-to-confirm dialog (must type `RESET`). Copy rewritten to stop implying the lifetime wipe is a "start of trip/stream" convenience.
+- Tests: bad-fix rejection (out-of-range, null-island, teleport), session baseline reset, and the two split reset endpoints. GPS suite green (25 passed); Pint, ESLint, and the build are clean.
+- The legacy `gps_pings` table is unused (no writer); ignored here.
+
 ## June 13th, 2026 - ops(metering): turn on broadcast metering in prod (observe-only)
 
 Flipped prod to start counting. `config/deploy.yml` now sets `BROADCAST_CONNECTION: metered` (wraps the reverb driver with `MeteredBroadcaster`) plus `METERING_ENABLED: "true"` and an empty `METERING_FREE_MONTHLY_BROADCASTS` (no enforced cap - observe-only). All three are plaintext `env.clear` values, not secrets. Counters land in the existing `overlabels-redis` accessory.

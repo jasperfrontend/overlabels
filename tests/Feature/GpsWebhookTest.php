@@ -1,9 +1,11 @@
 <?php
 
 use App\Events\ControlValueUpdated;
+use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Services\External\Drivers\GpsServiceDriver;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
@@ -273,6 +275,103 @@ test('second ping accumulates haversine distance', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Bad-fix rejection
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('out-of-range coordinate is rejected: no distance, no position broadcast', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+        'last_fix_at_unix' => time() - 5,
+        'session_distance_km' => 3.0,
+    ]);
+
+    foreach (['distance', 'session_distance', 'lat', 'lng'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
+            'key' => $key,
+            'type' => in_array($key, ['distance', 'session_distance']) ? 'number' : 'text',
+            'label' => $key,
+            'value' => $key === 'distance' ? '10' : ($key === 'session_distance' ? '3' : 'prev'),
+        ]);
+    }
+
+    // lon = 1e150 style garbage (out of the valid -180..180 range).
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 1.0,
+        'longitude' => 1.0e150,
+        'timestamp' => time(),
+        'serial' => '2',
+    ]))->assertStatus(200);
+
+    // Distance counters untouched, position controls not overwritten with junk.
+    $this->assertDatabaseHas('overlay_controls', ['user_id' => $user->id, 'source' => 'gps', 'key' => 'distance', 'value' => '10']);
+    $this->assertDatabaseHas('overlay_controls', ['user_id' => $user->id, 'source' => 'gps', 'key' => 'session_distance', 'value' => '3']);
+    $this->assertDatabaseHas('overlay_controls', ['user_id' => $user->id, 'source' => 'gps', 'key' => 'lat', 'value' => 'prev']);
+
+    // Last good position is preserved for the next real ping.
+    $integration->refresh();
+    expect((float) $integration->settings['last_lat'])->toBe(52.3676);
+});
+
+test('null-island (0,0) fix is rejected', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+        'last_fix_at_unix' => time() - 5,
+    ]);
+
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '0',
+    ]);
+
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 0,
+        'longitude' => 0,
+        'timestamp' => time(),
+        'serial' => '2',
+    ]))->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', ['user_id' => $user->id, 'source' => 'gps', 'key' => 'distance', 'value' => '0']);
+    $integration->refresh();
+    expect((float) $integration->settings['last_lat'])->toBe(52.3676);
+});
+
+test('teleport fix (impossible implied speed) is rejected', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    $ts = time();
+
+    // Last good fix in Amsterdam, 10s ago.
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+        'last_fix_at_unix' => $ts - 10,
+        'session_distance_km' => 1.5,
+    ]);
+
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '1.5',
+    ]);
+
+    // ~5800 km away in 10 seconds -> millions of km/h. Valid coordinate, but a teleport.
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 0.1,
+        'longitude' => 0.1,
+        'timestamp' => $ts,
+        'serial' => '2',
+    ]))->assertStatus(200);
+
+    // Distance unchanged, last position NOT advanced to the bad point.
+    $this->assertDatabaseHas('overlay_controls', ['user_id' => $user->id, 'source' => 'gps', 'key' => 'distance', 'value' => '1.5']);
+    $integration->refresh();
+    expect((float) $integration->settings['last_lat'])->toBe(52.3676);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Speed unit conversion
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -312,35 +411,126 @@ test('speed_unit setting does not affect stored speed (always raw m/s)', functio
 // Distance reset
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('reset distance endpoint clears distance and position', function () {
+test('reset-session zeroes session distance/stats but leaves lifetime and position intact', function () {
     Event::fake([ControlValueUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration('test-mobile-token', [
         'last_lat' => 52.3676,
         'last_lng' => 4.9041,
+        'last_fix_at_unix' => time(),
+        'session_distance_km' => 5785.36,
+        'session_max_speed_ms' => 30.0,
+        'session_speed_sum_ms' => 120.0,
+        'session_speed_count' => 4,
     ]);
 
     OverlayControl::provisionServiceControl($user, 'gps', [
-        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '42.5',
+        'key' => 'distance', 'type' => 'number', 'label' => 'distance', 'value' => '4321',
+    ]);
+    foreach (['session_distance', 'session_max_speed', 'session_avg_speed', 'session_duration'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
+            'key' => $key, 'type' => 'number', 'label' => $key, 'value' => '999',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->post('/settings/integrations/overlabels-mobile/reset-session')
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ok']);
+
+    foreach (['session_distance', 'session_max_speed', 'session_avg_speed', 'session_duration'] as $key) {
+        $this->assertDatabaseHas('overlay_controls', [
+            'user_id' => $user->id, 'source' => 'gps', 'key' => $key, 'value' => '0',
+        ]);
+    }
+
+    // Lifetime odometer untouched.
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'gps', 'key' => 'distance', 'value' => '4321',
+    ]);
+
+    $integration->refresh();
+    expect($integration->settings)->not()->toHaveKey('session_distance_km');
+    expect($integration->settings)->not()->toHaveKey('session_speed_count');
+    // Position is preserved so the session keeps measuring from here.
+    expect((float) $integration->settings['last_lat'])->toBe(52.3676);
+});
+
+test('reset-lifetime zeroes the cumulative distance only', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+        'session_distance_km' => 12.0,
+    ]);
+
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'distance', 'value' => '8000',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'session_distance', 'type' => 'number', 'label' => 'session_distance', 'value' => '12',
     ]);
 
     $this->actingAs($user)
-        ->post('/settings/integrations/overlabels-mobile/reset-distance')
+        ->post('/settings/integrations/overlabels-mobile/reset-lifetime')
         ->assertStatus(200)
         ->assertJson(['status' => 'ok']);
 
     $this->assertDatabaseHas('overlay_controls', [
-        'user_id' => $user->id,
-        'source' => 'gps',
-        'key' => 'distance',
-        'value' => '0',
+        'user_id' => $user->id, 'source' => 'gps', 'key' => 'distance', 'value' => '0',
+    ]);
+    // Session distance is independent and untouched.
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'gps', 'key' => 'session_distance', 'value' => '12',
     ]);
 
+    Event::assertDispatched(ControlValueUpdated::class);
+});
+
+test('session_start clears last position so first ping starts a clean baseline', function () {
+    Event::fake([ControlValueUpdated::class]);
+
+    // Previous session ended in Amsterdam.
+    [$user, $integration] = makeMobileIntegration('test-mobile-token', [
+        'last_lat' => 52.3676,
+        'last_lng' => 4.9041,
+        'last_fix_at_unix' => time() - 86400,
+        'session_distance_km' => 12.0,
+    ]);
+
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'distance', 'type' => 'number', 'label' => 'Distance', 'value' => '12',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'session_distance', 'type' => 'number', 'label' => 'Session Distance', 'value' => '12',
+    ]);
+
+    $sessionId = 'fresh-baseline-session';
+
+    postMobile($integration->webhook_token, [
+        'event' => 'session_start',
+        'session_id' => $sessionId,
+        'timestamp' => (string) time(),
+    ])->assertStatus(200);
+
+    // Baseline wiped: a new session must not difference against the old endpoint.
     $integration->refresh();
     expect($integration->settings)->not()->toHaveKey('last_lat');
-    expect($integration->settings)->not()->toHaveKey('last_lng');
+    expect((float) $integration->settings['session_distance_km'])->toBe(0.0);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    // First real ping in a far-away city adds 0 (it sets the baseline), not a phantom jump.
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 51.5072,
+        'longitude' => -0.1276, // London
+        'timestamp' => time(),
+        'serial' => '1',
+        'session_id' => $sessionId,
+    ]))->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'gps', 'key' => 'session_distance', 'value' => '0',
+    ]);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -375,7 +565,7 @@ test('connect creates integration with auto-generated token and provisions contr
         ->where('source_managed', true)
         ->count();
 
-    $expected = count((new \App\Services\External\Drivers\GpsServiceDriver())->getAutoProvisionedControls());
+    $expected = count((new GpsServiceDriver)->getAutoProvisionedControls());
     expect($controlCount)->toBe($expected);
 });
 
@@ -573,7 +763,7 @@ test('location_update with session_id stores it in payload', function () {
     ]), ['session_id' => $sessionId]))
         ->assertStatus(200);
 
-    $event = \App\Models\ExternalEvent::where('user_id', $user->id)
+    $event = ExternalEvent::where('user_id', $user->id)
         ->where('message_id', "gps_{$ts}_1")
         ->first();
 

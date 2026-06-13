@@ -13,6 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
@@ -111,13 +119,34 @@ function save() {
   });
 }
 
-async function resetDistance() {
-  if (!confirm('Reset distance to 0? This cannot be undone.')) return;
+async function resetSession() {
+  if (!confirm('Reset the current session distance and stats to 0? Your lifetime total is not affected.')) return;
   resetting.value = true;
   try {
-    await axios.post('/settings/integrations/overlabels-mobile/reset-distance');
+    await axios.post('/settings/integrations/overlabels-mobile/reset-session');
+    toastType.value = 'success';
+    toastMessage.value = 'Session distance reset.';
   } finally {
     resetting.value = false;
+  }
+}
+
+const lifetimeDialogOpen = ref(false);
+const lifetimeConfirmText = ref('');
+const resettingLifetime = ref(false);
+const lifetimeConfirmed = computed(() => lifetimeConfirmText.value.trim().toUpperCase() === 'RESET');
+
+async function resetLifetime() {
+  if (!lifetimeConfirmed.value) return;
+  resettingLifetime.value = true;
+  try {
+    await axios.post('/settings/integrations/overlabels-mobile/reset-lifetime');
+    toastType.value = 'success';
+    toastMessage.value = 'Lifetime distance reset to 0.';
+    lifetimeDialogOpen.value = false;
+    lifetimeConfirmText.value = '';
+  } finally {
+    resettingLifetime.value = false;
   }
 }
 
@@ -350,19 +379,43 @@ function formatDate(iso: string | null): string {
         <!-- Reset Distance -->
         <template v-if="integration.connected">
           <Separator />
+
+          <!-- Session reset: low-stakes -->
           <div class="space-y-2">
-            <p class="font-medium text-sm">Reset distance</p>
-            <p class="text-muted-foreground text-sm">
-              Reset the accumulated GPS distance back to 0 km. Useful at the start of a new trip or stream.
+            <p class="font-medium text-sm">Reset session distance</p>
+            <p class="text-foreground text-sm">
+              Zero out the current session's distance, speed and duration stats. Your lifetime total is
+              untouched. Note: a new session already resets these automatically - this is for fixing a
+              session mid-stream.
             </p>
             <Button
               variant="outline"
               size="sm"
               type="button"
+              class="cursor-pointer"
               :disabled="resetting"
-              @click="resetDistance"
+              @click="resetSession"
             >
-              {{ resetting ? 'Resetting...' : 'Reset distance to 0' }}
+              {{ resetting ? 'Resetting...' : 'Reset session distance' }}
+            </Button>
+          </div>
+
+          <!-- Lifetime reset: destructive -->
+          <div class="space-y-2 rounded-md border border-destructive/40 p-4">
+            <p class="font-medium text-sm text-destructive">Reset lifetime distance</p>
+            <p class="text-foreground text-sm">
+              This wipes your all-time cumulative distance back to 0 km. It is permanent and cannot be
+              undone - every kilometre you have ever logged is gone. This is not the same as starting a
+              new trip or stream (use the session reset above, or just start a new session).
+            </p>
+            <Button
+              variant="destructive"
+              size="sm"
+              type="button"
+              class="cursor-pointer"
+              @click="lifetimeDialogOpen = true"
+            >
+              Reset lifetime distance
             </Button>
           </div>
         </template>
@@ -405,5 +458,51 @@ function formatDate(iso: string | null): string {
     </SettingsLayout>
 
     <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
+
+    <!-- Lifetime reset: type-to-confirm guard -->
+    <Dialog v-model:open="lifetimeDialogOpen">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle class="text-destructive">Reset lifetime distance?</DialogTitle>
+          <DialogDescription class="text-foreground">
+            This permanently wipes your all-time cumulative distance back to 0 km. It cannot be undone.
+            Your current session distance is not affected.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-2">
+          <Label for="lifetime-confirm" class="text-sm">
+            Type <span class="font-mono font-semibold">RESET</span> to confirm.
+          </Label>
+          <Input
+            id="lifetime-confirm"
+            v-model="lifetimeConfirmText"
+            autocomplete="off"
+            placeholder="RESET"
+            @keyup.enter="resetLifetime"
+          />
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            type="button"
+            class="cursor-pointer"
+            @click="lifetimeDialogOpen = false"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            type="button"
+            class="cursor-pointer"
+            :disabled="!lifetimeConfirmed || resettingLifetime"
+            @click="resetLifetime"
+          >
+            {{ resettingLifetime ? 'Resetting...' : 'Reset lifetime distance' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AppLayout>
 </template>
