@@ -97,7 +97,6 @@ class IntegrationController extends Controller
     {
         return match ($key) {
             'kofi' => 'Ko-fi',
-            'gpslogger' => 'GPSLogger',
             'gps' => 'Overlabels GPS',
             'streamlabs' => 'Streamlabs',
             'streamelements' => 'StreamElements',

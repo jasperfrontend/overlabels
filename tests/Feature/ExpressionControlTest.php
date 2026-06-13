@@ -264,7 +264,7 @@ test('reserved key names are rejected', function () {
 
     $this->actingAs($user);
 
-    foreach (['kofi', 'streamlabs', 'twitch', 'gpslogger'] as $reserved) {
+    foreach (['kofi', 'streamlabs', 'twitch', 'gps'] as $reserved) {
         $response = $this->postJson("/templates/{$template->id}/controls", [
             'key' => $reserved,
             'type' => 'text',

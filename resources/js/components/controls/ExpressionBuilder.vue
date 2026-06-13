@@ -289,7 +289,6 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
     twitch: 'Twitch',
     kofi: 'Ko-fi',
     streamlabs: 'StreamLabs',
-    gpslogger: 'GPSLogger',
     gps: 'Overlabels GPS',
   };
 

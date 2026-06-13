@@ -15,13 +15,6 @@ export const KOFI_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'Ko-fi Total Received (session)', type: 'number' },
 ];
 
-export const GPSLOGGER_PRESETS: ServicePreset[] = [
-  { key: 'gps_speed', label: 'GPS Speed', type: 'number' },
-  { key: 'gps_lat', label: 'GPS Latitude', type: 'text' },
-  { key: 'gps_lng', label: 'GPS Longitude', type: 'text' },
-  { key: 'gps_distance', label: 'GPS Distance (km)', type: 'number' },
-];
-
 export const STREAMLABS_PRESETS: ServicePreset[] = [
   { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
   { key: 'latest_donor_name', label: 'StreamLabs Latest Donor Name', type: 'text' },
@@ -93,7 +86,6 @@ export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
     case 'twitch': return TWITCH_PRESETS;
     case 'kofi': return KOFI_PRESETS;
-    case 'gpslogger': return GPSLOGGER_PRESETS;
     case 'gps': return GPS_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
     case 'streamelements': return STREAMELEMENTS_PRESETS;

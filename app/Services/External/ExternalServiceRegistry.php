@@ -5,7 +5,6 @@ namespace App\Services\External;
 use App\Contracts\ExternalServiceDriver;
 use App\Services\External\Drivers\BMACServiceDriver;
 use App\Services\External\Drivers\FourthwallServiceDriver;
-use App\Services\External\Drivers\GpsLoggerServiceDriver;
 use App\Services\External\Drivers\GpsServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 use App\Services\External\Drivers\StreamElementsServiceDriver;
@@ -19,7 +18,6 @@ class ExternalServiceRegistry
      */
     private static array $drivers = [
         'kofi' => KofiServiceDriver::class,
-        'gpslogger' => GpsLoggerServiceDriver::class,
         'gps' => GpsServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
         'streamelements' => StreamElementsServiceDriver::class,

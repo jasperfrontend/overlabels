@@ -44,18 +44,13 @@ class ExternalWebhookController extends Controller
      * GET /api/webhooks/{service}/{webhook_token}
      *
      * Landing page shown when a user scans the QR code on their phone.
-     * Displays the webhook URL with a copy button so they can paste it
-     * into GPSLogger's "Log to custom URL" settings.
+     * Renders the deep link that auto-configures the Overlabels GPS app.
      */
     public function show(string $service, string $webhookToken): View
     {
         $canonical = $this->canonicalService($service);
 
-        if (! in_array($canonical, ['gpslogger', 'gps'])) {
-            abort(404);
-        }
-
-        if (! ExternalServiceRegistry::has($canonical)) {
+        if ($canonical !== 'gps' || ! ExternalServiceRegistry::has($canonical)) {
             abort(404);
         }
 
@@ -69,19 +64,15 @@ class ExternalWebhookController extends Controller
 
         $webhookUrl = url("/api/webhooks/{$service}/{$webhookToken}");
 
-        if ($canonical === 'gps') {
-            $credentials = $integration->getCredentialsDecrypted();
-            $token = $credentials['token'] ?? '';
-            $deepLink = 'overlabels://gps-setup?'
-                .http_build_query(['endpoint' => $webhookUrl, 'token' => $token]);
+        $credentials = $integration->getCredentialsDecrypted();
+        $token = $credentials['token'] ?? '';
+        $deepLink = 'overlabels://gps-setup?'
+            .http_build_query(['endpoint' => $webhookUrl, 'token' => $token]);
 
-            return view('webhook-landing-mobile', [
-                'webhookUrl' => $webhookUrl,
-                'deepLink' => $deepLink,
-            ]);
-        }
-
-        return view('webhook-landing', ['webhookUrl' => $webhookUrl]);
+        return view('webhook-landing-mobile', [
+            'webhookUrl' => $webhookUrl,
+            'deepLink' => $deepLink,
+        ]);
     }
 
     /**
@@ -318,7 +309,7 @@ class ExternalWebhookController extends Controller
             return $all;
         }
 
-        // Fallback: parse raw body as query string (e.g. GPSLogger
+        // Fallback: parse raw body as query string (the Overlabels GPS app
         // sends "lat=52.37&lon=4.90&..." without a Content-Type header,
         // so PHP does not populate $_POST automatically)
         $raw = $request->getContent();

@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 13th, 2026 - chore(gps): remove the deprecated GPSLogger integration
+
+GPSLogger (`gpslogger.app`) has been unconnectable from the UI for a while - it was fully superseded by the Overlabels GPS app (`gps` service). The two never shared code (parallel driver implementations behind the same `ExternalServiceDriver` interface), so removing the old one is safe and touches nothing in the live GPS path.
+
+- Deleted `GpsLoggerServiceDriver`, `GpsLoggerIntegrationController`, the `gpslogger.vue` settings page, `GpsLoggerWebhookTest`, and the old `webhook-landing.blade.php` (GPSLogger-only; the Overlabels GPS app uses `webhook-landing-mobile`).
+- Dropped the registry entry + the 4 `gpslogger` settings routes. `ExternalWebhookController::show()` simplified to only serve the `gps` deep-link landing (the GPSLogger fallback path was now dead).
+- Cleaned up the trailing references: `RESERVED_KEYS`, `SERVICE_EVENT_TYPES`, the integration name map, frontend service labels (`services.ts`, `ExpressionBuilder`, `TemplateTable`), control presets (`GPSLOGGER_PRESETS`), the help pages (`IntegrationPresets`, `ForCreators`), and the "(deprecated)" marker on the integrations index.
+- The Overlabels GPS app still authenticates with the `X-GPSLogger-Token` header and sends GPSLogger-style form-encoded payloads - that lives entirely in `GpsServiceDriver` and the webhook parser, untouched here.
+- Prod cleanup: purged the one leftover GPSLogger integration (Brian's abandoned test data from March: 1 integration, 6 events, 5 controls, 1 template mapping).
+- Full suite green (847 passing); Pint and the build are clean.
+
 ## June 13th, 2026 - ops(metering): turn on broadcast metering in prod (observe-only)
 
 Flipped prod to start counting. `config/deploy.yml` now sets `BROADCAST_CONNECTION: metered` (wraps the reverb driver with `MeteredBroadcaster`) plus `METERING_ENABLED: "true"` and an empty `METERING_FREE_MONTHLY_BROADCASTS` (no enforced cap - observe-only). All three are plaintext `env.clear` values, not secrets. Counters land in the existing `overlabels-redis` accessory.
