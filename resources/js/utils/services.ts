@@ -10,7 +10,6 @@ export const SERVICE_LABELS: Record<string, string> = {
   kofi: 'Ko-fi',
   streamelements: 'StreamElements',
   streamlabs: 'Streamlabs',
-  gpslogger: 'GPSLogger',
   twitch: 'Twitch',
   fourthwall: 'Fourthwall',
   bmac: 'Buy Me a Coffee',

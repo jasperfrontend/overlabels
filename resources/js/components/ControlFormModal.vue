@@ -24,7 +24,6 @@ import { ChevronsUpDownIcon } from '@lucide/vue';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
   KOFI_PRESETS,
-  GPSLOGGER_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
@@ -100,9 +99,6 @@ const isCopying = computed(() => !isEditing.value && !!props.copyFrom);
 const showKofiPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('kofi'),
 );
-const showGpsLoggerPresets = computed(
-  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gpslogger'),
-);
 const showGpsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('gps'),
 );
@@ -144,9 +140,6 @@ const availableTwitchPresets = computed(() =>
 );
 const availableKofiPresets = computed(() =>
   KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key) && matchesPresetSearch('kofi', p)),
-);
-const availableGpsLoggerPresets = computed(() =>
-  GPSLOGGER_PRESETS.filter((p) => !isPresetAlreadyAdded('gpslogger', p.key) && matchesPresetSearch('gpslogger', p)),
 );
 const availableGpsPresets = computed(() =>
   GPS_PRESETS.filter((p) => !isPresetAlreadyAdded('gps', p.key) && matchesPresetSearch('gps', p)),
@@ -511,7 +504,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsLoggerPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <div class="flex items-center justify-between gap-2">
               <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
               <a
@@ -552,16 +545,6 @@ async function save() {
                     v-for="preset in availableKofiPresets"
                     :key="'kofi:' + preset.key"
                     :value="'kofi:' + preset.key"
-                  >
-                    {{ preset.label }} ({{ preset.type }})
-                  </ComboboxItem>
-                </ComboboxGroup>
-                <ComboboxGroup v-if="showGpsLoggerPresets && availableGpsLoggerPresets.length">
-                  <ComboboxLabel>GPSLogger</ComboboxLabel>
-                  <ComboboxItem
-                    v-for="preset in availableGpsLoggerPresets"
-                    :key="'gpslogger:' + preset.key"
-                    :value="'gpslogger:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

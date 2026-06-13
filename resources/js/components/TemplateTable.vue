@@ -81,7 +81,6 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
     const serviceTypes = {
       kofi: { donation: 'Ko-fi Donation', subscription: 'Ko-fi Subscription', shop_order: 'Ko-fi Shop Order', commission: 'Ko-fi Commission' },
       streamlabs: { donation: 'StreamLabs Donation' },
-      gpslogger: { location_update: 'GPS Location Update' },
     } as Record<string, Record<string, string>>;
     return serviceTypes[ev.source]?.[ev.eventType] ?? `${ev.source}: ${ev.eventType}`;
   }

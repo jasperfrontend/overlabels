@@ -82,9 +82,6 @@ class ExternalEventTemplateMapping extends Model
             'session_end' => 'Overlabels GPS Session Ended',
             'settings_sync' => 'Overlabels GPS Settings Synced',
         ],
-        'gpslogger' => [
-            'location_update' => 'GPSLogger Location Update',
-        ],
         'kofi' => [
             'donation' => 'Ko-fi Donation',
             'subscription' => 'Ko-fi Subscription',

@@ -133,7 +133,6 @@ const breadcrumbs: BreadcrumbItem[] = [
               <li><strong>Twitch</strong> - per-stream counters, latest cheer / latest donor, follower / sub / raid / redemption tallies</li>
               <li><strong>Ko-fi</strong>, <strong>Streamlabs</strong>, <strong>StreamElements</strong>, <strong>Fourthwall</strong>, <strong>Buy Me a Coffee</strong> - donations and tips</li>
               <li><strong>Overlabels GPS</strong> - live phone GPS: lat, lng, speed, distance, battery, accuracy, plus session aggregates</li>
-              <li><strong>GPSLogger</strong> - legacy GPS app, kept for existing setups</li>
               <li><strong>Time itself</strong> -
                 <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">now()</code>
                 and

@@ -5,7 +5,6 @@ import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
   KOFI_PRESETS,
-  GPSLOGGER_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
   STREAMELEMENTS_PRESETS,
@@ -18,7 +17,6 @@ import { fuzzyMatch, presetHaystack, serviceLabel } from '@/utils/services';
 import {
   Coffee,
   HandHeart,
-  MapPin,
   MapPinned,
   Megaphone,
   ShoppingBag,
@@ -90,13 +88,6 @@ const sections: ServiceSection[] = [
     description: 'Live GPS data from the Overlabels GPS Android app: speed, coordinates, distance, battery, and per-session aggregates.',
     icon: MapPinned,
     presets: GPS_PRESETS,
-  },
-  {
-    source: 'gpslogger',
-    label: serviceLabel('gpslogger'),
-    description: 'Legacy GPS data from the GPSLogger Android app. Prefer Overlabels GPS for new overlays - GPSLogger is kept for existing setups.',
-    icon: MapPin,
-    presets: GPSLOGGER_PRESETS,
   },
 ];
 

@@ -7,7 +7,6 @@ use App\Http\Controllers\Settings\BotExpressionsController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsIntegrationController;
-use App\Http\Controllers\Settings\GpsLoggerIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\StreamElementsIntegrationController;
@@ -63,11 +62,6 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/kofi/test-mode', [KofiIntegrationController::class, 'setTestMode'])->name('kofi.test-mode');
         Route::post('/kofi/seed-count', [KofiIntegrationController::class, 'seedDonationCount'])->name('kofi.seed-count');
         Route::delete('/kofi', [KofiIntegrationController::class, 'disconnect'])->name('kofi.disconnect');
-
-        Route::get('/gpslogger', [GpsLoggerIntegrationController::class, 'show'])->name('gpslogger.show');
-        Route::post('/gpslogger', [GpsLoggerIntegrationController::class, 'save'])->name('gpslogger.save');
-        Route::delete('/gpslogger', [GpsLoggerIntegrationController::class, 'disconnect'])->name('gpslogger.disconnect');
-        Route::post('/gpslogger/reset-distance', [GpsLoggerIntegrationController::class, 'resetDistance'])->name('gpslogger.reset-distance');
 
         Route::get('/overlabels-mobile', [GpsIntegrationController::class, 'show'])->name('overlabels-mobile.show');
         Route::post('/overlabels-mobile', [GpsIntegrationController::class, 'save'])->name('overlabels-mobile.save');

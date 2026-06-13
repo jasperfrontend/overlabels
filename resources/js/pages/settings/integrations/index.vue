@@ -383,7 +383,7 @@ function formatDate(iso: string | null): string {
                   <span v-if="service.connected" title="Connected"><Power class="text-green-400 size-5 my-1" /></span>
                   <span v-else title="Disconnected"><PowerOff class="text-orange-400 size-5 my-1" /></span>
                   <span v-if="service.connected && service.test_mode" title="Test mode enabled"><FlaskConical class="text-yellow-400 size-5 my-1" /></span>
-                  <span class="font-medium">{{ service.name }} <span v-if="service.key === 'gpslogger'" class="text-orange-400">(deprecated)</span></span>
+                  <span class="font-medium">{{ service.name }}</span>
                 </div>
                 <p v-if="service.connected" class="text-muted-foreground text-sm">
                   Last event: {{ formatDate(service.last_received_at) }}
