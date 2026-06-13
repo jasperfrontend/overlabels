@@ -42,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
             return new TemplateDataMapperService;
         });
 
+        // One BroadcastMeter per request so its fail-fast "redis down" flag is
+        // shared across the dashboard share and the Usage page reads.
+        $this->app->singleton(BroadcastMeter::class);
+
         // Register Telescope only in local development
         // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)
         if ($this->app->isLocal() && class_exists(TelescopeServiceProvider::class)) {

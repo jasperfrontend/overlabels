@@ -18,11 +18,20 @@ use Illuminate\Support\Facades\Redis;
  * lists.{id}.{slug}), so MeteredBroadcaster can hand us the channel list and we
  * resolve the owner without touching the event payload.
  *
- * Metering must NEVER break a broadcast: every Redis touch is wrapped so a
- * counter failure degrades to "uncounted", not "undelivered".
+ * Metering must NEVER break a broadcast and must never hang a page: every Redis
+ * touch goes through withRedis(), which fails fast. The first failed call in a
+ * request trips $redisDown so the rest short-circuit instead of each blocking on
+ * a dead/slow connection. Registered as a singleton (see AppServiceProvider) so
+ * that flag is shared across the request.
  */
 class BroadcastMeter
 {
+    /**
+     * Set once a Redis op fails this request; subsequent ops skip Redis and
+     * return defaults rather than each paying the full connect timeout.
+     */
+    private bool $redisDown = false;
+
     /**
      * Increment each owning user's monthly counter for one broadcast call.
      *
@@ -86,9 +95,8 @@ class BroadcastMeter
             return;
         }
 
-        try {
+        $this->withRedis(function (Connection $redis) use ($twitchId, $count) {
             $key = $this->key($twitchId);
-            $redis = $this->redis();
             $total = (int) $redis->incrby($key, $count);
 
             // First write of the month: stamp a TTL so the key self-expires and
@@ -96,10 +104,9 @@ class BroadcastMeter
             if ($total === $count) {
                 $redis->expire($key, (int) config('metering.ttl_days', 70) * 86400);
             }
-        } catch (\Throwable $e) {
-            // Observe-only: a metering failure must not stop the broadcast.
-            report($e);
-        }
+
+            return null;
+        }, null);
     }
 
     /**
@@ -107,33 +114,43 @@ class BroadcastMeter
      */
     public function usageFor(string $twitchId, ?string $period = null): int
     {
-        try {
-            $value = $this->redis()->get($this->key($twitchId, $period));
+        $value = $this->withRedis(
+            fn (Connection $redis) => $redis->get($this->key($twitchId, $period)),
+            null,
+        );
 
-            return $value === null ? 0 : (int) $value;
-        } catch (\Throwable $e) {
-            return 0;
-        }
+        return $value === null ? 0 : (int) $value;
     }
 
     /**
      * The most recent $months counters, newest first. Powers the Usage page's
-     * little history strip.
+     * history strip. One mget round-trip, not one per month.
      *
      * @return array<int, array{period: string, broadcasts: int}>
      */
     public function historyFor(string $twitchId, int $months = 6): array
     {
-        $history = [];
+        $periods = [];
         $cursor = now()->startOfMonth();
-
         for ($i = 0; $i < $months; $i++) {
-            $period = $cursor->format('Y-m');
+            $periods[] = $cursor->format('Y-m');
+            $cursor = $cursor->subMonthNoOverflow();
+        }
+
+        $keys = array_map(fn (string $period) => $this->key($twitchId, $period), $periods);
+
+        /** @var array<int, string|null> $values */
+        $values = $this->withRedis(
+            fn (Connection $redis) => $redis->mget($keys),
+            array_fill(0, count($keys), null),
+        );
+
+        $history = [];
+        foreach ($periods as $i => $period) {
             $history[] = [
                 'period' => $period,
-                'broadcasts' => $this->usageFor($twitchId, $period),
+                'broadcasts' => (int) ($values[$i] ?? 0),
             ];
-            $cursor = $cursor->subMonthNoOverflow();
         }
 
         return $history;
@@ -154,7 +171,7 @@ class BroadcastMeter
     }
 
     /**
-     * Compact usage summary for sharing into Inertia / the dashboard.
+     * Compact usage summary for the dashboard strip and Usage page.
      *
      * @return array{broadcasts: int, limit: int|null, period: string}
      */
@@ -174,7 +191,37 @@ class BroadcastMeter
         return "metering:bcast:{$twitchId}:{$period}";
     }
 
-    protected function redis(): Connection
+    /**
+     * Run a Redis op, failing fast and non-fatally. Once anything fails this
+     * request, $redisDown short-circuits every later call so a dead or slow
+     * Redis costs one connect timeout, not one per read. Metering is best-effort
+     * - a failure degrades to "uncounted"/zero, never a broken broadcast or a
+     * hung page.
+     *
+     * @template T
+     *
+     * @param  callable(Connection): T  $op
+     * @param  T  $default
+     * @return T
+     */
+    private function withRedis(callable $op, mixed $default): mixed
+    {
+        if ($this->redisDown) {
+            return $default;
+        }
+
+        try {
+            return $op($this->redis());
+        } catch (\Throwable $e) {
+            // Log once per request, then stop trying.
+            $this->redisDown = true;
+            report($e);
+
+            return $default;
+        }
+    }
+
+    private function redis(): Connection
     {
         return Redis::connection(config('metering.redis_connection', 'default'));
     }

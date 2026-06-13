@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use App\Models\StreamState;
 use App\Models\User;
-use App\Services\BroadcastMeter;
 use App\Services\LockdownService;
 use App\Services\TwitchScopeService;
 use Illuminate\Http\Request;
@@ -88,14 +87,6 @@ class HandleInertiaRequests extends Middleware
                         ? $state->currentSession->started_at->toISOString()
                         : null,
                 ];
-            },
-            'usage' => function () use ($request) {
-                $user = $request->user();
-                if (! $user || ! $user->twitch_id) {
-                    return null;
-                }
-
-                return app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id);
             },
             'twitchScope' => function () use ($request) {
                 $user = $request->user();

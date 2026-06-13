@@ -51,7 +51,6 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
     streamState: StreamState | null;
     twitchScope: { missing: string[] } | null;
-    usage: UsageSummary | null;
 };
 
 

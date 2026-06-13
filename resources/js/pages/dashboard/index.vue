@@ -10,7 +10,7 @@ import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import type { AppPageProps, OverlayTemplate, Update } from '@/types';
+import type { AppPageProps, OverlayTemplate, Update, UsageSummary } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
@@ -45,11 +45,12 @@ const props = defineProps<{
   recentUpdates: Update[];
   needsOnboarding: boolean;
   twitchId: string;
+  usage: UsageSummary | null;
 }>();
 
 const isAdmin = computed(() => !!page.props.isAdmin);
 
-const usage = computed(() => page.props.usage ?? null);
+const usage = computed(() => props.usage ?? null);
 const usagePercent = computed(() => {
   const u = usage.value;
   if (!u || !u.limit || u.limit <= 0) return null;
