@@ -10,7 +10,7 @@ import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import type { AppPageProps, OverlayTemplate, Update } from '@/types';
+import type { AppPageProps, OverlayTemplate, Update, UsageSummary } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
@@ -45,9 +45,24 @@ const props = defineProps<{
   recentUpdates: Update[];
   needsOnboarding: boolean;
   twitchId: string;
+  usage: UsageSummary | null;
 }>();
 
 const isAdmin = computed(() => !!page.props.isAdmin);
+
+const usage = computed(() => props.usage ?? null);
+const usagePercent = computed(() => {
+  const u = usage.value;
+  if (!u || !u.limit || u.limit <= 0) return null;
+  return Math.min(100, Math.round((u.broadcasts / u.limit) * 100));
+});
+function fmtCount(n: number): string {
+  try {
+    return new Intl.NumberFormat(page.props.auth.user.locale ?? 'en-US').format(n);
+  } catch {
+    return String(n);
+  }
+}
 
 const breadcrumbs = [
   {
@@ -71,6 +86,30 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
+        <Link
+          v-if="usage"
+          :href="route('settings.usage')"
+          class="mb-6 block cursor-pointer rounded-md border border-sidebar p-4 transition-colors hover:bg-muted/50"
+          title="View your usage"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-sm text-foreground">Overlay updates this month</p>
+              <p class="text-2xl font-semibold text-foreground">
+                {{ fmtCount(usage.broadcasts) }}<span v-if="usage.limit" class="text-base font-normal text-muted-foreground"> / {{ fmtCount(usage.limit) }}</span>
+              </p>
+            </div>
+            <span v-if="usagePercent !== null" class="text-sm text-muted-foreground">{{ usagePercent }}% used</span>
+          </div>
+          <div v-if="usagePercent !== null" class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              class="h-full rounded-full"
+              :class="usagePercent >= 100 ? 'bg-destructive' : usagePercent >= 80 ? 'bg-amber-500' : 'bg-primary'"
+              :style="{ width: usagePercent + '%' }"
+            />
+          </div>
+        </Link>
+
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
 
           <section v-if="props.userStaticTemplates.length > 0" class="flex-1 p-4">
