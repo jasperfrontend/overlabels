@@ -372,7 +372,6 @@ function formatDate(iso: string | null): string {
           />
 
           <div class="mt-4 space-y-4">
-            <pre>{{props.services[1].key}}</pre>
             <div
               v-for="service in props.services"
               :key="service.key"
