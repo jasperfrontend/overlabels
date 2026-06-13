@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
+
+Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.
+
+- `handleKeyDown` now treats `HTMLSelectElement` as an input (like input/textarea/contenteditable), so single-key shortcuts no longer steal `<select>` typeahead anywhere.
+- Added a dialog guard: a keystroke originating inside an open `[role="dialog"]` no longer fires non-modifier page shortcuts. A modal owns the keyboard while it's open, so `e`, `a`, `1`-`6` etc. stop reaching the page underneath (this also fixed `a` firing "Add to OBS" from a button inside the modal). Modifier shortcuts (Ctrl/Alt/Meta) still pass through.
+- ESLint clean.
+
 ## June 13th, 2026 - chore(gps): remove the deprecated GPSLogger integration
 
 GPSLogger (`gpslogger.app`) has been unconnectable from the UI for a while - it was fully superseded by the Overlabels GPS app (`gps` service). The two never shared code (parallel driver implementations behind the same `ExternalServiceDriver` interface), so removing the old one is safe and touches nothing in the live GPS path.
