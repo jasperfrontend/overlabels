@@ -154,8 +154,21 @@ env:
 
     QUEUE_CONNECTION: database
     CACHE_STORE: redis
-    BROADCAST_CONNECTION: reverb
+    # `metered` wraps the reverb driver to count outbound broadcasts per user
+    # (MeteredBroadcaster). Set back to `reverb` to bypass metering entirely.
+    BROADCAST_CONNECTION: metered
     FILESYSTEM_DISK: local
+
+    # Broadcast metering. Observe-only: counters are tallied and shown on the
+    # dashboard / Usage page, but nothing is suppressed. Leave
+    # METERING_FREE_MONTHLY_BROADCASTS empty for no enforced cap; set a number
+    # later (once real per-user data exists) to turn on the free-tier ceiling.
+    # NOTE: counters share the LRU/non-persistent cache Redis below, so they can
+    # be evicted under memory pressure and reset on a Redis restart - acceptable
+    # for observe-only, but move to a persistent, non-evicting store before any
+    # enforcement/billing.
+    METERING_ENABLED: "true"
+    METERING_FREE_MONTHLY_BROADCASTS: ""
 
     REDIS_HOST: overlabels-redis
     REDIS_PORT: "6379"

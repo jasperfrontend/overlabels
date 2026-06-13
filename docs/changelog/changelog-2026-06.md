@@ -1,5 +1,12 @@
 # CHANGELOG JUNE 2026
 
+## June 13th, 2026 - ops(metering): turn on broadcast metering in prod (observe-only)
+
+Flipped prod to start counting. `config/deploy.yml` now sets `BROADCAST_CONNECTION: metered` (wraps the reverb driver with `MeteredBroadcaster`) plus `METERING_ENABLED: "true"` and an empty `METERING_FREE_MONTHLY_BROADCASTS` (no enforced cap - observe-only). All three are plaintext `env.clear` values, not secrets. Counters land in the existing `overlabels-redis` accessory.
+
+- Still observe-only: broadcasts are tallied and shown on the dashboard / Usage page, nothing is suppressed.
+- Caveat for later: that Redis runs `allkeys-lru --save ""` (LRU eviction, no persistence), shared across cache DB 1 and the meter's DB 0, so counters can be evicted under memory pressure and reset on a Redis restart. Fine for gathering rough p50/p90 data; needs a persistent, non-evicting store before any enforcement or billing.
+
 ## June 13th, 2026 - feat(metering): count Reverb broadcasts per user (observe-only) with a Usage page
 
 Reverb fan-out is the one resource that gets expensive as more streamers join, so it becomes the single defacto usage limit in Overlabels - everything else stays free. This lays the foundation: a per-user, per-month counter of outbound broadcasts ("overlay updates"), surfaced in the dashboard and a new Usage settings page. It is OBSERVE-ONLY - nothing is suppressed yet. The free-tier number will be set from real data, then enforcement + a paid tier come later.
