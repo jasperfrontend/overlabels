@@ -8,9 +8,24 @@ use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use App\Services\Location\GeoMath;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GpsServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
 {
+    /**
+     * Reject any ping whose distance from the previous fix implies a speed
+     * faster than this. Catches GPS "teleports" (null-island fixes, garbage
+     * coordinates) that would otherwise inject thousands of phantom km. Well
+     * above any real car/train speed, so legitimate movement is never dropped.
+     */
+    private const MAX_PLAUSIBLE_KMH = 400.0;
+
+    /**
+     * Ignore sub-metre jitter so a stationary device doesn't slowly accrue
+     * distance from GPS noise.
+     */
+    private const MIN_DELTA_KM = 0.001;
+
     public function getServiceKey(): string
     {
         return 'gps';
@@ -206,102 +221,142 @@ class GpsServiceDriver implements ExternalServiceDriver, StatefulExternalService
         NormalizedExternalEvent $event,
         array &$updates
     ): void {
-        $settings = $integration->settings ?? [];
+        $type = $event->getEventType();
+        $raw = $event->getRaw();
 
-        if ($event->getEventType() === 'session_start') {
-            $this->resetSessionState($integration, $settings, $event->getRaw()['session_id'] ?? null);
+        if ($type === 'session_start') {
+            $this->mutateSettingsLocked($integration, function (array &$settings) use ($raw) {
+                $this->resetSessionState($settings, $raw['session_id'] ?? null);
+            });
             $updates['session_distance'] = '0';
             $updates['session_max_speed'] = '0';
             $updates['session_avg_speed'] = '0';
             $updates['session_duration'] = '0';
+
             return;
         }
 
-        if ($event->getEventType() === 'session_end') {
+        if ($type === 'session_end') {
             // Freeze the final duration so overlays show the total session length
-            // even after pings stop arriving.
-            $startedAt = $settings['session_started_at_unix'] ?? null;
+            // even after pings stop arriving. Read-only, no lock needed.
+            $startedAt = ($integration->settings ?? [])['session_started_at_unix'] ?? null;
             if ($startedAt !== null) {
                 $updates['session_duration'] = (string) max(0, now()->timestamp - (int) $startedAt);
             }
+
             return;
         }
 
-        if ($event->getEventType() !== 'location_update') {
+        if ($type !== 'location_update') {
             return;
         }
 
-        $raw = $event->getRaw();
         $lat = $raw['latitude'] ?? $raw['lat'] ?? null;
         $lng = $raw['longitude'] ?? $raw['lng'] ?? $raw['lon'] ?? null;
 
-        if ($lat === null || $lng === null) {
+        // A ping with no usable coordinate, or one outside the valid lat/lng
+        // range (garbage like lat=1, lon=1e150), can't drive distance or
+        // position. Drop the position-derived control updates so we never
+        // broadcast a junk fix.
+        if ($lat === null || $lng === null || ! $this->isValidCoordinate((float) $lat, (float) $lng)) {
+            $this->dropPositionUpdates($updates);
+
             return;
         }
 
         $lat = (float) $lat;
         $lng = (float) $lng;
-        $sessionId = $raw['session_id'] ?? null;
+        $fixAt = isset($raw['timestamp'])
+            ? (int) $raw['timestamp']
+            : (isset($raw['time']) ? (int) $raw['time'] : now()->timestamp);
 
-        // If the incoming session_id doesn't match what we've been tracking
-        // (session_start lost, stale state, first deployment), treat this ping
-        // as the start of a fresh session.
-        $trackedSessionId = $settings['session_id'] ?? null;
-        if ($sessionId !== null && $trackedSessionId !== $sessionId) {
-            $this->resetSessionState($integration, $settings, $sessionId);
-            $trackedSessionId = $sessionId;
-        }
+        // All reads and writes of the per-session accumulators happen under a
+        // row lock so overlapping webhook requests (rapid pings, settings_sync)
+        // can't clobber each other's updates — that lost-update race is how a
+        // session reset silently got reverted and the counter ran away.
+        $rejected = false;
+        $this->mutateSettingsLocked($integration, function (array &$settings) use (&$updates, &$rejected, $raw, $lat, $lng, $fixAt) {
+            $sessionId = $raw['session_id'] ?? null;
 
-        $lastLat = $settings['last_lat'] ?? null;
-        $lastLng = $settings['last_lng'] ?? null;
-
-        $deltaKm = 0.0;
-        if ($lastLat !== null && $lastLng !== null) {
-            $deltaKm = GeoMath::haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
-            if ($deltaKm > 0.001) {
-                $updates['distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
-            } else {
-                $deltaKm = 0.0;
+            // New session_id (session_start lost, stale state, first deploy):
+            // treat this ping as the start of a fresh session.
+            if ($sessionId !== null && ($settings['session_id'] ?? null) !== $sessionId) {
+                $this->resetSessionState($settings, $sessionId);
             }
+
+            $lastLat = $settings['last_lat'] ?? null;
+            $lastLng = $settings['last_lng'] ?? null;
+            $lastFixAt = $settings['last_fix_at_unix'] ?? null;
+
+            $deltaKm = 0.0;
+            if ($lastLat !== null && $lastLng !== null) {
+                $deltaKm = GeoMath::haversineDistance((float) $lastLat, (float) $lastLng, $lat, $lng);
+
+                // Teleport guard: if the implied speed is physically impossible,
+                // this is a bad fix. Reject it without advancing position so the
+                // next good ping measures from the last real location.
+                if ($lastFixAt !== null) {
+                    $elapsed = max(1, $fixAt - (int) $lastFixAt);
+                    $impliedKmh = $deltaKm / ($elapsed / 3600);
+                    if ($impliedKmh > self::MAX_PLAUSIBLE_KMH) {
+                        $rejected = true;
+
+                        return;
+                    }
+                }
+
+                if ($deltaKm > self::MIN_DELTA_KM) {
+                    $updates['distance'] = ['action' => 'add', 'amount' => round($deltaKm, 4)];
+                } else {
+                    $deltaKm = 0.0;
+                }
+            }
+
+            // Per-session distance (replacement, not add — we hold the accumulator in settings).
+            $sessionDistanceKm = (float) ($settings['session_distance_km'] ?? 0.0) + $deltaKm;
+            $settings['session_distance_km'] = $sessionDistanceKm;
+            $updates['session_distance'] = (string) round($sessionDistanceKm, 4);
+
+            // Speed stats in raw m/s.
+            $speedMsRaw = $raw['speed'] ?? $raw['spd'] ?? null;
+            if ($speedMsRaw !== null) {
+                $speedMs = (float) $speedMsRaw;
+                $maxMs = max((float) ($settings['session_max_speed_ms'] ?? 0.0), $speedMs);
+                $sumMs = (float) ($settings['session_speed_sum_ms'] ?? 0.0) + $speedMs;
+                $count = (int) ($settings['session_speed_count'] ?? 0) + 1;
+
+                $settings['session_max_speed_ms'] = $maxMs;
+                $settings['session_speed_sum_ms'] = $sumMs;
+                $settings['session_speed_count'] = $count;
+
+                $updates['session_max_speed'] = (string) round($maxMs, 4);
+                $updates['session_avg_speed'] = (string) round($sumMs / $count, 4);
+            }
+
+            // Duration in seconds since session_start.
+            $startedAt = (int) ($settings['session_started_at_unix'] ?? $fixAt);
+            $updates['session_duration'] = (string) max(0, now()->timestamp - $startedAt);
+
+            $settings['last_lat'] = $lat;
+            $settings['last_lng'] = $lng;
+            $settings['last_fix_at_unix'] = $fixAt;
+        });
+
+        if ($rejected) {
+            $this->dropPositionUpdates($updates);
         }
-
-        // Per-session distance (replacement, not add — we hold the accumulator in settings).
-        $sessionDistanceKm = (float) ($settings['session_distance_km'] ?? 0.0) + $deltaKm;
-        $settings['session_distance_km'] = $sessionDistanceKm;
-        $updates['session_distance'] = (string) round($sessionDistanceKm, 4);
-
-        // Speed stats in raw m/s.
-        $speedMsRaw = $raw['speed'] ?? $raw['spd'] ?? null;
-        if ($speedMsRaw !== null) {
-            $speedMs = (float) $speedMsRaw;
-            $maxMs = max((float) ($settings['session_max_speed_ms'] ?? 0.0), $speedMs);
-            $sumMs = (float) ($settings['session_speed_sum_ms'] ?? 0.0) + $speedMs;
-            $count = (int) ($settings['session_speed_count'] ?? 0) + 1;
-
-            $settings['session_max_speed_ms'] = $maxMs;
-            $settings['session_speed_sum_ms'] = $sumMs;
-            $settings['session_speed_count'] = $count;
-
-            $updates['session_max_speed'] = (string) round($maxMs, 4);
-            $updates['session_avg_speed'] = (string) round($sumMs / $count, 4);
-        }
-
-        // Duration in seconds since session_start.
-        $startedAt = (int) ($settings['session_started_at_unix'] ?? now()->timestamp);
-        $updates['session_duration'] = (string) max(0, now()->timestamp - $startedAt);
-
-        $integration->settings = array_merge($settings, [
-            'last_lat' => $lat,
-            'last_lng' => $lng,
-        ]);
-        $integration->save();
     }
 
     /**
      * Wipe all per-session running counters and stamp a new session_started_at.
-     * Leaves last_lat/last_lng alone — those drive the cumulative `distance` control.
+     * Also clears last_lat/last_lng so the first ping of the new session
+     * establishes its own baseline instead of differencing against the previous
+     * session's end point (which injected phantom cross-session distance into
+     * both the session and cumulative counters).
+     *
+     * Mutates $settings in place; the caller owns persistence (under lock).
      */
-    private function resetSessionState(ExternalIntegration $integration, array &$settings, ?string $sessionId): void
+    private function resetSessionState(array &$settings, ?string $sessionId): void
     {
         $settings = array_merge($settings, [
             'session_id' => $sessionId,
@@ -311,7 +366,57 @@ class GpsServiceDriver implements ExternalServiceDriver, StatefulExternalService
             'session_speed_sum_ms' => 0.0,
             'session_speed_count' => 0,
         ]);
-        $integration->settings = $settings;
-        $integration->save();
+
+        unset($settings['last_lat'], $settings['last_lng'], $settings['last_fix_at_unix']);
+    }
+
+    /**
+     * Read-modify-write the integration's settings JSONB under a row lock so
+     * concurrent GPS webhook requests for the same integration serialize
+     * instead of clobbering each other. The caller's in-memory model is synced
+     * to the committed state so a later last_received_at write doesn't revert it.
+     */
+    private function mutateSettingsLocked(ExternalIntegration $integration, callable $mutator): void
+    {
+        DB::transaction(function () use ($integration, $mutator) {
+            $fresh = ExternalIntegration::whereKey($integration->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($fresh === null) {
+                return;
+            }
+
+            $settings = $fresh->settings ?? [];
+            $mutator($settings);
+            $fresh->settings = $settings;
+            $fresh->save();
+
+            // Sync the caller's model to committed state and mark it clean so the
+            // controller's subsequent last_received_at update only touches that
+            // column, never rewriting (stale) settings.
+            $integration->setRawAttributes($fresh->getAttributes(), true);
+        });
+    }
+
+    /**
+     * A coordinate is usable only inside the real lat/lng range. Exact (0,0)
+     * is the classic "no fix yet" sentinel, so it's rejected too.
+     */
+    private function isValidCoordinate(float $lat, float $lng): bool
+    {
+        return is_finite($lat) && is_finite($lng)
+            && $lat >= -90.0 && $lat <= 90.0
+            && $lng >= -180.0 && $lng <= 180.0
+            && ! ($lat === 0.0 && $lng === 0.0);
+    }
+
+    /**
+     * Strip position-derived control updates so a rejected/garbage fix is never
+     * broadcast to overlays or the public map.
+     */
+    private function dropPositionUpdates(array &$updates): void
+    {
+        unset($updates['lat'], $updates['lng'], $updates['speed'], $updates['bearing']);
     }
 }

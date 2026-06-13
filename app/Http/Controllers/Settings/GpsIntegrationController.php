@@ -6,6 +6,7 @@ use App\Events\ControlValueUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
+use App\Models\User;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\MapSlugService;
@@ -166,7 +167,13 @@ class GpsIntegrationController extends Controller
             ->with('success', 'Overlabels GPS disconnected.');
     }
 
-    public function resetDistance(): JsonResponse
+    /**
+     * Reset the CURRENT session distance and stats to 0. Low-stakes: the
+     * cumulative odometer and last position are left untouched, so the session
+     * simply restarts counting from here. (Sessions also reset themselves on
+     * the next session_start; this is for mid-session corrections.)
+     */
+    public function resetSession(): JsonResponse
     {
         $user = auth()->user();
 
@@ -178,10 +185,61 @@ class GpsIntegrationController extends Controller
             return response()->json(['error' => 'Not connected.'], 404);
         }
 
-        // Reset distance controls to 0
+        $this->resetControls($user, [
+            'session_distance',
+            'session_max_speed',
+            'session_avg_speed',
+            'session_duration',
+        ]);
+
+        // Clear only the per-session accumulators; leave cumulative distance and
+        // last position alone. Restamp the session start so duration counts from now.
+        $settings = $integration->settings ?? [];
+        unset(
+            $settings['session_distance_km'],
+            $settings['session_max_speed_ms'],
+            $settings['session_speed_sum_ms'],
+            $settings['session_speed_count'],
+        );
+        $settings['session_started_at_unix'] = now()->timestamp;
+        $integration->settings = $settings;
+        $integration->save();
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Reset the LIFETIME (cumulative) distance to 0. Destructive and
+     * unrecoverable: this is the all-time odometer. Lifetime distance lives only
+     * in the `distance` control value, so we zero that and keep the last
+     * position - the odometer just restarts from the current spot.
+     */
+    public function resetLifetime(): JsonResponse
+    {
+        $user = auth()->user();
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'gps')
+            ->first();
+
+        if (! $integration) {
+            return response()->json(['error' => 'Not connected.'], 404);
+        }
+
+        $this->resetControls($user, ['distance']);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Zero the given GPS control keys and broadcast each change so overlays
+     * update live.
+     */
+    private function resetControls(User $user, array $keys): void
+    {
         $controls = OverlayControl::where('user_id', $user->id)
             ->where('source', 'gps')
-            ->where('key', 'distance')
+            ->whereIn('key', $keys)
             ->where('source_managed', true)
             ->with('template')
             ->get();
@@ -201,13 +259,5 @@ class GpsIntegrationController extends Controller
                 $user->twitch_id,
             );
         }
-
-        // Clear last position from settings
-        $settings = $integration->settings ?? [];
-        unset($settings['last_lat'], $settings['last_lng']);
-        $integration->settings = $settings;
-        $integration->save();
-
-        return response()->json(['status' => 'ok']);
     }
 }
