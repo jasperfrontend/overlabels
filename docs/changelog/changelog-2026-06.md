@@ -10,6 +10,7 @@ GPSLogger (`gpslogger.app`) has been unconnectable from the UI for a while - it 
 - The Overlabels GPS app still authenticates with the `X-GPSLogger-Token` header and sends GPSLogger-style form-encoded payloads - that lives entirely in `GpsServiceDriver` and the webhook parser, untouched here.
 - Prod cleanup: purged the one leftover GPSLogger integration (Brian's abandoned test data from March: 1 integration, 6 events, 5 controls, 1 template mapping).
 - Full suite green (847 passing); Pint and the build are clean.
+
 ## June 13th, 2026 - fix(gps): stop GPS distance running away, and split session vs lifetime reset
 
 A streamer's `c:gps:session_distance` showed 5785 km after 18 metres of actual movement. Tracing prod data, the cause was a class of bugs around the GPS distance accumulators, not a single typo: the phone occasionally emits garbage fixes (confirmed in prod: `lat=1, lon=1e150`, and near-null-island coordinates), and nothing on the backend defended against them. A single bad fix near latitude 0 differenced against a real location in NL injects ~5783 km in one haversine delta - which is exactly the magic number that kept appearing.
