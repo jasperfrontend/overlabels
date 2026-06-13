@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 13th, 2026 - feat(metering): count Reverb broadcasts per user (observe-only) with a Usage page
+
+Reverb fan-out is the one resource that gets expensive as more streamers join, so it becomes the single defacto usage limit in Overlabels - everything else stays free. This lays the foundation: a per-user, per-month counter of outbound broadcasts ("overlay updates"), surfaced in the dashboard and a new Usage settings page. It is OBSERVE-ONLY - nothing is suppressed yet. The free-tier number will be set from real data, then enforcement + a paid tier come later.
+
+- **One chokepoint, not 30.** Every per-user channel embeds the owner's `twitch_id` as its first segment (`alerts.{id}`, `twitch-events.{id}`, `lists.{id}.{slug}`), so rather than instrument the ~30 scattered dispatch sites, a `MeteredBroadcaster` (`app/Broadcasting/`) decorates the Reverb driver and counts at the single point every broadcast funnels through - queued `ShouldBroadcast` and synchronous `ShouldBroadcastNow` alike. Channel registration and subscription auth pass straight through unchanged; only `broadcast()` is decorated.
+- **Activated via `BROADCAST_CONNECTION=metered`** (new `metered` connection in `config/broadcasting.php` that wraps `reverb`). Flipping it back to `reverb` is a full kill-switch. The decorator is registered as a custom broadcast driver in `AppServiceProvider`.
+- **`BroadcastMeter` service** keys counters as `metering:bcast:{twitch_id}:{YYYY-MM}` in Redis with a ~70-day TTL, so they self-expire and need no scheduled reset. Attribution (`ownerFromChannel`) is a pure, unit-tested function; public/global channels (`app-updates`, `bot-channels`, `map.{slug}`) and the niche `gamejam.{id}` feed are intentionally excluded. Every Redis touch is wrapped - a metering failure degrades to "uncounted", never "undelivered".
+- **UI.** Usage is shared globally via Inertia (`HandleInertiaRequests`), rendering a compact "overlay updates this month" strip on the dashboard and a dedicated `settings/Usage` page (current month + 6-month history). When `METERING_FREE_MONTHLY_BROADCASTS` is unset the UI shows the running count and an honest "no limit enforced yet" note; setting a number turns on the progress bar and percentage. New `config/metering.php` holds all knobs.
+- Tests: `BroadcastMeterTest` (channel attribution, observe-only vs capped limit, decorator delegation - no Redis needed) and `UsagePageTest` (page renders with usage + history, usage shared on the dashboard, guests redirected). Pint, ESLint, and the build are clean.
+
 ## June 13th, 2026 - fix(bot): |login formatter lowercases for canonical Twitch URLs
 
 The `|login` formatter stripped the leading `@` but left the original casing, so `!so @UserName56` produced `https://twitch.tv/UserName56`. That redirects, but it isn't the canonical profile URL. Twitch logins are case-insensitive and their canonical URL is lowercase, so `|login` now lowercases as part of the same strip-and-trim step: `@UserName56` -> `username56`. The canonical shoutout now reads `Everybody go follow @UserName56 over at https://twitch.tv/username56`.

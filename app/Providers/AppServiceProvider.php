@@ -2,15 +2,19 @@
 
 namespace App\Providers;
 
+use App\Broadcasting\MeteredBroadcaster;
 use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
 use App\Models\User;
 use App\Observers\UserObserver;
 use App\Services\Bot\RateLimitLog as BotRateLimitLog;
+use App\Services\BroadcastMeter;
 use App\Services\DefaultTemplateProviderService;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -70,6 +74,15 @@ class AppServiceProvider extends ServiceProvider
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
+
+        // Metered broadcaster: decorate the configured underlying connection
+        // (reverb) so every broadcast is counted per user before delivery.
+        // Active only when BROADCAST_CONNECTION=metered.
+        Broadcast::extend('metered', function ($app, array $config) {
+            $inner = $app->make(BroadcastFactory::class)->connection($config['connection'] ?? 'reverb');
+
+            return new MeteredBroadcaster($inner, $app->make(BroadcastMeter::class));
+        });
 
         // Configure rate limiters
         RateLimiter::for('overlay', function (Request $request) {

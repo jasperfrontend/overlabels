@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\StreamElementsIntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
+use App\Http\Controllers\Settings\UsageController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,9 @@ Route::middleware('auth.redirect')->group(function () {
 
     Route::delete('/settings/account', [AccountController::class, 'destroy'])
         ->name('settings.account.destroy');
+
+    Route::get('/settings/usage', [UsageController::class, 'index'])
+        ->name('settings.usage');
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);

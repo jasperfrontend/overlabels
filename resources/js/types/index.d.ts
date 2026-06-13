@@ -30,6 +30,15 @@ export interface StreamState {
     startedAt: string | null;
 }
 
+export interface UsageSummary {
+    /** Broadcasts (overlay updates) counted this month. */
+    broadcasts: number;
+    /** Free-tier monthly ceiling, or null when running observe-only. */
+    limit: number | null;
+    /** The month the count covers, as YYYY-MM. */
+    period: string;
+}
+
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
     quote: { message: string; author: string };
@@ -42,6 +51,7 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
     streamState: StreamState | null;
     twitchScope: { missing: string[] } | null;
+    usage: UsageSummary | null;
 };
 
 

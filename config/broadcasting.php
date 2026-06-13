@@ -30,6 +30,14 @@ return [
 
     'connections' => [
 
+        // Wraps `reverb` (see the `metered` driver in AppServiceProvider) to
+        // count outbound broadcasts per user. Set BROADCAST_CONNECTION=metered
+        // to enable; set it back to `reverb` to bypass metering entirely.
+        'metered' => [
+            'driver' => 'metered',
+            'connection' => 'reverb',
+        ],
+
         'reverb' => [
             'driver' => 'reverb',
             'key' => env('REVERB_APP_KEY'),
