@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - refactor(controls): service controls are a user-scoped class (+ consolidate duplicates)
+
+The root cause of the broadcast fan-out: a service preset (GPS, donation counters) could be added per-overlay, so the same value lived on N rows and broadcast N times. This makes service-managed controls a structurally user-scoped class - one row per (user, source, key) that every overlay renders - so the duplication can't happen by construction. Step 4 of 4 on the fan-out fix.
+
+- **Guard** (`OverlayControlController::store`): adding a service preset to an overlay now provisions the user-scoped control (idempotent `OverlayControl::provisionServiceControl()`) instead of creating a per-overlay copy. The render path already surfaces user-scoped `source_managed` controls on every overlay, and the management UI lists them in its user-scoped section, so the control still shows where expected - it just can't be duplicated. `ControlFormModal` copy explains service controls apply to all overlays.
+- **Consolidation migration** (`2026_06_14_120000_consolidate_service_controls`): collapses existing per-overlay service-control duplicates into the single user-scoped row per (user, source, key). Value precedence: the existing user-scoped row wins; with none, the freshest template-scoped row is promoted. Scoped to `source_managed` + non-null `source` + null `recipe_instance_id`; idempotent; `down()` is a no-op (deleted rows are unrecoverable).
+- **Prod dry-run before merge** (read-only): 97 template-scoped duplicates across 50 (user, source, key) groups, **0 with divergent values** and **0 referenced by list_writers** - so consolidation loses no information and breaks no bindings. Runs on deploy.
+- Tests: the guard creates a user-scoped (not per-overlay) control and is idempotent; the migration collapses-to-existing, promotes-freshest, and is idempotent. Full suite green (857); Pint, ESLint, build clean.
+- Follow-up (not in this PR): a reverse-lookup "which overlays use which controls" observability page - additive and read-only; the dry-run covered the visibility this migration needed.
+
 ## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
 
 Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.

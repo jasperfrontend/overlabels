@@ -86,19 +86,14 @@ class OverlayControlController extends Controller
 
             abort_unless($def !== null, 422, "Invalid key '{$validated['key']}' for service '$source'");
 
-            $control = OverlayControl::create([
-                'overlay_template_id' => $template->id,
-                'user_id' => auth()->id(),
-                'key' => $def['key'],
-                'label' => $validated['label'] ?? $def['label'] ?? null,
-                'description' => $validated['description'] ?? null,
-                'type' => $def['type'],
-                'value' => $def['value'] ?? null,
-                'config' => $def['config'] ?? null,
-                'sort_order' => $validated['sort_order'] ?? 0,
-                'source' => $source,
-                'source_managed' => true,
-            ]);
+            // Service-managed controls are a USER-SCOPED class: one row per
+            // (user, source, key) that every overlay renders, not a per-overlay
+            // copy. Provisioning per-overlay is what drove the broadcast
+            // fan-out (one value broadcast once per duplicate). provision is
+            // idempotent, so re-adding from any overlay just returns the
+            // existing user-scoped control; the render path already surfaces it
+            // on every overlay.
+            $control = OverlayControl::provisionServiceControl(auth()->user(), $source, $def);
 
             return response()->json(['control' => $control], 201);
         }
