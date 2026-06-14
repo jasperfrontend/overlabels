@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - feat(controls): "which overlays use which controls" observability page
+
+Diagnosing the GPS fan-out required SSHing into prod and running ad-hoc queries because there was no way to answer "what controls exist and where do they live" from the UI. This adds a read-only `Settings -> Controls` page that lists every control you own, grouped by key, with its scope (user-scoped service controls show "All overlays"; template-scoped controls list the specific overlays), type, source, current value, and a flag when the same key is duplicated across multiple overlays (the fan-out smell). Follow-up to the service-control-class work.
+
+- New `ControlUsageController` (read-only) groups `OverlayControl` rows by `source:key`, eager-loads the template name/slug, sorts most-instances-first.
+- New `settings/Controls.vue` page + `Controls` entry in the settings nav.
+- Additive and read-only - no schema, no migration, no change to any hot path.
+- Tests: guests are redirected; the page renders grouped controls with scope/overlays/instances. Full suite green (854); Pint, ESLint, build clean.
+
 ## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
 
 Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.

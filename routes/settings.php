@@ -5,6 +5,7 @@ use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotAliasesController;
 use App\Http\Controllers\Settings\BotExpressionsController;
 use App\Http\Controllers\Settings\BotSettingsController;
+use App\Http\Controllers\Settings\ControlUsageController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
@@ -30,6 +31,9 @@ Route::middleware('auth.redirect')->group(function () {
 
     Route::get('/settings/usage', [UsageController::class, 'index'])
         ->name('settings.usage');
+
+    Route::get('/settings/controls', [ControlUsageController::class, 'index'])
+        ->name('settings.controls');
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);
