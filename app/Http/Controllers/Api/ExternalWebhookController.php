@@ -6,6 +6,7 @@ use App\Contracts\StatefulExternalServiceDriver;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
+use App\Services\EventMeter;
 use App\Services\External\ExternalAlertService;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
@@ -169,6 +170,14 @@ class ExternalWebhookController extends Controller
             ]);
 
             return response()->json(['status' => 'duplicate']);
+        }
+
+        // 8b. Meter the inbound event (the usage unit pricing is set against).
+        // One stored event = one count, regardless of how many overlays/controls
+        // it fans out to. Duplicates returned above; settings_sync returned
+        // earlier; test-mode traffic is excluded.
+        if (! $integration->test_mode) {
+            app(EventMeter::class)->record($user->id);
         }
 
         // 9. Update service-managed controls
