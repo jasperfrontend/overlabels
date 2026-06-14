@@ -226,6 +226,52 @@ test('a location ping produces one batched broadcast, not one per control', func
     Event::assertNotDispatched(ControlValueUpdated::class);
 });
 
+test('repeated identical coordinates do not re-broadcast (change detection)', function () {
+    Event::fake([ControlValuesBatchUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    foreach (['lat', 'lng'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
+            'key' => $key, 'type' => 'text', 'label' => $key, 'value' => '0',
+        ]);
+    }
+
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 52.0, 'longitude' => 4.0, 'serial' => '1', 'timestamp' => time(),
+    ]))->assertStatus(200);
+
+    // Identical fix (different serial so it isn't deduped) - a parked device.
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 52.0, 'longitude' => 4.0, 'serial' => '2', 'timestamp' => time() + 5,
+    ]))->assertStatus(200);
+
+    // Only the first ping moved the value; the identical second emits nothing.
+    Event::assertDispatched(ControlValuesBatchUpdated::class, 1);
+});
+
+test('movement beyond the epsilon re-broadcasts', function () {
+    Event::fake([ControlValuesBatchUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'gps', [
+        'key' => 'lat', 'type' => 'text', 'label' => 'lat', 'value' => '0',
+    ]);
+
+    $t = time();
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 52.0, 'longitude' => 4.0, 'serial' => '1', 'timestamp' => $t,
+    ]))->assertStatus(200);
+
+    // ~110 m later (well above the 1e-5 epsilon, well under the teleport cap).
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 52.001, 'longitude' => 4.0, 'serial' => '2', 'timestamp' => $t + 5,
+    ]))->assertStatus(200);
+
+    Event::assertDispatched(ControlValuesBatchUpdated::class, 2);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Distance accumulation
 // ──────────────────────────────────────────────────────────────────────────────
