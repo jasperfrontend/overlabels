@@ -94,7 +94,7 @@ const breadcrumbs = [
         >
           <div class="flex items-center justify-between gap-4">
             <div>
-              <p class="text-sm text-foreground">Overlay updates this month</p>
+              <p class="text-sm text-foreground">Events this month</p>
               <p class="text-2xl font-semibold text-foreground">
                 {{ fmtCount(usage.broadcasts) }}<span v-if="usage.limit" class="text-base font-normal text-muted-foreground"> / {{ fmtCount(usage.limit) }}</span>
               </p>
