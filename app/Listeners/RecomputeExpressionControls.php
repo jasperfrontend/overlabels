@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -78,7 +79,31 @@ class RecomputeExpressionControls
         // expression values; nothing else changes within a single cascade.
         $data = $this->buildDataContext($user);
 
-        $this->walk($event, $user, $data, 0, []);
+        $this->walk($event->key, $event->overlaySlug, $user, $data, 0, []);
+    }
+
+    /**
+     * Batched service-control updates (one GPS ping, one donation) arrive as a
+     * single event carrying many changed keys. Build the (expensive) data
+     * context ONCE and recompute dependents for each key, instead of paying a
+     * full rebuild + Helix fetch per key the way N separate events would.
+     */
+    public function handleBatch(ControlValuesBatchUpdated $event): void
+    {
+        $user = User::where('twitch_id', $event->broadcasterId)->first();
+        if (! $user) {
+            return;
+        }
+
+        $data = $this->buildDataContext($user);
+
+        foreach ($event->updates as $update) {
+            $key = $update['key'] ?? null;
+            if (! is_string($key) || $key === '') {
+                continue;
+            }
+            $this->walk($key, (string) ($update['overlay_slug'] ?? ''), $user, $data, 0, []);
+        }
     }
 
     /**
@@ -92,12 +117,12 @@ class RecomputeExpressionControls
      *                                    recomputed in this cascade (DAG
      *                                    safety net).
      */
-    private function walk(ControlValueUpdated $event, User $user, array &$data, int $depth, array $visited): void
+    private function walk(string $key, string $overlaySlug, User $user, array &$data, int $depth, array $visited): void
     {
         if ($depth >= self::MAX_DEPTH) {
             Log::warning('[recompute-expression] max cascade depth reached', [
                 'depth' => $depth,
-                'key' => $event->key,
+                'key' => $key,
             ]);
 
             return;
@@ -105,7 +130,7 @@ class RecomputeExpressionControls
 
         $dependents = OverlayControl::where('user_id', $user->id)
             ->where('type', 'expression')
-            ->whereJsonContains('config->dependencies', $event->key)
+            ->whereJsonContains('config->dependencies', $key)
             ->get();
 
         if ($dependents->isEmpty()) {
@@ -138,33 +163,23 @@ class RecomputeExpressionControls
 
             // Dispatch the cascade event with the recomputed flag so this
             // listener doesn't re-walk, but other listeners (list_writer,
-            // overlay broadcast) still see the new value.
+            // overlay broadcast) still see the new value. Expression
+            // recomputes are low-volume, so they stay individual events.
             ControlValueUpdated::dispatch(
-                $event->overlaySlug,
+                $overlaySlug,
                 $expr->broadcastKey(),
                 'expression',
                 $newValue,
-                $event->broadcasterId,
+                $user->twitch_id,
                 null,
                 $expression,
                 null,
                 true,
             );
 
-            // Walk the next layer in-process. The dispatched event won't
-            // re-trigger us; we own the cascade walk explicitly.
-            $cascadeEvent = new ControlValueUpdated(
-                $event->overlaySlug,
-                $expr->broadcastKey(),
-                'expression',
-                $newValue,
-                $event->broadcasterId,
-                null,
-                $expression,
-                null,
-                true,
-            );
-            $this->walk($cascadeEvent, $user, $data, $depth + 1, $visited);
+            // Walk the next layer in-process; the dispatched event won't
+            // re-trigger us (alreadyRecomputed), we own the walk explicitly.
+            $this->walk($expr->broadcastKey(), $overlaySlug, $user, $data, $depth + 1, $visited);
         }
     }
 

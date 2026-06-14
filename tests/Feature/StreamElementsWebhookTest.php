@@ -1,6 +1,6 @@
 <?php
 
-use App\Events\ControlValueUpdated;
+use App\Events\ControlValuesBatchUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -132,7 +132,7 @@ test('returns duplicate status for duplicate _id', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('increments donations_received control on tip', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
@@ -150,11 +150,11 @@ test('increments donations_received control on tip', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('sets latest_donor_name on tip', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
@@ -174,7 +174,7 @@ test('sets latest_donor_name on tip', function () {
 });
 
 test('accumulates total_received across multiple tips', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamElementsIntegrationForWebhook();
 
@@ -199,7 +199,7 @@ test('accumulates total_received across multiple tips', function () {
 });
 
 test('non-tip event type is ignored', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [, $integration] = makeStreamElementsIntegrationForWebhook();
 
@@ -207,5 +207,5 @@ test('non-tip event type is ignored', function () {
         ->assertStatus(200)
         ->assertJson(['status' => 'ignored']);
 
-    Event::assertNotDispatched(ControlValueUpdated::class);
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });

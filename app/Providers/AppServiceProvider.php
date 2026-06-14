@@ -152,8 +152,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // BridgePickerLandedToControl is registered via auto-discovery
-        // (Laravel scans app/Listeners and binds handle() by its typed
-        // event parameter), so no explicit Event::listen() call is needed.
+        // (Laravel scans app/Listeners and binds any handle* method by its
+        // typed event parameter), so no explicit Event::listen() call is
+        // needed. This also auto-binds RecomputeExpressionControls::handleBatch
+        // and ListWriterAppend::handleBatch to ControlValuesBatchUpdated, so a
+        // batched service tick drives the same cascades as a single update.
 
         User::observe(UserObserver::class);
     }

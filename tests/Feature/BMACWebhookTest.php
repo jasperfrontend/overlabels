@@ -1,6 +1,6 @@
 <?php
 
-use App\Events\ControlValueUpdated;
+use App\Events\ControlValuesBatchUpdated;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
@@ -163,7 +163,7 @@ test('test mode allows the same payload to be re-fired without dedup', function 
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('refund event types are ignored without storing an external_events row', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeBmacIntegration();
 
@@ -175,7 +175,7 @@ test('refund event types are ignored without storing an external_events row', fu
         ->assertJson(['status' => 'ignored']);
 
     expect(ExternalEvent::where('user_id', $user->id)->count())->toBe(0);
-    Event::assertNotDispatched(ControlValueUpdated::class);
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ test('refund event types are ignored without storing an external_events row', fu
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('increments donations_received and broadcasts the update', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeBmacIntegration();
 
@@ -200,11 +200,11 @@ test('increments donations_received and broadcasts the update', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('membership.started increments donations_received just like a donation', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeBmacIntegration();
 

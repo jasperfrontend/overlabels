@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
@@ -111,7 +112,7 @@ test('returns 200 with duplicate status for duplicate timestamp+serial', functio
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('updates speed, lat, lng controls on location update', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
@@ -153,11 +154,11 @@ test('updates speed, lat, lng controls on location update', function () {
         'value' => '13.89',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('updates bearing, battery, charging controls on location update', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
@@ -197,7 +198,32 @@ test('updates bearing, battery, charging controls on location update', function 
         'value' => '0',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
+});
+
+test('a location ping produces one batched broadcast, not one per control', function () {
+    Event::fake([ControlValuesBatchUpdated::class, ControlValueUpdated::class]);
+
+    [$user, $integration] = makeMobileIntegration();
+
+    foreach (['lat', 'lng', 'speed'] as $key) {
+        OverlayControl::provisionServiceControl($user, 'gps', [
+            'key' => $key,
+            'type' => $key === 'speed' ? 'number' : 'text',
+            'label' => $key,
+            'value' => '0',
+        ]);
+    }
+
+    postMobile($integration->webhook_token, mobilePayload([
+        'latitude' => 52.0, 'longitude' => 4.0, 'speed' => 12.0,
+    ]))->assertStatus(200);
+
+    // The whole ping collapses into a single broadcast carrying every changed
+    // key, instead of one ControlValueUpdated per control instance.
+    Event::assertDispatched(ControlValuesBatchUpdated::class, 1);
+    Event::assertDispatched(ControlValuesBatchUpdated::class, fn ($e) => count($e->updates) >= 3);
+    Event::assertNotDispatched(ControlValueUpdated::class);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -632,7 +658,7 @@ test('GET webhook URL returns 404 for unknown token', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('session_start sets tracking to 1 and stores event', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
@@ -662,11 +688,11 @@ test('session_start sets tracking to 1 and stores event', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('session_end sets tracking to 0 and stores event', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeMobileIntegration();
 
@@ -696,7 +722,7 @@ test('session_end sets tracking to 0 and stores event', function () {
         'value' => '0',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('session_start is deduplicated by session_id', function () {
