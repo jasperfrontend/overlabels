@@ -10,6 +10,7 @@ use App\Observers\UserObserver;
 use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\BroadcastMeter;
 use App\Services\DefaultTemplateProviderService;
+use App\Services\EventMeter;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
@@ -45,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
         // One BroadcastMeter per request so its fail-fast "redis down" flag is
         // shared across the dashboard share and the Usage page reads.
         $this->app->singleton(BroadcastMeter::class);
+
+        // Same per-request singleton treatment for the inbound-event meter.
+        $this->app->singleton(EventMeter::class);
 
         // Register Telescope only in local development
         // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)

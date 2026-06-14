@@ -8,6 +8,7 @@ use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use App\Models\Update;
 use App\Services\BroadcastMeter;
+use App\Services\EventMeter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
@@ -59,7 +60,9 @@ class DashboardController extends Controller
             'recentUpdates' => $recentUpdates,
             'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
             'twitchId' => $user->twitch_id,
-            'usage' => $user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null,
+            'usage' => config('metering.meter_mode', 'both') === 'broadcast'
+                ? ($user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null)
+                : app(EventMeter::class)->summaryFor($user->id),
         ]);
     }
 

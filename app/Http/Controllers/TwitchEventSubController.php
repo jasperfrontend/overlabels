@@ -12,6 +12,7 @@ use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use App\Services\EventMeter;
 use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
@@ -514,6 +515,12 @@ class TwitchEventSubController extends Controller
                 'twitch_timestamp' => now(),
                 'processed' => false,
             ]);
+
+            // Meter the inbound event (the usage unit pricing is set against).
+            // testCheer() synthetic events use a different path and are not counted.
+            if ($user) {
+                app(EventMeter::class)->record($user->id);
+            }
 
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);

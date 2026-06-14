@@ -23,6 +23,23 @@ return [
     // full kill-switch that bypasses the decorator entirely.
     'enabled' => env('METERING_ENABLED', true),
 
+    // Which meter feeds the displayed usage and which counters keep writing.
+    // 'both' (default): write BOTH the legacy broadcast counter (kept as an
+    // internal verification signal while we collapse the GPS fan-out) AND the
+    // input-event counter, and DISPLAY the input count. 'input': stop writing
+    // the broadcast counter. 'broadcast': legacy output-only behaviour.
+    // Inputs are immune to broadcast fan-out, so pricing is set against them.
+    'meter_mode' => env('METERING_MODE', 'both'),
+
+    // Free-tier monthly ceiling in INPUT EVENTS (pings / donations / twitch
+    // events). null = observe-only. This is the number to set pricing against,
+    // since one inbound event is one inbound event regardless of overlay count.
+    'free_monthly_events' => env('METERING_FREE_MONTHLY_EVENTS'),
+
+    // Redis connection backing the input-event counters. Falls back to
+    // redis_connection when unset.
+    'event_redis_connection' => env('METERING_EVENT_REDIS_CONNECTION'),
+
     // Free-tier monthly ceiling, in broadcasts. null = observe-only (no cap,
     // no percentage, just the running total). A number turns on the progress
     // UI. Enforcement (suppressing over-limit broadcasts) is a later phase.
