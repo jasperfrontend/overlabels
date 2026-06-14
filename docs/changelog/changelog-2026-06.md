@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - perf(broadcasts): batch service control updates into one broadcast per tick
+
+A single GPS ping flowed through `ExternalControlService::applyUpdates()` and dispatched one `ControlValueUpdated` per control instance - ~11 keys times however many overlays duplicate each control - fanning one ping out to ~50 Reverb broadcasts. This collapses a whole service tick into ONE `ControlValuesBatchUpdated` carrying every changed key. Step 2 of 4 on the fan-out fix (after input metering). No data migration.
+
+- **New `ControlValuesBatchUpdated` event** on the same `alerts.{twitch_id}` channel (`control.batch`), payload `{ updates: [{overlay_slug, key, type, value}...], updated_at }`. Each element keeps the per-update shape the overlay already understands.
+- **`applyUpdates` accumulates** instead of dispatching in the loop: it still writes each control row, but collects the changes and fires one batch event at the end. The public `map.{slug}` feed stays per-key (minimal, unmetered). Scope is the service/GPS path only; the other 11 `ControlValueUpdated` producers (bot, expression cascade, stream-session, etc.) are unchanged.
+- **`OverlayRenderer`** refactors `handleControlUpdated` into a shared `applyControlUpdate(u)` and adds a `.control.batch` listener that applies each entry through the same path (slug filter + expression/timer/random handling preserved). Overlays open across the deploy refresh via the existing health auto-reload.
+- **Server-side cascades preserved**: `RecomputeExpressionControls` and `ListWriterAppend` gain `handleBatch()` (auto-discovered by Laravel's `handle*` binding) so a batched donation/GPS update still recomputes dependent Expression Controls and appends to bound lists - and the expensive expression data-context is now built ONCE per batch instead of once per key.
+- Tests: a GPS ping now produces exactly one `ControlValuesBatchUpdated` (not N `ControlValueUpdated`); donation/GPS webhook suites updated to assert the batch event; new list-writer and expression-recompute tests prove the batched path still drives both cascades. Full suite green (855); Pint, ESLint, build clean.
+
 ## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
 
 Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.

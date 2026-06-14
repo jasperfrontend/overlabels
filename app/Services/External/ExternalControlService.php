@@ -3,6 +3,7 @@
 namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Events\MapPositionBroadcast;
 use App\Models\ExternalIntegration;
@@ -105,8 +106,15 @@ class ExternalControlService
     }
 
     /**
-     * Apply control updates from a normalized event and broadcast each change.
+     * Apply control updates from a normalized event and broadcast the changes.
      * $updates is a map of control key => new value (or ['action' => 'increment']).
+     *
+     * All control updates from one event (e.g. a GPS ping touching ~11 keys, each
+     * duplicated across overlays) are collapsed into a SINGLE
+     * {@see ControlValuesBatchUpdated} broadcast instead of one per control
+     * instance - that per-instance dispatch is what fanned a single ping out to
+     * ~50 broadcasts. The public `map.{slug}` feed stays per-key (it's minimal
+     * and unmetered).
      */
     public function applyUpdates(User $user, string $service, array $updates): void
     {
@@ -119,6 +127,8 @@ class ExternalControlService
         $mapSlug = $mapSharingEnabled
             ? app(MapSlugService::class)->encode($user->twitch_id)
             : null;
+
+        $batch = [];
 
         foreach ($updates as $key => $update) {
             $controls = OverlayControl::where('user_id', $user->id)
@@ -155,13 +165,12 @@ class ExternalControlService
                     ? ($control->template?->slug ?? '')
                     : '';
 
-                ControlValueUpdated::dispatch(
-                    $overlaySlug,
-                    $control->broadcastKey(),
-                    $control->type,
-                    $newValue,
-                    $user->twitch_id,
-                );
+                $batch[] = [
+                    'overlay_slug' => $overlaySlug,
+                    'key' => $control->broadcastKey(),
+                    'type' => $control->type,
+                    'value' => $newValue,
+                ];
 
                 if ($mapSharingEnabled && $mapSlug !== null && self::isMapSharedKey($key)) {
                     MapPositionBroadcast::dispatch(
@@ -170,8 +179,11 @@ class ExternalControlService
                         $newValue,
                     );
                 }
-
             }
+        }
+
+        if (! empty($batch)) {
+            ControlValuesBatchUpdated::dispatch($user->twitch_id, $batch);
         }
     }
 

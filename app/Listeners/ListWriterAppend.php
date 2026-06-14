@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Events\ListUpdated;
 use App\Models\OptionSet;
@@ -38,7 +39,36 @@ class ListWriterAppend
             return;
         }
 
-        $sourceControl = $this->findSourceControl($user, $event);
+        $this->process($user, $event->key, $event->value, $event->overlaySlug);
+    }
+
+    /**
+     * Batched service-control updates (one GPS ping, one donation) arrive as a
+     * single event carrying many changed keys. Append for each.
+     */
+    public function handleBatch(ControlValuesBatchUpdated $event): void
+    {
+        $user = User::where('twitch_id', $event->broadcasterId)->first();
+        if (! $user) {
+            return;
+        }
+
+        foreach ($event->updates as $update) {
+            $key = $update['key'] ?? null;
+            if (! is_string($key) || $key === '') {
+                continue;
+            }
+            $this->process($user, $key, (string) ($update['value'] ?? ''), (string) ($update['overlay_slug'] ?? ''));
+        }
+    }
+
+    /**
+     * Find every list_writer control bound to the updating control and append
+     * the new value to each writer's target list.
+     */
+    private function process(User $user, string $key, string $value, string $overlaySlug): void
+    {
+        $sourceControl = $this->findSourceControl($user, $key, $overlaySlug);
         if (! $sourceControl) {
             return;
         }
@@ -60,7 +90,7 @@ class ListWriterAppend
             if ($targetId === null) {
                 continue;
             }
-            $this->appendToList($targetId, $event->value, $user);
+            $this->appendToList($targetId, $value, $user);
         }
     }
 
@@ -70,15 +100,15 @@ class ListWriterAppend
      * narrow by overlay slug if the user has multiple controls with the
      * same key on different templates.
      */
-    private function findSourceControl(User $user, ControlValueUpdated $event): ?OverlayControl
+    private function findSourceControl(User $user, string $eventKey, string $overlaySlug): ?OverlayControl
     {
-        $colon = strpos($event->key, ':');
+        $colon = strpos($eventKey, ':');
         if ($colon !== false) {
-            $source = substr($event->key, 0, $colon);
-            $key = substr($event->key, $colon + 1);
+            $source = substr($eventKey, 0, $colon);
+            $key = substr($eventKey, $colon + 1);
         } else {
             $source = null;
-            $key = $event->key;
+            $key = $eventKey;
         }
 
         $query = OverlayControl::where('user_id', $user->id)->where('key', $key);
@@ -96,8 +126,8 @@ class ListWriterAppend
             return $candidates->first();
         }
 
-        if ($event->overlaySlug !== '') {
-            $bySlug = $candidates->first(fn (OverlayControl $c) => $c->template?->slug === $event->overlaySlug);
+        if ($overlaySlug !== '') {
+            $bySlug = $candidates->first(fn (OverlayControl $c) => $c->template?->slug === $overlaySlug);
             if ($bySlug) {
                 return $bySlug;
             }
