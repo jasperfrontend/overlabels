@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - perf(broadcasts): change detection - don't broadcast values that didn't move
+
+Building on batching: a service control whose value didn't actually change no longer persists or broadcasts. For noisy GPS floats - a parked device still jitters in the 6th decimal - the comparison uses a per-key epsilon, so a scooter at a red light emits nothing. Step 3 of 4 on the fan-out fix. No data migration; no frontend change.
+
+- **`ExternalControlService::applyUpdates`** compares each new value against the stored one before persisting/broadcasting. A change within epsilon is dropped from BOTH the DB write and the batch - the stored value stays at the last broadcast value so sub-threshold drift can't accumulate. `increment`/`add` of 0 naturally drop out too.
+- **`config/controls.php`** holds the per-key epsilons (`lat`/`lng` 1e-5 deg ~ 1.1m, `speed` 0.5, `bearing` 1.0; numeric keys default to exact compare; text/boolean use exact string compare). Tunable without a deploy.
+- Stacks on the batch: a stationary device's batch comes out empty, so no broadcast fires at all. A freshly-loaded overlay still reads current values from the DB at render, so suppression never leaves it stale.
+- Tests: repeated identical coordinates broadcast once, not twice; movement beyond the epsilon re-broadcasts (kept under the teleport cap). Full suite green (857); Pint clean.
+
 ## June 14th, 2026 - perf(broadcasts): batch service control updates into one broadcast per tick
 
 A single GPS ping flowed through `ExternalControlService::applyUpdates()` and dispatched one `ControlValueUpdated` per control instance - ~11 keys times however many overlays duplicate each control - fanning one ping out to ~50 Reverb broadcasts. This collapses a whole service tick into ONE `ControlValuesBatchUpdated` carrying every changed key. Step 2 of 4 on the fan-out fix (after input metering). No data migration.

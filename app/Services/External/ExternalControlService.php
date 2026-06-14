@@ -144,6 +144,7 @@ class ExternalControlService
 
             foreach ($controls as $control) {
                 $action = is_array($update) ? ($update['action'] ?? null) : null;
+                $oldValue = (string) ($control->value ?? '');
 
                 if ($action === 'increment') {
                     $step = (float) ($control->config['step'] ?? 1);
@@ -155,6 +156,15 @@ class ExternalControlService
                     $newValue = (string) ($current + $amount);
                 } else {
                     $newValue = OverlayControl::sanitizeValue($control->type, $update);
+                }
+
+                // Change detection: a value that didn't move (within an epsilon
+                // for noisy floats) is dropped from BOTH persistence and the
+                // broadcast. A parked GPS device drifting in the 6th decimal
+                // emits nothing; the stored value stays at the last broadcast
+                // value so drift can't accumulate.
+                if (! $this->valueChanged($key, $control->type, $oldValue, $newValue)) {
+                    continue;
                 }
 
                 $control->update(['value' => $newValue]);
@@ -185,6 +195,42 @@ class ExternalControlService
         if (! empty($batch)) {
             ControlValuesBatchUpdated::dispatch($user->twitch_id, $batch);
         }
+    }
+
+    /**
+     * Whether a control value moved enough to be worth persisting and
+     * broadcasting. Numeric keys with a configured epsilon (GPS floats) use a
+     * threshold compare; other numeric controls use an exact numeric compare;
+     * text/boolean controls use an exact string compare.
+     */
+    private function valueChanged(string $key, string $type, string $old, string $new): bool
+    {
+        $epsilon = $this->epsilonFor($key, $type);
+
+        if ($epsilon !== null) {
+            return abs((float) $new - (float) $old) > $epsilon;
+        }
+
+        return $new !== $old;
+    }
+
+    /**
+     * Resolve the change-detection epsilon for a key, or null when an exact
+     * string comparison should be used (text/boolean controls).
+     */
+    private function epsilonFor(string $key, string $type): ?float
+    {
+        $map = config('controls.change_detection.epsilon', []);
+
+        if (array_key_exists($key, $map)) {
+            return (float) $map[$key];
+        }
+
+        if (in_array($type, ['number', 'counter'], true)) {
+            return (float) ($map['default'] ?? 0.0);
+        }
+
+        return null;
     }
 
     /**
