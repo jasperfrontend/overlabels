@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - refactor(controls): service controls are a user-scoped class (+ consolidate duplicates)
+
+The root cause of the broadcast fan-out: a service preset (GPS, donation counters) could be added per-overlay, so the same value lived on N rows and broadcast N times. This makes service-managed controls a structurally user-scoped class - one row per (user, source, key) that every overlay renders - so the duplication can't happen by construction. Step 4 of 4 on the fan-out fix.
+
+- **Guard** (`OverlayControlController::store`): adding a service preset to an overlay now provisions the user-scoped control (idempotent `OverlayControl::provisionServiceControl()`) instead of creating a per-overlay copy. The render path already surfaces user-scoped `source_managed` controls on every overlay, and the management UI lists them in its user-scoped section, so the control still shows where expected - it just can't be duplicated. `ControlFormModal` copy explains service controls apply to all overlays.
+- **Consolidation migration** (`2026_06_14_120000_consolidate_service_controls`): collapses existing per-overlay service-control duplicates into the single user-scoped row per (user, source, key). Value precedence: the existing user-scoped row wins; with none, the freshest template-scoped row is promoted. Scoped to `source_managed` + non-null `source` + null `recipe_instance_id`; idempotent; `down()` is a no-op (deleted rows are unrecoverable).
+- **Prod dry-run before merge** (read-only): 97 template-scoped duplicates across 50 (user, source, key) groups, **0 with divergent values** and **0 referenced by list_writers** - so consolidation loses no information and breaks no bindings. Runs on deploy.
+- Tests: the guard creates a user-scoped (not per-overlay) control and is idempotent; the migration collapses-to-existing, promotes-freshest, and is idempotent. Full suite green (857); Pint, ESLint, build clean.
+- Follow-up (not in this PR): a reverse-lookup "which overlays use which controls" observability page - additive and read-only; the dry-run covered the visibility this migration needed.
+
 ## June 14th, 2026 - perf(broadcasts): change detection - don't broadcast values that didn't move
 
 Building on batching: a service control whose value didn't actually change no longer persists or broadcasts. For noisy GPS floats - a parked device still jitters in the 6th decimal - the comparison uses a per-key epsilon, so a scooter at a red light emits nothing. Step 3 of 4 on the fan-out fix. No data migration; no frontend change.
@@ -18,6 +28,7 @@ A single GPS ping flowed through `ExternalControlService::applyUpdates()` and di
 - **`OverlayRenderer`** refactors `handleControlUpdated` into a shared `applyControlUpdate(u)` and adds a `.control.batch` listener that applies each entry through the same path (slug filter + expression/timer/random handling preserved). Overlays open across the deploy refresh via the existing health auto-reload.
 - **Server-side cascades preserved**: `RecomputeExpressionControls` and `ListWriterAppend` gain `handleBatch()` (auto-discovered by Laravel's `handle*` binding) so a batched donation/GPS update still recomputes dependent Expression Controls and appends to bound lists - and the expensive expression data-context is now built ONCE per batch instead of once per key.
 - Tests: a GPS ping now produces exactly one `ControlValuesBatchUpdated` (not N `ControlValueUpdated`); donation/GPS webhook suites updated to assert the batch event; new list-writer and expression-recompute tests prove the batched path still drives both cascades. Full suite green (855); Pint, ESLint, build clean.
+
 ## June 14th, 2026 - feat(metering): meter inbound events, not outbound broadcasts
 
 Usage was metered by counting Reverb broadcasts, which made it a function of the broadcast fan-out: one GPS ping fans out to ~50 broadcasts (one per control-instance per overlay), so a single 31-ping session read as 1,690 "overlay updates." That couples pricing to an implementation detail and punishes IRL/GPS streamers ~50x. This switches the usage meter to count the *cause* (inbound events) instead of the *symptom* (broadcasts), so 1 overlay and 200 overlays produce the same number for the same activity. Step 1 of 4 toward fixing the fan-out (see `docs/design` / memory). Additive and observe-only - no enforcement.
