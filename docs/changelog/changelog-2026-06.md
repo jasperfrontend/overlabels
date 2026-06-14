@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - feat(metering): meter inbound events, not outbound broadcasts
+
+Usage was metered by counting Reverb broadcasts, which made it a function of the broadcast fan-out: one GPS ping fans out to ~50 broadcasts (one per control-instance per overlay), so a single 31-ping session read as 1,690 "overlay updates." That couples pricing to an implementation detail and punishes IRL/GPS streamers ~50x. This switches the usage meter to count the *cause* (inbound events) instead of the *symptom* (broadcasts), so 1 overlay and 200 overlays produce the same number for the same activity. Step 1 of 4 toward fixing the fan-out (see `docs/design` / memory). Additive and observe-only - no enforcement.
+
+- **New `app/Services/EventMeter.php`** - mirrors `BroadcastMeter`'s fail-fast Redis discipline (per-request `redisDown` short-circuit, self-expiring monthly keys, `usageFor`/`historyFor`/`summaryFor`/`freeLimit`). Keyed by internal `user_id` under `metering:events:{userId}:{Y-m}` (input boundaries always have the owning user; GPS-only users need no twitch_id). Registered as a per-request singleton.
+- **Counted at the input boundaries**: one increment per stored `ExternalEvent` (GPS ping / donation) in `ExternalWebhookController` and per stored `TwitchEvent` in `TwitchEventSubController`. Duplicates, `settings_sync`, test-mode integrations, and `testCheer()` synthetics are excluded.
+- **`config/metering.php` `meter_mode`** (`both` default | `input` | `broadcast`): `both` keeps the legacy broadcast counter writing as an internal verification signal while displaying the event count; `input` retires the broadcast counter; `broadcast` is the old behaviour. Plus `free_monthly_events` (the ceiling pricing is set against) and `event_redis_connection`.
+- **UI** (`Usage.vue`, dashboard strip): relabeled "Overlay updates" -> "Events" with copy explaining one inbound event counts once regardless of overlay count. Prop shape unchanged.
+- Tests: `EventMeterTest` (key format, observe-only vs capped limit) and `EventMeteringTest` (one ping = one increment; duplicate/settings_sync/test-mode = none). Metering disabled in the test env (`phpunit.xml`) so the suite doesn't pay Redis connect timeouts. Pint, ESLint, build clean.
+
 ## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
 
 Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.
