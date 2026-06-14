@@ -10,6 +10,7 @@ use App\Observers\UserObserver;
 use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\BroadcastMeter;
 use App\Services\DefaultTemplateProviderService;
+use App\Services\EventMeter;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
@@ -45,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
         // One BroadcastMeter per request so its fail-fast "redis down" flag is
         // shared across the dashboard share and the Usage page reads.
         $this->app->singleton(BroadcastMeter::class);
+
+        // Same per-request singleton treatment for the inbound-event meter.
+        $this->app->singleton(EventMeter::class);
 
         // Register Telescope only in local development
         // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)
@@ -148,8 +152,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // BridgePickerLandedToControl is registered via auto-discovery
-        // (Laravel scans app/Listeners and binds handle() by its typed
-        // event parameter), so no explicit Event::listen() call is needed.
+        // (Laravel scans app/Listeners and binds any handle* method by its
+        // typed event parameter), so no explicit Event::listen() call is
+        // needed. This also auto-binds RecomputeExpressionControls::handleBatch
+        // and ListWriterAppend::handleBatch to ControlValuesBatchUpdated, so a
+        // batched service tick drives the same cascades as a single update.
 
         User::observe(UserObserver::class);
     }

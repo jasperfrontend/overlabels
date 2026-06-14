@@ -9,6 +9,45 @@ Diagnosing the GPS fan-out required SSHing into prod and running ad-hoc queries 
 - Additive and read-only - no schema, no migration, no change to any hot path.
 - Tests: guests are redirected; the page renders grouped controls with scope/overlays/instances. Full suite green (854); Pint, ESLint, build clean.
 
+## June 14th, 2026 - refactor(controls): service controls are a user-scoped class (+ consolidate duplicates)
+
+The root cause of the broadcast fan-out: a service preset (GPS, donation counters) could be added per-overlay, so the same value lived on N rows and broadcast N times. This makes service-managed controls a structurally user-scoped class - one row per (user, source, key) that every overlay renders - so the duplication can't happen by construction. Step 4 of 4 on the fan-out fix.
+
+- **Guard** (`OverlayControlController::store`): adding a service preset to an overlay now provisions the user-scoped control (idempotent `OverlayControl::provisionServiceControl()`) instead of creating a per-overlay copy. The render path already surfaces user-scoped `source_managed` controls on every overlay, and the management UI lists them in its user-scoped section, so the control still shows where expected - it just can't be duplicated. `ControlFormModal` copy explains service controls apply to all overlays.
+- **Consolidation migration** (`2026_06_14_120000_consolidate_service_controls`): collapses existing per-overlay service-control duplicates into the single user-scoped row per (user, source, key). Value precedence: the existing user-scoped row wins; with none, the freshest template-scoped row is promoted. Scoped to `source_managed` + non-null `source` + null `recipe_instance_id`; idempotent; `down()` is a no-op (deleted rows are unrecoverable).
+- **Prod dry-run before merge** (read-only): 97 template-scoped duplicates across 50 (user, source, key) groups, **0 with divergent values** and **0 referenced by list_writers** - so consolidation loses no information and breaks no bindings. Runs on deploy.
+- Tests: the guard creates a user-scoped (not per-overlay) control and is idempotent; the migration collapses-to-existing, promotes-freshest, and is idempotent. Full suite green (857); Pint, ESLint, build clean.
+- Follow-up (not in this PR): a reverse-lookup "which overlays use which controls" observability page - additive and read-only; the dry-run covered the visibility this migration needed.
+
+## June 14th, 2026 - perf(broadcasts): change detection - don't broadcast values that didn't move
+
+Building on batching: a service control whose value didn't actually change no longer persists or broadcasts. For noisy GPS floats - a parked device still jitters in the 6th decimal - the comparison uses a per-key epsilon, so a scooter at a red light emits nothing. Step 3 of 4 on the fan-out fix. No data migration; no frontend change.
+
+- **`ExternalControlService::applyUpdates`** compares each new value against the stored one before persisting/broadcasting. A change within epsilon is dropped from BOTH the DB write and the batch - the stored value stays at the last broadcast value so sub-threshold drift can't accumulate. `increment`/`add` of 0 naturally drop out too.
+- **`config/controls.php`** holds the per-key epsilons (`lat`/`lng` 1e-5 deg ~ 1.1m, `speed` 0.5, `bearing` 1.0; numeric keys default to exact compare; text/boolean use exact string compare). Tunable without a deploy.
+- Stacks on the batch: a stationary device's batch comes out empty, so no broadcast fires at all. A freshly-loaded overlay still reads current values from the DB at render, so suppression never leaves it stale.
+- Tests: repeated identical coordinates broadcast once, not twice; movement beyond the epsilon re-broadcasts (kept under the teleport cap). Full suite green (857); Pint clean.
+
+## June 14th, 2026 - perf(broadcasts): batch service control updates into one broadcast per tick
+
+A single GPS ping flowed through `ExternalControlService::applyUpdates()` and dispatched one `ControlValueUpdated` per control instance - ~11 keys times however many overlays duplicate each control - fanning one ping out to ~50 Reverb broadcasts. This collapses a whole service tick into ONE `ControlValuesBatchUpdated` carrying every changed key. Step 2 of 4 on the fan-out fix (after input metering). No data migration.
+
+- **New `ControlValuesBatchUpdated` event** on the same `alerts.{twitch_id}` channel (`control.batch`), payload `{ updates: [{overlay_slug, key, type, value}...], updated_at }`. Each element keeps the per-update shape the overlay already understands.
+- **`applyUpdates` accumulates** instead of dispatching in the loop: it still writes each control row, but collects the changes and fires one batch event at the end. The public `map.{slug}` feed stays per-key (minimal, unmetered). Scope is the service/GPS path only; the other 11 `ControlValueUpdated` producers (bot, expression cascade, stream-session, etc.) are unchanged.
+- **`OverlayRenderer`** refactors `handleControlUpdated` into a shared `applyControlUpdate(u)` and adds a `.control.batch` listener that applies each entry through the same path (slug filter + expression/timer/random handling preserved). Overlays open across the deploy refresh via the existing health auto-reload.
+- **Server-side cascades preserved**: `RecomputeExpressionControls` and `ListWriterAppend` gain `handleBatch()` (auto-discovered by Laravel's `handle*` binding) so a batched donation/GPS update still recomputes dependent Expression Controls and appends to bound lists - and the expensive expression data-context is now built ONCE per batch instead of once per key.
+- Tests: a GPS ping now produces exactly one `ControlValuesBatchUpdated` (not N `ControlValueUpdated`); donation/GPS webhook suites updated to assert the batch event; new list-writer and expression-recompute tests prove the batched path still drives both cascades. Full suite green (855); Pint, ESLint, build clean.
+
+## June 14th, 2026 - feat(metering): meter inbound events, not outbound broadcasts
+
+Usage was metered by counting Reverb broadcasts, which made it a function of the broadcast fan-out: one GPS ping fans out to ~50 broadcasts (one per control-instance per overlay), so a single 31-ping session read as 1,690 "overlay updates." That couples pricing to an implementation detail and punishes IRL/GPS streamers ~50x. This switches the usage meter to count the *cause* (inbound events) instead of the *symptom* (broadcasts), so 1 overlay and 200 overlays produce the same number for the same activity. Step 1 of 4 toward fixing the fan-out (see `docs/design` / memory). Additive and observe-only - no enforcement.
+
+- **New `app/Services/EventMeter.php`** - mirrors `BroadcastMeter`'s fail-fast Redis discipline (per-request `redisDown` short-circuit, self-expiring monthly keys, `usageFor`/`historyFor`/`summaryFor`/`freeLimit`). Keyed by internal `user_id` under `metering:events:{userId}:{Y-m}` (input boundaries always have the owning user; GPS-only users need no twitch_id). Registered as a per-request singleton.
+- **Counted at the input boundaries**: one increment per stored `ExternalEvent` (GPS ping / donation) in `ExternalWebhookController` and per stored `TwitchEvent` in `TwitchEventSubController`. Duplicates, `settings_sync`, test-mode integrations, and `testCheer()` synthetics are excluded.
+- **`config/metering.php` `meter_mode`** (`both` default | `input` | `broadcast`): `both` keeps the legacy broadcast counter writing as an internal verification signal while displaying the event count; `input` retires the broadcast counter; `broadcast` is the old behaviour. Plus `free_monthly_events` (the ceiling pricing is set against) and `event_redis_connection`.
+- **UI** (`Usage.vue`, dashboard strip): relabeled "Overlay updates" -> "Events" with copy explaining one inbound event counts once regardless of overlay count. Prop shape unchanged.
+- Tests: `EventMeterTest` (key format, observe-only vs capped limit) and `EventMeteringTest` (one ping = one increment; duplicate/settings_sync/test-mode = none). Metering disabled in the test env (`phpunit.xml`) so the suite doesn't pay Redis connect timeouts. Pint, ESLint, build clean.
+
 ## June 14th, 2026 - fix(shortcuts): stop page hotkeys leaking into modals and selects
 
 Pressing `e` in the "Type" dropdown of the add-control modal (on `templates/show`) navigated to the template editor instead of jumping the `<select>` to "Expression" - the page-level `e` = "edit this overlay" shortcut won the keystroke and `preventDefault()`'d the native typeahead. Root cause was a focus-guard gap in `useKeyboardShortcuts`, not the Controls tab itself, so the fix is in the composable and covers the whole class of clash.

@@ -3,6 +3,7 @@
 namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Events\MapPositionBroadcast;
 use App\Models\ExternalIntegration;
@@ -105,8 +106,15 @@ class ExternalControlService
     }
 
     /**
-     * Apply control updates from a normalized event and broadcast each change.
+     * Apply control updates from a normalized event and broadcast the changes.
      * $updates is a map of control key => new value (or ['action' => 'increment']).
+     *
+     * All control updates from one event (e.g. a GPS ping touching ~11 keys, each
+     * duplicated across overlays) are collapsed into a SINGLE
+     * {@see ControlValuesBatchUpdated} broadcast instead of one per control
+     * instance - that per-instance dispatch is what fanned a single ping out to
+     * ~50 broadcasts. The public `map.{slug}` feed stays per-key (it's minimal
+     * and unmetered).
      */
     public function applyUpdates(User $user, string $service, array $updates): void
     {
@@ -119,6 +127,8 @@ class ExternalControlService
         $mapSlug = $mapSharingEnabled
             ? app(MapSlugService::class)->encode($user->twitch_id)
             : null;
+
+        $batch = [];
 
         foreach ($updates as $key => $update) {
             $controls = OverlayControl::where('user_id', $user->id)
@@ -134,6 +144,7 @@ class ExternalControlService
 
             foreach ($controls as $control) {
                 $action = is_array($update) ? ($update['action'] ?? null) : null;
+                $oldValue = (string) ($control->value ?? '');
 
                 if ($action === 'increment') {
                     $step = (float) ($control->config['step'] ?? 1);
@@ -147,6 +158,15 @@ class ExternalControlService
                     $newValue = OverlayControl::sanitizeValue($control->type, $update);
                 }
 
+                // Change detection: a value that didn't move (within an epsilon
+                // for noisy floats) is dropped from BOTH persistence and the
+                // broadcast. A parked GPS device drifting in the 6th decimal
+                // emits nothing; the stored value stays at the last broadcast
+                // value so drift can't accumulate.
+                if (! $this->valueChanged($key, $control->type, $oldValue, $newValue)) {
+                    continue;
+                }
+
                 $control->update(['value' => $newValue]);
 
                 // For template-scoped controls, broadcast to the specific overlay slug.
@@ -155,13 +175,12 @@ class ExternalControlService
                     ? ($control->template?->slug ?? '')
                     : '';
 
-                ControlValueUpdated::dispatch(
-                    $overlaySlug,
-                    $control->broadcastKey(),
-                    $control->type,
-                    $newValue,
-                    $user->twitch_id,
-                );
+                $batch[] = [
+                    'overlay_slug' => $overlaySlug,
+                    'key' => $control->broadcastKey(),
+                    'type' => $control->type,
+                    'value' => $newValue,
+                ];
 
                 if ($mapSharingEnabled && $mapSlug !== null && self::isMapSharedKey($key)) {
                     MapPositionBroadcast::dispatch(
@@ -170,9 +189,48 @@ class ExternalControlService
                         $newValue,
                     );
                 }
-
             }
         }
+
+        if (! empty($batch)) {
+            ControlValuesBatchUpdated::dispatch($user->twitch_id, $batch);
+        }
+    }
+
+    /**
+     * Whether a control value moved enough to be worth persisting and
+     * broadcasting. Numeric keys with a configured epsilon (GPS floats) use a
+     * threshold compare; other numeric controls use an exact numeric compare;
+     * text/boolean controls use an exact string compare.
+     */
+    private function valueChanged(string $key, string $type, string $old, string $new): bool
+    {
+        $epsilon = $this->epsilonFor($key, $type);
+
+        if ($epsilon !== null) {
+            return abs((float) $new - (float) $old) > $epsilon;
+        }
+
+        return $new !== $old;
+    }
+
+    /**
+     * Resolve the change-detection epsilon for a key, or null when an exact
+     * string comparison should be used (text/boolean controls).
+     */
+    private function epsilonFor(string $key, string $type): ?float
+    {
+        $map = config('controls.change_detection.epsilon', []);
+
+        if (array_key_exists($key, $map)) {
+            return (float) $map[$key];
+        }
+
+        if (in_array($type, ['number', 'counter'], true)) {
+            return (float) ($map['default'] ?? 0.0);
+        }
+
+        return null;
     }
 
     /**

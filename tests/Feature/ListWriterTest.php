@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ControlValuesBatchUpdated;
 use App\Events\ControlValueUpdated;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
@@ -197,6 +198,20 @@ it('appends a service-managed control value via namespaced broadcast key', funct
     expect(ListItems::values($list->fresh()->items))->toBe(['Alice']);
 });
 
+it('appends a service control value delivered via a batched broadcast', function () {
+    $user = lwUser();
+    $template = lwTemplate($user);
+    $source = lwService($user, 'kofi', 'latest_donor_name');
+    $list = lwList($user, ['slug' => 'kofi_donors_batch']);
+    lwWriter($user, $template, $source, $list);
+
+    ControlValuesBatchUpdated::dispatch((string) $user->twitch_id, [
+        ['overlay_slug' => '', 'key' => 'kofi:latest_donor_name', 'type' => 'text', 'value' => 'Bob'],
+    ]);
+
+    expect(ListItems::values($list->fresh()->items))->toBe(['Bob']);
+});
+
 it('FIFO drops oldest when max_items is exceeded', function () {
     $user = lwUser();
     $template = lwTemplate($user);
@@ -288,6 +303,34 @@ it('recomputes an Expression Control when its dependency updates and appends to 
         ->and(ListItems::values($list->fresh()->items))->toBe(['10'])
         ->and($fake->calls)->toHaveCount(1)
         ->and($fake->calls[0]['expression'])->toBe('c.wins * 2');
+});
+
+it('recomputes an Expression Control from a batched service update', function () {
+    $fake = new FakeExpressionEngineClient;
+    app()->instance(ExpressionEngineClient::class, $fake);
+
+    $user = lwUser();
+    $template = lwTemplate($user);
+
+    $donations = lwService($user, 'kofi', 'total_received');
+    $donations->value = '30';
+    $donations->save();
+
+    $expr = lwExpression($user, $template, 'c["kofi:total_received"] / 100 * 100', 'goal_pct', ['kofi:total_received']);
+
+    $list = lwList($user, ['slug' => 'goal_log']);
+    lwWriter($user, $template, $expr, $list, 'goal_logger');
+
+    $fake->responses['c["kofi:total_received"] / 100 * 100'] = '30';
+
+    // A donation arrives as a batched broadcast - the expression depending on
+    // the service control must still recompute and cascade to the list.
+    ControlValuesBatchUpdated::dispatch((string) $user->twitch_id, [
+        ['overlay_slug' => '', 'key' => 'kofi:total_received', 'type' => 'number', 'value' => '30'],
+    ]);
+
+    expect($expr->fresh()->value)->toBe('30')
+        ->and(ListItems::values($list->fresh()->items))->toBe(['30']);
 });
 
 it('cascades through chained expression controls (A -> B)', function () {

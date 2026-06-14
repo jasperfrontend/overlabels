@@ -516,6 +516,10 @@ async function save() {
                 Browse all presets &rarr;
               </a>
             </div>
+            <p class="text-xs text-foreground">
+              Service controls are shared across all your overlays automatically - adding one here makes it
+              available everywhere, you don't add it per overlay.
+            </p>
             <Combobox v-model="servicePresetKey" open-on-click open-on-focus ignore-filter>
               <ComboboxAnchor>
                 <ComboboxInput

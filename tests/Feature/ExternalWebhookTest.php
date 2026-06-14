@@ -1,6 +1,6 @@
 <?php
 
-use App\Events\ControlValueUpdated;
+use App\Events\ControlValuesBatchUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -127,7 +127,7 @@ test('returns 200 with duplicate status for duplicate message_id', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('increments donations_received control on donation', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeKofiIntegration();
 
@@ -145,17 +145,17 @@ test('increments donations_received control on donation', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('ignored event type does not update controls', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [, $integration] = makeKofiIntegration();
 
     postKofi($integration->webhook_token, kofiPayload(['type' => 'Commission']))->assertStatus(200);
 
-    Event::assertNotDispatched(ControlValueUpdated::class);
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -262,7 +262,7 @@ test('fourthwall webhook deduplicates on data.id across retries', function () {
 });
 
 test('fourthwall webhook increments donations_received control', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeFourthwallIntegration();
 
@@ -279,11 +279,11 @@ test('fourthwall webhook increments donations_received control', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('fourthwall webhook ignores unsupported event types without updating controls', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [, $integration] = makeFourthwallIntegration();
 
@@ -294,5 +294,5 @@ test('fourthwall webhook ignores unsupported event types without updating contro
         ->assertStatus(200)
         ->assertJson(['status' => 'ignored']);
 
-    Event::assertNotDispatched(ControlValueUpdated::class);
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });

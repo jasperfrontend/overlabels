@@ -669,8 +669,11 @@ function setupAlertListener() {
   // and play after the alert's tts_delay_ms relative to when the alert fired.
   channel.listen('.tts.ready', handleTtsAudioReady);
 
-  // Listen for control value updates
+  // Listen for control value updates. Single updates (.control.updated) come
+  // from user actions; batched updates (.control.batch) collapse a service
+  // tick's many key changes (e.g. a GPS ping) into one event to kill fan-out.
   channel.listen('.control.updated', handleControlUpdated);
+  channel.listen('.control.batch', handleControlBatch);
 
   // Listen for user-managed List saves/deletes (the new Lists feature).
   // Lists ship as c:list:<slug> = JSON array string + c:list:<slug>.N
@@ -701,6 +704,20 @@ function setupAlertListener() {
 }
 
 function handleControlUpdated(event: any) {
+  applyControlUpdate(event);
+}
+
+// A batched broadcast carries many control updates from one service tick under
+// a single channel message. Apply each through the same path as a single update;
+// the batch's updated_at stamps any element that doesn't carry its own.
+function handleControlBatch(event: any) {
+  if (!event || !Array.isArray(event.updates)) return;
+  for (const u of event.updates) {
+    applyControlUpdate({ ...u, updated_at: u.updated_at ?? event.updated_at });
+  }
+}
+
+function applyControlUpdate(event: any) {
   // User-scoped (service-managed) controls broadcast with an empty overlay_slug — apply to all overlays.
   // Template-scoped controls include the slug and are filtered to match only their overlay.
   const isUserScoped = !event.overlay_slug;

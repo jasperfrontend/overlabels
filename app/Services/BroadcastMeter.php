@@ -47,6 +47,12 @@ class BroadcastMeter
             return;
         }
 
+        // In 'input' mode the broadcast counter is retired; 'both' keeps it
+        // writing as an internal verification signal alongside the event meter.
+        if (config('metering.meter_mode', 'both') === 'input') {
+            return;
+        }
+
         $prefixes = config('metering.channels', ['alerts', 'twitch-events', 'lists']);
 
         $owners = [];
