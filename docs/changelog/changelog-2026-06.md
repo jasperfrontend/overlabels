@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 14th, 2026 - feat(controls): "which overlays use which controls" observability page
+
+Diagnosing the GPS fan-out required SSHing into prod and running ad-hoc queries because there was no way to answer "what controls exist and where do they live" from the UI. This adds a read-only `Settings -> Controls` page that lists every control you own, grouped by key, with its scope (user-scoped service controls show "All overlays"; template-scoped controls list the specific overlays), type, source, current value, and a flag when the same key is duplicated across multiple overlays (the fan-out smell). Follow-up to the service-control-class work.
+
+- New `ControlUsageController` (read-only) groups `OverlayControl` rows by `source:key`, eager-loads the template name/slug, sorts most-instances-first.
+- New `settings/Controls.vue` page + `Controls` entry in the settings nav.
+- Additive and read-only - no schema, no migration, no change to any hot path.
+- Tests: guests are redirected; the page renders grouped controls with scope/overlays/instances. Full suite green (854); Pint, ESLint, build clean.
+
 ## June 14th, 2026 - refactor(controls): service controls are a user-scoped class (+ consolidate duplicates)
 
 The root cause of the broadcast fan-out: a service preset (GPS, donation counters) could be added per-overlay, so the same value lived on N rows and broadcast N times. This makes service-managed controls a structurally user-scoped class - one row per (user, source, key) that every overlay renders - so the duplication can't happen by construction. Step 4 of 4 on the fan-out fix.
