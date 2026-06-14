@@ -1,6 +1,6 @@
 <?php
 
-use App\Events\ControlValueUpdated;
+use App\Events\ControlValuesBatchUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -134,7 +134,7 @@ test('returns 200 with duplicate status for duplicate event_id', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('increments donations_received control on donation', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamLabsIntegration();
 
@@ -152,11 +152,11 @@ test('increments donations_received control on donation', function () {
         'value' => '1',
     ]);
 
-    Event::assertDispatched(ControlValueUpdated::class);
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
 });
 
 test('sets latest_donor_name on donation', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamLabsIntegration();
 
@@ -176,7 +176,7 @@ test('sets latest_donor_name on donation', function () {
 });
 
 test('accumulates total_received across multiple donations', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [$user, $integration] = makeStreamLabsIntegration();
 
@@ -201,7 +201,7 @@ test('accumulates total_received across multiple donations', function () {
 });
 
 test('non-donation event type is ignored', function () {
-    Event::fake([ControlValueUpdated::class]);
+    Event::fake([ControlValuesBatchUpdated::class]);
 
     [, $integration] = makeStreamLabsIntegration();
 
@@ -209,5 +209,5 @@ test('non-donation event type is ignored', function () {
         ->assertStatus(200)
         ->assertJson(['status' => 'ignored']);
 
-    Event::assertNotDispatched(ControlValueUpdated::class);
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });

@@ -72,15 +72,15 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
     <SettingsLayout>
       <div class="space-y-6">
         <HeadingSmall
-          title="Overlay updates"
-          description="Every real-time push to your overlays - an alert firing, a control changing, a Twitch event, a list updating - counts as one update. It is the single usage limit in Overlabels. Everything else is free."
+          title="Events"
+          description="Every inbound event you generate - a GPS ping, a donation, a Twitch follow/sub/cheer - counts as one. It is the single usage limit in Overlabels, and it is the same whether you run 1 overlay or 50. Everything else is free."
         />
 
         <div class="rounded-md border border-sidebar p-6">
           <div class="flex items-baseline justify-between gap-4">
             <div>
               <p class="text-3xl font-semibold text-foreground">{{ fmt(usage.broadcasts) }}</p>
-              <p class="text-sm text-muted-foreground">updates this month ({{ monthLabel(usage.period) }})</p>
+              <p class="text-sm text-muted-foreground">events this month ({{ monthLabel(usage.period) }})</p>
             </div>
             <div v-if="hasLimit" class="text-right">
               <p class="text-sm text-foreground">{{ fmt(usage.limit as number) }} included</p>
@@ -92,18 +92,18 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
             <div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div class="h-full rounded-full transition-all" :class="barColor" :style="{ width: percentUsed + '%' }" />
             </div>
-            <p class="mt-2 text-xs text-muted-foreground">{{ percentUsed }}% of your monthly updates used.</p>
+            <p class="mt-2 text-xs text-muted-foreground">{{ percentUsed }}% of your monthly events used.</p>
           </template>
 
           <p v-else class="mt-4 text-sm text-foreground">
-            No limit is being enforced yet. Overlabels is counting your updates so a fair free-tier ceiling can be set
+            No limit is being enforced yet. Overlabels is counting your events so a fair free-tier ceiling can be set
             from real usage. Your overlays will never be cut off without plenty of notice first.
           </p>
         </div>
       </div>
 
       <div class="space-y-6">
-        <HeadingSmall title="Recent months" description="Your update count over the last six months. Counters reset on the 1st." />
+        <HeadingSmall title="Recent months" description="Your event count over the last six months. Counters reset on the 1st." />
 
         <div class="space-y-2">
           <div v-for="month in history" :key="month.period" class="flex items-center gap-3">
