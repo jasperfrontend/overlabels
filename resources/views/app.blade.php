@@ -67,7 +67,12 @@
         <meta name="twitter:image" content="{{ $ogData['image'] }}" />
         <meta name="twitter:image:alt" content="{{ $ogData['image_alt'] }}" />
 
-        @routes
+        @php
+            $ziggyGroup = ! auth()->check()
+                ? 'guest'
+                : (auth()->user()->isAdmin() ? 'admin' : 'user');
+        @endphp
+        @routes($ziggyGroup)
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
     </head>

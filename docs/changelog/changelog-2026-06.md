@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 16th, 2026 - chore(ziggy): role-scoped route output (stop shipping every route to every page)
+
+Ziggy emitted nearly the full route table into the `<head>` of every page via a bare `@routes`, including admin routes for non-admins. The fix uses Ziggy's route groups, resolved per request from the visitor's auth state, so each page only carries the routes that role can reach.
+
+- **`config/ziggy.php`**: replaced the single `user`/`admin`/`guest` stub groups + top-level `except` list with three real groups (`guest`, `user`, `admin`). The former `except` entries are now `!` negation patterns in a shared `$hidden` array folded into each group - required because passing a group to `@routes` makes Ziggy ignore the top-level `except` entirely (`Ziggy::applyFilters()`). `user` adds `!admin.*` so non-admins never receive admin route definitions; `admin` keeps them.
+- **`resources/views/app.blade.php`**: `@routes` now takes a group resolved inline - `guest` when logged out, `admin` for `isAdmin()` users, `user` otherwise.
+- Payload-trimming and hygiene, not access control: admin routes were already protected server-side by `admin.role` middleware (404 for non-admins). This just stops leaking their URIs and shrinks the per-page route blob.
+- No schema, no migration. Cleared config + view caches.
+
 ## June 14th, 2026 - feat(controls): "which overlays use which controls" observability page
 
 Diagnosing the GPS fan-out required SSHing into prod and running ad-hoc queries because there was no way to answer "what controls exist and where do they live" from the UI. This adds a read-only `Settings -> Controls` page that lists every control you own, grouped by key, with its scope (user-scoped service controls show "All overlays"; template-scoped controls list the specific overlays), type, source, current value, and a flag when the same key is duplicated across multiple overlays (the fan-out smell). Follow-up to the service-control-class work.
