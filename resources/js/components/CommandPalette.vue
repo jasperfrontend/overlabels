@@ -26,6 +26,7 @@ import {
 } from '@lucide/vue';
 
 const page = usePage<AppPageProps>();
+const user = computed(() => page.props.auth.user);
 const isAdmin = computed(() => page.props.isAdmin);
 
 const open = ref(false);
@@ -45,6 +46,11 @@ interface PaletteItem {
 // Curated list of navigable destinations, not a raw route dump.
 // This is intentional: users want destinations, not POST endpoints.
 const items = computed<PaletteItem[]>(() => {
+  // Every destination below is an authenticated route, absent from the `guest`
+  // Ziggy group - calling route() for those names would throw for a logged-out
+  // visitor (e.g. browsing /help), so bail before building the list.
+  if (!user.value) return [];
+
   const list: PaletteItem[] = [
     { id: 'dashboard', label: 'Dashboard', section: 'Navigation', href: route('dashboard.index'), icon: House, keywords: ['home', 'start'] },
     { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
