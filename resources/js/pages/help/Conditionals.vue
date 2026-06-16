@@ -1392,7 +1392,7 @@ function clearFilter() {
               <p class="mb-3 text-foreground">
                 These are the collections you can put on the right-hand side of <code>[[[foreach:X as Y]]]</code>.
                 Event collections follow Twitch's own limits. User-scope collections obey the caps on your
-                <Link :href="route('settings.account')" class="underline hover:no-underline">Account settings page</Link>
+                <Link href="/settings/account" class="underline hover:no-underline">Account settings page</Link>
                 (hard maximum 50 per loop).
               </p>
               <div class="overflow-x-auto">

@@ -49,28 +49,48 @@ const isAdmin = computed(() => page.props.isAdmin);
 //@ts-expect-error on runtime __COMMIT_HASH__ is replaced by the actual commit hash through Vite
 const commitHash = __COMMIT_HASH__;
 
-const mainNavItems: NavItem[] = [
-  { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
-  { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
-  { title: 'Lists', href: route('lists.index'), icon: ListIcon },
-  { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
-];
-const botNavItems: NavItem[] = [
-  { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: MessageSquare },
-  { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode }
-];
+// These arrays call route() for routes that only exist in the authenticated
+// Ziggy group, so they must be computed and gated by `user` - building them
+// eagerly would call route() for a logged-out visitor (whose `guest` group
+// lacks these names) and Ziggy would throw.
+const mainNavItems = computed<NavItem[]>(() =>
+  user.value
+    ? [
+        { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
+        { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
+        { title: 'Lists', href: route('lists.index'), icon: ListIcon },
+        { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
+      ]
+    : []
+);
+const botNavItems = computed<NavItem[]>(() =>
+  user.value
+    ? [
+        { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: MessageSquare },
+        { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode }
+      ]
+    : []
+);
 
-const alertsNavItems: NavItem[] = [
-  { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
-  { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
-  { title: 'Routes', href: route('dashboard.gps-sessions'), icon: Radio }
-];
+const alertsNavItems = computed<NavItem[]>(() =>
+  user.value
+    ? [
+        { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
+        { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
+        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: Radio }
+      ]
+    : []
+);
 
-const learnNavItems: NavItem[] = [
-  { title: 'Learn', href: route('help'), icon: BookOpen },
-  { title: 'Reference', href: route('help.reference'), icon: Brackets },
-  { title: 'Updates', href: route('updates.index'), icon: Newspaper }
-];
+const learnNavItems = computed<NavItem[]>(() =>
+  user.value
+    ? [
+        { title: 'Learn', href: route('help'), icon: BookOpen },
+        { title: 'Reference', href: route('help.reference'), icon: Brackets },
+        { title: 'Updates', href: route('updates.index'), icon: Newspaper }
+      ]
+    : []
+);
 
 const helpNavItems: NavItem[] = [
   { title: 'Help', href: '/help', icon: BookOpen },
@@ -84,25 +104,31 @@ const helpNavItems: NavItem[] = [
   { title: 'Manifesto', href: '/help/manifesto', icon: FileText }
 ];
 
-const adminDashboardItem: NavItem = { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck };
-const adminSectionItems: NavItem[] = [
-  { title: 'Users', href: route('admin.users.index'), icon: Users },
-  { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
-  { title: 'Events', href: route('admin.events.index'), icon: Radio },
-  { title: 'Tags', href: route('admin.tags.index'), icon: Brackets },
-  { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },
-  { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
-  { title: 'Bans', href: route('admin.bans.index'), icon: ShieldBan },
-  { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
-  { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
-  { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
-  { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper }
-];
-
 const isOnAdminPage = computed(() => page.url.startsWith('/admin'));
-const adminNavItems = computed<NavItem[]>(() =>
-  isOnAdminPage.value ? [adminDashboardItem, ...adminSectionItems] : [adminDashboardItem]
-);
+// route('admin.*') only exists in the `admin` Ziggy group, so these must be
+// built lazily and gated by `isAdmin` - a logged-in non-admin's `user` group
+// excludes admin.* and Ziggy would throw if these ran eagerly.
+const adminNavItems = computed<NavItem[]>(() => {
+  if (!isAdmin.value) return [];
+
+  const dashboard: NavItem = { title: 'Dashboard', href: route('admin.dashboard'), icon: ShieldCheck };
+  if (!isOnAdminPage.value) return [dashboard];
+
+  return [
+    dashboard,
+    { title: 'Users', href: route('admin.users.index'), icon: Users },
+    { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
+    { title: 'Events', href: route('admin.events.index'), icon: Radio },
+    { title: 'Tags', href: route('admin.tags.index'), icon: Brackets },
+    { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },
+    { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
+    { title: 'Bans', href: route('admin.bans.index'), icon: ShieldBan },
+    { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
+    { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
+    { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
+    { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper }
+  ];
+});
 
 </script>
 

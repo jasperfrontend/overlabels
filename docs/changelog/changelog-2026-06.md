@@ -1,5 +1,17 @@
 # CHANGELOG JUNE 2026
 
+## June 16th, 2026 - chore(ziggy): role-scoped route output (stop shipping every route to every page)
+
+Ziggy emitted nearly the full route table into the `<head>` of every page via a bare `@routes`, including admin routes for non-admins. The fix uses Ziggy's route groups, resolved per request from the visitor's auth state, so each page only carries the routes that role can reach.
+
+- **`config/ziggy.php`**: replaced the single `user`/`admin`/`guest` stub groups + top-level `except` list with three real groups (`guest`, `user`, `admin`). The former `except` entries are now `!` negation patterns in a shared `$hidden` array folded into each group - required because passing a group to `@routes` makes Ziggy ignore the top-level `except` entirely (`Ziggy::applyFilters()`). `user` adds `!admin.*` so non-admins never receive admin route definitions; `admin` keeps them.
+- **`resources/views/app.blade.php`**: `@routes` now takes a group resolved inline - `guest` when logged out, `admin` for `isAdmin()` users, `user` otherwise.
+- Payload-trimming and hygiene, not access control: admin routes were already protected server-side by `admin.role` middleware (404 for non-admins). This just stops leaking their URIs and shrinks the per-page route blob.
+- **`AppSidebar.vue`**: its nav arrays were plain consts that called `route()` at component setup, so they fired for every visitor regardless of `v-if` - which threw once those routes left the active group (admin routes for non-admins, all app routes for guests on `/help`). Converted the affected arrays to `computed`s gated by `user` / `isAdmin`, so `route()` only runs for the role whose group contains those names. The `guest` nav already used plain string hrefs, so it was unaffected.
+- **`CommandPalette.vue`**: mounted unconditionally in `AppLayout`, its `items` computed called `route('settings.account')` and other authenticated routes regardless of auth state. For a guest deeper in `/help` this threw, and the throw inside a render function surfaced as a "Maximum recursive updates exceeded" loop. Gated the computed to return `[]` when there's no user. (`ReferencePalette` alongside it has no `route()` calls; `UserMenuContent`'s eager `route()` consts are fine because it only renders behind a `user` guard.)
+- **`help/Conditionals.vue`**: a body-copy link used `route('settings.account')`, an authed route, inside a guest-visible help page - swapped for the plain `/settings/account` href (a logged-out click just hits the normal auth redirect). Swept the rest of `resources/js/pages/help/`: the only other `route()` calls are `help.*` names, which the `guest` group includes, so they resolve fine.
+- No schema, no migration. Cleared config + view caches.
+
 ## June 14th, 2026 - feat(controls): "which overlays use which controls" observability page
 
 Diagnosing the GPS fan-out required SSHing into prod and running ad-hoc queries because there was no way to answer "what controls exist and where do they live" from the UI. This adds a read-only `Settings -> Controls` page that lists every control you own, grouped by key, with its scope (user-scoped service controls show "All overlays"; template-scoped controls list the specific overlays), type, source, current value, and a flag when the same key is duplicated across multiple overlays (the fan-out smell). Follow-up to the service-control-class work.
