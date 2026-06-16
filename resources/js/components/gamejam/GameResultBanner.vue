@@ -21,7 +21,7 @@ const page = usePage();
     <h2 :class="['text-8xl font-bold mb-4', titleClass]">{{ title }}</h2>
     <p class="text-3xl">{{ props.description }}</p>
     <p class="text-xl mt-8 text-olive-400">{{ props.footnote }}</p>
-    <a :href="page.props.ziggy.location">OK</a>
+    <a :href="page.url">OK</a>
   </div>
 </template>
 

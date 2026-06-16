@@ -1,5 +1,4 @@
 import type { LucideIcon } from '@lucide/vue';
-import type { Config } from 'ziggy-js';
 
 export interface Auth {
     csrf: string | null | undefined;
@@ -43,7 +42,6 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
-    ziggy: Config & { location: string };
     sidebarOpen: boolean;
     flash: FlashMessage;
     isAdmin: boolean;

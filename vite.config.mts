@@ -11,7 +11,7 @@ try {
     commitHash = (process.env.APP_COMMIT_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA ?? 'dev').substring(0, 7);
 }
 
-export default defineConfig(({ isSsrBuild }) => ({
+export default defineConfig(() => ({
     define: {
         __COMMIT_HASH__: JSON.stringify(commitHash),
     },
@@ -23,7 +23,6 @@ export default defineConfig(({ isSsrBuild }) => ({
                 'resources/js/map/app.ts',
                 'resources/js/help-reference/main.ts',
             ],
-            ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
         tailwindcss(),
@@ -39,24 +38,22 @@ export default defineConfig(({ isSsrBuild }) => ({
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
-            output: isSsrBuild
-                ? {}
-                : {
-                      // Rolldown (Vite 8) only accepts the function form of manualChunks.
-                      // Match by node_modules path to preserve the previous object grouping.
-                      manualChunks(id) {
-                          if (!id.includes('node_modules')) return;
-                          if (id.includes('/vue-codemirror/') || id.includes('/codemirror/') || id.includes('/@codemirror/')) {
-                              return 'codemirror';
-                          }
-                          if (id.includes('/pusher-js/') || id.includes('/laravel-echo/')) {
-                              return 'websocket';
-                          }
-                          if (id.includes('/leaflet/')) {
-                              return 'leaflet';
-                          }
-                      },
-                  },
+            output: {
+                // Rolldown (Vite 8) only accepts the function form of manualChunks.
+                // Match by node_modules path to preserve the previous object grouping.
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) return;
+                    if (id.includes('/vue-codemirror/') || id.includes('/codemirror/') || id.includes('/@codemirror/')) {
+                        return 'codemirror';
+                    }
+                    if (id.includes('/pusher-js/') || id.includes('/laravel-echo/')) {
+                        return 'websocket';
+                    }
+                    if (id.includes('/leaflet/')) {
+                        return 'leaflet';
+                    }
+                },
+            },
         },
     },
 }));
