@@ -8,7 +8,6 @@ use App\Services\LockdownService;
 use App\Services\TwitchScopeService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -56,10 +55,6 @@ class HandleInertiaRequests extends Middleware
                     'locale',
                     'foreach_caps',
                 ]) : null,
-            ],
-            'ziggy' => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
             ],
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),

@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 16th, 2026 - chore(inertia): drop the Ziggy shared prop and remove dead SSR
+
+The role-scoped `@routes` change only trimmed the `<head>` copy of the route table. A second, full copy was still shipped in the `<body>`: `HandleInertiaRequests` shared `'ziggy' => (new Ziggy)->toArray()` as a prop, dumping every route (all `admin.*`, `settings.*`, etc.) into the `data-page` JSON of every page, including for guests. Nothing on the client read it - `route()` resolves against the `@routes` global - so it was pure dead weight. Its only consumer was Inertia SSR, which was abandoned mid-attempt and never runs (the prod body renders empty; no SSR process is deployed). This removes both.
+
+- **`HandleInertiaRequests`**: removed the `ziggy` shared prop (and the now-unused `Tighten\Ziggy\Ziggy` import). The full route table no longer appears in any page body - verified the rendered home page now carries 0 `admin.*` refs (head + body), down from the entire table.
+- **`.location` readers repointed to `page.url`**: `settings/Layout.vue` and `gamejam/GameResultBanner.vue` were the only client readers of the prop, and both only used `ziggy.location` (a URL string). Swapped to Inertia's built-in `page.url`. Removed `ziggy` from the `AppPageProps` type and its now-unused `Config` import.
+- **Dead SSR removed**: `config/inertia.php` `ssr.enabled` flipped to `false`; deleted `resources/js/ssr.ts`, the `build:ssr` script, the vite `ssr` input + `isSsrBuild` branch, and the local (gitignored) `bootstrap/ssr` bundle. Note on the flag: the SSR gateway (`HttpGateway::dispatch`) bails before any HTTP call when no bundle exists, so prod paid no per-request cost; flipping it off is honesty + a footgun guard (a stray `build:ssr` would have re-armed a failed `Http::post` per request against a server that isn't there).
+- The `@routes` head copy (guest/user/admin group) is unchanged and remains the single source for client `route()`. Build, lint clean.
+
 ## June 16th, 2026 - chore(ziggy): role-scoped route output (stop shipping every route to every page)
 
 Ziggy emitted nearly the full route table into the `<head>` of every page via a bare `@routes`, including admin routes for non-admins. The fix uses Ziggy's route groups, resolved per request from the visitor's auth state, so each page only carries the routes that role can reach.
