@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 17th, 2026 - chore(deps): refresh dependencies to latest, close phpseclib SSRF advisory
+
+Routine "keep the tree current" pass across both package managers, prompted by a fresh advisory. Composer audit flagged one real issue: `phpseclib/phpseclib` 3.0.53 (pulled in transitively by `laravel/socialite`) was affected by a medium-severity SSRF advisory published June 16th (GHSA-m557-wrgg-6rp4: X.509 validation makes attacker-controlled outbound requests via Authority Information Access). npm audit was already clean.
+
+- **Composer (in-range updates)**: `phpseclib` 3.0.53 -> 3.0.55 (closes the SSRF advisory), `laravel/framework` 13.15.0 -> 13.16.1, `laravel/socialite` 5.27.0 -> 5.28.0, `intervention/image` 4.1.3 -> 4.1.4, `laravel/pint` 1.29.1 -> 1.29.3, plus transitive bumps. `composer audit` now reports no advisories.
+- **npm (in-range updates)**: `axios` 1.17.0 -> 1.18.0, `@lucide/vue` 1.18.0 -> 1.20.0, `typescript-eslint` 8.61.0 -> 8.61.1, `vue-tsc` 3.3.4 -> 3.3.5, plus transitive bumps. `npm audit` clean (0 vulnerabilities).
+- **ESLint 9 -> 10 (dev tooling)**: bumped `eslint` and `@eslint/js` to `^10`. Node 22.14 satisfies eslint 10's engine floor (>=22.13.0), and the lint ecosystem (typescript-eslint, `@vue/eslint-config-typescript`, eslint-plugin-vue) all declare `^10` peer support. Lint runs clean.
+- **Dropped a dead optional dependency**: removed the `@rollup/rollup-linux-x64-gnu` 4.9.5 pin from `optionalDependencies`. Vite 8 bundles rolldown, not rollup, so nothing in the tree depends on it - the real Linux bundler binary (`@rolldown/binding-linux-x64-gnu` 1.0.3) plus oxide/lightningcss linux-x64-gnu all resolve automatically in the lockfile (lockfileVersion 3 stores every platform variant regardless of dev OS). The remaining oxide/lightningcss pins were left as-is (still resolve to current versions; removing them adds risk for no gain).
+- Verified: `composer audit` clean, `npm audit` 0 vulnerabilities, ESLint clean, Vite build succeeds, full PHP suite green (871 passed, 2374 assertions).
+
 ## June 16th, 2026 - chore(inertia): drop the Ziggy shared prop and remove dead SSR
 
 The role-scoped `@routes` change only trimmed the `<head>` copy of the route table. A second, full copy was still shipped in the `<body>`: `HandleInertiaRequests` shared `'ziggy' => (new Ziggy)->toArray()` as a prop, dumping every route (all `admin.*`, `settings.*`, etc.) into the `data-page` JSON of every page, including for guests. Nothing on the client read it - `route()` resolves against the `@routes` global - so it was pure dead weight. Its only consumer was Inertia SSR, which was abandoned mid-attempt and never runs (the prod body renders empty; no SSR process is deployed). This removes both.
