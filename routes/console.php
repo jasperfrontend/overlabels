@@ -3,6 +3,7 @@
 use App\Jobs\VerifyStreamState;
 use App\Models\CloudinaryUpload;
 use App\Models\ExternalEvent;
+use App\Models\ListSnapshot;
 use App\Models\OverlayAccessLog;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Storage;
 use Mchev\Banhammer\IP;
 
 Artisan::command('inspire', function () {
@@ -190,7 +192,7 @@ Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(9
 // exempt - streamers explicitly opt into keeping those forever. Runs
 // daily so the 30-day window is honoured to the day (the privacy policy
 // commits to this retention period).
-Schedule::call(fn () => \App\Models\ListSnapshot::where('pinned', false)
+Schedule::call(fn () => ListSnapshot::where('pinned', false)
     ->where('created_at', '<', now()->subDays(30))
     ->delete()
 )->daily()->name('prune:list-snapshots')->withoutOverlapping();
@@ -244,13 +246,24 @@ Schedule::command('lists:sweep-expired')
     ->withoutOverlapping()
     ->name('lists:sweep-expired');
 
+// Self-destruct sweep for temporary Bot Expressions. Deletes expressions
+// whose destroy_at timer (set via `!ol cmd options <name> destroy <hours>`)
+// has elapsed, plus any aliases that forward to them. DB-backed so timers
+// survive restarts; idempotent.
+Schedule::command('bot:sweep-destroyed')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->name('bot:sweep-destroyed');
+
 // Cleanup ElevenLabs TTS audio cache. Files are content-addressed by
 // sha256(text + voice + model) so a cache miss after eviction just costs
 // one re-synthesis. 7 days keeps frequent alert lines warm without letting
 // the directory grow unbounded.
 Schedule::call(function () {
-    $disk = \Illuminate\Support\Facades\Storage::disk('public');
-    if (! $disk->exists('tts')) return;
+    $disk = Storage::disk('public');
+    if (! $disk->exists('tts')) {
+        return;
+    }
     $cutoff = now()->subDays(7)->getTimestamp();
     foreach ($disk->files('tts') as $file) {
         if ($disk->lastModified($file) < $cutoff) {

@@ -19,6 +19,7 @@ class BotExpression extends Model
         'enabled',
         'hidden_from_commands',
         'last_fired_at',
+        'destroy_at',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class BotExpression extends Model
         'enabled' => 'boolean',
         'hidden_from_commands' => 'boolean',
         'last_fired_at' => 'datetime',
+        'destroy_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

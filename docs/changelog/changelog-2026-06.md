@@ -1,5 +1,17 @@
 # CHANGELOG JUNE 2026
 
+## June 18th, 2026 - feat(bot): self-destruct timer for temporary Bot Expressions
+
+A new `destroy` option on `!ol cmd options` lets a streamer set a temporary command that removes itself after a fixed number of hours - set-and-forget, no live countdown to manage. `!ol cmd options <name> destroy 12` schedules `!<name>` for deletion 12 hours from now; `destroy 0` cancels a pending timer, and re-running just overwrites it (free extend/shorten).
+
+- **No bot changes.** The bot's `!ol` handler already relays `option`/`value` opaquely, so this is entirely backend.
+- **`destroy_at` column** added to `bot_expressions` (nullable timestamp, indexed). DB-backed rather than a delayed queue job on purpose: a timer parked for hours would be lost if Redis (not yet persistent/`noeviction` in prod) restarted.
+- **`BotChatAdminService::applyOption()`**: new `destroy` case - whole hours 1-8760 (one year), `0` cancels. Expressions only; running it on an alias returns "destroy only works on commands, not aliases" (aliases have no `destroy_at`). Aliases `selfdestruct`/`kill` to `destroy`; help line updated.
+- **New `bot:sweep-destroyed` command**, scheduled every minute next to `lists:sweep-expired`. Deletes expressions whose `destroy_at` has passed, plus any of that user's aliases that forward to the destroyed command (matched by the first token of `target_template`, the same way the alias validator extracts the link). Idempotent. Deleting a row is graceful - the bot reads expressions live and a missing one is a silent `expression_not_found`, identical to a manual `!ol cmd delete`.
+- Cascade to dependent aliases happens on the destroy sweep only, not on manual `!ol cmd delete` (which keeps today's behaviour).
+- **Settings visibility**: the Bot Expressions settings page now shows an amber "self-destructs in 11h 59m" badge (clock icon, exact timestamp on hover) on any expression with a pending timer. `destroy_at` is serialized into the page payload; the badge is computed client-side.
+- Tests: option set/cancel/range-reject/alias-refusal in `BotChatAdminTest`, plus a `SweepDestroyedBotExpressionsTest` covering elapsed-vs-future timers, dependent-alias cleanup, unrelated-alias survival, and cross-user isolation. Full new + affected suite green (24 passed).
+
 ## June 17th, 2026 - chore(deps): refresh dependencies to latest, close phpseclib SSRF advisory
 
 Routine "keep the tree current" pass across both package managers, prompted by a fresh advisory. Composer audit flagged one real issue: `phpseclib/phpseclib` 3.0.53 (pulled in transitively by `laravel/socialite`) was affected by a medium-severity SSRF advisory published June 16th (GHSA-m557-wrgg-6rp4: X.509 validation makes attacker-controlled outbound requests via Authority Information Access). npm audit was already clean.

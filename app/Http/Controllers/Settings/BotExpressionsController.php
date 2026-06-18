@@ -69,6 +69,7 @@ class BotExpressionsController extends Controller
             'enabled' => $e->enabled,
             'hidden_from_commands' => $e->hidden_from_commands,
             'last_fired_at' => $e->last_fired_at?->toIso8601String(),
+            'destroy_at' => $e->destroy_at?->toIso8601String(),
         ];
     }
 

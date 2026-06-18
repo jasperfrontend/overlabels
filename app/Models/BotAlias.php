@@ -32,4 +32,17 @@ class BotAlias extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * The underlying command this alias forwards to: the first token of the
+     * normalised target_template, lowercased. Mirrors the extraction the
+     * BotAliasValidator does, so dependents can be matched when a command is
+     * destroyed.
+     */
+    public function targetCommand(): string
+    {
+        $token = strtok($this->target_template ?? '', " \t");
+
+        return strtolower($token === false ? '' : $token);
+    }
 }
