@@ -1,5 +1,12 @@
 # CHANGELOG JUNE 2026
 
+## June 18th, 2026 - fix(impersonation): keep admin.impersonate.stop in the Ziggy payload while impersonating
+
+Stopping an impersonation from the admin panel threw `Ziggy error: route 'admin.impersonate.stop' is not in the route list`. The role-scoped Ziggy groups pick the payload from `auth()->user()`, but during impersonation that user is the (non-admin) target - so the `user` group was emitted, which negates `admin.*` and dropped the very route the Stop button calls.
+
+- **`app.blade.php`**: the `@routes` group now resolves to `admin` when the session is impersonating (`impersonating_user_id` + `real_admin_id` present), not just when `auth()->user()->isAdmin()`. The real operator is a verified admin - `HandleImpersonation` confirms `real_admin_id` is an admin before swapping the auth user - so shipping the admin group leaks nothing to a non-admin: they would receive it normally anyway.
+- Why not a surgical "user group + just admin.impersonate.stop" group: Ziggy keeps a route only if no negation pattern matches it, so the `user` group's `!admin.*` rejects `admin.impersonate.stop` regardless of order. Re-allowing one admin route would mean enumerating every other admin subtree as a negation - brittle, and new admin routes would leak. Selecting the existing `admin` group for a verified admin is both simpler and safer.
+
 ## June 18th, 2026 - fix(public-preview): bounce "Log in to copy" back to the public overlay
 
 On a public overlay preview (`/overlay/{slug}/public`), the "Log in to copy" button shown to logged-out visitors linked straight to `/auth/redirect/twitch`, which skipped the step that records where the user came from - so after connecting they always landed on `/dashboard` instead of the overlay they were viewing.

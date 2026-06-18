@@ -68,9 +68,15 @@
         <meta name="twitter:image:alt" content="{{ $ogData['image_alt'] }}" />
 
         @php
+            // During impersonation auth()->user() is the (non-admin) target, so
+            // isAdmin() is false and the 'user' group would drop every admin.*
+            // route - including admin.impersonate.stop that the Stop button calls.
+            // The real operator is a verified admin (HandleImpersonation checks
+            // real_admin_id before swapping), so ship the admin group instead.
+            $isImpersonating = session()->has('impersonating_user_id') && session()->has('real_admin_id');
             $ziggyGroup = ! auth()->check()
                 ? 'guest'
-                : (auth()->user()->isAdmin() ? 'admin' : 'user');
+                : ((auth()->user()->isAdmin() || $isImpersonating) ? 'admin' : 'user');
         @endphp
         @routes($ziggyGroup)
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
