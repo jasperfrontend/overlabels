@@ -1,5 +1,12 @@
 # CHANGELOG JUNE 2026
 
+## June 18th, 2026 - fix(stream-state): correct stream uptime that lagged ~11 minutes behind Twitch
+
+Stream uptime in the user menu read consistently 10-11 minutes behind twitch.tv's own counter. The state machine stamps a new session's `started_at` with `now()` at the moment it confidently flips to live - which trails the real go-live by however long Twitch's `stream.online` EventSub webhook took to arrive (a stable per-channel delay). `transitionToLive()` has a retroactive-repair step that's meant to erase exactly this lag by snapping `started_at` back to Helix's authoritative `started_at` (the same value twitch.tv uses), but its guard was inverted and the repair never ran.
+
+- **`StreamStateMachineService::transitionToLive()`**: `diffInSeconds` is signed in this Carbon version, and `started_at` (the live-transition `now()`) is always later than Helix's go-live, so `$session->started_at->diffInSeconds($helixStartedAt)` returned a negative value and the `> 5` guard was never true. Changed to the absolute difference (`diffInSeconds($helixStartedAt, true)`), so the repair fires whenever the two differ by more than 5 seconds in either direction. New streams now report uptime matching twitch.tv to within a second. (Already-live sessions don't self-heal - the repair only runs on the live transition.)
+- **`tests/Feature/StreamStateMachineTest.php`** (new): a starting-state stream verified against a Helix payload whose `started_at` is 11 minutes old asserts (1) the session's `started_at` is realigned to Helix truth on the live transition, and (2) the `StreamStatusChanged` broadcast carries that Helix-aligned timestamp, not the late `now()`. Both fail against the old inverted guard.
+
 ## June 18th, 2026 - feat(templates): surface "Add to OBS" on the overlay overview page
 
 "Add to OBS" (the dialog that mints a unique overlay URL via `generateOBSUrl()`) only lived on the edit page, buried in the code editor's tab strip. Owners had to open EDIT - and step into the code - just to grab a browser-source URL. It now lives on the overlay overview page (`templates/show`) too, right where you read the overlay.

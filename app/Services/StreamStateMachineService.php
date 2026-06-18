@@ -73,6 +73,7 @@ readonly class StreamStateMachineService
     /**
      * Handle an EventSub stream.offline event.
      * Transitions to "ending" with grace period and dispatches Helix verification.
+     *
      * @throws Throwable
      */
     public function handleEventSubOffline(User $user, array $eventData): void
@@ -117,6 +118,7 @@ readonly class StreamStateMachineService
     /**
      * Verify the current stream state against Twitch Helix API.
      * Called by the VerifyStreamState job.
+     *
      * @throws ConnectionException
      * @throws Throwable
      */
@@ -317,10 +319,14 @@ readonly class StreamStateMachineService
             $session = $this->sessionService->openSession($user);
         }
 
-        // Retroactive repair: align started_at with Helix truth
+        // Retroactive repair: align started_at with Helix truth.
+        // diffInSeconds is signed in this Carbon version, and started_at (the
+        // live-transition now()) is later than Helix's go-live, so compare the
+        // absolute difference - otherwise the guard is always negative and the
+        // repair silently never runs, leaving uptime lagging the real go-live.
         if ($helixStream && isset($helixStream['started_at'])) {
             $helixStartedAt = Carbon::parse($helixStream['started_at']);
-            if ($session->started_at->diffInSeconds($helixStartedAt) > 5) {
+            if ($session->started_at->diffInSeconds($helixStartedAt, true) > 5) {
                 $session->update(['started_at' => $helixStartedAt]);
             }
         }
