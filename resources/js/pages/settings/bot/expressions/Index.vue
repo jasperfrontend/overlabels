@@ -5,7 +5,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
-import { Plus, Pencil, Trash2, MessageSquare } from '@lucide/vue';
+import { Plus, Pencil, Trash2, MessageSquare, Clock } from '@lucide/vue';
 
 interface BotExpression {
   id: number;
@@ -16,6 +16,7 @@ interface BotExpression {
   enabled: boolean;
   hidden_from_commands: boolean;
   last_fired_at: string | null;
+  destroy_at: string | null;
 }
 
 const props = defineProps<{
@@ -40,6 +41,22 @@ function formatDate(iso: string | null): string {
   if (!iso) return 'never';
   const d = new Date(iso);
   return d.toLocaleString();
+}
+
+// Human-readable countdown to a destroy_at timestamp. The sweep runs every
+// minute, so a timestamp in the (recent) past just means "any second now".
+function expiresIn(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'any moment';
+
+  const minutes = Math.floor(ms / 60000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
 }
 </script>
 
@@ -109,6 +126,14 @@ function formatDate(iso: string | null): string {
                 </span>
                 <span v-if="expression.cooldown_seconds > 0" class="text-xs text-foreground/70">
                   cooldown: {{ expression.cooldown_seconds }}s
+                </span>
+                <span
+                  v-if="expression.destroy_at"
+                  class="inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400"
+                  :title="`Self-destructs at ${formatDate(expression.destroy_at)}`"
+                >
+                  <Clock class="size-3" />
+                  self-destructs in {{ expiresIn(expression.destroy_at) }}
                 </span>
               </div>
 
