@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 18th, 2026 - feat(templates): surface "Add to OBS" on the overlay overview page
+
+"Add to OBS" (the dialog that mints a unique overlay URL via `generateOBSUrl()`) only lived on the edit page, buried in the code editor's tab strip. Owners had to open EDIT - and step into the code - just to grab a browser-source URL. It now lives on the overlay overview page (`templates/show`) too, right where you read the overlay.
+
+- **`show.vue`**: the read-only HEAD / BODY / CSS tab strip gains a fourth **OBS** tab that renders the existing `AddToObsButton`, mirroring the edit page's code editor. Owner-only via a new `visibleEditorTabs` computed (the access token is user-scoped). The selected tab swaps the code `<pre>` for the OBS panel; the "Copy CODE" button is hidden on the OBS tab.
+- **Inform, don't restrict.** The OBS tab is available for both static and alert overlays. Alerts are usually rendered inside a static overlay (where they inherit its CSS structure and variables), but adding an alert straight to OBS as its own browser source works fine - so on alert templates the panel shows a short "Heads up" note rather than hiding the option. Same gate change applied to the edit page's `TemplateCodeEditor` OBS panel (previously hidden for alerts).
+- **New help doc `/help/overlays-vs-alerts` ("Overlays vs Alerts").** The "Heads up" note grew into a wall of text, so it moved to its own help page (modeled on `ForDesigners.vue`, `AppLayout` + meta tags + `max-w-4xl` prose). The doc explains the two overlay kinds, shows simplified HTML examples of an alert rendering inside a static overlay's DOM (just before `</body>`, inheriting its CSS variables) vs. standalone in its own browser source, and clarifies Targeting (which static overlay an alert renders in) vs Triggers (which event fires it). Registered in `web.php` and added as a card on the help index. The OBS-tab note is now a one-liner that links to the doc (opens in a new tab).
+- **Removed the broken `a` keyboard shortcut.** On `show.vue` the shortcut called `obsButton.value?.generateOBSUrl()` but the `AddToObsButton` was never rendered there, so the ref was always null and the key did nothing. On `edit.vue` the `ref="obsButton"` was bound inside `TemplateCodeEditor`'s own scope, never the page's - so that shortcut was dead too. Dropped the registration, the orphaned `obsButton` refs, the now-unused `AddToObsButton` import on `edit.vue`, and the dangling `ref="obsButton"` in `TemplateCodeEditor.vue`.
+- No backend changes: pure reuse of the existing `AddToObsButton` component and `tokens.store` flow. Lint clean.
+
 ## June 18th, 2026 - fix(impersonation): keep admin.impersonate.stop in the Ziggy payload while impersonating
 
 Stopping an impersonation from the admin panel threw `Ziggy error: route 'admin.impersonate.stop' is not in the route list`. The role-scoped Ziggy groups pick the payload from `auth()->user()`, but during impersonation that user is the (non-admin) target - so the `user` group was emitted, which negates `admin.*` and dropped the very route the Stop button calls.

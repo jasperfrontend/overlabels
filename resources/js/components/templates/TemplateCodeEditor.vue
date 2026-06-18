@@ -240,7 +240,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
 
           <!-- Add to OBS panel -->
           <div
-            v-show="codeTab === 'add-to-obs' && props.templateType === 'static'"
+            v-show="codeTab === 'add-to-obs'"
             v-if="props.template"
             class="absolute inset-0 overflow-auto p-6 text-sm text-foreground"
           >
@@ -249,12 +249,29 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 <Video class="size-6 text-violet-500 dark:text-violet-400" />
                 <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
               </div>
-              <p v-if="props.templateType === 'static'">
+              <p>
                 Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
               </p>
 
+              <div
+                v-if="props.templateType === 'alert'"
+                class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90"
+              >
+                <p class="font-medium text-violet-700 dark:text-violet-300">Heads up: you're adding an alert directly to OBS</p>
+                <p>
+                  That works fine, but alerts are usually far more powerful rendered inside a static overlay, where they inherit its structure and styling.
+                  <a
+                    :href="route('help.overlays-vs-alerts')"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="cursor-pointer font-medium text-violet-600 underline hover:text-violet-500 dark:text-violet-300"
+                  >Read "Overlays vs Alerts"</a>
+                  so you know what you're doing.
+                </p>
+              </div>
+
               <div>
-                <AddToObsButton ref="obsButton" :template="props.template" />
+                <AddToObsButton :template="props.template" />
               </div>
             </div>
           </div>

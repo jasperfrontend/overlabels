@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Radio, Sigma, SlidersHorizontal, Sparkles, Swords } from '@lucide/vue';
+import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Layers, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Radio, Sigma, SlidersHorizontal, Sparkles, Swords } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,6 +27,12 @@ const pages = [
     description: 'A handoff guide for designers working on overlays: the two surfaces, the unknown-background problem, variable-length content, fluid layout, CSS animation, and a deliverables checklist.',
     href: '/help/for-designers',
     icon: Palette,
+  },
+  {
+    title: 'Overlays vs Alerts',
+    description: 'The two kinds of overlay and how they fit together: why alerts are most powerful rendered inside a static overlay\'s DOM, plus Targeting vs Triggers.',
+    href: '/help/overlays-vs-alerts',
+    icon: Layers,
   },
   {
     title: 'Why Ko-fi',

@@ -34,6 +34,7 @@ import {
   TargetIcon,
   ImageIcon,
   Zap,
+  VideoIcon,
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
@@ -42,7 +43,6 @@ import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
 
 const showPreview = ref(false);
-const obsButton = ref<InstanceType<typeof AddToObsButton> | null>(null);
 
 interface OverlayOption {
   id: number;
@@ -76,8 +76,16 @@ const props = defineProps<{
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
   { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' }
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
+  { key: 'add-to-obs', label: 'OBS', icon: VideoIcon, color: 'text-violet-500 dark:text-violet-400' }
 ];
+
+// OBS browser-source URL is owner-only (the token is user-scoped). Available for
+// both static and alert overlays - alerts are usually rendered inside a static
+// overlay, but adding one straight to OBS is valid too, so we inform rather than gate.
+const visibleEditorTabs = computed(() =>
+  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || props.canEdit),
+);
 
 const mainTabs = computed(() => {
   const tabs: Array<{ key: string; label: string; icon: any }> = [
@@ -137,10 +145,6 @@ onMounted(() => {
       if (tab) mainTab.value = tab.key;
     }, { description: `Switch to tab ${i}` });
   }
-
-  register('add-to-obs', 'a', () => {
-    obsButton.value?.generateOBSUrl();
-  }, { description: 'Add to OBS' });
 });
 
 // Use the template actions composable
@@ -366,7 +370,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- File tabs sidebar -->
             <div class="flex flex-col bg-sidebar text-sidebar-foreground">
               <button
-                v-for="tab in editorTabs"
+                v-for="tab in visibleEditorTabs"
                 :key="tab.key"
                 @click="activeTab = tab.key"
                 :class="[
@@ -382,14 +386,51 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <!-- Code panel -->
             <div class="relative flex-1  text-gray-700 dark:text-accent-foreground">
-              <pre class="h-[50vh] overflow-auto p-4 bg-white dark:bg-[#160e21]"><code
-                class="text-sm text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
-              <button
-                @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
-                class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
+              <!-- Add to OBS panel -->
+              <div
+                v-if="activeTab === 'add-to-obs'"
+                class="h-[50vh] overflow-auto p-6 text-sm text-foreground bg-white dark:bg-[#160e21]"
               >
-                Copy {{ activeTab.toUpperCase() }}
-              </button>
+                <div class="mx-auto max-w-2xl space-y-4">
+                  <div class="flex items-center gap-3">
+                    <VideoIcon class="size-6 text-violet-500 dark:text-violet-400" />
+                    <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
+                  </div>
+                  <p>
+                    Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
+                  </p>
+                  <div
+                    v-if="props.template?.type === 'alert'"
+                    class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90"
+                  >
+                    <p class="font-medium text-violet-700 dark:text-violet-300">Heads up: you're adding an alert directly to OBS</p>
+                    <p>
+                      That works fine, but alerts are usually far more powerful rendered inside a static overlay, where they inherit its structure and styling.
+                      <a
+                        :href="route('help.overlays-vs-alerts')"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="cursor-pointer font-medium text-violet-600 underline hover:text-violet-500 dark:text-violet-300"
+                      >Read "Overlays vs Alerts"</a>
+                      so you know what you're doing.
+                    </p>
+                  </div>
+                  <div>
+                    <AddToObsButton :template="props.template" />
+                  </div>
+                </div>
+              </div>
+              <!-- Read-only code view -->
+              <template v-else>
+                <pre class="h-[50vh] overflow-auto p-4 bg-white dark:bg-[#160e21]"><code
+                  class="text-sm text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
+                <button
+                  @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
+                  class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
+                >
+                  Copy {{ activeTab.toUpperCase() }}
+                </button>
+              </template>
             </div>
           </div>
 

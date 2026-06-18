@@ -16,7 +16,6 @@ import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager from '@/components/TriggerManager.vue';
-import AddToObsButton from '@/components/AddToObsButton.vue';
 import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
 import {
   Brackets,
@@ -208,7 +207,6 @@ const mainTabs = computed(() => {
 
 const mainTab = ref<string>('code');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
-const obsButton = ref<InstanceType<typeof AddToObsButton> | null>(null);
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -429,10 +427,6 @@ onMounted(() => {
     }
     if (props.template?.id) router.visit(route('templates.show', props.template.id));
   }, { description: 'Back to overlay overview' });
-
-  register('add-to-obs', 'a', () => {
-    obsButton.value?.generateOBSUrl();
-  }, { description: 'Add to OBS' });
 });
 
 </script>
