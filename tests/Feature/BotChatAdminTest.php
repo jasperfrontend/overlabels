@@ -216,6 +216,112 @@ it('cmd options rejects out-of-range cooldown', function () {
         ->toContain('0 and 86400');
 });
 
+it('cmd options destroy sets a self-destruct timer', function () {
+    $user = adminUser();
+    BotExpression::create([
+        'user_id' => $user->id,
+        'command' => 'temp',
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'expression' => 'fleeting',
+        'enabled' => true,
+        'hidden_from_commands' => false,
+    ]);
+
+    postManage(managePayload([
+        'action' => 'options',
+        'name' => 'temp',
+        'option' => 'destroy',
+        'value' => '12',
+    ]))->assertOk();
+
+    $expr = BotExpression::where('user_id', $user->id)->where('command', 'temp')->first();
+    expect($expr->destroy_at)->not->toBeNull();
+    expect($expr->destroy_at->between(now()->addHours(12)->subMinute(), now()->addHours(12)->addMinute()))->toBeTrue();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toContain('destroyed in 12h');
+});
+
+it('cmd options destroy 0 cancels a pending timer', function () {
+    $user = adminUser();
+    BotExpression::create([
+        'user_id' => $user->id,
+        'command' => 'temp',
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'expression' => 'fleeting',
+        'enabled' => true,
+        'hidden_from_commands' => false,
+        'destroy_at' => now()->addHours(3),
+    ]);
+
+    postManage(managePayload([
+        'action' => 'options',
+        'name' => 'temp',
+        'option' => 'destroy',
+        'value' => '0',
+    ]))->assertOk();
+
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toContain('cancelled');
+});
+
+it('cmd options destroy rejects out-of-range and non-numeric values', function () {
+    $user = adminUser();
+    BotExpression::create([
+        'user_id' => $user->id,
+        'command' => 'temp',
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'expression' => 'fleeting',
+        'enabled' => true,
+        'hidden_from_commands' => false,
+    ]);
+
+    postManage(managePayload([
+        'action' => 'options',
+        'name' => 'temp',
+        'option' => 'destroy',
+        'value' => '99999',
+    ]))->assertOk();
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+
+    postManage(managePayload([
+        'action' => 'options',
+        'name' => 'temp',
+        'option' => 'destroy',
+        'value' => 'soon',
+    ]))->assertOk();
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toContain('whole number of hours');
+});
+
+it('alias options destroy is refused (commands only)', function () {
+    $user = adminUser();
+    BotAlias::create([
+        'user_id' => $user->id,
+        'command' => 'w',
+        'target_template' => 'increment wins {1}',
+        'permission_level' => 'moderator',
+        'cooldown_seconds' => 0,
+        'enabled' => true,
+        'hidden_from_commands' => false,
+    ]);
+
+    postManage(managePayload([
+        'subject' => 'alias',
+        'action' => 'options',
+        'name' => 'w',
+        'option' => 'destroy',
+        'value' => '12',
+    ]))->assertOk();
+
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toContain('only works on commands');
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // alias: add / delete / options
 // ──────────────────────────────────────────────────────────────────────────────

@@ -26,7 +26,7 @@ readonly class BotChatAdminService
 {
     public function __construct(
         private BotExpressionValidator $exprValidator,
-        private BotAliasValidator      $aliasValidator,
+        private BotAliasValidator $aliasValidator,
     ) {}
 
     /**
@@ -296,7 +296,7 @@ readonly class BotChatAdminService
         return match ($topic) {
             'cmd' => '!ol cmd add|edit|delete|options <name> [payload]. example: !ol cmd add lol HAHA',
             'alias' => '!ol alias add|edit|delete|options <name> [target]. example: !ol alias add w !inc wins {1}',
-            'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false',
+            'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false | destroy <hours> (0 cancels, cmd only)',
             default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol list ; !ol help <cmd|alias|options>',
         };
     }
@@ -352,6 +352,29 @@ readonly class BotChatAdminService
 
                 return "command $label is now ".($bool ? 'hidden' : 'visible').' in !commands listings';
 
+            case 'destroy':
+                // Self-destruct timer. Expressions only - aliases have no
+                // destroy_at column and the friend's use case is temporary
+                // commands. Whole hours, 1-8760 (one year); 0 cancels.
+                if ($row instanceof BotAlias) {
+                    return 'destroy only works on commands, not aliases';
+                }
+                if (! ctype_digit($rawValue)) {
+                    return 'destroy must be a whole number of hours (0 to cancel, max 8760)';
+                }
+                $hours = (int) $rawValue;
+                if ($hours === 0) {
+                    $row->update(['destroy_at' => null]);
+
+                    return "destroy timer on $label cancelled";
+                }
+                if ($hours > 8760) {
+                    return 'destroy must be between 1 and 8760 hours';
+                }
+                $row->update(['destroy_at' => now()->addHours($hours)]);
+
+                return "$label will be destroyed in {$hours}h from now";
+
             default:
                 return 'unknown option - try !ol help options';
         }
@@ -366,6 +389,7 @@ readonly class BotChatAdminService
             'perm', 'permission_level' => 'permission',
             'enable', 'enabled' => 'enabled',
             'hide', 'hidden_from_commands' => 'hidden',
+            'selfdestruct', 'self_destruct', 'kill', 'destroy_at' => 'destroy',
             default => $raw,
         };
     }
