@@ -1,5 +1,12 @@
 # CHANGELOG JUNE 2026
 
+## June 18th, 2026 - fix(public-preview): bounce "Log in to copy" back to the public overlay
+
+On a public overlay preview (`/overlay/{slug}/public`), the "Log in to copy" button shown to logged-out visitors linked straight to `/auth/redirect/twitch`, which skipped the step that records where the user came from - so after connecting they always landed on `/dashboard` instead of the overlay they were viewing.
+
+- **`public-preview.vue`**: the link now points at the login route with `?redirect_to=<current url>`, mirroring how `RedirectIfUnauthenticated` builds its login URL. The login page (`AuthenticatedSessionController@create`) stores `redirect_to` as `url.intended`, which the Twitch OAuth callback already pulls and honours - so the user is returned to the exact public preview after connecting.
+- No backend changes: pure reuse of the existing `?redirect_to=` flow. The callback's safety check only rejects `/onboarding/` and `/api/` paths, so the public overlay URL redirects cleanly.
+
 ## June 18th, 2026 - feat(bot): self-destruct timer for temporary Bot Expressions
 
 A new `destroy` option on `!ol cmd options` lets a streamer set a temporary command that removes itself after a fixed number of hours - set-and-forget, no live countdown to manage. `!ol cmd options <name> destroy 12` schedules `!<name>` for deletion 12 hours from now; `destroy 0` cancels a pending timer, and re-running just overwrites it (free extend/shorten).

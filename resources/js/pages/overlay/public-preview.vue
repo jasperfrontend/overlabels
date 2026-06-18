@@ -51,6 +51,11 @@ const props = defineProps<{
 const page = usePage<AppPageProps>();
 const isAuthed = computed(() => !!page.props.auth?.user);
 
+// Bounce unauthenticated users through the login flow and back to this public
+// preview once they connect. Mirrors RedirectIfUnauthenticated: the login page
+// stores redirect_to as url.intended, which the Twitch OAuth callback honours.
+const loginUrl = computed(() => `${route('login')}?redirect_to=${encodeURIComponent(window.location.href)}`);
+
 const csrf = computed(() => {
   return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
 });
@@ -247,7 +252,7 @@ const activeSource = computed(() => {
             <input type="hidden" name="_token" :value="csrf" />
             <button type="submit" class="ovl-btn-copy cursor-pointer">Copy</button>
           </form>
-          <a v-else href="/auth/redirect/twitch" class="ovl-btn-copy cursor-pointer">Log in to copy</a>
+          <a v-else :href="loginUrl" class="ovl-btn-copy cursor-pointer">Log in to copy</a>
         </div>
       </div>
 
