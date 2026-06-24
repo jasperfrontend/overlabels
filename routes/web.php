@@ -531,6 +531,10 @@ Route::middleware('auth.redirect')->group(function () {
         // dashboard equivalent). Same vocabulary as the chat command.
         Route::post('/{list}/actions', [ListActionWebController::class, 'runAction'])->name('actions.run');
 
+        // Recent-events feed config. Turns a list into a StreamElements-style
+        // recent-events widget fed from the recents page.
+        Route::put('/{list}/event-feed', [ListController::class, 'updateEventFeed'])->name('event-feed');
+
         // Snapshots
         Route::prefix('{list}/snapshots')->name('snapshots.')->group(function () {
             Route::get('/', [ListActionWebController::class, 'listSnapshots'])->name('index');

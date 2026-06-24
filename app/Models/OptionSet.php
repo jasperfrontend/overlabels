@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $entry_ttl_seconds
  * @property Carbon|null $expires_at
  * @property array<string, string>|null $chat_permissions Action -> permission level overrides; NULL means use defaults
+ * @property array{enabled:bool,types:array<int,string>}|null $event_feed Recent-events feed config; NULL means this list is not an event feed
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read RecipeInstance|null $recipeInstance
@@ -52,6 +53,7 @@ class OptionSet extends Model
         'entry_ttl_seconds',
         'expires_at',
         'chat_permissions',
+        'event_feed',
     ];
 
     protected $casts = [
@@ -64,11 +66,44 @@ class OptionSet extends Model
         'entry_ttl_seconds' => 'integer',
         'expires_at' => 'datetime',
         'chat_permissions' => 'array',
+        'event_feed' => 'array',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Whether this list is an enabled recent-events feed - i.e. incoming
+     * Twitch / external events should be appended to it.
+     */
+    public function eventFeedEnabled(): bool
+    {
+        return (bool) ($this->event_feed['enabled'] ?? false);
+    }
+
+    /**
+     * The event_type whitelist for the feed. An empty array means "every
+     * event type" - the feed accepts anything.
+     *
+     * @return array<int, string>
+     */
+    public function eventFeedTypes(): array
+    {
+        $types = $this->event_feed['types'] ?? [];
+
+        return is_array($types) ? array_values(array_filter($types, 'is_string')) : [];
+    }
+
+    /**
+     * Does the feed accept this event_type? Empty whitelist = accept all.
+     */
+    public function eventFeedAccepts(string $eventType): bool
+    {
+        $types = $this->eventFeedTypes();
+
+        return $types === [] || in_array($eventType, $types, true);
     }
 
     public function pickers(): HasMany

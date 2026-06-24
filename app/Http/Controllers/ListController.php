@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\ListUpdated;
 use App\Models\OptionSet;
+use App\Services\Lists\EventFeedService;
 use App\Services\Lists\ListActionService;
 use App\Support\BotChatGate;
 use App\Support\ListItems;
@@ -255,6 +256,62 @@ class ListController extends Controller
         ]);
 
         $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
+
+        return back()->with('flash_list_id', $list->id);
+    }
+
+    /**
+     * PUT /dashboard/lists/{list}/event-feed
+     *
+     * Turn a List into (or out of) a recent-events feed. Configured from the
+     * recents page: an enabled flag, an event_type whitelist (empty = all
+     * types), and an optional FIFO window. When the feed is switched on we
+     * seed the list from events that already happened so the widget isn't
+     * empty until the next live event - the user explicitly wants existing
+     * activity stuffed in. Re-saving an already-enabled feed only updates the
+     * config (no re-seed) so a curated list isn't clobbered.
+     */
+    public function updateEventFeed(Request $request, OptionSet $list, EventFeedService $feeds): RedirectResponse
+    {
+        $this->authorize($request, $list);
+
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+            'types' => 'nullable|array',
+            'types.*' => 'string|max:100',
+            'max_items' => 'sometimes|nullable|integer|min:1|max:500',
+        ]);
+
+        $wasEnabled = $list->eventFeedEnabled();
+        $types = array_values(array_unique(array_filter(
+            $validated['types'] ?? [],
+            fn ($t) => is_string($t) && $t !== '',
+        )));
+
+        $updates = [
+            'event_feed' => [
+                'enabled' => $validated['enabled'],
+                'types' => $types,
+            ],
+        ];
+
+        // Apply an explicit cap if sent; otherwise, the first time a feed is
+        // enabled on an uncapped list, default a sensible window so the
+        // full-state broadcast stays under the Reverb payload limit.
+        if (array_key_exists('max_items', $validated)) {
+            $updates['max_items'] = $validated['max_items'];
+        } elseif ($validated['enabled'] && ! $wasEnabled && $list->max_items === null) {
+            $updates['max_items'] = EventFeedService::DEFAULT_FEED_CAP;
+        }
+
+        $list->update($updates);
+
+        if ($validated['enabled'] && ! $wasEnabled) {
+            // Seeds and broadcasts the populated list.
+            $feeds->seed($list->fresh(), $request->user());
+        } else {
+            $this->broadcastUpdate($request->user()->twitch_id, $list->fresh());
+        }
 
         return back()->with('flash_list_id', $list->id);
     }

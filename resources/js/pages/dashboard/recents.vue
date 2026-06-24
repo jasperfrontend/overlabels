@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { ExternalLink, Radio, RefreshCw } from '@lucide/vue';
+import { ExternalLink, ListPlus, Radio, RefreshCw } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import type { AppPageProps, OverlayTemplate } from '@/types';
+
+interface FeedList {
+  id: number;
+  slug: string;
+  label: string | null;
+  max_items: number | null;
+  feed_enabled: boolean;
+  feed_types: string[];
+}
 
 interface UnifiedEvent {
   id: number;
@@ -56,6 +65,7 @@ const props = defineProps<{
   recentEvents: PaginatedEvents;
   filters?: FiltersShape;
   facets: FilterFacets;
+  userLists: FeedList[];
 }>();
 
 function normalizeFilters(input?: FiltersShape) {
@@ -118,7 +128,7 @@ function refresh() {
   if (refreshing.value) return;
   refreshing.value = true;
   router.reload({
-    only: ['recentEvents', 'recentTemplates', 'facets'],
+    only: ['recentEvents', 'recentTemplates', 'facets', 'userLists'],
     onFinish: () => {
       setTimeout(() => {
         refreshing.value = false;
@@ -141,6 +151,64 @@ function sourceLabel(source: string): string {
 
 function eventTypeLabel(type: string): string {
   return EVENT_TYPE_LABELS[type] ?? type;
+}
+
+/* -------- Recent-events feed: point a list at this event stream -------- */
+
+const selectedListId = ref<number | null>(null);
+const feedEnabled = ref(false);
+const allTypes = ref(true);
+const selectedTypes = ref<string[]>([]);
+const feedMaxItems = ref<number>(50);
+const savingFeed = ref(false);
+const feedSaved = ref(false);
+
+const selectedList = computed(() =>
+  props.userLists.find((l) => l.id === selectedListId.value) ?? null,
+);
+
+// Prefill the controls from the chosen list's existing feed config so saving
+// without changes is a no-op rather than a surprise reset.
+watch(selectedListId, () => {
+  const list = selectedList.value;
+  if (!list) return;
+  feedEnabled.value = list.feed_enabled;
+  allTypes.value = list.feed_types.length === 0;
+  selectedTypes.value = [...list.feed_types];
+  feedMaxItems.value = list.max_items ?? 50;
+  feedSaved.value = false;
+});
+
+function toggleType(type: string, checked: boolean) {
+  if (checked) {
+    if (!selectedTypes.value.includes(type)) selectedTypes.value.push(type);
+  } else {
+    selectedTypes.value = selectedTypes.value.filter((t) => t !== type);
+  }
+}
+
+function saveFeed() {
+  if (!selectedListId.value || savingFeed.value) return;
+  savingFeed.value = true;
+  feedSaved.value = false;
+  router.put(
+    route('lists.event-feed', selectedListId.value),
+    {
+      enabled: feedEnabled.value,
+      types: allTypes.value ? [] : selectedTypes.value,
+      max_items: feedMaxItems.value,
+    },
+    {
+      preserveScroll: true,
+      preserveState: false,
+      onSuccess: () => {
+        feedSaved.value = true;
+      },
+      onFinish: () => {
+        savingFeed.value = false;
+      },
+    },
+  );
 }
 
 const breadcrumbs = [
@@ -242,6 +310,114 @@ const breadcrumbs = [
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send these events to a list -->
+        <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
+          <div class="flex items-start gap-3">
+            <ListPlus class="mt-0.5 h-5 w-5 shrink-0" />
+            <div class="min-w-0 flex-1 space-y-1">
+              <h3 class="font-semibold text-foreground">Send these events to a list</h3>
+              <p class="text-sm text-foreground">
+                Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay
+                (loop it with <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
+                <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app over websockets.
+                Turning it on backfills the list with events that already happened.
+              </p>
+            </div>
+          </div>
+
+          <div v-if="userLists.length === 0" class="mt-3 text-sm text-foreground">
+            You don't have any editable lists yet.
+            <a href="/dashboard/lists" class="text-primary underline cursor-pointer">Create a list</a> first, then come back here.
+          </div>
+
+          <div v-else class="mt-4 space-y-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <!-- Target list -->
+              <div class="flex flex-col gap-1">
+                <label for="feed-list">Target list</label>
+                <select
+                  v-model="selectedListId"
+                  class="input-border h-10 w-full cursor-pointer"
+                  id="feed-list"
+                >
+                  <option :value="null">- pick a list -</option>
+                  <option v-for="l in userLists" :key="l.id" :value="l.id">
+                    {{ l.label || l.slug }}{{ l.feed_enabled ? ' (feed on)' : '' }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Keep latest N -->
+              <div class="flex flex-col gap-1">
+                <label for="feed-cap">Keep latest</label>
+                <input
+                  v-model.number="feedMaxItems"
+                  :disabled="!selectedList"
+                  type="number"
+                  min="1"
+                  max="500"
+                  class="input-border h-10 w-full disabled:opacity-50"
+                  id="feed-cap"
+                />
+              </div>
+
+              <!-- Enabled -->
+              <div class="flex flex-col gap-1">
+                <label>Feed</label>
+                <label class="flex h-10 items-center gap-2" :class="selectedList ? 'cursor-pointer' : 'opacity-50'">
+                  <input type="checkbox" v-model="feedEnabled" :disabled="!selectedList" class="cursor-pointer" />
+                  <span class="text-sm text-foreground">{{ feedEnabled ? 'Enabled' : 'Disabled' }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Event type filter -->
+            <fieldset v-if="selectedList" class="space-y-2" :disabled="!feedEnabled" :class="feedEnabled ? '' : 'opacity-50'">
+              <label class="flex w-fit items-center gap-2 cursor-pointer">
+                <input type="checkbox" v-model="allTypes" class="cursor-pointer" />
+                <span class="text-sm text-foreground">All event types</span>
+              </label>
+
+              <div v-if="!allTypes" class="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                <label
+                  v-for="type in facets.event_types"
+                  :key="type"
+                  class="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="selectedTypes.includes(type)"
+                    @change="toggleType(type, ($event.target as HTMLInputElement).checked)"
+                    class="cursor-pointer"
+                  />
+                  <span class="truncate text-sm text-foreground">{{ eventTypeLabel(type) }}</span>
+                </label>
+              </div>
+              <p v-if="!allTypes && facets.event_types.length === 0" class="text-sm text-foreground">
+                No event types recorded yet - leave "All event types" on to capture everything going forward.
+              </p>
+            </fieldset>
+
+            <div class="flex items-center gap-3">
+              <button
+                class="btn btn-primary cursor-pointer disabled:opacity-50"
+                :disabled="!selectedList || savingFeed"
+                @click="saveFeed"
+              >
+                {{ savingFeed ? 'Saving' : 'Save feed' }}
+              </button>
+              <a
+                v-if="selectedList"
+                :href="`/dashboard/lists/${selectedList.slug}`"
+                class="text-sm text-primary underline cursor-pointer"
+              >
+                View list
+              </a>
+              <span v-if="feedSaved" class="text-sm text-green-500">Saved</span>
             </div>
           </div>
         </div>

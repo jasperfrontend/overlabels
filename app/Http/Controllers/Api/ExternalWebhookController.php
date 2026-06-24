@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Contracts\StatefulExternalServiceDriver;
+use App\Events\ExternalEventStored;
 use App\Http\Controllers\Controller;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
@@ -179,6 +180,11 @@ class ExternalWebhookController extends Controller
         if (! $integration->test_mode) {
             app(EventMeter::class)->record($user->id);
         }
+
+        // 8c. Internal hook for recent-events feed lists (symmetric to the
+        // Twitch path's TwitchEventReceived). Carries the raw service / type /
+        // normalized payload that the alert + control broadcasts below discard.
+        ExternalEventStored::dispatch($user->id, $service, $eventType, $normalizedEvent->getTemplateTags());
 
         // 9. Update service-managed controls
         $controlUpdates = $driver->getControlUpdates($normalizedEvent);

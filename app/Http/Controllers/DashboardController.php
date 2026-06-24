@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
+use App\Models\OptionSet;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use App\Models\Update;
@@ -85,7 +86,34 @@ class DashboardController extends Controller
             'recentEvents' => $paginator,
             'filters' => $filters,
             'facets' => $facets,
+            'userLists' => $this->eventFeedLists($user->id),
         ]);
+    }
+
+    /**
+     * The user's lists, with their recent-events feed config, for the recents
+     * page picker. Locked recipe lists are excluded - a feed appends items,
+     * which a locked list forbids.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function eventFeedLists(int $userId): array
+    {
+        return OptionSet::where('user_id', $userId)
+            ->where('user_editable', true)
+            ->orderBy('label')
+            ->orderBy('slug')
+            ->get()
+            ->map(fn (OptionSet $list) => [
+                'id' => $list->id,
+                'slug' => $list->slug,
+                'label' => $list->label,
+                'max_items' => $list->max_items,
+                'feed_enabled' => $list->eventFeedEnabled(),
+                'feed_types' => $list->eventFeedTypes(),
+            ])
+            ->values()
+            ->all();
     }
 
     public function recentActivityDashboard(Request $request): Response
