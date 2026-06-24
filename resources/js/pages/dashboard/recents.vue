@@ -466,10 +466,10 @@ const breadcrumbs = [
 
               <!-- Enabled -->
               <div class="flex flex-col gap-1">
-                <label>Feed</label>
-                <label class="flex h-10 items-center gap-2" :class="selectedList ? 'cursor-pointer' : 'opacity-50'">
-                  <input type="checkbox" v-model="feedEnabled" :disabled="!selectedList" class="cursor-pointer" />
-                  <span class="text-sm text-foreground">{{ feedEnabled ? 'On' : 'Off' }}</span>
+                <label for="feed-enabled">Enable?</label>
+                <label for="feed-enabled" class="flex h-10 items-center gap-2" :class="selectedList ? 'cursor-pointer' : 'opacity-50'">
+                  <input id="feed-enabled" type="checkbox" v-model="feedEnabled" :disabled="!selectedList" class="cursor-pointer" />
+                  <span class="text-sm text-foreground">Enabled</span>
                 </label>
               </div>
             </div>
