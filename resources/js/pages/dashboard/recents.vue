@@ -376,7 +376,8 @@ const breadcrumbs = [
               <p class="text-sm text-foreground">
                 Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay
                 (loop it with <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
-                <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app over websockets.
+                <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app
+                <a href="/help/lists-realtime" class="text-violet-400 hover:underline" target="_blank">over websockets</a>.
                 Turning it on backfills the list with events that already happened.
               </p>
             </div>

@@ -9,6 +9,7 @@ The first cut of the "Send these events to a list" panel had no way to tell whet
 - **Save no longer wipes the form.** The save round-trip now keeps your selection (`preserveState`, partial reload of `userLists`) and shows a persistent "Saved" tick that downgrades to "Unsaved changes" the moment you edit. The button label reflects intent - "Start feed" / "Save changes" / "Turn feed off".
 - **`DashboardController::eventFeedLists`** now also returns `items_count`, `last_item`, and `disabled` per list to drive the above. Frontend-only otherwise; feed append/seed logic unchanged. ESLint clean, build passes, `EventFeedTest` green.
 - **Clearer enable toggle.** The on/off control was labelled "Feed" with an "On/Off" status word next to an unchecked box, which read as a status rather than an action - users didn't realise they could click it. Relabelled to "Enable?" with a static "Enabled" beside the checkbox, and wired the label's `for` to the input so the text is clickable too.
+- **Panel copy links to the realtime guide.** "read from your own app over websockets" now links to `/help/lists-realtime` so users can find the consumer docs from the panel.
 
 ## June 24th, 2026 - feat(lists): turn your recent events into a live List (StreamElements-style recent-events widget)
 
