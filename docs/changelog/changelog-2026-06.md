@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 25th, 2026 - feat(lists): make the recent-events feed panel show its real state
+
+The first cut of the "Send these events to a list" panel had no way to tell whether a list was already an active feed - you'd pick a target, set options, save, and the form reset to blank with no confirmation, so you couldn't be sure it took. (It did: the append writes to the DB; only the live websocket push that would visibly update the list doesn't reach a dev box, which is what made it look broken locally.) The panel now states its state plainly and gives you a concrete signal that events are landing.
+
+- **Always-visible "Receiving events" summary.** Above the form, a list of every active feed with a live dot (green, or amber when the underlying list is disabled so appends are paused), the event-type scope, the **captured count**, and the **latest captured line** (e.g. `Donors · all event types · 12 captured - latest: "Alice Ko-fi tip 5 USD"`). On a dev box with no live broadcast, hit Refresh after an event fires and the count/latest tick up - that's your proof the append works. Each row has inline Edit and Turn off buttons.
+- **Selected-list status line.** Choosing a list in the form shows whether it's already a feed, its captured count + latest line, and a warning if the list itself is disabled (so it won't capture until re-enabled).
+- **Save no longer wipes the form.** The save round-trip now keeps your selection (`preserveState`, partial reload of `userLists`) and shows a persistent "Saved" tick that downgrades to "Unsaved changes" the moment you edit. The button label reflects intent - "Start feed" / "Save changes" / "Turn feed off".
+- **`DashboardController::eventFeedLists`** now also returns `items_count`, `last_item`, and `disabled` per list to drive the above. Frontend-only otherwise; feed append/seed logic unchanged. ESLint clean, build passes, `EventFeedTest` green.
+
 ## June 24th, 2026 - feat(lists): turn your recent events into a live List (StreamElements-style recent-events widget)
 
 StreamElements has a "recent events" widget - a rolling list of your latest follows, subs, cheers, raids and tips. Overlabels already had all the parts (the `/dashboard/recents` activity view, plus Lists with their live websocket broadcast and external-consumer API), they just weren't wired together. Now you can point any of your Lists at your event stream and it fills - and stays filled - with formatted lines for each new event, ready to drop into an overlay (`foreach` it, cap it with `list.x.index`) or read from your own app over websockets.

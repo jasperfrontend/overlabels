@@ -104,14 +104,25 @@ class DashboardController extends Controller
             ->orderBy('label')
             ->orderBy('slug')
             ->get()
-            ->map(fn (OptionSet $list) => [
-                'id' => $list->id,
-                'slug' => $list->slug,
-                'label' => $list->label,
-                'max_items' => $list->max_items,
-                'feed_enabled' => $list->eventFeedEnabled(),
-                'feed_types' => $list->eventFeedTypes(),
-            ])
+            ->map(function (OptionSet $list) {
+                $items = $list->items ?? [];
+                $count = count($items);
+
+                return [
+                    'id' => $list->id,
+                    'slug' => $list->slug,
+                    'label' => $list->label,
+                    'max_items' => $list->max_items,
+                    'disabled' => $list->disabled_at !== null,
+                    'feed_enabled' => $list->eventFeedEnabled(),
+                    'feed_types' => $list->eventFeedTypes(),
+                    // Concrete proof the feed is working: how many lines have
+                    // landed and the most recent one. On a dev box (no live
+                    // broadcast) these update on Refresh after an event fires.
+                    'items_count' => $count,
+                    'last_item' => $count > 0 ? ($items[$count - 1]['value'] ?? null) : null,
+                ];
+            })
             ->values()
             ->all();
     }
