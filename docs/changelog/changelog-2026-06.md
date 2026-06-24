@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 24th, 2026 - chore(deps): patch Guzzle HTTP stack to clear 3 moderate Dependabot alerts
+
+Dependabot flagged 3 moderate advisories in the transitive Guzzle stack (nothing in `composer.json` requires Guzzle directly - it comes in via Laravel's HTTP client and Socialite). All three are patch-level fixes within the same minor versions, and real-world exposure for this app was low, but the bump is clean and risk-free.
+
+- **`guzzlehttp/guzzle` 7.12.0 -> 7.12.3** clears two advisories: a `CookieJar` that accepted dot-only `Domain` attributes (matters only when a shared jar is reused across untrusted + trusted origins - we don't), and a silent HTTPS-proxy downgrade to cleartext on libcurl <7.50.2 (no HTTPS proxy is configured).
+- **`guzzlehttp/psr7` 2.12.0 -> 2.12.3** clears a CR/LF injection in HTTP start-line serialization (only reachable when manually serializing/forwarding raw HTTP messages - not the standard send path this app uses).
+- `composer.lock` only; `composer audit` now reports no advisories. Full suite green (881 passed).
+
 ## June 24th, 2026 - feat(obs): QR code in the "Add to OBS" dialog for opening an overlay on your phone
 
 The "Add to OBS" dialog mints an overlay URL with the access token in the URL fragment - effectively impossible to retype on a phone. The dialog now offers a QR code so you can scan the full URL (token and all) straight onto a mobile device.
