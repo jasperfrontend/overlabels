@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 24th, 2026 - feat(obs): QR code in the "Add to OBS" dialog for opening an overlay on your phone
+
+The "Add to OBS" dialog mints an overlay URL with the access token in the URL fragment - effectively impossible to retype on a phone. The dialog now offers a QR code so you can scan the full URL (token and all) straight onto a mobile device.
+
+- **`AddToObsButton.vue`**: a collapsible "Show QR code to open on your phone" toggle inside the URL-generated block, collapsed by default so it adds no vertical space until needed. The QR is generated (client-side, via the already-installed `qrcode` package) only *after* `obsGeneratedUrl` is confirmed - a `watch` builds the data URL when the URL appears and clears it when reset; the toggle resets to collapsed on every (re)generation.
+- The code encodes the same secret-bearing URL already shown on screen, so it stays within the URL-fragment token model (nothing is sent to the server - the QR is rendered locally). An inline note warns not to show the code on stream, matching the existing link-warning posture.
+- Reused the exact `QRCode.toDataURL` options from the GPS integration settings page. No new dependencies, no backend changes. Lint clean.
+
 ## June 18th, 2026 - fix(stream-state): correct stream uptime that lagged ~11 minutes behind Twitch
 
 Stream uptime in the user menu read consistently 10-11 minutes behind twitch.tv's own counter. The state machine stamps a new session's `started_at` with `now()` at the moment it confidently flips to live - which trails the real go-live by however long Twitch's `stream.online` EventSub webhook took to arrive (a stable per-channel delay). `transitionToLive()` has a retroactive-repair step that's meant to erase exactly this lag by snapping `started_at` back to Helix's authoritative `started_at` (the same value twitch.tv uses), but its guard was inverted and the repair never ran.

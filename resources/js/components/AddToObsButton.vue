@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import QRCode from 'qrcode';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from 'reka-ui';
 import { useLinkWarning } from '@/composables/useLinkWarning';
-import { CheckIcon, CopyIcon, Loader2 } from '@lucide/vue';
+import { CheckIcon, CopyIcon, Loader2, QrCodeIcon } from '@lucide/vue';
 
 const props = defineProps<{
   template: { id: number; name: string; slug: string };
@@ -18,6 +19,21 @@ const obsGeneratedUrl = ref<string | null>(null);
 const obsUrlCopied = ref(false);
 const obsConfirmedCopied = ref(false);
 const obsError = ref('');
+const showQrCode = ref(false);
+const qrDataUrl = ref<string | null>(null);
+
+// Render the QR only after a URL is confirmed; clear it when the URL is reset.
+watch(obsGeneratedUrl, async (url) => {
+  if (!url) {
+    qrDataUrl.value = null;
+    return;
+  }
+  qrDataUrl.value = await QRCode.toDataURL(url, {
+    width: 240,
+    margin: 2,
+    color: { dark: '#000000', light: '#ffffff' },
+  });
+});
 
 const obsIconSVG = '<svg role="img" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12,24C5.383,24,0,18.617,0,12S5.383,0,12,0s12,5.383,12,12S18.617,24,12,24z M12,1.109 C5.995,1.109,1.11,5.995,1.11,12C1.11,18.005,5.995,22.89,12,22.89S22.89,18.005,22.89,12C22.89,5.995,18.005,1.109,12,1.109z M6.182,5.99c0.352-1.698,1.503-3.229,3.05-3.996c-0.269,0.273-0.595,0.483-0.844,0.78c-1.02,1.1-1.48,2.692-1.199,4.156 c0.355,2.235,2.455,4.06,4.732,4.028c1.765,0.079,3.485-0.937,4.348-2.468c1.848,0.063,3.645,1.017,4.7,2.548 c0.54,0.799,0.962,1.736,0.991,2.711c-0.342-1.295-1.202-2.446-2.375-3.095c-1.135-0.639-2.529-0.802-3.772-0.425 c-1.56,0.448-2.849,1.723-3.293,3.293c-0.377,1.25-0.216,2.628,0.377,3.772c-0.825,1.429-2.315,2.449-3.932,2.756 c-1.244,0.261-2.551,0.059-3.709-0.464c1.036,0.302,2.161,0.355,3.191-0.011c1.381-0.457,2.522-1.567,3.024-2.935 c0.556-1.49,0.345-3.261-0.591-4.54c-0.7-1.007-1.803-1.717-3.002-1.969c-0.38-0.068-0.764-0.098-1.148-0.134 c-0.611-1.231-0.834-2.66-0.528-3.996L6.182,5.99z"/></svg>';
 
@@ -29,6 +45,7 @@ function generateOBSUrl() {
     obsUrlCopied.value = false;
     obsConfirmedCopied.value = false;
     obsError.value = '';
+    showQrCode.value = false;
     try {
       const url = route('tokens.store');
       const response = await fetch(url, {
@@ -130,6 +147,26 @@ defineExpose({ generateOBSUrl });
               <button type="button" class="underline text-violet-400 hover:text-violet-300 cursor-pointer" @click="showObsScreenshot = true">this example</button>.
             </li>
           </ol>
+        </div>
+
+        <!-- QR code for getting the overlay URL onto a phone -->
+        <div class="rounded-lg border border-violet-500/30 bg-violet-600/5">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left cursor-pointer"
+            @click="showQrCode = !showQrCode"
+          >
+            <span class="flex items-center gap-2 text-sm text-foreground">
+              <QrCodeIcon class="h-4 w-4 text-violet-400" />
+              Show QR code to open on your phone
+            </span>
+            <span class="text-xs text-violet-400">{{ showQrCode ? 'Hide' : 'Show' }}</span>
+          </button>
+
+          <div v-if="showQrCode && qrDataUrl" class="flex flex-col items-center gap-2 px-3 pb-3">
+            <img :src="qrDataUrl" alt="QR code for this overlay URL" class="rounded bg-white p-2" width="240" height="240" />
+            <p class="text-center text-xs text-foreground">Scan with your phone to open this overlay. This code contains your secret token, so do not show it on stream.</p>
+          </div>
         </div>
 
         <div class="h-px bg-violet-300"></div>
