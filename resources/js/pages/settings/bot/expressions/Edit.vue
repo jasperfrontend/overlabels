@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { type BreadcrumbItem } from '@/types';
-import { ChevronLeft, Sparkles, AlertTriangle } from '@lucide/vue';
+import { ChevronLeft, Sparkles, AlertTriangle, Clock } from '@lucide/vue';
 
 interface BotExpression {
   id: number;
@@ -21,6 +21,7 @@ interface BotExpression {
   enabled: boolean;
   hidden_from_commands: boolean;
   last_fired_at: string | null;
+  destroy_at: string | null;
 }
 
 const props = defineProps<{
@@ -31,6 +32,33 @@ const props = defineProps<{
 }>();
 
 const isEdit = computed(() => props.expression !== null);
+
+// The destroy timer is stored as an absolute timestamp but authored as
+// "hours from now" (mirroring the !ol cmd options ... destroy <hours> chat
+// command). Pre-fill the input with the remaining whole hours so an
+// incidental save preserves a pending timer rather than silently resetting
+// it; a timer already in the past pre-fills empty (the sweep will clear it).
+function remainingHours(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return null;
+  return Math.max(1, Math.ceil(ms / 3_600_000));
+}
+
+// Human-readable countdown for the "currently self-destructs in ..." note.
+function expiresIn(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'any moment';
+
+  const minutes = Math.floor(ms / 60000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
+}
 
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -46,9 +74,10 @@ const form = useForm({
   command: props.expression?.command ?? '',
   permission_level: props.expression?.permission_level ?? 'everyone',
   cooldown_seconds: props.expression?.cooldown_seconds ?? 0,
-  expression: props.expression?.expression ?? 'Hi [[[bot:from_user]]]!',
+  expression: props.expression?.expression ?? 'Hi [[[bot:from_user|mention]]]!',
   enabled: props.expression?.enabled ?? true,
   hidden_from_commands: props.expression?.hidden_from_commands ?? false,
+  destroy_hours: remainingHours(props.expression?.destroy_at),
 });
 
 function submit() {
@@ -70,7 +99,27 @@ const previewLoading = ref(false);
 const previewError = ref<string | null>(null);
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 
+// The auto-update resolves on every keystroke (debounced), errors and all,
+// which some authors find distracting while mid-edit. Let them switch it off
+// and render on demand instead. The choice is per-browser so it sticks across
+// expressions and sessions; default on so existing behaviour is unchanged.
+const LIVE_PREVIEW_KEY = 'ol:bot-expr-live-preview';
+const livePreview = ref(readLivePreviewPref());
+// True when the expression changed since the last render while live preview
+// is off, so the shown output is stale and worth a manual refresh.
+const previewStale = ref(false);
+
+function readLivePreviewPref(): boolean {
+  try {
+    return localStorage.getItem(LIVE_PREVIEW_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
 async function refreshPreview() {
+  previewStale.value = false;
+
   if (!form.expression) {
     previewOutput.value = '';
     previewLength.value = 0;
@@ -94,14 +143,33 @@ async function refreshPreview() {
   }
 }
 
+// Render once on load so the panel isn't blank, regardless of the toggle.
+refreshPreview();
+
 watch(
   () => form.expression,
   () => {
+    if (!livePreview.value) {
+      previewStale.value = true;
+      return;
+    }
     if (previewTimer) clearTimeout(previewTimer);
     previewTimer = setTimeout(refreshPreview, 250);
-  },
-  { immediate: true }
+  }
 );
+
+watch(livePreview, (on) => {
+  try {
+    localStorage.setItem(LIVE_PREVIEW_KEY, on ? 'on' : 'off');
+  } catch {
+    // Private-mode or blocked storage - the toggle still works this session.
+  }
+  // Catch up immediately when re-enabling so the panel reflects current input.
+  if (on) {
+    if (previewTimer) clearTimeout(previewTimer);
+    refreshPreview();
+  }
+});
 
 const charsLeft = computed(() => 500 - previewLength.value);
 
@@ -175,29 +243,64 @@ function insertSnippet(snippet: string) {
             <p v-if="form.errors.expression" class="text-sm text-rose-400">{{ form.errors.expression }}</p>
           </div>
 
-          <!-- Live preview -->
+          <!-- Preview -->
           <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
-            <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
-              <Sparkles class="size-3.5" />
-              Live preview
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
+                <Sparkles class="size-3.5" />
+                Preview
+                <span v-if="previewLoading" class="normal-case italic text-foreground/40">resolving...</span>
+              </div>
+              <label class="flex items-center gap-2 text-xs text-foreground/70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="livePreview"
+                  class="size-3.5 cursor-pointer"
+                />
+                Live preview
+              </label>
             </div>
-            <div v-if="previewError" class="flex items-center gap-2 text-sm text-rose-400">
-              <AlertTriangle class="size-4" />
-              {{ previewError }}
+            <!--
+              The content stays mounted across refreshes - we never swap it for
+              a "Resolving..." line. Collapsing multi-line output to one line and
+              back is what made the panel jump; instead the last output stays put
+              (dimmed) while a new one resolves, so height changes only ever go
+              directly from old content to new. min-height floors the empty/error
+              states so they don't collapse either.
+            -->
+            <div class="min-h-16 text-sm">
+              <div v-if="previewError" class="flex items-center gap-2 text-rose-400">
+                <AlertTriangle class="size-4" />
+                {{ previewError }}
+              </div>
+              <div v-else-if="!previewOutput" class="italic text-foreground/50">
+                (empty)
+              </div>
+              <div
+                v-else
+                class="whitespace-pre-wrap wrap-break-word transition-opacity duration-150"
+                :class="{ 'opacity-50': previewLoading }"
+              >
+                {{ previewOutput }}
+              </div>
             </div>
-            <div v-else-if="previewLoading" class="text-sm text-foreground/50 italic">
-              Resolving...
+            <div class="mt-3 flex flex-wrap items-end justify-between gap-2">
+              <p class="text-xs text-foreground/60">
+                Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args.
+                Twitch tags resolve to empty in preview.
+              </p>
+              <div v-if="!livePreview" class="flex items-center gap-2">
+                <span v-if="previewStale" class="text-xs text-amber-400">edited</span>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded bg-foreground/10 px-2 py-1 text-xs cursor-pointer hover:bg-foreground/15"
+                  @click="refreshPreview"
+                >
+                  <Sparkles class="size-3" />
+                  Render preview
+                </button>
+              </div>
             </div>
-            <div v-else-if="!previewOutput" class="text-sm text-foreground/50 italic">
-              (empty)
-            </div>
-            <div v-else class="text-sm whitespace-pre-wrap wrap-break-word">
-              {{ previewOutput }}
-            </div>
-            <p class="mt-3 text-xs text-foreground/60">
-              Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args.
-              Twitch tags resolve to empty in preview.
-            </p>
           </div>
 
           <!-- Available tags helper -->
@@ -288,6 +391,31 @@ function insertSnippet(snippet: string) {
               />
               <p class="text-xs text-foreground/60">Per channel. Broadcaster bypasses cooldown.</p>
             </div>
+          </div>
+
+          <!-- Self-destruct timer -->
+          <div class="space-y-2">
+            <Label for="destroy_hours">Self-destruct timer (hours)</Label>
+            <Input
+              id="destroy_hours"
+              v-model.number="form.destroy_hours"
+              type="number"
+              min="0"
+              max="8760"
+              placeholder="Leave empty to keep it forever"
+            />
+            <p v-if="form.errors.destroy_hours" class="text-sm text-rose-400">{{ form.errors.destroy_hours }}</p>
+            <p v-else class="text-xs text-foreground/60">
+              Automatically deletes this command after a set number of whole hours (max 8760 = one year). Leave empty to
+              keep it forever. Saving restarts the countdown from now.
+            </p>
+            <p
+              v-if="isEdit && props.expression?.destroy_at"
+              class="inline-flex items-center gap-1 text-xs text-amber-400"
+            >
+              <Clock class="size-3" />
+              Currently self-destructs in {{ expiresIn(props.expression.destroy_at) }}
+            </p>
           </div>
 
           <!-- Toggles -->

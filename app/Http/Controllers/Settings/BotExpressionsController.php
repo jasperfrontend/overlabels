@@ -10,6 +10,7 @@ use App\Services\Bot\BotExpressionResolver;
 use App\Services\Bot\BotExpressionValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,6 +87,7 @@ class BotExpressionsController extends Controller
             'expression' => $data['expression'],
             'enabled' => $data['enabled'],
             'hidden_from_commands' => $data['hidden_from_commands'],
+            'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
 
         return redirect()->route('settings.bot.expressions.index');
@@ -104,6 +106,7 @@ class BotExpressionsController extends Controller
             'expression' => $data['expression'],
             'enabled' => $data['enabled'],
             'hidden_from_commands' => $data['hidden_from_commands'],
+            'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
 
         return redirect()->route('settings.bot.expressions.index');
@@ -158,6 +161,17 @@ class BotExpressionsController extends Controller
     private function validatePayload(Request $request, ?BotExpression $existing = null): array
     {
         return $this->validator->validateAndNormalize($request->user()->id, $request->all(), $existing);
+    }
+
+    /**
+     * Turn the form's "hours from now" timer into an absolute destroy_at,
+     * mirroring the chat-admin `destroy` option. Null or 0 clears the timer.
+     * The countdown always restarts from now, so re-saving an expression is a
+     * free extend/shorten (or cancel) - identical to re-running the command.
+     */
+    private function destroyAtFromHours(?int $hours): ?Carbon
+    {
+        return $hours && $hours > 0 ? now()->addHours($hours) : null;
     }
 
     /**

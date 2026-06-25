@@ -1,5 +1,32 @@
 # CHANGELOG JUNE 2026
 
+## June 26th, 2026 - fix(bot): stop the expression preview from jumping on refresh
+
+Each live re-render briefly swapped the resolved output for a one-line "Resolving..." placeholder, then swapped it back. On a multi-line expression that collapse-then-expand made the panel visibly jump on every keystroke - the "jumpy" complaint that prompted the pause toggle in the first place.
+
+- **`Edit.vue`**: the preview content now stays mounted across refreshes. The last output remains visible (dimmed via a 150ms opacity transition) while the next one resolves, so height only ever changes directly from old content to new - never through an intermediate one-line state. The "resolving..." hint moved to the panel header where it doesn't affect content height.
+- A `min-h-16` floor on the content area keeps the empty and error states from collapsing too.
+- Frontend only, no behaviour change beyond the smoother transition. ESLint + vue-tsc clean.
+
+## June 26th, 2026 - feat(bot): let authors pause the expression live preview
+
+The expression editor's preview re-resolves on every keystroke (debounced), errors and all. For some authors that constant flicker mid-edit is distracting rather than helpful, so the preview can now be paused.
+
+- **`Edit.vue`**: a "Live preview" checkbox sits in the preview panel header. When ticked (the default - unchanged behaviour) the preview keeps auto-updating as you type. Unticked, auto-update stops and a "Render preview" button appears to resolve on demand; an amber "edited" marker shows when the displayed output is stale.
+- The choice is saved to `localStorage` (`ol:bot-expr-live-preview`), so it sticks across expressions and sessions per browser. Storage access is wrapped in try/catch so private-mode or blocked storage degrades to a working-but-non-persistent toggle.
+- The panel renders once on load regardless of the toggle (so it's never blank when opening an existing expression), and re-enabling live preview triggers an immediate catch-up render. Panel header renamed "Live preview" -> "Preview" since the auto-update is now optional.
+- Frontend only - no backend or preview-endpoint changes. ESLint + vue-tsc clean.
+
+## June 26th, 2026 - feat(bot): set the Bot Expression self-destruct timer from the UI
+
+The self-destruct timer (shipped June 18th) could only be set through the `!ol cmd options <name> destroy <hours>` chat command. The Bot Expression editor now has a number input for it too, so streamers can schedule a temporary command without dropping into chat.
+
+- **`Edit.vue`**: new "Self-destruct timer (hours)" number input (0-8760). The stored value is an absolute `destroy_at` timestamp, but it's authored as "hours from now" to mirror the chat command. On edit it pre-fills with the remaining whole hours (rounded up) so an incidental save preserves a pending timer instead of silently resetting it; when a timer is pending the field shows a "Currently self-destructs in 11h 59m" note (clock icon). Empty leaves the command forever; `0` cancels.
+- **`BotExpressionsController`**: `store`/`update` now persist `destroy_at`, derived from the form's `destroy_hours` via a small `destroyAtFromHours()` helper (`now()->addHours($n)`, or `null` for empty/0). Saving always restarts the countdown from now - a free extend/shorten/cancel, identical to re-running the chat command.
+- **`BotExpressionValidator`**: added a `destroy_hours` rule (`nullable|integer|min:0|max:8760`). It's harmless to the chat-admin path, which never sends the field and manages `destroy_at` through its own `applyOption()` flow.
+- No bot, DB, or sweep changes - this reuses the existing `destroy_at` column and the every-minute `bot:sweep-destroyed` command.
+- Tests: new `BotExpressionDestroyTimerTest` (create schedules from now, create-without leaves no timer, update `0` cancels, over-cap rejected, edit page serializes `destroy_at`); existing chat-admin/sweep/API suites still green (54 passed). ESLint + Pint clean.
+
 ## June 25th, 2026 - fix(tts): alert TTS now honors static-overlay targeting
 
 An alert template can be "Targeted" at specific static overlays so it only renders where you want it. The visual alert respected that, but the ElevenLabs text-to-speech spoke in **every** open overlay regardless - a targeted donation alert would render in one overlay yet read aloud in all of them at once.
