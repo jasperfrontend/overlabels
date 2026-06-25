@@ -36,6 +36,10 @@ class BotExpressionValidator
             'expression' => ['required', 'string', 'max:2000'],
             'enabled' => ['required', 'boolean'],
             'hidden_from_commands' => ['required', 'boolean'],
+            // Optional self-destruct timer, whole hours 1-8760 (one year);
+            // null/absent means "no timer". Only the web form sends this - the
+            // chat-admin path manages destroy_at through its own option flow.
+            'destroy_hours' => ['nullable', 'integer', 'min:0', 'max:8760'],
         ])->validate();
 
         $command = strtolower(ltrim($data['command'], '!'));

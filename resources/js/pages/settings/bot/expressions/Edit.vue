@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { type BreadcrumbItem } from '@/types';
-import { ChevronLeft, Sparkles, AlertTriangle } from '@lucide/vue';
+import { ChevronLeft, Sparkles, AlertTriangle, Clock } from '@lucide/vue';
 
 interface BotExpression {
   id: number;
@@ -21,6 +21,7 @@ interface BotExpression {
   enabled: boolean;
   hidden_from_commands: boolean;
   last_fired_at: string | null;
+  destroy_at: string | null;
 }
 
 const props = defineProps<{
@@ -31,6 +32,33 @@ const props = defineProps<{
 }>();
 
 const isEdit = computed(() => props.expression !== null);
+
+// The destroy timer is stored as an absolute timestamp but authored as
+// "hours from now" (mirroring the !ol cmd options ... destroy <hours> chat
+// command). Pre-fill the input with the remaining whole hours so an
+// incidental save preserves a pending timer rather than silently resetting
+// it; a timer already in the past pre-fills empty (the sweep will clear it).
+function remainingHours(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return null;
+  return Math.max(1, Math.ceil(ms / 3_600_000));
+}
+
+// Human-readable countdown for the "currently self-destructs in ..." note.
+function expiresIn(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'any moment';
+
+  const minutes = Math.floor(ms / 60000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
+}
 
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -49,6 +77,7 @@ const form = useForm({
   expression: props.expression?.expression ?? 'Hi [[[bot:from_user]]]!',
   enabled: props.expression?.enabled ?? true,
   hidden_from_commands: props.expression?.hidden_from_commands ?? false,
+  destroy_hours: remainingHours(props.expression?.destroy_at),
 });
 
 function submit() {
@@ -288,6 +317,31 @@ function insertSnippet(snippet: string) {
               />
               <p class="text-xs text-foreground/60">Per channel. Broadcaster bypasses cooldown.</p>
             </div>
+          </div>
+
+          <!-- Self-destruct timer -->
+          <div class="space-y-2">
+            <Label for="destroy_hours">Self-destruct timer (hours)</Label>
+            <Input
+              id="destroy_hours"
+              v-model.number="form.destroy_hours"
+              type="number"
+              min="0"
+              max="8760"
+              placeholder="Leave empty to keep it forever"
+            />
+            <p v-if="form.errors.destroy_hours" class="text-sm text-rose-400">{{ form.errors.destroy_hours }}</p>
+            <p v-else class="text-xs text-foreground/60">
+              Automatically deletes this command after a set number of whole hours (max 8760 = one year). Leave empty to
+              keep it forever. Saving restarts the countdown from now.
+            </p>
+            <p
+              v-if="isEdit && props.expression?.destroy_at"
+              class="inline-flex items-center gap-1 text-xs text-amber-400"
+            >
+              <Clock class="size-3" />
+              Currently self-destructs in {{ expiresIn(props.expression.destroy_at) }}
+            </p>
           </div>
 
           <!-- Toggles -->

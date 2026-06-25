@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 26th, 2026 - feat(bot): set the Bot Expression self-destruct timer from the UI
+
+The self-destruct timer (shipped June 18th) could only be set through the `!ol cmd options <name> destroy <hours>` chat command. The Bot Expression editor now has a number input for it too, so streamers can schedule a temporary command without dropping into chat.
+
+- **`Edit.vue`**: new "Self-destruct timer (hours)" number input (0-8760). The stored value is an absolute `destroy_at` timestamp, but it's authored as "hours from now" to mirror the chat command. On edit it pre-fills with the remaining whole hours (rounded up) so an incidental save preserves a pending timer instead of silently resetting it; when a timer is pending the field shows a "Currently self-destructs in 11h 59m" note (clock icon). Empty leaves the command forever; `0` cancels.
+- **`BotExpressionsController`**: `store`/`update` now persist `destroy_at`, derived from the form's `destroy_hours` via a small `destroyAtFromHours()` helper (`now()->addHours($n)`, or `null` for empty/0). Saving always restarts the countdown from now - a free extend/shorten/cancel, identical to re-running the chat command.
+- **`BotExpressionValidator`**: added a `destroy_hours` rule (`nullable|integer|min:0|max:8760`). It's harmless to the chat-admin path, which never sends the field and manages `destroy_at` through its own `applyOption()` flow.
+- No bot, DB, or sweep changes - this reuses the existing `destroy_at` column and the every-minute `bot:sweep-destroyed` command.
+- Tests: new `BotExpressionDestroyTimerTest` (create schedules from now, create-without leaves no timer, update `0` cancels, over-cap rejected, edit page serializes `destroy_at`); existing chat-admin/sweep/API suites still green (54 passed). ESLint + Pint clean.
+
 ## June 25th, 2026 - fix(tts): alert TTS now honors static-overlay targeting
 
 An alert template can be "Targeted" at specific static overlays so it only renders where you want it. The visual alert respected that, but the ElevenLabs text-to-speech spoke in **every** open overlay regardless - a targeted donation alert would render in one overlay yet read aloud in all of them at once.
