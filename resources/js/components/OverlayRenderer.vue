@@ -1033,6 +1033,14 @@ function handleTtsAudioReady(event: any): void {
   const audioUrl = event?.audio_url;
   if (typeof alertId !== 'string' || typeof audioUrl !== 'string' || !audioUrl) return;
 
+  // Honor targeting independently of the visual alert. This broadcast reaches
+  // every overlay on the user's channel, and the pendingTts map can't gate it:
+  // a non-targeted overlay never records an entry, so the "forgotten audio"
+  // fallback below would otherwise play it immediately. Mirror the same
+  // whitelist check handleAlertTriggered uses.
+  const targetSlugs: string[] | null = event?.target_overlay_slugs ?? null;
+  if (targetSlugs !== null && !targetSlugs.includes(props.slug)) return;
+
   const entry = pendingTts.get(alertId);
   // Late-arriving audio for an alert we've forgotten about: play immediately.
   // No record means no scheduled SFX to wait for either.

@@ -20,10 +20,15 @@ class TtsAudioReady implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * @param  array<int,string>|null  $targetSlugs  Static overlay slugs this alert
+     *                                               targets; null = play on all.
+     */
     public function __construct(
         public readonly string $alertId,
         public readonly string $broadcasterId,
         public readonly string $audioUrl,
+        public readonly ?array $targetSlugs = null,
     ) {}
 
     /**
@@ -37,13 +42,16 @@ class TtsAudioReady implements ShouldBroadcast
     }
 
     /**
-     * @return array<string,string>
+     * @return array<string,mixed>
      */
     public function broadcastWith(): array
     {
         return [
             'alert_id' => $this->alertId,
             'audio_url' => $this->audioUrl,
+            // Mirror AlertTriggered so the overlay can gate TTS by target the
+            // same way it gates the visual alert. null = play on all overlays.
+            'target_overlay_slugs' => $this->targetSlugs,
         ];
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\AlertTriggered;
+use App\Events\TtsAudioReady;
 use App\Jobs\SynthesizeAlertTts;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
@@ -409,4 +410,70 @@ test('SynthesizeAlertTts is NOT dispatched when the tts gate control is off', fu
     $this->actingAs($user)->post("/external-events/{$event->id}/replay");
 
     Bus::assertNotDispatched(SynthesizeAlertTts::class);
+});
+
+test('SynthesizeAlertTts is dispatched with the alert target slugs when set', function () {
+    Event::fake([AlertTriggered::class]);
+    Bus::fake([SynthesizeAlertTts::class]);
+
+    [$user, $alert] = makeUserWithAlertTemplate('Hello [[[event.from_name]]]');
+
+    // Target a single static overlay so the synthesis job must carry its slug.
+    $static = OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'static',
+        'slug' => 'static-'.fake()->unique()->lexify('????????'),
+    ]);
+    $alert->targetStaticOverlays()->attach($static->id);
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Sam']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Bus::assertDispatched(SynthesizeAlertTts::class, function (SynthesizeAlertTts $job) use ($static) {
+        return $job->targetSlugs === [$static->slug];
+    });
+});
+
+test('SynthesizeAlertTts is dispatched with null target slugs when none set', function () {
+    Event::fake([AlertTriggered::class]);
+    Bus::fake([SynthesizeAlertTts::class]);
+
+    [$user] = makeUserWithAlertTemplate('Hello [[[event.from_name]]]');
+
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Tess']);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Bus::assertDispatched(SynthesizeAlertTts::class, function (SynthesizeAlertTts $job) {
+        return $job->targetSlugs === null;
+    });
+});
+
+test('TtsAudioReady broadcastWith payload exposes target_overlay_slugs', function () {
+    $event = new TtsAudioReady(
+        alertId: 'alert-abc-123',
+        broadcasterId: '12345',
+        audioUrl: 'https://example.com/tts/abc.mp3',
+        targetSlugs: ['my-static-overlay'],
+    );
+
+    $payload = $event->broadcastWith();
+
+    expect($payload['alert_id'])->toBe('alert-abc-123')
+        ->and($payload['audio_url'])->toBe('https://example.com/tts/abc.mp3')
+        ->and($payload['target_overlay_slugs'])->toBe(['my-static-overlay']);
+});
+
+test('TtsAudioReady ships null target_overlay_slugs when the alert targets all overlays', function () {
+    $event = new TtsAudioReady(
+        alertId: 'alert-xyz-789',
+        broadcasterId: '12345',
+        audioUrl: 'https://example.com/tts/xyz.mp3',
+    );
+
+    $payload = $event->broadcastWith();
+
+    expect($payload['target_overlay_slugs'])->toBeNull();
 });

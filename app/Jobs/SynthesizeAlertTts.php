@@ -27,10 +27,15 @@ class SynthesizeAlertTts implements ShouldQueue
 
     public int $tries = 1;
 
+    /**
+     * @param  array<int,string>|null  $targetSlugs  Static overlay slugs this alert
+     *                                               targets; null = fire on all.
+     */
     public function __construct(
         public readonly string $alertId,
         public readonly string $broadcasterId,
         public readonly string $text,
+        public readonly ?array $targetSlugs = null,
     ) {}
 
     public function handle(TtsService $tts): void
@@ -50,6 +55,7 @@ class SynthesizeAlertTts implements ShouldQueue
             alertId: $this->alertId,
             broadcasterId: $this->broadcasterId,
             audioUrl: $audioUrl,
+            targetSlugs: $this->targetSlugs,
         ));
     }
 }
