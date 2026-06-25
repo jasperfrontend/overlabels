@@ -65,7 +65,7 @@ class ExternalAlertService
             ));
 
             if ($ttsText !== null) {
-                SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText);
+                SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText, $targetSlugs);
             }
 
             // Optional bot chat message - queued for the bot to post. Gated on

@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 25th, 2026 - fix(tts): alert TTS now honors static-overlay targeting
+
+An alert template can be "Targeted" at specific static overlays so it only renders where you want it. The visual alert respected that, but the ElevenLabs text-to-speech spoke in **every** open overlay regardless - a targeted donation alert would render in one overlay yet read aloud in all of them at once.
+
+- **Root cause.** TTS audio arrives on a second broadcast (`TtsAudioReady` -> `.tts.ready`), fired by the queued synthesis job after the visual alert. That payload never carried the target slugs - the only thing gating it was an implicit assumption that "if this overlay recorded a pending-TTS entry, it was a target." A non-targeted overlay never records one, so the renderer's "late/forgotten audio" fallback (play immediately) kicked in and spoke it anyway. "No pending entry" was ambiguous - it meant either "not a target" or "a target we forgot" - and the code assumed the latter.
+- **Fix.** `TtsAudioReady` now carries `target_overlay_slugs`, plumbed from the same `$targetSlugs` already computed for `AlertTriggered` at all three dispatch sites (Twitch EventSub, external webhook, external replay) through `SynthesizeAlertTts`. `OverlayRenderer.handleTtsAudioReady()` gates on it with the exact whitelist check the visual alert uses, so TTS honors targeting on its own merits instead of relying on the fragile pending-entry side-channel. The legitimate "late/forgotten audio" fallback stays intact for overlays that *are* targets. Empty/null slugs still means "play on all" (backward-compatible).
+- **Tests**: `AlertTtsExpressionTest` gains 4 cases (synthesis job dispatched with/without target slugs, `TtsAudioReady` payload exposes/null-defaults `target_overlay_slugs`); full TTS + targeting suites green (32 passed). ESLint + Pint clean.
+
 ## June 25th, 2026 - feat(lists): make the recent-events feed panel show its real state
 
 The first cut of the "Send these events to a list" panel had no way to tell whether a list was already an active feed - you'd pick a target, set options, save, and the form reset to blank with no confirmation, so you couldn't be sure it took. (It did: the append writes to the DB; only the live websocket push that would visibly update the list doesn't reach a dev box, which is what made it look broken locally.) The panel now states its state plainly and gives you a concrete signal that events are landing.
