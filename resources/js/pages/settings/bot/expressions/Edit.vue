@@ -99,7 +99,27 @@ const previewLoading = ref(false);
 const previewError = ref<string | null>(null);
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 
+// The auto-update resolves on every keystroke (debounced), errors and all,
+// which some authors find distracting while mid-edit. Let them switch it off
+// and render on demand instead. The choice is per-browser so it sticks across
+// expressions and sessions; default on so existing behaviour is unchanged.
+const LIVE_PREVIEW_KEY = 'ol:bot-expr-live-preview';
+const livePreview = ref(readLivePreviewPref());
+// True when the expression changed since the last render while live preview
+// is off, so the shown output is stale and worth a manual refresh.
+const previewStale = ref(false);
+
+function readLivePreviewPref(): boolean {
+  try {
+    return localStorage.getItem(LIVE_PREVIEW_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
 async function refreshPreview() {
+  previewStale.value = false;
+
   if (!form.expression) {
     previewOutput.value = '';
     previewLength.value = 0;
@@ -123,14 +143,33 @@ async function refreshPreview() {
   }
 }
 
+// Render once on load so the panel isn't blank, regardless of the toggle.
+refreshPreview();
+
 watch(
   () => form.expression,
   () => {
+    if (!livePreview.value) {
+      previewStale.value = true;
+      return;
+    }
     if (previewTimer) clearTimeout(previewTimer);
     previewTimer = setTimeout(refreshPreview, 250);
-  },
-  { immediate: true }
+  }
 );
+
+watch(livePreview, (on) => {
+  try {
+    localStorage.setItem(LIVE_PREVIEW_KEY, on ? 'on' : 'off');
+  } catch {
+    // Private-mode or blocked storage - the toggle still works this session.
+  }
+  // Catch up immediately when re-enabling so the panel reflects current input.
+  if (on) {
+    if (previewTimer) clearTimeout(previewTimer);
+    refreshPreview();
+  }
+});
 
 const charsLeft = computed(() => 500 - previewLength.value);
 
@@ -204,11 +243,21 @@ function insertSnippet(snippet: string) {
             <p v-if="form.errors.expression" class="text-sm text-rose-400">{{ form.errors.expression }}</p>
           </div>
 
-          <!-- Live preview -->
+          <!-- Preview -->
           <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
-            <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
-              <Sparkles class="size-3.5" />
-              Live preview
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
+                <Sparkles class="size-3.5" />
+                Preview
+              </div>
+              <label class="flex items-center gap-2 text-xs text-foreground/70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="livePreview"
+                  class="size-3.5 cursor-pointer"
+                />
+                Live preview
+              </label>
             </div>
             <div v-if="previewError" class="flex items-center gap-2 text-sm text-rose-400">
               <AlertTriangle class="size-4" />
@@ -223,10 +272,23 @@ function insertSnippet(snippet: string) {
             <div v-else class="text-sm whitespace-pre-wrap wrap-break-word">
               {{ previewOutput }}
             </div>
-            <p class="mt-3 text-xs text-foreground/60">
-              Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args.
-              Twitch tags resolve to empty in preview.
-            </p>
+            <div class="mt-3 flex flex-wrap items-end justify-between gap-2">
+              <p class="text-xs text-foreground/60">
+                Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args.
+                Twitch tags resolve to empty in preview.
+              </p>
+              <div v-if="!livePreview" class="flex items-center gap-2">
+                <span v-if="previewStale" class="text-xs text-amber-400">edited</span>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded bg-foreground/10 px-2 py-1 text-xs cursor-pointer hover:bg-foreground/15"
+                  @click="refreshPreview"
+                >
+                  <Sparkles class="size-3" />
+                  Render preview
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Available tags helper -->

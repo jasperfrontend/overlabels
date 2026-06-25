@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 26th, 2026 - feat(bot): let authors pause the expression live preview
+
+The expression editor's preview re-resolves on every keystroke (debounced), errors and all. For some authors that constant flicker mid-edit is distracting rather than helpful, so the preview can now be paused.
+
+- **`Edit.vue`**: a "Live preview" checkbox sits in the preview panel header. When ticked (the default - unchanged behaviour) the preview keeps auto-updating as you type. Unticked, auto-update stops and a "Render preview" button appears to resolve on demand; an amber "edited" marker shows when the displayed output is stale.
+- The choice is saved to `localStorage` (`ol:bot-expr-live-preview`), so it sticks across expressions and sessions per browser. Storage access is wrapped in try/catch so private-mode or blocked storage degrades to a working-but-non-persistent toggle.
+- The panel renders once on load regardless of the toggle (so it's never blank when opening an existing expression), and re-enabling live preview triggers an immediate catch-up render. Panel header renamed "Live preview" -> "Preview" since the auto-update is now optional.
+- Frontend only - no backend or preview-endpoint changes. ESLint + vue-tsc clean.
+
 ## June 26th, 2026 - feat(bot): set the Bot Expression self-destruct timer from the UI
 
 The self-destruct timer (shipped June 18th) could only be set through the `!ol cmd options <name> destroy <hours>` chat command. The Bot Expression editor now has a number input for it too, so streamers can schedule a temporary command without dropping into chat.
