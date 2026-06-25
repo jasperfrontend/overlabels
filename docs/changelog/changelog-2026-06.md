@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 26th, 2026 - fix(bot): stop the expression preview from jumping on refresh
+
+Each live re-render briefly swapped the resolved output for a one-line "Resolving..." placeholder, then swapped it back. On a multi-line expression that collapse-then-expand made the panel visibly jump on every keystroke - the "jumpy" complaint that prompted the pause toggle in the first place.
+
+- **`Edit.vue`**: the preview content now stays mounted across refreshes. The last output remains visible (dimmed via a 150ms opacity transition) while the next one resolves, so height only ever changes directly from old content to new - never through an intermediate one-line state. The "resolving..." hint moved to the panel header where it doesn't affect content height.
+- A `min-h-16` floor on the content area keeps the empty and error states from collapsing too.
+- Frontend only, no behaviour change beyond the smoother transition. ESLint + vue-tsc clean.
+
 ## June 26th, 2026 - feat(bot): let authors pause the expression live preview
 
 The expression editor's preview re-resolves on every keystroke (debounced), errors and all. For some authors that constant flicker mid-edit is distracting rather than helpful, so the preview can now be paused.

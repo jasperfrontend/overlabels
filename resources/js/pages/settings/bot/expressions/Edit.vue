@@ -74,7 +74,7 @@ const form = useForm({
   command: props.expression?.command ?? '',
   permission_level: props.expression?.permission_level ?? 'everyone',
   cooldown_seconds: props.expression?.cooldown_seconds ?? 0,
-  expression: props.expression?.expression ?? 'Hi [[[bot:from_user]]]!',
+  expression: props.expression?.expression ?? 'Hi [[[bot:from_user|mention]]]!',
   enabled: props.expression?.enabled ?? true,
   hidden_from_commands: props.expression?.hidden_from_commands ?? false,
   destroy_hours: remainingHours(props.expression?.destroy_at),
@@ -249,6 +249,7 @@ function insertSnippet(snippet: string) {
               <div class="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
                 <Sparkles class="size-3.5" />
                 Preview
+                <span v-if="previewLoading" class="normal-case italic text-foreground/40">resolving...</span>
               </div>
               <label class="flex items-center gap-2 text-xs text-foreground/70 cursor-pointer">
                 <input
@@ -259,18 +260,29 @@ function insertSnippet(snippet: string) {
                 Live preview
               </label>
             </div>
-            <div v-if="previewError" class="flex items-center gap-2 text-sm text-rose-400">
-              <AlertTriangle class="size-4" />
-              {{ previewError }}
-            </div>
-            <div v-else-if="previewLoading" class="text-sm text-foreground/50 italic">
-              Resolving...
-            </div>
-            <div v-else-if="!previewOutput" class="text-sm text-foreground/50 italic">
-              (empty)
-            </div>
-            <div v-else class="text-sm whitespace-pre-wrap wrap-break-word">
-              {{ previewOutput }}
+            <!--
+              The content stays mounted across refreshes - we never swap it for
+              a "Resolving..." line. Collapsing multi-line output to one line and
+              back is what made the panel jump; instead the last output stays put
+              (dimmed) while a new one resolves, so height changes only ever go
+              directly from old content to new. min-height floors the empty/error
+              states so they don't collapse either.
+            -->
+            <div class="min-h-16 text-sm">
+              <div v-if="previewError" class="flex items-center gap-2 text-rose-400">
+                <AlertTriangle class="size-4" />
+                {{ previewError }}
+              </div>
+              <div v-else-if="!previewOutput" class="italic text-foreground/50">
+                (empty)
+              </div>
+              <div
+                v-else
+                class="whitespace-pre-wrap wrap-break-word transition-opacity duration-150"
+                :class="{ 'opacity-50': previewLoading }"
+              >
+                {{ previewOutput }}
+              </div>
             </div>
             <div class="mt-3 flex flex-wrap items-end justify-between gap-2">
               <p class="text-xs text-foreground/60">
