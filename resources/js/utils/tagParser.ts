@@ -1,12 +1,17 @@
 import { applyFormatter } from '@/utils/formatters';
 
-// Matches [[[tag_name]]] and [[[tag_name|formatter]]] and [[[tag_name|formatter:args]]]
-// Tag key allows word chars, dots, colons, and hyphens (legacy support for hyphenated service names)
-// Pipe args allow word chars, dots, colons, hyphens, and spaces (for date patterns like dd-MM-yyyy HH:mm)
+// Matches [[[tag]]], [[[tag|formatter]]], [[[tag|formatter:args]]], and an optional
+// trailing `?? default` slot: [[[tag ?? fallback]]] / [[[tag|formatter ?? fallback]]].
+// - Group 1 (tag key): word chars, dots, colons, hyphens (legacy hyphenated service names)
+// - Group 2 (pipe args, optional): word chars, dots, colons, hyphens, spaces (date patterns like dd-MM-yyyy HH:mm)
+// - Group 3 (default, optional): the literal text after `??`, captured lazily up to the
+//   closing `]]]`. May contain spaces/punctuation; the only thing it can't contain is `]]]`.
 //
 // SINGLE-PASS BY DESIGN: this regex runs exactly once per render. Substituted values are never
 // re-scanned for tags. This is the day-one rule that prevents template-injection via user content
-// (donor names, chat messages, control values containing [[[c:foo]]] etc).
+// (donor names, chat messages, control values containing [[[c:foo]]] etc). The `?? default` is
+// part of the AUTHORED template, not substituted data, so it inherits the same single-pass safety:
+// it is emitted verbatim and never re-parsed.
 //
 // Canonical adversarial test: a control "scr" with value "scr" and "scr_end" with value "/scr",
 // composed in a template as `<[[[c:scr]]]ipt>alert('hi')<[[[c:scr_end]]][[[c:ipt]]]>`, resolves
@@ -14,7 +19,7 @@ import { applyFormatter } from '@/utils/formatters';
 // no second pass and the result is not re-parsed as a template, the string remains inert text
 // (and encodeHtml below additionally neutralises it for v-html sinks). If you ever feel tempted
 // to add a "just one more pass" loop here, this comment is why you won't.
-export const TAG_REGEX = /\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?]]]/g;
+export const TAG_REGEX = /\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/g;
 
 // HTML-encode substituted tag values so donor-supplied strings can't break out of attribute or
 // text context when the result is rendered via v-html. Encodes the five chars that matter for
@@ -34,13 +39,26 @@ export function replaceTagsWithFormatting(
   locale: string,
   encode: boolean = true,
 ): string {
-  return source.replace(TAG_REGEX, (_match, key: string, pipe: string | undefined) => {
-    const val = sourceData[key];
-    if (val === undefined || val === null || typeof val === 'object') return '';
-    const strVal = String(val);
-    const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
-    return encode ? encodeHtml(formatted) : formatted;
-  });
+  return source.replace(
+    TAG_REGEX,
+    (_match, key: string, pipe: string | undefined, def: string | undefined) => {
+      const val = sourceData[key];
+      const missing = val === undefined || val === null || typeof val === 'object';
+      const strVal = missing ? '' : String(val);
+
+      // `?? default` backstops ABSENCE only: an empty value renders the literal
+      // default (verbatim, no pipe). A present-but-unexpected value is never
+      // "absent", so the default never fires for it. The default is HTML-encoded
+      // here just like any value, so it can't break out of an HTML/v-html sink.
+      if (strVal === '') {
+        const fallback = def?.trim();
+        return fallback ? (encode ? encodeHtml(fallback) : fallback) : '';
+      }
+
+      const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
+      return encode ? encodeHtml(formatted) : formatted;
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +112,13 @@ export function compileCssBindings(source: string): CompiledCssBindings {
     const placeholderLen = m[0].length;
     const key = m[1];
     const pipe = m[2];
+
+    // A `?? default` fallback can't be collapsed into a single var() reference
+    // (the fallback is conditional on emptiness, resolved per-update). Hand the
+    // whole source to the slow path, which applies defaults inline.
+    if (m[3] !== undefined) {
+      return { fastPath: false };
+    }
 
     // Left-side adjacency check: `--x: [[[k]]]` is fine (space before),
     // `#[[[hex]]]` is not (hex digit prefix would need merging).

@@ -561,6 +561,24 @@ const breadcrumbs: BreadcrumbItem[] = [
                 namespace for EventSub in expressions yet - use the presets.
               </p>
             </div>
+
+            <div class="border border-sidebar-border bg-card p-6">
+              <h3 class="mb-2 text-lg font-semibold">
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">?? defaults</code> don't touch the math.
+              </h3>
+              <p class="text-foreground">
+                A <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">?? fallback</code> on a template tag
+                (like <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:hue_base ?? 100]]]</code>)
+                is display-only - it fills in literal text when a tag renders <em>empty</em>. It never changes the
+                control's stored value, so an Expression Control like
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">c.hue_base + 40</code> keeps computing
+                on the real value (an empty control reads as 0 in math). The model: compute first with Expression
+                Controls, then catch any empties at display time with
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">??</code> in your template. See
+                <Link href="/help/formatting" class="text-violet-400 hover:underline">Formatting Pipes</Link> for the
+                full syntax.
+              </p>
+            </div>
           </div>
         </section>
 

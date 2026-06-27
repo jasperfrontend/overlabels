@@ -381,6 +381,12 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
                 <code class="text-foreground/80">|login</code> strips it and lowercases for URLs like
                 <code class="text-foreground/80">twitch.tv/[[[bot:args.0|login]]]</code>.
               </p>
+              <p class="text-foreground/60">
+                Default value: add <code class="text-foreground/80">?? something</code> to show literal text when a
+                tag is empty, e.g. <code class="text-foreground/80">[[[bot:args.0 ?? everyone]]]</code> or
+                <code class="text-foreground/80">[[[c:donations|number ?? 0]]]</code>. It only fills in for a
+                missing value; a value that's present is shown as-is.
+              </p>
             </div>
           </details>
 

@@ -289,7 +289,7 @@ function substituteScopedTokens(
     encode: boolean,
 ): string {
     TAG_REGEX.lastIndex = 0;
-    return template.replace(TAG_REGEX, (match, key: string, pipe: string | undefined) => {
+    return template.replace(TAG_REGEX, (match, key: string, pipe: string | undefined, def: string | undefined) => {
         // [[[raw]]] inside a foreach dumps the current iteration item as
         // pretty-printed JSON. Useful for inspecting the shape of an iterable
         // while writing a template. Pipe formatters are ignored.
@@ -312,12 +312,26 @@ function substituteScopedTokens(
             key.startsWith(`${alias}.`) ||
             key === 'loop' ||
             key.startsWith('loop.');
+        // Non-scoped tags (incl. any `?? default`) are left intact for the outer
+        // substitution pass, which resolves their values and defaults.
         if (!isScoped) return match;
 
         const val = resolvePath(scoped, key);
-        if (val === undefined || val === null || typeof val === 'object') return '';
+        const strVal =
+            val === undefined || val === null || typeof val === 'object'
+                ? ''
+                : typeof val === 'boolean'
+                  ? val
+                      ? '1'
+                      : '0'
+                  : String(val);
 
-        const strVal = typeof val === 'boolean' ? (val ? '1' : '0') : String(val);
+        // `?? default` backstops an absent scoped value, same as the outer pass.
+        if (strVal === '') {
+            const fallback = def?.trim();
+            return fallback ? (encode ? encodeHtml(fallback) : fallback) : '';
+        }
+
         const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
         return encode ? encodeHtml(formatted) : formatted;
     });

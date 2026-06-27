@@ -168,9 +168,13 @@ class OverlayTemplate extends Model
         $caps = $caps ?? $this->owner?->foreachCaps() ?? [];
         $tags = [];
 
-        // Pattern to match [[[tag_name]]] and [[[tag_name|formatter:args]]] syntax
-        // Pipe args allow word chars, dots, colons, hyphens, and spaces (for patterns like date:dd-MM-yyyy HH:mm)
-        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:\-]*?)(?:\|[a-zA-Z0-9_.:% -]+)?]]]/';
+        // Pattern to match [[[tag_name]]] and [[[tag_name|formatter:args]]] syntax.
+        // Pipe args allow word chars, dots, colons, hyphens, and spaces (for patterns like date:dd-MM-yyyy HH:mm).
+        // A trailing `?? default` slot is consumed (lazily, up to `]]]`) but not
+        // captured - the tag name in group 1 stays clean for the allowlist. This
+        // MUST tolerate defaults, otherwise `[[[followers_total ?? 0]]]` fails to
+        // match, the real key is never fetched, and the default would always win.
+        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:\-]*?)(?:\|[a-zA-Z0-9_.:% -]+)?(?:\s*\?\?\s*.*?)?]]]/';
 
         // Extract from HTML
         preg_match_all($pattern, $this->html ?? '', $htmlMatches);
