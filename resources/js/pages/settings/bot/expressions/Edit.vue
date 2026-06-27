@@ -177,6 +177,13 @@ function insertSnippet(snippet: string) {
   // Append at end if no selection.
   form.expression = (form.expression ?? '') + snippet;
 }
+
+// Slash commands never make it out of the bot: the Send Chat Message API
+// transmits literal text, so Twitch drops a leading `/timeout` (or any slash
+// command) and posts the rest as plain chat. The server validator rejects
+// these too - this just warns the author live, before they submit, rather
+// than bouncing them off a save error.
+const startsWithSlash = computed(() => (form.expression ?? '').trimStart().startsWith('/'));
 </script>
 
 <template>
@@ -241,6 +248,19 @@ function insertSnippet(snippet: string) {
               placeholder="Hi [[[bot:from_user]]], the count is [[[c:my_counter]]]"
             />
             <p v-if="form.errors.expression" class="text-sm text-rose-400">{{ form.errors.expression }}</p>
+            <div
+              v-if="startsWithSlash"
+              class="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200"
+            >
+              <AlertTriangle class="mt-0.5 size-4 shrink-0" />
+              <span>
+                Slash commands like <code class="text-amber-100">/timeout</code>,
+                <code class="text-amber-100">/ban</code> or <code class="text-amber-100">/me</code> don't work here.
+                The overlabels bot sends plain chat text, so Twitch drops the leading
+                <code class="text-amber-100">/</code> and posts the rest as a message. The bot powers your overlays,
+                it isn't a chat moderator - use your mod tools for that.
+              </span>
+            </div>
           </div>
 
           <!-- Preview -->

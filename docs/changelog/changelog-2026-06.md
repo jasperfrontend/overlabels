@@ -1,5 +1,14 @@
 # CHANGELOG JUNE 2026
 
+## June 27th, 2026 - feat(bot): reject slash-command Bot Expressions
+
+A `!vanish` expression with the reply `/timeout [[[bot:from_user]]] 1` posted `@user 1` to chat and timed out nobody. Slash commands are a twitch.tv website convenience; the bot replies via the Send Chat Message API, which transmits literal text only, so Twitch drops the leading `/timeout` (or any slash command) and posts the rest as a plain message. Rather than reinvent moderation through the Helix API - the bot powers your overlays, it isn't a chat moderator - we now catch these at authoring time and explain why.
+
+- **`BotExpressionValidator`**: an expression whose trimmed body starts with `/` is rejected with a one-line message. The check runs on the raw template pre-substitution, so chatter args can never inject the leading slash (the single-pass resolver already guarantees this). Because the validator is shared, this covers both the web form **and** the chat-driven `!ol cmd add ...` path in one place - the chat path already relays validation errors back as a chat line, so the deny shows up there too.
+- **`Edit.vue`**: a live amber note appears the moment the expression starts with `/`, naming `/timeout`, `/ban`, `/me` and explaining that the bot sends plain chat text and isn't a chat moderator - so a web author sees it before submitting instead of bouncing off the server error.
+- No bot, DB, or scope changes - this deliberately does **not** add a moderation lane.
+- Tests: chat-admin path rejects a slashed `!vanish`; web form returns an `expression` validation error and creates nothing. Existing bot-expression/chat-admin/sweep suites green (27 passed). ESLint + Pint clean.
+
 ## June 26th, 2026 - fix(bot): stop the expression preview from jumping on refresh
 
 Each live re-render briefly swapped the resolved output for a one-line "Resolving..." placeholder, then swapped it back. On a multi-line expression that collapse-then-expand made the panel visibly jump on every keystroke - the "jumpy" complaint that prompted the pause toggle in the first place.

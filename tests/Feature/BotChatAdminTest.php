@@ -105,6 +105,20 @@ it('cmd add rejects collision with a builtin', function () {
         ->toContain('built-in');
 });
 
+it('cmd add rejects an expression that starts with a slash command', function () {
+    $user = adminUser();
+
+    postManage(managePayload([
+        'name' => 'vanish',
+        'payload' => '/timeout [[[bot:from_user]]] 1',
+    ]))->assertOk();
+
+    expect(BotExpression::where('user_id', $user->id)->where('command', 'vanish')->exists())->toBeFalse();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toStartWith('error:')
+        ->toContain("can't start with '/'");
+});
+
 it('cmd edit updates expression payload', function () {
     $user = adminUser();
     BotExpression::create([
