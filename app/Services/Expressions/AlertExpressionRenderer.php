@@ -22,6 +22,11 @@ use App\Models\User;
  * ExpressionFormatter. Unknown tags resolve to empty string per the
  * null-over-placeholder rule.
  *
+ * Default values: `[[[key ?? literal]]]` emits the literal text VERBATIM when
+ * the value resolves empty - a presentation fallback for ABSENCE only, never
+ * re-scanned for tags and never piped. Both sinks here (TTS audio, chat) are
+ * plain text, so no HTML encoding is applied.
+ *
  * Reserved gate control: if the user owns any boolean control with key `tts`
  * whose value is "0", render() returns null. The caller treats null as "do not
  * include tts_text in the broadcast". The control may live on any of the user's
@@ -30,7 +35,9 @@ use App\Models\User;
  */
 class AlertExpressionRenderer
 {
-    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?]]]/';
+    // Group 1: tag key. Group 2 (optional): pipe formatter. Group 3 (optional,
+    // after `??`): literal default emitted when the value resolves empty.
+    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/';
 
     private const int MAX_RESOLVED_LENGTH = 500;
 
@@ -80,8 +87,15 @@ class AlertExpressionRenderer
             self::TAG_REGEX,
             function (array $matches) use ($controls, $templateData, $locale): string {
                 $key = $matches[1];
-                $pipe = $matches[2] ?? null;
+                $pipe = ($matches[2] ?? '') !== '' ? $matches[2] : null;
+                $default = isset($matches[3]) ? trim($matches[3]) : null;
                 $value = $this->lookup($key, $controls, $templateData);
+
+                // Absence backstop: empty value renders the literal default.
+                if ($value === '' && $default !== null && $default !== '') {
+                    return $default;
+                }
+
                 if ($pipe !== null) {
                     $value = ExpressionFormatter::apply($value, $pipe, $locale);
                 }

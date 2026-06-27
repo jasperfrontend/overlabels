@@ -33,6 +33,30 @@ test('extractTemplateTags strips pipe with format args', function () {
     expect($tags)->toContain('c:timer');
 });
 
+test('extractTemplateTags strips a ?? default and keeps the clean key', function () {
+    $template = new OverlayTemplate;
+    // Without tolerating the default, this key would never be extracted, the
+    // real value would never be fetched, and the default would always win.
+    $template->html = '<span>[[[followers_total ?? 0]]]</span>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)->toContain('followers_total')
+        ->and($tags)->not->toContain('followers_total ?? 0');
+});
+
+test('extractTemplateTags strips both a pipe and a ?? default', function () {
+    $template = new OverlayTemplate;
+    $template->html = '<span>[[[amount|currency:USD ?? a mystery sum]]]</span>';
+    $template->css = '';
+
+    $tags = $template->extractTemplateTags();
+
+    expect($tags)->toContain('amount')
+        ->and($tags)->not->toContain('a mystery sum');
+});
+
 test('extractTemplateTags handles date format with hyphens', function () {
     $template = new OverlayTemplate;
     $template->html = '<span>[[[c:event_date|date:dd-MM-yyyy]]]</span>';

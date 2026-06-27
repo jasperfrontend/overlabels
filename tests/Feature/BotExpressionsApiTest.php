@@ -7,6 +7,7 @@ use App\Models\OverlayControl;
 use App\Models\User;
 use App\Services\Bot\BotExpressionResolver;
 use App\Services\TwitchApiService;
+use App\Services\TwitchTokenService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
@@ -457,7 +458,7 @@ test('resolver refreshes the token then resolves bare Twitch tags', function () 
     $user->forceFill(['access_token' => 'stale-token'])->save();
 
     // Token refresh succeeds -> the fetch runs and the tag resolves.
-    app()->instance(App\Services\TwitchTokenService::class, new class extends App\Services\TwitchTokenService
+    app()->instance(TwitchTokenService::class, new class extends TwitchTokenService
     {
         public function __construct() {}
 
@@ -488,7 +489,7 @@ test('resolver leaves Twitch tags empty when the token cannot be refreshed', fun
     // Refresh fails. Even though getExtendedUserData WOULD return data, the
     // failed refresh must short-circuit before the fetch - this is the bug:
     // pre-fix, a stale token 401'd inside the fetch and emptied every tag.
-    app()->instance(App\Services\TwitchTokenService::class, new class extends App\Services\TwitchTokenService
+    app()->instance(TwitchTokenService::class, new class extends TwitchTokenService
     {
         public function __construct() {}
 
@@ -567,4 +568,91 @@ test('resolver caps output at 500 characters', function () {
     $output = $resolver->resolve($user, $longExpression);
 
     expect(mb_strlen($output))->toBe(500);
+});
+
+test('default value fills an absent bot arg', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // No args.0 in context -> the value is empty -> the default renders.
+    expect($resolver->resolve($user, 'shoutout [[[bot:args.0 ?? everyone]]]', []))
+        ->toBe('shoutout everyone');
+});
+
+test('a present value ignores its default', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // args.0 present -> default never fires (it backstops absence, not "wrong").
+    expect($resolver->resolve($user, 'shoutout [[[bot:args.0 ?? everyone]]]', ['args.0' => 'bob']))
+        ->toBe('shoutout bob');
+});
+
+test('default is emitted verbatim and bypasses the pipe', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // Control missing -> default '5000' renders literally, NOT '5,000': the
+    // |number formatter applies to a present value, never to the default.
+    expect($resolver->resolve($user, '[[[c:nope|number ?? 5000]]]'))->toBe('5000');
+});
+
+test('pipe still formats a present value that also has a default', function () {
+    $user = makeOptedInBotUser();
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'count',
+        'type' => 'number',
+        'value' => '1234567',
+        'source_managed' => false,
+    ]);
+
+    $resolver = app(BotExpressionResolver::class);
+
+    expect($resolver->resolve($user, '[[[c:count|number ?? 5000]]]'))->toBe('1,234,567');
+});
+
+test('default preserves literal punctuation and spaces', function () {
+    $user = makeOptedInBotUser();
+    $resolver = app(BotExpressionResolver::class);
+
+    // '100% sure' would be mangled by a formatter or a restrictive charset;
+    // the default is raw literal text, so it survives intact.
+    expect($resolver->resolve($user, '[[[bot:args.0 ?? 100% sure]]]', []))
+        ->toBe('100% sure');
+});
+
+test('default text is never re-scanned as a tag (single-pass)', function () {
+    $user = makeOptedInBotUser();
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'goal_km',
+        'type' => 'number',
+        'value' => '999',
+        'source_managed' => false,
+    ]);
+
+    $resolver = app(BotExpressionResolver::class);
+    $output = $resolver->resolve($user, '[[[bot:nope ?? [[[c:goal_km]]]]]]', []);
+
+    // The tag-shaped default is emitted as inert text, never resolved to '999'.
+    expect($output)->not->toContain('999');
+});
+
+test('an empty control value triggers its default', function () {
+    $user = makeOptedInBotUser();
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'blank',
+        'type' => 'string',
+        'value' => '',
+        'source_managed' => false,
+    ]);
+
+    $resolver = app(BotExpressionResolver::class);
+
+    expect($resolver->resolve($user, '[[[c:blank ?? nothing yet]]]'))->toBe('nothing yet');
 });

@@ -27,10 +27,21 @@ use Throwable;
  *
  * Pipe formatters (e.g. |number, |round:2, |distance:mi) run after lookup.
  * Unknown tags resolve to empty string per the null-over-placeholder rule.
+ *
+ * Default values: `[[[key ?? literal]]]` (or `[[[key|pipe ?? literal]]]`) emits
+ * the literal text VERBATIM when the looked-up value is empty. The default is a
+ * presentation fallback for ABSENCE only - it is never re-scanned for tags
+ * (single-pass), the pipe is not applied to it, and it never feeds back into a
+ * control's stored value. Chat output is a plain-text sink, so the default
+ * needs no HTML encoding here.
  */
 class BotExpressionResolver
 {
-    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?]]]/';
+    // Group 1: tag key. Group 2 (optional): pipe formatter. Group 3 (optional,
+    // after `??`): literal default emitted when the value resolves empty. The
+    // default captures lazily up to the closing `]]]` so it may contain spaces
+    // and punctuation; the only thing it can't contain is the literal `]]]`.
+    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/';
 
     private const int MAX_RESOLVED_LENGTH = 500;
 
@@ -60,8 +71,16 @@ class BotExpressionResolver
             self::TAG_REGEX,
             function (array $matches) use ($controls, $twitchTags, $botContext, $locale): string {
                 $key = $matches[1];
-                $pipe = $matches[2] ?? null;
+                $pipe = ($matches[2] ?? '') !== '' ? $matches[2] : null;
+                $default = isset($matches[3]) ? trim($matches[3]) : null;
                 $value = $this->lookup($key, $controls, $twitchTags, $botContext);
+
+                // Absence backstop: an empty value renders the literal default
+                // (verbatim, no pipe). A present value never triggers it.
+                if ($value === '' && $default !== null && $default !== '') {
+                    return $default;
+                }
+
                 if ($pipe !== null) {
                     $value = ExpressionFormatter::apply($value, $pipe, $locale);
                 }

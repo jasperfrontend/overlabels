@@ -79,6 +79,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             <li><a href="#distance" class="text-violet-400 hover:underline">distance - Distance with Unit Conversion</a></li>
             <li><a href="#speed" class="text-violet-400 hover:underline">speed - Speed with Unit Conversion</a></li>
             <li><a href="#text" class="text-violet-400 hover:underline">uppercase / lowercase - Text Transforms</a></li>
+            <li><a href="#default" class="text-violet-400 hover:underline">?? - Default Values for Empty Tags</a></li>
             <li><a href="#locale" class="text-violet-400 hover:underline">Locale Settings</a></li>
             <li><a href="#css" class="text-violet-400 hover:underline">Pipes in CSS</a></li>
             <li><a href="#tips" class="text-violet-400 hover:underline">Tips</a></li>
@@ -643,6 +644,84 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
         </div>
 
+        <!-- default values -->
+        <div class="mb-12" id="default">
+          <h2 class="mb-6 text-2xl font-bold">
+            <code class="rounded bg-background px-2 py-1 font-mono text-2xl">?? default</code>
+            <span class="ml-2 text-lg font-normal text-muted-foreground">Fallback for empty tags</span>
+          </h2>
+
+          <div class="space-y-6">
+            <div class="border border-sidebar-border bg-card p-6">
+              <p class="mb-4 text-foreground">
+                Add <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">?? something</code> after a tag
+                to show literal text when the tag resolves <strong>empty</strong>. Without it, an empty tag renders
+                nothing - so <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">Hi [[[bot:args.0]]]!</code>
+                with no argument becomes <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">Hi !</code>.
+                A default keeps it readable.
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                <div class="text-muted-foreground">No value - shows the default:</div>
+                <div>[[[bot:args.0 ?? everyone]]]</div>
+                <div class="mt-3 text-muted-foreground">Pairs with a pipe - format when present, default when empty:</div>
+                <div>[[[c:donations|number ?? 0]]]</div>
+                <div class="mt-3 text-muted-foreground">The default is literal - spaces and punctuation are kept:</div>
+                <div>[[[event.user_name ?? a kind stranger]]]</div>
+              </div>
+            </div>
+
+            <div class="border border-sidebar-border bg-card p-6">
+              <h3 class="mb-4 text-xl font-semibold">How it behaves</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                  <tr class="border-b border-sidebar text-left">
+                    <th class="pb-2 pr-4 font-semibold">Tag</th>
+                    <th class="pb-2 pr-4 font-semibold">Raw value</th>
+                    <th class="pb-2 font-semibold">Output</th>
+                  </tr>
+                  </thead>
+                  <tbody class="font-mono">
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:tips ?? 0]]]</td>
+                    <td class="py-2 pr-4 text-muted-foreground">(empty)</td>
+                    <td class="py-2">0</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:tips ?? 0]]]</td>
+                    <td class="py-2 pr-4">25</td>
+                    <td class="py-2">25</td>
+                  </tr>
+                  <tr class="border-b border-sidebar/50">
+                    <td class="py-2 pr-4">[[[c:tips|currency ?? no tips yet]]]</td>
+                    <td class="py-2 pr-4 text-muted-foreground">(empty)</td>
+                    <td class="py-2">no tips yet</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">[[[c:tips|currency ?? no tips yet]]]</td>
+                    <td class="py-2 pr-4">25</td>
+                    <td class="py-2">$25.00</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-4 text-sm text-foreground">
+                When a value is present the pipe formats it as usual; the default is only used when the value is empty,
+                and it is shown verbatim (the pipe is never applied to it).
+              </p>
+            </div>
+
+            <div class="border border-amber-500/30 bg-amber-500/5 p-6">
+              <p class="text-foreground">
+                <strong>It only fills in for empty.</strong> A default backstops a <em>missing</em> value, not a
+                <em>wrong</em> one. If a value is present - even an unexpected one - it is shown as-is and the default
+                never fires. And like pipes, <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">??</code>
+                is display-only: it never changes a control's stored value or feeds into expression-control math.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Locale -->
         <div class="mb-12" id="locale">
           <h2 class="mb-6 text-2xl font-bold">Locale Settings</h2>
@@ -809,10 +888,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                   <td class="py-2 pr-4 text-muted-foreground">-</td>
                   <td class="py-2">ALL CAPS</td>
                 </tr>
-                <tr>
+                <tr class="border-b border-sidebar/50">
                   <td class="py-2 pr-4 font-mono">|lowercase</td>
                   <td class="py-2 pr-4 text-muted-foreground">-</td>
                   <td class="py-2">all lowercase</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 font-mono">?? text</td>
+                  <td class="py-2 pr-4 font-mono text-muted-foreground">literal fallback</td>
+                  <td class="py-2">Shown only when the tag is empty</td>
                 </tr>
                 </tbody>
               </table>

@@ -8,6 +8,7 @@ use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
+use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\HtmlSanitizationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
@@ -476,4 +477,16 @@ test('TtsAudioReady ships null target_overlay_slugs when the alert targets all o
     $payload = $event->broadcastWith();
 
     expect($payload['target_overlay_slugs'])->toBeNull();
+});
+
+test('alert renderer fills an absent value with its default, and a present value ignores it', function () {
+    $user = User::factory()->create();
+    $renderer = app(AlertExpressionRenderer::class);
+    $expr = 'thanks [[[event.user_name ?? a kind stranger]]]';
+
+    // Absent -> default renders; present -> default ignored (absence backstop).
+    expect($renderer->renderMessage($user, $expr, []))
+        ->toBe('thanks a kind stranger')
+        ->and($renderer->renderMessage($user, $expr, ['event.user_name' => 'Alice']))
+        ->toBe('thanks Alice');
 });
