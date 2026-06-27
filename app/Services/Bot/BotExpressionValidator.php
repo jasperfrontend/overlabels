@@ -42,6 +42,19 @@ class BotExpressionValidator
             'destroy_hours' => ['nullable', 'integer', 'min:0', 'max:8760'],
         ])->validate();
 
+        // Reject slash commands. The bot replies via the Send Chat Message API,
+        // which transmits literal text only - Twitch drops a leading `/timeout`
+        // (or any slash command) and posts the rest as a plain message, so the
+        // expression silently does nothing useful. We check the raw template
+        // pre-substitution, so chatter args can never inject the leading slash
+        // (the single-pass resolver guarantees this). Kept to one sentence so it
+        // reads under the form field and as a single relayed chat line.
+        if (str_starts_with(ltrim($data['expression']), '/')) {
+            throw ValidationException::withMessages([
+                'expression' => "Expressions can't start with '/'. Slash commands like /timeout only work in Twitch's own chat box; the overlabels bot sends plain text and powers your overlays, it doesn't moderate chat.",
+            ]);
+        }
+
         $command = strtolower(ltrim($data['command'], '!'));
 
         $reserved = array_column(BotCommand::DEFAULTS, 'command');

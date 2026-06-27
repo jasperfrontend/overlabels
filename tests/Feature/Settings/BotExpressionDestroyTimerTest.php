@@ -80,6 +80,19 @@ test('destroy_hours over the one-year cap is rejected', function () {
     expect(BotExpression::where('user_id', $user->id)->count())->toBe(0);
 });
 
+test('an expression starting with a slash command is rejected', function () {
+    $user = timerUser();
+
+    $this->actingAs($user)
+        ->post('/settings/bot/expressions', expressionPayload([
+            'command' => 'vanish',
+            'expression' => '/timeout [[[bot:from_user]]] 1',
+        ]))
+        ->assertSessionHasErrors('expression');
+
+    expect(BotExpression::where('user_id', $user->id)->count())->toBe(0);
+});
+
 test('the edit page serializes destroy_at into the payload', function () {
     $user = timerUser();
     $expr = BotExpression::create([
