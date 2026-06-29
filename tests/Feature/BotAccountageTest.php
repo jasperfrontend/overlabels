@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
@@ -14,6 +15,17 @@ beforeEach(function () {
         'services.twitch.client_secret' => 'test-client-secret',
     ]);
     Cache::flush();
+
+    // Freeze the clock to a mid-month date so the relative-age fixtures are
+    // deterministic. now()->subMonths(N) overflows a short month when run on
+    // a high day-of-month (e.g. on the 29th, subMonths(4) targets Feb 29 ->
+    // rolls to Mar 1), which made the "4 months" assertion fail on certain
+    // calendar dates. The 15th can't overflow any month.
+    Carbon::setTestNow(Carbon::create(2026, 6, 15, 12));
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
 });
 
 function postAccountage(array $payload): TestResponse
