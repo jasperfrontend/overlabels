@@ -1193,7 +1193,8 @@ async function loadMeta() {
                 placeholder="@[[[bot:from_user]]], your entry has been added to the list."
               ></textarea>
               <p class="mt-1 text-xs text-muted-foreground">
-                Spoken in chat after a successful append. Same template syntax as the value template. Leave blank for silent.
+                Spoken in chat after a successful append. Same template syntax as the value template, plus this list's read tags like
+                <span class="font-mono">[[[c:list:{{ list.slug }}:count]]]</span> (resolved after the append, so the count includes it). Leave blank for silent.
               </p>
             </div>
             <div>

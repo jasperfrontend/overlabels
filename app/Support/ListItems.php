@@ -258,6 +258,47 @@ final class ListItems
         );
     }
 
+    /**
+     * Sum the numeric values in a List for the [[[c:list:slug:sum]]] tag.
+     * Whitespace-only / empty values are skipped (treated as 0, since
+     * empties are common as placeholders and aren't really mistakes). Any
+     * other non-numeric content fails loudly with an inline error string
+     * identifying the list slug + offending value + position, so the
+     * streamer can find and fix the broken row. The integer-valued result
+     * renders without a trailing ".0" and avoids scientific notation.
+     *
+     * The single source of truth for sum parity across the overlay render
+     * (OverlayTemplateController), the bot reply resolver
+     * (BotExpressionResolver), and the frontend renderer's computeListSum.
+     *
+     * @param  array<int, string>  $values
+     */
+    public static function sum(string $slug, array $values): string
+    {
+        $total = 0.0;
+        $sawNumber = false;
+
+        foreach (array_values($values) as $i => $raw) {
+            $trimmed = trim((string) $raw);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (! is_numeric($trimmed)) {
+                return "ERR: list '{$slug}' has non-numeric item '{$raw}' at position {$i}";
+            }
+            $total += (float) $trimmed;
+            $sawNumber = true;
+        }
+
+        if (! $sawNumber) {
+            return '0';
+        }
+
+        return $total == (int) $total
+            ? (string) (int) $total
+            : (string) $total;
+    }
+
     private static function coerceValue(mixed $value): string
     {
         if (is_string($value)) {

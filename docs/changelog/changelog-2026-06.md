@@ -1,5 +1,17 @@
 # CHANGELOG JUNE 2026
 
+## June 29th, 2026 - feat(bot): List read tags in chat replies
+
+An append command's success reply (and any Bot Expression) can now read its list back. `[[[bot:from_user|mention]]], encounter [[[c:list:sightings:count]]] logged.` used to drop the count to empty - the bot's `BotExpressionResolver` only knew `OverlayControl`-backed `c:` tags, never Lists (`OptionSet`s), which are resolved on a separate overlay-only path. The resolver now projects the user's Lists too, so list read tags work everywhere bot text is resolved: `success_reply`, `args_empty_reply`, and generic Bot Expressions.
+
+- **`BotExpressionResolver`**: a new `loadLists()` helper mirrors the overlay render projection (`OverlayTemplateController`), and `lookup()` gains a `c:list:` branch checked **before** the generic `c:` control branch (which would otherwise swallow a `c:list:...` key into a missing-control empty). Chat is a one-shot text sink, so every field is a **static snapshot at resolve time** - nothing ticks.
+- **Supported fields:** `count`, `first`, `last`, `empty`, `sum`, `random`, `expires_at`, and `countdown` (computed once as `max(0, expires_at - now)` rather than the overlay's RAF-driven timer, since a chat line can't tick). In the append flow the reply resolves **after** the append commits, so `:count` includes the item just added - "encounter 7 logged" reads 7, not 6.
+- **Deliberately not in chat:** the bare `[[[c:list:slug]]]` (a raw JSON array string) and `[[[c:list:slug:json]]]` (full item objects) resolve to empty - dumping JSON into a chat line is noise, not output. The foreach-only `.N` / `.count` indexed scalars stay overlay-only too.
+- **Pipes and `?? default` compose** with list tags as expected: `[[[c:list:raffle:countdown|duration:mm:ss]]]`, `[[[c:list:quotes:last ?? no quotes yet]]]`.
+- **Parity refactor:** the sum logic now lives once in `ListItems::sum()` (the pure list-item chokepoint); `OverlayTemplateController::sumListItems` delegates to it, so overlay render and chat reply can't drift on the loud non-numeric error path.
+- **UI:** the Lists page's success-reply field hint now names `[[[c:list:<slug>:count]]]` and notes the count is resolved after the append.
+- **Tests:** 12 new (`BotListTagsTest`) covering every field, the empty-list and expired-deadline edges, the dropped bare/`:json` tags, pipe + `??` composition, per-user scoping, and the end-to-end `!sighting` success reply reporting the post-append count. List/bot/unit suites green (76 + 12 passed). Pint clean.
+
 ## June 27th, 2026 - feat(templates): `?? default` fallback for empty tags
 
 Tags that resolve empty left visible holes - `Hi [[[bot:args.0]]]!` with no argument rendered `Hi !`. You can now give any tag a literal fallback for when it comes out empty: `[[[bot:args.0 ?? everyone]]]`, `[[[c:donations|number ?? 0]]]`, `[[[event.user_name ?? a kind stranger]]]`. It's a new slot in the template DSL, deliberately separate from pipe formatters - pipes format a value that's present, `??` supplies literal text when one is absent. The two compose: `[[[amount|currency ?? a mystery sum]]]`.
