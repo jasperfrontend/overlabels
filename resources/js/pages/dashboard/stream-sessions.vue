@@ -6,25 +6,15 @@ import { Badge } from '@/components/ui/badge';
 import {
   TvMinimalPlay,
   Clock,
-  UserPlus,
-  Star,
-  Repeat,
-  Gift,
   Swords,
-  Sparkles,
-  BarChart3,
-  Flame,
-  Target,
   PencilLine,
   Trophy,
-  ChevronDown,
-  ChevronUp,
   AlertTriangle,
-  Radio,
   MessageSquareQuote,
+  HandCoins,
 } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
 
 interface PollChoice {
@@ -110,6 +100,22 @@ interface RewardBreakdown {
   total_cost: number;
 }
 
+interface IncomeTotal {
+  service: string;
+  currency: string;
+  count: number;
+  total: number;
+}
+
+interface Donation {
+  service: string;
+  from_name: string | null;
+  amount: number;
+  currency: string | null;
+  message: string | null;
+  at: string;
+}
+
 interface StreamSession {
   session_id: number;
   started_at: string;
@@ -138,10 +144,11 @@ interface StreamSession {
     hype_trains: HypeTrain[];
     goals: GoalProgress[];
     title_history: TitleHistoryEntry[];
+    income: { totals: IncomeTotal[]; count: number; donations: Donation[] };
   };
 }
 
-defineProps<{ sessions: StreamSession[] }>();
+const props = defineProps<{ sessions: StreamSession[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -150,16 +157,57 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const { userLocale, formatDate, formatTime } = useSessionDataFormatter();
 
-const expanded = ref<Set<number>>(new Set());
+const TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'twitch', label: 'Twitch' },
+  { key: 'income', label: 'Income' },
+  { key: 'engagement', label: 'Engagement' },
+  { key: 'raw', label: 'Raw' },
+] as const;
 
-function toggle(id: number) {
-  const next = new Set(expanded.value);
-  if (next.has(id)) next.delete(id); else next.add(id);
-  expanded.value = next;
+type TabKey = (typeof TABS)[number]['key'];
+
+const selectedId = ref<number | null>(props.sessions[0]?.session_id ?? null);
+const activeTab = ref<TabKey>('overview');
+
+const selected = computed<StreamSession | null>(
+  () => props.sessions.find((s) => s.session_id === selectedId.value) ?? null,
+);
+
+function select(id: number) {
+  selectedId.value = id;
 }
 
 function fmtNum(n: number): string {
   return new Intl.NumberFormat(userLocale.value).format(n);
+}
+
+const decimalFmt = computed(
+  () => new Intl.NumberFormat(userLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+);
+
+function fmtCurrency(amount: number, currency: string | null): string {
+  if (currency) {
+    try {
+      return new Intl.NumberFormat(userLocale.value, { style: 'currency', currency }).format(amount);
+    } catch {
+      // Unknown/invalid ISO code - fall back to a plain decimal plus the raw code.
+    }
+  }
+  return currency ? `${decimalFmt.value.format(amount)} ${currency}` : decimalFmt.value.format(amount);
+}
+
+const SERVICE_LABELS: Record<string, string> = {
+  twitch: 'Twitch',
+  kofi: 'Ko-fi',
+  streamlabs: 'StreamLabs',
+  streamelements: 'StreamElements',
+  bmac: 'Buy Me a Coffee',
+  fourthwall: 'Fourthwall',
+};
+
+function serviceLabel(service: string): string {
+  return SERVICE_LABELS[service] ?? service;
 }
 
 function fmtDurationFromSeconds(seconds: number | null): string | null {
@@ -169,6 +217,24 @@ function fmtDurationFromSeconds(seconds: number | null): string | null {
   const s = seconds % 60;
   if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
   return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
+/** Compact duration for the selector rail, e.g. "4h12m" / "47m". */
+function fmtDurationCompact(seconds: number | null): string {
+  if (seconds === null) return 'live';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h${String(m).padStart(2, '0')}m`;
+  return `${m}m`;
+}
+
+/** The headline number a streamer scans the rail for: follows + donation count. */
+function railSummary(s: StreamSession): string {
+  const parts: string[] = [`${fmtNum(s.stats.follows.count)} follows`];
+  if (s.stats.income.count > 0) {
+    parts.push(`${fmtNum(s.stats.income.count)} ${s.stats.income.count === 1 ? 'donation' : 'donations'}`);
+  }
+  return parts.join(' · ');
 }
 
 function tierLabel(tier: string | null): string {
@@ -184,7 +250,7 @@ function pollChoiceWidth(choice: PollChoice, total: number): string {
 }
 
 function isPollWinner(choice: PollChoice, winners: PollChoice[]): boolean {
-  return winners.some(w => w.id === choice.id);
+  return winners.some((w) => w.id === choice.id);
 }
 
 function pollStatusVariant(status: string | null): 'default' | 'secondary' | 'destructive' {
@@ -228,22 +294,62 @@ function monthsLabel(count: number): string {
   return count === 1 ? '1 cumulative month' : `${fmtNum(count)} cumulative months`;
 }
 
-function hasAudienceContent(s: StreamSession): boolean {
-  return s.stats.title_history.length > 1
-    || s.stats.raids_received.raids.length > 0;
+/** Headline tiles for the Overview tab - flat, neutral, no invented accents. */
+function headlineTiles(s: StreamSession): { label: string; value: string; sub?: string }[] {
+  return [
+    { label: 'Follows', value: fmtNum(s.stats.follows.count) },
+    {
+      label: 'New subs',
+      value: fmtNum(s.stats.new_subscribers.count),
+      sub: formatTierBreakdown(s.stats.new_subscribers.by_tier) || undefined,
+    },
+    {
+      label: 'Resubs',
+      value: fmtNum(s.stats.resubs.count),
+      sub: s.stats.resubs.total_cumulative_months > 0 ? monthsLabel(s.stats.resubs.total_cumulative_months) : undefined,
+    },
+    {
+      label: 'Gift subs',
+      value: fmtNum(s.stats.gift_subs.total_subs_gifted),
+      sub: s.stats.gift_subs.count > 0 ? gifterLabel(s.stats.gift_subs.count) : undefined,
+    },
+    {
+      label: 'Raids in',
+      value: fmtNum(s.stats.raids_received.count),
+      sub: s.stats.raids_received.total_viewers > 0 ? viewersLabel(s.stats.raids_received.total_viewers) : undefined,
+    },
+    {
+      label: 'Bits',
+      value: fmtNum(s.stats.cheers.total_bits),
+      sub: s.stats.cheers.count > 0 ? `${fmtNum(s.stats.cheers.count)} cheers` : undefined,
+    },
+    {
+      label: 'Redemptions',
+      value: fmtNum(s.stats.channel_point_redemptions.count),
+      sub:
+        s.stats.channel_point_redemptions.total_cost > 0
+          ? `${fmtNum(s.stats.channel_point_redemptions.total_cost)} pts spent`
+          : undefined,
+    },
+    { label: 'Donations', value: fmtNum(s.stats.income.count) },
+  ];
 }
 
-function hasMonetizationContent(s: StreamSession): boolean {
-  return s.stats.cheers.count > 0
-    || s.stats.resubs.recent_messages.length > 0
-    || s.stats.channel_point_redemptions.by_reward.length > 0;
+function hasTwitchDetail(s: StreamSession): boolean {
+  return (
+    s.stats.title_history.length > 1 ||
+    s.stats.raids_received.raids.length > 0 ||
+    s.stats.cheers.count > 0 ||
+    s.stats.resubs.recent_messages.length > 0 ||
+    s.stats.channel_point_redemptions.by_reward.length > 0
+  );
 }
 
-function hasEngagementContent(s: StreamSession): boolean {
-  return s.stats.goals.length > 0
-    || s.stats.polls.length > 0
-    || s.stats.hype_trains.length > 0;
+function hasEngagement(s: StreamSession): boolean {
+  return s.stats.goals.length > 0 || s.stats.polls.length > 0 || s.stats.hype_trains.length > 0;
 }
+
+const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-foreground/60';
 </script>
 
 <template>
@@ -255,7 +361,7 @@ function hasEngagementContent(s: StreamSession): boolean {
         <TvMinimalPlay class="h-6 w-6" />
         <Heading
           title="Stream Sessions"
-          description="A per-stream overview of follows, subs, raids, polls, hype trains and more."
+          description="Your recent streams - every Twitch event and connected-service donation, one stream at a time."
           description-class="text-foreground"
         />
       </div>
@@ -264,197 +370,127 @@ function hasEngagementContent(s: StreamSession): boolean {
         <p>No streams have been recorded yet. Once you go live, each stream's events will be aggregated here.</p>
       </div>
 
-      <div class="space-y-6">
-        <article
-          v-for="session in sessions"
-          :key="session.session_id"
-          class="border border-sidebar-border bg-card overflow-hidden"
+      <div v-else class="flex flex-col gap-4 lg:flex-row">
+        <!-- Selector rail -->
+        <nav
+          class="shrink-0 border border-sidebar-border bg-card lg:w-72"
+          aria-label="Streams"
         >
+          <ul class="max-h-64 divide-y divide-sidebar-border overflow-y-auto lg:max-h-[72vh]">
+            <li v-for="s in sessions" :key="s.session_id">
+              <button
+                type="button"
+                class="flex w-full cursor-pointer flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-background/50"
+                :class="s.session_id === selectedId ? 'bg-background/60 border-l-2 border-l-violet-400' : 'border-l-2 border-l-transparent'"
+                @click="select(s.session_id)"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-medium text-foreground">{{ formatDate(s.started_at) }}</span>
+                  <span class="text-xs text-foreground/70 tabular-nums">{{ fmtDurationCompact(s.duration_seconds) }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-foreground/70">
+                  <span
+                    class="h-2 w-2 shrink-0 rounded-full"
+                    :class="s.completed ? 'bg-muted-foreground/40' : 'bg-green-500'"
+                    :title="s.completed ? 'Ended' : 'Live'"
+                  ></span>
+                  <span class="truncate">{{ railSummary(s) }}</span>
+                </div>
+              </button>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Detail panel -->
+        <section v-if="selected" class="min-w-0 flex-1 border border-sidebar-border bg-card">
           <!-- Header -->
-          <header class="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
-            <div class="space-y-2 min-w-0 flex-1">
-              <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span class="text-base font-semibold text-foreground">{{ formatDate(session.started_at) }}</span>
-                <span class="text-sm text-foreground/60">·</span>
-                <span class="text-sm text-foreground">{{ formatTime(session.started_at) }}</span>
-                <span v-if="session.ended_at" class="text-sm text-foreground/60">-</span>
-                <span v-if="session.ended_at" class="text-sm text-foreground">{{ formatTime(session.ended_at) }}</span>
-                <span v-if="session.duration_seconds !== null" class="inline-flex items-center gap-1 text-sm text-foreground">
-                  <Clock class="h-3.5 w-3.5" />
-                  {{ fmtDurationFromSeconds(session.duration_seconds) }}
-                </span>
-              </div>
-
-              <div v-if="latestTitleEntry(session)" class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <PencilLine class="h-3.5 w-3.5 self-center text-foreground/60 shrink-0" />
-                <span class="font-medium text-foreground">{{ latestTitleEntry(session)?.title }}</span>
-                <span v-if="latestTitleEntry(session)?.category_name" class="text-sm text-foreground/80">in {{ latestTitleEntry(session)?.category_name }}</span>
-                <span v-if="session.stats.title_history.length > 1" class="text-xs text-foreground/60">· {{ session.stats.title_history.length }} title changes</span>
-              </div>
+          <header class="space-y-2 border-b border-sidebar-border p-4">
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span class="text-base font-semibold text-foreground">{{ formatDate(selected.started_at) }}</span>
+              <span class="text-sm text-foreground">{{ formatTime(selected.started_at) }}</span>
+              <span v-if="selected.ended_at" class="text-sm text-foreground/60">-</span>
+              <span v-if="selected.ended_at" class="text-sm text-foreground">{{ formatTime(selected.ended_at) }}</span>
+              <span v-if="selected.duration_seconds !== null" class="inline-flex items-center gap-1 text-sm text-foreground">
+                <Clock class="h-3.5 w-3.5" />
+                {{ fmtDurationFromSeconds(selected.duration_seconds) }}
+              </span>
+              <Badge v-if="selected.completed" variant="secondary">Ended</Badge>
+              <Badge v-else variant="default">Live</Badge>
             </div>
-
-            <div class="shrink-0">
-              <Badge v-if="session.completed" variant="default" class="bg-green-400 hover:bg-green-400 text-primary-foreground">Completed</Badge>
-              <Badge v-else variant="secondary" class="bg-amber-400 hover:bg-amber-400 text-primary-foreground">Live</Badge>
+            <div v-if="latestTitleEntry(selected)" class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <PencilLine class="h-3.5 w-3.5 self-center text-foreground/60 shrink-0" />
+              <span class="font-medium text-foreground">{{ latestTitleEntry(selected)?.title }}</span>
+              <span v-if="latestTitleEntry(selected)?.category_name" class="text-sm text-foreground/80">
+                in {{ latestTitleEntry(selected)?.category_name }}
+              </span>
             </div>
           </header>
 
-          <!-- Anchor warning -->
-          <div
-            v-if="!session.window.anchored_on_eventsub.online || !session.window.anchored_on_eventsub.offline"
-            class="mx-4 mb-4 flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-foreground"
-          >
-            <AlertTriangle class="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
-            <p>
-              Capture window is approximate for this session
-              ({{ !session.window.anchored_on_eventsub.online ? 'no stream.online event found' : '' }}{{ !session.window.anchored_on_eventsub.online && !session.window.anchored_on_eventsub.offline ? ', ' : '' }}{{ !session.window.anchored_on_eventsub.offline ? 'no stream.offline event found' : '' }}).
-              Stats fall back to the session's recorded start and end times.
-            </p>
-          </div>
-
-          <!-- Hero tiles -->
-          <div class="grid grid-cols-2 gap-3 px-4 pb-4 sm:grid-cols-3 lg:grid-cols-6">
-            <div class="border border-sidebar-border border-t-2 border-t-violet-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <UserPlus class="h-4 w-4 text-violet-400" />
-                <span class="text-sm font-medium text-foreground">Follows</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.follows.count) }}</p>
-            </div>
-
-            <div class="border border-sidebar-border border-t-2 border-t-amber-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <Star class="h-4 w-4 text-amber-400" />
-                <span class="text-sm font-medium text-foreground">New subs</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.new_subscribers.count) }}</p>
-              <p v-if="formatTierBreakdown(session.stats.new_subscribers.by_tier)" class="text-xs text-foreground/80">
-                {{ formatTierBreakdown(session.stats.new_subscribers.by_tier) }}
-              </p>
-            </div>
-
-            <div class="border border-sidebar-border border-t-2 border-t-cyan-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <Repeat class="h-4 w-4 text-cyan-400" />
-                <span class="text-sm font-medium text-foreground">Resubs</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.resubs.count) }}</p>
-              <p v-if="session.stats.resubs.total_cumulative_months > 0" class="text-xs text-foreground/80">
-                {{ monthsLabel(session.stats.resubs.total_cumulative_months) }}
-              </p>
-            </div>
-
-            <div class="border border-sidebar-border border-t-2 border-t-rose-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <Gift class="h-4 w-4 text-rose-400" />
-                <span class="text-sm font-medium text-foreground">Gift subs</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.gift_subs.total_subs_gifted) }}</p>
-              <p v-if="session.stats.gift_subs.count > 0" class="text-xs text-foreground/80">
-                {{ gifterLabel(session.stats.gift_subs.count) }}
-              </p>
-            </div>
-
-            <div class="border border-sidebar-border border-t-2 border-t-red-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <Swords class="h-4 w-4 text-red-400" />
-                <span class="text-sm font-medium text-foreground">Raids in</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.raids_received.count) }}</p>
-              <p v-if="session.stats.raids_received.total_viewers > 0" class="text-xs text-foreground/80">
-                {{ viewersLabel(session.stats.raids_received.total_viewers) }}
-              </p>
-            </div>
-
-            <div class="border border-sidebar-border border-t-2 border-t-emerald-400 bg-background/40 p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <Sparkles class="h-4 w-4 text-emerald-400" />
-                <span class="text-sm font-medium text-foreground">Redemptions</span>
-              </div>
-              <p class="text-3xl font-bold text-foreground tabular-nums">{{ fmtNum(session.stats.channel_point_redemptions.count) }}</p>
-              <p v-if="session.stats.channel_point_redemptions.total_cost > 0" class="text-xs text-foreground/80">
-                {{ fmtNum(session.stats.channel_point_redemptions.total_cost) }} pts spent
-              </p>
-            </div>
-          </div>
-
-          <!-- Toggle -->
-          <div class="border-t border-sidebar-border px-4 py-3">
+          <!-- Tabs -->
+          <div class="flex flex-wrap gap-1 border-b border-sidebar-border px-2 pt-2">
             <button
+              v-for="tab in TABS"
+              :key="tab.key"
               type="button"
-              class="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-violet-400 cursor-pointer transition-colors"
-              @click="toggle(session.session_id)"
+              class="cursor-pointer border-b-2 px-3 py-2 text-sm font-medium transition-colors"
+              :class="
+                activeTab === tab.key
+                  ? 'border-b-violet-400 text-foreground'
+                  : 'border-b-transparent text-foreground/60 hover:text-foreground'
+              "
+              @click="activeTab = tab.key"
             >
-              <component :is="expanded.has(session.session_id) ? ChevronUp : ChevronDown" class="h-4 w-4" />
-              {{ expanded.has(session.session_id) ? 'Hide details' : 'Show details' }}
+              {{ tab.label }}
             </button>
           </div>
 
-          <!-- Details -->
-          <section v-if="expanded.has(session.session_id)" class="border-t border-sidebar-border bg-background/20 p-4 space-y-4">
-
-            <!-- Audience block -->
-            <div
-              v-if="hasAudienceContent(session)"
-              class="border border-sidebar-border border-t-2 border-t-red-400 bg-card p-4 space-y-4"
-            >
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-red-400">Audience</h3>
-
-              <div v-if="session.stats.title_history.length > 1" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <PencilLine class="h-4 w-4" /> Title and category changes ({{ session.stats.title_history.length }})
-                </h4>
-                <ol class="space-y-2 border-l-2 border-sidebar-border pl-4">
-                  <li v-for="(entry, i) in session.stats.title_history" :key="i" class="space-y-0.5">
-                    <p class="text-xs text-foreground/70">{{ formatTime(entry.at) }}</p>
-                    <p class="text-sm text-foreground">{{ entry.title }}</p>
-                    <p v-if="entry.category_name" class="text-xs text-foreground/80">{{ entry.category_name }}</p>
-                  </li>
-                </ol>
+          <!-- Tab panels -->
+          <div class="p-4">
+            <!-- Overview -->
+            <div v-if="activeTab === 'overview'" class="space-y-4">
+              <div
+                v-if="!selected.window.anchored_on_eventsub.online || !selected.window.anchored_on_eventsub.offline"
+                class="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-foreground"
+              >
+                <AlertTriangle class="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                <p>
+                  Capture window is approximate for this session
+                  ({{ !selected.window.anchored_on_eventsub.online ? 'no stream.online event found' : '' }}{{ !selected.window.anchored_on_eventsub.online && !selected.window.anchored_on_eventsub.offline ? ', ' : '' }}{{ !selected.window.anchored_on_eventsub.offline ? 'no stream.offline event found' : '' }}).
+                  Stats fall back to the session's recorded start and end times.
+                </p>
               </div>
 
-              <div v-if="session.stats.raids_received.raids.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <Swords class="h-4 w-4" /> Incoming raids ({{ session.stats.raids_received.raids.length }})
-                </h4>
-                <ul class="space-y-1">
-                  <li
-                    v-for="(raid, i) in session.stats.raids_received.raids"
-                    :key="i"
-                    class="flex items-center justify-between border border-sidebar-border bg-background/40 p-2 text-sm"
-                  >
-                    <span class="font-medium text-foreground">{{ raid.from }}</span>
-                    <span class="flex items-center gap-3">
-                      <span class="text-foreground tabular-nums">{{ viewersLabel(raid.viewers) }}</span>
-                      <span class="text-xs text-foreground/70">{{ formatTime(raid.at) }}</span>
-                    </span>
-                  </li>
-                </ul>
+              <div class="grid grid-cols-2 gap-px border border-sidebar-border bg-sidebar-border sm:grid-cols-4">
+                <div v-for="tile in headlineTiles(selected)" :key="tile.label" class="bg-card p-4 space-y-1">
+                  <p class="text-xs font-medium uppercase tracking-wide text-foreground/60">{{ tile.label }}</p>
+                  <p class="text-2xl font-semibold text-foreground tabular-nums">{{ tile.value }}</p>
+                  <p v-if="tile.sub" class="text-xs text-foreground/70">{{ tile.sub }}</p>
+                </div>
               </div>
             </div>
 
-            <!-- Monetization block -->
-            <div
-              v-if="hasMonetizationContent(session)"
-              class="border border-sidebar-border border-t-2 border-t-amber-400 bg-card p-4 space-y-4"
-            >
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-amber-400">Monetization</h3>
+            <!-- Twitch -->
+            <div v-else-if="activeTab === 'twitch'" class="space-y-6">
+              <p v-if="!hasTwitchDetail(selected)" class="text-sm text-foreground/60">
+                No detailed Twitch activity recorded for this stream. Headline counts are on the Overview tab.
+              </p>
 
-              <div v-if="session.stats.cheers.count > 0" class="flex items-center gap-2 text-sm">
-                <Sparkles class="h-4 w-4 text-amber-400" />
-                <span class="text-foreground">
-                  <span class="font-semibold tabular-nums">{{ fmtNum(session.stats.cheers.count) }}</span> cheers
-                  · <span class="font-semibold tabular-nums">{{ fmtNum(session.stats.cheers.total_bits) }}</span> bits
-                </span>
+              <!-- Subs by tier -->
+              <div v-if="formatTierBreakdown(selected.stats.new_subscribers.by_tier)" class="space-y-2">
+                <h3 :class="sectionHeading">New subscribers by tier</h3>
+                <p class="text-sm text-foreground tabular-nums">{{ formatTierBreakdown(selected.stats.new_subscribers.by_tier) }}</p>
               </div>
 
-              <div v-if="session.stats.resubs.recent_messages.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <MessageSquareQuote class="h-4 w-4" /> Recent resub messages ({{ session.stats.resubs.recent_messages.length }})
-                </h4>
+              <!-- Resub messages -->
+              <div v-if="selected.stats.resubs.recent_messages.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">
+                  <span class="inline-flex items-center gap-1.5">
+                    <MessageSquareQuote class="h-3.5 w-3.5" /> Resub messages ({{ selected.stats.resubs.recent_messages.length }})
+                  </span>
+                </h3>
                 <ul class="space-y-1.5">
                   <li
-                    v-for="(msg, i) in session.stats.resubs.recent_messages"
+                    v-for="(msg, i) in selected.stats.resubs.recent_messages"
                     :key="i"
                     class="flex flex-col gap-1 border border-sidebar-border bg-background/40 p-2 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3"
                   >
@@ -471,10 +507,40 @@ function hasEngagementContent(s: StreamSession): boolean {
                 </ul>
               </div>
 
-              <div v-if="session.stats.channel_point_redemptions.by_reward.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <Sparkles class="h-4 w-4" /> Redemptions by reward
-                </h4>
+              <!-- Cheers -->
+              <div v-if="selected.stats.cheers.count > 0" class="space-y-2">
+                <h3 :class="sectionHeading">Cheers</h3>
+                <p class="text-sm text-foreground">
+                  <span class="font-semibold tabular-nums">{{ fmtNum(selected.stats.cheers.count) }}</span> cheers ·
+                  <span class="font-semibold tabular-nums">{{ fmtNum(selected.stats.cheers.total_bits) }}</span> bits
+                </p>
+              </div>
+
+              <!-- Raids -->
+              <div v-if="selected.stats.raids_received.raids.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">
+                  <span class="inline-flex items-center gap-1.5">
+                    <Swords class="h-3.5 w-3.5" /> Incoming raids ({{ selected.stats.raids_received.raids.length }})
+                  </span>
+                </h3>
+                <ul class="space-y-1">
+                  <li
+                    v-for="(raid, i) in selected.stats.raids_received.raids"
+                    :key="i"
+                    class="flex items-center justify-between border border-sidebar-border bg-background/40 p-2 text-sm"
+                  >
+                    <span class="font-medium text-foreground">{{ raid.from }}</span>
+                    <span class="flex items-center gap-3">
+                      <span class="text-foreground tabular-nums">{{ viewersLabel(raid.viewers) }}</span>
+                      <span class="text-xs text-foreground/70">{{ formatTime(raid.at) }}</span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Redemptions by reward -->
+              <div v-if="selected.stats.channel_point_redemptions.by_reward.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">Redemptions by reward</h3>
                 <div class="overflow-x-auto border border-sidebar-border">
                   <table class="w-full text-sm">
                     <thead>
@@ -487,7 +553,7 @@ function hasEngagementContent(s: StreamSession): boolean {
                     </thead>
                     <tbody>
                       <tr
-                        v-for="reward in session.stats.channel_point_redemptions.by_reward"
+                        v-for="reward in selected.stats.channel_point_redemptions.by_reward"
                         :key="reward.title"
                         class="border-b border-sidebar-border last:border-0"
                       >
@@ -500,21 +566,99 @@ function hasEngagementContent(s: StreamSession): boolean {
                   </table>
                 </div>
               </div>
+
+              <!-- Title history -->
+              <div v-if="selected.stats.title_history.length > 1" class="space-y-2">
+                <h3 :class="sectionHeading">
+                  <span class="inline-flex items-center gap-1.5">
+                    <PencilLine class="h-3.5 w-3.5" /> Title and category changes ({{ selected.stats.title_history.length }})
+                  </span>
+                </h3>
+                <ol class="space-y-2 border-l-2 border-sidebar-border pl-4">
+                  <li v-for="(entry, i) in selected.stats.title_history" :key="i" class="space-y-0.5">
+                    <p class="text-xs text-foreground/70">{{ formatTime(entry.at) }}</p>
+                    <p class="text-sm text-foreground">{{ entry.title }}</p>
+                    <p v-if="entry.category_name" class="text-xs text-foreground/80">{{ entry.category_name }}</p>
+                  </li>
+                </ol>
+              </div>
             </div>
 
-            <!-- Engagement block -->
-            <div
-              v-if="hasEngagementContent(session)"
-              class="border border-sidebar-border border-t-2 border-t-cyan-400 bg-card p-4 space-y-4"
-            >
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Engagement</h3>
+            <!-- Income -->
+            <div v-else-if="activeTab === 'income'" class="space-y-6">
+              <p v-if="selected.stats.income.count === 0" class="text-sm text-foreground/60">
+                No donations from connected services were recorded for this stream. Ko-fi, StreamLabs, StreamElements,
+                Buy Me a Coffee and Fourthwall donations show up here once they fire during a live stream.
+              </p>
 
-              <div v-if="session.stats.goals.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <Target class="h-4 w-4" /> Goals
-                </h4>
+              <template v-else>
+                <!-- Per-service / per-currency totals -->
+                <div class="space-y-2">
+                  <h3 :class="sectionHeading">
+                    <span class="inline-flex items-center gap-1.5">
+                      <HandCoins class="h-3.5 w-3.5" /> Totals
+                    </span>
+                  </h3>
+                  <div class="overflow-x-auto border border-sidebar-border">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-sidebar-border bg-background/40">
+                          <th class="text-left p-2 font-medium text-foreground/80">Service</th>
+                          <th class="text-right p-2 font-medium text-foreground/80">Count</th>
+                          <th class="text-right p-2 font-medium text-foreground/80">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="(row, i) in selected.stats.income.totals"
+                          :key="i"
+                          class="border-b border-sidebar-border last:border-0"
+                        >
+                          <td class="p-2 text-foreground">{{ serviceLabel(row.service) }}</td>
+                          <td class="p-2 text-right text-foreground tabular-nums">{{ fmtNum(row.count) }}</td>
+                          <td class="p-2 text-right text-foreground tabular-nums font-medium">{{ fmtCurrency(row.total, row.currency) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p class="text-xs text-foreground/60">Currencies are listed separately - no exchange-rate conversion.</p>
+                </div>
+
+                <!-- Individual donations -->
+                <div v-if="selected.stats.income.donations.length > 0" class="space-y-2">
+                  <h3 :class="sectionHeading">
+                    Recent donations ({{ selected.stats.income.donations.length }})
+                  </h3>
+                  <ul class="space-y-1.5">
+                    <li
+                      v-for="(d, i) in selected.stats.income.donations"
+                      :key="i"
+                      class="flex flex-col gap-1 border border-sidebar-border bg-background/40 p-2 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3"
+                    >
+                      <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                        <span class="font-medium text-foreground">{{ d.from_name ?? 'Anonymous' }}</span>
+                        <span class="font-semibold text-foreground tabular-nums">{{ fmtCurrency(d.amount, d.currency) }}</span>
+                        <Badge variant="secondary" class="text-xs">{{ serviceLabel(d.service) }}</Badge>
+                        <span v-if="d.message" class="text-foreground italic min-w-0 truncate">"{{ d.message }}"</span>
+                      </div>
+                      <span class="text-xs text-foreground/70 shrink-0 tabular-nums">{{ formatTime(d.at) }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+            </div>
+
+            <!-- Engagement -->
+            <div v-else-if="activeTab === 'engagement'" class="space-y-6">
+              <p v-if="!hasEngagement(selected)" class="text-sm text-foreground/60">
+                No goals, polls or hype trains were recorded for this stream.
+              </p>
+
+              <!-- Goals -->
+              <div v-if="selected.stats.goals.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">Goals</h3>
                 <div
-                  v-for="goal in session.stats.goals"
+                  v-for="goal in selected.stats.goals"
                   :key="goal.type"
                   class="border border-sidebar-border bg-background/40 p-3 space-y-2"
                 >
@@ -526,7 +670,7 @@ function hasEngagementContent(s: StreamSession): boolean {
                     </span>
                   </div>
                   <div class="h-2 rounded-sm bg-sidebar-accent overflow-hidden">
-                    <div class="h-full bg-green-500/70" :style="{ width: `${goalPercent(goal)}%` }" />
+                    <div class="h-full bg-violet-400" :style="{ width: `${goalPercent(goal)}%` }" />
                   </div>
                   <p class="text-xs text-foreground/80">
                     {{ goalPercent(goal) }}% to target
@@ -535,12 +679,11 @@ function hasEngagementContent(s: StreamSession): boolean {
                 </div>
               </div>
 
-              <div v-if="session.stats.polls.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <BarChart3 class="h-4 w-4" /> Polls ({{ session.stats.polls.length }})
-                </h4>
+              <!-- Polls -->
+              <div v-if="selected.stats.polls.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">Polls ({{ selected.stats.polls.length }})</h3>
                 <div
-                  v-for="poll in session.stats.polls"
+                  v-for="poll in selected.stats.polls"
                   :key="poll.id"
                   class="border border-sidebar-border bg-background/40 p-3 space-y-2"
                 >
@@ -573,12 +716,11 @@ function hasEngagementContent(s: StreamSession): boolean {
                 </div>
               </div>
 
-              <div v-if="session.stats.hype_trains.length > 0" class="space-y-2">
-                <h4 class="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                  <Flame class="h-4 w-4" /> Hype trains ({{ session.stats.hype_trains.length }})
-                </h4>
+              <!-- Hype trains -->
+              <div v-if="selected.stats.hype_trains.length > 0" class="space-y-2">
+                <h3 :class="sectionHeading">Hype trains ({{ selected.stats.hype_trains.length }})</h3>
                 <div
-                  v-for="(train, i) in session.stats.hype_trains"
+                  v-for="(train, i) in selected.stats.hype_trains"
                   :key="train.id ?? i"
                   class="border border-sidebar-border bg-background/40 p-3 space-y-2"
                 >
@@ -606,24 +748,26 @@ function hasEngagementContent(s: StreamSession): boolean {
               </div>
             </div>
 
-            <!-- Debug fold -->
-            <details class="text-xs text-foreground/70">
-              <summary class="cursor-pointer hover:text-foreground inline-flex items-center gap-1">
-                <Radio class="h-3 w-3" /> Debug · capture window and event counts
-              </summary>
-              <div class="mt-2 space-y-2">
+            <!-- Raw -->
+            <div v-else-if="activeTab === 'raw'" class="space-y-4 text-sm text-foreground/80">
+              <div class="space-y-1">
+                <h3 :class="sectionHeading">Capture window</h3>
                 <p>
-                  Capture window: {{ formatDate(session.window.start) }} {{ formatTime(session.window.start) }}
-                  -> {{ formatDate(session.window.end) }} {{ formatTime(session.window.end) }}
+                  {{ formatDate(selected.window.start) }} {{ formatTime(selected.window.start) }}
+                  -> {{ formatDate(selected.window.end) }} {{ formatTime(selected.window.end) }}
                 </p>
                 <p>
-                  Anchored on EventSub: online={{ session.window.anchored_on_eventsub.online }},
-                  offline={{ session.window.anchored_on_eventsub.offline }}
+                  Anchored on EventSub: online={{ selected.window.anchored_on_eventsub.online }},
+                  offline={{ selected.window.anchored_on_eventsub.offline }}
                 </p>
-                <p v-if="session.helix_stream_id">Helix stream id: {{ session.helix_stream_id }}</p>
-                <div class="flex flex-wrap gap-1.5 pt-2">
+                <p v-if="selected.helix_stream_id">Helix stream id: {{ selected.helix_stream_id }}</p>
+              </div>
+
+              <div class="space-y-2">
+                <h3 :class="sectionHeading">Event counts</h3>
+                <div class="flex flex-wrap gap-1.5">
                   <Badge
-                    v-for="(count, type) in session.event_counts"
+                    v-for="(count, type) in selected.event_counts"
                     :key="type"
                     variant="secondary"
                     class="text-xs font-mono"
@@ -632,9 +776,9 @@ function hasEngagementContent(s: StreamSession): boolean {
                   </Badge>
                 </div>
               </div>
-            </details>
-          </section>
-        </article>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </AppLayout>

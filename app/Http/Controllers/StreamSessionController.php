@@ -26,6 +26,9 @@ class StreamSessionController extends Controller
     /** Max resub messages to surface per session (most recent first). */
     private const int RESUB_MESSAGE_LIMIT = 25;
 
+    /** Max individual donations to surface per session (most recent first). */
+    private const int DONATION_LIMIT = 25;
+
     /**
      * @throws DateMalformedStringException
      */
@@ -45,8 +48,9 @@ class StreamSessionController extends Controller
         $goals = $this->loadGoals($userId);
         $boundedLists = $this->loadBoundedListEvents($userId);
         $resubMessages = $this->loadResubMessages($userId);
+        $income = $this->loadExternalIncome($userId);
 
-        $payload = array_map(function (array $s) use ($headlines, $subTiers, $rewards, $goals, $boundedLists, $resubMessages) {
+        $payload = array_map(function (array $s) use ($headlines, $subTiers, $rewards, $goals, $boundedLists, $resubMessages, $income) {
             $sid = $s['session_id'];
             $h = $headlines[$sid] ?? $this->emptyHeadline();
 
@@ -105,6 +109,11 @@ class StreamSessionController extends Controller
                     'hype_trains' => $boundedLists[$sid]['hype_trains'] ?? [],
                     'goals' => $goals[$sid] ?? [],
                     'title_history' => $boundedLists[$sid]['title_history'] ?? [],
+                    'income' => [
+                        'totals' => $income[$sid]['totals'] ?? [],
+                        'count' => $income[$sid]['count'] ?? 0,
+                        'donations' => $income[$sid]['donations'] ?? [],
+                    ],
                 ],
             ];
         }, array_values($this->sessionsCache));
@@ -682,6 +691,110 @@ class StreamSessionController extends Controller
                 'streak_months' => $data['streak_months'] ?? null,
                 'message' => $data['message']['text'] ?? null,
                 'at' => $this->iso($r->twitch_timestamp),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Per-session external donation income, keyed off the stream_session_id FK
+     * (external events are stamped with their session on the live transition, so
+     * this is exact rather than the time-window approach used for twitch_events).
+     *
+     * Returns per-service/per-currency totals plus a bounded list of individual
+     * donations. Currencies are never summed across each other - no FX guessing.
+     *
+     * @return array<int, array{totals: array<int, array<string, mixed>>, count: int, donations: array<int, array<string, mixed>>}>
+     * @throws DateMalformedStringException
+     */
+    private function loadExternalIncome(int $userId): array
+    {
+        $sessionIds = array_keys($this->sessionsCache);
+        if (empty($sessionIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($sessionIds), '?'));
+
+        // Only rows whose amount is a clean, positive numeric string. The regex
+        // guard keeps Postgres from erroring on empty or non-numeric amounts
+        // (subscriptions, shop orders and GPS pings carry no donation amount).
+        $amountGuard = "
+            AND normalized_payload->>'event.amount' ~ '^[0-9]+(\\.[0-9]+)?$'
+            AND (normalized_payload->>'event.amount')::numeric > 0
+        ";
+
+        $totalsSql = "
+            SELECT
+                stream_session_id AS session_id,
+                service,
+                COALESCE(NULLIF(normalized_payload->>'event.currency', ''), '') AS currency,
+                COUNT(*) AS cnt,
+                SUM((normalized_payload->>'event.amount')::numeric) AS total
+            FROM external_events
+            WHERE user_id = ?
+              AND stream_session_id IN ($placeholders)
+              $amountGuard
+            GROUP BY stream_session_id, service, currency
+            ORDER BY stream_session_id, total DESC
+        ";
+
+        $totalsRows = DB::select($totalsSql, [$userId, ...$sessionIds]);
+
+        $out = [];
+        foreach ($totalsRows as $r) {
+            $sid = (int) $r->session_id;
+            if (! isset($out[$sid])) {
+                $out[$sid] = ['totals' => [], 'count' => 0, 'donations' => []];
+            }
+            $out[$sid]['totals'][] = [
+                'service' => $r->service,
+                'currency' => $r->currency,
+                'count' => (int) $r->cnt,
+                'total' => (float) $r->total,
+            ];
+            $out[$sid]['count'] += (int) $r->cnt;
+        }
+
+        $donationsSql = "
+            WITH ranked AS (
+                SELECT
+                    stream_session_id AS session_id,
+                    service,
+                    normalized_payload->>'event.from_name' AS from_name,
+                    (normalized_payload->>'event.amount')::numeric AS amount,
+                    NULLIF(normalized_payload->>'event.currency', '') AS currency,
+                    NULLIF(normalized_payload->>'event.message', '') AS message,
+                    created_at,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY stream_session_id
+                        ORDER BY created_at DESC
+                    ) AS rn
+                FROM external_events
+                WHERE user_id = ?
+                  AND stream_session_id IN ($placeholders)
+                  $amountGuard
+            )
+            SELECT session_id, service, from_name, amount, currency, message, created_at
+            FROM ranked
+            WHERE rn <= ?
+            ORDER BY session_id, created_at DESC
+        ";
+
+        $donationRows = DB::select($donationsSql, [$userId, ...$sessionIds, self::DONATION_LIMIT]);
+        foreach ($donationRows as $r) {
+            $sid = (int) $r->session_id;
+            if (! isset($out[$sid])) {
+                $out[$sid] = ['totals' => [], 'count' => 0, 'donations' => []];
+            }
+            $out[$sid]['donations'][] = [
+                'service' => $r->service,
+                'from_name' => $r->from_name !== '' ? $r->from_name : null,
+                'amount' => (float) $r->amount,
+                'currency' => $r->currency,
+                'message' => $r->message,
+                'at' => $this->iso($r->created_at),
             ];
         }
 

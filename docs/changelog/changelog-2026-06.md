@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 29th, 2026 - feat(dashboard): rebuild Stream Sessions as a selector + tabbed panel, add connected-service income
+
+`/dashboard/stream-sessions` was a vertical stack of expandable cards where every headline tile invented its own accent (violet/amber/cyan/rose/red/emerald top-borders) and the detail sub-blocks reassigned those same colors to different meanings - decoration pretending to be information. It was also blind to money: the controller only ever queried `twitch_events`, so Ko-fi / StreamLabs / StreamElements / Buy Me a Coffee / Fourthwall donations - already linked to their session by the `external_events.stream_session_id` FK - never appeared. Rebuilt as a focused data tool: pick one stream from a rail, read it in a tabbed panel.
+
+- **Layout:** a left selector rail (one row per stream - date, compact duration, a neutral live/ended dot, and an at-a-glance `42 follows · 3 donations` line) drives a single detail panel on the right. On mobile the rail collapses to a scrollable strip above the panel. The selected row gets the app's one accent (violet); nothing else invents color.
+- **Tabs:** Overview (flat `tabular-nums` headline tiles, no colored borders, plus title/duration and the approximate-window warning) · Twitch (subs-by-tier, resub messages, cheers, incoming raids, redemptions-by-reward, title history) · **Income** (new) · Engagement (goals, polls, hype trains) · Raw (event counts + capture-window debug).
+- **Income tab:** per-service / per-currency totals (currencies listed separately - no exchange-rate guessing) plus a bounded list of individual donations (donor, amount, message, service, time). Keyed off the `stream_session_id` FK directly rather than the time-window join used for Twitch events, so it's exact. Events from before session-stamping landed (null FK) won't appear - a known, acceptable gap.
+- **Backend:** one new `StreamSessionController::loadExternalIncome()` aggregate, mirroring the existing per-session SQL pattern. A regex guard (`amount ~ '^[0-9]+(\.[0-9]+)?$'`) keeps Postgres from erroring on the empty/non-numeric amounts carried by subscriptions, shop orders and GPS pings. No migration - the FK and normalized payload already existed.
+- **Color discipline:** killed all six invented accents; neutral `text-foreground` data, violet only for the active tab and progress/winner bars, reusing `useSessionDataFormatter` and the existing live-dot convention.
+- **Tests:** 2 new (`StreamSessionIncomeTest`) covering the per-service/per-currency split, the post-amount-guard ignore of non-donation external events, and the empty-session case. ESLint + vite build clean.
+
 ## June 29th, 2026 - feat(bot): List read tags in chat replies
 
 An append command's success reply (and any Bot Expression) can now read its list back. `[[[bot:from_user|mention]]], encounter [[[c:list:sightings:count]]] logged.` used to drop the count to empty - the bot's `BotExpressionResolver` only knew `OverlayControl`-backed `c:` tags, never Lists (`OptionSet`s), which are resolved on a separate overlay-only path. The resolver now projects the user's Lists too, so list read tags work everywhere bot text is resolved: `success_reply`, `args_empty_reply`, and generic Bot Expressions.
