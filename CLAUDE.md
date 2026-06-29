@@ -102,7 +102,7 @@ Critical variables:
 - Grace period: 120 seconds in `ending` state before finalizing. Handles OBS crashes - if Helix shows stream is back, reverts to `live`.
 - Session stitching: if stream goes offline and comes back within 5 minutes, existing session is reopened (ended_at cleared) instead of creating new.
 - Retroactive repair: session `started_at` corrected to match Helix `started_at`.
-- Event grouping: `stream_session_id` FK on `twitch_events` and `external_events`. Stamped via `stampEventsWithSession()` on live transition.
+- Event grouping: `stream_session_id` FK on `twitch_events` and `external_events`. Stamped via `stampEventsWithSession()` once at the go-live transition - it only covers the ~seconds between `started_at` and Helix confirmation, so events arriving DURING the live stream keep a null FK and are never re-stamped. The FK is near-empty in practice: do NOT group per-session with `WHERE stream_session_id = ...`. Aggregate by a per-session time window over `created_at`/`twitch_timestamp` instead (see `StreamSessionController::buildWindowsCte()`).
 - `StreamSessionService::isLive()` and `handleEvent()` now use confidence-based check instead of raw session existence.
 - Broadcasting handled by state machine (removed from `openSession`/`closeSession`). `StreamStatusChanged` includes state, confidence, startedAt.
 - Safety-net scheduler: every 5 minutes, re-dispatches VerifyStreamState for stuck states (last_verified_at > 5 min ago).
