@@ -2,12 +2,14 @@
 
 namespace App\Services\Bot;
 
+use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\User;
 use App\Services\Expressions\ExpressionFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
+use App\Support\ListItems;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -20,10 +22,18 @@ use Throwable;
  * happens to contain something tag-shaped.
  *
  * Tag families inside [[[...]]]:
+ *   c:list:<slug>:<field> -> own List (OptionSet) read tag, snapshot at fire time
  *   c:<key>            -> own OverlayControl by key
  *   c:<service>:<key>  -> service-managed OverlayControl by broadcastKey
  *   bot:<key>          -> per-invocation context (from_user, args.0, ...)
  *   <bare>             -> Twitch Helix tag from TemplateDataMapperService
+ *
+ * List read tags mirror the overlay render projection (OverlayTemplateController),
+ * but chat is a one-shot text sink so every value is a STATIC SNAPSHOT at resolve
+ * time - nothing ticks. Supported fields: count, first, last, empty, sum, random,
+ * expires_at, countdown. Deliberately omitted: the bare c:list:<slug> (raw JSON
+ * array string) and :json (full item objects) - dumping JSON into chat is noise -
+ * plus the .N indexed scalars and foreach machinery, which aren't chat constructs.
  *
  * Pipe formatters (e.g. |number, |round:2, |distance:mi) run after lookup.
  * Unknown tags resolve to empty string per the null-over-placeholder rule.
@@ -64,16 +74,17 @@ class BotExpressionResolver
     public function resolve(User $user, string $expression, array $botContext = [], bool $dryRun = false): string
     {
         $controls = $this->loadControls($user);
+        $lists = $this->loadLists($user);
         $twitchTags = $dryRun ? [] : $this->loadTwitchTags($user);
         $locale = (string) ($user->preference('locale', 'en-US'));
 
         $resolved = preg_replace_callback(
             self::TAG_REGEX,
-            function (array $matches) use ($controls, $twitchTags, $botContext, $locale): string {
+            function (array $matches) use ($controls, $lists, $twitchTags, $botContext, $locale): string {
                 $key = $matches[1];
                 $pipe = ($matches[2] ?? '') !== '' ? $matches[2] : null;
                 $default = isset($matches[3]) ? trim($matches[3]) : null;
-                $value = $this->lookup($key, $controls, $twitchTags, $botContext);
+                $value = $this->lookup($key, $controls, $lists, $twitchTags, $botContext);
 
                 // Absence backstop: an empty value renders the literal default
                 // (verbatim, no pipe). A present value never triggers it.
@@ -99,11 +110,21 @@ class BotExpressionResolver
 
     /**
      * @param  array<string,string>  $controls
+     * @param  array<string,string>  $lists
      * @param  array<string,mixed>  $twitchTags
      * @param  array<string,mixed>  $botContext
      */
-    private function lookup(string $key, array $controls, array $twitchTags, array $botContext): string
+    private function lookup(string $key, array $controls, array $lists, array $twitchTags, array $botContext): string
     {
+        // List read tags resolve from OptionSets, not OverlayControls. Checked
+        // before the generic c: branch, which would otherwise swallow a
+        // c:list:... key into a missing-control empty string. Unsupported list
+        // tags (the bare c:list:<slug> array dump and :json) are never put in
+        // $lists, so they fall through to '' here per null-over-placeholder.
+        if (str_starts_with($key, 'c:list:')) {
+            return $lists[$key] ?? '';
+        }
+
         if (str_starts_with($key, 'c:')) {
             $controlKey = substr($key, 2);
 
@@ -140,6 +161,43 @@ class BotExpressionResolver
                 ? $control->broadcastKey()
                 : $control->key;
             $map[$identifier] = $control->resolveDisplayValue();
+        }
+
+        return $map;
+    }
+
+    /**
+     * Project the user's Lists (OptionSets) into a flat map of
+     * c:list:<slug>:<field> => value string, mirroring the overlay render
+     * projection in OverlayTemplateController. Chat is a one-shot text sink,
+     * so every field is a static snapshot at resolve time - no live ticking.
+     * countdown is computed once as max(0, expires_at - now) instead of the
+     * overlay's RAF-driven timer, since a chat line cannot tick. The bare
+     * array tag, :json, and the foreach-only .N / .count scalars are
+     * intentionally not projected here (see class docblock).
+     *
+     * @return array<string,string> Map of c:list:<slug>:<field> -> value string.
+     */
+    private function loadLists(User $user): array
+    {
+        $now = now()->timestamp;
+        $map = [];
+
+        foreach (OptionSet::where('user_id', $user->id)->get() as $list) {
+            $values = ListItems::values($list->items ?? []);
+            $count = count($values);
+            $base = 'c:list:'.$list->slug;
+
+            $map[$base.':count'] = (string) $count;
+            $map[$base.':first'] = $count > 0 ? $values[0] : '';
+            $map[$base.':last'] = $count > 0 ? $values[$count - 1] : '';
+            $map[$base.':empty'] = $count === 0 ? '1' : '0';
+            $map[$base.':sum'] = ListItems::sum($list->slug, $values);
+            $map[$base.':random'] = $count > 0 ? $values[array_rand($values)] : '';
+
+            $expiresTs = $list->expires_at?->timestamp;
+            $map[$base.':expires_at'] = $expiresTs !== null ? (string) $expiresTs : '';
+            $map[$base.':countdown'] = $expiresTs !== null ? (string) max(0, $expiresTs - $now) : '';
         }
 
         return $map;

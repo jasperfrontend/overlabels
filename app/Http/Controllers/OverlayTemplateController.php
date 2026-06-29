@@ -742,31 +742,7 @@ class OverlayTemplateController extends Controller
      */
     private function sumListItems(string $slug, array $items): string
     {
-        $total = 0.0;
-        $sawNumber = false;
-
-        foreach ($items as $i => $raw) {
-            $trimmed = trim((string) $raw);
-            if ($trimmed === '') {
-                continue;
-            }
-            if (! is_numeric($trimmed)) {
-                return "ERR: list '{$slug}' has non-numeric item '{$raw}' at position {$i}";
-            }
-            $total += (float) $trimmed;
-            $sawNumber = true;
-        }
-
-        // Avoid scientific notation; let the streamer's |number pipe
-        // format if they want commas. Integer-valued sums render
-        // without trailing zeros.
-        if (! $sawNumber) {
-            return '0';
-        }
-
-        return $total == (int) $total
-            ? (string) (int) $total
-            : (string) $total;
+        return ListItems::sum($slug, $items);
     }
 
     /**
