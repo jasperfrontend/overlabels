@@ -1,5 +1,13 @@
 # CHANGELOG JUNE 2026
 
+## June 29th, 2026 - fix(dashboard): match Stream Sessions income by time window, not the session FK
+
+The new Income tab showed nothing for a live stream - a donation that landed mid-stream appeared in `/dashboard/recents` but not under the live session's Income tab. Root cause: the income query filtered on `external_events.stream_session_id`, but that FK is only stamped **once, retroactively, at the go-live transition** (`StreamStateMachineService::stampEventsWithSession`). That one-shot stamp covers just the few seconds between session start and Helix confirmation - so virtually every real donation (live or historical) inserts with a null FK and is never re-stamped. `/recents` doesn't filter by the FK, so it showed the donation; the Income tab did, so it didn't. The "exact FK" framing in the previous entry was wrong: the FK is barely populated for any session.
+
+- **`StreamSessionController::loadExternalIncome()`** now joins `external_events` on `created_at` against the same per-session `windows` CTE every other stat on the page already uses (headline counts, redemptions, goals). Income is now consistent with the headline Twitch numbers, surfaces in-flight donations on a live stream, and correctly covers historical streams. No webhook/hot-path changes - read-side query swap only.
+- **Rejected alternative:** stamping external events at insert when live. It touches the webhook hot path, wouldn't retroactively fix the nulls already stored, and the Twitch stats don't use the FK anyway - so it'd add inconsistency, not remove it.
+- **Tests:** `StreamSessionIncomeTest` updated to leave the FK null and rely on the window (as a real donation does), plus a new out-of-window donation asserted absent from the session. Both green (25 assertions). Controller lint clean.
+
 ## June 29th, 2026 - feat(dashboard): rebuild Stream Sessions as a selector + tabbed panel, add connected-service income
 
 `/dashboard/stream-sessions` was a vertical stack of expandable cards where every headline tile invented its own accent (violet/amber/cyan/rose/red/emerald top-borders) and the detail sub-blocks reassigned those same colors to different meanings - decoration pretending to be information. It was also blind to money: the controller only ever queried `twitch_events`, so Ko-fi / StreamLabs / StreamElements / Buy Me a Coffee / Fourthwall donations - already linked to their session by the `external_events.stream_session_id` FK - never appeared. Rebuilt as a focused data tool: pick one stream from a rail, read it in a tabbed panel.
