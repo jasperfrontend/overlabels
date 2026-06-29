@@ -698,9 +698,14 @@ class StreamSessionController extends Controller
     }
 
     /**
-     * Per-session external donation income, keyed off the stream_session_id FK
-     * (external events are stamped with their session on the live transition, so
-     * this is exact rather than the time-window approach used for twitch_events).
+     * Per-session external donation income, matched by the same per-session time
+     * window every other stat on this page uses (joined on external_events.created_at).
+     *
+     * The stream_session_id FK is deliberately NOT used: it's only stamped once,
+     * retroactively, at the go-live transition, so it captures just the few seconds
+     * between session start and Helix confirmation - never the donations that arrive
+     * during the live stream. The window join keeps Income consistent with the
+     * headline Twitch numbers and surfaces in-flight donations on a live stream.
      *
      * Returns per-service/per-currency totals plus a bounded list of individual
      * donations. Currencies are never summed across each other - no FX guessing.
@@ -710,37 +715,41 @@ class StreamSessionController extends Controller
      */
     private function loadExternalIncome(int $userId): array
     {
-        $sessionIds = array_keys($this->sessionsCache);
-        if (empty($sessionIds)) {
+        $sessions = $this->sessionsCache;
+        if (empty($sessions)) {
             return [];
         }
-
-        $placeholders = implode(',', array_fill(0, count($sessionIds), '?'));
 
         // Only rows whose amount is a clean, positive numeric string. The regex
         // guard keeps Postgres from erroring on empty or non-numeric amounts
         // (subscriptions, shop orders and GPS pings carry no donation amount).
         $amountGuard = "
-            AND normalized_payload->>'event.amount' ~ '^[0-9]+(\\.[0-9]+)?$'
-            AND (normalized_payload->>'event.amount')::numeric > 0
+            AND e.normalized_payload->>'event.amount' ~ '^[0-9]+(\\.[0-9]+)?$'
+            AND (e.normalized_payload->>'event.amount')::numeric > 0
         ";
+
+        [$cte, $totalsBindings] = $this->buildWindowsCte($sessions);
 
         $totalsSql = "
+            WITH $cte
             SELECT
-                stream_session_id AS session_id,
-                service,
-                COALESCE(NULLIF(normalized_payload->>'event.currency', ''), '') AS currency,
+                w.session_id,
+                e.service,
+                COALESCE(NULLIF(e.normalized_payload->>'event.currency', ''), '') AS currency,
                 COUNT(*) AS cnt,
-                SUM((normalized_payload->>'event.amount')::numeric) AS total
-            FROM external_events
-            WHERE user_id = ?
-              AND stream_session_id IN ($placeholders)
-              $amountGuard
-            GROUP BY stream_session_id, service, currency
-            ORDER BY stream_session_id, total DESC
+                SUM((e.normalized_payload->>'event.amount')::numeric) AS total
+            FROM windows w
+            JOIN external_events e
+                ON e.user_id = ?
+                AND e.created_at >= w.window_start
+                AND e.created_at <= w.window_end
+                $amountGuard
+            GROUP BY w.session_id, e.service, currency
+            ORDER BY w.session_id, total DESC
         ";
+        $totalsBindings[] = $userId;
 
-        $totalsRows = DB::select($totalsSql, [$userId, ...$sessionIds]);
+        $totalsRows = DB::select($totalsSql, $totalsBindings);
 
         $out = [];
         foreach ($totalsRows as $r) {
@@ -757,32 +766,39 @@ class StreamSessionController extends Controller
             $out[$sid]['count'] += (int) $r->cnt;
         }
 
+        [$cte2, $donationBindings] = $this->buildWindowsCte($sessions);
+
         $donationsSql = "
-            WITH ranked AS (
+            WITH $cte2,
+            ranked AS (
                 SELECT
-                    stream_session_id AS session_id,
-                    service,
-                    normalized_payload->>'event.from_name' AS from_name,
-                    (normalized_payload->>'event.amount')::numeric AS amount,
-                    NULLIF(normalized_payload->>'event.currency', '') AS currency,
-                    NULLIF(normalized_payload->>'event.message', '') AS message,
-                    created_at,
+                    w.session_id,
+                    e.service,
+                    e.normalized_payload->>'event.from_name' AS from_name,
+                    (e.normalized_payload->>'event.amount')::numeric AS amount,
+                    NULLIF(e.normalized_payload->>'event.currency', '') AS currency,
+                    NULLIF(e.normalized_payload->>'event.message', '') AS message,
+                    e.created_at,
                     ROW_NUMBER() OVER (
-                        PARTITION BY stream_session_id
-                        ORDER BY created_at DESC
+                        PARTITION BY w.session_id
+                        ORDER BY e.created_at DESC
                     ) AS rn
-                FROM external_events
-                WHERE user_id = ?
-                  AND stream_session_id IN ($placeholders)
-                  $amountGuard
+                FROM windows w
+                JOIN external_events e
+                    ON e.user_id = ?
+                    AND e.created_at >= w.window_start
+                    AND e.created_at <= w.window_end
+                    $amountGuard
             )
             SELECT session_id, service, from_name, amount, currency, message, created_at
             FROM ranked
             WHERE rn <= ?
             ORDER BY session_id, created_at DESC
         ";
+        $donationBindings[] = $userId;
+        $donationBindings[] = self::DONATION_LIMIT;
 
-        $donationRows = DB::select($donationsSql, [$userId, ...$sessionIds, self::DONATION_LIMIT]);
+        $donationRows = DB::select($donationsSql, $donationBindings);
         foreach ($donationRows as $r) {
             $sid = (int) $r->session_id;
             if (! isset($out[$sid])) {

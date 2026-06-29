@@ -4,17 +4,22 @@ use App\Models\ExternalEvent;
 use App\Models\StreamSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
 
-function makeDonation(int $userId, int $sessionId, string $service, string $amount, string $currency, string $from, ?string $message = null): void
+/**
+ * Income is matched by the session time window, NOT the stream_session_id FK -
+ * so these donations deliberately leave the FK null and rely on created_at
+ * falling inside the window, exactly as a real live donation does.
+ */
+function makeDonation(int $userId, string $service, string $amount, string $currency, string $from, Carbon $at, ?string $message = null): void
 {
-    ExternalEvent::create([
+    $event = new ExternalEvent([
         'user_id' => $userId,
         'service' => $service,
         'event_type' => 'donation',
         'message_id' => (string) fake()->unique()->uuid(),
-        'stream_session_id' => $sessionId,
         'raw_payload' => [],
         'normalized_payload' => [
             'event.from_name' => $from,
@@ -25,6 +30,10 @@ function makeDonation(int $userId, int $sessionId, string $service, string $amou
             'event.type' => 'donation',
         ],
     ]);
+    // Set created_at manually so it's "dirty" and Eloquent won't override it
+    // with now() on insert - this is what places the event inside the window.
+    $event->created_at = $at;
+    $event->save();
 }
 
 it('aggregates external donation income per session, split by service and currency', function () {
@@ -36,20 +45,26 @@ it('aggregates external donation income per session, split by service and curren
         'ended_at' => now()->subHour(),
     ]);
 
-    makeDonation($user->id, $session->id, 'kofi', '50.00', 'USD', 'alice', 'love the stream!');
-    makeDonation($user->id, $session->id, 'kofi', '9.00', 'USD', 'bob');
-    makeDonation($user->id, $session->id, 'streamelements', '25.00', 'EUR', 'chris', 'o7');
+    // All inside the window (between started_at and ended_at), FK left null.
+    $mid = now()->subHours(2);
+    makeDonation($user->id, 'kofi', '50.00', 'USD', 'alice', $mid, 'love the stream!');
+    makeDonation($user->id, 'kofi', '9.00', 'USD', 'bob', $mid);
+    makeDonation($user->id, 'streamelements', '25.00', 'EUR', 'chris', $mid, 'o7');
+
+    // Outside the window (5 hours ago) - must NOT be counted for this session.
+    makeDonation($user->id, 'kofi', '999.00', 'USD', 'ghost', now()->subHours(5));
 
     // A non-donation external event (no amount) must be ignored, not crash the cast.
-    ExternalEvent::create([
+    $sub = new ExternalEvent([
         'user_id' => $user->id,
         'service' => 'kofi',
         'event_type' => 'subscription',
         'message_id' => (string) fake()->unique()->uuid(),
-        'stream_session_id' => $session->id,
         'raw_payload' => [],
         'normalized_payload' => ['event.from_name' => 'dana', 'event.amount' => ''],
     ]);
+    $sub->created_at = $mid;
+    $sub->save();
 
     $response = $this->actingAs($user)->get('/dashboard/stream-sessions');
 
