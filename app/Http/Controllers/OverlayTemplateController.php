@@ -858,9 +858,11 @@ class OverlayTemplateController extends Controller
 
         $assignedTwitch = EventTemplateMapping::where('user_id', $userId)
             ->where('template_id', $template->id)
-            ->get(['event_type', 'duration_ms', 'enabled'])
+            ->get(['event_type', 'condition_type', 'condition_value', 'duration_ms', 'enabled'])
             ->map(fn (EventTemplateMapping $m) => [
                 'event_type' => $m->event_type,
+                'condition_type' => $m->condition_type,
+                'condition_value' => $m->condition_value,
                 'duration_ms' => $m->duration_ms,
                 'enabled' => (bool) $m->enabled,
             ])
@@ -885,6 +887,9 @@ class OverlayTemplateController extends Controller
         return [
             'eventTypes' => EventTemplateMapping::EVENT_TYPES,
             'externalEventTypes' => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES,
+            // Which Twitch event types support a variant condition, and the
+            // unit label for each (drives the per-row condition picker).
+            'amountFields' => EventTemplateMapping::AMOUNT_FIELDS,
             'connectedServices' => $connectedServices,
             'assigned' => [
                 'twitch' => $assignedTwitch,
@@ -911,6 +916,8 @@ class OverlayTemplateController extends Controller
         $validated = $request->validate([
             'twitch' => ['nullable', 'array'],
             'twitch.*.event_type' => ['required', 'string', 'in:'.implode(',', array_keys(EventTemplateMapping::EVENT_TYPES))],
+            'twitch.*.condition_type' => ['nullable', 'string', 'in:'.EventTemplateMapping::CONDITION_AT_LEAST.','.EventTemplateMapping::CONDITION_EXACTLY],
+            'twitch.*.condition_value' => ['nullable', 'integer', 'min:1', 'max:100000000', 'required_with:twitch.*.condition_type'],
             'twitch.*.duration_ms' => ['required', 'integer', 'min:1000', 'max:999000'],
             'twitch.*.enabled' => ['required', 'boolean'],
             'external' => ['nullable', 'array'],
@@ -941,17 +948,40 @@ class OverlayTemplateController extends Controller
             ->delete();
 
         foreach ($twitch as $row) {
+            // A condition only means something for amount-bearing events
+            // (cheer bits, gift count, raid viewers). Strip it otherwise so a
+            // stale picker value can't smuggle a non-matchable row in.
+            $supportsCondition = isset(EventTemplateMapping::AMOUNT_FIELDS[$row['event_type']]);
+            $conditionType = $supportsCondition ? ($row['condition_type'] ?? null) : null;
+            $conditionValue = $conditionType !== null ? ($row['condition_value'] ?? null) : null;
+
+            // Key on (user, template, event_type): each template owns one row
+            // per event type, but many templates can map the same event type
+            // with different conditions - that is what makes the variant ladder.
             EventTemplateMapping::updateOrCreate(
                 [
                     'user_id' => $userId,
+                    'template_id' => $template->id,
                     'event_type' => $row['event_type'],
                 ],
                 [
-                    'template_id' => $template->id,
+                    'condition_type' => $conditionType,
+                    'condition_value' => $conditionValue,
                     'duration_ms' => $row['duration_ms'],
                     'enabled' => $row['enabled'],
                 ]
             );
+
+            // Non-amount events keep the one-template-per-event invariant:
+            // there is no condition to tell two rows apart, so claiming the
+            // event for this template releases it from any other. Amount-bearing
+            // events skip this - multiple templates coexisting IS the variant set.
+            if (! $supportsCondition) {
+                EventTemplateMapping::where('user_id', $userId)
+                    ->where('event_type', $row['event_type'])
+                    ->where('template_id', '!=', $template->id)
+                    ->delete();
+            }
         }
 
         $keptExternalKeys = array_map(fn ($row) => $row['service'].':'.$row['event_type'], $external);

@@ -12,6 +12,8 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property string $event_type
+ * @property string|null $condition_type
+ * @property int|null $condition_value
  * @property int|null $template_id
  * @property int $duration_ms
  * @property bool $enabled
@@ -42,6 +44,8 @@ class EventTemplateMapping extends Model
     protected $fillable = [
         'user_id',
         'event_type',
+        'condition_type',
+        'condition_value',
         'template_id',
         'duration_ms',
         'enabled',
@@ -51,7 +55,27 @@ class EventTemplateMapping extends Model
     protected $casts = [
         'enabled' => 'boolean',
         'duration_ms' => 'integer',
+        'condition_value' => 'integer',
         'settings' => 'array',
+    ];
+
+    /** Variant condition: fire only when amount >= condition_value. */
+    public const string CONDITION_AT_LEAST = 'at_least';
+
+    /** Variant condition: fire only when amount === condition_value. */
+    public const string CONDITION_EXACTLY = 'exactly';
+
+    /**
+     * Event types whose payload carries a numeric field a variant condition
+     * can compare against. The `path` is the (flat) key on the EventSub event
+     * payload; `unit` labels the value in the trigger UI. Event types absent
+     * here cannot carry a condition - they always resolve to their base row,
+     * preserving the original one-template-per-event behavior.
+     */
+    public const array AMOUNT_FIELDS = [
+        'channel.cheer' => ['path' => 'bits', 'unit' => 'bits'],
+        'channel.subscription.gift' => ['path' => 'total', 'unit' => 'gifts'],
+        'channel.raid' => ['path' => 'viewers', 'unit' => 'viewers'],
     ];
 
     /**
@@ -118,5 +142,70 @@ class EventTemplateMapping extends Model
     public function getEventTypeDisplayAttribute(): string
     {
         return self::EVENT_TYPES[$this->event_type] ?? $this->event_type;
+    }
+
+    /**
+     * Pick the winning mapping for an incoming event, honoring variant
+     * conditions. Replaces the bare `->first()` lookup at every firing site
+     * (live webhook, replay, test cheer) so selection can never drift.
+     *
+     * Ladder (most specific first):
+     *   1. `exactly N`  where amount === N
+     *   2. `at_least N` where amount >= N - highest N wins
+     *   3. base row (no condition) - the catch-all fallback
+     *
+     * Ties at the same threshold break on lowest template_id (deterministic).
+     * Non-amount event types skip the ladder and resolve to their base row,
+     * which is exactly the original behavior.
+     *
+     * @param  array<string, mixed>  $event  the EventSub `event` payload
+     */
+    public static function resolveForEvent(int $userId, string $eventType, array $event): ?self
+    {
+        $mappings = self::with('template')
+            ->where('user_id', $userId)
+            ->where('event_type', $eventType)
+            ->where('enabled', true)
+            ->get()
+            ->filter(fn (self $m) => $m->template !== null);
+
+        if ($mappings->isEmpty()) {
+            return null;
+        }
+
+        $field = self::AMOUNT_FIELDS[$eventType] ?? null;
+
+        // No numeric field to condition on - there is only ever a base row.
+        if ($field === null) {
+            return $mappings->sortBy('template_id')->first();
+        }
+
+        $amount = (int) ($event[$field['path']] ?? 0);
+
+        $exact = $mappings
+            ->filter(fn (self $m) => $m->condition_type === self::CONDITION_EXACTLY
+                && $m->condition_value === $amount)
+            ->sortBy('template_id')
+            ->first();
+        if ($exact !== null) {
+            return $exact;
+        }
+
+        $atLeast = $mappings
+            ->filter(fn (self $m) => $m->condition_type === self::CONDITION_AT_LEAST
+                && $m->condition_value !== null
+                && $amount >= $m->condition_value)
+            // Highest threshold first; lowest template_id breaks ties.
+            ->sort(fn (self $a, self $b) => [$b->condition_value, $a->template_id]
+                <=> [$a->condition_value, $b->template_id])
+            ->first();
+        if ($atLeast !== null) {
+            return $atLeast;
+        }
+
+        return $mappings
+            ->filter(fn (self $m) => $m->condition_type === null)
+            ->sortBy('template_id')
+            ->first();
     }
 }

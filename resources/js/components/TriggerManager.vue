@@ -8,6 +8,8 @@ import { SERVICE_LABELS } from '@/utils/services';
 
 interface TwitchAssignment {
   event_type: string;
+  condition_type: string | null;
+  condition_value: number | null;
   duration_ms: number;
   enabled: boolean;
 }
@@ -22,6 +24,8 @@ interface ExternalAssignment {
 interface TriggerData {
   eventTypes: Record<string, string>;
   externalEventTypes: Record<string, Record<string, string>>;
+  /** Event types that support a variant condition, mapped to their unit label. */
+  amountFields: Record<string, { path: string; unit: string }>;
   connectedServices: string[];
   assigned: {
     twitch: TwitchAssignment[];
@@ -42,6 +46,8 @@ const emit = defineEmits<{
 interface Row {
   event_type: string;
   event_label: string;
+  condition_type: string | null;
+  condition_value: number | null;
   duration_ms: number;
   enabled: boolean;
   /** Filled for external rows, empty for Twitch. Drives the "kofi:donation" key text. */
@@ -57,6 +63,8 @@ const twitchRows = ref<Row[]>(
     return {
       event_type: eventType,
       event_label: label,
+      condition_type: existing?.condition_type ?? null,
+      condition_value: existing?.condition_value ?? null,
       duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
       enabled: existing?.enabled ?? false,
       service: '',
@@ -75,6 +83,9 @@ const externalRowsByService = ref<Record<string, Row[]>>(
         return {
           event_type: eventType,
           event_label: label,
+          // External donation variants land in Phase 2; no condition here yet.
+          condition_type: null,
+          condition_value: null,
           duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
           enabled: existing?.enabled ?? false,
           service,
@@ -129,7 +140,13 @@ function save() {
   const payload = {
     twitch: twitchRows.value
       .filter((r) => r.enabled)
-      .map((r) => ({ event_type: r.event_type, duration_ms: r.duration_ms, enabled: r.enabled })),
+      .map((r) => ({
+        event_type: r.event_type,
+        condition_type: r.condition_type,
+        condition_value: r.condition_value,
+        duration_ms: r.duration_ms,
+        enabled: r.enabled,
+      })),
     external: externalRows
       .filter((r) => r.enabled)
       .map((r) => ({
@@ -187,6 +204,9 @@ function save() {
       <TriggerRow
         v-model:enabled="item.enabled"
         v-model:duration-ms="item.duration_ms"
+        v-model:condition-type="item.condition_type"
+        v-model:condition-value="item.condition_value"
+        :amount-unit="group.key === TWITCH_GROUP_KEY ? triggers.amountFields[item.event_type]?.unit : undefined"
         :label="item.event_label"
         :key-text="rowKeyText(item)"
         :toggle-checked-class="
