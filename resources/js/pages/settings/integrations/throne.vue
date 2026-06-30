@@ -128,11 +128,10 @@ function formatDate(iso: string | null): string {
         <!-- Not connected: one-click connect (no credentials needed) -->
         <div v-if="!integration.connected" class="space-y-4">
           <div class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
-            <p class="font-medium text-foreground">How Throne works</p>
+            <p class="font-medium text-foreground">Connect to Throne</p>
             <p>
-              Throne signs every webhook with its own key, so there is nothing to paste here first - just connect,
-              then copy the webhook URL into Throne. Throne fires on gifts, contributions, and completed crowdfunded
-              gifts, and each one can drive alerts and overlay controls.
+              Click the button below to connect to Throne and generate a unique Webhook URL.
+              You'll need to add this URL into your Throne Webhook settings.
             </p>
           </div>
           <Button :disabled="connectForm.processing" @click="connect">
@@ -146,7 +145,7 @@ function formatDate(iso: string | null): string {
             <p class="font-medium text-foreground">What to do next</p>
             <ol class="list-decimal space-y-1 pl-4">
               <li>
-                Copy the webhook URL below into Throne -&gt; Creator dashboard -&gt; Integrations -&gt; Webhook, and save.
+                Copy the webhook URL below into your Throne webhook settings and save (there's a button for it right there).
               </li>
               <li>
                 Go to <a href="/alerts" class="font-medium text-violet-400 hover:underline">Alerts Builder</a>
@@ -163,7 +162,7 @@ function formatDate(iso: string | null): string {
           <div v-if="integration.webhook_url" class="group space-y-2">
             <Label>Your Webhook URL</Label>
             <p class="text-sm text-muted-foreground">
-              Paste this into Throne -&gt; Integrations -&gt; Webhook.
+              Paste this into the Webhook URL field on your Throne webhook settings page.
             </p>
             <div class="flex">
               <input
@@ -178,6 +177,22 @@ function formatDate(iso: string | null): string {
               >
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
+            </div>
+
+            <!-- Manual step: send them straight to Throne's webhook settings page -->
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              <a
+                href="https://throne.com/profile/integrations/webhook"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-primary cursor-pointer"
+              >
+                Open Throne webhook settings -&gt;
+              </a>
+              <p class="text-xs" :class="copied ? 'font-medium text-violet-400' : 'text-muted-foreground'">
+                <template v-if="copied">Copied. Now open Throne and paste it into the Webhook URL field.</template>
+                <template v-else>Manual step: paste the URL above into the Webhook URL field there, then save.</template>
+              </p>
             </div>
           </div>
 

@@ -1,5 +1,9 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - polish(throne): clearer "paste into Throne" manual step
+
+Tightened the connected-state copy on the Throne settings page so the one manual step (pasting the webhook URL into Throne) is unmissable. Replaced scattered inline "go there" links with a single prominent "Open Throne webhook settings ->" button directly below the webhook URL input, plus a helper line that reacts to the Copy button (after copying it turns violet and reads "Copied. Now open Throne and paste it into the Webhook URL field.").
+
 ## July 1st, 2026 - docs(throne): "All Throne Events" reference page
 
 Added `resources/help/reference/eventsub-tags/all-throne-events.md`, the Throne counterpart to "All Ko-fi Events". The filesystem-driven help reference picks it up automatically (the gitignored search index rebuilds on deploy via the composer hook). Documents every normalized tag across the three Throne event types, including the Throne-unique `event.item_name`, `event.item_thumbnail_url`, and `event.is_surprise_gift`, and notes that `from_name`/`message` are empty on crowdfunded gifts.
