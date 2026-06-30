@@ -19,12 +19,14 @@ class ExternalAlertService
      */
     public function dispatch(NormalizedExternalEvent $event, User $user): bool
     {
-        $mapping = ExternalEventTemplateMapping::where('user_id', $user->id)
-            ->where('service', $event->getService())
-            ->where('event_type', $event->getEventType())
-            ->where('enabled', true)
-            ->with('template')
-            ->first();
+        // Pick the alert template, honoring variant conditions on the donated
+        // amount (e.g. a louder alert for a bigger Ko-fi donation).
+        $mapping = ExternalEventTemplateMapping::resolveForEvent(
+            $user->id,
+            $event->getService(),
+            $event->getEventType(),
+            $event->getAmount(),
+        );
 
         if (! $mapping || ! $mapping->template) {
             return false;
