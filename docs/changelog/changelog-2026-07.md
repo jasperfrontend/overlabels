@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - feat(throne): control presets in the Add-Control picker
+
+The last functional gap: surface Throne's controls in the "Add control" modal so a streamer can build a Throne overlay without hand-typing tags. Mirrors the existing Ko-fi / Fourthwall / BMAC preset pattern.
+
+- **`THRONE_PRESETS`** in `controlPresets.ts` - the six shared donation-family controls plus the three Throne-unique ones (`latest_item_name`, `latest_item_thumbnail_url`, `latest_is_surprise_gift`), exactly matching the driver's auto-provision definitions. Registered in `getPresetsForSource('throne')`.
+- **`ControlFormModal`** - a `Throne` preset group that appears on static templates once the user has connected Throne, with the same already-added filtering and fuzzy search as every other service. No backend threading needed: `connectedServices` is plucked from the user's enabled integrations, so connecting Throne lights up the group automatically.
+- Adding a preset still creates one user-scoped, service-managed control shared across all overlays. ESLint + vite build clean.
+
 ## July 1st, 2026 - feat(throne): connect / settings flow
 
 The settings page that turns the Throne driver into something a streamer can actually use. Throne is the simplest connect flow of any integration: it signs every webhook with its own global key, so there's no token to paste and no OAuth dance - connecting is one click, then you copy the webhook URL into Throne.
