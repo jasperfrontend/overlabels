@@ -87,6 +87,7 @@ class ExternalEventTemplateMapping extends Model
         'kofi' => ['donation'],
         'streamelements' => ['donation'],
         'streamlabs' => ['donation'],
+        'throne' => ['donation'],
     ];
 
     /**
@@ -135,6 +136,9 @@ class ExternalEventTemplateMapping extends Model
         ],
         'streamlabs' => [
             'donation' => 'Streamlabs Donation',
+        ],
+        'throne' => [
+            'donation' => 'Throne Gift or Contribution',
         ],
     ];
 
