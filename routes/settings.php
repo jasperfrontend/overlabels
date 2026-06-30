@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\StreamElementsIntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
+use App\Http\Controllers\Settings\ThroneIntegrationController;
 use App\Http\Controllers\Settings\UsageController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -97,6 +98,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::patch('/bmac/test-mode', [BMACIntegrationController::class, 'setTestMode'])->name('bmac.test-mode');
         Route::post('/bmac/seed-count', [BMACIntegrationController::class, 'seedDonationCount'])->name('bmac.seed-count');
         Route::delete('/bmac', [BMACIntegrationController::class, 'disconnect'])->name('bmac.disconnect');
+
+        Route::get('/throne', [ThroneIntegrationController::class, 'show'])->name('throne.show');
+        Route::post('/throne', [ThroneIntegrationController::class, 'connect'])->name('throne.connect');
+        Route::patch('/throne/test-mode', [ThroneIntegrationController::class, 'setTestMode'])->name('throne.test-mode');
+        Route::post('/throne/seed-count', [ThroneIntegrationController::class, 'seedDonationCount'])->name('throne.seed-count');
+        Route::delete('/throne', [ThroneIntegrationController::class, 'disconnect'])->name('throne.disconnect');
 
         Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
     });

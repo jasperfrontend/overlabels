@@ -296,3 +296,277 @@ test('fourthwall webhook ignores unsupported event types without updating contro
 
     Event::assertNotDispatched(ControlValuesBatchUpdated::class);
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Throne - Ed25519-signed JSON. Signature rides in headers over "{ts}.{rawBody}",
+// verified against Throne's single GLOBAL public key (config, not per-integration).
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Wrap a raw 32-byte Ed25519 public key in the same SubjectPublicKeyInfo PEM that
+// Throne publishes, so the driver's "strip armor, take the last 32 bytes" extraction
+// is exercised exactly as it is in production.
+function throneSpkiPem(string $rawPublicKey): string
+{
+    $der = hex2bin('302a300506032b6570032100').$rawPublicKey;
+
+    return "-----BEGIN PUBLIC KEY-----\n".chunk_split(base64_encode($der), 64, "\n").'-----END PUBLIC KEY-----';
+}
+
+// Generate a throwaway keypair, pin its public key as Throne's global key, and
+// return the secret key so the test can sign arbitrary payloads with it.
+function makeThroneIntegration(): array
+{
+    $keypair = sodium_crypto_sign_keypair();
+    $secret = sodium_crypto_sign_secretkey($keypair);
+    config(['services.throne.public_key' => throneSpkiPem(sodium_crypto_sign_publickey($keypair))]);
+
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'throne',
+        'enabled' => true,
+        'credentials' => Crypt::encryptString(json_encode([])),
+    ]);
+
+    return [$user, $integration, $secret];
+}
+
+function thronePayload(array $dataOverrides = [], string $eventType = 'gift_purchased', ?string $eventId = null): array
+{
+    return [
+        'contract_version' => '1',
+        'event_id' => $eventId ?? fake()->uuid(),
+        'event_type' => $eventType,
+        'data' => array_merge([
+            'creator_id' => 'creator_x',
+            'creator_username' => 'jasperdiscovers',
+            'gifter_username' => 'marie_123',
+            'message' => 'Keep doing what you are doing!',
+            'item_name' => 'AirPods Max',
+            'item_thumbnail_url' => 'https://example.com/airpods.jpg',
+            'is_surprise_gift' => false,
+            'price' => 10000,
+            'currency' => 'USD',
+        ], $dataOverrides),
+    ];
+}
+
+// Signs "{ts}.{body}" with the given secret key, matching Throne's scheme. A caller
+// may pass an explicit $timestamp/$signatureHex to simulate tampering/replay.
+function postThrone(string $webhookToken, array $payload, string $secretKey, ?string $timestamp = null, ?string $signatureHex = null): TestResponse
+{
+    $body = json_encode($payload);
+    $ts = $timestamp ?? (string) time();
+    $sig = $signatureHex ?? bin2hex(sodium_crypto_sign_detached($ts.'.'.$body, $secretKey));
+
+    return test()->call('POST', "/api/webhooks/throne/{$webhookToken}", [], [], [], [
+        'CONTENT_TYPE' => 'application/json; charset=utf-8',
+        'HTTP_ACCEPT' => 'application/json',
+        'HTTP_X_SIGNATURE_TIMESTAMP' => $ts,
+        'HTTP_X_SIGNATURE_ED25519' => $sig,
+    ], $body);
+}
+
+// --- Verification --------------------------------------------------------------
+
+test('throne verifies a real captured request against the pinned production public key', function () {
+    // No config override here: this exercises the real key shipped in config/services.php
+    // against a genuine Throne "Test webhook" delivery (body + headers captured verbatim).
+    $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
+    $integration = ExternalIntegration::factory()->create([
+        'user_id' => $user->id,
+        'service' => 'throne',
+        'enabled' => true,
+        'credentials' => Crypt::encryptString(json_encode([])),
+    ]);
+
+    $body = '{"contract_version":"1","event_id":"655c3194-59c7-41a6-99c5-537c5c865e79","event_type":"gift_purchased","data":{"creator_id":"mhC7x9dmBoQ4Wk8OvfaZGH31wxP2","creator_username":"jasperdiscovers","gifter_username":"marie_123","message":"Keep doing what you\'re doing!","item_name":"AirPods Max","item_thumbnail_url":"https://m.media-amazon.com/images/I/81jqUPkIVRL._AC_SX522_.jpg","is_surprise_gift":false,"price":10000,"currency":"USD"}}';
+
+    test()->call('POST', "/api/webhooks/throne/{$integration->webhook_token}", [], [], [], [
+        'CONTENT_TYPE' => 'application/json; charset=utf-8',
+        'HTTP_ACCEPT' => 'application/json',
+        'HTTP_X_SIGNATURE_TIMESTAMP' => '1782855097',
+        'HTTP_X_SIGNATURE_ED25519' => '78df2cfbcb52df12d2a98b2a0aad2b87e3ee45f7e2495bb4d22c37dcb789228f8d06676cda608ff9127d60eb944dcdca1cacff570e74a72447609880cd4e9e09',
+    ], $body)
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ok']);
+
+    $this->assertDatabaseHas('external_events', [
+        'user_id' => $user->id,
+        'service' => 'throne',
+        'event_type' => 'donation',
+        'message_id' => '655c3194-59c7-41a6-99c5-537c5c865e79',
+    ]);
+});
+
+test('throne returns 200 for a valid signed gift_purchased', function () {
+    [$user, $integration, $secret] = makeThroneIntegration();
+
+    $eventId = fake()->uuid();
+
+    postThrone($integration->webhook_token, thronePayload(eventId: $eventId), $secret)
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ok']);
+
+    $this->assertDatabaseHas('external_events', [
+        'user_id' => $user->id,
+        'service' => 'throne',
+        'event_type' => 'donation',
+        'message_id' => $eventId,
+    ]);
+});
+
+test('throne returns 403 when signed by the wrong key', function () {
+    [, $integration] = makeThroneIntegration();
+
+    $wrongSecret = sodium_crypto_sign_secretkey(sodium_crypto_sign_keypair());
+
+    postThrone($integration->webhook_token, thronePayload(), $wrongSecret)->assertStatus(403);
+});
+
+test('throne returns 403 when the body is tampered after signing', function () {
+    [, $integration, $secret] = makeThroneIntegration();
+
+    $ts = (string) time();
+    $body = json_encode(thronePayload());
+    $sig = bin2hex(sodium_crypto_sign_detached($ts.'.'.$body, $secret));
+
+    // Same signature/timestamp, different body.
+    postThrone($integration->webhook_token, thronePayload(['gifter_username' => 'mallory_99']), $secret, $ts, $sig)
+        ->assertStatus(403);
+});
+
+test('throne returns 403 when the timestamp is missing or non-numeric', function () {
+    [, $integration, $secret] = makeThroneIntegration();
+
+    $body = json_encode(thronePayload());
+
+    // Non-numeric timestamp (also makes the signed message mismatch).
+    test()->call('POST', "/api/webhooks/throne/{$integration->webhook_token}", [], [], [], [
+        'CONTENT_TYPE' => 'application/json; charset=utf-8',
+        'HTTP_X_SIGNATURE_TIMESTAMP' => 'not-a-number',
+        'HTTP_X_SIGNATURE_ED25519' => bin2hex(sodium_crypto_sign_detached('not-a-number.'.$body, $secret)),
+    ], $body)->assertStatus(403);
+
+    // Missing timestamp header entirely.
+    test()->call('POST', "/api/webhooks/throne/{$integration->webhook_token}", [], [], [], [
+        'CONTENT_TYPE' => 'application/json; charset=utf-8',
+        'HTTP_X_SIGNATURE_ED25519' => str_repeat('ab', 64),
+    ], $body)->assertStatus(403);
+});
+
+test('throne returns 403 for a malformed signature header', function () {
+    [, $integration] = makeThroneIntegration();
+
+    $body = json_encode(thronePayload());
+
+    // Too short / not 128 hex chars.
+    test()->call('POST', "/api/webhooks/throne/{$integration->webhook_token}", [], [], [], [
+        'CONTENT_TYPE' => 'application/json; charset=utf-8',
+        'HTTP_X_SIGNATURE_TIMESTAMP' => (string) time(),
+        'HTTP_X_SIGNATURE_ED25519' => 'deadbeef',
+    ], $body)->assertStatus(403);
+});
+
+// --- Dedup / bookkeeping -------------------------------------------------------
+
+test('throne deduplicates on event_id across retries', function () {
+    [, $integration, $secret] = makeThroneIntegration();
+
+    $payload = thronePayload(eventId: 'evt-dup-001');
+
+    postThrone($integration->webhook_token, $payload, $secret)->assertStatus(200)->assertJson(['status' => 'ok']);
+    postThrone($integration->webhook_token, $payload, $secret)->assertStatus(200)->assertJson(['status' => 'duplicate']);
+});
+
+test('throne updates last_received_at on success', function () {
+    [, $integration, $secret] = makeThroneIntegration();
+
+    postThrone($integration->webhook_token, thronePayload(), $secret)->assertStatus(200);
+
+    $integration->refresh();
+    expect($integration->last_received_at)->not()->toBeNull();
+});
+
+// --- Control updates -----------------------------------------------------------
+
+test('throne increments donations_received and sets the item name', function () {
+    Event::fake([ControlValuesBatchUpdated::class]);
+
+    [$user, $integration, $secret] = makeThroneIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'throne', [
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Gifts', 'value' => '0',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'throne', [
+        'key' => 'latest_item_name', 'type' => 'text', 'label' => 'Latest Item', 'value' => '',
+    ]);
+
+    postThrone($integration->webhook_token, thronePayload(), $secret)->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'throne', 'key' => 'donations_received', 'value' => '1',
+    ]);
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'throne', 'key' => 'latest_item_name', 'value' => 'AirPods Max',
+    ]);
+
+    Event::assertDispatched(ControlValuesBatchUpdated::class);
+});
+
+test('throne gift_crowdfunded bumps the counter but preserves the latest donor', function () {
+    [$user, $integration, $secret] = makeThroneIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'throne', [
+        'key' => 'donations_received', 'type' => 'counter', 'label' => 'Gifts', 'value' => '0',
+    ]);
+    OverlayControl::provisionServiceControl($user, 'throne', [
+        'key' => 'latest_donor_name', 'type' => 'text', 'label' => 'Latest Donor', 'value' => 'marie_123',
+    ]);
+
+    // A crowdfunded completion carries no gifter and no message.
+    $payload = thronePayload(eventType: 'gift_crowdfunded');
+    unset($payload['data']['gifter_username'], $payload['data']['message']);
+
+    postThrone($integration->webhook_token, $payload, $secret)->assertStatus(200);
+
+    // Counter advanced...
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'throne', 'key' => 'donations_received', 'value' => '1',
+    ]);
+    // ...but the last real gifter was NOT blanked.
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'throne', 'key' => 'latest_donor_name', 'value' => 'marie_123',
+    ]);
+});
+
+test('throne contribution_purchased reads the amount field, not price', function () {
+    [$user, $integration, $secret] = makeThroneIntegration();
+
+    OverlayControl::provisionServiceControl($user, 'throne', [
+        'key' => 'latest_donation_amount', 'type' => 'number', 'label' => 'Latest Amount', 'value' => '0',
+    ]);
+
+    $payload = thronePayload(eventType: 'contribution_purchased');
+    unset($payload['data']['price']);
+    $payload['data']['amount'] = 2500;
+
+    postThrone($integration->webhook_token, $payload, $secret)->assertStatus(200);
+
+    $this->assertDatabaseHas('overlay_controls', [
+        'user_id' => $user->id, 'source' => 'throne', 'key' => 'latest_donation_amount', 'value' => '25.00',
+    ]);
+});
+
+test('throne ignores unsupported event types without storing an event', function () {
+    Event::fake([ControlValuesBatchUpdated::class]);
+
+    [, $integration, $secret] = makeThroneIntegration();
+
+    postThrone($integration->webhook_token, thronePayload(eventType: 'something_else'), $secret)
+        ->assertStatus(200)
+        ->assertJson(['status' => 'ignored']);
+
+    Event::assertNotDispatched(ControlValuesBatchUpdated::class);
+});

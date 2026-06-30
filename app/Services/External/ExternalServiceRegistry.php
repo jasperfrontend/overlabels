@@ -9,6 +9,7 @@ use App\Services\External\Drivers\GpsServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 use App\Services\External\Drivers\StreamElementsServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
+use App\Services\External\Drivers\ThroneServiceDriver;
 use InvalidArgumentException;
 
 class ExternalServiceRegistry
@@ -23,6 +24,7 @@ class ExternalServiceRegistry
         'streamelements' => StreamElementsServiceDriver::class,
         'fourthwall' => FourthwallServiceDriver::class,
         'bmac' => BMACServiceDriver::class,
+        'throne' => ThroneServiceDriver::class,
     ];
 
     /**

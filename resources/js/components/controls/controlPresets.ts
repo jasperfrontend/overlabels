@@ -52,6 +52,20 @@ export const BMAC_PRESETS: ServicePreset[] = [
   { key: 'latest_support_type', label: 'BMAC Latest Support Type', type: 'text' },
 ];
 
+export const THRONE_PRESETS: ServicePreset[] = [
+  { key: 'donations_received', label: 'Throne Gifts Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Throne Latest Gifter Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Throne Latest Gift Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Throne Latest Gift Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Throne Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Throne Total Received (session)', type: 'number' },
+  // Throne-unique: gifts are real products, so they carry an item name, a product
+  // thumbnail, and a surprise-gift flag the shared donation controls have no slot for.
+  { key: 'latest_item_name', label: 'Throne Latest Item Name', type: 'text' },
+  { key: 'latest_item_thumbnail_url', label: 'Throne Latest Item Thumbnail URL', type: 'text' },
+  { key: 'latest_is_surprise_gift', label: 'Throne Latest Is Surprise Gift', type: 'text' },
+];
+
 export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'follows_this_stream', label: 'Follows This Stream', type: 'counter' },
   { key: 'subs_this_stream', label: 'Subs This Stream', type: 'counter' },
@@ -91,6 +105,7 @@ export function getPresetsForSource(source: string): ServicePreset[] {
     case 'streamelements': return STREAMELEMENTS_PRESETS;
     case 'fourthwall': return FOURTHWALL_PRESETS;
     case 'bmac': return BMAC_PRESETS;
+    case 'throne': return THRONE_PRESETS;
     default: return [];
   }
 }
