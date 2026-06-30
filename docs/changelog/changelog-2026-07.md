@@ -1,5 +1,9 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - docs(throne): "All Throne Events" reference page
+
+Added `resources/help/reference/eventsub-tags/all-throne-events.md`, the Throne counterpart to "All Ko-fi Events". The filesystem-driven help reference picks it up automatically (the gitignored search index rebuilds on deploy via the composer hook). Documents every normalized tag across the three Throne event types, including the Throne-unique `event.item_name`, `event.item_thumbnail_url`, and `event.is_surprise_gift`, and notes that `from_name`/`message` are empty on crowdfunded gifts.
+
 ## July 1st, 2026 - docs(throne): homepage + integration-presets help page
 
 Surfacing Throne everywhere the other integrations already appear, now that the integration is functionally complete.
