@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
-import { ExternalLink, Megaphone } from '@lucide/vue';
+import { AlertTriangle, ExternalLink, Megaphone } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
 
@@ -13,14 +13,24 @@ interface AssignedTemplate {
   slug: string;
 }
 
-interface TwitchMapping {
+/** Fields shared by every mapping row that carries a variant condition. */
+interface ConditionFields {
+  condition_type: string | null;
+  condition_value: number | null;
+  /** Unit label when the event supports a condition (e.g. "bits"), else null. */
+  condition_unit: string | null;
+  /** Name of the alert that wins this exact trigger, if this row is shadowed. */
+  shadowed_by: string | null;
+}
+
+interface TwitchMapping extends ConditionFields {
   event_type: string;
   event_label: string;
   duration_ms: number;
   template: AssignedTemplate | null;
 }
 
-interface ExternalMapping {
+interface ExternalMapping extends ConditionFields {
   service: string;
   event_type: string;
   event_label: string;
@@ -53,6 +63,20 @@ const externalByService = computed(() => {
 });
 
 const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
+
+/**
+ * Human label for a row's variant condition, or null when the event has no
+ * amount to condition on (so no condition text is shown). "amount" is the
+ * unitless external/donation case - we drop the word so it doesn't read
+ * "At least 50 amount".
+ */
+function conditionLabel(row: ConditionFields): string | null {
+  if (!row.condition_unit) return null;
+  const unit = row.condition_unit === 'amount' ? '' : ` ${row.condition_unit}`;
+  if (row.condition_type === 'at_least') return `At least ${row.condition_value}${unit}`;
+  if (row.condition_type === 'exactly') return `Exactly ${row.condition_value}${unit}`;
+  return 'Any amount';
+}
 </script>
 
 <template>
@@ -85,9 +109,10 @@ const totalAssigned = computed(() => props.twitchMappings.length + props.externa
         <div v-else class="space-y-2">
           <Link
             v-for="row in twitchMappings"
-            :key="row.event_type"
+            :key="`${row.event_type}:${row.template?.id}`"
             :href="row.template ? route('templates.show', row.template.id) : '#'"
-            class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+            class="flex flex-wrap items-center gap-3 rounded-sm border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+            :class="row.shadowed_by ? 'border-amber-400/50' : 'border-sidebar-border'"
           >
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -100,10 +125,18 @@ const totalAssigned = computed(() => props.twitchMappings.length + props.externa
               </div>
               <div v-if="row.template" class="mt-1 text-sm text-foreground">
                 {{ row.template.name }}
+                <span v-if="conditionLabel(row)" class="text-muted-foreground"> · {{ conditionLabel(row) }}</span>
                 <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
               </div>
+              <div
+                v-if="row.shadowed_by"
+                class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+              >
+                <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>Never fires - "{{ row.shadowed_by }}" wins this exact trigger. Change or remove this condition.</span>
+              </div>
             </div>
-            <ExternalLink class="h-4 w-4 text-muted-foreground" />
+            <ExternalLink class="h-4 w-4 shrink-0 text-muted-foreground" />
           </Link>
         </div>
       </section>
@@ -125,9 +158,10 @@ const totalAssigned = computed(() => props.twitchMappings.length + props.externa
         <div v-else class="space-y-2">
           <Link
             v-for="row in externalByService[service]"
-            :key="`${row.service}:${row.event_type}`"
+            :key="`${row.service}:${row.event_type}:${row.template?.id}`"
             :href="row.template ? route('templates.show', row.template.id) : '#'"
-            class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+            class="flex flex-wrap items-center gap-3 rounded-sm border bg-card p-4 transition-colors hover:border-violet-400 hover:bg-sidebar cursor-pointer"
+            :class="row.shadowed_by ? 'border-amber-400/50' : 'border-sidebar-border'"
           >
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -140,10 +174,18 @@ const totalAssigned = computed(() => props.twitchMappings.length + props.externa
               </div>
               <div v-if="row.template" class="mt-1 text-sm text-foreground">
                 {{ row.template.name }}
+                <span v-if="conditionLabel(row)" class="text-muted-foreground"> · {{ conditionLabel(row) }}</span>
                 <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
               </div>
+              <div
+                v-if="row.shadowed_by"
+                class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+              >
+                <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>Never fires - "{{ row.shadowed_by }}" wins this exact trigger. Change or remove this condition.</span>
+              </div>
             </div>
-            <ExternalLink class="h-4 w-4 text-muted-foreground" />
+            <ExternalLink class="h-4 w-4 shrink-0 text-muted-foreground" />
           </Link>
         </div>
       </section>

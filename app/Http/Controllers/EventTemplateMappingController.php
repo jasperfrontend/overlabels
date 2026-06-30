@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
-use App\Models\OverlayTemplate;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -20,20 +21,30 @@ class EventTemplateMappingController extends Controller
     {
         $user = Auth::user();
 
-        $twitchMappings = EventTemplateMapping::with('template:id,name,slug')
+        $twitchRows = EventTemplateMapping::with('template:id,name,slug')
             ->where('user_id', $user->id)
             ->where('enabled', true)
             ->whereNotNull('template_id')
-            ->get()
+            ->orderBy('event_type')
+            ->orderBy('template_id')
+            ->get();
+
+        $twitchShadow = $this->shadowedBy($twitchRows, fn (EventTemplateMapping $m) => $m->event_type);
+
+        $twitchMappings = $twitchRows
             ->map(fn (EventTemplateMapping $m) => [
                 'event_type' => $m->event_type,
                 'event_label' => EventTemplateMapping::EVENT_TYPES[$m->event_type] ?? $m->event_type,
+                'condition_type' => $m->condition_type,
+                'condition_value' => $m->condition_value,
+                'condition_unit' => EventTemplateMapping::AMOUNT_FIELDS[$m->event_type]['unit'] ?? null,
                 'duration_ms' => $m->duration_ms,
                 'template' => $m->template ? [
                     'id' => $m->template->id,
                     'name' => $m->template->name,
                     'slug' => $m->template->slug,
                 ] : null,
+                'shadowed_by' => $twitchShadow[$m->id] ?? null,
             ])
             ->values();
 
@@ -42,22 +53,33 @@ class EventTemplateMappingController extends Controller
             ->pluck('service')
             ->toArray();
 
-        $externalMappings = ExternalEventTemplateMapping::with('template:id,name,slug')
+        $externalRows = ExternalEventTemplateMapping::with('template:id,name,slug')
             ->where('user_id', $user->id)
             ->where('enabled', true)
             ->whereNotNull('overlay_template_id')
-            ->get()
+            ->orderBy('service')
+            ->orderBy('event_type')
+            ->orderBy('overlay_template_id')
+            ->get();
+
+        $externalShadow = $this->shadowedBy($externalRows, fn (ExternalEventTemplateMapping $m) => $m->service.':'.$m->event_type);
+
+        $externalMappings = $externalRows
             ->map(fn (ExternalEventTemplateMapping $m) => [
                 'service' => $m->service,
                 'event_type' => $m->event_type,
                 'event_label' => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$m->service][$m->event_type]
                     ?? $m->event_type,
+                'condition_type' => $m->condition_type,
+                'condition_value' => $m->condition_value,
+                'condition_unit' => ExternalEventTemplateMapping::supportsCondition($m->service, $m->event_type) ? 'amount' : null,
                 'duration_ms' => $m->duration_ms,
                 'template' => $m->template ? [
                     'id' => $m->template->id,
                     'name' => $m->template->name,
                     'slug' => $m->template->slug,
                 ] : null,
+                'shadowed_by' => $externalShadow[$m->id] ?? null,
             ])
             ->values();
 
@@ -75,6 +97,46 @@ class EventTemplateMappingController extends Controller
             'connectedServices' => $connectedServices,
             'unassignedEventTypes' => $unassignedEventTypes,
         ]);
+    }
+
+    /**
+     * Map [mapping_id => winning template name] for every "shadowed" mapping:
+     * one that shares an identical trigger condition with an earlier-assigned
+     * mapping (same event scope + condition_type + condition_value). The
+     * resolver breaks such ties on the lowest template id, so the winner always
+     * fires and every other member never does. Only EXACT-condition duplicates
+     * are flagged - an `at_least 100` is not shadowed by an `exactly 100`,
+     * because it still fires at other amounts.
+     *
+     * The collection MUST already be ordered by the tie-break id ascending, so
+     * the group's first element is the winner.
+     *
+     * @param  Collection<int, Model>  $mappings
+     * @param  callable(Model): string  $scopeKey
+     * @return array<int, string>
+     */
+    private function shadowedBy(Collection $mappings, callable $scopeKey): array
+    {
+        $shadowed = [];
+
+        $groups = $mappings->groupBy(
+            fn ($m) => $scopeKey($m).'|'.($m->condition_type ?? '').'|'.($m->condition_value ?? '')
+        );
+
+        foreach ($groups as $group) {
+            if ($group->count() < 2) {
+                continue;
+            }
+
+            $winner = $group->first();
+            foreach ($group as $m) {
+                if ($m->getKey() !== $winner->getKey()) {
+                    $shadowed[$m->getKey()] = $winner->template?->name ?? 'another alert';
+                }
+            }
+        }
+
+        return $shadowed;
     }
 
     /**
