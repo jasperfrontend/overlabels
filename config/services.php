@@ -55,6 +55,20 @@ return [
         'hmac' => env('FW_HMAC'),
     ],
 
+    'throne' => [
+        // Throne signs every inbound webhook with Ed25519. The signature rides in
+        // the X-Signature-Ed25519 header over the message "{timestamp}.{rawBody}",
+        // verified against Throne's GLOBAL public key (the same key for every
+        // creator). The key is published on Throne's webhook help page; we pin it
+        // here as the default and allow THRONE_PUBLIC_KEY to override it if Throne
+        // ever rotates, so a rotation is a config change rather than a deploy.
+        'public_key' => env('THRONE_PUBLIC_KEY', <<<'PEM'
+            -----BEGIN PUBLIC KEY-----
+            MCowBQYDK2VwAyEAPXbUfxh7XL4SYUVcfhmYMIbxvtR9E9LDd8gPJ1PwSD8=
+            -----END PUBLIC KEY-----
+            PEM),
+    ],
+
     'twitchbot' => [
         'client_id' => env('TWITCHBOT_CLIENT_ID'),
         'client_secret' => env('TWITCHBOT_CLIENT_SECRET'),
