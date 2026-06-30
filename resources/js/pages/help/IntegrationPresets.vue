@@ -10,12 +10,14 @@ import {
   STREAMELEMENTS_PRESETS,
   FOURTHWALL_PRESETS,
   BMAC_PRESETS,
+  THRONE_PRESETS,
   TWITCH_PRESETS,
   type ServicePreset,
 } from '@/components/controls/controlPresets';
 import { fuzzyMatch, presetHaystack, serviceLabel } from '@/utils/services';
 import {
   Coffee,
+  Gift,
   HandHeart,
   MapPinned,
   Megaphone,
@@ -83,6 +85,13 @@ const sections: ServiceSection[] = [
     presets: BMAC_PRESETS,
   },
   {
+    source: 'throne',
+    label: serviceLabel('throne'),
+    description: 'Gift, contribution, and crowdfunded-gift data from Throne. Beyond the shared donation controls, Throne gifts are real products - so they also expose the item name, a product thumbnail you can drop straight into an <img>, and a surprise-gift flag.',
+    icon: Gift,
+    presets: THRONE_PRESETS,
+  },
+  {
     source: 'gps',
     label: serviceLabel('gps'),
     description: 'Live GPS data from the Overlabels GPS Android app: speed, coordinates, distance, battery, and per-session aggregates.',
@@ -130,7 +139,7 @@ function copyTag(tag: string) {
     <title>Integration Presets - Overlabels</title>
     <meta
       name="description"
-      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS."
+      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, Throne, and Overlabels GPS."
     />
   </Head>
 

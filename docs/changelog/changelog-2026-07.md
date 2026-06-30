@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - docs(throne): homepage + integration-presets help page
+
+Surfacing Throne everywhere the other integrations already appear, now that the integration is functionally complete.
+
+- **Homepage (`SectionIntegrations`)** - Throne is the sixth tab in the donations section with its own card and namespace example. The `NEW:` badge moved off Fourthwall and Buy Me a Coffee (no longer new) and onto Throne. The cross-service `latest()` showcase - the feature no donation-platform-owned overlay tool can match - now threads all six donation services plus Twitch bits: "Five donation services" became "Six", and both `latest()` examples gained a `c.throne.*` pipe.
+- **Help (`IntegrationPresets`)** - a Throne section documenting all nine controls, including the three Throne-unique ones (item name, product thumbnail, surprise-gift flag), with a note that the thumbnail drops straight into an `<img>`. `serviceLabel('throne')` added to the frontend label source of truth.
+- ESLint + vite build clean.
+
 ## July 1st, 2026 - feat(throne): control presets in the Add-Control picker
 
 The last functional gap: surface Throne's controls in the "Add control" modal so a streamer can build a Throne overlay without hand-typing tags. Mirrors the existing Ko-fi / Fourthwall / BMAC preset pattern.
