@@ -538,12 +538,9 @@ class TwitchEventSubController extends Controller
 
             if ($broadcasterId) {
                 if ($user) {
-                    // Check if user has a template mapping for this event
-                    $mapping = EventTemplateMapping::with('template')
-                        ->where('user_id', $user->id)
-                        ->where('event_type', $eventType)
-                        ->where('enabled', true)
-                        ->first();
+                    // Pick the alert template for this event, honoring variant
+                    // conditions (e.g. cheer at_least/exactly bits thresholds).
+                    $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
 
                     if ($mapping && $mapping->template) {
 
@@ -685,11 +682,11 @@ class TwitchEventSubController extends Controller
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
         }
 
-        $mapping = EventTemplateMapping::with(['template', 'template.targetStaticOverlays'])
-            ->where('user_id', $user->id)
-            ->where('event_type', $twitchEvent->event_type)
-            ->where('enabled', true)
-            ->first();
+        $mapping = EventTemplateMapping::resolveForEvent(
+            $user->id,
+            $twitchEvent->event_type,
+            $twitchEvent->event_data ?? []
+        );
 
         if (! $mapping || ! $mapping->template) {
             return back()->with('message', 'No active template mapping found for this event type.')->with('type', 'error');
@@ -760,11 +757,7 @@ class TwitchEventSubController extends Controller
 
         $this->streamSessionService->handleEvent($user, 'channel.cheer', $event);
 
-        $mapping = EventTemplateMapping::with('template')
-            ->where('user_id', $user->id)
-            ->where('event_type', 'channel.cheer')
-            ->where('enabled', true)
-            ->first();
+        $mapping = EventTemplateMapping::resolveForEvent($user->id, 'channel.cheer', $event);
 
         $alertFired = false;
         if ($mapping && $mapping->template) {

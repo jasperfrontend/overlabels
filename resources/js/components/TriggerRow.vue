@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const enabled = defineModel<boolean>('enabled', { required: true });
 const durationMs = defineModel<number>('durationMs', { required: true });
+/** Variant condition. null = base/any amount; otherwise 'at_least' | 'exactly'. */
+const conditionType = defineModel<string | null>('conditionType', { default: null });
+const conditionValue = defineModel<number | null>('conditionValue', { default: null });
 
 defineProps<{
   /** Human label rendered as the main row text. */
@@ -9,6 +12,8 @@ defineProps<{
   keyText: string;
   /** Custom Tailwind classes for the toggle's checked color, so external groups can differ from Twitch. */
   toggleCheckedClass?: string;
+  /** When set (e.g. "bits"), this event supports a variant condition and the picker is shown. */
+  amountUnit?: string;
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +28,20 @@ function clampSeconds(value: number): number {
 
 function onDurationInput(raw: string) {
   durationMs.value = clampSeconds(Number(raw) || 1) * 1000;
+}
+
+function onConditionTypeChange(raw: string) {
+  conditionType.value = raw === '' ? null : raw;
+  if (conditionType.value === null) {
+    conditionValue.value = null;
+  } else if (conditionValue.value == null || conditionValue.value < 1) {
+    conditionValue.value = 1;
+  }
+  emit('save');
+}
+
+function onConditionValueInput(raw: string) {
+  conditionValue.value = Math.max(1, Math.round(Number(raw) || 1));
 }
 </script>
 
@@ -44,6 +63,37 @@ function onDurationInput(raw: string) {
     <div class="min-w-0 flex-1">
       <div class="font-medium text-foreground">{{ label }}</div>
       <div class="font-mono text-xs text-muted-foreground">{{ keyText }}</div>
+    </div>
+
+    <div
+      v-if="amountUnit"
+      class="flex items-center gap-2"
+      :class="{ 'opacity-40': !enabled }"
+    >
+      <select
+        :value="conditionType ?? ''"
+        class="input-border h-9 cursor-pointer rounded-sm"
+        :disabled="!enabled"
+        @change="onConditionTypeChange(($event.target as HTMLSelectElement).value)"
+      >
+        <option value="">Any amount</option>
+        <option value="at_least">At least</option>
+        <option value="exactly">Exactly</option>
+      </select>
+      <template v-if="conditionType">
+        <input
+          :value="conditionValue ?? 1"
+          type="number"
+          min="1"
+          step="1"
+          class="input-border h-9 w-24 rounded-sm"
+          :disabled="!enabled"
+          @input="onConditionValueInput(($event.target as HTMLInputElement).value)"
+          @blur="emit('save')"
+          @keydown.enter.prevent="emit('save')"
+        />
+        <span class="text-xs text-muted-foreground">{{ amountUnit }}</span>
+      </template>
     </div>
 
     <div class="flex items-center gap-2" :class="{ 'opacity-40': !enabled }">
