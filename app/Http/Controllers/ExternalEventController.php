@@ -26,19 +26,21 @@ class ExternalEventController extends Controller
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
         }
 
-        $mapping = ExternalEventTemplateMapping::with(['template', 'template.targetStaticOverlays'])
-            ->where('user_id', $user->id)
-            ->where('service', $externalEvent->service)
-            ->where('event_type', $externalEvent->event_type)
-            ->where('enabled', true)
-            ->first();
+        $data = $externalEvent->normalized_payload ?? [];
+
+        $mapping = ExternalEventTemplateMapping::resolveForEvent(
+            $user->id,
+            $externalEvent->service,
+            $externalEvent->event_type,
+            $data['event.amount'] ?? null,
+        );
 
         if (! $mapping || ! $mapping->template) {
             return back()->with('message', 'No active alert mapping found for this event type.')->with('type', 'error');
         }
 
         $template = $mapping->template;
-        $data = $externalEvent->normalized_payload ?? [];
+        $template->loadMissing('targetStaticOverlays');
 
         $targetSlugs = $template->targetStaticOverlays->isNotEmpty()
             ? $template->targetStaticOverlays->pluck('slug')->all()

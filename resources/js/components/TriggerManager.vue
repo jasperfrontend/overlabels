@@ -17,6 +17,8 @@ interface TwitchAssignment {
 interface ExternalAssignment {
   service: string;
   event_type: string;
+  condition_type: string | null;
+  condition_value: number | null;
   duration_ms: number;
   enabled: boolean;
 }
@@ -26,6 +28,8 @@ interface TriggerData {
   externalEventTypes: Record<string, Record<string, string>>;
   /** Event types that support a variant condition, mapped to their unit label. */
   amountFields: Record<string, { path: string; unit: string }>;
+  /** External (service -> event types) that support an amount condition. */
+  externalAmountEventTypes: Record<string, string[]>;
   connectedServices: string[];
   assigned: {
     twitch: TwitchAssignment[];
@@ -83,9 +87,8 @@ const externalRowsByService = ref<Record<string, Row[]>>(
         return {
           event_type: eventType,
           event_label: label,
-          // External donation variants land in Phase 2; no condition here yet.
-          condition_type: null,
-          condition_value: null,
+          condition_type: existing?.condition_type ?? null,
+          condition_value: existing?.condition_value ?? null,
           duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
           enabled: existing?.enabled ?? false,
           service,
@@ -130,6 +133,14 @@ function rowSearchText(row: Row): string {
   return `${row.event_label} ${row.event_type} ${row.service} ${rowKeyText(row)}`;
 }
 
+/** Unit label for the condition picker, or undefined if the row has no amount. */
+function amountUnitFor(row: Row): string | undefined {
+  if (!row.service) {
+    return props.triggers.amountFields[row.event_type]?.unit;
+  }
+  return props.triggers.externalAmountEventTypes[row.service]?.includes(row.event_type) ? 'amount' : undefined;
+}
+
 const isSaving = ref(false);
 
 function save() {
@@ -152,6 +163,8 @@ function save() {
       .map((r) => ({
         service: r.service,
         event_type: r.event_type,
+        condition_type: r.condition_type,
+        condition_value: r.condition_value,
         duration_ms: r.duration_ms,
         enabled: r.enabled,
       })),
@@ -206,7 +219,7 @@ function save() {
         v-model:duration-ms="item.duration_ms"
         v-model:condition-type="item.condition_type"
         v-model:condition-value="item.condition_value"
-        :amount-unit="group.key === TWITCH_GROUP_KEY ? triggers.amountFields[item.event_type]?.unit : undefined"
+        :amount-unit="amountUnitFor(item)"
         :label="item.event_label"
         :key-text="rowKeyText(item)"
         :toggle-checked-class="

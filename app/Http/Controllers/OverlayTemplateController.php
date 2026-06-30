@@ -870,10 +870,12 @@ class OverlayTemplateController extends Controller
 
         $assignedExternal = ExternalEventTemplateMapping::where('user_id', $userId)
             ->where('overlay_template_id', $template->id)
-            ->get(['service', 'event_type', 'duration_ms', 'enabled'])
+            ->get(['service', 'event_type', 'condition_type', 'condition_value', 'duration_ms', 'enabled'])
             ->map(fn (ExternalEventTemplateMapping $m) => [
                 'service' => $m->service,
                 'event_type' => $m->event_type,
+                'condition_type' => $m->condition_type,
+                'condition_value' => $m->condition_value,
                 'duration_ms' => $m->duration_ms,
                 'enabled' => (bool) $m->enabled,
             ])
@@ -890,6 +892,9 @@ class OverlayTemplateController extends Controller
             // Which Twitch event types support a variant condition, and the
             // unit label for each (drives the per-row condition picker).
             'amountFields' => EventTemplateMapping::AMOUNT_FIELDS,
+            // Which external (service => event types) support an amount
+            // condition (donation variants). Same picker, "amount" unit.
+            'externalAmountEventTypes' => ExternalEventTemplateMapping::AMOUNT_EVENT_TYPES,
             'connectedServices' => $connectedServices,
             'assigned' => [
                 'twitch' => $assignedTwitch,
@@ -923,6 +928,8 @@ class OverlayTemplateController extends Controller
             'external' => ['nullable', 'array'],
             'external.*.service' => ['required', 'string', 'in:'.implode(',', array_keys(ExternalEventTemplateMapping::SERVICE_EVENT_TYPES))],
             'external.*.event_type' => ['required', 'string'],
+            'external.*.condition_type' => ['nullable', 'string', 'in:'.ExternalEventTemplateMapping::CONDITION_AT_LEAST.','.ExternalEventTemplateMapping::CONDITION_EXACTLY],
+            'external.*.condition_value' => ['nullable', 'integer', 'min:1', 'max:100000000', 'required_with:external.*.condition_type'],
             'external.*.duration_ms' => ['required', 'integer', 'min:1000', 'max:999000'],
             'external.*.enabled' => ['required', 'boolean'],
         ]);
@@ -995,18 +1002,42 @@ class OverlayTemplateController extends Controller
             });
 
         foreach ($external as $row) {
+            // A condition only means something for amount-bearing events
+            // (donations). Strip it otherwise so a stale picker value can't
+            // smuggle a non-matchable row in.
+            $supportsCondition = ExternalEventTemplateMapping::supportsCondition($row['service'], $row['event_type']);
+            $conditionType = $supportsCondition ? ($row['condition_type'] ?? null) : null;
+            $conditionValue = $conditionType !== null ? ($row['condition_value'] ?? null) : null;
+
+            // Key on (user, template, service, event_type): each template owns
+            // one row per external event type, but many templates can map the
+            // same donation with different conditions - the variant ladder.
             ExternalEventTemplateMapping::updateOrCreate(
                 [
                     'user_id' => $userId,
+                    'overlay_template_id' => $template->id,
                     'service' => $row['service'],
                     'event_type' => $row['event_type'],
                 ],
                 [
-                    'overlay_template_id' => $template->id,
+                    'condition_type' => $conditionType,
+                    'condition_value' => $conditionValue,
                     'duration_ms' => $row['duration_ms'],
                     'enabled' => $row['enabled'],
                 ]
             );
+
+            // Non-amount events keep the one-template-per-event invariant:
+            // there is no condition to tell two rows apart, so claiming the
+            // event for this template releases it from any other. Amount-bearing
+            // events skip this - multiple templates coexisting IS the variant set.
+            if (! $supportsCondition) {
+                ExternalEventTemplateMapping::where('user_id', $userId)
+                    ->where('service', $row['service'])
+                    ->where('event_type', $row['event_type'])
+                    ->where('overlay_template_id', '!=', $template->id)
+                    ->delete();
+            }
         }
 
         return back()->with('message', 'Triggers saved.')->with('type', 'success');

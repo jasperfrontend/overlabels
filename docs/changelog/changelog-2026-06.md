@@ -1,5 +1,16 @@
 # CHANGELOG JUNE 2026
 
+## June 30th, 2026 - feat(triggers): donation amount variants (Phase 2 - Ko-fi / StreamLabs / StreamElements / BMAC / Fourthwall)
+
+Phase 2 of alert variants extends the same machinery to external donations: a bigger Ko-fi donation can now fire a louder alert than a small one, the same way cheer bits do. Built directly on the Phase 1 frontend - the Triggers tab condition picker now appears on donation rows too, no new UI component.
+
+- **Conditions on donations** - `At least N` / `Exactly N` on the `donation` event of each donation service (Ko-fi, StreamLabs, StreamElements, Buy Me a Coffee, Fourthwall), listed in the new `ExternalEventTemplateMapping::AMOUNT_EVENT_TYPES` registry. Every other external event type (subscriptions, shop orders, GPS pings) keeps its single base row.
+- **One resolver, both firing sites** - `ExternalEventTemplateMapping::resolveForEvent()` replaces the bare `->first()` in `ExternalAlertService::dispatch` (live webhook, amount from `NormalizedExternalEvent::getAmount()`) and `ExternalEventController::replay` (amount from the stored `normalized_payload['event.amount']`). Same ladder as Twitch: `exactly == amount` -> highest matching `at_least` -> base -> nothing; ties break on lowest `overlay_template_id`.
+- **Whole-unit, currency-naive thresholds** - the threshold is an integer (e.g. "at least 5"); the donated amount is parsed as a float and compared raw, with **no FX conversion** (matching the no-exchange-rate stance the Stream Sessions income view already takes). A 4.99 donation falls below an "at least 5" tier; 5.00 meets it. `exactly` uses a small epsilon so 5.00 matches a threshold of 5. A null/blank amount reads as 0.
+- **Schema** - `2026_06_30_000002_add_conditions_to_external_event_template_mappings` adds `condition_type` + `condition_value` and re-keys `unique(user_id, service, event_type)` to `unique(user_id, overlay_template_id, service, event_type)` so many templates can map the same donation. Non-amount external events keep one-template-per-event (ownership moves on reassign), mirroring Twitch.
+- **Write-path guards** - a condition is stripped server-side for non-amount external events, `condition_value` is `required_with` its `condition_type`, and an unknown `condition_type` is rejected.
+- **Tests:** 16 new (`ExternalEventVariantsTest`) covering the ladder, the decimal-below/at-threshold edges, null/blank-as-zero, tie-break, disabled skip, the non-amount-type passthrough, two-templates-coexist, the non-amount strip + ownership-move, and both validation rejections. Full suite **958 passed**; Pint + ESLint + vite build clean.
+
 ## June 30th, 2026 - feat(triggers): alert variants by amount (cheer bits, gift count, raid viewers)
 
 One alert template per event type was a hard limit baked into the schema: `event_template_mappings` carried a `unique(user_id, event_type)`, so a single `channel.cheer` could only ever fire one alert no matter how many bits were thrown. Streamers wanted what Twitch Alerts calls "variants" - a 5000-bit cheer deserving a louder alert than a 100-bit one. You can now give an amount-bearing event a condition per template, and the matching variant wins. The look/sound/TTS/controls already live on the template, so a "variant" is just **a template plus a condition** - no new alert plumbing.
