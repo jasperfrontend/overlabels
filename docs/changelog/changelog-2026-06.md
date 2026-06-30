@@ -1,5 +1,15 @@
 # CHANGELOG JUNE 2026
 
+## June 30th, 2026 - feat(alerts): surface variant condition + collision warning on the event overview
+
+The `/alerts` overview was built before variants - it listed "Bits Cheer -> some template" with no hint of the condition, so two cheer variants pointing at different templates looked identical, and a genuine collision (two alerts on the exact same condition) was invisible. When variants tie, the resolver deterministically fires the lowest-template-id (first-assigned) one and silently skips the rest; nothing told you the others were dead. This makes the one cross-template view honest about both.
+
+- **Conditions are now shown** on each overview row: `Big Cheer · At least 1000 bits · 5s`, `Nice · Exactly 69 bits · 5s`, base rows read `Any amount`. Non-amount events (follow, raid-with-no-threshold, etc.) show nothing extra. External donation rows drop the unit word (`At least 50`, since the amount is currency-naive).
+- **Collision warning** - rows that share an identical trigger (same event + `condition_type` + `condition_value`) with an earlier-assigned alert get an amber border and a one-line "Never fires - \"First Cheer\" wins this exact trigger. Change or remove this condition." Only TRUE always-shadowed duplicates are flagged: an `exactly 100` does not flag an `at_least 100`, because the latter still fires at other amounts. Disabled duplicates are ignored (the resolver skips them too).
+- **No blocking, by design** - the per-template Triggers editor stays dumb and never denies a save; the overview (the only view that sees all templates at once) is where cross-template conflicts surface. Visibility over prohibition - the config isn't broken, it was just invisible.
+- **Backend** - `EventTemplateMappingController::index()` now orders by the tie-break id and runs a small `shadowedBy()` grouping helper (shared shape for Twitch and external), returning `condition_type/value/unit` + `shadowed_by` (winning template name) per row. Fixed a latent duplicate-`:key` in the Vue list now that one event type can have multiple rows. Fully responsive (flex-wrap, warning wraps under the row on mobile).
+- **Tests:** 5 new (`AlertOverviewCollisionTest`) covering the flagged duplicate, the non-colliding different-conditions case, the exactly-vs-at-least non-collision, the external donation collision, and the disabled-duplicate skip. Full suite **963 passed**; Pint + ESLint + vite build clean.
+
 ## June 30th, 2026 - feat(triggers): donation amount variants (Phase 2 - Ko-fi / StreamLabs / StreamElements / BMAC / Fourthwall)
 
 Phase 2 of alert variants extends the same machinery to external donations: a bigger Ko-fi donation can now fire a louder alert than a small one, the same way cheer bits do. Built directly on the Phase 1 frontend - the Triggers tab condition picker now appears on donation rows too, no new UI component.
