@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - fix(throne): register Throne in the alert trigger catalogue
+
+Throne shipped (#142) with a working webhook but no alert trigger - the Triggers tab showed no Throne row to attach an alert template to. Root cause: the TriggerManager UI lists external triggers from `ExternalEventTemplateMapping::SERVICE_EVENT_TYPES`, a hand-maintained catalogue separate from the driver, and the Throne entry was never added. The webhook, controls, recents, and replay all worked because those flow off the normalized event; only the trigger picker reads this constant.
+
+- Added `throne => ['donation' => 'Throne Gift or Contribution']` to `SERVICE_EVENT_TYPES` so the trigger appears (no frontend change - TriggerManager renders connected services dynamically).
+- Added `throne => ['donation']` to `AMOUNT_EVENT_TYPES` so Throne gifts get the same at-least / exactly variant conditions as every other donation service (a bigger gift can fire a louder alert).
+- **New guard test** (`ExternalTriggerCatalogueTest`) asserts every registered driver's `getSupportedEventTypes()` is present in `SERVICE_EVENT_TYPES`, so this drift is a red build for the next integration instead of a UI hunt. Would have caught this on the original PR.
+
 ## July 1st, 2026 - polish(throne): clearer "paste into Throne" manual step
 
 Tightened the connected-state copy on the Throne settings page so the one manual step (pasting the webhook URL into Throne) is unmissable. Replaced scattered inline "go there" links with a single prominent "Open Throne webhook settings ->" button directly below the webhook URL input, plus a helper line that reacts to the Copy button (after copying it turns violet and reads "Copied. Now open Throne and paste it into the Webhook URL field.").
