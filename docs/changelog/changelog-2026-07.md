@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 1st, 2026 - feat(throne): connect / settings flow
+
+The settings page that turns the Throne driver into something a streamer can actually use. Throne is the simplest connect flow of any integration: it signs every webhook with its own global key, so there's no token to paste and no OAuth dance - connecting is one click, then you copy the webhook URL into Throne.
+
+- **`ThroneIntegrationController`** + routes under `settings/integrations/throne` (`show`, `connect`, `test-mode`, `seed-count`, `disconnect`), mirroring the Ko-fi donation-service shape. `connect` is credential-less: it `firstOrCreate`s the integration (the model generates the routing `webhook_token`) and surfaces the URL. Idempotent - reconnecting never duplicates the row or rotates the token.
+- **Settings page** (`settings/integrations/throne.vue`) - one-click Connect, copyable webhook URL, a "what to do next" checklist (paste into Throne, map an alert, add controls), test mode (disables dedup so Throne's "Test webhook" button can be fired repeatedly), a one-time starting gift count seed, and a disconnect danger zone. No verification-token field and no event-type picker, since all three Throne types normalize to `donation`. The integrations index already listed Throne via the registry, so it now links straight through.
+- **Tests:** 8 new (`ThroneIntegrationSettingsTest`) covering the disconnected render, credential-less connect, connect idempotency, the webhook URL surfacing, test-mode persistence + the not-connected 404, seed-count, and disconnect. Pint + ESLint + vite build clean.
+
 ## July 1st, 2026 - feat(throne): webhook driver + Ed25519 verification (backend slice)
 
 Throne was previously written off as un-integrable (no public API, only an unofficial Docker image). It now ships a real signed webhook, which makes it a Ko-fi-class integration with no listener process. This first slice is the backend core: the driver, signature verification, and tests. The connect/settings flow, control presets UI, and help page are follow-ups.
