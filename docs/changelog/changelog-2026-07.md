@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 2nd, 2026 - docs(controls): document preset controls on the Controls help page
+
+The Controls help page (`/help/controls`) thoroughly explained user-created controls but never mentioned preset controls - the service-managed values Overlabels feeds in from Twitch, the donation integrations, and the GPS app. New readers had no bridge from that page to the concept or to the exhaustive `/help/integration-presets` reference.
+
+- New **"Preset Controls (from integrations)"** section (plus a Table of Contents entry) covering how they differ from hand-made controls: auto-managed read-only value, the namespaced `[[[c:source:key]]]` tag, user-scoped so one add is shared across every overlay, and only visible once the integration is connected (Twitch excepted).
+- Documents the shared six-key donation family (`donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`) that lets cross-service expressions total donations, plus the per-service extras (Throne item/thumbnail/surprise flag, BMAC support type).
+- A compact icon grid of all eight integrations with **live preset counts imported from `controlPresets.ts`** (`TWITCH_PRESETS.length`, etc.), so the doc can't drift as presets change, and two links out to the full Integration presets reference. ESLint clean.
+
 ## July 1st, 2026 - fix(throne): register Throne in the alert trigger catalogue
 
 Throne shipped (#142) with a working webhook but no alert trigger - the Triggers tab showed no Throne row to attach an alert template to. Root cause: the TriggerManager UI lists external triggers from `ExternalEventTemplateMapping::SERVICE_EVENT_TYPES`, a hand-maintained catalogue separate from the driver, and the Throne entry was never added. The webhook, controls, recents, and replay all worked because those flow off the normalized event; only the trigger picker reads this constant.

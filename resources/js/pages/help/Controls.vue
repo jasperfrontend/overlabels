@@ -2,8 +2,31 @@
 import { Head, Link } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Pencil, Plus, Trash } from '@lucide/vue';
+import {
+  Coffee,
+  Gift,
+  HandHeart,
+  MapPinned,
+  Megaphone,
+  Pencil,
+  Plus,
+  ShoppingBag,
+  Sparkles,
+  Trash,
+  Tv,
+  type LucideIcon,
+} from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
+import {
+  KOFI_PRESETS,
+  GPS_PRESETS,
+  STREAMLABS_PRESETS,
+  STREAMELEMENTS_PRESETS,
+  FOURTHWALL_PRESETS,
+  BMAC_PRESETS,
+  THRONE_PRESETS,
+  TWITCH_PRESETS,
+} from '@/components/controls/controlPresets';
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -15,6 +38,29 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/help/controls'
   }
 ];
+
+// Compact overview of the preset (service-managed) controls. The exhaustive,
+// copy-to-clipboard list lives on /help/integration-presets - this is just a
+// pointer with live counts so the doc can't drift from controlPresets.ts.
+interface PresetSummary {
+  label: string;
+  icon: LucideIcon;
+  count: number;
+  blurb: string;
+}
+
+const presetSections: PresetSummary[] = [
+  { label: 'Twitch', icon: Tv, count: TWITCH_PRESETS.length, blurb: 'Per-stream counters (follows, subs, raids, cheers, bits) that reset when you go live. Available the moment you connect Twitch.' },
+  { label: 'Ko-fi', icon: Coffee, count: KOFI_PRESETS.length, blurb: 'Donation, subscription, and shop-sale data from your connected Ko-fi account.' },
+  { label: 'StreamLabs', icon: Megaphone, count: STREAMLABS_PRESETS.length, blurb: 'Live donation data delivered through the StreamLabs listener.' },
+  { label: 'StreamElements', icon: Sparkles, count: STREAMELEMENTS_PRESETS.length, blurb: 'Tip data authenticated with a JWT you generate in the SE dashboard.' },
+  { label: 'Fourthwall', icon: ShoppingBag, count: FOURTHWALL_PRESETS.length, blurb: 'Donation and tip data for creators using Fourthwall for merch and supporter tiers.' },
+  { label: 'Buy Me a Coffee', icon: HandHeart, count: BMAC_PRESETS.length, blurb: 'Supporter and membership data, including the latest support type.' },
+  { label: 'Throne', icon: Gift, count: THRONE_PRESETS.length, blurb: 'Gift data plus Throne-only extras: item name, product thumbnail URL, and a surprise-gift flag.' },
+  { label: 'Overlabels GPS', icon: MapPinned, count: GPS_PRESETS.length, blurb: 'Live location data from the Overlabels GPS app: speed, coordinates, distance, battery, and per-session aggregates.' },
+];
+
+const totalPresets = presetSections.reduce((sum, s) => sum + s.count, 0);
 </script>
 
 <template>
@@ -83,6 +129,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <li><a href="#type-list_writer" class="text-violet-400/70 hover:underline text-sm">List writer</a></li>
               </ul>
             </li>
+            <li><a href="#presets" class="text-violet-400 hover:underline">Preset Controls (from integrations)</a></li>
             <li><a href="#managing-controls" class="text-violet-400 hover:underline">Managing Controls</a></li>
             <li><a href="#using-controls" class="text-violet-400 hover:underline">Using Controls in Overlays</a></li>
             <li><a href="#panel" class="text-violet-400 hover:underline">The Control Panel</a></li>
@@ -543,6 +590,111 @@ const breadcrumbs: BreadcrumbItem[] = [
                   remove the row.</p>
                 <p><strong>Disabled lists.</strong> Disabling a list (from the Lists dashboard) silently skips appends.
                   The writer doesn't error; the value just doesn't land. Re-enable the list to resume.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preset Controls -->
+        <div class="mb-12">
+          <h2 class="mb-6 text-2xl font-bold" id="presets">Preset Controls (from integrations)</h2>
+          <p class="mb-6 text-foreground">
+            Everything above describes controls <em>you</em> create and update by hand. There is a second family of
+            controls that Overlabels creates and updates <em>for</em> you: <strong>preset controls</strong>. When you
+            connect an integration - Twitch, a donation service, or the Overlabels GPS app - that service can feed live
+            values straight into your overlays. There are {{ totalPresets }} presets across {{ presetSections.length }}
+            integrations today.
+          </p>
+
+          <div class="space-y-6">
+            <!-- How they differ -->
+            <div class="border border-sidebar-border bg-card p-6">
+              <h3 class="mb-4 text-xl font-semibold">How they differ from the controls above</h3>
+              <div class="space-y-3 text-foreground">
+                <div>
+                  <strong class="text-foreground">Auto-managed value.</strong> You never type their value in the Control
+                  Panel. The connected service updates it whenever an event lands - a donation, a cheer, a GPS ping. The
+                  Control Panel shows them as read-only.
+                </div>
+                <div>
+                  <strong class="text-foreground">Namespaced tag.</strong> Reference them with a source-qualified tag:
+                  <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:source:key]]]</code>, e.g.
+                  <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:kofi:latest_donor_name]]]</code>
+                  or <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:gps:speed]]]</code>. The
+                  extra segment keeps two services from colliding on the same key.
+                </div>
+                <div>
+                  <strong class="text-foreground">Shared across every overlay.</strong> Unlike the overlay-scoped
+                  controls above, preset controls are <strong>user-scoped</strong>. Add one on any static template and
+                  it becomes available in <em>all</em> of your overlays automatically - you don't add it per overlay.
+                </div>
+                <div>
+                  <strong class="text-foreground">Only when connected.</strong> A service's presets only appear once
+                  you've connected that integration. Twitch is the exception - its per-stream counters are available as
+                  soon as you sign in.
+                </div>
+              </div>
+            </div>
+
+            <!-- How to add one -->
+            <div class="border border-sidebar-border bg-card p-6">
+              <h3 class="mb-4 text-xl font-semibold">Adding a preset control</h3>
+              <p class="mb-4 text-foreground">
+                Open a <strong>static</strong> template, click <strong>Add control</strong>, and pick a preset from the
+                <strong>Stream Controls</strong> dropdown at the top of the modal. The key, type, and label are filled
+                in for you - you can override the label. Presets you've already added are hidden from the list so you
+                can't add the same one twice.
+              </p>
+              <p class="text-sm text-foreground">
+                Prefer to skip the modal? Every preset tag is copy-to-clipboard on the
+                <Link href="/help/integration-presets" class="text-violet-400 hover:underline">Integration presets</Link>
+                reference - paste the tag straight into your overlay HTML and it resolves the same way.
+              </p>
+            </div>
+
+            <!-- The shared donation family -->
+            <div class="border border-sidebar-border bg-card p-6">
+              <h3 class="mb-4 text-xl font-semibold">The shared donation family</h3>
+              <p class="mb-4 text-foreground">
+                Every donation service (Ko-fi, StreamLabs, StreamElements, Fourthwall, Buy Me a Coffee, Throne) exposes
+                the same six-key shape, so you can swap services - or combine them - without relearning the keys:
+              </p>
+              <div class="rounded bg-background p-4 font-mono text-sm leading-relaxed">
+                donations_received&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-muted-foreground">// counter, bumps per donation</span><br />
+                latest_donor_name<br />
+                latest_donation_amount<br />
+                latest_donation_message<br />
+                latest_donation_currency<br />
+                total_received&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-muted-foreground">// running total this session</span>
+              </div>
+              <p class="mt-4 text-sm text-foreground">
+                Because the keys line up, an
+                <a href="#type-expression" class="text-violet-400 hover:underline">Expression</a> like
+                <code class="rounded bg-background px-1.5 py-0.5 font-mono text-xs">c.kofi.total_received + c.streamlabs.total_received</code>
+                totals donations across services. Some services add extras on top: Throne carries an item name,
+                thumbnail URL, and surprise-gift flag; Buy Me a Coffee adds the latest support type.
+              </p>
+            </div>
+
+            <!-- Service overview -->
+            <div class="border border-sidebar-border bg-card p-6">
+              <div class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                <h3 class="text-xl font-semibold">Available integrations</h3>
+                <Link href="/help/integration-presets" class="text-sm text-violet-400 hover:underline">
+                  Browse every preset &rarr;
+                </Link>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div v-for="section in presetSections" :key="section.label" class="flex gap-3">
+                  <component :is="section.icon" class="mt-0.5 size-5 shrink-0 text-violet-400" />
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <span class="font-semibold text-foreground">{{ section.label }}</span>
+                      <span class="text-xs text-muted-foreground">{{ section.count }} presets</span>
+                    </div>
+                    <p class="mt-0.5 text-sm text-foreground">{{ section.blurb }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
