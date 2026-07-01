@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
           After signing up, the system will trigger an onboarding wizard which will set you up with the defaults you need to
           make Overlabels work for you: One overlay, a bunch of alerts and your secret token is generated and applied to the URL
           you need to add to your OBS. We also generate your personal template tags that match the level of your Twitch account.
-          This so you don't up with affiliate level capabilities if you're a Twitch partner and vice versa. Yeah, we're cool like that.
+          This so you don't end up with affiliate level capabilities if you're a Twitch partner and vice versa.
         </p>
 
         <div class="grid gap-10 sm:grid-cols-2">

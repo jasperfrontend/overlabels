@@ -16,7 +16,10 @@ import TwitchIcon from '@/components/TwitchIcon.vue';
         </h1>
 
         <p class="mb-4 max-w-2xl text-xl leading-relaxed text-foreground">
-          Template tags, a reactive expression engine, and pipe formatters wired into the HTML and CSS you already write. Pull live Twitch data with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">[[[tag]]]</code>. Derive state with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">c.wins / (c.wins + c.losses) * 100</code>. React to follows, raids, and donations from Ko-fi, Streamlabs, and StreamElements. Update anything from your dashboard and watch the overlay catch up in milliseconds.
+          Template tags, a reactive expression engine, and pipe formatters wired into the HTML and CSS you already write.
+          Pull live Twitch data with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">[[[tag]]]</code>.
+          Derive state with <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-amber-700 dark:text-amber-400">c.wins / (c.wins + c.losses) * 100</code>.
+          React to follows, raids, and donations from Ko-fi, Streamlabs, StreamElements, Buy Me A Coffee, FourthWall and Throne. Update anything from your dashboard and watch the overlay catch up in milliseconds.
         </p>
         <p class="mb-14 max-w-2xl text-base text-foreground">
           No drag-and-drop editor. No proprietary file format. No lock-in. <strong>Overlabels is the reactive substrate - your overlay is just a webpage it keeps alive.</strong>
