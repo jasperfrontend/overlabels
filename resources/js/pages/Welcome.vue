@@ -31,7 +31,7 @@ import SectionFooter from '@/pages/SectionFooter.vue';
       <meta property="og:title" content="Overlabels • Reactive Twitch overlays for people who code" />
       <meta
         property="og:description"
-        content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source."
+        content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts and donation tracking from Ko-fi, Streamlabs, StreamElements, Buy Me A Coffee, FourthWall and Throne. Free and open source."
       />
       <meta property="og:image"
             content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />

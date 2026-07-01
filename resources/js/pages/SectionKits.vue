@@ -11,18 +11,11 @@ import { Badge } from '@/components/ui/badge';
         <Badge variant="default" class="mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Kits &amp; Copying</Badge>
         <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Good design compounds.</h2>
 
-        <div class="flex items-center justify-center mb-4 max-w-3xl gap-2.5 border border-violet-500/30 bg-violet-500/10 px-4 py-3">
-          <AlertTriangle class="h-4 w-4 shrink-0 text-violet-500" />
-          <p class="text-sm text-violet-700 dark:text-violet-300">
-            <strong>Work in progress</strong>. Duplicating overlays works, but Integration-controlled Controls may not transfer correctly.
-          </p>
-        </div>
         <p class="mb-12 max-w-3xl text-lg text-foreground">
           Any public template or kit can be copied. One click, one copy, fully yours to modify, extend, or break. An
           Overlay Kit is a collection of
           templates - a static overlay, a follower alert, a subscription alert, a raid alert - designed as a cohesive
-          visual system. Copy the kit,
-          get everything at once.
+          visual system. Copy the kit, get everything at once - including all Controls and their values.
         </p>
 
         <div class="grid gap-6 sm:grid-cols-3">
