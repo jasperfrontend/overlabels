@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DeployWebhookController;
+use App\Http\Controllers\Api\EventFeedController;
 use App\Http\Controllers\Api\ExternalWebhookController;
 use App\Http\Controllers\Api\GpsSessionMapController;
 use App\Http\Controllers\Api\Internal\BotAccountageController;
@@ -51,6 +52,21 @@ Route::get('/user', function (Request $request) {
 Route::get('/lists/{slug}', [ListReadController::class, 'show'])
     ->name('api.lists.show')
     ->where('slug', '[a-z][a-z0-9_]{0,49}')
+    ->middleware(['throttle:overlay', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
+// Token-authed events feed for /events/feed (phone-friendly, no Twitch login
+// needed). Same OverlayAccessToken as overlays; token travels as a ?token=
+// query param (GET) or JSON body field (POST), never in the URL path. Reading
+// requires the `read` ability, the mute toggle requires `write` - the first
+// endpoints to enforce token abilities. Stateless like the overlay render
+// route. See App\Http\Controllers\Api\EventFeedController.
+Route::get('/events', [EventFeedController::class, 'index'])
+    ->name('api.events.index')
+    ->middleware(['throttle:overlay', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+Route::post('/events/mute', [EventFeedController::class, 'mute'])
+    ->name('api.events.mute')
     ->middleware(['throttle:overlay', 'lockdown'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 

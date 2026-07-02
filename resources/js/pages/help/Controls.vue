@@ -14,10 +14,12 @@ import {
   Sparkles,
   Trash,
   Tv,
+  VolumeX,
   type LucideIcon,
 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import {
+  ALERTS_PRESETS,
   KOFI_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
@@ -58,6 +60,7 @@ const presetSections: PresetSummary[] = [
   { label: 'Buy Me a Coffee', icon: HandHeart, count: BMAC_PRESETS.length, blurb: 'Supporter and membership data, including the latest support type.' },
   { label: 'Throne', icon: Gift, count: THRONE_PRESETS.length, blurb: 'Gift data plus Throne-only extras: item name, product thumbnail URL, and a surprise-gift flag.' },
   { label: 'Overlabels GPS', icon: MapPinned, count: GPS_PRESETS.length, blurb: 'Live location data from the Overlabels GPS app: speed, coordinates, distance, battery, and per-session aggregates.' },
+  { label: 'Overlabels Alerts', icon: VolumeX, count: ALERTS_PRESETS.length, blurb: 'The global alert mute state, no integration required. Show a banner while muted: [[[if:c:alerts:muted]]]ALERTS ARE MUTED[[[endif]]] - it flips live when you hit the mute button on the Events page.' },
 ];
 
 const totalPresets = presetSections.reduce((sum, s) => sum + s.count, 0);

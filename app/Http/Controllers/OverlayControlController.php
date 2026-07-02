@@ -6,6 +6,7 @@ use App\Events\ControlValueUpdated;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Services\AlertMuteService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\StreamSessionService;
 use Carbon\Carbon;
@@ -72,9 +73,12 @@ class OverlayControlController extends Controller
         if (! empty($validated['source'])) {
             $source = $validated['source'];
 
-            // Resolve presets from either Twitch stream controls or external service drivers
+            // Resolve presets from Twitch stream controls, the system alerts
+            // namespace, or external service drivers
             if ($source === 'twitch') {
                 $provisionedDefs = collect(StreamSessionService::CONTROL_PRESETS)->keyBy('key');
+            } elseif ($source === AlertMuteService::SOURCE) {
+                $provisionedDefs = collect(AlertMuteService::CONTROL_PRESETS)->keyBy('key');
             } elseif (ExternalServiceRegistry::has($source)) {
                 $driver = ExternalServiceRegistry::driver($source);
                 $provisionedDefs = collect($driver->getAutoProvisionedControls())->keyBy('key');

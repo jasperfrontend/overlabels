@@ -3,6 +3,7 @@
 use App\Console\Commands\GamejamDebug;
 use App\Events\GameStateChanged;
 use App\Events\UserRegistered;
+use App\Http\Controllers\AlertMuteController;
 use App\Http\Controllers\CloudinaryUploadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventTemplateMappingController;
@@ -224,6 +225,18 @@ Route::get('/dashboard/stream-sessions', [StreamSessionController::class, 'index
 Route::get('/dashboard/events', [DashboardController::class, 'recentEvents'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.events');
+
+Route::post('/dashboard/events/mute', [AlertMuteController::class, 'update'])
+    ->middleware(['auth.redirect'])
+    ->name('dashboard.events.mute');
+
+// Token-authed events feed shell (phone-friendly /dashboard/events sibling).
+// Served without auth on purpose: the overlay token lives in the URL fragment
+// and is read client-side, so the server never sees it here. The shell shows
+// nothing until the Vue app authenticates against /api/events with the token.
+Route::get('/events/feed', function () {
+    return view('events.feed');
+})->name('events.feed');
 
 Route::get('/login', [PageController::class, 'notAuthorized'])
     ->middleware(['guest'])
