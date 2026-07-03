@@ -94,13 +94,6 @@ function toggleExpanded(id: number) {
   expandedGifts.value = next;
 }
 
-const getEventStatus = computed(() => (event: UnifiedEvent) => {
-  const status = event?.event_data?.status;
-  if (status === 'fulfilled') return { class: 'text-green-400', label: 'Complete' };
-  if (status === 'unfulfilled') return { class: 'text-slate-400', label: 'Refunded' };
-  return { class: 'hidden', label: '' };
-});
-
 function openConfirm(event: UnifiedEvent) {
   if (!canReplay(event) || replayingId.value === event.id) return;
   confirmingId.value = event.id;
@@ -360,7 +353,6 @@ function relativeTime(iso: string): string {
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0 text-foreground" />
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <span :class="getEventStatus(event).class" class="text-xs ml-4">{{ getEventStatus(event).label }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</span>
               <button
