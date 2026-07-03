@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { RefreshCw } from '@lucide/vue';
+import { RefreshCw, ChevronDown, ChevronRight, Gift } from '@lucide/vue';
 import { useEventColors } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
 
@@ -23,6 +23,75 @@ const emit = defineEmits<{
 
 const replayingId = ref<number | null>(null);
 const confirmingId = ref<number | null>(null);
+const expandedGifts = ref<Set<number>>(new Set());
+
+// Twitch delivers a gift-sub bomb as one `channel.subscription.gift` event
+// (the gifter, carrying `total`) plus N separate `channel.subscribe` events
+// with `is_gift: true` (the recipients). Twitch does not link the recipient
+// events back to the gifter, so we fold them together heuristically: for each
+// gift event, claim the next `total` recipient events (in chronological order)
+// that share the same broadcaster and tier. Everything else passes through
+// untouched. Grouping is display-only - the underlying events, replay routes
+// and pagination are all unchanged.
+interface DisplayRow {
+  event: UnifiedEvent;
+  recipients: UnifiedEvent[];
+}
+
+const GIFT_EVENT = 'channel.subscription.gift';
+const SUB_EVENT = 'channel.subscribe';
+
+const displayRows = computed<DisplayRow[]>(() => {
+  const list = props.events;
+  const claimed = new Set<number>();
+  const recipientsByGift = new Map<number, UnifiedEvent[]>();
+
+  // Walk oldest -> newest so "the next N recipients" reads naturally in time.
+  const chronological = [...list].reverse();
+  for (let i = 0; i < chronological.length; i++) {
+    const gift = chronological[i];
+    if (gift.source !== 'twitch' || gift.event_type !== GIFT_EVENT) continue;
+
+    const gd = gift.event_data ?? {};
+    const total = Number(gd.total) || 0;
+    if (total <= 0) continue;
+    const tier = gd.tier;
+    const broadcaster = gd.broadcaster_user_id;
+
+    const recipients: UnifiedEvent[] = [];
+    for (let j = i + 1; j < chronological.length && recipients.length < total; j++) {
+      const sub = chronological[j];
+      if (claimed.has(sub.id)) continue;
+      if (sub.source !== 'twitch' || sub.event_type !== SUB_EVENT) continue;
+      const sd = sub.event_data ?? {};
+      if (sd.is_gift !== true) continue;
+      if (broadcaster && sd.broadcaster_user_id !== broadcaster) continue;
+      if (tier && sd.tier !== tier) continue;
+      claimed.add(sub.id);
+      recipients.push(sub);
+    }
+
+    if (recipients.length > 0) recipientsByGift.set(gift.id, recipients);
+  }
+
+  const rows: DisplayRow[] = [];
+  for (const event of list) {
+    if (claimed.has(event.id)) continue;
+    rows.push({ event, recipients: recipientsByGift.get(event.id) ?? [] });
+  }
+  return rows;
+});
+
+function isExpanded(id: number): boolean {
+  return expandedGifts.value.has(id);
+}
+
+function toggleExpanded(id: number) {
+  const next = new Set(expandedGifts.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  expandedGifts.value = next;
+}
 
 const getEventStatus = computed(() => (event: UnifiedEvent) => {
   const status = event?.event_data?.status;
@@ -265,9 +334,8 @@ function relativeTime(iso: string): string {
 
 <template>
   <div class="flex flex-col gap-2 mt-4">
+    <div v-for="{ event, recipients } in displayRows" :key="`${event.source}-${event.id}`" class="flex flex-col gap-1">
     <Popover
-      v-for="event in events"
-      :key="`${event.source}-${event.id}`"
       :open="confirmingId === event.id"
       @update:open="(open: boolean) => (confirmingId = open && canReplay(event) ? event.id : null)"
     >
@@ -292,6 +360,20 @@ function relativeTime(iso: string): string {
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
+              <button
+                v-if="recipients.length"
+                type="button"
+                class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-sm border border-sidebar px-1.5 py-0.5 text-xs text-foreground hover:bg-background"
+                :aria-expanded="isExpanded(event.id)"
+                @click.stop="toggleExpanded(event.id)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                <Gift class="h-3 w-3" />
+                {{ recipients.length }}
+                <ChevronDown v-if="isExpanded(event.id)" class="h-3 w-3" />
+                <ChevronRight v-else class="h-3 w-3" />
+              </button>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs w-full">
               <div class="whitespace-nowrap text-ellipsis">{{ relativeTime(event.created_at) }}</div>
@@ -312,6 +394,20 @@ function relativeTime(iso: string): string {
         </div>
       </PopoverContent>
     </Popover>
+
+    <!-- Gift-sub recipients, folded under the gifter's row -->
+    <div v-if="recipients.length && isExpanded(event.id)" class="flex flex-col gap-1 border-l border-sidebar pl-4 ml-1">
+      <div
+        v-for="recipient in recipients"
+        :key="`recipient-${recipient.id}`"
+        class="flex items-center gap-2 text-xs text-foreground"
+      >
+        <div class="h-1.5 w-1.5 shrink-0 rounded-full" :class="eventDotClass(recipient)"></div>
+        <span class="font-medium">{{ who(recipient) }}</span>
+        <span v-if="details(recipient)" class="text-foreground/70">{{ details(recipient) }}</span>
+      </div>
+    </div>
+    </div>
 
   </div>
 </template>

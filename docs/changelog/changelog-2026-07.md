@@ -1,5 +1,14 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - feat(events): collapse gift-sub bombs into one expandable row
+
+A single gift-sub bomb landed in the feed as N+1 loose rows: one "gifted subs" line plus a separate "subscribed" line for every recipient, drowning out everything around it. StreamElements folds these into one tidy row you can expand; now so do we.
+
+- `EventsTable.vue` groups on the client: each `channel.subscription.gift` event claims the next `total` `channel.subscribe` events with `is_gift: true` that share its broadcaster and tier, walking oldest to newest. The gifter keeps its own row; the recipients fold underneath it.
+- A small gift pill next to the gifter's name shows the recipient count and toggles the list open. It uses `@click.stop` so it never trips the row's replay-confirm popover, and the recipients render as indented name + tier rows.
+- Display-only: no backend, migration, or query changes. `is_gift`, `total`, `tier` and `user_name` were already in `event_data`, so replay routes, the token-auth path and pagination are all untouched. Applies everywhere `EventsTable` renders (token feed and the dashboard event pages).
+- Graceful edges: a bomb only splits if a page boundary falls mid-burst (rare, since recipients arrive within ~a second), in which case it degrades to the old individual rows. Two simultaneous same-tier bombs can't be perfectly disambiguated - Twitch never links recipients back to the gifter - so recipients attach to the nearest preceding gift.
+
 ## July 3rd, 2026 - feat(events): replay alerts from the token-authed events feed
 
 The feed shipped view-only (mute was the single token write), but replaying an alert from your phone mid-stream is exactly what the feed is for. Replay is now the second write an overlay token can perform.
