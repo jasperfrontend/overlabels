@@ -351,7 +351,7 @@ function relativeTime(iso: string): string {
               />
               <div v-if="who(event)" class="font-bold max-w-40 overflow-hidden whitespace-nowrap text-ellipsis">{{ who(event) }}</div>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
-              <span v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</span>
+              <span v-if="details(event)" class="whitespace-nowrap max-w-40 overflow-hidden text-ellipsis">{{ details(event) }}</span>
               <button
                 v-if="recipients.length"
                 type="button"
