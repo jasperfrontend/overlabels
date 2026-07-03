@@ -349,7 +349,7 @@ function relativeTime(iso: string): string {
                             class="h-4 w-4 shrink-0"
                             :class="eventDotClass(event)"
               />
-              <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
+              <div v-if="who(event)" class="font-bold max-w-40 overflow-hidden whitespace-nowrap text-ellipsis">{{ who(event) }}</div>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</span>
               <button
