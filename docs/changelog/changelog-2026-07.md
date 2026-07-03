@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - feat(events): one-click feed link + QR from the recents page
+
+Closes the "how do I even get the feed URL onto my phone" gap from the feed feature: plaintext tokens are shown once, so no page could reconstruct the link after the fact. Now the recents page mints it for you.
+
+- **`TokenUrlDialog`** - the token-URL machinery extracted from `AddToObsButton` (link warning, `tokens.store` POST, fragment URL assembly, copy-to-clipboard box, QR code) into one shared dialog with `instructions`/`footer` slots. `AddToObsButton` is now a thin wrapper around it with identical behavior and copy.
+- **`EventsFeedLinkButton`** - replaces the "Embed view" link on `/dashboard/recents` (which pointed at the session-locked `/dashboard/events`). One click mints a fresh token **scoped to `read,write`** (tighter than the unrestricted default), named "Events feed" so it's recognizable on the Tokens page, and shows `/events/feed#<token>` with the QR code open by default - the phone is the whole point. Copy warns that the link reads your history and can mute your alerts, and points at token revocation if it leaks.
+- ESLint + vite build clean; no backend changes.
+
 ## July 3rd, 2026 - feat(events): token-authed events feed + one-click global alert mute
 
 Two user-requested pieces that make the events page usable mid-stream from a phone. First: `/dashboard/events` required a full Twitch login, painful on mobile where you're usually not logged in to Twitch. Second: there was no way to silence every alert at once (StreamElements has this; now so do we).
