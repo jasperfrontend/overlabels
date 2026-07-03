@@ -93,6 +93,21 @@ test('applies source and range filters', function () {
         ->and($resp->json('events.data.0.source'))->toBe('kofi');
 });
 
+test('hidden_types excludes the listed event types from both sources', function () {
+    $user = eventFeedUser();
+    $token = eventFeedToken($user);
+    eventFeedSeedEvents($user); // channel.follow (twitch) + donation (kofi)
+
+    // Hide the Twitch follow: only the kofi donation remains.
+    $resp = $this->getJson("/api/events?token={$token}&hidden_types=channel.follow")->assertOk();
+    expect($resp->json('events.total'))->toBe(1)
+        ->and($resp->json('events.data.0.event_type'))->toBe('donation');
+
+    // Hiding both (comma-separated) empties the feed.
+    $resp = $this->getJson("/api/events?token={$token}&hidden_types=channel.follow,donation")->assertOk();
+    expect($resp->json('events.total'))->toBe(0);
+});
+
 test('refuses a missing, malformed, or unknown token with 401', function () {
     $user = eventFeedUser();
     eventFeedToken($user);

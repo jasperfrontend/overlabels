@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 class UnifiedEventFeedService
 {
     /**
-     * @return array{search: string, source: string, event_type: string, range: string}
+     * @return array{search: string, source: string, event_type: string, hidden_types: array<int, string>, range: string}
      */
     public function normalizeFilters(Request $request): array
     {
@@ -30,16 +30,28 @@ class UnifiedEventFeedService
             $range = 'all';
         }
 
+        // Subtractive event-type filter: a comma-separated list of event types
+        // the viewer has chosen to hide. Everything not listed stays visible,
+        // so event types Twitch adds later show by default. Capped so a crafted
+        // query string can't balloon the WHERE NOT IN clause.
+        $hiddenRaw = (string) $request->query('hidden_types', '');
+        $hiddenTypes = array_values(array_unique(array_filter(
+            array_map('trim', explode(',', $hiddenRaw)),
+            fn (string $t): bool => $t !== '',
+        )));
+        $hiddenTypes = array_slice($hiddenTypes, 0, 100);
+
         return [
             'search' => trim((string) $request->query('search', '')),
             'source' => trim((string) $request->query('source', '')),
             'event_type' => trim((string) $request->query('event_type', '')),
+            'hidden_types' => $hiddenTypes,
             'range' => $range,
         ];
     }
 
     /**
-     * @param  array{search: string, source: string, event_type: string, range: string}  $filters
+     * @param  array{search: string, source: string, event_type: string, hidden_types: array<int, string>, range: string}  $filters
      */
     public function paginate(int $userId, array $filters, int $perPage): LengthAwarePaginator
     {
@@ -116,7 +128,7 @@ class UnifiedEventFeedService
     }
 
     /**
-     * @param  array{search: string, source: string, event_type: string, range: string}  $filters
+     * @param  array{search: string, source: string, event_type: string, hidden_types: array<int, string>, range: string}  $filters
      */
     private function applyFilters(QueryBuilder $twitch, QueryBuilder $external, array $filters): void
     {
@@ -132,6 +144,14 @@ class UnifiedEventFeedService
         if ($filters['event_type'] !== '') {
             $twitch->where('event_type', $filters['event_type']);
             $external->where('event_type', $filters['event_type']);
+        }
+
+        // Hide the viewer's opted-out event types from both sources. A hidden
+        // Twitch type simply never matches external rows and vice versa, so
+        // applying the same exclusion to both subqueries is safe.
+        if (! empty($filters['hidden_types'])) {
+            $twitch->whereNotIn('event_type', $filters['hidden_types']);
+            $external->whereNotIn('event_type', $filters['hidden_types']);
         }
 
         $since = match ($filters['range']) {

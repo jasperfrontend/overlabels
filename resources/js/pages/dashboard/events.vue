@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -8,6 +8,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
+import { loadHiddenTypes, saveHiddenTypes } from '@/utils/hiddenEventTypes';
 import type { AppPageProps } from '@/types';
 
 interface UnifiedEvent {
@@ -41,6 +42,7 @@ interface FiltersShape {
   search?: string;
   source?: string;
   event_type?: string;
+  hidden_types?: string[];
   range?: string;
 }
 
@@ -67,6 +69,11 @@ function normalizeFilters(input?: FiltersShape) {
 
 const filters = ref(normalizeFilters(props.filters));
 
+// Subtractive event-type filter, persisted per device. Source of truth is
+// localStorage; we mirror it into the query string so the server filters and
+// pagination links carry it.
+const hiddenTypes = ref<string[]>(loadHiddenTypes());
+
 watch(
   () => props.filters,
   (newFilters) => {
@@ -79,8 +86,8 @@ function buildQuery(): Record<string, string> {
   const params: Record<string, string> = {};
   if (filters.value.search) params.search = filters.value.search;
   if (filters.value.source) params.source = filters.value.source;
-  if (filters.value.event_type) params.event_type = filters.value.event_type;
   if (filters.value.range && filters.value.range !== 'all') params.range = filters.value.range;
+  if (hiddenTypes.value.length) params.hidden_types = hiddenTypes.value.join(',');
   return params;
 }
 
@@ -90,6 +97,41 @@ function applyFilter() {
     preserveScroll: true,
   });
 }
+
+function isTypeVisible(type: string): boolean {
+  return !hiddenTypes.value.includes(type);
+}
+
+const visibleTypeCount = computed(() => props.facets.event_types.filter(isTypeVisible).length);
+
+function setHiddenTypes(next: string[]) {
+  hiddenTypes.value = next;
+  saveHiddenTypes(next);
+  applyFilter();
+}
+
+function toggleType(type: string) {
+  setHiddenTypes(isTypeVisible(type) ? [...hiddenTypes.value, type] : hiddenTypes.value.filter((t) => t !== type));
+}
+
+function showAllTypes() {
+  setHiddenTypes([]);
+}
+
+function hideAllTypes() {
+  setHiddenTypes([...props.facets.event_types]);
+}
+
+// localStorage is invisible to the server-rendered first paint, so if this
+// device has hidden types that the initial query didn't include, re-apply once
+// to pull a correctly filtered (and correctly paginated) page.
+onMounted(() => {
+  const serverHidden = [...(props.filters?.hidden_types ?? [])].sort().join(',');
+  const localHidden = [...hiddenTypes.value].sort().join(',');
+  if (localHidden && localHidden !== serverHidden) {
+    applyFilter();
+  }
+});
 
 const debounceSearch = debounce(() => {
   applyFilter();
@@ -109,7 +151,7 @@ watch(
       toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const refreshing = ref(false);
@@ -139,7 +181,7 @@ function refresh() {
       setTimeout(() => {
         refreshing.value = false;
       }, 600);
-    }
+    },
   });
 }
 
@@ -168,13 +210,13 @@ function eventTypeLabel(type: string): string {
 
   <div class="mx-auto max-w-3xl px-2 py-2">
     <div class="mb-2 flex flex-wrap items-center gap-2">
-      <button class="btn btn-chill btn-xs gap-1.5 cursor-pointer" :disabled="refreshing" @click="refresh">
+      <button class="btn btn-chill btn-xs cursor-pointer gap-1.5" :disabled="refreshing" @click="refresh">
         <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />
         {{ refreshing ? 'Working' : 'Refresh' }}
       </button>
 
       <button
-        class="btn btn-chill btn-xs gap-1.5 cursor-pointer"
+        class="btn btn-chill btn-xs cursor-pointer gap-1.5"
         :aria-expanded="filtersOpen"
         aria-controls="event-filters"
         @click="filtersOpen = !filtersOpen"
@@ -186,7 +228,7 @@ function eventTypeLabel(type: string): string {
       </button>
 
       <button
-        class="btn btn-xs ml-auto gap-1.5 cursor-pointer"
+        class="btn btn-xs ml-auto cursor-pointer gap-1.5"
         :class="alertsMuted ? 'border-amber-400/60 text-amber-400 hover:bg-amber-400/10' : 'btn-chill'"
         :disabled="muting"
         :aria-pressed="alertsMuted"
@@ -207,20 +249,13 @@ function eventTypeLabel(type: string): string {
       </button>
     </div>
 
-    <div
-      v-if="alertsMuted"
-      class="mb-2 flex items-center gap-2 border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-foreground"
-    >
+    <div v-if="alertsMuted" class="mb-2 flex items-center gap-2 border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-foreground">
       <VolumeX class="h-4 w-4 shrink-0 text-amber-400" />
       <span>All alerts are muted. Events keep recording; unmute to fire alerts again.</span>
     </div>
 
     <!-- Collapsible Filters -->
-    <div
-      v-show="filtersOpen"
-      id="event-filters"
-      class="mb-2 border border-sidebar-border bg-sidebar-accent p-3"
-    >
+    <div v-show="filtersOpen" id="event-filters" class="mb-2 border border-sidebar-border bg-sidebar-accent p-3">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="flex flex-col gap-1">
           <label for="embed-filter-search" class="text-xs">Search</label>
@@ -236,12 +271,7 @@ function eventTypeLabel(type: string): string {
 
         <div class="flex flex-col gap-1">
           <label for="embed-filter-source" class="text-xs">Source</label>
-          <select
-            v-model="filters.source"
-            @change="applyFilter"
-            class="input-border h-9 w-full cursor-pointer text-sm"
-            id="embed-filter-source"
-          >
+          <select v-model="filters.source" @change="applyFilter" class="input-border h-9 w-full cursor-pointer text-sm" id="embed-filter-source">
             <option value="">All sources</option>
             <option v-for="src in facets.sources" :key="src" :value="src">
               {{ sourceLabel(src) }}
@@ -250,28 +280,8 @@ function eventTypeLabel(type: string): string {
         </div>
 
         <div class="flex flex-col gap-1">
-          <label for="embed-filter-event-type" class="text-xs">Event type</label>
-          <select
-            v-model="filters.event_type"
-            @change="applyFilter"
-            class="input-border h-9 w-full cursor-pointer text-sm"
-            id="embed-filter-event-type"
-          >
-            <option value="">All event types</option>
-            <option v-for="type in facets.event_types" :key="type" :value="type">
-              {{ eventTypeLabel(type) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="flex flex-col gap-1">
           <label for="embed-filter-range" class="text-xs">Time range</label>
-          <select
-            v-model="filters.range"
-            @change="applyFilter"
-            class="input-border h-9 w-full cursor-pointer text-sm"
-            id="embed-filter-range"
-          >
+          <select v-model="filters.range" @change="applyFilter" class="input-border h-9 w-full cursor-pointer text-sm" id="embed-filter-range">
             <option value="all">All time</option>
             <option value="hour">Last hour</option>
             <option value="24h">Last 24 hours</option>
@@ -280,42 +290,50 @@ function eventTypeLabel(type: string): string {
           </select>
         </div>
       </div>
+
+      <!-- Event types: enable/disable which events show in the feed -->
+      <div v-if="facets.event_types.length" class="mt-3 flex flex-col gap-1.5 border-t border-sidebar-border pt-3">
+        <div class="flex items-center justify-between">
+          <label class="text-xs">
+            Event types
+            <span class="text-muted-foreground">({{ visibleTypeCount }}/{{ facets.event_types.length }} shown)</span>
+          </label>
+          <div class="flex items-center gap-3">
+            <button type="button" class="cursor-pointer text-xs text-violet-400 hover:underline" @click="showAllTypes">Show all</button>
+            <button type="button" class="cursor-pointer text-xs text-violet-400 hover:underline" @click="hideAllTypes">Hide all</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
+          <label v-for="type in facets.event_types" :key="type" class="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="checkbox" class="cursor-pointer" :checked="isTypeVisible(type)" @change="toggleType(type)" />
+            <span class="truncate">{{ eventTypeLabel(type) }}</span>
+          </label>
+        </div>
+      </div>
     </div>
 
-    <div class="transition-opacity duration-300 bg-card px-2 py-1" :class="refreshing ? 'opacity-40' : 'opacity-100'">
+    <div class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.data.length > 0" :events="events.data" />
 
-      <EmptyState v-else
-                  message="No events match your filters. Try widening the time range or clearing search." />
+      <EmptyState v-else message="No events match your filters. Try widening the time range or clearing search." />
 
       <div v-if="events.last_page > 1" class="mt-4">
-        <Pagination
-          :links="events.links"
-          :from="events.from"
-          :to="events.to"
-          :total="events.total"
-        />
+        <Pagination :links="events.links" :from="events.from" :to="events.to" :total="events.total" />
       </div>
     </div>
   </div>
 
-  <div
-    v-if="showInfo"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-    @click.self="showInfo = false"
-  >
-    <div class="w-full max-w-md rounded-xl bg-base-100 p-5 shadow-xl bg-background">
+  <div v-if="showInfo" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" @click.self="showInfo = false">
+    <div class="bg-base-100 w-full max-w-md rounded-xl bg-background p-5 shadow-xl">
       <div class="flex items-start justify-between gap-3">
-        <p class="text-sm font-medium leading-6">
-          Your recent events. Click an event and tap Yes to replay the event in your overlay(s).
-          The mute button silences every alert in one click - visuals, sounds, TTS and bot messages -
-          until you unmute. On a phone without being logged in? Open
+        <p class="text-sm leading-6 font-medium">
+          Your recent events. Click an event and tap Yes to replay the event in your overlay(s). The mute button silences every alert in one click -
+          visuals, sounds, TTS and bot messages - until you unmute. On a phone without being logged in? Open
           <code class="rounded bg-black/10 px-1 dark:bg-white/10">/events/feed#your-overlay-token</code>
           to see this feed and the mute button using an overlay token instead.
         </p>
 
-        <button class="text-lg leading-none text-base-content/60 hover:text-base-content cursor-pointer" type="button"
-                @click="showInfo = false">
+        <button class="text-base-content/60 hover:text-base-content cursor-pointer text-lg leading-none" type="button" @click="showInfo = false">
           ×
         </button>
       </div>

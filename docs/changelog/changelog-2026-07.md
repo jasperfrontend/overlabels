@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 4th, 2026 - feat(events): enable/disable event types in the feed instead of a single-pick dropdown
+
+The feed's "Event type" filter was a single-select dropdown: you could look at exactly one type at a time, which is the opposite of what you want. What you actually want is to permanently hide the noise - `channel.channel_points_custom_reward_redemption.update`, `channel.poll.progress` - and keep everything else. So the dropdown is now a checkbox list: every type you receive, each toggleable, all shown by default.
+
+- **Subtractive by design.** We store the HIDDEN set, not the enabled set, so any event type Twitch adds later shows up by default instead of silently vanishing until you notice. "Show all" / "Hide all" shortcuts, plus a live "(5/7 shown)" count.
+- **Sticky per device.** The choice persists in localStorage (`overlabels:hidden-event-types`), so the noise you hid stays hidden across visits - no DB, no per-account migration. Shared util `resources/js/utils/hiddenEventTypes.ts` keeps the dashboard page and the token phone feed reading/writing the same key.
+- **Filtered server-side**, not just hidden in the DOM: the hidden set rides along as a `hidden_types` query param and `UnifiedEventFeedService` applies `WHERE event_type NOT IN (...)` to both the Twitch and external subqueries, so pagination counts stay honest. Capped at 100 types so a crafted query string can't balloon the clause. The type checkboxes are driven by `facets` (independent of the filter), so "Hide all" never hides the controls to turn them back on.
+- Both feeds updated: `/dashboard/events` (Inertia) and the token `/events/feed` (fetch). On the dashboard, localStorage is invisible to the server-rendered first paint, so the page re-applies once on mount if this device has hidden types the initial query lacked. The phone feed reads the set before its opening fetch, so it is filtered from the first frame.
+- Filled out `EVENT_TYPE_LABELS` so poll / hype train / goal / points-updated and the external recurring/extra/membership/wishlist types render friendly names in the checkbox list instead of raw event keys.
+
+Tests: new Pest case covering `hidden_types` exclusion across both sources (single + comma-separated). Feed suites green (30 tests).
+
 ## July 3rd, 2026 - feat(events): shape-only provider icons in the activity feed
 
 The feed identified each event's source with a single colored dot. Color alone is a weak channel: it collapses for viewers with a color vision deficiency, and an IRL streamer checking their phone in bright sunlight is effectively colorblind too - washed-out mobile screens flatten the palette. So identity now rides on shape, not color.
