@@ -58,15 +58,25 @@ Route::get('/lists/{slug}', [ListReadController::class, 'show'])
 // Token-authed events feed for /events/feed (phone-friendly, no Twitch login
 // needed). Same OverlayAccessToken as overlays; token travels as a ?token=
 // query param (GET) or JSON body field (POST), never in the URL path. Reading
-// requires the `read` ability, the mute toggle requires `write` - the first
-// endpoints to enforce token abilities. Stateless like the overlay render
-// route. See App\Http\Controllers\Api\EventFeedController.
+// requires the `read` ability, the writes (mute toggle, event replay) require
+// `write` - the first endpoints to enforce token abilities. Stateless like the
+// overlay render route. See App\Http\Controllers\Api\EventFeedController.
 Route::get('/events', [EventFeedController::class, 'index'])
     ->name('api.events.index')
     ->middleware(['throttle:overlay', 'lockdown'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 Route::post('/events/mute', [EventFeedController::class, 'mute'])
     ->name('api.events.mute')
+    ->middleware(['throttle:overlay', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+Route::post('/events/{twitchEvent}/replay', [EventFeedController::class, 'replayTwitch'])
+    ->name('api.events.replay')
+    ->whereNumber('twitchEvent')
+    ->middleware(['throttle:overlay', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+Route::post('/external-events/{externalEvent}/replay', [EventFeedController::class, 'replayExternal'])
+    ->name('api.external-events.replay')
+    ->whereNumber('externalEvent')
     ->middleware(['throttle:overlay', 'lockdown'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 

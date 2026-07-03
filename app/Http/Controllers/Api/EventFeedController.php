@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\ExternalEventController;
+use App\Http\Controllers\TwitchEventSubController;
+use App\Models\ExternalEvent;
 use App\Models\OverlayAccessToken;
+use App\Models\TwitchEvent;
 use App\Services\AlertMuteService;
 use App\Services\UnifiedEventFeedService;
 use Illuminate\Http\JsonResponse;
@@ -16,10 +20,10 @@ use Illuminate\Http\Request;
  * mute their alerts. Serves /events/feed, which reads the token from the URL
  * fragment client-side (the fragment never reaches the server).
  *
- * First consumers of token abilities: reading the feed requires `read`, the
- * mute toggle requires `write` (tokens with no abilities set are unrestricted,
- * matching hasAbility(), so existing overlay tokens keep working). The mute
- * toggle is deliberately the only write an overlay token can perform.
+ * First consumers of token abilities: reading the feed requires `read`; the
+ * writes - the mute toggle and event replay - require `write` (tokens with no
+ * abilities set are unrestricted, matching hasAbility(), so existing overlay
+ * tokens keep working). Every write lands in the token's access log.
  */
 class EventFeedController extends Controller
 {
@@ -74,6 +78,66 @@ class EventFeedController extends Controller
         $accessToken->recordAccess($request->ip(), $request->userAgent(), 'events-feed:mute');
 
         return response()->json(['alerts_muted' => $muted]);
+    }
+
+    /**
+     * Replay a Twitch event as an alert. Same core as the dashboard replay
+     * (mute guard, mapping resolution, broadcast + TTS + bot message).
+     */
+    public function replayTwitch(Request $request, TwitchEvent $twitchEvent): JsonResponse
+    {
+        $accessToken = $this->resolveToken($request, 'write');
+        if ($accessToken instanceof JsonResponse) {
+            return $accessToken;
+        }
+
+        // 404 (not 403) for foreign events: a token must not be able to probe
+        // which event ids exist for other users.
+        if ($twitchEvent->user_id !== $accessToken->user_id) {
+            return response()->json(['error' => 'Event not found.'], 404);
+        }
+
+        $result = app(TwitchEventSubController::class)->replayForUser($accessToken->user, $twitchEvent);
+
+        return $this->replayResponse($request, $accessToken, $result);
+    }
+
+    /**
+     * Replay an external (Ko-fi, StreamLabs, ...) event as an alert.
+     */
+    public function replayExternal(Request $request, ExternalEvent $externalEvent): JsonResponse
+    {
+        $accessToken = $this->resolveToken($request, 'write');
+        if ($accessToken instanceof JsonResponse) {
+            return $accessToken;
+        }
+
+        if ($externalEvent->user_id !== $accessToken->user_id) {
+            return response()->json(['error' => 'Event not found.'], 404);
+        }
+
+        $result = app(ExternalEventController::class)->replayForUser($accessToken->user, $externalEvent);
+
+        return $this->replayResponse($request, $accessToken, $result);
+    }
+
+    /**
+     * Map a replay core result to JSON: success and warning (muted) are 200s
+     * the feed shows as-is, error (no active mapping) is a 422.
+     *
+     * @param  array{message: string, type: string}  $result
+     */
+    private function replayResponse(Request $request, OverlayAccessToken $accessToken, array $result): JsonResponse
+    {
+        if ($result['type'] === 'success') {
+            // Writes leave a trail in the token's access log.
+            $accessToken->recordAccess($request->ip(), $request->userAgent(), 'events-feed:replay');
+        }
+
+        return response()->json(
+            ['message' => $result['message'], 'type' => $result['type']],
+            $result['type'] === 'error' ? 422 : 200,
+        );
     }
 
     private function resolveToken(Request $request, string $ability): OverlayAccessToken|JsonResponse
