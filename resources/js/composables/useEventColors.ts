@@ -11,9 +11,9 @@ export interface UnifiedEvent {
 // Full class strings so Tailwind can detect them during production builds.
 // Dynamic construction like `bg-${color}` is invisible to Tailwind's scanner.
 const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
-  'channel.subscribe': { dot: 'text-purple-500', border: 'hover:border-l-purple-500' },
-  'channel.subscription.gift': { dot: 'text-pink-500', border: 'hover:border-l-pink-500' },
-  'channel.subscription.message': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
+  'channel.subscribe': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  'channel.subscription.gift': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  'channel.subscription.message': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
   'channel.raid': { dot: 'text-emerald-500', border: 'hover:border-l-emerald-500' },
   'channel.cheer': { dot: 'text-amber-500', border: 'hover:border-l-amber-500' },
   'stream.online': { dot: 'text-green-500', border: 'hover:border-l-green-500' },
@@ -21,9 +21,9 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
   'channel.channel_points_custom_reward_redemption.add': { dot: 'text-cyan-500', border: 'hover:border-l-cyan-500' },
   'channel.channel_points_custom_reward_redemption.update': { dot: 'text-cyan-500', border: 'hover:border-l-cyan-500' },
   'channel.follow': { dot: 'text-pink-500', border: 'hover:border-l-pink-500' },
-  'channel.poll.begin': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
-  'channel.poll.progress': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
-  'channel.poll.end': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  'channel.poll.begin': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
+  'channel.poll.progress': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
+  'channel.poll.end': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
 };
 
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
