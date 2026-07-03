@@ -1,5 +1,14 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - feat(events): shape-only provider icons in the activity feed
+
+The feed identified each event's source with a single colored dot. Color alone is a weak channel: it collapses for viewers with a color vision deficiency, and an IRL streamer checking their phone in bright sunlight is effectively colorblind too - washed-out mobile screens flatten the palette. So identity now rides on shape, not color.
+
+- Each source gets a distinct monochrome 4x4 grid icon (Twitch ring, Fourthwall x, StreamElements top/bottom bars, StreamLabs side bars, Buy Me a Coffee checker, Ko-fi solid base, Throne corner block). Encoded as a `uint16` bitmap - a binary literal reads exactly like the grid - and rendered as an SVG that inherits `currentColor`, so it gets maximum contrast in both light and dark mode with zero color logic.
+- Shape is the only identity channel: no color, no baked-in text. The event text sits right next to the icon, and each icon carries a `role="img"` + `aria-label` so screen readers still announce the source. Readable at 16px, in sunlight, and under any color vision deficiency.
+- The set is built so every pair of icons differs by at least 6 filled cells (current min is 8), which is what keeps them distinct at a glance. `iconDistance()` enforces this when adding a provider later.
+- `resources/js/utils/providerIcons.ts` (pure encoding module, mirrors `formatters.ts`) + `ProviderIcon.vue`. Wired into `EventsTable.vue`, replacing the color-coded source/event dot. Gift-sub recipient sub-rows use a small neutral dot (their source is obvious from the gifter's Twitch icon above). `TemplateTable.vue` keeps its colored event-type dot - that is a different question ("which event triggers this template"), not a source identity.
+
 ## July 3rd, 2026 - feat(events): collapse gift-sub bombs into one expandable row
 
 A single gift-sub bomb landed in the feed as N+1 loose rows: one "gifted subs" line plus a separate "subscribed" line for every recipient, drowning out everything around it. StreamElements folds these into one tidy row you can expand; now so do we.

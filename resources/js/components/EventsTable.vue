@@ -5,8 +5,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { RefreshCw, ChevronDown, ChevronRight, Gift } from '@lucide/vue';
 import { useEventColors } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
+import ProviderIcon from '@/components/ProviderIcon.vue';
 
-const { eventDotClass, eventHoverBorderClass } = useEventColors();
+const { eventHoverBorderClass } = useEventColors();
 
 const props = defineProps<{
   events: UnifiedEvent[];
@@ -357,7 +358,7 @@ function relativeTime(iso: string): string {
         >
           <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
-              <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
+              <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0 text-foreground" />
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
               <button
@@ -402,7 +403,7 @@ function relativeTime(iso: string): string {
         :key="`recipient-${recipient.id}`"
         class="flex items-center gap-2 text-xs text-foreground"
       >
-        <div class="h-1.5 w-1.5 shrink-0 rounded-full" :class="eventDotClass(recipient)"></div>
+        <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"></div>
         <span class="font-medium">{{ who(recipient) }}</span>
         <span v-if="details(recipient)" class="text-foreground/70">{{ details(recipient) }}</span>
       </div>

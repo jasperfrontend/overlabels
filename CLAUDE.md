@@ -215,6 +215,14 @@ Critical variables:
 - `OverlayRenderer.vue` early-exits in `handleAlertTriggered()`: if targetSlugs !== null and slug not in list, return
 - Semantic: empty pivot = null slugs = fires on ALL overlays (backward-compatible default)
 
+## Provider Icons (Implemented Jul 2026)
+
+- Monochrome 4x4 grid SVG icons identify the source service in the events feed (`EventsTable.vue`). Shape is the ONLY identity channel - no color, no text - so they stay legible in sunlight and under color vision deficiency. Replaced the color-coded `eventDotClass` dot (which mixed event-type + source color).
+- Encoding: each icon is a `uint16`, one bit per grid cell. Bit 15 (MSB) = top-left, filling left-to-right, top-to-bottom to bit 0 (bottom-right). A binary literal reads exactly like the grid.
+- `resources/js/utils/providerIcons.ts`: pure module, `PROVIDER_ICONS` map (source -> {bits, label}), `iconCells()`, `providerIcon()`, `iconDistance()` (Hamming). `resources/js/components/ProviderIcon.vue` renders the SVG with `fill=currentColor`, `role="img"` + `aria-label`.
+- Adding a provider: pick an unused `uint16` with 4-8 filled cells, confirm `iconDistance() >= 6` against every existing icon. Current set's min pairwise distance is 8.
+- Keyed by `source` (twitch/kofi/streamlabs/streamelements/bmac/fourthwall/throne), NOT event type. All Twitch events share the Twitch ring; event type is carried by the adjacent text label. `TemplateTable.vue` still uses the colored `eventTypeDotClass` (different context: which event triggers a template).
+
 ## Development Workflow
 
 ### Setting Up Twitch Integration
