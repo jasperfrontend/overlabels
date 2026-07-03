@@ -217,11 +217,12 @@ Critical variables:
 
 ## Provider Icons (Implemented Jul 2026)
 
-- Monochrome 4x4 grid SVG icons identify the source service in the events feed (`EventsTable.vue`). Shape is the ONLY identity channel - no color, no text - so they stay legible in sunlight and under color vision deficiency. Replaced the color-coded `eventDotClass` dot (which mixed event-type + source color).
+- 4x4 grid SVG icons identify the source service in the events feed (`EventsTable.vue`). Shape is the PRIMARY identity channel - legible in sunlight and under color vision deficiency even with no color at all. Replaced the color-only `eventDotClass` dot (which mixed event-type + source color).
+- Color is layered back on as REINFORCEMENT, not sole identity (redundant encoding = the a11y-correct way to add color): `eventDotClass(event)` is applied to the icon in `EventsTable.vue`. It resolves by event type first - Twitch types get a `text-*` class (sets `currentColor`, which the SVG `fill` inherits) - then falls back to source, where external services get a `fill-*` class (colors the SVG directly). So Twitch reads as calm texture and a Ko-fi-orange icon pops pre-attentively. Do NOT reduce this back to shape-only or color-only; the pairing is deliberate.
 - Encoding: each icon is a `uint16`, one bit per grid cell. Bit 15 (MSB) = top-left, filling left-to-right, top-to-bottom to bit 0 (bottom-right). A binary literal reads exactly like the grid.
-- `resources/js/utils/providerIcons.ts`: pure module, `PROVIDER_ICONS` map (source -> {bits, label}), `iconCells()`, `providerIcon()`, `iconDistance()` (Hamming). `resources/js/components/ProviderIcon.vue` renders the SVG with `fill=currentColor`, `role="img"` + `aria-label`.
+- `resources/js/utils/providerIcons.ts`: pure module, `PROVIDER_ICONS` map (source -> {bits, label}), `iconCells()`, `providerIcon()`, `iconDistance()` (Hamming). `resources/js/components/ProviderIcon.vue` renders the SVG with `fill=currentColor` (so a `text-*` class tints it), `role="img"` + `aria-label`. Color class strings are full literals in `useEventColors.ts` so Tailwind's scanner keeps them.
 - Adding a provider: pick an unused `uint16` with 4-8 filled cells, confirm `iconDistance() >= 6` against every existing icon. Current set's min pairwise distance is 8.
-- Keyed by `source` (twitch/kofi/streamlabs/streamelements/bmac/fourthwall/throne), NOT event type. All Twitch events share the Twitch ring; event type is carried by the adjacent text label. `TemplateTable.vue` still uses the colored `eventTypeDotClass` (different context: which event triggers a template).
+- Icon SHAPE is keyed by `source` (twitch/kofi/streamlabs/streamelements/bmac/fourthwall/throne), NOT event type - all Twitch events share the Twitch ring. Icon COLOR is keyed by event type for Twitch (and by source for externals - see the reinforcement bullet). Event type is additionally carried by the adjacent text label. `TemplateTable.vue` still uses `eventTypeDotClass` in a different context (which event triggers a template).
 
 ## Development Workflow
 
