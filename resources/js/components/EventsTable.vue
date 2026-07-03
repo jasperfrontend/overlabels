@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Clock, RefreshCw } from '@lucide/vue';
+import { RefreshCw } from '@lucide/vue';
 import { useEventColors } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
 
@@ -241,18 +241,17 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
+          <div class="flex flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden text-ellipsis">{{ label(event) }}</div>
+              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden max-w-50 md:max-w-90 text-ellipsis">{{ label(event) }}</div>
             </div>
-            <div class="flex items-center gap-2 pl-4 text-xs text-muted-foreground">
-              <Clock class="h-3 w-3" />
-              <span>{{ relativeTime(event.created_at) }}</span>
+            <div class="flex items-center gap-2 pl-4 text-xs w-full">
+              <div class="whitespace-nowrap text-ellipsis w-full">{{ relativeTime(event.created_at) }}</div>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
 
-              <span v-if="details(event)">{{ details(event) }}</span>
+              <div v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</div>
             </div>
               <span :class="getEventStatus(event).class" class="text-xs ml-4">{{ getEventStatus(event).label }}</span>
           </div>
