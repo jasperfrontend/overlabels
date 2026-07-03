@@ -1,5 +1,12 @@
 # CHANGELOG JULY 2026
 
+## July 4th, 2026 - fix(events): hide the redundant bare sub that Twitch fires next to every resub
+
+A resub emits two EventSub events at the same instant - `channel.subscribe` and `channel.subscription.message` - so the feed always showed a pointless pair: "JP_4468 resub T1" directly above "JP_4468 sub T1". Now the bare sub is folded away and only the resub row remains.
+
+- Display-only, same posture as the gift-sub folding right above it: both events stay recorded, replay and pagination are untouched, nothing changes at the source. Handled in `EventsTable.vue`'s `displayRows` as a second pass that shares the gift pass's `claimed` set.
+- Matches a `channel.subscription.message` to the closest unclaimed non-gift `channel.subscribe` from the same `user_id` (and broadcaster) within a 2-minute window, then hides that sub. The window is deliberately short so a user's genuine original subscribe from a previous month - also a `channel.subscribe` - is never mistaken for the duplicate of a current resub if it happens to share the page. Standalone new subs and gift recipients are left alone.
+
 ## July 4th, 2026 - feat(events): enable/disable event types in the feed instead of a single-pick dropdown
 
 The feed's "Event type" filter was a single-select dropdown: you could look at exactly one type at a time, which is the opposite of what you want. What you actually want is to permanently hide the noise - `channel.channel_points_custom_reward_redemption.update`, `channel.poll.progress` - and keep everything else. So the dropdown is now a checkbox list: every type you receive, each toggleable, all shown by default.

@@ -41,6 +41,16 @@ interface DisplayRow {
 
 const GIFT_EVENT = 'channel.subscription.gift';
 const SUB_EVENT = 'channel.subscribe';
+const RESUB_EVENT = 'channel.subscription.message';
+
+// A resub fires BOTH `channel.subscribe` and `channel.subscription.message`
+// for the same user at essentially the same instant, so the feed shows a
+// redundant bare "sub" right next to every "resub". We hide the bare sub when a
+// matching resub from the same user lands within this window. Kept short so a
+// user's genuine original subscribe from a previous month (also a
+// `channel.subscribe`) that happens to share the page is never mistaken for the
+// duplicate of a current resub.
+const RESUB_DEDUP_WINDOW_MS = 2 * 60 * 1000;
 
 const displayRows = computed<DisplayRow[]>(() => {
   const list = props.events;
@@ -73,6 +83,36 @@ const displayRows = computed<DisplayRow[]>(() => {
     }
 
     if (recipients.length > 0) recipientsByGift.set(gift.id, recipients);
+  }
+
+  // Second pass: drop the bare self-sub that Twitch emits alongside each resub.
+  // The gift pass above already claimed is_gift subs, so this only ever targets
+  // genuine self-subscriptions.
+  for (const resub of chronological) {
+    if (resub.source !== 'twitch' || resub.event_type !== RESUB_EVENT) continue;
+    const rd = resub.event_data ?? {};
+    const userId = rd.user_id;
+    if (!userId) continue;
+    const broadcaster = rd.broadcaster_user_id;
+    const resubTime = Date.parse(resub.created_at);
+
+    // Claim the closest unclaimed self-sub from the same user within the window.
+    let bestId = -1;
+    let bestDelta = Infinity;
+    for (const sub of chronological) {
+      if (claimed.has(sub.id)) continue;
+      if (sub.source !== 'twitch' || sub.event_type !== SUB_EVENT) continue;
+      const sd = sub.event_data ?? {};
+      if (sd.is_gift === true) continue;
+      if (sd.user_id !== userId) continue;
+      if (broadcaster && sd.broadcaster_user_id !== broadcaster) continue;
+      const delta = Math.abs(Date.parse(sub.created_at) - resubTime);
+      if (delta <= RESUB_DEDUP_WINDOW_MS && delta < bestDelta) {
+        bestDelta = delta;
+        bestId = sub.id;
+      }
+    }
+    if (bestId >= 0) claimed.add(bestId);
   }
 
   const rows: DisplayRow[] = [];
