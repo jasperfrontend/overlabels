@@ -223,7 +223,7 @@ function relativeTime(iso: string): string {
       v-for="event in events"
       :key="`${event.source}-${event.id}`"
       :open="confirmingId === event.id"
-      @update:open="(open: boolean) => (confirmingId = open ? event.id : null)"
+      @update:open="(open: boolean) => (confirmingId = open && canReplay(event) ? event.id : null)"
     >
       <PopoverTrigger as-child>
         <div
@@ -241,14 +241,14 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
+          <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <div class="h-2 w-2 shrink-0 rounded-full" :class="eventDotClass(event)"></div>
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
-              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden max-w-50 md:max-w-90 text-ellipsis">{{ label(event) }}</div>
+              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs w-full">
-              <div class="whitespace-nowrap text-ellipsis w-full">{{ relativeTime(event.created_at) }}</div>
+              <div class="whitespace-nowrap text-ellipsis">{{ relativeTime(event.created_at) }}</div>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
 
               <div v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</div>

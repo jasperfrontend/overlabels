@@ -1,5 +1,11 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - fix(events): readonly guard on the replay confirm popover
+
+Clicking a row on the token-authed events feed crashed with `page$1.get() is undefined`. The `readonly` guard covered the row's own `@click` and `openConfirm()`, but Reka's `PopoverTrigger` toggles open state on its own click, so `@update:open` set `confirmingId` unconditionally and the "Replay?" confirm still opened - and its Yes button calls Inertia's `router.post`, which has no page state on the feed (plain `createApp`, no Inertia).
+
+- `EventsTable.vue`: `@update:open` now checks `canReplay(event)` before opening the confirm, closing the trigger path that bypassed the readonly guard.
+
 ## July 3rd, 2026 - feat(events): one-click feed link + QR from the recents page
 
 Closes the "how do I even get the feed URL onto my phone" gap from the feed feature: plaintext tokens are shown once, so no page could reconstruct the link after the fact. Now the recents page mints it for you.
