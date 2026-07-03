@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm, Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -26,10 +26,12 @@ const form = useForm({
   html: '',
   css: '',
   compiled_css: '',
-  type: 'static',
+  type: '',
   is_public: true,
   screenshot_url: '',
 });
+
+const typeChosen = computed(() => form.type === 'static' || form.type === 'alert');
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
 
@@ -52,6 +54,14 @@ const showToast = ref(false);
 const { register } = useKeyboardShortcuts();
 
 const submitForm = async () => {
+  if (!typeChosen.value) {
+    mainTab.value = 'meta';
+    toastMessage.value = 'Choose an overlay type before creating your overlay.';
+    toastType.value = 'warning';
+    showToast.value = true;
+    return;
+  }
+
   const { sanitized, removed } = sanitizeHtmlFields({
     name: form.name,
     description: form.description,
@@ -109,13 +119,13 @@ onMounted(() => {
         <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags."
                  description-class="text-sm text-muted-foreground" />
         <div class="flex shrink-0 items-center gap-2">
-          <button type="button" @click="previewTemplate" class="btn btn-cancel">Preview
+          <button type="button" @click="previewTemplate" :disabled="!typeChosen" class="btn btn-cancel disabled:cursor-not-allowed disabled:opacity-50">Preview
             <ExternalLink class="ml-2 h-4 w-4" />
           </button>
           <button
             @click="submitForm"
-            :disabled="form.processing"
-            class="btn btn-primary"
+            :disabled="form.processing || !typeChosen"
+            class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save class="mr-2 h-4 w-4" />
             Create Overlay
@@ -131,9 +141,11 @@ onMounted(() => {
               v-for="(tab, index) in mainTabs"
               :key="tab.key"
               type="button"
+              :disabled="!typeChosen"
               @click="mainTab = tab.key"
               :class="[
-                'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+                'flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
+                !typeChosen ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-background',
                 index === 0 && 'rounded-tl-sm',
                 mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
               ]"
@@ -148,37 +160,7 @@ onMounted(() => {
         <div class="rounded-b-sm border border-t-0 border-sidebar bg-sidebar-accent p-4">
           <!-- Meta Tab -->
           <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5">
-            <div>
-              <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Overlay Name *</label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                class="input-border w-full"
-                placeholder="My Awesome Overlay"
-                required
-                autofocus
-                data-1p-ignore
-              />
-              <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
-            </div>
-
-            <div>
-              <label for="description"
-                     class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
-              <textarea
-                id="description"
-                v-model="form.description"
-                rows="3"
-                class="input-border w-full"
-                placeholder="Describe what your overlay does…"
-              />
-              <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
-            </div>
-
-            <PublicToggle v-model="form.is_public" label="Overlay" />
-
-            <!-- Overlay Type -->
+            <!-- Overlay Type - deliberate first choice that unlocks the rest of the form -->
             <div>
               <label class="mb-2 block text-sm font-medium text-accent-foreground">Overlay Type *</label>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -229,21 +211,55 @@ onMounted(() => {
                 </label>
               </div>
               <div v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</div>
+              <p v-if="!typeChosen" class="mt-2 text-sm text-foreground">
+                Choose an overlay type to continue.
+              </p>
             </div>
 
+            <!-- Everything below stays frozen until a type is deliberately chosen -->
+            <fieldset :disabled="!typeChosen" :class="!typeChosen && 'pointer-events-none opacity-50'" class="space-y-5">
+              <div>
+                <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Overlay Name *</label>
+                <input
+                  id="name"
+                  v-model="form.name"
+                  type="text"
+                  class="input-border w-full"
+                  placeholder="My Awesome Overlay"
+                  required
+                  data-1p-ignore
+                />
+                <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</div>
+              </div>
 
-            <!-- Event alert tips -->
-            <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
-              <strong class="text-accent-foreground">Event Alert tips:</strong>
-              <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
-                <li>Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-tags" target="_blank">Help docs</a> for all
-                  event-based tags.
-                </li>
-                <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.
-                </li>
-                <li>Keep alert overlays simple: they only display briefly on screen.</li>
-              </ul>
-            </div>
+              <div>
+                <label for="description"
+                       class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
+                <textarea
+                  id="description"
+                  v-model="form.description"
+                  rows="3"
+                  class="input-border w-full"
+                  placeholder="Describe what your overlay does…"
+                />
+                <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
+              </div>
+
+              <PublicToggle v-model="form.is_public" label="Overlay" />
+
+              <!-- Event alert tips -->
+              <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
+                <strong class="text-accent-foreground">Event Alert tips:</strong>
+                <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
+                  <li>Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-tags" target="_blank">Help docs</a> for all
+                    event-based tags.
+                  </li>
+                  <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.
+                  </li>
+                  <li>Keep alert overlays simple: they only display briefly on screen.</li>
+                </ul>
+              </div>
+            </fieldset>
 
           </div>
 
@@ -285,7 +301,7 @@ onMounted(() => {
         <div class="mt-6 flex items-center justify-between gap-3">
           <Link :href="route('dashboard.index')" class="btn btn-cancel">← Back to Dashboard</Link>
           <div class="flex items-center gap-3">
-            <button type="submit" :disabled="form.processing" class="btn btn-primary">Create Overlay</button>
+            <button type="submit" :disabled="form.processing || !typeChosen" class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">Create Overlay</button>
           </div>
         </div>
       </form>
