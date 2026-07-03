@@ -7,7 +7,7 @@ import { useEventColors } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 
-const { eventHoverBorderClass } = useEventColors();
+const { eventHoverBorderClass, eventDotClass } = useEventColors();
 
 const props = defineProps<{
   events: UnifiedEvent[];
@@ -345,7 +345,10 @@ function relativeTime(iso: string): string {
         >
           <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-0 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
-              <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0 text-foreground" />
+              <ProviderIcon :source="event.source"
+                            class="h-4 w-4 shrink-0"
+                            :class="eventDotClass(event)"
+              />
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
               <span v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</span>
