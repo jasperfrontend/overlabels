@@ -41,10 +41,10 @@ defineExpose({ generateFeedUrl });
   >
     <template #instructions>
       <p class="text-foreground">
-        The link opens your live events feed with the mute-all-alerts button - no login needed.
-        Anyone with the link can read your event history and mute or unmute your alerts, so treat
-        it like a password. If it ever leaks, revoke the "Events feed" token on the Tokens page
-        and generate a new link here.
+        The link opens your live events feed with the mute-all-alerts button and event replay -
+        no login needed. Anyone with the link can read your event history, mute or unmute your
+        alerts, and replay past alerts on your stream, so treat it like a password. If it ever
+        leaks, revoke the "Events feed" token on the Tokens page and generate a new link here.
       </p>
     </template>
 

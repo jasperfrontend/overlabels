@@ -41,6 +41,16 @@ const initialized = ref(false);
 const fatalError = ref<string | null>(null);
 const loadError = ref<string | null>(null);
 const muteError = ref<string | null>(null);
+const replayNotice = ref<{ message: string; type: string } | null>(null);
+let replayNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+
+function onReplayResult(result: { message: string; type: string }) {
+  replayNotice.value = result;
+  clearTimeout(replayNoticeTimer);
+  replayNoticeTimer = setTimeout(() => {
+    replayNotice.value = null;
+  }, 6000);
+}
 
 async function load(showSpinner = true) {
   if (showSpinner) refreshing.value = true;
@@ -165,6 +175,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(replayNoticeTimer);
   const echo = (window as any).Echo;
   if (echo && twitchId.value) {
     echo.leave(`twitch-events.${twitchId.value}`);
@@ -247,6 +258,18 @@ function eventTypeLabel(type: string): string {
       {{ muteError }}
     </div>
 
+    <div
+      v-if="replayNotice"
+      class="mb-2 border px-3 py-2 text-sm text-foreground"
+      :class="{
+        'border-violet-400/40 bg-violet-400/10': replayNotice.type === 'success',
+        'border-amber-400/40 bg-amber-400/10': replayNotice.type === 'warning',
+        'border-red-400/40 bg-red-400/10': replayNotice.type === 'error',
+      }"
+    >
+      {{ replayNotice.message }}
+    </div>
+
     <!-- Collapsible Filters -->
     <div v-show="filtersOpen" id="feed-filters" class="mb-2 border border-sidebar-border bg-sidebar-accent p-3">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -315,7 +338,7 @@ function eventTypeLabel(type: string): string {
     </div>
 
     <div v-else-if="initialized" class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
-      <EventsTable v-if="events.length > 0" :events="events" readonly />
+      <EventsTable v-if="events.length > 0" :events="events" :token="token" @replay-result="onReplayResult" />
 
       <EmptyState v-else message="No events match your filters. Try widening the time range or clearing search." />
 
@@ -349,7 +372,7 @@ function eventTypeLabel(type: string): string {
     <div class="w-full max-w-md rounded-xl bg-background p-5 shadow-xl">
       <div class="flex items-start justify-between gap-3">
         <p class="text-sm font-medium leading-6">
-          Your recent events, live. Use the mute button to silence every alert in one tap - visuals, sounds, TTS and bot messages. Events keep recording while muted. Replaying events is available on the dashboard when you are logged in.
+          Your recent events, live. Use the mute button to silence every alert in one tap - visuals, sounds, TTS and bot messages. Events keep recording while muted. Tap an event to replay its alert on stream; unmute first, replay is blocked while alerts are muted.
         </p>
 
         <button

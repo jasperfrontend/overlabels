@@ -1,5 +1,24 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - feat(events): replay alerts from the token-authed events feed
+
+The feed shipped view-only (mute was the single token write), but replaying an alert from your phone mid-stream is exactly what the feed is for. Replay is now the second write an overlay token can perform.
+
+**Backend**
+
+- New token-authed endpoints: `POST /api/events/{id}/replay` (Twitch) and `POST /api/external-events/{id}/replay` (Ko-fi/StreamLabs/...). Same posture as the mute toggle: `throttle:overlay` + `lockdown`, Sanctum-stateful shed, token in the JSON body, `write` ability required, successful replays land in the token's access log (`events-feed:replay`).
+- Foreign event ids return 404 (not 403) so a token cannot probe which ids exist for other users.
+- The replay cores were extracted out of the session-bound actions into `replayForUser(User, event)` on `TwitchEventSubController` / `ExternalEventController` - dashboard replay and feed replay run the exact same logic (ownership, mute guard, mapping resolution, broadcast + TTS + bot message). Dashboard behavior unchanged, including flash messages.
+- Muted replay still returns the "Alerts are muted" warning - the feed gets the same no-bypass rule as the dashboard.
+
+**Frontend**
+
+- `EventsTable` lost the `readonly` prop and gained an optional `token` prop: without it replay posts via Inertia as before; with it replay posts to the token API via fetch and emits a `replay-result` event (the feed has no Inertia flash messages).
+- `EventsFeed` shows the replay outcome in an inline notice (violet success / amber warning / red error, auto-clears) and passes the token through.
+- Feed info dialog and the feed-link warning copy updated: the link can now also replay alerts on stream, and the warning says so explicitly.
+
+Tests: 6 new Pest tests covering write-ability replay for both event kinds, read-only 403, foreign-event 404, muted warning, and missing-mapping 422. Full suite 1010 green.
+
 ## July 3rd, 2026 - fix(events): readonly guard on the replay confirm popover
 
 Clicking a row on the token-authed events feed crashed with `page$1.get() is undefined`. The `readonly` guard covered the row's own `@click` and `openConfirm()`, but Reka's `PopoverTrigger` toggles open state on its own click, so `@update:open` set `confirmingId` unconditionally and the "Replay?" confirm still opened - and its Yes button calls Inertia's `router.post`, which has no page state on the feed (plain `createApp`, no Inertia).

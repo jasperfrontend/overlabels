@@ -10,9 +10,15 @@ const { eventDotClass, eventHoverBorderClass } = useEventColors();
 
 const props = defineProps<{
   events: UnifiedEvent[];
-  // Hides the replay affordance; used by the token-authed events feed, which
-  // is view-only (replay stays a logged-in dashboard action).
-  readonly?: boolean;
+  // When set, replay posts to the token-authed /api endpoints instead of the
+  // session-authed dashboard routes; used by the events feed, which has no
+  // session and no Inertia. Requires the token's `write` ability server-side.
+  token?: string;
+}>();
+
+const emit = defineEmits<{
+  // Replay outcome for pages without Inertia flash messages (the events feed).
+  'replay-result': [result: { message: string; type: string }];
 }>();
 
 const replayingId = ref<number | null>(null);
@@ -38,13 +44,18 @@ function confirmAndReplay(event: UnifiedEvent) {
 const nonReplayableTypes = ['stream.online', 'stream.offline', 'channel.channel_points_custom_reward_redemption.update'];
 
 function canReplay(event: UnifiedEvent): boolean {
-  if (props.readonly) return false;
   if (event.source !== 'twitch') return true;
   return !nonReplayableTypes.includes(event.event_type);
 }
 
 function replay(event: UnifiedEvent) {
   replayingId.value = event.id;
+
+  if (props.token) {
+    void replayViaToken(event, props.token);
+    return;
+  }
+
   const url = event.source === 'twitch'
     ? `/events/${event.id}/replay`
     : `/external-events/${event.id}/replay`;
@@ -58,6 +69,41 @@ function replay(event: UnifiedEvent) {
       },
     },
   );
+}
+
+async function replayViaToken(event: UnifiedEvent, token: string) {
+  const url = event.source === 'twitch'
+    ? `/api/events/${event.id}/replay`
+    : `/api/external-events/${event.id}/replay`;
+  const fallback = { message: 'Could not replay the event. Check your connection and try again.', type: 'error' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    if (res.status === 403) {
+      emit('replay-result', { message: 'This feed link is not allowed to replay alerts.', type: 'error' });
+      return;
+    }
+
+    const json = await res.json().catch(() => null);
+    if (json?.message) {
+      emit('replay-result', { message: json.message, type: json.type ?? 'error' });
+    } else if (json?.error) {
+      emit('replay-result', { message: json.error, type: 'error' });
+    } else {
+      emit('replay-result', fallback);
+    }
+  } catch {
+    emit('replay-result', fallback);
+  } finally {
+    replayingId.value = null;
+  }
 }
 
 const externalEventLabels: Record<string, Record<string, string>> = {
@@ -263,7 +309,6 @@ function relativeTime(iso: string): string {
           <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
           <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
           <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
-
         </div>
       </PopoverContent>
     </Popover>

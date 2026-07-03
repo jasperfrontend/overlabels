@@ -684,14 +684,27 @@ class TwitchEventSubController extends Controller
      */
     public function replay(Request $request, TwitchEvent $twitchEvent)
     {
-        $user = $request->user();
+        $result = $this->replayForUser($request->user(), $twitchEvent);
 
+        return back()->with('message', $result['message'])->with('type', $result['type']);
+    }
+
+    /**
+     * Replay core, independent of how the request was authenticated (dashboard
+     * session or overlay token via the events feed).
+     *
+     * @return array{message: string, type: string}
+     *
+     * @throws RandomException
+     */
+    public function replayForUser(User $user, TwitchEvent $twitchEvent): array
+    {
         if ($twitchEvent->user_id !== $user->id) {
-            return back()->with('message', 'You do not own this event.')->with('type', 'error');
+            return ['message' => 'You do not own this event.', 'type' => 'error'];
         }
 
         if (app(AlertMuteService::class)->isMuted($user)) {
-            return back()->with('message', 'Alerts are muted. Unmute alerts to replay events.')->with('type', 'warning');
+            return ['message' => 'Alerts are muted. Unmute alerts to replay events.', 'type' => 'warning'];
         }
 
         $mapping = EventTemplateMapping::resolveForEvent(
@@ -701,7 +714,7 @@ class TwitchEventSubController extends Controller
         );
 
         if (! $mapping || ! $mapping->template) {
-            return back()->with('message', 'No active template mapping found for this event type.')->with('type', 'error');
+            return ['message' => 'No active template mapping found for this event type.', 'type' => 'error'];
         }
 
         $reconstructedData = [
@@ -711,9 +724,8 @@ class TwitchEventSubController extends Controller
 
         $this->renderEventAlert($user, $mapping, $reconstructedData);
         $randomString = str_pad(random_int(1, 999999), 4, '0', STR_PAD_LEFT);
-        $message = "Replayed alert $twitchEvent->event_type (ID: $twitchEvent->id-$randomString)";
 
-        return back()->with('message', $message)->with('type', 'success');
+        return ['message' => "Replayed alert $twitchEvent->event_type (ID: $twitchEvent->id-$randomString)", 'type' => 'success'];
     }
 
     /**

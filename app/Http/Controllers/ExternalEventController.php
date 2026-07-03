@@ -7,6 +7,7 @@ use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
+use App\Models\User;
 use App\Services\AlertMuteService;
 use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Http\RedirectResponse;
@@ -21,14 +22,25 @@ class ExternalEventController extends Controller
      */
     public function replay(Request $request, ExternalEvent $externalEvent): RedirectResponse
     {
-        $user = $request->user();
+        $result = $this->replayForUser($request->user(), $externalEvent);
 
+        return back()->with('message', $result['message'])->with('type', $result['type']);
+    }
+
+    /**
+     * Replay core, independent of how the request was authenticated (dashboard
+     * session or overlay token via the events feed).
+     *
+     * @return array{message: string, type: string}
+     */
+    public function replayForUser(User $user, ExternalEvent $externalEvent): array
+    {
         if ($externalEvent->user_id !== $user->id) {
-            return back()->with('message', 'You do not own this event.')->with('type', 'error');
+            return ['message' => 'You do not own this event.', 'type' => 'error'];
         }
 
         if (app(AlertMuteService::class)->isMuted($user)) {
-            return back()->with('message', 'Alerts are muted. Unmute alerts to replay events.')->with('type', 'warning');
+            return ['message' => 'Alerts are muted. Unmute alerts to replay events.', 'type' => 'warning'];
         }
 
         $data = $externalEvent->normalized_payload ?? [];
@@ -41,7 +53,7 @@ class ExternalEventController extends Controller
         );
 
         if (! $mapping || ! $mapping->template) {
-            return back()->with('message', 'No active alert mapping found for this event type.')->with('type', 'error');
+            return ['message' => 'No active alert mapping found for this event type.', 'type' => 'error'];
         }
 
         $template = $mapping->template;
@@ -95,6 +107,6 @@ class ExternalEventController extends Controller
 
         $label = ucfirst($externalEvent->event_type).' ('.ucfirst($externalEvent->service).')';
 
-        return back()->with('message', "Replayed {$label} alert.")->with('type', 'success');
+        return ['message' => "Replayed {$label} alert.", 'type' => 'success'];
     }
 }
