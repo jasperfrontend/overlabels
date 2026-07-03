@@ -14,16 +14,16 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
   'channel.subscribe': { dot: 'text-purple-500', border: 'hover:border-l-purple-500' },
   'channel.subscription.gift': { dot: 'text-pink-500', border: 'hover:border-l-pink-500' },
   'channel.subscription.message': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
-  'channel.raid': { dot: 'text-rose-500', border: 'hover:border-l-rose-500' },
+  'channel.raid': { dot: 'text-emerald-500', border: 'hover:border-l-emerald-500' },
   'channel.cheer': { dot: 'text-amber-500', border: 'hover:border-l-amber-500' },
   'stream.online': { dot: 'text-green-500', border: 'hover:border-l-green-500' },
   'stream.offline': { dot: 'text-red-500', border: 'hover:border-l-red-500' },
   'channel.channel_points_custom_reward_redemption.add': { dot: 'text-cyan-500', border: 'hover:border-l-cyan-500' },
   'channel.channel_points_custom_reward_redemption.update': { dot: 'text-cyan-500', border: 'hover:border-l-cyan-500' },
-  'channel.follow': { dot: 'text-green-500', border: 'hover:border-l-green-500' },
-  'channel.poll.begin': { dot: 'text-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
-  'channel.poll.progress': { dot: 'text-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
-  'channel.poll.end': { dot: 'text-[#8c45f7]', border: 'hover:border-l-[#8c45f7]' },
+  'channel.follow': { dot: 'text-pink-500', border: 'hover:border-l-pink-500' },
+  'channel.poll.begin': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  'channel.poll.progress': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  'channel.poll.end': { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
 };
 
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
