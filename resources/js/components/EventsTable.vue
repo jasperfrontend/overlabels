@@ -246,23 +246,17 @@ function hypeTrainLabels(event: UnifiedEvent): string {
     event.event_type !== 'channel.hype_train.end'
   ) return '';
   const d = event.event_data as Record<string, unknown>;
-  const total = d.total as number;
   const progress = d.progress as number;
   const goal = d.goal as number;
   const level = d.level as number;
   if (event.event_type === 'channel.hype_train.begin') {
-    return `Hype Train started at level ${level}: ${progress} of ${goal}`;
+    return `Hype Train started level ${level}: ${progress} of ${goal}`;
   }
   if (event.event_type === 'channel.hype_train.progress') {
     return `Hype Train progressed to level ${level}: ${progress} of ${goal}`;
   }
   if (event.event_type === 'channel.hype_train.end') {
-    const top = (d.top_contributions as Array<{ user_name: string; total: number; type: string; }> | undefined) ?? [];
-    const contributors = top.map((c) => `${c.user_name}: ${c.total} ${c.type}`);
-    const suffix = contributors.length
-      ? `. Top contributions: ${new Intl.ListFormat(undefined, { type: 'conjunction' }).format(contributors)}`
-      : '';
-    return `Hype Train ended at level ${level}: ${total} contributions${suffix}.`;
+    return `Hype Train ended level ${level}.`;
   }
   return '';
 
@@ -349,7 +343,7 @@ function relativeTime(iso: string): string {
           @keydown.enter.prevent="openConfirm(event)"
           @keydown.space.prevent="openConfirm(event)"
         >
-          <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-1 group text-sm" :id="label(event)">
+          <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-0 group text-sm" :id="label(event)">
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0 text-foreground" />
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
@@ -371,9 +365,8 @@ function relativeTime(iso: string): string {
               </button>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs w-full">
-              <div class="whitespace-nowrap text-ellipsis ml-auto">{{ relativeTime(event.created_at) }}</div>
+              <div class="whitespace-nowrap text-ellipsis ml-2 md:ml-auto">{{ relativeTime(event.created_at) }}</div>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
-
             </div>
           </div>
         </div>
