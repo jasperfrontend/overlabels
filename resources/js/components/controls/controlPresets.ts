@@ -80,6 +80,13 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
 ];
 
+// System namespace, not an integration: alerts:muted mirrors the global
+// alert mute state (events page / feed page button). Read-only in overlays,
+// flips live: [[[if:c:alerts:muted]]]ALERTS ARE MUTED[[[endif]]]
+export const ALERTS_PRESETS: ServicePreset[] = [
+  { key: 'muted', label: 'Alerts Muted', type: 'boolean' },
+];
+
 export const GPS_PRESETS: ServicePreset[] = [
   { key: 'speed', label: 'GPS Speed', type: 'number' },
   { key: 'lat', label: 'GPS Latitude', type: 'text' },
@@ -99,6 +106,7 @@ export const GPS_PRESETS: ServicePreset[] = [
 export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
     case 'twitch': return TWITCH_PRESETS;
+    case 'alerts': return ALERTS_PRESETS;
     case 'kofi': return KOFI_PRESETS;
     case 'gps': return GPS_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;

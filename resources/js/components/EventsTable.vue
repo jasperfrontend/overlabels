@@ -8,8 +8,11 @@ import type { UnifiedEvent } from '@/composables/useEventColors';
 
 const { eventDotClass, eventHoverBorderClass } = useEventColors();
 
-defineProps<{
+const props = defineProps<{
   events: UnifiedEvent[];
+  // Hides the replay affordance; used by the token-authed events feed, which
+  // is view-only (replay stays a logged-in dashboard action).
+  readonly?: boolean;
 }>();
 
 const replayingId = ref<number | null>(null);
@@ -35,6 +38,7 @@ function confirmAndReplay(event: UnifiedEvent) {
 const nonReplayableTypes = ['stream.online', 'stream.offline', 'channel.channel_points_custom_reward_redemption.update'];
 
 function canReplay(event: UnifiedEvent): boolean {
+  if (props.readonly) return false;
   if (event.source !== 'twitch') return true;
   return !nonReplayableTypes.includes(event.event_type);
 }

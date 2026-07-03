@@ -5,7 +5,7 @@ import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal } from '@lucide/vue';
+import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import type { AppPageProps } from '@/types';
@@ -53,6 +53,7 @@ const props = defineProps<{
   events: PaginatedEvents;
   filters?: FiltersShape;
   facets: FilterFacets;
+  alertsMuted: boolean;
 }>();
 
 function normalizeFilters(input?: FiltersShape) {
@@ -112,6 +113,22 @@ watch(
 );
 
 const refreshing = ref(false);
+const muting = ref(false);
+
+function toggleMute() {
+  if (muting.value) return;
+  muting.value = true;
+  router.post(
+    route('dashboard.events.mute'),
+    { muted: !props.alertsMuted },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        muting.value = false;
+      },
+    },
+  );
+}
 
 function refresh() {
   if (refreshing.value) return;
@@ -169,13 +186,33 @@ function eventTypeLabel(type: string): string {
       </button>
 
       <button
-        class="ml-auto grid h-7 w-7 cursor-pointer place-items-center rounded-full border border-violet-400/40 text-violet-400 transition hover:bg-violet-400/10"
+        class="btn btn-xs ml-auto gap-1.5 cursor-pointer"
+        :class="alertsMuted ? 'border-amber-400/60 text-amber-400 hover:bg-amber-400/10' : 'btn-chill'"
+        :disabled="muting"
+        :aria-pressed="alertsMuted"
+        @click="toggleMute"
+      >
+        <VolumeX v-if="alertsMuted" class="h-3 w-3" />
+        <Volume2 v-else class="h-3 w-3" />
+        {{ alertsMuted ? 'Unmute alerts' : 'Mute all alerts' }}
+      </button>
+
+      <button
+        class="grid h-7 w-7 cursor-pointer place-items-center rounded-full border border-violet-400/40 text-violet-400 transition hover:bg-violet-400/10"
         type="button"
         aria-label="Show info"
         @click="showInfo = true"
       >
         ?
       </button>
+    </div>
+
+    <div
+      v-if="alertsMuted"
+      class="mb-2 flex items-center gap-2 border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-foreground"
+    >
+      <VolumeX class="h-4 w-4 shrink-0 text-amber-400" />
+      <span>All alerts are muted. Events keep recording; unmute to fire alerts again.</span>
     </div>
 
     <!-- Collapsible Filters -->
@@ -270,7 +307,11 @@ function eventTypeLabel(type: string): string {
     <div class="w-full max-w-md rounded-xl bg-base-100 p-5 shadow-xl bg-background">
       <div class="flex items-start justify-between gap-3">
         <p class="text-sm font-medium leading-6">
-          Your recent events. click an event and tap Yes to replay the event in your overlay(s)
+          Your recent events. Click an event and tap Yes to replay the event in your overlay(s).
+          The mute button silences every alert in one click - visuals, sounds, TTS and bot messages -
+          until you unmute. On a phone without being logged in? Open
+          <code class="rounded bg-black/10 px-1 dark:bg-white/10">/events/feed#your-overlay-token</code>
+          to see this feed and the mute button using an overlay token instead.
         </p>
 
         <button class="text-lg leading-none text-base-content/60 hover:text-base-content cursor-pointer" type="button"

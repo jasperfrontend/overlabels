@@ -12,6 +12,7 @@ use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use App\Services\AlertMuteService;
 use App\Services\EventMeter;
 use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\LockdownService;
@@ -591,6 +592,13 @@ class TwitchEventSubController extends Controller
      */
     private function renderEventAlert(User $user, EventTemplateMapping $mapping, array $eventData): void
     {
+        // Global mute: muted is muted - no broadcast, no TTS synthesis, no
+        // bot message. Guarded here so the live webhook path, replay, and
+        // test cheer are all covered by one check.
+        if (app(AlertMuteService::class)->isMuted($user)) {
+            return;
+        }
+
         try {
             // Get user's Twitch data for static template tags
             $twitchData = $this->twitchService->getExtendedUserData(
@@ -682,6 +690,10 @@ class TwitchEventSubController extends Controller
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
         }
 
+        if (app(AlertMuteService::class)->isMuted($user)) {
+            return back()->with('message', 'Alerts are muted. Unmute alerts to replay events.')->with('type', 'warning');
+        }
+
         $mapping = EventTemplateMapping::resolveForEvent(
             $user->id,
             $twitchEvent->event_type,
@@ -759,8 +771,10 @@ class TwitchEventSubController extends Controller
 
         $mapping = EventTemplateMapping::resolveForEvent($user->id, 'channel.cheer', $event);
 
+        $muted = app(AlertMuteService::class)->isMuted($user);
+
         $alertFired = false;
-        if ($mapping && $mapping->template) {
+        if (! $muted && $mapping && $mapping->template) {
             $this->renderEventAlert($user, $mapping, $data);
             $alertFired = true;
         }
@@ -772,6 +786,7 @@ class TwitchEventSubController extends Controller
             'bits' => $bits,
             'cheerer_name' => $cheererName,
             'alert_fired' => $alertFired,
+            'alerts_muted' => $muted,
             'controls_updated' => $wasLive,
             'is_live' => $wasLive,
         ]);

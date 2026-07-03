@@ -7,6 +7,7 @@ use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\User;
+use App\Services\AlertMuteService;
 use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -19,6 +20,12 @@ class ExternalAlertService
      */
     public function dispatch(NormalizedExternalEvent $event, User $user): bool
     {
+        // Global mute: muted is muted - no broadcast, no TTS synthesis, no
+        // bot message. Control updates still flow; only alert output stops.
+        if (app(AlertMuteService::class)->isMuted($user)) {
+            return false;
+        }
+
         // Pick the alert template, honoring variant conditions on the donated
         // amount (e.g. a louder alert for a bigger Ko-fi donation).
         $mapping = ExternalEventTemplateMapping::resolveForEvent(

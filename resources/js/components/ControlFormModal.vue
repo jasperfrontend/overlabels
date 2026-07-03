@@ -23,6 +23,7 @@ import {
 import { ChevronsUpDownIcon } from '@lucide/vue';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import {
+  ALERTS_PRESETS,
   KOFI_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
@@ -121,6 +122,11 @@ const showThronePresets = computed(
 const showTwitchPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static',
 );
+// System presets (alerts:muted): no integration required, so same visibility
+// rule as the Twitch presets.
+const showAlertsPresets = computed(
+  () => !isEditing.value && !isCopying.value && props.template?.type === 'static',
+);
 
 // Filter out presets that already exist as controls on this template
 function isPresetAlreadyAdded(source: string, key: string): boolean {
@@ -141,6 +147,9 @@ function matchesPresetSearch(source: string, preset: ServicePreset): boolean {
 
 const availableTwitchPresets = computed(() =>
   TWITCH_PRESETS.filter((p) => !isPresetAlreadyAdded('twitch', p.key) && matchesPresetSearch('twitch', p)),
+);
+const availableAlertsPresets = computed(() =>
+  ALERTS_PRESETS.filter((p) => !isPresetAlreadyAdded('alerts', p.key) && matchesPresetSearch('alerts', p)),
 );
 const availableKofiPresets = computed(() =>
   KOFI_PRESETS.filter((p) => !isPresetAlreadyAdded('kofi', p.key) && matchesPresetSearch('kofi', p)),
@@ -511,7 +520,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets || showThronePresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showAlertsPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets || showThronePresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <div class="flex items-center justify-between gap-2">
               <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
               <a
@@ -546,6 +555,16 @@ async function save() {
                     v-for="preset in availableTwitchPresets"
                     :key="'twitch:' + preset.key"
                     :value="'twitch:' + preset.key"
+                  >
+                    {{ preset.label }} ({{ preset.type }})
+                  </ComboboxItem>
+                </ComboboxGroup>
+                <ComboboxGroup v-if="showAlertsPresets && availableAlertsPresets.length">
+                  <ComboboxLabel>Overlabels - Alerts</ComboboxLabel>
+                  <ComboboxItem
+                    v-for="preset in availableAlertsPresets"
+                    :key="'alerts:' + preset.key"
+                    :value="'alerts:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

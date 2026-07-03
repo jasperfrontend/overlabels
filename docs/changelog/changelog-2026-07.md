@@ -1,5 +1,34 @@
 # CHANGELOG JULY 2026
 
+## July 3rd, 2026 - feat(events): one-click feed link + QR from the recents page
+
+Closes the "how do I even get the feed URL onto my phone" gap from the feed feature: plaintext tokens are shown once, so no page could reconstruct the link after the fact. Now the recents page mints it for you.
+
+- **`TokenUrlDialog`** - the token-URL machinery extracted from `AddToObsButton` (link warning, `tokens.store` POST, fragment URL assembly, copy-to-clipboard box, QR code) into one shared dialog with `instructions`/`footer` slots. `AddToObsButton` is now a thin wrapper around it with identical behavior and copy.
+- **`EventsFeedLinkButton`** - replaces the "Embed view" link on `/dashboard/recents` (which pointed at the session-locked `/dashboard/events`). One click mints a fresh token **scoped to `read,write`** (tighter than the unrestricted default), named "Events feed" so it's recognizable on the Tokens page, and shows `/events/feed#<token>` with the QR code open by default - the phone is the whole point. Copy warns that the link reads your history and can mute your alerts, and points at token revocation if it leaks.
+- ESLint + vite build clean; no backend changes.
+
+## July 3rd, 2026 - feat(events): token-authed events feed + one-click global alert mute
+
+Two user-requested pieces that make the events page usable mid-stream from a phone. First: `/dashboard/events` required a full Twitch login, painful on mobile where you're usually not logged in to Twitch. Second: there was no way to silence every alert at once (StreamElements has this; now so do we).
+
+**Token-authed events feed (`/events/feed#<token>`)**
+
+- New standalone page (own Vite entry, `resources/js/events-feed/`) authenticated by the same `OverlayAccessToken` overlays use: token in the URL fragment, read client-side, never sent to the server in a URL. Mirrors the overlay shell + the `/api/lists/{slug}?token=` precedent.
+- New stateless endpoints: `GET /api/events` (filters, facets, pagination - same query as the dashboard page, extracted into `UnifiedEventFeedService`) and `POST /api/events/mute`. Both `throttle:overlay` + `lockdown`, Sanctum-stateful shed.
+- **Token abilities are now enforced for the first time**: the feed requires `read`, the mute toggle requires `write`. Tokens with no abilities set remain unrestricted (matches `hasAbility()`), so every existing overlay token keeps working. The mute toggle is deliberately the only write an overlay token can perform, and each mute write lands in the token's access log.
+- Live updates via the existing overlay broadcasting auth endpoint (it already signs `twitch-events`/`alerts` channels for a token): new events refresh page 1 debounced; the mute state flips live no matter where it was toggled from.
+- `EventsTable` gained a `readonly` prop - replay stays a logged-in dashboard action.
+
+**Global alert mute (muted is muted)**
+
+- State lives in ONE place: a service-managed boolean control `alerts:muted` (user-scoped, source_managed, provisioned lazily on first toggle). The same control templates read - `[[[if:c:alerts:muted]]]ALERTS ARE MUTED[[[endif]]]` shows/hides live in overlays with zero engine changes, and `[[[c:alerts:muted_at]]]` ("muted since") comes free from the client-side `_at` companion. Conceptual sibling of the `tts` gate control.
+- `AlertMuteService`: `isMuted()` (one indexed exists() query, absent control = not muted) + `setMuted()` (provision, flip `'0'`/`'1'`, broadcast `ControlValueUpdated` with empty overlay_slug = all overlays).
+- Guarded at all three alert build-sites BEFORE any output: `TwitchEventSubController::renderEventAlert` (covers live webhooks, replay, test cheer), `ExternalAlertService::dispatch`, `ExternalEventController::replay`. Muting stops the visual broadcast, the alert sound, the ElevenLabs TTS synthesis (no credits burned), and the bot chat message. Events keep recording and controls keep updating - only alert output stops.
+- No replay bypass: replaying while muted returns a "Alerts are muted" warning instead; test cheer reports `alerts_muted` in its response.
+- Mute/unmute button + amber muted banner on both `/dashboard/events` (session, `POST /dashboard/events/mute`) and the token feed.
+- `alerts:muted` is in the Add-Control preset picker (new "Overlabels - Alerts" group, no integration required) so the overlay banner pattern is one click to add. `alerts` reserved as a control key; drive-by: `fourthwall`, `bmac`, `throne` added to `RESERVED_KEYS` too (they were missing, same collision class).
+
 ## July 2nd, 2026 - docs(controls): document preset controls on the Controls help page
 
 The Controls help page (`/help/controls`) thoroughly explained user-created controls but never mentioned preset controls - the service-managed values Overlabels feeds in from Twitch, the donation integrations, and the GPS app. New readers had no bridge from that page to the concept or to the exhaustive `/help/integration-presets` reference.

@@ -7,6 +7,7 @@ use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
+use App\Services\AlertMuteService;
 use App\Services\Expressions\AlertExpressionRenderer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,10 @@ class ExternalEventController extends Controller
 
         if ($externalEvent->user_id !== $user->id) {
             return back()->with('message', 'You do not own this event.')->with('type', 'error');
+        }
+
+        if (app(AlertMuteService::class)->isMuted($user)) {
+            return back()->with('message', 'Alerts are muted. Unmute alerts to replay events.')->with('type', 'warning');
         }
 
         $data = $externalEvent->normalized_payload ?? [];

@@ -6,7 +6,8 @@ import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Check, ExternalLink, ListPlus, Radio, RefreshCw } from '@lucide/vue';
+import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
+import { Check, ListPlus, Radio, RefreshCw } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -294,10 +295,9 @@ const breadcrumbs = [
               {{ refreshing ? 'Working' : 'Refresh' }}
             </button>
           </div>
-          <a href="/dashboard/events" target="_blank" class="btn btn-primary self-start sm:self-auto cursor-pointer">
-            Embed view
-            <ExternalLink class="ml-2 h-4 w-4" />
-          </a>
+          <div class="self-start sm:self-auto">
+            <EventsFeedLinkButton />
+          </div>
         </div>
 
         <!-- Filters Section -->
