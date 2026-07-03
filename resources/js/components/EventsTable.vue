@@ -212,13 +212,13 @@ const externalEventLabels: Record<string, Record<string, string>> = {
 // Keeping this next to externalEventLabels so both label sources are visible
 // at a glance when adding new event types.
 const twitchEventLabels: Record<string, string> = {
-  'channel.follow': 'followed',
-  'channel.subscribe': 'subscribed',
-  'channel.subscription.message': 'resubscribed',
-  'channel.subscription.gift': 'gifted subs',
-  'channel.cheer': 'cheered',
-  'channel.raid': 'raided',
-  'channel.channel_points_custom_reward_redemption.add': 'redeemed',
+  'channel.follow': 'follow',
+  'channel.subscribe': 'sub',
+  'channel.subscription.message': 'resub',
+  'channel.subscription.gift': 'gifted',
+  'channel.cheer': 'cheer',
+  'channel.raid': 'raid',
+  'channel.channel_points_custom_reward_redemption.add': 'redeem',
   'channel.channel_points_custom_reward_redemption.update': 'redemption updated',
   'stream.online': 'went live',
   'stream.offline': 'ended the stream',
@@ -299,7 +299,7 @@ function details(event: UnifiedEvent): string | null {
   switch (event.event_type) {
     case 'channel.subscribe':
     case 'channel.subscription.message':
-      return d.tier ? `Tier ${String(d.tier).replace('1000', '1').replace('2000', '2').replace('3000', '3')}` : null;
+      return d.tier ? `T${String(d.tier).replace('1000', '1').replace('2000', '2').replace('3000', '3')}` : null;
     case 'channel.subscription.gift':
       return d.total ? `${d.total} gifts` : null;
     case 'channel.cheer':
@@ -309,7 +309,7 @@ function details(event: UnifiedEvent): string | null {
     case 'channel.channel_points_custom_reward_redemption.add':
       return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
     case 'channel.channel_points_custom_reward_redemption.update':
-      return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
+      return null;
     default:
       return null;
   }
@@ -360,7 +360,9 @@ function relativeTime(iso: string): string {
             <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
               <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0 text-foreground" />
               <span v-if="who(event)" class="font-bold">{{ who(event) }}</span>
+              <span :class="getEventStatus(event).class" class="text-xs ml-4">{{ getEventStatus(event).label }}</span>
               <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
+              <span v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</span>
               <button
                 v-if="recipients.length"
                 type="button"
@@ -377,12 +379,10 @@ function relativeTime(iso: string): string {
               </button>
             </div>
             <div class="flex items-center gap-2 pl-4 text-xs w-full">
-              <div class="whitespace-nowrap text-ellipsis">{{ relativeTime(event.created_at) }}</div>
+              <div class="whitespace-nowrap text-ellipsis ml-auto">{{ relativeTime(event.created_at) }}</div>
               <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
 
-              <div v-if="details(event)" class="whitespace-nowrap text-ellipsis">{{ details(event) }}</div>
             </div>
-              <span :class="getEventStatus(event).class" class="text-xs ml-4">{{ getEventStatus(event).label }}</span>
           </div>
         </div>
       </PopoverTrigger>
