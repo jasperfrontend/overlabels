@@ -249,11 +249,6 @@ function eventTypeLabel(type: string): string {
       </button>
     </div>
 
-    <div v-if="alertsMuted" class="mb-2 flex items-center gap-2 border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-foreground">
-      <VolumeX class="h-4 w-4 shrink-0 text-amber-400" />
-      <span>All alerts are muted. Events keep recording; unmute to fire alerts again.</span>
-    </div>
-
     <!-- Collapsible Filters -->
     <div v-show="filtersOpen" id="event-filters" class="mb-2 border border-sidebar-border bg-sidebar-accent p-3">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -281,7 +281,7 @@ function eventTypeLabel(type: string): string {
       </button>
     </div>
 
-    <div v-if="alertsMuted" class="mb-2 flex items-center gap-2 border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-foreground">
+    <div v-if="alertsMuted" class="mb-2 flex items-center gap-2 sticky top-0 border border-[#82600a] bg-[#2e2511] px-3 py-2 text-sm text-foreground">
       <VolumeX class="h-4 w-4 shrink-0 text-amber-400" />
       <span>All alerts are muted. Events keep recording; unmute to fire alerts again.</span>
     </div>
