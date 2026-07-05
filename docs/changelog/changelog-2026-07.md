@@ -1,5 +1,14 @@
 # CHANGELOG JULY 2026
 
+## July 5th, 2026 - docs(bot): rename the "Bot Commands" help page to "Bot Expressions"
+
+The bot's user-facing feature is branded "Expressions" - and the dashboard route to author them is `/settings/bot/expressions` - but the help doc still said "Bot Commands" and lived at `/help/bot/commands`. That discrepancy is gone: the page is now "Bot Expressions" throughout, at `/help/bot/expressions`.
+
+- **Route renamed**: `/help/bot/commands` -> `/help/bot/expressions`, route name `help.bot.commands` -> `help.bot.expressions`. The Vue file stays `help/bot/Commands.vue` (only its route and copy changed). Sitemap entry updated. A `Route::redirect(..., 301)` keeps the old `/help/bot/commands` URL working for any bookmarks or search-indexed links.
+- **Copy fully purged** of the word "command" in prose: title, hero, breadcrumb, TOC, section headings, warning block, and card descriptions now read "expression" (e.g. "Control expressions are OFF by default", "Your own expressions", "meta-expression"). Left untouched on purpose: literal syntax tokens (`!command`, `!cmd`, `!commands`, `!ol cmd`), the other bots' owned command names, and the simulated bot replies (they mirror what the bot actually says).
+- **Callers updated**: the Bot help index nav card, the two links from the Aliases page, and the Settings > Integrations bot blurb all point at the new route and read "Bot Expressions".
+- The `localStorage` acknowledgment key (`help.bot.commands.controlsWarningAck`) was intentionally left unchanged so streamers who already dismissed the controls-access warning don't see it again.
+
 ## July 4th, 2026 - fix(events): hide the redundant bare sub that Twitch fires next to every resub
 
 A resub emits two EventSub events at the same instant - `channel.subscribe` and `channel.subscription.message` - so the feed always showed a pointless pair: "JP_4468 resub T1" directly above "JP_4468 sub T1". Now the bare sub is folded away and only the resub row remains.

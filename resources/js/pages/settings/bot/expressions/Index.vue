@@ -72,7 +72,9 @@ function expiresIn(iso: string): string {
           title="Bot expressions"
           description="Custom chat commands that read from your controls, Twitch data, and the chatter who fired them. The bot speaks the resolved string."
         />
-
+        <div>
+          <a class="btn btn-primary" href="/help/bot/expressions" target="_blank">Learn how Bot Expressions work</a>
+        </div>
         <div v-if="!botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
           <p class="text-foreground">
             The Overlabels bot isn't enabled yet. Bot expressions are saved here, but nothing fires until the bot is on.
@@ -137,7 +139,7 @@ function expiresIn(iso: string): string {
                 </span>
               </div>
 
-              <p class="break-words font-mono text-sm text-foreground/80">{{ expression.expression }}</p>
+              <p class="wrap-break-word font-mono text-sm text-foreground/80">{{ expression.expression }}</p>
 
               <p class="text-xs text-foreground/60">
                 Last fired: {{ formatDate(expression.last_fired_at) }}
