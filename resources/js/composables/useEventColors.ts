@@ -27,12 +27,12 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
 };
 
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
-  kofi: { dot: 'fill-[#ff5a16]', border: 'hover:border-l-[#ff5a16]' },
-  streamlabs: { dot: 'fill-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
-  streamelements: { dot: 'fill-[#0691ff]', border: 'hover:border-l-[#0691ff]' },
-  twitch: { dot: 'fill-[#9146ff]', border: 'hover:border-l-[#9146ff]' },
-  bmac: { dot: 'fill-[#ffdd00]', border: 'hover:border-l-[#ffdd00]' },
-  fourthwall: { dot: 'fill-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },
+  kofi: { dot: 'text-[#ff5a16]', border: 'hover:border-l-[#ff5a16]' },
+  streamlabs: { dot: 'text-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
+  streamelements: { dot: 'text-[#0691ff]', border: 'hover:border-l-[#0691ff]' },
+  twitch: { dot: 'text-[#9146ff]', border: 'hover:border-l-[#9146ff]' },
+  bmac: { dot: 'text-[#ffdd00]', border: 'hover:border-l-[#ffdd00]' },
+  fourthwall: { dot: 'text-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },
 };
 
 const DEFAULT_STYLE = { dot: 'bg-slate-500', border: 'hover:border-l-slate-500' };

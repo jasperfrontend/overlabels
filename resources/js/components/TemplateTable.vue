@@ -109,17 +109,12 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
       <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="flex flex-col flex-wrap items-left gap-x-2 gap-y-1">
           <div class="flex items-center gap-3">
-          <div
-            v-if="showEvent && firstEvent(t)"
-            class="h-2 w-2 shrink-0 rounded-full"
-            :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)"
-          ></div>
+
           <span class="font-medium">{{ t.name }}</span>
           <Badge v-if="!t.is_public" variant="destructive" class="text-xs">Private</Badge>
           </div>
           <span
             class="font-normal text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%]"
-            :class="t.type === 'alert' ? 'pl-5' : ''"
           >
             {{ t.description }}
           </span>
@@ -127,8 +122,8 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
 
         <div
           v-if="showEvent && firstEvent(t)"
-          class="text-xs text-muted-foreground/60"
-          :class="firstEvent(t) ? 'pl-5' : ''"
+          class="text-xs"
+          :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)"
         >
           {{ eventLabel(firstEvent(t)!) }}
         </div>
