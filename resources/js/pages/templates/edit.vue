@@ -15,7 +15,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
-import TriggerManager from '@/components/TriggerManager.vue';
+import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
 import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
 import {
   Brackets,
@@ -70,16 +70,6 @@ interface FreesoundLibraryRow {
   duration: number | null;
   preview_url: string;
   freesound_url: string | null;
-}
-
-interface TriggerData {
-  eventTypes: Record<string, string>;
-  externalEventTypes: Record<string, Record<string, string>>;
-  connectedServices: string[];
-  assigned: {
-    twitch: Array<{ event_type: string; duration_ms: number; enabled: boolean }>;
-    external: Array<{ service: string; event_type: string; duration_ms: number; enabled: boolean }>;
-  };
 }
 
 interface Props {

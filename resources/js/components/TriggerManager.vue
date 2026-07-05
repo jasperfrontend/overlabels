@@ -23,7 +23,7 @@ interface ExternalAssignment {
   enabled: boolean;
 }
 
-interface TriggerData {
+export interface TriggerData {
   eventTypes: Record<string, string>;
   externalEventTypes: Record<string, Record<string, string>>;
   /** Event types that support a variant condition, mapped to their unit label. */

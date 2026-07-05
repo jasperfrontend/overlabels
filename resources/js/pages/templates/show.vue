@@ -6,7 +6,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
-import TriggerManager from '@/components/TriggerManager.vue';
+import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
@@ -48,16 +48,6 @@ interface OverlayOption {
   id: number;
   name: string;
   slug: string;
-}
-
-interface TriggerData {
-  eventTypes: Record<string, string>;
-  externalEventTypes: Record<string, Record<string, string>>;
-  connectedServices: string[];
-  assigned: {
-    twitch: Array<{ event_type: string; duration_ms: number; enabled: boolean }>;
-    external: Array<{ service: string; event_type: string; duration_ms: number; enabled: boolean }>;
-  };
 }
 
 const props = defineProps<{
@@ -385,7 +375,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
             <!-- Code panel -->
-            <div class="relative flex-1  text-gray-700 dark:text-accent-foreground">
+            <div class="relative flex-1 min-w-0 text-gray-700 dark:text-accent-foreground">
               <!-- Add to OBS panel -->
               <div
                 v-if="activeTab === 'add-to-obs'"
@@ -422,8 +412,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               </div>
               <!-- Read-only code view -->
               <template v-else>
-                <pre class="h-[50vh] overflow-auto p-4 bg-white dark:bg-[#160e21]"><code
-                  class="text-sm text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code></pre>
+                <div class="h-[50vh] w-full overflow-auto p-4 bg-white dark:bg-[#160e21]">
+                  <code class="text-sm whitespace-break-spaces overflow-hidden text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code>
+                </div>
                 <button
                   @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
                   class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
