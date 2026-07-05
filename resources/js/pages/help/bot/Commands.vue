@@ -141,7 +141,7 @@ const olCommands: BotCommandDoc[] = [
   {
     command: '!ol cmd options <name> <option> <value>',
     tier: 'moderator',
-    summary: 'Tune one option on an expression. Options: cooldown, permission, enabled, hidden.',
+    summary: 'Tune one option on an expression. Options: cooldown, permission, enabled, destroy, hidden.',
     example: { chat: '!ol cmd options lol cooldown 30', reply: '@mod !lol cooldown is now 30s' },
     notes: 'Permission shortforms work: mod, sub, vip, bc, all. Booleans accept true/false/on/off/yes/no/1/0.',
   },
@@ -408,6 +408,7 @@ const miscCommands: BotCommandDoc[] = [
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">cooldown</code> - integer seconds, 0 to 86400. Broadcaster bypasses cooldown.</li>
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">permission</code> - <code>everyone</code> / <code>sub</code> / <code>vip</code> / <code>mod</code> / <code>broadcaster</code>. <code>all</code> is a synonym for everyone, <code>bc</code> for broadcaster.</li>
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">enabled</code> - <code>true</code> or <code>false</code> (also accepts on/off, yes/no, 1/0).</li>
+          <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">destroy</code> - integer hours, 0 to 8760 (1 year).</li>
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">hidden</code> - hides this expression from the future <code>!commands</code> listing without disabling it.</li>
         </ul>
       </div>
@@ -458,14 +459,7 @@ const miscCommands: BotCommandDoc[] = [
         Everything above is built into the bot. On top of that you can author four kinds of custom expressions - each
         is managed from the dashboard, and three of them are also reachable through <code>!ol</code> in chat.
       </p>
-      <div class="grid gap-3 sm:grid-cols-3">
-        <a :href="route('help.expressions')" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
-          <p class="mb-1 font-semibold text-foreground">Bot Expressions</p>
-          <p class="text-sm text-muted-foreground">
-            Custom <code>!command</code> chat replies templated against controls, Helix data, and the chatter who
-            fired them. The bot speaks the resolved string.
-          </p>
-        </a>
+      <div class="grid gap-3 sm:grid-cols-2">
         <a :href="route('help.bot.aliases')" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Aliases</p>
           <p class="text-sm text-muted-foreground">
