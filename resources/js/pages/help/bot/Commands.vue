@@ -230,14 +230,16 @@ const miscCommands: BotCommandDoc[] = [
     canonical-url="https://overlabels.com/help/bot/expressions"
   >
     <!-- Hero -->
-    <div class="mb-8">
+    <div>
       <Heading
         title="Bot Expressions"
         title-class="text-4xl font-bold mb-4"
         description="Every chat expression the @overlabels Twitch bot understands - controls, !ol chat-admin meta-expression, list operations, and built-ins. Click a row to expand it and show an example."
       />
     </div>
-
+    <div class="mt-4 mb-8">
+      <p>Warning: This page is&hellip; Slightly overwhelming. I'm fully aware of that and I hope to make this page less of a knowledge bomb in the future. For now: if you learn how <code>!ol</code> works, you're well on your way to become an Overlabels Bot Expressions expert.</p>
+    </div>
     <!-- Controls-access warning (collapsed version once acknowledged) -->
     <div
       v-if="!iUnderstand"
