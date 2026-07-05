@@ -26,12 +26,17 @@ const props = defineProps<{
 }>();
 
 function normalizeFilters(input?: FiltersShape) {
+  // Only accept string values. An empty PHP `$request->only()` serializes to a
+  // JSON array, which arrives here as `[]` - reading `.sort`/`.filter` off that
+  // yields native Array methods (functions), not strings, which then leak into
+  // the query string and crash the ORDER BY. Guarding on typeof keeps us safe.
+  const str = (val: unknown) => (typeof val === 'string' ? val : '');
   return {
-    filter: input?.filter || 'all_templates',
-    search: input?.search || '',
-    type: input?.type || '',
-    sort: input?.sort || 'created_at',
-    direction: input?.direction || 'desc',
+    filter: str(input?.filter) || 'all_templates',
+    search: str(input?.search),
+    type: str(input?.type),
+    sort: str(input?.sort) || 'created_at',
+    direction: str(input?.direction) || 'desc',
   };
 }
 
