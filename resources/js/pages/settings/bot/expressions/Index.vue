@@ -139,7 +139,7 @@ function expiresIn(iso: string): string {
                 </span>
               </div>
 
-              <p class="break-words font-mono text-sm text-foreground/80">{{ expression.expression }}</p>
+              <p class="wrap-break-word font-mono text-sm text-foreground/80">{{ expression.expression }}</p>
 
               <p class="text-xs text-foreground/60">
                 Last fired: {{ formatDate(expression.last_fired_at) }}
