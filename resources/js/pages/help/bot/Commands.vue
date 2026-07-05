@@ -8,7 +8,7 @@ import Heading from '@/components/Heading.vue';
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Help', href: '/help' },
   { title: 'Twitch Bot', href: '/help/bot' },
-  { title: 'Commands', href: '/help/bot/commands' },
+  { title: 'Expressions', href: '/help/bot/expressions' },
 ];
 
 const STORAGE_KEY = 'help.bot.commands.controlsWarningAck';
@@ -148,7 +148,7 @@ const olCommands: BotCommandDoc[] = [
   {
     command: '!ol alias add <name> <target>',
     tier: 'moderator',
-    summary: 'Create a Bot Alias - a short command that rewrites to a longer one.',
+    summary: 'Create a Bot Alias - a short expression that rewrites to a longer one.',
     example: { chat: '!ol alias add w !inc wins {1}', reply: '@mod added alias !w -> !inc wins {1}' },
     notes: 'Use {1}, {2}, ... for positional args from the alias call site. {*} captures all remaining args. Aliases can target builtins or your expressions, but not other aliases (one hop only).',
   },
@@ -169,7 +169,7 @@ const olCommands: BotCommandDoc[] = [
     tier: 'moderator',
     summary: 'Same options as !ol cmd options, applied to an alias.',
     example: { chat: '!ol alias options w permission broadcaster', reply: '@mod alias !w permission is now broadcaster' },
-    notes: 'The target command\'s own permission still applies after the alias rewrite, so this only restricts who can trigger the alias itself.',
+    notes: 'The target expression\'s own permission still applies after the alias rewrite, so this only restricts who can trigger the alias itself.',
   },
   {
     command: '!ol list [cmd|alias]',
@@ -193,7 +193,7 @@ const listCommands: BotCommandDoc[] = [
     tier: 'moderator',
     summary: 'Operate on one of your Lists. ~20 actions cover read, append, draw, snapshot, clear, etc.',
     example: { chat: '!list raffle count', reply: '@mod \'raffle\' has 17 entries' },
-    notes: 'The verb after the slug is the action. Full action vocabulary lives on the /help/lists page - this command exposes every action there to chat.',
+    notes: 'The verb after the slug is the action. Full action vocabulary lives on the /help/lists page - this expression exposes every action there to chat.',
   },
 ];
 
@@ -225,16 +225,16 @@ const miscCommands: BotCommandDoc[] = [
 <template>
   <HelpLayout
     :breadcrumbs="breadcrumbs"
-    title="Bot Commands - Overlabels Help"
-    description="Every chat command the @overlabels Twitch bot understands - controls, !ol chat-admin meta-command, list operations, and built-ins."
-    canonical-url="https://overlabels.com/help/bot/commands"
+    title="Bot Expressions - Overlabels Help"
+    description="Every chat expression the @overlabels Twitch bot understands - controls, !ol chat-admin meta-expression, list operations, and built-ins."
+    canonical-url="https://overlabels.com/help/bot/expressions"
   >
     <!-- Hero -->
     <div class="mb-8">
       <Heading
-        title="Bot Commands"
+        title="Bot Expressions"
         title-class="text-4xl font-bold mb-4"
-        description="Every chat command the @overlabels Twitch bot understands - controls, !ol chat-admin meta-command, list operations, and built-ins. Click a row to expand it and show an example."
+        description="Every chat expression the @overlabels Twitch bot understands - controls, !ol chat-admin meta-expression, list operations, and built-ins. Click a row to expand it and show an example."
       />
     </div>
 
@@ -245,14 +245,14 @@ const miscCommands: BotCommandDoc[] = [
     >
       <h2 class="mb-2 text-xl font-semibold text-amber-500">
         <ShieldAlert class="mr-2 inline-block h-5 w-5" />
-        Control commands are OFF by default
+        Control expressions are OFF by default
       </h2>
       <p class="mb-3 text-foreground">
         Everything in the <em>Controls</em> section below is gated behind a per-channel switch. The default is
         <strong>off</strong>: until you flip it on, the bot will ignore <code>!control</code>, <code>!set</code>,
         <code>!increment</code>, <code>!decrement</code>, <code>!reset</code>, <code>!enable</code>,
-        <code>!disable</code>, and <code>!toggle</code> entirely. <strong>The !ol chat-admin commands and
-        !list meta-command work regardless</strong> - they don't touch your controls layer.
+        <code>!disable</code>, and <code>!toggle</code> entirely. <strong>The !ol chat-admin expressions and
+        !list meta-expression work regardless</strong> - they don't touch your controls layer.
       </p>
       <p class="mb-3 text-foreground">
         To open the controls surface for your channel, type <code class="rounded bg-background px-1.5 py-0.5 font-mono">!enablecontrols</code>
@@ -285,8 +285,8 @@ const miscCommands: BotCommandDoc[] = [
         <li><a href="#controls" class="text-violet-400 hover:underline">Controls</a></li>
         <li><a href="#access" class="text-violet-400 hover:underline">Controls-access switch</a></li>
         <li><a href="#ol" class="text-violet-400 hover:underline"><code>!ol</code> chat-admin</a></li>
-        <li><a href="#list" class="text-violet-400 hover:underline"><code>!list</code> meta-command</a></li>
-        <li><a href="#user" class="text-violet-400 hover:underline">Your own commands</a></li>
+        <li><a href="#list" class="text-violet-400 hover:underline"><code>!list</code> meta-expression</a></li>
+        <li><a href="#user" class="text-violet-400 hover:underline">Your own expressions</a></li>
         <li><a href="#misc" class="text-violet-400 hover:underline">Miscellaneous</a></li>
         <li><a href="#tiers" class="text-violet-400 hover:underline">Permission tiers</a></li>
       </ol>
@@ -362,7 +362,7 @@ const miscCommands: BotCommandDoc[] = [
     <section class="mb-12" id="ol">
       <h2 class="mb-3 text-2xl font-bold"><code>!ol</code> chat-admin</h2>
       <p class="mb-3 text-foreground">
-        Manage your custom commands and aliases without leaving Twitch. <code class="rounded bg-background px-1.5 py-0.5 font-mono">!ol</code>
+        Manage your custom expressions and aliases without leaving Twitch. <code class="rounded bg-background px-1.5 py-0.5 font-mono">!ol</code>
         is namespaced this way so it doesn't fight with other bots (StreamElements, Wizebot, Nightbot, Streamlabs Cloudbot
         all already own <code>!command</code> / <code>!cmd</code> / <code>!commands</code>).
       </p>
@@ -406,16 +406,16 @@ const miscCommands: BotCommandDoc[] = [
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">cooldown</code> - integer seconds, 0 to 86400. Broadcaster bypasses cooldown.</li>
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">permission</code> - <code>everyone</code> / <code>sub</code> / <code>vip</code> / <code>mod</code> / <code>broadcaster</code>. <code>all</code> is a synonym for everyone, <code>bc</code> for broadcaster.</li>
           <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">enabled</code> - <code>true</code> or <code>false</code> (also accepts on/off, yes/no, 1/0).</li>
-          <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">hidden</code> - hides this command from the future <code>!commands</code> listing without disabling it.</li>
+          <li><code class="rounded bg-background px-1.5 py-0.5 font-mono">hidden</code> - hides this expression from the future <code>!commands</code> listing without disabling it.</li>
         </ul>
       </div>
     </section>
 
     <!-- Section: !list -->
     <section class="mb-12" id="list">
-      <h2 class="mb-3 text-2xl font-bold"><code>!list</code> meta-command</h2>
+      <h2 class="mb-3 text-2xl font-bold"><code>!list</code> meta-expression</h2>
       <p class="mb-5 text-foreground">
-        One mod-only command exposes the full action vocabulary of your Lists to chat. The shape is
+        One mod-only expression exposes the full action vocabulary of your Lists to chat. The shape is
         <code class="rounded bg-background px-1.5 py-0.5 font-mono">!list &lt;slug&gt; &lt;action&gt; [args]</code> and the verbs
         cover read (<code>count</code>, <code>first</code>, <code>random</code>...), grow (<code>add</code>), shrink (<code>draw</code>, <code>pop</code>, <code>clear</code>),
         snapshot/restore, and lifecycle (<code>disable</code>, <code>enable</code>).
@@ -451,9 +451,9 @@ const miscCommands: BotCommandDoc[] = [
 
     <!-- Section: User-defined -->
     <section class="mb-12" id="user">
-      <h2 class="mb-3 text-2xl font-bold">Your own commands</h2>
+      <h2 class="mb-3 text-2xl font-bold">Your own expressions</h2>
       <p class="mb-4 text-foreground">
-        Everything above is built into the bot. On top of that you can author four kinds of custom commands - each
+        Everything above is built into the bot. On top of that you can author four kinds of custom expressions - each
         is managed from the dashboard, and three of them are also reachable through <code>!ol</code> in chat.
       </p>
       <div class="grid gap-3 sm:grid-cols-3">
@@ -467,20 +467,20 @@ const miscCommands: BotCommandDoc[] = [
         <a :href="route('help.bot.aliases')" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">Bot Aliases</p>
           <p class="text-sm text-muted-foreground">
-            Short commands that rewrite to longer ones before dispatch. <code>!w 2</code> becomes
+            Short expressions that rewrite to longer ones before dispatch. <code>!w 2</code> becomes
             <code>!inc wins 2</code>. Positional placeholders: <code>{1}</code>, <code>{2}</code>, <code>{*}</code>.
           </p>
         </a>
         <a :href="`${route('help.lists')}#appenders`" class="block border border-sidebar-border bg-sidebar-accent p-4 hover:border-violet-400/50">
           <p class="mb-1 font-semibold text-foreground">List Appenders</p>
           <p class="text-sm text-muted-foreground">
-            Chat commands that append a chatter's input to one of your Lists. Raffle entries, quote walls,
+            Chat expressions that append a chatter's input to one of your Lists. Raffle entries, quote walls,
             song requests - one verb per kind of growing list.
           </p>
         </a>
       </div>
       <p class="mt-4 text-sm text-foreground">
-        A custom command can't claim the name of a built-in - <code>!control</code>, <code>!ol</code>,
+        A custom expression can't claim the name of a built-in - <code>!control</code>, <code>!ol</code>,
         <code>!list</code>, <code>!ping</code>, etc. are reserved. Validation catches the collision at save time
         on both the dashboard and <code>!ol cmd add</code>.
       </p>
@@ -514,7 +514,7 @@ const miscCommands: BotCommandDoc[] = [
         </details>
       </div>
       <p class="mt-3 text-sm text-foreground">
-        Chat Castle (the chat-driven map game) ships several command verbs of its own - <code>!join</code>,
+        Chat Castle (the chat-driven map game) ships several chat verbs of its own - <code>!join</code>,
         <code>!p</code>, <code>!h</code>, <code>!a</code>, <code>!s</code>, <code>!castlehelp</code>. Those are
         documented separately at <a href="/help/gamejam" class="text-violet-400 hover:underline">/help/gamejam</a>.
       </p>

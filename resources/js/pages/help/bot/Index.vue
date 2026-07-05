@@ -12,9 +12,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const pages = [
   {
-    title: 'Commands',
-    description: 'The built-in chat commands the bot ships with, plus one working example per command.',
-    href: '/help/bot/commands',
+    title: 'Expressions',
+    description: 'The built-in chat expressions the bot ships with, plus one working example per expression.',
+    href: '/help/bot/expressions',
     icon: Terminal,
   },
   {

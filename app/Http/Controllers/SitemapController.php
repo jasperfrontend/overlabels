@@ -28,7 +28,7 @@ class SitemapController extends Controller
         ['path' => '/help/why-overlabels', 'priority' => '0.7', 'changefreq' => 'monthly'],
         ['path' => '/help/manifesto', 'priority' => '0.6', 'changefreq' => 'monthly'],
         ['path' => '/help/bot', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/bot/commands', 'priority' => '0.7', 'changefreq' => 'monthly'],
+        ['path' => '/help/bot/expressions', 'priority' => '0.7', 'changefreq' => 'monthly'],
         ['path' => '/help/gamejam', 'priority' => '0.6', 'changefreq' => 'monthly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
     ];

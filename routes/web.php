@@ -173,9 +173,12 @@ Route::get('/help/bot', function () {
     return Inertia::render('help/bot/Index');
 })->name('help.bot');
 
-Route::get('/help/bot/commands', function () {
+Route::get('/help/bot/expressions', function () {
     return Inertia::render('help/bot/Commands');
-})->name('help.bot.commands');
+})->name('help.bot.expressions');
+
+// Renamed from /help/bot/commands - keep old links and indexed URLs working.
+Route::redirect('/help/bot/commands', '/help/bot/expressions', 301);
 
 Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');

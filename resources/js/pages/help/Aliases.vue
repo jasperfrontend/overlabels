@@ -130,7 +130,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </div>
           <p class="mt-4 text-foreground">
             Full <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">!ol alias</code> reference
-            (add / edit / delete / options) lives on <Link href="/help/bot/commands#ol" class="text-violet-400 hover:underline">/help/bot/commands</Link>.
+            (add / edit / delete / options) lives on <Link href="/help/bot/expressions#ol" class="text-violet-400 hover:underline">/help/bot/expressions</Link>.
           </p>
         </section>
 
@@ -419,8 +419,8 @@ const breadcrumbs: BreadcrumbItem[] = [
               who fired them.
             </li>
             <li>
-              <Link href="/help/bot/commands" class="text-violet-400 hover:underline">Bot Commands</Link> - every
-              built-in chat command the @overlabels bot ships with, plus the full <code>!ol</code> chat-admin
+              <Link href="/help/bot/expressions" class="text-violet-400 hover:underline">Bot Expressions</Link> - every
+              built-in chat expression the @overlabels bot ships with, plus the full <code>!ol</code> chat-admin
               vocabulary.
             </li>
             <li>
