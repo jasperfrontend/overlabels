@@ -443,7 +443,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Actions -->
       <div class="mt-6 flex justify-between">
-        <a :href="route('templates.index')" class="btn btn-cancel"> ← All Overlays </a>
+        <a href="/templates?filter=mine&type=static" class="btn btn-cancel"> ← My Overlays </a>
       </div>
     </div>
   </AppLayout>
