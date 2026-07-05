@@ -35,7 +35,7 @@ const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   fourthwall: { dot: 'text-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },
 };
 
-const DEFAULT_STYLE = { dot: 'bg-slate-500', border: 'hover:border-l-slate-500' };
+const DEFAULT_STYLE = { dot: 'text-slate-500', border: 'hover:border-l-slate-500' };
 
 export const EVENT_TYPE_LABELS: Record<string, string> = {
   'channel.follow': 'Follow',

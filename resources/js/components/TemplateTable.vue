@@ -114,7 +114,7 @@ function eventLabel(ev: { eventType: string; source?: string }): string {
           <Badge v-if="!t.is_public" variant="destructive" class="text-xs">Private</Badge>
           </div>
           <span
-            class="font-normal text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%]"
+            class="font-normal text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%]"
           >
             {{ t.description }}
           </span>
