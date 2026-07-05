@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## July 6th, 2026 - fix(templates): stop the templates list crashing when a filter is changed from a bare URL
+
+Visiting `/templates` with no query string and then changing the Ownership (or any) filter threw a 500: `column "function sort() { [native code] }" does not exist`. The ORDER BY was literally receiving the string form of JavaScript's native `Array.prototype.sort`.
+
+- **Root cause**: an empty `$request->only([...])` returns a PHP `[]`, which serializes to a JSON array. On the Vue side `props.filters` then arrived as `[]` instead of `{}`, so `normalizeFilters` read `input?.sort` / `input?.filter` off an array and got the native `Array.prototype.sort` / `.filter` methods (truthy functions) instead of strings. That is also why both selects rendered "unset" - no `<option value>` matches a function. On the next `applyFilter`, `buildQuery` saw a truthy non-`'created_at'` value and serialized the function into the URL, which reached Postgres as an ORDER BY column name.
+- **Fix at the source** (`OverlayTemplateController@index`): cast the filters payload to `(object)` so the empty case serializes as `{}`, never `[]`.
+- **Defense in depth** (`templates/index.vue` `normalizeFilters`): only accept string values, so a non-string can never again leak into the query string regardless of the payload shape.
+
 ## July 5th, 2026 - docs(bot): rename the "Bot Commands" help page to "Bot Expressions"
 
 The bot's user-facing feature is branded "Expressions" - and the dashboard route to author them is `/settings/bot/expressions` - but the help doc still said "Bot Commands" and lived at `/help/bot/commands`. That discrepancy is gone: the page is now "Bot Expressions" throughout, at `/help/bot/expressions`.

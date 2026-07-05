@@ -88,7 +88,7 @@ class OverlayTemplateController extends Controller
 
         return Inertia::render('templates/index', [
             'templates' => $templates,
-            'filters' => $request->only(['filter', 'search', 'type', 'sort', 'direction']),
+            'filters' => (object) $request->only(['filter', 'search', 'type', 'sort', 'direction']),
         ]);
     }
 
