@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 23rd, 2026 - chore(deps): update Composer and npm dependencies
+
+Routine dependency refresh across both package managers, plus a fix for a real type regression the update surfaced.
+
+- **Composer**: `laravel/framework` 13.16.1 -> 13.21.1, plus minor/patch bumps to Reverb, Sanctum, Socialite, Telescope, Sail, Pest, and their transitive deps. All patch/minor - no majors pending. Full Pest suite green (1011 tests).
+- **npm, in-range**: all packages with `Wanted === Latest` bumped via `npm update` (reka-ui, pusher-js, laravel-echo, vite, tailwindcss, eslint, typescript-eslint, and others).
+- **npm, major bumps taken**: `pinia` 3 -> 4 (now requires `@vue/devtools-api` as an explicit peer, added as a direct dependency), `katex` 0.17 -> 0.18 (its 0.18 breaking change renames internal CSS classes, but this app only uses KaTeX's own bundled stylesheet so nothing to update), `@types/node` 25 -> 26. Removed `@types/katex` as a dependency - katex now ships its own types (`types/katex.d.ts`).
+- **npm, major bump skipped**: `typescript` 6 -> 7. `typescript-eslint@8.65.0` (current latest) declares a peer range of `>=4.8.4 <6.1.0`, so the lint toolchain doesn't support TS 7 yet. Left pinned at `^6.0.3`.
+- **Security**: `concurrently`'s transitive `shell-quote` had a ReDoS advisory (GHSA-395f-4hp3-45gv). Rather than downgrade `concurrently`, pinned `shell-quote` to `^1.10.0` via the existing `overrides` block (same pattern already used for `ws`). `npm audit` now reports 0 vulnerabilities.
+- **Fixed real regression**: `reka-ui` 2.10.0 shipped "enhanced type inference for `useForwardPropsEmits`" - which correctly surfaced that our `Tabs.vue` wrapper extended the generic `TabsRootProps` unparameterized, defaulting its `defaultValue`/`modelValue` types to the wide `StringOrNumber` union instead of the `string` our own `emits` and the actual component use. Fixed by extending `TabsRootProps<string>` explicitly. Type-only, `defaultValue` isn't even used anywhere in the app yet, so no runtime behavior changed.
+- Verified with `vue-tsc --noEmit`, `npm run lint`, `npm run build`, and `php artisan test` - all clean.
+
 ## July 6th, 2026 - fix(templates): stop the templates list crashing when a filter is changed from a bare URL
 
 Visiting `/templates` with no query string and then changing the Ownership (or any) filter threw a 500: `column "function sort() { [native code] }" does not exist`. The ORDER BY was literally receiving the string form of JavaScript's native `Array.prototype.sort`.

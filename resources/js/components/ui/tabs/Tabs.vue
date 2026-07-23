@@ -3,7 +3,7 @@ import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 import { TabsRoot, type TabsRootProps, useForwardPropsEmits } from 'reka-ui'
 
-interface Props extends TabsRootProps {
+interface Props extends TabsRootProps<string> {
   class?: HTMLAttributes['class']
 }
 
