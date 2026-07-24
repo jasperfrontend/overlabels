@@ -5,22 +5,31 @@ import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
-const sidebarNavItems: NavItem[] = [
+interface NavGroup {
+    label: string | null;
+    hint?: string;
+    items: NavItem[];
+}
+
+const sidebarNavGroups: NavGroup[] = [
     {
-        title: 'Account',
-        href: '/settings/account',
+        label: null,
+        items: [
+            { title: 'Account', href: '/settings/account' },
+            { title: 'Integrations', href: '/settings/integrations' },
+            { title: 'Usage', href: '/settings/usage' },
+            { title: 'Controls', href: '/settings/controls' },
+        ],
     },
     {
-        title: 'Integrations',
-        href: '/settings/integrations',
-    },
-    {
-        title: 'Usage',
-        href: '/settings/usage',
-    },
-    {
-        title: 'Controls',
-        href: '/settings/controls',
+        label: 'Developer tools',
+        hint: 'Contains sensitive data - avoid opening these on stream.',
+        items: [
+            { title: 'Token Generator', href: '/tokens' },
+            { title: 'Tags Generator', href: '/tags' },
+            { title: 'Your Twitch Data', href: '/twitchdata' },
+            { title: 'Testing Guide', href: '/testing' },
+        ],
     },
 ];
 
@@ -36,17 +45,28 @@ const currentPath = page.url.split('?')[0];
         <div class="flex flex-col space-y-8 md:space-y-0 lg:flex-row lg:space-y-0 lg:space-x-12 mt-4">
             <aside class="w-full max-w-xl lg:w-48">
                 <nav class="flex flex-col space-y-1 space-x-0">
-                    <Button
-                        v-for="item in sidebarNavItems"
-                        :key="item.href"
-                        variant="ghost"
-                        :class="['w-full justify-start', { 'bg-muted': currentPath === item.href }]"
-                        as-child
-                    >
-                        <Link :href="item.href">
-                            {{ item.title }}
-                        </Link>
-                    </Button>
+                    <template v-for="(group, index) in sidebarNavGroups" :key="group.label ?? index">
+                        <div
+                            v-if="group.label"
+                            class="px-4 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                        >
+                            {{ group.label }}
+                        </div>
+                        <p v-if="group.hint" class="px-4 pb-1 text-xs text-muted-foreground">
+                            {{ group.hint }}
+                        </p>
+                        <Button
+                            v-for="item in group.items"
+                            :key="item.href"
+                            variant="ghost"
+                            :class="['w-full justify-start cursor-pointer', { 'bg-muted': currentPath === item.href }]"
+                            as-child
+                        >
+                            <Link :href="item.href">
+                                {{ item.title }}
+                            </Link>
+                        </Button>
+                    </template>
                 </nav>
             </aside>
 

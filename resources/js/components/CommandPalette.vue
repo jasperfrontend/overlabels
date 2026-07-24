@@ -9,6 +9,7 @@ import {
   Bell,
   BookOpen,
   Brackets,
+  Code,
   Coffee,
   FileText,
   Heart,
@@ -16,7 +17,11 @@ import {
   Layers,
   LayoutGrid,
   Library,
+  List,
   Megaphone,
+  MessageSquare,
+  MessageSquareCode,
+  Newspaper,
   Pipette,
   Search,
   Settings,
@@ -56,12 +61,19 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
     { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
     { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
-    { id: 'alerts-builder', label: 'Alerts builder', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings'] },
+    { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
+    { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
+    { id: 'updates', label: 'Updates', section: 'Navigation', href: route('updates.index'), icon: Newspaper, keywords: ['news', 'changelog', 'releases'] },
+
+    { id: 'bot-expressions', label: 'Bot Expressions', section: 'Chat bot', href: route('settings.bot.expressions.index'), icon: MessageSquare, keywords: ['bot', 'commands', 'chat'] },
+    { id: 'bot-aliases', label: 'Bot Aliases', section: 'Chat bot', href: route('settings.bot.aliases.index'), icon: MessageSquareCode, keywords: ['bot', 'commands', 'chat'] },
 
     { id: 'account', label: 'Account Settings', section: 'Settings', href: route('settings.account'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme', 'locale', 'delete', 'account'] },
     { id: 'integrations', label: 'Integrations', section: 'Settings', href: route('settings.integrations.index'), icon: Coffee, keywords: ['kofi', 'streamlabs', 'connect'] },
+    { id: 'usage', label: 'Usage', section: 'Settings', href: '/settings/usage', icon: Activity, keywords: ['broadcasts', 'metering', 'limits'] },
+    { id: 'controls', label: 'Controls', section: 'Settings', href: '/settings/controls', icon: SlidersHorizontal, keywords: ['values', 'observability'] },
 
     { id: 'help', label: 'Overlabels Help', section: 'Learn', href: route('help'), icon: Library, keywords: ['help', 'assistence', 'learn', 'documentation', 'docs'] },
     { id: 'help-reference', label: 'Reference (Left Alt+r)', section: 'Learn', href: '/help/reference', icon: Library, keywords: ['search', 'tags', 'events', 'fields', 'lookup', 'documentation', 'docs'] },
@@ -72,9 +84,10 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'help-why-kofi', label: 'Why Ko-fi', section: 'Learn', href: route('help.why-kofi'), icon: Heart, keywords: ['donate', 'support'] },
     { id: 'help-manifesto', label: 'Manifesto', section: 'Learn', href: route('help.manifesto'), icon: FileText, keywords: ['about', 'philosophy'] },
 
-    { id: 'tokens', label: 'Token Generator', section: 'Tools', href: route('tokens.index'), icon: Shield, keywords: ['access', 'auth'] },
-    { id: 'twitchdata', label: 'Your Twitch Data', section: 'Tools', href: route('twitchdata'), icon: Terminal, keywords: ['api', 'debug', 'refresh'] },
-    { id: 'testing', label: 'Testing Guide', section: 'Tools', href: route('testing.index'), icon: Terminal, keywords: ['debug', 'test'] },
+    { id: 'tokens', label: 'Token Generator', section: 'Developer tools', href: route('tokens.index'), icon: Shield, keywords: ['access', 'auth'] },
+    { id: 'tags', label: 'Tags Generator', section: 'Developer tools', href: route('tags.generator'), icon: Code, keywords: ['template', 'generator'] },
+    { id: 'twitchdata', label: 'Your Twitch Data', section: 'Developer tools', href: route('twitchdata'), icon: Terminal, keywords: ['api', 'debug', 'refresh'] },
+    { id: 'testing', label: 'Testing Guide', section: 'Developer tools', href: route('testing.index'), icon: Terminal, keywords: ['debug', 'test'] },
   ];
 
   if (isAdmin.value) {

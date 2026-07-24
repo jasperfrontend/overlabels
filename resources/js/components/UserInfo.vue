@@ -5,7 +5,6 @@ import { useStreamState } from '@/composables/useStreamState';
 import type { User } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { Button } from '@/components/ui/button';
 
 const { isLive, isTransitioning, uptime } = useStreamState();
 
@@ -24,11 +23,7 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
 </script>
 
 <template>
-  <Button
-    variant="ghost"
-    size="icon"
-    class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
-  >
+  <span class="relative inline-flex size-10 items-center justify-center p-1">
     <Avatar v-if="showAvatar" class="size-8 overflow-hidden rounded-full">
       <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
       <AvatarFallback
@@ -38,13 +33,13 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     </Avatar>
     <span
       v-if="isLive"
-      class="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-green-500 ring-2 ring-background"
+      class="absolute top-0 right-0 size-2 rounded-full bg-green-500 ring-2 ring-background"
     />
     <span
       v-else-if="isTransitioning"
-      class="absolute -top-0.5 -right-0.5 size-2 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
+      class="absolute top-0 right-0 size-2 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
     />
-  </Button>
+  </span>
 
   <div class="grid flex-1 text-left text-sm leading-tight" v-if="user">
     <span class="truncate font-medium">{{ user.name }}</span>

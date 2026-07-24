@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
 import { usePage } from '@inertiajs/vue3';
+import { ChevronDown } from '@lucide/vue';
 import type { BreadcrumbItemType } from '@/types';
 import type { AppPageProps } from '@/types';
 import { computed } from 'vue';
@@ -37,8 +38,9 @@ const user = computed(() => page.props.auth.user);
           <div class="ml-auto w-auto flex items-center">
             <div v-if="user" class="p-3">
               <DropdownMenu>
-                <DropdownMenuTrigger class="flex items-center gap-2 p-2 px-4 rounded hover:bg-sidebar-accent cursor-pointer outline-none">
+                <DropdownMenuTrigger class="group flex items-center gap-2 p-2 px-3 rounded hover:bg-sidebar-accent cursor-pointer outline-none">
                   <UserInfo :user="user" />
+                  <ChevronDown class="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="min-w-56 rounded-lg" side="bottom" align="end" :side-offset="4">
                   <UserMenuContent :user="user" />

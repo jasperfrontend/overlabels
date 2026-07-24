@@ -4,14 +4,14 @@ import WelcomeNavbar from '@/components/welcome/WelcomeNavbar.vue';
 import SectionHero from '@/components/welcome/SectionHero.vue';
 import SectionSyntax from '@/components/welcome/SectionSyntax.vue';
 import SectionPlayground from '@/components/welcome/SectionPlayground.vue';
-import SectionControls from '@/pages/SectionControls.vue';
-import SectionConditionals from '@/pages/SectionConditionals.vue';
-import SectionEvents from '@/pages/SectionEvents.vue';
-import SectionIntegrations from '@/pages/SectionIntegrations.vue';
-import SectionKits from '@/pages/SectionKits.vue';
-import SectionOnboarding from '@/pages/SectionOnboarding.vue';
-import SectionCta from '@/pages/SectionCta.vue';
-import SectionFooter from '@/pages/SectionFooter.vue';
+import SectionControls from '@/components/welcome/SectionControls.vue';
+import SectionConditionals from '@/components/welcome/SectionConditionals.vue';
+import SectionEvents from '@/components/welcome/SectionEvents.vue';
+import SectionIntegrations from '@/components/welcome/SectionIntegrations.vue';
+import SectionKits from '@/components/welcome/SectionKits.vue';
+import SectionOnboarding from '@/components/welcome/SectionOnboarding.vue';
+import SectionCta from '@/components/welcome/SectionCta.vue';
+import SectionFooter from '@/components/welcome/SectionFooter.vue';
 </script>
 
 <template>

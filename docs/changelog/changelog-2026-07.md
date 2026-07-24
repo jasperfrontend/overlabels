@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 24th, 2026 - refactor(nav): declutter the navigation and user menu
+
+The navigation had grown scattered: app content hid inside the user menu, sensitive developer pages sat one hover away in a dropdown submenu, and the user-menu trigger didn't look clickable. This restructure gives every link one logical home - no new chrome, same sidebar-plus-header layout.
+
+- **User menu slimmed to personal items only**: Account Settings, Integrations, Log out. "Event alerts overview", the duplicate "Learn" link, and the whole "Sensitive Data" submenu are gone from it.
+- **"Triggers" moved into the sidebar** under My stuff (next to Alerts, where it belongs - it's app content, not an account setting). The page, breadcrumb, and browser title renamed from "Event alerts overview" to "Triggers", matching the vocabulary of the alert template edit page's Triggers tab.
+- **Sensitive pages relocated to Settings > Developer tools**: Token Generator, Tags Generator, Your Twitch Data, and Testing Guide now live in a labeled section of the settings sub-nav, with a "avoid opening these on stream" hint. Reaching them takes a deliberate trip into Settings instead of an accidental hover - they also remain reachable via Ctrl+Space.
+- **User-menu trigger is now visibly clickable**: chevron that flips when open, and the avatar no longer renders an invalid nested `<button>` inside the dropdown trigger button.
+- **Small sidebar fixes**: Routes got its own MapPin icon (it shared the Radio icon with Streams), and the "Learn" item inside the Learn group is now "Help".
+- **Command palette synced**: added My lists, Updates, Bot Expressions, Bot Aliases, Tags Generator, Settings Usage and Controls; "Alerts builder" renamed to "Alert triggers"; the Tools section is now "Developer tools" to match Settings.
+
 ## July 23rd, 2026 - chore(deps): update Composer and npm dependencies
 
 Routine dependency refresh across both package managers, plus a fix for a real type regression the update surfaced.

@@ -25,6 +25,8 @@ import {
   Layers,
   LayoutGrid,
   LogIn,
+  MapPin,
+  Megaphone,
   MessageSquare,
   MessageSquareCode,
   Newspaper,
@@ -58,6 +60,7 @@ const mainNavItems = computed<NavItem[]>(() =>
     ? [
         { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
         { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
+        { title: 'Triggers', href: route('events.index'), icon: Megaphone },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
       ]
@@ -77,7 +80,7 @@ const alertsNavItems = computed<NavItem[]>(() =>
     ? [
         { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
         { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
-        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: Radio }
+        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: MapPin }
       ]
     : []
 );
@@ -85,7 +88,7 @@ const alertsNavItems = computed<NavItem[]>(() =>
 const learnNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Learn', href: route('help'), icon: BookOpen },
+        { title: 'Help', href: route('help'), icon: BookOpen },
         { title: 'Reference', href: route('help.reference'), icon: Brackets },
         { title: 'Updates', href: route('updates.index'), icon: Newspaper }
       ]
