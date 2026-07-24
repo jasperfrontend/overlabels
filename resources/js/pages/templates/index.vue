@@ -139,10 +139,16 @@ const breadcrumbs: BreadcrumbItem[] = [
           <Layers v-else class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
-        <Link :href="route('templates.create')" class="btn btn-primary self-start sm:self-auto">
-          Create Overlay
-          <PlusIcon class="ml-2 h-4 w-4" />
-        </Link>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <Link :href="route('builder.create')" class="btn btn-cancel">
+            Builder
+            <Blocks class="ml-2 h-4 w-4" />
+          </Link>
+          <Link :href="route('templates.create')" class="btn btn-primary">
+            Create Overlay
+            <PlusIcon class="ml-2 h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       <!-- Filters Section -->

@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 25th, 2026 - feat(builder): the Builder - compose overlays from blocks on a CSS grid (part 2)
+
+The assembly gap, closed: users who do not write HTML can now open `/builder`, set up a grid (12x8 default on a 1920x1080 canvas), click a cell, pick a block from the library, and save. The output is a plain static overlay - the entire existing machinery (render pipeline, Add to OBS, tokens, alerts, controls, WebSockets) works on it untouched, because the Builder compiles down to the same three head/html/css strings every template is made of. Zero new engine.
+
+- **Builder page** (`/builder`, also in the command palette and next to Create Overlay on the templates index): grid controls with presets, click-to-place picker with search, click-to-select with a move/resize panel, arrow keys to move, Shift + arrows to resize, Delete to remove. Pixel-true block previews in sandboxed iframes with sample data. Full-overlay preview dialog renders the actual compiled output.
+- **Compile step** (`composeBuilderTemplate` + `prefixCss`, both pure and dependency-free): grid container CSS + one wrapper div per placement with `grid-area`, and every block's CSS prefix-scoped to its instance wrapper so two blocks styling `.label` can never collide. `:root`/`html`/`body` selectors map onto the wrapper; `@media` recurses; `@keyframes`/`@font-face` pass through (limits documented for block authors). Composed output then flows through the exact same sanitize -> UnoCSS -> store path as a hand-written overlay.
+- **Snapshot semantics**: placing a block copies its code at placement time into `metadata.builder` (version-stamped: grid, canvas, placements with snapshots). Blocks are never dereferenced again - a block author editing or deleting theirs can never break a composed overlay. Strict server validation (max 40 placements, 64KB per snapshot field, grid capped at 24x24) and snapshots are run through HtmlSanitizationService on every save.
+- **Controls carryover**: blocks bring their non-service controls along at save via the existing controls import endpoint - missing keys are created, existing keys shared, so blocks using the same control key stay in sync (that is a feature).
+- **Re-edit + eject**: a composed overlay's edit page shows the grid editor on the Code tab (state restored from metadata). "Open in code editor" in the actions menu converts it to a hand-edited overlay after a confirmation - one-way door, compiled code stays byte-identical. One-click stays inspectable.
+- **Endpoints**: `GET /builder`, `GET /templates/blocks/library`, `GET /templates/blocks/{id}/snapshot` (block-only, public-or-owner, non-service controls). Three slim methods on the existing controller, no new abstractions.
+- **Tests**: new `BuilderTemplateTest` (11 tests): metadata round-trip and validation bounds, snapshot script-stripping, eject, snapshot endpoint auth, library visibility, edit-page prop gating, controls import collision. Full suite green (1031 tests).
+
 ## July 25th, 2026 - feat(templates): add the block template type (Builder groundwork, part 1)
 
 First slice of the Builder: a third template type, `block`. Blocks are reusable mini-templates (head/html/css, tags and controls all work) that experienced authors publish and that the upcoming Builder will let anyone place on a CSS grid to compose an overlay without writing code.

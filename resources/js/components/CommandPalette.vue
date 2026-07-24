@@ -67,6 +67,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
+    { id: 'builder', label: 'Builder', section: 'Navigation', href: route('builder.create'), icon: Blocks, keywords: ['compose', 'grid', 'blocks'] },
     { id: 'updates', label: 'Updates', section: 'Navigation', href: route('updates.index'), icon: Newspaper, keywords: ['news', 'changelog', 'releases'] },
 
     { id: 'bot-expressions', label: 'Bot Expressions', section: 'Chat bot', href: route('settings.bot.expressions.index'), icon: MessageSquare, keywords: ['bot', 'commands', 'chat'] },
