@@ -45,8 +45,11 @@ const editorTabs = [
 
 type CodeTab = (typeof editorTabs)[number]['key'];
 
-// OBS tab generates a browser-source URL, which only exists once the overlay is saved
-const visibleTabs = computed(() => editorTabs.filter((tab) => tab.key !== 'add-to-obs' || props.template));
+// OBS tab generates a browser-source URL, which only exists once the overlay is saved.
+// Blocks are Builder ingredients, not standalone overlays, so they never get the tab.
+const visibleTabs = computed(() =>
+  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || (props.template && props.templateType !== 'block')),
+);
 
 const codeTab = ref<CodeTab>('body');
 const isExpanded = ref(false);

@@ -9,7 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import ImageDropZone from '@/components/ImageDropZone.vue';
-import { Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from '@lucide/vue';
+import { Blocks, Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from '@lucide/vue';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
@@ -29,9 +29,14 @@ const form = useForm({
   type: '',
   is_public: true,
   screenshot_url: '',
+  metadata: null as { block: { default_span: { w: number; h: number } } } | null,
 });
 
-const typeChosen = computed(() => form.type === 'static' || form.type === 'alert');
+// Suggested size a block occupies when placed on a Builder grid.
+const blockSpanW = ref(4);
+const blockSpanH = ref(2);
+
+const typeChosen = computed(() => form.type === 'static' || form.type === 'alert' || form.type === 'block');
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Create New Overlay', href: '/templates/create' }];
 
@@ -82,6 +87,10 @@ const submitForm = async () => {
     head: form.head,
     css: form.css,
   });
+
+  form.metadata = form.type === 'block'
+    ? { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } }
+    : null;
 
   form.post(route('templates.store'));
 };
@@ -163,7 +172,7 @@ onMounted(() => {
             <!-- Overlay Type - deliberate first choice that unlocks the rest of the form -->
             <div>
               <label class="mb-2 block text-sm font-medium text-accent-foreground">Overlay Type *</label>
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
                   :class="form.type === 'static' ? 'border-violet-400 bg-violet-400/10 dark:bg-violet-400/5' : 'border-sidebar'"
@@ -209,6 +218,29 @@ onMounted(() => {
                     </div>
                   </div>
                 </label>
+
+                <label
+                  class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
+                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10 dark:bg-violet-500/5' : 'border-sidebar'"
+                >
+                  <input v-model="form.type" type="radio" value="block" class="sr-only" required />
+                  <div class="flex items-start">
+                    <div
+                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      :class="form.type === 'block' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
+                    >
+                      <div v-if="form.type === 'block'" class="h-2 w-2 rounded-full bg-white" />
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <Blocks class="h-4 w-4" />
+                        <span class="text-sm font-medium">Block</span>
+                      </div>
+                      <p class="mt-1 text-sm text-muted-foreground">A reusable piece for the Builder. Other streamers
+                        place blocks on a grid to compose an overlay.</p>
+                    </div>
+                  </div>
+                </label>
               </div>
               <div v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</div>
               <p v-if="!typeChosen" class="mt-2 text-sm text-foreground">
@@ -246,6 +278,45 @@ onMounted(() => {
               </div>
 
               <PublicToggle v-model="form.is_public" label="Overlay" />
+
+              <!-- Block suggested size -->
+              <div v-if="form.type === 'block'" class="space-y-4">
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-accent-foreground">Suggested size</label>
+                  <p class="mb-2 text-sm text-foreground">
+                    How many grid cells this block occupies when someone places it in the Builder (they can resize it).
+                    Builder grids default to 12 columns by 8 rows.
+                  </p>
+                  <div class="flex items-center gap-3">
+                    <input
+                      v-model.number="blockSpanW"
+                      type="number"
+                      min="1"
+                      max="24"
+                      class="input-border w-24"
+                      aria-label="Columns wide"
+                    />
+                    <span class="text-sm text-muted-foreground">columns wide</span>
+                    <input
+                      v-model.number="blockSpanH"
+                      type="number"
+                      min="1"
+                      max="24"
+                      class="input-border w-24"
+                      aria-label="Rows tall"
+                    />
+                    <span class="text-sm text-muted-foreground">rows tall</span>
+                  </div>
+                </div>
+                <div class="rounded-sm bg-sidebar p-4 text-sm">
+                  <strong class="text-accent-foreground">Block tips:</strong>
+                  <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
+                    <li>Your block renders inside its grid cell. Use <code class="rounded bg-sidebar-accent px-1">height: 100%</code> instead of styling <code class="rounded bg-sidebar-accent px-1">body</code>.</li>
+                    <li>Keep CSS flat and class names specific - your styles are scoped to the block when composed.</li>
+                    <li>All template tags and controls work exactly like in a regular overlay.</li>
+                  </ul>
+                </div>
+              </div>
 
               <!-- Event alert tips -->
               <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">

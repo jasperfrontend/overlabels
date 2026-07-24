@@ -15,6 +15,7 @@ class OverlayTemplateFactory extends Factory
     {
         return [
             'slug' => $this->faker->slug(),
+            'type' => 'static',
             'name' => $this->faker->name(),
             'description' => $this->faker->text(),
             'head' => $this->faker->word(),
@@ -33,5 +34,15 @@ class OverlayTemplateFactory extends Factory
             'owner_id' => User::factory(),
             'fork_of_id' => OverlayTemplate::factory(),
         ];
+    }
+
+    public function alert(): static
+    {
+        return $this->state(fn () => ['type' => 'alert']);
+    }
+
+    public function block(): static
+    {
+        return $this->state(fn () => ['type' => 'block']);
     }
 }

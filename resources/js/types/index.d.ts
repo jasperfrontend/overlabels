@@ -125,18 +125,41 @@ export interface AdminTemplate {
   owner?: { id: number; name: string; twitch_id: string | null } | null;
 }
 
+export interface BuilderPlacement {
+  instance_id: string;
+  block_template_id: number;
+  block_slug: string;
+  block_name: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  snapshot: { head: string; html: string; css: string };
+}
+
+export interface BuilderMetadata {
+  version: number;
+  grid: { cols: number; rows: number; gap: number };
+  canvas: { width: number; height: number };
+  placements: BuilderPlacement[];
+}
+
 export interface OverlayTemplate {
   id: number;
   slug: string;
   name: string;
   description: string | null;
-  type: 'static' | 'alert';
+  type: 'static' | 'alert' | 'block';
   is_public: boolean;
   view_count: number;
   fork_count: number;
   kits_exists?: boolean;
   screenshot_url?: string | null;
   has_controls?: boolean;
+  metadata?: {
+    block?: { default_span?: { w: number; h: number }; category?: string };
+    builder?: BuilderMetadata;
+  } | null;
   owner?: {
     id: number;
     name: string;

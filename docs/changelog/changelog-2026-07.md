@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 25th, 2026 - feat(templates): add the block template type (Builder groundwork, part 1)
+
+First slice of the Builder: a third template type, `block`. Blocks are reusable mini-templates (head/html/css, tags and controls all work) that experienced authors publish and that the upcoming Builder will let anyone place on a CSS grid to compose an overlay without writing code.
+
+- **Migration**: `type` gains `'block'` alongside `static`/`alert`. The column is a varchar + CHECK constraint (Laravel `enum()`), not a native PG enum, so this is a transactional constraint swap. The constraint name is discovered at runtime via `pg_constraint` rather than hardcoded.
+- **Backend**: `scopeBlock()` and `isBuilderComposed()` on OverlayTemplate; store/update validation accepts `block`; `RefreshTemplateTags` and the public OG label know the third type; factory got an explicit `type` plus `alert()`/`block()` states.
+- **Metadata surface**: store/update now accept a `metadata` payload, strictly validated and stripped to known namespaced keys (`block` for now, `builder` coming). Blocks carry `metadata.block.default_span` - the suggested width x height in grid cells when placed in the Builder (editable on create and edit pages).
+- **Authoring UX**: third radio card on the create page, Block option in the templates index filter (with a Blocks icon and "My blocks" command palette entry), suggested-size inputs plus author tips (style the block, not `body`; keep CSS flat).
+- **Deliberately unchanged**: alert targeting, event triggers, and onboarding all filter positively on `static`/`alert`, so blocks are excluded automatically - locked in with regression tests. Blocks stay renderable via the overlay pipeline for author preview, but the Add to OBS tab is hidden for them (a block is an ingredient, not a standalone overlay).
+- **Tests**: new `BlockTemplateTest` (9 tests): type CRUD + validation, metadata stripping/bounds, no-wipe on metadata-less saves, scope, alert-targeting rejection, static-picker exclusion, render pipeline regression. Full suite green (1020 tests).
+
 ## July 24th, 2026 - refactor(welcome): rebuild the homepage as a static blade page for SEO
 
 The homepage was an Inertia/Vue page, so crawlers got an empty `@inertia` div plus a JSON blob and all content only existed after JavaScript ran. It is now a server-rendered blade page: the full marketing copy ships as static HTML in the initial response, indexable by every search engine without a JS render pass. Same visual result, massively lighter page.

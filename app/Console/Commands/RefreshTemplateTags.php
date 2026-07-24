@@ -30,8 +30,8 @@ class RefreshTemplateTags extends Command
 
         // Filter by type if specified
         if ($type = $this->option('type')) {
-            if (! in_array($type, ['static', 'alert'])) {
-                $this->error('Invalid type. Must be "static" or "alert".');
+            if (! in_array($type, ['static', 'alert', 'block'])) {
+                $this->error('Invalid type. Must be "static", "alert" or "block".');
 
                 return 1;
             }

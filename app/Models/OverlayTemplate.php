@@ -504,4 +504,21 @@ class OverlayTemplate extends Model
     {
         return $query->where('type', 'alert');
     }
+
+    /**
+     * Scope for builder blocks
+     */
+    public function scopeBlock($query)
+    {
+        return $query->where('type', 'block');
+    }
+
+    /**
+     * Whether this template was composed in the Builder (grid + block placements
+     * stored in metadata). Ejecting to the code editor removes this key.
+     */
+    public function isBuilderComposed(): bool
+    {
+        return isset($this->metadata['builder']);
+    }
 }

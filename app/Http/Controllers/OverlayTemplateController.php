@@ -22,6 +22,7 @@ use App\Support\ListItems;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -343,7 +344,11 @@ class OverlayTemplateController extends Controller
         $template->recordView();
 
         $ownerName = $template->owner?->name ?: 'an Overlabels user';
-        $typeLabel = $template->type === 'alert' ? 'event alert' : 'overlay';
+        $typeLabel = match ($template->type) {
+            'alert' => 'event alert',
+            'block' => 'builder block',
+            default => 'overlay',
+        };
 
         $description = $template->description
             ?: "A Twitch {$typeLabel} by {$ownerName} on Overlabels. View the source, copy it to your account, and customise it for your stream.";
@@ -746,6 +751,36 @@ class OverlayTemplateController extends Controller
     }
 
     /**
+     * Validation rules for the client-writable slice of the metadata json.
+     * Only namespaced keys we understand survive normalizeMetadata() below.
+     */
+    private static function metadataRules(): array
+    {
+        return [
+            'metadata' => 'sometimes|nullable|array',
+            'metadata.block' => 'sometimes|array',
+            'metadata.block.default_span' => 'required_with:metadata.block|array',
+            'metadata.block.default_span.w' => 'required_with:metadata.block|integer|min:1|max:24',
+            'metadata.block.default_span.h' => 'required_with:metadata.block|integer|min:1|max:24',
+        ];
+    }
+
+    /**
+     * Strip unknown keys from client-supplied metadata so arbitrary json can
+     * never be persisted through this surface.
+     */
+    private static function normalizeMetadata(array $validated): array
+    {
+        if (array_key_exists('metadata', $validated)) {
+            $validated['metadata'] = $validated['metadata']
+                ? Arr::only($validated['metadata'], ['block'])
+                : null;
+        }
+
+        return $validated;
+    }
+
+    /**
      * Store new template
      */
     public function store(Request $request, CloudinaryUploadService $cloudinary)
@@ -757,16 +792,18 @@ class OverlayTemplateController extends Controller
             'html' => 'present|nullable|string',
             'css' => 'nullable|string',
             'compiled_css' => 'nullable|string',
-            'type' => 'required|in:static,alert',
+            'type' => 'required|in:static,alert,block',
             'is_public' => 'boolean',
             'screenshot_url' => 'nullable|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
             'bot_message_expression' => 'nullable|string|max:500',
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'nullable|url|max:2048',
+            ...self::metadataRules(),
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
+        $validated = self::normalizeMetadata($validated);
 
         $template = $request->user()->overlayTemplates()->create($validated);
 
@@ -807,15 +844,17 @@ class OverlayTemplateController extends Controller
             'html' => 'sometimes|nullable|string',
             'css' => 'nullable|string',
             'compiled_css' => 'nullable|string',
-            'type' => 'sometimes|in:static,alert',
+            'type' => 'sometimes|in:static,alert,block',
             'is_public' => 'sometimes|boolean',
             'tts_expression' => 'sometimes|nullable|string|max:2000',
             'bot_message_expression' => 'sometimes|nullable|string|max:500',
             'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'sometimes|nullable|url|max:2048',
+            ...self::metadataRules(),
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
+        $validated = self::normalizeMetadata($validated);
 
         $template->update($validated);
 

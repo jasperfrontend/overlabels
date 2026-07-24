@@ -7,6 +7,7 @@ import type { AppPageProps } from '@/types';
 import {
   Activity,
   Bell,
+  Blocks,
   BookOpen,
   Brackets,
   Code,
@@ -60,6 +61,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'dashboard', label: 'Dashboard', section: 'Navigation', href: route('dashboard.index'), icon: House, keywords: ['home', 'start'] },
     { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
     { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
+    { id: 'blocks', label: 'My blocks', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=block', icon: Blocks, keywords: ['builder', 'pieces'] },
     { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
     { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
     { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },

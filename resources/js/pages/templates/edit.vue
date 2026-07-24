@@ -84,8 +84,9 @@ interface Props {
     compiled_css: string | null;
     is_public: boolean;
     slug: string;
-    type: 'static' | 'alert';
+    type: 'static' | 'alert' | 'block';
     screenshot_url: string | null;
+    metadata?: { block?: { default_span?: { w: number; h: number } } } | null;
     created_at: string;
     updated_at: string;
     view_count: number;
@@ -152,6 +153,11 @@ const form = useForm({
   tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
   alert_sound_url: props?.template?.alert_sound_url || '',
 });
+
+// Suggested Builder grid span, editable for blocks only. Sent via transform()
+// so non-block saves never touch the metadata column.
+const blockSpanW = ref(props.template?.metadata?.block?.default_span?.w ?? 4);
+const blockSpanH = ref(props.template?.metadata?.block?.default_span?.h ?? 2);
 
 // Freeze the list we came from for this template, so the breadcrumb and the
 // post-delete redirect (see useTemplateActions) always agree, even after the
@@ -358,7 +364,11 @@ const submitForm = async () => {
     css: form.css,
   });
 
-  form.put(route('templates.update', props.template), {
+  form.transform((data) =>
+    props.template.type === 'block'
+      ? { ...data, metadata: { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } } }
+      : data,
+  ).put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
       if (removed > 0 && hadEmbeds) {
@@ -536,6 +546,19 @@ onMounted(() => {
             </div>
 
             <PublicToggle v-model="form.is_public" label="Overlay" />
+
+            <div v-if="props.template.type === 'block'">
+              <label class="mb-1 block text-sm font-medium text-accent-foreground">Suggested size</label>
+              <p class="mb-2 text-sm text-foreground">
+                How many grid cells this block occupies when someone places it in the Builder (they can resize it).
+              </p>
+              <div class="flex items-center gap-3">
+                <input v-model.number="blockSpanW" type="number" min="1" max="24" class="input-border w-24" aria-label="Columns wide" />
+                <span class="text-sm text-muted-foreground">columns wide</span>
+                <input v-model.number="blockSpanH" type="number" min="1" max="24" class="input-border w-24" aria-label="Rows tall" />
+                <span class="text-sm text-muted-foreground">rows tall</span>
+              </div>
+            </div>
 
             <TemplateMeta
               :created-at="template?.created_at"

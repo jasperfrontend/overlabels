@@ -32,6 +32,7 @@ export function deriveListContext(template: { type?: string | null; ownedByMe: b
   const typeLabels: Record<string, string> = {
     static: 'static overlays',
     alert: 'event alerts',
+    block: 'blocks',
   };
   const type = template.type ?? '';
   const typeLabel = typeLabels[type] ?? 'overlays';

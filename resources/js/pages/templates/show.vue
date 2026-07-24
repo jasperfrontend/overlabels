@@ -73,8 +73,9 @@ const editorTabs = [
 // OBS browser-source URL is owner-only (the token is user-scoped). Available for
 // both static and alert overlays - alerts are usually rendered inside a static
 // overlay, but adding one straight to OBS is valid too, so we inform rather than gate.
+// Blocks are Builder ingredients, not standalone overlays, so no OBS tab for them.
 const visibleEditorTabs = computed(() =>
-  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || props.canEdit),
+  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || (props.canEdit && props.template?.type !== 'block')),
 );
 
 const mainTabs = computed(() => {
