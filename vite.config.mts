@@ -19,6 +19,7 @@ export default defineConfig(() => ({
         laravel({
             input: [
                 'resources/js/app.ts',
+                'resources/js/welcome/app.ts',
                 'resources/js/overlay/app.js',
                 'resources/js/map/app.ts',
                 'resources/js/events-feed/app.ts',

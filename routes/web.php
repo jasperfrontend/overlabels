@@ -39,7 +39,6 @@ use App\Http\Controllers\UpdateController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\Game;
 use App\Models\User;
-use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
@@ -51,10 +50,8 @@ use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 
-Route::get('/', function (TemplateDataMapperService $mapper) {
-    return Inertia::render('Welcome', [
-        'sampleData' => $mapper->getSampleTemplateData(),
-    ]);
+Route::get('/', function () {
+    return view('welcome');
 })->name('home');
 
 // gamejam routes

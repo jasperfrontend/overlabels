@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 24th, 2026 - refactor(welcome): rebuild the homepage as a static blade page for SEO
+
+The homepage was an Inertia/Vue page, so crawlers got an empty `@inertia` div plus a JSON blob and all content only existed after JavaScript ran. It is now a server-rendered blade page: the full marketing copy ships as static HTML in the initial response, indexable by every search engine without a JS render pass. Same visual result, massively lighter page.
+
+- **New `resources/views/welcome.blade.php`** with one partial per section under `resources/views/welcome/` (navbar, hero, syntax, controls, conditionals, events, integrations, kits, onboarding, cta, footer, plus shared theme-toggle and login-social partials). Markup ported 1:1 from the Vue components - same Tailwind classes, same copy.
+- **Zero Vue on the homepage**: the page loads a new `resources/js/welcome/app.ts` entry that imports the app CSS and wires the only interactive bits in ~100 lines of vanilla JS: theme switcher (light/dark/sepia/system, same localStorage + cookie contract as `useAppearance`), mobile menu, and the two tab groups (syntax examples, integrations). Lucide icons are inlined as SVGs.
+- **All tab panels are now in the DOM at load** (previously `v-show`), so the Live CSS / Alerts examples and all six integration descriptions are crawlable text too.
+- **Playground section removed** on purpose - it saw no use, and the planned overlay builder will live inside the app, not on the marketing page. `SectionPlayground.vue` is deleted with the rest; git history keeps it. The `/` route no longer needs `TemplateDataMapperService` sample data.
+- **Deleted** `pages/Welcome.vue` and all 12 `components/welcome/*.vue` components.
+- **Meta tags consolidated**: the page owns its own `<head>` (title, description, canonical, Open Graph, Twitter card) instead of the previous split between `app.blade.php` defaults and Inertia `<Head>` overrides.
+- Verified: production build green, ESLint clean, full Pest suite green (1011 tests), and `curl` against the local site returns ~99 KB of static HTML with all sections present and no Inertia payload.
+
 ## July 24th, 2026 - refactor(nav): declutter the navigation and user menu
 
 The navigation had grown scattered: app content hid inside the user menu, sensitive developer pages sat one hover away in a dropdown submenu, and the user-menu trigger didn't look clickable. This restructure gives every link one logical home - no new chrome, same sidebar-plus-header layout.
