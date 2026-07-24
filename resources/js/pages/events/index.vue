@@ -51,7 +51,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Event alerts overview', href: '/alerts' },
+  { title: 'Triggers', href: '/alerts' },
 ];
 
 const externalByService = computed(() => {
@@ -80,13 +80,13 @@ function conditionLabel(row: ConditionFields): string | null {
 </script>
 
 <template>
-  <Head title="Event alerts overview" />
+  <Head title="Triggers" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="px-4 py-3">
       <div class="mb-4 mt-1 flex items-center gap-2">
         <Megaphone class="h-6 w-6" />
         <Heading
-          title="Event alerts overview"
+          title="Triggers"
           description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
         />
       </div>
