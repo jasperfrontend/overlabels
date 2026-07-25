@@ -105,6 +105,20 @@ function snippetKey(ctrl: OverlayControl): string {
   return ctrl.source_managed && ctrl.source ? `${ctrl.source}:${ctrl.key}` : ctrl.key;
 }
 
+// Builder-composed overlays only: flag template controls whose tag no longer
+// appears in the compiled output, i.e. every block that used them has been
+// removed from the canvas. The value is deliberately preserved (re-adding the
+// block reattaches it) - this badge just makes the leftovers visible so the
+// user can decide. template_tags is re-extracted server-side on every save.
+const builderComposed = computed(() => !!props.template?.metadata?.builder);
+
+function isBlockOrphan(ctrl: OverlayControl): boolean {
+  const tags = props.template?.template_tags;
+  if (!builderComposed.value || !Array.isArray(tags)) return false;
+  if (ctrl.source || ctrl.overlay_template_id === null) return false;
+  return !tags.includes(`c:${ctrl.key}`);
+}
+
 async function copySnippet(ctrl: OverlayControl) {
   const key = snippetKey(ctrl);
   try {
@@ -408,6 +422,13 @@ const controlsCounter = computed(() => controls.value.length);
                     >
                       <LockIcon class="h-2.5 w-2.5" />
                       {{ SERVICE_LABELS[ctrl.source] ?? ctrl.source }}
+                    </span>
+                    <span
+                      v-if="isBlockOrphan(ctrl)"
+                      class="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-400"
+                      title="No block on the canvas references this control. Its value is preserved - re-adding a block with the same key picks it back up, or delete it here if you no longer need it."
+                    >
+                      Not used by any block
                     </span>
                   </div>
                   <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>

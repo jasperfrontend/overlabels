@@ -160,6 +160,7 @@ export interface OverlayTemplate {
     block?: { default_span?: { w: number; h: number }; category?: string };
     builder?: BuilderMetadata;
   } | null;
+  template_tags?: string[] | null;
   owner?: {
     id: number;
     name: string;

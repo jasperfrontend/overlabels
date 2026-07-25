@@ -1,6 +1,13 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - fix(builder): block controls show up on the Controls tab right after save
+## July 25th, 2026 - feat(builder): surface controls left behind by removed blocks
+
+Removing a block from the canvas keeps the controls it brought along - deliberately, so a counter at 500 survives a layout experiment and re-adding the block picks it right back up. But the leftovers were invisible, and a few removed blocks could quietly pile up a heap of stray controls. Inform, don't gate:
+
+- **Badge**: on builder-composed overlays, the Controls tab flags template controls whose `c:{key}` tag no longer appears anywhere in the compiled output with "Not used by any block" (amber pill, tooltip explains the value is preserved and how to reattach or delete). Computed purely client-side from `template_tags`, which the server already re-extracts on every save - including piped, defaulted, and `[[[if:...]]]` conditional references, so a control used only in a condition is never falsely flagged.
+- **Save toast**: a builder-mode save that leaves orphans behind says so - "Overlay saved. N controls are no longer used by any block - review them on the Controls tab."
+- No auto-delete, by design: shared keys mean another block may still use the control, expressions and system keys (like `tts`) can reference controls outside the overlay HTML, and silent data loss is worse than a visible leftover. Deletion stays one deliberate click on the Controls tab.
+- Zero backend changes.
 
 Placing a block that carries controls, saving, and opening the Controls tab showed... nothing until a hard refresh. Two stacked causes on the edit page: the controls import fires in `onSuccess`, which is AFTER Inertia already delivered the refreshed page props (so `props.controls` predates the import), and the Controls/Values tabs render from `localControls`, which is copied from props once at mount and never re-synced.
 
