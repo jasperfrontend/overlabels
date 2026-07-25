@@ -376,6 +376,20 @@ const openExternalLink = (link: any, target: string) => window.open(link, target
 const suggestionModalOpen = ref(false);
 const showSuggestionLink = ref(false);
 
+// Template controls whose tag no longer appears in the compiled output, i.e.
+// every block that used them was removed from the canvas. Values are kept on
+// purpose (re-adding the block reattaches them); the save toast and a badge
+// on the Controls tab surface them so the user can clean up deliberately.
+// Runs against the fresh post-save props: Inertia swaps them in before
+// onSuccess, and the server re-extracts template_tags on every content save.
+function countBlockOrphans(): number {
+  const tags = props.template?.template_tags;
+  if (!builderMode.value || !Array.isArray(tags)) return 0;
+  return localControls.value.filter(
+    (c) => !c.source && c.overlay_template_id !== null && !tags.includes(`c:${c.key}`),
+  ).length;
+}
+
 const submitForm = async () => {
   // Builder mode: recompose the grid + placements into head/html/css first,
   // so the rest of the save path (sanitize, compile, put) is identical.
@@ -424,12 +438,20 @@ const submitForm = async () => {
 
       // Import controls for blocks placed this session (existing keys are
       // skipped server-side - same semantics as the Copy import wizard).
+      // This runs AFTER Inertia already delivered the refreshed props, so the
+      // created controls must be merged into localControls by hand - the
+      // Controls and Values tabs render from it and remount per tab switch.
       if (builderMode.value && builderEditor.value) {
         const controls = builderEditor.value.controlsForImport();
         if (controls.length) {
           axios
             .post(`/templates/${props.template.id}/controls/import`, {
               controls: controls.map((c) => ({ ...c, action: 'create' })),
+            })
+            .then(({ data }) => {
+              if (data?.created?.length) {
+                localControls.value = [...localControls.value, ...data.created];
+              }
             })
             .catch(() => pushToast('Overlay saved, but importing block controls failed.', 'warning'));
         }
@@ -447,7 +469,14 @@ const submitForm = async () => {
         );
       } else {
         showSuggestionLink.value = false;
-        pushToast('Overlay saved successfully!', 'success');
+        const orphans = countBlockOrphans();
+        if (orphans === 1) {
+          pushToast('Overlay saved. 1 control is no longer used by any block - review it on the Controls tab.', 'info');
+        } else if (orphans > 1) {
+          pushToast(`Overlay saved. ${orphans} controls are no longer used by any block - review them on the Controls tab.`, 'info');
+        } else {
+          pushToast('Overlay saved successfully!', 'success');
+        }
       }
     },
     onError: () => pushToast('Failed to save overlay.', 'error')
