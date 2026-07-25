@@ -86,6 +86,9 @@ export function useBlockSourceSync(state: ReturnType<typeof useBuilderState>) {
       snapshot: { head: norm(data.head), html: norm(data.html), css: norm(data.css) },
       controls: data.controls ?? [],
     });
+    // Names are labels, not output: a renamed source updates its placements
+    // immediately, with none of the stale-snapshot ceremony.
+    if (data.name) state.syncBlockNames(new Map([[blockId, data.name]]));
     recompute();
   }
 

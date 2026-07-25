@@ -114,6 +114,23 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         placements.value = [...placements.value];
     }
 
+    /**
+     * Block names are provenance labels, not rendered output, so unlike the
+     * code snapshot they are never frozen: whenever a fresh source is seen,
+     * placement labels silently follow it. Persisted with the next save.
+     */
+    function syncBlockNames(names: ReadonlyMap<number, string>): void {
+        let changed = false;
+        for (const p of placements.value) {
+            const name = names.get(p.block_template_id);
+            if (name && name !== p.block_name) {
+                p.block_name = name;
+                changed = true;
+            }
+        }
+        if (changed) placements.value = [...placements.value];
+    }
+
     /** Absolute move (drag target). Returns true when the block actually moved. */
     function moveTo(id: string, x: number, y: number): boolean {
         const p = placements.value.find((pl) => pl.instance_id === id);
@@ -197,6 +214,7 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         clampSpan,
         addPlacement,
         refreshSnapshot,
+        syncBlockNames,
         move,
         moveTo,
         resize,
