@@ -65,6 +65,9 @@ function markDirty<A extends unknown[]>(fn: (...args: A) => void) {
 }
 
 const move = markDirty((dx: number, dy: number) => state.move(state.selectedId.value!, dx, dy));
+const moveTo = (id: string, x: number, y: number) => {
+  if (state.moveTo(id, x, y)) emit('dirty');
+};
 const resize = markDirty((dw: number, dh: number) => state.resize(state.selectedId.value!, dw, dh));
 const removeSelected = markDirty(() => state.remove(state.selectedId.value!));
 const setGrid = markDirty(state.setGrid);
@@ -100,8 +103,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[1fr_280px]">
-    <div class="space-y-4">
+  <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+    <div class="min-w-0 space-y-4">
       <div class="border border-sidebar-border bg-sidebar-accent p-4">
         <BuilderGridControls :grid="state.grid.value" @update="setGrid" />
       </div>
@@ -115,10 +118,11 @@ defineExpose({
         :is-cell-occupied="(x, y) => state.occupied(x, y)"
         @cell-click="onCellClick"
         @select="(id) => (state.selectedId.value = id)"
+        @move-to="moveTo"
       />
 
       <p class="text-sm text-muted-foreground">
-        Click an empty cell to place a block. Click a block to select it, then use the panel or arrow keys to move it,
+        Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
         Shift + arrows to resize, Delete to remove. Save with the page's Save button.
       </p>
     </div>

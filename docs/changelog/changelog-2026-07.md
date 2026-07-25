@@ -1,6 +1,20 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(builder): the Builder - compose overlays from blocks on a CSS grid (part 2)
+## July 25th, 2026 - feat(builder): drag blocks around the canvas with the mouse
+
+Move/arrow buttons worked but felt like a miss the moment you tried them: you want to grab a block and drag it. Now you can - placed blocks drag cell-to-cell across the grid, live-snapping as you go.
+
+- **Drag semantics**: the block follows the pointer with its grab point preserved (no jump-to-top-left), snapped to grid cells. Every candidate position runs through the same `fits()` occupancy check as the buttons and keyboard, so a drag can never overlap another block - it visibly stops at the last valid cell and drops wherever it sits when you release. Dragging across an occupied region to free space on the other side works.
+- **Pointer capture** on the placement is the load-bearing trick: block previews are iframes, which swallow pointer events - capture keeps move/up events flowing for the whole drag, and retargets the trailing click so releasing over an empty cell does not pop the block picker or deselect.
+- **Click vs drag**: a 5px slack keeps plain clicks as select. Buttons, arrow keys, and Delete all still work; grab/grabbing cursors signal draggability; `touch-none` makes it behave on touch screens.
+- **State**: one new `moveTo(id, x, y)` absolute move in `useBuilderState` (the drag target), wired into both the standalone Builder page and the edit-page BuilderEditor (which marks the form dirty only when a block actually moved).
+
+## July 25th, 2026 - fix(builder): canvas actually scales down to fit the page
+
+First bug from real use: the Builder canvas rendered at a full 1920x1080 with `scale` stuck at 1. Root cause was layout, not the ResizeObserver: `transform: scale()` never affects layout size, so the 1920px-wide grid still occupied 1920px, and the `1fr` column track in the page layout (`grid-cols-[1fr_280px]`) has an `auto` minimum that grows to fit content. The column stretched to 1920px, the wrapper measured 1920px, and `1920 / 1920 = 1`.
+
+- **Fix**: `minmax(0,1fr)` for the canvas column plus `min-w-0` on the column div, in both `builder/create.vue` and `BuilderEditor.vue` (edit page had the same bug). The column now sizes to the free space and the canvas scales to fit it.
+- **Checkerboard background**: swapped leftover Tailwind v3 `theme(colors.sidebar.DEFAULT)` syntax for `var(--color-sidebar)` + `bg-size-[32px_32px]` so the empty-canvas checkerboard actually renders in v4.
 
 The assembly gap, closed: users who do not write HTML can now open `/builder`, set up a grid (12x8 default on a 1920x1080 canvas), click a cell, pick a block from the library, and save. The output is a plain static overlay - the entire existing machinery (render pipeline, Add to OBS, tokens, alerts, controls, WebSockets) works on it untouched, because the Builder compiles down to the same three head/html/css strings every template is made of. Zero new engine.
 

@@ -212,8 +212,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_280px]">
-        <div class="space-y-4">
+      <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div class="min-w-0 space-y-4">
           <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <BuilderGridControls :grid="state.grid.value" @update="state.setGrid" />
           </div>
@@ -227,10 +227,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             :is-cell-occupied="(x, y) => state.occupied(x, y)"
             @cell-click="onCellClick"
             @select="(id) => (state.selectedId.value = id)"
+            @move-to="(id, x, y) => state.moveTo(id, x, y)"
           />
 
           <p class="text-sm text-muted-foreground">
-            Click an empty cell to place a block. Click a block to select it, then use the panel or arrow keys to move it,
+            Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
             Shift + arrows to resize, Delete to remove.
           </p>
         </div>

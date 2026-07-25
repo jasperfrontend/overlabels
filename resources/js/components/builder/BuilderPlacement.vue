@@ -8,7 +8,16 @@ const props = defineProps<{
   selected: boolean;
 }>();
 
-const emit = defineEmits<{ select: [id: string] }>();
+const emit = defineEmits<{ select: [id: string]; dragStart: [id: string, event: PointerEvent] }>();
+
+// Pointer capture keeps move/up events flowing to this element even when the
+// pointer crosses the preview iframes (which would otherwise swallow them).
+// The canvas owns the actual drag math; this just hands it the pointer.
+function onPointerDown(e: PointerEvent) {
+  if (e.button !== 0) return;
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  emit('dragStart', props.placement.instance_id, e);
+}
 
 // Same preview approach as the template create page: substitute sample data
 // into the block's code, strip leftover tag/conditional markers for visual
@@ -41,10 +50,11 @@ const gridArea = computed(
   <div
     :style="{ gridArea }"
     :class="[
-      'relative min-h-0 min-w-0 cursor-pointer overflow-hidden transition-shadow',
+      'relative min-h-0 min-w-0 cursor-grab touch-none overflow-hidden transition-shadow select-none active:cursor-grabbing',
       selected ? 'ring-2 ring-violet-500 z-10' : 'ring-1 ring-sidebar-border/60 hover:ring-violet-400/60',
     ]"
     @click.stop="emit('select', placement.instance_id)"
+    @pointerdown="onPointerDown"
   >
     <iframe
       :srcdoc="previewDoc"
