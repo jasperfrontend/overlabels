@@ -17,6 +17,7 @@ import {
   Bell,
   BotIcon,
   BookOpen,
+  Blocks,
   Brackets,
   FileText,
   HashIcon,
@@ -60,6 +61,7 @@ const mainNavItems = computed<NavItem[]>(() =>
     ? [
         { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
         { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
+        { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
         { title: 'Triggers', href: route('events.index'), icon: Megaphone },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
