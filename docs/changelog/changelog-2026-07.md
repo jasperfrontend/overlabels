@@ -1,6 +1,12 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(builder): drag blocks around the canvas with the mouse
+## July 25th, 2026 - fix(builder): block controls show up on the Controls tab right after save
+
+Placing a block that carries controls, saving, and opening the Controls tab showed... nothing until a hard refresh. Two stacked causes on the edit page: the controls import fires in `onSuccess`, which is AFTER Inertia already delivered the refreshed page props (so `props.controls` predates the import), and the Controls/Values tabs render from `localControls`, which is copied from props once at mount and never re-synced.
+
+- **Fix**: the import endpoint already returns the created control models, so the `.then` now merges `data.created` into `localControls` - no extra request, no server change. The tab contents are `v-if`-mounted per switch, so they pick the merged list up immediately.
+- Controls are still created at save time, not at placement - placing a block and abandoning the session must not leave stray controls behind.
+- The standalone `/builder` page was never affected (it navigates to the show page with a fresh load after save).
 
 Move/arrow buttons worked but felt like a miss the moment you tried them: you want to grab a block and drag it. Now you can - placed blocks drag cell-to-cell across the grid, live-snapping as you go.
 

@@ -424,12 +424,20 @@ const submitForm = async () => {
 
       // Import controls for blocks placed this session (existing keys are
       // skipped server-side - same semantics as the Copy import wizard).
+      // This runs AFTER Inertia already delivered the refreshed props, so the
+      // created controls must be merged into localControls by hand - the
+      // Controls and Values tabs render from it and remount per tab switch.
       if (builderMode.value && builderEditor.value) {
         const controls = builderEditor.value.controlsForImport();
         if (controls.length) {
           axios
             .post(`/templates/${props.template.id}/controls/import`, {
               controls: controls.map((c) => ({ ...c, action: 'create' })),
+            })
+            .then(({ data }) => {
+              if (data?.created?.length) {
+                localControls.value = [...localControls.value, ...data.created];
+              }
             })
             .catch(() => pushToast('Overlay saved, but importing block controls failed.', 'warning'));
         }
