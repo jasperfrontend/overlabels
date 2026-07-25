@@ -51,7 +51,7 @@ import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext, deriveListContext } from '@/composables/useListContext';
+import { captureListContext } from '@/composables/useListContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -201,7 +201,7 @@ function ejectToCodeEditor() {
 // the template itself. The edit page is owner-only, so ownership is always "My".
 const listContext = captureListContext(
   props.template?.id,
-  deriveListContext({ type: props.template?.type, ownedByMe: true }),
+  { type: props.template?.type, ownedByMe: true },
 );
 
 const breadcrumbs: BreadcrumbItem[] = [

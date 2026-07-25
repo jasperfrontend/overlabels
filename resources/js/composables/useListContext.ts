@@ -17,10 +17,6 @@ export type ListContext = { title: string; href: string };
 const GLOBAL_KEY = 'templates_list_context';
 const originKey = (templateId: number | string) => `template_origin:${templateId}`;
 
-function fallback(): ListContext {
-  return { title: 'My overlays', href: route('templates.index') };
-}
-
 // Build a deterministic breadcrumb context from a template's own attributes, for
 // when there is no recorded navigation history (direct URL, fresh tab, or
 // straight after create - sessionStorage is per-tab and dies with the tab).
@@ -74,20 +70,44 @@ export function recordListContext(ctx: ListContext): void {
   write(GLOBAL_KEY, ctx);
 }
 
+// A stored context is only trusted when this template could actually appear in
+// the list it points to - a crumb must never claim a list that cannot contain
+// the page it sits on. The canonical trap: copy a static overlay as a Block,
+// and the new block's show page would freeze the SOURCE's list ("My static
+// overlays" - still the freshest index visit at that moment) as its origin,
+// then serve that wrong crumb forever. Checking the candidate's filter params
+// against the template's own type + ownership rejects impossible contexts and
+// self-heals any stale frozen origin already sitting in sessionStorage.
+function matchesTemplate(ctx: ListContext, template: { type?: string | null; ownedByMe: boolean }): boolean {
+  try {
+    const params = new URL(ctx.href, window.location.origin).searchParams;
+    const typeParam = params.get('type');
+    if (typeParam && template.type && typeParam !== template.type) return false;
+    if (params.get('filter') === 'mine' && !template.ownedByMe) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Called once at mount on show/edit. Returns the context frozen for this
 // template, freezing the current global context on first visit. Subsequent
 // mounts for the same template (refresh, back/forward) return the frozen value.
 //
 // Precedence: a previously frozen origin wins, then the live list you navigated
-// from (GLOBAL_KEY), then `derived` (built from the template itself for cold
-// direct-paste / post-create), then the generic fallback. This keeps the "came
-// from this list" semantic when you actually arrived via the index, while giving
-// a direct visit an accurate contextual crumb instead of the generic one.
-export function captureListContext(templateId: number | string, derived?: ListContext): ListContext {
+// from (GLOBAL_KEY), then a context derived from the template itself (cold
+// direct-paste, fresh tab, straight after create or copy) - but a frozen or
+// global candidate is skipped when the template could not appear in that list
+// (see matchesTemplate above).
+export function captureListContext(
+  templateId: number | string,
+  template: { type?: string | null; ownedByMe: boolean },
+): ListContext {
   const frozen = read(originKey(templateId));
-  if (frozen) return frozen;
+  if (frozen && matchesTemplate(frozen, template)) return frozen;
 
-  const current = read(GLOBAL_KEY) ?? derived ?? fallback();
+  const global = read(GLOBAL_KEY);
+  const current = global && matchesTemplate(global, template) ? global : deriveListContext(template);
   write(originKey(templateId), current);
   return current;
 }

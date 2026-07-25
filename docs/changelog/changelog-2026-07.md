@@ -1,6 +1,12 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(templates): copy any static overlay as a Block
+## July 25th, 2026 - fix(breadcrumbs): a copied-as-Block template no longer inherits the source's list crumb
+
+Copy a static overlay as a Block and the new block's breadcrumb said "My static overlays" forever, even when you clicked it from the My blocks list. Root cause in `useListContext`: the show page freezes the freshest global list context for a template on its first mount - and right after a copy, the freshest list you visited is still the SOURCE's list. The frozen origin then wins over every later navigation by design, so the wrong crumb stuck for the whole tab session.
+
+- **Fix**: a stored context (frozen or global) is only trusted when the template could actually appear in the list it points to - the candidate's `type`/`filter` params are checked against the template's own type and ownership. Impossible contexts are rejected and the frozen origin is re-written, which also self-heals any already-poisoned sessionStorage entries.
+- Same fix covers the unreported sibling: creating a block right after browsing the static list would freeze the wrong crumb the same way.
+- `captureListContext` now takes the template's raw attributes and derives the fallback itself; the crumb-and-delete-redirect agreement (the reason freezing exists) is unchanged.
 
 The Copy action on a static overlay now asks what the copy should become: a static overlay (the existing behavior) or a Block for the Builder. That turns the entire public library of static overlays into potential Builder material - see a community overlay you like, copy it as a Block, place it on your grid.
 

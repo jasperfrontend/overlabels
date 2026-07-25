@@ -39,7 +39,7 @@ import {
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext, deriveListContext } from '@/composables/useListContext';
+import { captureListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
 
@@ -188,7 +188,7 @@ const copyToClipboard = (url: string, shownValue: string) => {
 // to a crumb derived from the template's own type + ownership.
 const listContext = captureListContext(
   props.template?.id,
-  deriveListContext({ type: props.template?.type, ownedByMe: props.canEdit }),
+  { type: props.template?.type, ownedByMe: props.canEdit },
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
