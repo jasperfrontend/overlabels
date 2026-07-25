@@ -7,6 +7,7 @@ import type { AppPageProps } from '@/types';
 import {
   Activity,
   Bell,
+  Blocks,
   BookOpen,
   Brackets,
   Code,
@@ -60,11 +61,13 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'dashboard', label: 'Dashboard', section: 'Navigation', href: route('dashboard.index'), icon: House, keywords: ['home', 'start'] },
     { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
     { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
+    { id: 'blocks', label: 'My blocks', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=block', icon: Blocks, keywords: ['builder', 'pieces'] },
     { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
     { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
     { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
+    { id: 'builder', label: 'Builder', section: 'Navigation', href: route('builder.create'), icon: Blocks, keywords: ['compose', 'grid', 'blocks'] },
     { id: 'updates', label: 'Updates', section: 'Navigation', href: route('updates.index'), icon: Newspaper, keywords: ['news', 'changelog', 'releases'] },
 
     { id: 'bot-expressions', label: 'Bot Expressions', section: 'Chat bot', href: route('settings.bot.expressions.index'), icon: MessageSquare, keywords: ['bot', 'commands', 'chat'] },

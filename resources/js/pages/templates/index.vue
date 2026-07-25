@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import TemplateTable from '@/components/TemplateTable.vue';
 import debounce from 'lodash/debounce';
-import { PlusIcon, Layers, Bell } from '@lucide/vue';
+import { PlusIcon, Layers, Bell, Blocks } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
@@ -96,7 +96,8 @@ const pageTitle = computed(() => {
   };
   const typeMap: Record<string, string> = {
     alert: 'event alerts',
-    static: 'static overlays'
+    static: 'static overlays',
+    block: 'blocks'
   };
 
   const owner = ownerMap[filters.value.filter] ?? 'All';
@@ -134,13 +135,20 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
           <Bell v-if="filters.type === 'alert'" class="mr-2 size-6" />
+          <Blocks v-else-if="filters.type === 'block'" class="mr-2 size-6" />
           <Layers v-else class="mr-2 size-6" />
           <Heading :title="pageTitle" />
         </div>
-        <Link :href="route('templates.create')" class="btn btn-primary self-start sm:self-auto">
-          Create Overlay
-          <PlusIcon class="ml-2 h-4 w-4" />
-        </Link>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <Link :href="route('builder.create')" class="btn btn-cancel">
+            Builder
+            <Blocks class="ml-2 h-4 w-4" />
+          </Link>
+          <Link :href="route('templates.create')" class="btn btn-primary">
+            Create Overlay
+            <PlusIcon class="ml-2 h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       <!-- Filters Section -->
@@ -172,6 +180,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <option value="">All Types</option>
               <option value="static">Static overlay</option>
               <option value="alert">Event alert</option>
+              <option value="block">Block</option>
             </select>
           </div>
 

@@ -17,6 +17,10 @@ import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
 import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
+import BuilderEditor from '@/components/builder/BuilderEditor.vue';
+import type { LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
+import type { BuilderMetadata } from '@/types';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Brackets,
   Code,
@@ -84,8 +88,9 @@ interface Props {
     compiled_css: string | null;
     is_public: boolean;
     slug: string;
-    type: 'static' | 'alert';
+    type: 'static' | 'alert' | 'block';
     screenshot_url: string | null;
+    metadata?: { block?: { default_span?: { w: number; h: number } }; builder?: BuilderMetadata } | null;
     created_at: string;
     updated_at: string;
     view_count: number;
@@ -113,6 +118,9 @@ interface Props {
   userLists?: Array<{ id: number; slug: string; label?: string | null; items_count: number; disabled: boolean }>;
   triggers?: TriggerData | null;
   freesoundLibrary?: FreesoundLibraryRow[];
+  // Present only when the overlay was composed in the Builder.
+  sampleData?: Record<string, string>;
+  builderBlocks?: LibraryBlock[];
 }
 
 const FREESOUND_LIBRARY_CAP = 100;
@@ -152,6 +160,36 @@ const form = useForm({
   tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
   alert_sound_url: props?.template?.alert_sound_url || '',
 });
+
+// Suggested Builder grid span, editable for blocks only. Sent via transform()
+// so non-block saves never touch the metadata column.
+const blockSpanW = ref(props.template?.metadata?.block?.default_span?.w ?? 4);
+const blockSpanH = ref(props.template?.metadata?.block?.default_span?.h ?? 2);
+
+// Builder mode: this overlay was composed in the Builder, so the Code tab
+// shows the grid editor instead of CodeMirror. Ejecting (below) is one-way.
+const builderMode = computed(() => !!props.template?.metadata?.builder);
+const builderEditor = ref<InstanceType<typeof BuilderEditor> | null>(null);
+const builderDirty = ref(false);
+const ejectDialogOpen = ref(false);
+const ejecting = ref(false);
+
+function ejectToCodeEditor() {
+  ejecting.value = true;
+  router.put(
+    route('templates.update', props.template),
+    { metadata: { builder: null } },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        ejectDialogOpen.value = false;
+        pushToast('Converted to a hand-edited overlay. The code below is yours now.', 'success');
+      },
+      onError: () => pushToast('Could not convert the overlay. Please try again.', 'error'),
+      onFinish: () => (ejecting.value = false),
+    },
+  );
+}
 
 // Freeze the list we came from for this template, so the breadcrumb and the
 // post-delete redirect (see useTemplateActions) always agree, even after the
@@ -339,6 +377,19 @@ const suggestionModalOpen = ref(false);
 const showSuggestionLink = ref(false);
 
 const submitForm = async () => {
+  // Builder mode: recompose the grid + placements into head/html/css first,
+  // so the rest of the save path (sanitize, compile, put) is identical.
+  if (builderMode.value && builderEditor.value) {
+    if (!builderEditor.value.hasPlacements()) {
+      pushToast('Place at least one block before saving.', 'warning');
+      return;
+    }
+    const composed = builderEditor.value.compose();
+    form.head = composed.head;
+    form.html = composed.html;
+    form.css = composed.css;
+  }
+
   // Check if embeddable elements were present before sanitization
   const rawHtml = `${form.head} ${form.html} ${form.css}`;
   const hadEmbeds = /<iframe\b|<embed\b|<object\b/i.test(rawHtml);
@@ -358,9 +409,31 @@ const submitForm = async () => {
     css: form.css,
   });
 
-  form.put(route('templates.update', props.template), {
+  form.transform((data) => {
+    if (props.template.type === 'block') {
+      return { ...data, metadata: { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } } };
+    }
+    if (builderMode.value && builderEditor.value) {
+      return { ...data, metadata: { builder: builderEditor.value.serialize() } };
+    }
+    return data;
+  }).put(route('templates.update', props.template), {
     preserveScroll: true,
     onSuccess: () => {
+      builderDirty.value = false;
+
+      // Import controls for blocks placed this session (existing keys are
+      // skipped server-side - same semantics as the Copy import wizard).
+      if (builderMode.value && builderEditor.value) {
+        const controls = builderEditor.value.controlsForImport();
+        if (controls.length) {
+          axios
+            .post(`/templates/${props.template.id}/controls/import`, {
+              controls: controls.map((c) => ({ ...c, action: 'create' })),
+            })
+            .catch(() => pushToast('Overlay saved, but importing block controls failed.', 'warning'));
+        }
+      }
       if (removed > 0 && hadEmbeds) {
         showSuggestionLink.value = true;
         pushToast(
@@ -443,7 +516,7 @@ onMounted(() => {
         />
         <div class="flex shrink-0 items-center gap-2">
 
-          <button @click="submitForm" :disabled="form.processing || !form.isDirty" class="btn btn-primary">
+          <button @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
             Save
@@ -469,6 +542,14 @@ onMounted(() => {
                 <Split class="mr-2 h-4 w-4" />
                 Copy
               </DropdownMenuItem>
+
+              <template v-if="builderMode">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem @click="ejectDialogOpen = true">
+                  <Code class="mr-2 h-4 w-4" />
+                  Open in code editor
+                </DropdownMenuItem>
+              </template>
 
               <DropdownMenuSeparator />
 
@@ -510,8 +591,19 @@ onMounted(() => {
         <div
           class="border border-t-0 border-sidebar-border bg-card h-full overflow-auto"
         >
-          <!-- Code Tab -->
+          <!-- Code Tab: Builder-composed overlays get the grid editor, everything else CodeMirror -->
+          <BuilderEditor
+            v-if="builderMode && props.template.metadata?.builder"
+            v-show="mainTab === 'code'"
+            ref="builderEditor"
+            :initial="props.template.metadata.builder"
+            :sample-data="props.sampleData ?? {}"
+            :blocks="props.builderBlocks ?? []"
+            @dirty="builderDirty = true"
+            @error="(msg) => pushToast(msg, 'warning')"
+          />
           <TemplateCodeEditor
+            v-else
             :template-type="props.template.type"
             :template="props.template"
             v-show="mainTab === 'code'"
@@ -536,6 +628,19 @@ onMounted(() => {
             </div>
 
             <PublicToggle v-model="form.is_public" label="Overlay" />
+
+            <div v-if="props.template.type === 'block'">
+              <label class="mb-1 block text-sm font-medium text-accent-foreground">Suggested size</label>
+              <p class="mb-2 text-sm text-foreground">
+                How many grid cells this block occupies when someone places it in the Builder (they can resize it).
+              </p>
+              <div class="flex items-center gap-3">
+                <input v-model.number="blockSpanW" type="number" min="1" max="24" class="input-border w-24" aria-label="Columns wide" />
+                <span class="text-sm text-muted-foreground">columns wide</span>
+                <input v-model.number="blockSpanH" type="number" min="1" max="24" class="input-border w-24" aria-label="Rows tall" />
+                <span class="text-sm text-muted-foreground">rows tall</span>
+              </div>
+            </div>
 
             <TemplateMeta
               :created-at="template?.created_at"
@@ -859,6 +964,28 @@ onMounted(() => {
       </form>
     </div>
 
+
+    <!-- Eject confirmation: one-way door from Builder mode to hand-edited code -->
+    <Dialog :open="ejectDialogOpen" @update:open="ejectDialogOpen = $event">
+      <DialogContent class="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Open in code editor?</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-3 text-sm text-foreground">
+          <p>
+            This converts your overlay to a hand-edited overlay. You get the full compiled HTML and CSS in the code
+            editor, but the block layout tools will no longer be available for it.
+          </p>
+          <p><strong>This cannot be undone.</strong></p>
+        </div>
+        <DialogFooter>
+          <button type="button" class="btn btn-cancel cursor-pointer" @click="ejectDialogOpen = false">Keep the Builder</button>
+          <button type="button" class="btn btn-primary cursor-pointer" :disabled="ejecting" @click="ejectToCodeEditor">
+            {{ ejecting ? 'Converting...' : 'Convert to code' }}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false">
       <button

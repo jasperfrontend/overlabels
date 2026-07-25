@@ -22,6 +22,7 @@ use App\Support\ListItems;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -100,6 +101,76 @@ class OverlayTemplateController extends Controller
         return Inertia::render('templates/create', [
             'sampleData' => $templateDataMapper->getSampleTemplateData(),
         ]);
+    }
+
+    /**
+     * The Builder: compose an overlay from blocks on a CSS grid.
+     */
+    public function builder(TemplateDataMapperService $templateDataMapper)
+    {
+        return Inertia::render('builder/create', [
+            'sampleData' => $templateDataMapper->getSampleTemplateData(),
+            'blocks' => $this->blockLibraryQuery()->get(),
+        ]);
+    }
+
+    /**
+     * JSON block library for the Builder's picker (server-side search).
+     */
+    public function blockLibrary(Request $request)
+    {
+        $query = $this->blockLibraryQuery();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%");
+            });
+        }
+
+        return response()->json(['blocks' => $query->get()]);
+    }
+
+    /**
+     * Code + controls snapshot of a block, fetched at placement time. The
+     * Builder stores this snapshot in the composed overlay's metadata - the
+     * block is never dereferenced again after placement.
+     */
+    public function blockSnapshot(OverlayTemplate $template)
+    {
+        abort_unless($template->type === 'block', 404);
+        abort_unless($template->is_public || $template->owner_id === auth()->id(), 404);
+
+        return response()->json([
+            'id' => $template->id,
+            'slug' => $template->slug,
+            'name' => $template->name,
+            'head' => $template->head ?? '',
+            'html' => $template->html ?? '',
+            'css' => $template->css ?? '',
+            'default_span' => $template->metadata['block']['default_span'] ?? ['w' => 4, 'h' => 2],
+            // Non-service controls only, mirroring Kit::fork - service-managed
+            // controls are user-scoped and provisioned by their integration.
+            'controls' => $template->controls()
+                ->whereNull('source')
+                ->orderBy('sort_order')
+                ->get(['key', 'label', 'description', 'type', 'value', 'config', 'sort_order']),
+        ]);
+    }
+
+    /**
+     * Light projection of blocks visible to the current user. No code fields -
+     * the Builder fetches those per block via blockSnapshot at placement time.
+     */
+    private function blockLibraryQuery()
+    {
+        return OverlayTemplate::query()
+            ->block()
+            ->where(fn ($q) => $q->where('is_public', true)->orWhere('owner_id', auth()->id()))
+            ->select(['id', 'slug', 'name', 'description', 'screenshot_url', 'metadata', 'owner_id'])
+            ->orderByDesc('fork_count')
+            ->orderBy('name')
+            ->limit(200);
     }
 
     /**
@@ -274,6 +345,14 @@ class OverlayTemplateController extends Controller
             'userLists' => $userLists,
             'triggers' => $triggers,
             'freesoundLibrary' => $freesoundLibrary,
+            // Builder-composed overlays get the grid editor on the Code tab;
+            // everything else skips these to keep the payload light.
+            'sampleData' => $template->isBuilderComposed()
+                ? app(TemplateDataMapperService::class)->getSampleTemplateData()
+                : null,
+            'builderBlocks' => $template->isBuilderComposed()
+                ? $this->blockLibraryQuery()->get()
+                : null,
         ]);
 
     }
@@ -343,7 +422,11 @@ class OverlayTemplateController extends Controller
         $template->recordView();
 
         $ownerName = $template->owner?->name ?: 'an Overlabels user';
-        $typeLabel = $template->type === 'alert' ? 'event alert' : 'overlay';
+        $typeLabel = match ($template->type) {
+            'alert' => 'event alert',
+            'block' => 'builder block',
+            default => 'overlay',
+        };
 
         $description = $template->description
             ?: "A Twitch {$typeLabel} by {$ownerName} on Overlabels. View the source, copy it to your account, and customise it for your stream.";
@@ -746,6 +829,78 @@ class OverlayTemplateController extends Controller
     }
 
     /**
+     * Validation rules for the client-writable slice of the metadata json.
+     * Only namespaced keys we understand survive normalizeMetadata() below.
+     */
+    private static function metadataRules(): array
+    {
+        return [
+            'metadata' => 'sometimes|nullable|array',
+            'metadata.block' => 'sometimes|array',
+            'metadata.block.default_span' => 'required_with:metadata.block|array',
+            'metadata.block.default_span.w' => 'required_with:metadata.block|integer|min:1|max:24',
+            'metadata.block.default_span.h' => 'required_with:metadata.block|integer|min:1|max:24',
+            // Builder state: grid + block placements with code snapshots. The
+            // snapshots are what re-editing works from - the source blocks are
+            // never dereferenced again after placement.
+            'metadata.builder' => 'sometimes|nullable|array',
+            'metadata.builder.version' => 'required_with:metadata.builder|integer|min:1',
+            'metadata.builder.grid' => 'required_with:metadata.builder|array',
+            'metadata.builder.grid.cols' => 'required_with:metadata.builder|integer|min:1|max:24',
+            'metadata.builder.grid.rows' => 'required_with:metadata.builder|integer|min:1|max:24',
+            'metadata.builder.grid.gap' => 'required_with:metadata.builder|integer|min:0|max:100',
+            'metadata.builder.canvas' => 'required_with:metadata.builder|array',
+            'metadata.builder.canvas.width' => 'required_with:metadata.builder|integer|min:16|max:7680',
+            'metadata.builder.canvas.height' => 'required_with:metadata.builder|integer|min:16|max:4320',
+            'metadata.builder.placements' => 'sometimes|array|max:40',
+            'metadata.builder.placements.*.instance_id' => 'required|alpha_num:ascii|max:8',
+            'metadata.builder.placements.*.block_template_id' => 'required|integer',
+            'metadata.builder.placements.*.block_slug' => 'required|string|max:255',
+            'metadata.builder.placements.*.block_name' => 'required|string|max:255',
+            'metadata.builder.placements.*.x' => 'required|integer|min:1|max:24',
+            'metadata.builder.placements.*.y' => 'required|integer|min:1|max:24',
+            'metadata.builder.placements.*.w' => 'required|integer|min:1|max:24',
+            'metadata.builder.placements.*.h' => 'required|integer|min:1|max:24',
+            'metadata.builder.placements.*.snapshot' => 'required|array',
+            'metadata.builder.placements.*.snapshot.head' => 'present|nullable|string|max:65535',
+            'metadata.builder.placements.*.snapshot.html' => 'present|nullable|string|max:65535',
+            'metadata.builder.placements.*.snapshot.css' => 'present|nullable|string|max:65535',
+        ];
+    }
+
+    /**
+     * Strip unknown keys from client-supplied metadata so arbitrary json can
+     * never be persisted through this surface, and sanitize the builder
+     * snapshots - they re-enter the editor and the compiled output on every
+     * Builder re-save, so they get the same treatment as top-level fields.
+     */
+    private static function normalizeMetadata(array $validated): array
+    {
+        if (! array_key_exists('metadata', $validated)) {
+            return $validated;
+        }
+
+        $metadata = $validated['metadata'] ? Arr::only($validated['metadata'], ['block', 'builder']) : [];
+
+        // An explicit builder => null is the eject signal: drop the key.
+        if (array_key_exists('builder', $metadata) && $metadata['builder'] === null) {
+            unset($metadata['builder']);
+        }
+
+        if (isset($metadata['builder']['placements'])) {
+            foreach ($metadata['builder']['placements'] as $i => $placement) {
+                $metadata['builder']['placements'][$i]['snapshot'] = HtmlSanitizationService::sanitizeTemplateFields(
+                    array_merge(['head' => '', 'html' => '', 'css' => ''], $placement['snapshot'] ?? [])
+                );
+            }
+        }
+
+        $validated['metadata'] = $metadata ?: null;
+
+        return $validated;
+    }
+
+    /**
      * Store new template
      */
     public function store(Request $request, CloudinaryUploadService $cloudinary)
@@ -757,16 +912,18 @@ class OverlayTemplateController extends Controller
             'html' => 'present|nullable|string',
             'css' => 'nullable|string',
             'compiled_css' => 'nullable|string',
-            'type' => 'required|in:static,alert',
+            'type' => 'required|in:static,alert,block',
             'is_public' => 'boolean',
             'screenshot_url' => 'nullable|url|max:2048',
             'tts_expression' => 'nullable|string|max:2000',
             'bot_message_expression' => 'nullable|string|max:500',
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'nullable|url|max:2048',
+            ...self::metadataRules(),
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
+        $validated = self::normalizeMetadata($validated);
 
         $template = $request->user()->overlayTemplates()->create($validated);
 
@@ -807,15 +964,17 @@ class OverlayTemplateController extends Controller
             'html' => 'sometimes|nullable|string',
             'css' => 'nullable|string',
             'compiled_css' => 'nullable|string',
-            'type' => 'sometimes|in:static,alert',
+            'type' => 'sometimes|in:static,alert,block',
             'is_public' => 'sometimes|boolean',
             'tts_expression' => 'sometimes|nullable|string|max:2000',
             'bot_message_expression' => 'sometimes|nullable|string|max:500',
             'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'sometimes|nullable|url|max:2048',
+            ...self::metadataRules(),
         ]);
 
         $validated = HtmlSanitizationService::sanitizeTemplateFields($validated);
+        $validated = self::normalizeMetadata($validated);
 
         $template->update($validated);
 

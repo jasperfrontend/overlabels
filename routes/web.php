@@ -558,11 +558,17 @@ Route::middleware('auth.redirect')->group(function () {
         });
     });
 
+    // Builder - compose an overlay from blocks on a CSS grid
+    Route::get('/builder', [OverlayTemplateController::class, 'builder'])->name('builder.create');
+
     // Template Management - Full resource routes
     Route::prefix('templates')->name('templates.')->group(function () {
         Route::get('/', [OverlayTemplateController::class, 'index'])->name('index');
         Route::get('/create', [OverlayTemplateController::class, 'create'])->name('create');
         Route::post('/', [OverlayTemplateController::class, 'store'])->name('store');
+        // Block routes must precede the {template} wildcard.
+        Route::get('/blocks/library', [OverlayTemplateController::class, 'blockLibrary'])->name('blocks.library');
+        Route::get('/blocks/{template}/snapshot', [OverlayTemplateController::class, 'blockSnapshot'])->name('blocks.snapshot');
         Route::get('/{template}', [OverlayTemplateController::class, 'show'])->name('show');
         Route::get('/{template}/edit', [OverlayTemplateController::class, 'edit'])->name('edit');
         Route::put('/{template}', [OverlayTemplateController::class, 'update'])->name('update');
