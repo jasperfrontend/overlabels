@@ -1,6 +1,12 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - fix(builder): block previews honor height:100%
+## July 26th, 2026 - docs(help): The Builder and Blocks help pages
+
+Two new help docs covering the block-based composing story, both in the established help-page format (TOC, numbered sections, callouts, bottom line) and linked from the help index:
+
+- **/help/builder** - for composers: what the Builder is (assembly, not a separate runtime), the grid and picker, drag/keyboard/preview, why saving yields a plain static overlay (with the actual compiled CSS shown), how controls come along (shared keys sync, removal keeps values), refresh from source, and the one-way eject door.
+- **/help/blocks** - for block authors: the third template type, creating from scratch or via Copy-as-Block, the fill-the-box CSS pattern (`width/height: 100%` against the definite-size wrapper), compile-time selector scoping with `:root`/`body` mapping (shown before/after), the keyframes/font-face global passthrough caveat, controls traveling with defaults + key-sharing design advice, snapshot semantics as a two-way trust promise, and publishing guidelines.
+- Both use HelpLayout (meta/OG boilerplate handled), routes registered as `help.builder` and `help.blocks`, two new cards on the help index (LayoutGrid and Blocks icons).
 
 A block styled with `height: 100%` filled its cell in the rendered overlay but not in the Builder's placement preview - full width, shrunk height. The preview iframe's document reset set no height on `html`/`body`, so a percentage height inside resolved against an indefinite parent and collapsed to auto (width was unaffected because block elements fill width by default). The reset now includes `height: 100%`, which also makes the preview environment faithfully mirror the compiled one, where the block wrapper is a grid item with a definite height. One line, preview-only - compiled output was always correct.
 

@@ -134,6 +134,14 @@ Route::get('/help/overlays-vs-alerts', function () {
     return Inertia::render('help/OverlaysVsAlerts');
 })->name('help.overlays-vs-alerts');
 
+Route::get('/help/builder', function () {
+    return Inertia::render('help/Builder');
+})->name('help.builder');
+
+Route::get('/help/blocks', function () {
+    return Inertia::render('help/Blocks');
+})->name('help.blocks');
+
 Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
 })->name('help.formatting');

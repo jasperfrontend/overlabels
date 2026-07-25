@@ -2,7 +2,7 @@
 import type { BreadcrumbItem } from '@/types';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import HelpCardGrid from '@/components/help/HelpCardGrid.vue';
-import { Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Layers, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Radio, Sigma, SlidersHorizontal, Sparkles, Swords } from '@lucide/vue';
+import { Blocks, Bot, BookOpen, Brackets, FunctionSquare, Heart, FileText, Layers, LayoutGrid, Lightbulb, Library, ListChecks, Palette, Pipette, Plug, Radio, Sigma, SlidersHorizontal, Sparkles, Swords } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,6 +33,18 @@ const pages = [
     description: 'The two kinds of overlay and how they fit together: why alerts are most powerful rendered inside a static overlay\'s DOM, plus Targeting vs Triggers.',
     href: '/help/overlays-vs-alerts',
     icon: Layers,
+  },
+  {
+    title: 'The Builder',
+    description: 'Compose an overlay without writing code: set up a grid, click a cell, pick a block, save. Compiles to a plain static overlay that works with everything else.',
+    href: '/help/builder',
+    icon: LayoutGrid,
+  },
+  {
+    title: 'Blocks',
+    description: 'Reusable building pieces for the Builder: how to author one, how CSS scoping and snapshots keep everyone safe, and how controls travel with your block.',
+    href: '/help/blocks',
+    icon: Blocks,
   },
   {
     title: 'Why Ko-fi',
