@@ -96,6 +96,17 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         return placement;
     }
 
+    /** Absolute move (drag target). Returns true when the block actually moved. */
+    function moveTo(id: string, x: number, y: number): boolean {
+        const p = placements.value.find((pl) => pl.instance_id === id);
+        if (!p || (p.x === x && p.y === y)) return false;
+        if (!fits(x, y, p.w, p.h, id)) return false;
+        p.x = x;
+        p.y = y;
+        placements.value = [...placements.value];
+        return true;
+    }
+
     function move(id: string, dx: number, dy: number): void {
         const p = placements.value.find((pl) => pl.instance_id === id);
         if (!p) return;
@@ -168,6 +179,7 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         clampSpan,
         addPlacement,
         move,
+        moveTo,
         resize,
         remove,
         setGrid,
