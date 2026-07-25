@@ -212,8 +212,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_280px]">
-        <div class="space-y-4">
+      <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div class="min-w-0 space-y-4">
           <div class="border border-sidebar-border bg-sidebar-accent p-4">
             <BuilderGridControls :grid="state.grid.value" @update="state.setGrid" />
           </div>

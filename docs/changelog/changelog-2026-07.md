@@ -1,6 +1,11 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(builder): the Builder - compose overlays from blocks on a CSS grid (part 2)
+## July 25th, 2026 - fix(builder): canvas actually scales down to fit the page
+
+First bug from real use: the Builder canvas rendered at a full 1920x1080 with `scale` stuck at 1. Root cause was layout, not the ResizeObserver: `transform: scale()` never affects layout size, so the 1920px-wide grid still occupied 1920px, and the `1fr` column track in the page layout (`grid-cols-[1fr_280px]`) has an `auto` minimum that grows to fit content. The column stretched to 1920px, the wrapper measured 1920px, and `1920 / 1920 = 1`.
+
+- **Fix**: `minmax(0,1fr)` for the canvas column plus `min-w-0` on the column div, in both `builder/create.vue` and `BuilderEditor.vue` (edit page had the same bug). The column now sizes to the free space and the canvas scales to fit it.
+- **Checkerboard background**: swapped leftover Tailwind v3 `theme(colors.sidebar.DEFAULT)` syntax for `var(--color-sidebar)` + `bg-size-[32px_32px]` so the empty-canvas checkerboard actually renders in v4.
 
 The assembly gap, closed: users who do not write HTML can now open `/builder`, set up a grid (12x8 default on a 1920x1080 canvas), click a cell, pick a block from the library, and save. The output is a plain static overlay - the entire existing machinery (render pipeline, Add to OBS, tokens, alerts, controls, WebSockets) works on it untouched, because the Builder compiles down to the same three head/html/css strings every template is made of. Zero new engine.
 

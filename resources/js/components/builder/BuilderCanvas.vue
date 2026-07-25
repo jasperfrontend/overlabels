@@ -49,7 +49,7 @@ const emptyCells = computed(() => {
   <div ref="wrapper" class="w-full">
     <div :style="{ height: `${canvas.height * scale}px` }" class="overflow-hidden">
       <div
-        class="grid border border-sidebar-border bg-[repeating-conic-gradient(theme(colors.sidebar.DEFAULT)_0%_25%,transparent_0%_50%)] bg-[length:32px_32px] dark:bg-[repeating-conic-gradient(rgba(255,255,255,0.03)_0%_25%,transparent_0%_50%)]"
+        class="grid border border-sidebar-border bg-[repeating-conic-gradient(var(--color-sidebar)_0%_25%,transparent_0%_50%)] bg-size-[32px_32px]"
         :style="{
           width: `${canvas.width}px`,
           height: `${canvas.height}px`,
