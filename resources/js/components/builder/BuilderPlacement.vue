@@ -35,9 +35,12 @@ const previewDoc = computed(() => {
   html = html.replace(/\[\[\[[^\]]*]]]/g, '');
   css = css.replace(/\[\[\[[^\]]*]]]/g, '');
 
+  // height:100% on html/body mirrors the compiled environment: there the
+  // block's wrapper is a grid item with a definite height, so a block using
+  // height:100% must resolve the same way inside the preview iframe.
   return `<!DOCTYPE html>
 <html lang="en">
-  <head><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}</style><style>${css}</style>${props.placement.snapshot.head}</head>
+  <head><style>html,body{margin:0;padding:0;height:100%;background:transparent;overflow:hidden;}</style><style>${css}</style>${props.placement.snapshot.head}</head>
   <body>${html}</body>
 </html>`;
 });

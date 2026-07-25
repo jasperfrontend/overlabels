@@ -1,5 +1,9 @@
 # CHANGELOG JULY 2026
 
+## July 25th, 2026 - fix(builder): block previews honor height:100%
+
+A block styled with `height: 100%` filled its cell in the rendered overlay but not in the Builder's placement preview - full width, shrunk height. The preview iframe's document reset set no height on `html`/`body`, so a percentage height inside resolved against an indefinite parent and collapsed to auto (width was unaffected because block elements fill width by default). The reset now includes `height: 100%`, which also makes the preview environment faithfully mirror the compiled one, where the block wrapper is a grid item with a definite height. One line, preview-only - compiled output was always correct.
+
 ## July 25th, 2026 - fix(builder): renamed blocks update their placement labels
 
 Renaming a block did not change its label on Builder placements: drift detection deliberately compares only head/html/css (drift = rendered output), so a name-only change never qualified for the refresh flow - and never will, because the name is a provenance label, not output. Labels are now treated as live instead of snapshot-frozen: whenever the editor sees a fresh source (the mount/refocus check or a picker fetch), placement names silently follow it - no badge, no refresh ceremony, persisted with the next save. Descriptions were never stored on placements; the picker already shows them fresh per page load.
