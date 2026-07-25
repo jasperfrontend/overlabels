@@ -1,6 +1,8 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(builder): refresh placed blocks from their source
+## July 25th, 2026 - feat(builder): "used by block" pill on the Controls tab
+
+On builder-composed overlays, template controls that a placed block references now carry a pill in the same visual family as the service-managed label - block icon plus the block's name (first name +N when several blocks share the key), tooltip listing all of them. Deliberately "used by", not "came from": it is computed by scanning the placement snapshots in `metadata.builder` for `[[[c:key]]]` and `[[[if:c:key ...]]]` references, so it is always true, even for a hand-made control that a block happens to use. No lock - block controls stay fully editable. Composes with the existing badge: referenced by a placed block = block pill, referenced by none = "Not used by any block". Client-side only, zero backend.
 
 Editing a block after placing it left the placement on the old snapshot, and the only remedy was remove + re-place, losing position and size. Now the Builder notices and offers to sync - explicitly, in the editing session only.
 

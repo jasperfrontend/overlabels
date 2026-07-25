@@ -13,6 +13,7 @@ import {
   ChevronsUpDown,
   ChevronsDownUp,
   LockIcon,
+  Blocks,
 } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -111,6 +112,43 @@ function snippetKey(ctrl: OverlayControl): string {
 // block reattaches it) - this badge just makes the leftovers visible so the
 // user can decide. template_tags is re-extracted server-side on every save.
 const builderComposed = computed(() => !!props.template?.metadata?.builder);
+
+// Which placed blocks reference each control key. Built by scanning the
+// placement snapshots for [[[c:key]]] (and [[[if:c:key ...]]]) tags, so it is
+// "used by", not "came from" - always true, even for a hand-made control that
+// a block happens to reference. Keys with a colon are namespaced service tags
+// (c:kofi:x) and never template-scoped, so they are skipped.
+const blockUsage = computed<Map<string, string[]>>(() => {
+  const map = new Map<string, string[]>();
+  for (const placement of props.template?.metadata?.builder?.placements ?? []) {
+    const code = `${placement.snapshot?.head ?? ''}\n${placement.snapshot?.html ?? ''}\n${placement.snapshot?.css ?? ''}`;
+    const keys = new Set<string>();
+    for (const match of code.matchAll(/\[\[\[(?:if:)?c:([a-zA-Z0-9_.:-]+)/g)) {
+      if (!match[1].includes(':')) keys.add(match[1]);
+    }
+    for (const key of keys) {
+      const names = map.get(key) ?? [];
+      if (!names.includes(placement.block_name)) names.push(placement.block_name);
+      map.set(key, names);
+    }
+  }
+  return map;
+});
+
+function usedByBlocks(ctrl: OverlayControl): string[] {
+  if (ctrl.source || ctrl.overlay_template_id === null) return [];
+  return blockUsage.value.get(ctrl.key) ?? [];
+}
+
+function usedByBlocksLabel(ctrl: OverlayControl): string {
+  const names = usedByBlocks(ctrl);
+  return names.length > 1 ? `${names[0]} +${names.length - 1}` : (names[0] ?? '');
+}
+
+function usedByBlocksTitle(ctrl: OverlayControl): string {
+  const names = usedByBlocks(ctrl);
+  return `Used by block${names.length === 1 ? '' : 's'}: ${names.join(', ')}. Block controls stay fully editable.`;
+}
 
 function isBlockOrphan(ctrl: OverlayControl): boolean {
   const tags = props.template?.template_tags;
@@ -422,6 +460,14 @@ const controlsCounter = computed(() => controls.value.length);
                     >
                       <LockIcon class="h-2.5 w-2.5" />
                       {{ SERVICE_LABELS[ctrl.source] ?? ctrl.source }}
+                    </span>
+                    <span
+                      v-if="usedByBlocks(ctrl).length"
+                      class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
+                      :title="usedByBlocksTitle(ctrl)"
+                    >
+                      <Blocks class="h-2.5 w-2.5" />
+                      {{ usedByBlocksLabel(ctrl) }}
                     </span>
                     <span
                       v-if="isBlockOrphan(ctrl)"
