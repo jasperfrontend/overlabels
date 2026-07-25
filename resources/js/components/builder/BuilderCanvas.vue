@@ -10,12 +10,14 @@ const props = defineProps<{
   selectedId: string | null;
   sampleData: Record<string, string>;
   isCellOccupied: (x: number, y: number) => boolean;
+  stalePlacementIds?: Set<string>;
 }>();
 
 const emit = defineEmits<{
   cellClick: [x: number, y: number];
   select: [id: string | null];
   moveTo: [id: string, x: number, y: number];
+  syncAll: [];
 }>();
 
 // The canvas renders at its real OBS size (1920x1080) and is scaled down with
@@ -116,6 +118,15 @@ const emptyCells = computed(() => {
 
 <template>
   <div ref="wrapper" class="w-full">
+    <div
+      v-if="stalePlacementIds && stalePlacementIds.size > 0"
+      class="mb-2 flex flex-wrap items-center justify-between gap-2 border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-foreground"
+    >
+      <span>
+        The source of {{ stalePlacementIds.size }} placed block{{ stalePlacementIds.size === 1 ? '' : 's' }} changed. Sync into this session?
+      </span>
+      <button type="button" class="btn btn-cancel btn-sm shrink-0 cursor-pointer" @click="emit('syncAll')">Sync all</button>
+    </div>
     <div :style="{ height: `${canvas.height * scale}px` }" class="overflow-hidden">
       <div
         ref="gridEl"
@@ -149,6 +160,7 @@ const emptyCells = computed(() => {
           :placement="placement"
           :sample-data="sampleData"
           :selected="placement.instance_id === selectedId"
+          :source-stale="stalePlacementIds?.has(placement.instance_id) ?? false"
           @select="(id) => emit('select', id)"
           @drag-start="onDragStart"
         />

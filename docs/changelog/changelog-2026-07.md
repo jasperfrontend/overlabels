@@ -1,6 +1,14 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - fix(breadcrumbs): a copied-as-Block template no longer inherits the source's list crumb
+## July 25th, 2026 - feat(builder): refresh placed blocks from their source
+
+Editing a block after placing it left the placement on the old snapshot, and the only remedy was remove + re-place, losing position and size. Now the Builder notices and offers to sync - explicitly, in the editing session only.
+
+- **Detection**: on editor mount and window refocus (throttled to once per 10s), the current snapshots of all distinct placed blocks are fetched and string-compared against the stored ones. String comparison is ground truth - no timestamps to store, and it works retroactively on every composed overlay saved before this feature existed. Covers the edit-the-block-in-another-tab round trip.
+- **UI**: an amber "Source updated" badge on each drifted placement, a "Refresh from source" button in the selected-block panel, and a bar above the canvas - "The source of N placed blocks changed. Sync into this session?" - with a Sync all action.
+- **Refresh** re-takes the snapshot in place: same instance_id, position, and size (remove + re-add without losing the layout). The source's controls are registered like a fresh placement, so new control keys ride along at the next save. On the edit page a refresh marks the form dirty.
+- **The snapshot invariant is untouched**: nothing propagates to a saved overlay until the owner saves. A deleted or newly-private source is skipped silently - the placement keeps rendering its snapshot, which is the invariant working as intended. The picker's fetch feeds the same source cache, so a just-placed block can never be flagged stale by an older background check or silently downgraded by a refresh.
+- Zero backend changes; this is step 1 of the Hot Blocks ladder (docs/design/hot-blocks-idea.md, local).
 
 Copy a static overlay as a Block and the new block's breadcrumb said "My static overlays" forever, even when you clicked it from the My blocks list. Root cause in `useListContext`: the show page freezes the freshest global list context for a template on its first mount - and right after a copy, the freshest list you visited is still the SOURCE's list. The frozen origin then wins over every later navigation by design, so the wrong crumb stuck for the whole tab session.
 

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type { BuilderPlacement } from '@/types';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Trash2 } from '@lucide/vue';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, RefreshCcw, Trash2 } from '@lucide/vue';
 
 defineProps<{
   placement: BuilderPlacement;
+  sourceStale?: boolean;
 }>();
 
 const emit = defineEmits<{
   move: [dx: number, dy: number];
   resize: [dw: number, dh: number];
   remove: [];
+  refreshSource: [];
 }>();
 </script>
 
@@ -18,6 +20,14 @@ const emit = defineEmits<{
     <div class="text-sm font-medium text-accent-foreground">{{ placement.block_name }}</div>
     <div class="font-mono text-xs text-muted-foreground">
       {{ placement.w }} x {{ placement.h }} at column {{ placement.x }}, row {{ placement.y }}
+    </div>
+
+    <div v-if="sourceStale" class="space-y-2 border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs text-foreground">
+      <p>The source of this block changed since it was placed here.</p>
+      <button type="button" class="btn btn-cancel btn-sm cursor-pointer" @click="emit('refreshSource')">
+        <RefreshCcw class="mr-1.5 size-3.5" />
+        Refresh from source
+      </button>
     </div>
 
     <div class="flex items-center gap-2">

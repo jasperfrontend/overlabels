@@ -7,6 +7,7 @@ import BuilderGridControls from '@/components/builder/BuilderGridControls.vue';
 import BlockPickerModal, { type LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
 import SelectedBlockPanel from '@/components/builder/SelectedBlockPanel.vue';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
+import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 
 // The Builder editing surface inside the template edit page's Code tab.
@@ -21,6 +22,15 @@ const props = defineProps<{
 const emit = defineEmits<{ dirty: []; error: [message: string] }>();
 
 const state = useBuilderState(props.initial);
+const { stalePlacementIds, refreshPlacement, syncAll, noteFreshSource } = useBlockSourceSync(state);
+
+function refreshSelectedFromSource() {
+  if (state.selectedId.value && refreshPlacement(state.selectedId.value)) emit('dirty');
+}
+
+function syncAllFromSource() {
+  if (syncAll() > 0) emit('dirty');
+}
 
 const pickerOpen = ref(false);
 const pickerCell = ref<{ x: number; y: number } | null>(null);
@@ -37,6 +47,7 @@ async function onPickBlock(block: LibraryBlock) {
 
   try {
     const { data } = await axios.get(route('templates.blocks.snapshot', block.id));
+    noteFreshSource(block.id, data);
     const span = data.default_span ?? { w: 4, h: 2 };
     const placed = state.addPlacement(
       { id: data.id, slug: data.slug, name: data.name },
@@ -116,9 +127,11 @@ defineExpose({
         :selected-id="state.selectedId.value"
         :sample-data="sampleData"
         :is-cell-occupied="(x, y) => state.occupied(x, y)"
+        :stale-placement-ids="stalePlacementIds"
         @cell-click="onCellClick"
         @select="(id) => (state.selectedId.value = id)"
         @move-to="moveTo"
+        @sync-all="syncAllFromSource"
       />
 
       <p class="text-sm text-muted-foreground">
@@ -131,9 +144,11 @@ defineExpose({
       <SelectedBlockPanel
         v-if="state.selected.value"
         :placement="state.selected.value"
+        :source-stale="stalePlacementIds.has(state.selected.value.instance_id)"
         @move="move"
         @resize="resize"
         @remove="removeSelected"
+        @refresh-source="refreshSelectedFromSource"
       />
       <div class="border border-sidebar-border bg-sidebar-accent p-4 text-xs text-muted-foreground">
         Blocks that use controls bring them along on save. Blocks sharing a control key stay in sync.
