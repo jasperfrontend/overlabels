@@ -13,6 +13,7 @@ import BlockPickerModal, { type LibraryBlock } from '@/components/builder/BlockP
 import SelectedBlockPanel from '@/components/builder/SelectedBlockPanel.vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
+import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
@@ -26,6 +27,20 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Builder', href: '/builder' }];
 
 const state = useBuilderState();
+const { stalePlacementIds, refreshPlacement, syncAll, noteFreshSource } = useBlockSourceSync(state);
+
+function refreshSelectedFromSource() {
+  if (state.selectedId.value && refreshPlacement(state.selectedId.value)) {
+    toast('Block refreshed from its source.', 'success');
+  }
+}
+
+function syncAllFromSource() {
+  const refreshed = syncAll();
+  if (refreshed > 0) {
+    toast(`${refreshed} block${refreshed === 1 ? '' : 's'} refreshed from source.`, 'success');
+  }
+}
 
 const name = ref('');
 const description = ref('');
@@ -71,6 +86,7 @@ async function onPickBlock(block: LibraryBlock) {
 
   try {
     const { data } = await axios.get(route('templates.blocks.snapshot', block.id));
+    noteFreshSource(block.id, data);
     const span = data.default_span ?? { w: 4, h: 2 };
     const placed = state.addPlacement(
       { id: data.id, slug: data.slug, name: data.name },
@@ -225,9 +241,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             :selected-id="state.selectedId.value"
             :sample-data="props.sampleData"
             :is-cell-occupied="(x, y) => state.occupied(x, y)"
+            :stale-placement-ids="stalePlacementIds"
             @cell-click="onCellClick"
             @select="(id) => (state.selectedId.value = id)"
             @move-to="(id, x, y) => state.moveTo(id, x, y)"
+            @sync-all="syncAllFromSource"
           />
 
           <p class="text-sm text-muted-foreground">
@@ -252,9 +270,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
           <SelectedBlockPanel
             v-if="state.selected.value"
             :placement="state.selected.value"
+            :source-stale="stalePlacementIds.has(state.selected.value.instance_id)"
             @move="(dx, dy) => state.move(state.selectedId.value!, dx, dy)"
             @resize="(dw, dh) => state.resize(state.selectedId.value!, dw, dh)"
             @remove="state.remove(state.selectedId.value!)"
+            @refresh-source="refreshSelectedFromSource"
           />
 
           <div class="border border-sidebar-border bg-sidebar-accent p-4 text-sm text-foreground">

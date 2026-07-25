@@ -6,6 +6,7 @@ const props = defineProps<{
   placement: BuilderPlacement;
   sampleData: Record<string, string>;
   selected: boolean;
+  sourceStale?: boolean;
 }>();
 
 const emit = defineEmits<{ select: [id: string]; dragStart: [id: string, event: PointerEvent] }>();
@@ -65,6 +66,13 @@ const gridArea = computed(
     />
     <div class="pointer-events-none absolute top-0 left-0 max-w-full truncate bg-sidebar-accent/90 px-2 py-0.5 font-mono text-xs text-foreground">
       {{ placement.block_name }}
+    </div>
+    <div
+      v-if="sourceStale"
+      class="pointer-events-none absolute top-0 right-0 bg-amber-500/90 px-2 py-0.5 text-[10px] font-medium text-black"
+      title="The source of this block changed since it was placed. Select it to refresh."
+    >
+      Source updated
     </div>
   </div>
 </template>

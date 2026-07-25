@@ -96,6 +96,24 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         return placement;
     }
 
+    /**
+     * Re-take a placement's snapshot from its source block ("Refresh from
+     * source"). Position, size, and instance_id stay put - this is remove +
+     * re-add without losing the layout. The source's controls are registered
+     * like a fresh placement so any NEW control keys ride along at save time.
+     */
+    function refreshSnapshot(
+        id: string,
+        source: { name: string; snapshot: { head: string; html: string; css: string }; controls: BuilderControlDef[] },
+    ): void {
+        const p = placements.value.find((pl) => pl.instance_id === id);
+        if (!p) return;
+        p.block_name = source.name;
+        p.snapshot = { ...source.snapshot };
+        sessionControlDefs.set(id, source.controls);
+        placements.value = [...placements.value];
+    }
+
     /** Absolute move (drag target). Returns true when the block actually moved. */
     function moveTo(id: string, x: number, y: number): boolean {
         const p = placements.value.find((pl) => pl.instance_id === id);
@@ -178,6 +196,7 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         occupied,
         clampSpan,
         addPlacement,
+        refreshSnapshot,
         move,
         moveTo,
         resize,
