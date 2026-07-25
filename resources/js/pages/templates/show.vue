@@ -10,6 +10,7 @@ import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vu
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import {
   DropdownMenu,
@@ -143,6 +144,8 @@ const {
   canDelete,
   previewTemplate,
   forkTemplate,
+  forkAs,
+  copyChoiceOpen,
   deleteTemplate,
   toastMessage,
   toastType,
@@ -213,6 +216,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       :required-services="forkWizardRequiredServices"
       :connected-services="forkWizardConnectedServices"
     />
+    <CopyTypeDialog v-model:open="copyChoiceOpen" @choose="forkAs" />
 
     <div class="p-4">
       <!-- Header -->

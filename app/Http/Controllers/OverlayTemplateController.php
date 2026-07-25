@@ -1267,7 +1267,15 @@ class OverlayTemplateController extends Controller
             abort(403, 'Cannot fork private template');
         }
 
-        $fork = $template->fork($request->user());
+        $validated = $request->validate([
+            'type' => 'sometimes|nullable|in:static,block',
+        ]);
+
+        // Only a static source offers a target-type choice; alerts and blocks
+        // always copy as themselves.
+        $asType = $template->type === 'static' ? ($validated['type'] ?? null) : null;
+
+        $fork = $template->fork($request->user(), $asType);
 
         $connectedServices = ExternalIntegration::where('user_id', $request->user()->id)
             ->where('enabled', true)

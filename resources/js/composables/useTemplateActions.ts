@@ -54,11 +54,13 @@ export function useTemplateActions(template: any, options: TemplateActionOptions
     return true;
   };
 
-  const forkTemplate = async () => {
-    if (!confirm('Copy this template?')) return;
+  // Copy-type choice dialog (static templates only): the copy can become a
+  // static overlay or a Builder block. Alerts and blocks copy as themselves.
+  const copyChoiceOpen = ref(false);
 
+  const performFork = async (payload: Record<string, unknown> = {}) => {
     try {
-      const response = await axios.post(route('templates.fork', template));
+      const response = await axios.post(route('templates.fork', template), payload);
       const data = response.data;
 
       if (!openWizardFromPayload(data)) {
@@ -70,6 +72,20 @@ export function useTemplateActions(template: any, options: TemplateActionOptions
       toastMessage.value = 'Failed to copy template.';
       toastType.value = 'error';
     }
+  };
+
+  const forkTemplate = async () => {
+    if (template?.type === 'static') {
+      copyChoiceOpen.value = true;
+      return;
+    }
+    if (!confirm('Copy this template?')) return;
+    await performFork();
+  };
+
+  const forkAs = async (type: 'static' | 'block') => {
+    copyChoiceOpen.value = false;
+    await performFork({ type });
   };
 
   const deleteTemplate = async () => {
@@ -104,6 +120,8 @@ export function useTemplateActions(template: any, options: TemplateActionOptions
     canDelete,
     previewTemplate,
     forkTemplate,
+    forkAs,
+    copyChoiceOpen,
     deleteTemplate,
     toastMessage,
     toastType,

@@ -383,11 +383,25 @@ class OverlayTemplate extends Model
     /**
      * Fork this template
      */
-    public function fork(User $user): self
+    public function fork(User $user, ?string $asType = null): self
     {
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->fork_of_id = $this->id;
+
+        // Copy-as-conversion: a static overlay can be copied as a block for
+        // the Builder. A Builder-composed source keeps its compiled output but
+        // drops the grid editing state - a block is a leaf piece, not a grid
+        // of other blocks.
+        if ($asType !== null && $asType !== $this->type) {
+            $fork->type = $asType;
+            if ($asType === 'block' && isset($fork->metadata['builder'])) {
+                $metadata = $fork->metadata;
+                unset($metadata['builder']);
+                $fork->metadata = $metadata ?: null;
+            }
+        }
+
         // Create the forked name and limit to 100 characters
         $copiedName = 'Copy: '.$this->owner->name.' - '.$this->name;
         if (strlen($copiedName) > 70) {

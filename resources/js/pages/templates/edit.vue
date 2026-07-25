@@ -13,6 +13,7 @@ import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
@@ -135,6 +136,8 @@ const {
   canDelete,
   previewTemplate,
   forkTemplate,
+  forkAs,
+  copyChoiceOpen,
   deleteTemplate,
   toastMessage: templateToastMessage,
   toastType: templateToastType,
@@ -535,6 +538,7 @@ onMounted(() => {
       :required-services="forkWizardRequiredServices"
       :connected-services="forkWizardConnectedServices"
     />
+    <CopyTypeDialog v-model:open="copyChoiceOpen" @choose="forkAs" />
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">

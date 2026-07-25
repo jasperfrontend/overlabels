@@ -1,6 +1,14 @@
 # CHANGELOG JULY 2026
 
-## July 25th, 2026 - feat(builder): surface controls left behind by removed blocks
+## July 25th, 2026 - feat(templates): copy any static overlay as a Block
+
+The Copy action on a static overlay now asks what the copy should become: a static overlay (the existing behavior) or a Block for the Builder. That turns the entire public library of static overlays into potential Builder material - see a community overlay you like, copy it as a Block, place it on your grid.
+
+- **Choice dialog** on the show and edit pages' Copy action, static templates only. Alerts (and blocks) copy as themselves with the existing confirm, no dialog.
+- **Backend**: the fork endpoint accepts an optional `type` (`static`/`block`, anything else 422s) which is only honored when the source is static - alerts can never be converted into, or out of, anything. Copying a Builder-composed overlay as a Block keeps the compiled output but drops the grid editing state (a block is a leaf piece, not a grid of other blocks); copying it as a static overlay keeps the grid fully editable.
+- Controls still flow through the existing import wizard regardless of target type - blocks carry controls, so nothing changes there.
+- The quick-copy actions on the templates table/cards and the public preview page keep the direct static-to-static behavior (they are full-navigation form posts, no dialog surface).
+- **Tests**: 5 new in BlockTemplateTest - static-to-block, default stays static, builder-composed conversion (grid state dropped as block, kept as static), alert ignores the requested type, `type=alert` rejected. 14/14 green.
 
 Removing a block from the canvas keeps the controls it brought along - deliberately, so a counter at 500 survives a layout experiment and re-adding the block picks it right back up. But the leftovers were invisible, and a few removed blocks could quietly pile up a heap of stray controls. Inform, don't gate:
 
