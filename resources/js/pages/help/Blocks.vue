@@ -48,7 +48,7 @@ const scopingExample = `/* you write */
       <Heading
         title="Blocks"
         title-class="text-4xl font-bold mb-4"
-        description="A block is a small, self-contained overlay piece: a follower counter, a donation goal, a chat box frame. Build it once with the same HTML, CSS, and tags as any overlay - then anyone can place it on a grid in the Builder, no code required on their end."
+        description="A block is a small, self-contained overlay piece: a follower counter, a donation goal, anything that can live within Overlabels. Build it once with the same HTML, CSS, and tags as any overlay - then anyone can place it on a grid in the Builder, no code required on their end."
       />
     </div>
 
