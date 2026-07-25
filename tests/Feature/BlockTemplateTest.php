@@ -155,6 +155,81 @@ test('the static overlay picker on the alert edit page excludes blocks', functio
     );
 });
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Copy as: static templates can be copied as blocks
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('copying a static template as a block yields a block', function () {
+    $user = makeBlockUser();
+    $this->actingAs($user);
+    $static = makeTemplateOfType($user, 'static');
+
+    $response = $this->postJson("/templates/{$static->id}/fork", ['type' => 'block']);
+
+    $response->assertOk();
+    $fork = OverlayTemplate::find($response->json('template.id'));
+    expect($fork->type)->toBe('block')
+        ->and($static->fresh()->type)->toBe('static');
+});
+
+test('copying a static template without a type stays static', function () {
+    $user = makeBlockUser();
+    $this->actingAs($user);
+    $static = makeTemplateOfType($user, 'static');
+
+    $response = $this->postJson("/templates/{$static->id}/fork");
+
+    expect(OverlayTemplate::find($response->json('template.id'))->type)->toBe('static');
+});
+
+test('copying a builder composed overlay as a block drops the grid state', function () {
+    $user = makeBlockUser();
+    $this->actingAs($user);
+    $builderMetadata = [
+        'version' => 1,
+        'grid' => ['cols' => 12, 'rows' => 8, 'gap' => 8],
+        'canvas' => ['width' => 1920, 'height' => 1080],
+        'placements' => [],
+    ];
+    $static = OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'static',
+        'slug' => 'composed-'.fake()->unique()->lexify('????????'),
+        'metadata' => ['builder' => $builderMetadata],
+    ]);
+
+    $asBlock = OverlayTemplate::find(
+        $this->postJson("/templates/{$static->id}/fork", ['type' => 'block'])->json('template.id')
+    );
+    $asStatic = OverlayTemplate::find(
+        $this->postJson("/templates/{$static->id}/fork", ['type' => 'static'])->json('template.id')
+    );
+
+    expect($asBlock->type)->toBe('block')
+        ->and($asBlock->metadata)->toBeNull()
+        // Copied as static, the grid stays editable in the Builder.
+        ->and($asStatic->metadata['builder'])->toBe($builderMetadata);
+});
+
+test('an alert copy ignores the requested type', function () {
+    $user = makeBlockUser();
+    $this->actingAs($user);
+    $alert = makeTemplateOfType($user, 'alert');
+
+    $response = $this->postJson("/templates/{$alert->id}/fork", ['type' => 'block']);
+
+    expect(OverlayTemplate::find($response->json('template.id'))->type)->toBe('alert');
+});
+
+test('copying as an alert is rejected', function () {
+    $user = makeBlockUser();
+    $this->actingAs($user);
+    $static = makeTemplateOfType($user, 'static');
+
+    $this->postJson("/templates/{$static->id}/fork", ['type' => 'alert'])->assertUnprocessable();
+});
+
 test('a block renders through the overlay pipeline for its owner', function () {
     $this->mock(TwitchTokenService::class, function ($mock) {
         $mock->shouldReceive('ensureValidToken')->andReturnTrue();

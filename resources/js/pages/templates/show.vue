@@ -10,6 +10,7 @@ import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vu
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import {
   DropdownMenu,
@@ -38,7 +39,7 @@ import {
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext, deriveListContext } from '@/composables/useListContext';
+import { captureListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
 
@@ -143,6 +144,8 @@ const {
   canDelete,
   previewTemplate,
   forkTemplate,
+  forkAs,
+  copyChoiceOpen,
   deleteTemplate,
   toastMessage,
   toastType,
@@ -185,7 +188,7 @@ const copyToClipboard = (url: string, shownValue: string) => {
 // to a crumb derived from the template's own type + ownership.
 const listContext = captureListContext(
   props.template?.id,
-  deriveListContext({ type: props.template?.type, ownedByMe: props.canEdit }),
+  { type: props.template?.type, ownedByMe: props.canEdit },
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -213,6 +216,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       :required-services="forkWizardRequiredServices"
       :connected-services="forkWizardConnectedServices"
     />
+    <CopyTypeDialog v-model:open="copyChoiceOpen" @choose="forkAs" />
 
     <div class="p-4">
       <!-- Header -->

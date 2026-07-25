@@ -13,6 +13,7 @@ import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
+import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
@@ -50,7 +51,7 @@ import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
-import { captureListContext, deriveListContext } from '@/composables/useListContext';
+import { captureListContext } from '@/composables/useListContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,6 +136,8 @@ const {
   canDelete,
   previewTemplate,
   forkTemplate,
+  forkAs,
+  copyChoiceOpen,
   deleteTemplate,
   toastMessage: templateToastMessage,
   toastType: templateToastType,
@@ -198,7 +201,7 @@ function ejectToCodeEditor() {
 // the template itself. The edit page is owner-only, so ownership is always "My".
 const listContext = captureListContext(
   props.template?.id,
-  deriveListContext({ type: props.template?.type, ownedByMe: true }),
+  { type: props.template?.type, ownedByMe: true },
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -535,6 +538,7 @@ onMounted(() => {
       :required-services="forkWizardRequiredServices"
       :connected-services="forkWizardConnectedServices"
     />
+    <CopyTypeDialog v-model:open="copyChoiceOpen" @choose="forkAs" />
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
