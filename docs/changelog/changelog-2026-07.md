@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - docs(dsl): specify the Overlabels DSL and retire the Recipes milestone
+
+The template language grew by accretion over a year and was never written down. It is now specified at `docs/design/overlabels-dsl-spec.md`, written descriptively first - sections 1-6 document what the language actually does today, derived by reading every implementation, before section 7 proposes anything.
+
+- **The language is small**: 79 closed terms (62 static Twitch tags, 11 formatters, 6 block keywords, 6 comparison operators, 2 operators), plus open namespaces (`c:*`, `c:list:*`, `event.*`, `bot:*`, foreach `alias.*`/`loop.*`). The design insight the spec turns on: closed terms validate by lookup, open namespaces validate by resolution against the user's own controls and lists - which Expression Controls already do.
+- **Five independent tag-matching regexes were found, not two.** The three substitution engines (`tagParser.ts`, `BotExpressionResolver`, `AlertExpressionRenderer`) are byte-identical, so the rendered language is consistent across overlays, bot replies and alerts. The outlier is the extraction engine (`OverlayTemplate::extractTemplateTags`), which decides which data is fetched at all - when extraction and substitution disagree, a tag silently resolves to empty because its value was never requested.
+- **Seven divergences documented (D1-D7)**, all unintentional. Sharpest is D3: `detectRequiredServices` was never taught about `??`, so `[[[c:kofi:total ?? 0]]]` does not register Ko-fi as a required service and the connect-this-service warning never fires.
+- **The language already detects malformation and throws it away** (section 5.6): unmatched `if`/`foreach`, stray `else`/`endif`, and nesting past depth 10 are all caught at render time, then met with a `console.warn` and a silent abort. Detection exists; only reporting is missing.
+- Documented drift found along the way: 11 formatters ship, 8 are documented (`distance`, `speed`, `login` and `mention` arrived without the docs following).
+- **Milestone 9 (Recipes: Producer Layer) is retired** and replaced by M13 - the Builder: drag & drop, and Blocks that feel real before placement. The Recipes engine stays in the codebase because `OptionSet` and `Picker` are load-bearing for Lists, but the shippable surface is not going to be built: it was aimed at developers, and it is not easy, which is the opposite of the direction. The completed-milestones entry now carries that reasoning so it is not re-proposed.
+- Bot Expression follow-ups moved to the Backlog and triaged: per-user cooldowns and the outbox cadence doc stay, `c:` validation and tag autocomplete fold into the DSL validator, `!commands` is rejected on privacy grounds, and the anti-spam cap on `bot_chat_outbox` is rejected by design - the outbox swallows everything and surge protection belongs upstream of it.
+
 ## July 27th, 2026 - chore(deps): dependency audit and in-range updates
 
 A security sweep across both dependency trees. `npm audit` and `composer audit` both report zero advisories against 366 npm packages and the full Composer tree, so nothing here was a fix - these are routine currency updates applied while the trees were clean.
