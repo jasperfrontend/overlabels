@@ -1,5 +1,15 @@
 # CHANGELOG JULY 2026
 
+## July 27th, 2026 - chore(deps): dependency audit and in-range updates
+
+A security sweep across both dependency trees. `npm audit` and `composer audit` both report zero advisories against 366 npm packages and the full Composer tree, so nothing here was a fix - these are routine currency updates applied while the trees were clean.
+
+- **Composer**: `laravel/framework` v13.21.1 -> v13.23.0 (the only outdated direct dependency; everything else was already current).
+- **npm**: 12 packages moved within their existing semver ranges - `@codemirror/view` 6.43.7, `@lucide/vue` 1.27.0, `@vue/devtools-api` 8.2.1 (plus devtools-kit/shared), `eslint` 10.8.0, `concurrently` 10.0.4, `@types/node` 26.1.2, and transitive bumps to `postcss`, `minimatch`, `es-toolkit`, and `@eslint/config-helpers`.
+- **Manifests unchanged**: only `composer.lock` and `package-lock.json` moved. No declared ranges were widened, so nothing new entered either tree.
+- **Held back**: `typescript` 6.0.3 -> 7.0.2 is a major and stays pinned at `^6.0.3` pending a deliberate upgrade pass (it drags `vue-tsc` and `typescript-eslint` compatibility with it). The two `MISSING` optional deps in `npm outdated` (`@tailwindcss/oxide-linux-x64-gnu`, `lightningcss-linux-x64-gnu`) are Linux-only binaries that correctly skip installation on the Windows dev machine and resolve in the production image.
+- Verified with a production Vite build, ESLint, and the full Pest suite: 1036 passed, 2900 assertions.
+
 ## July 26th, 2026 - docs(help): The Builder and Blocks help pages
 
 Two new help docs covering the block-based composing story, both in the established help-page format (TOC, numbered sections, callouts, bottom line) and linked from the help index:
