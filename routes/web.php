@@ -11,6 +11,7 @@ use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\FreesoundController;
 use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpReferenceController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
@@ -138,9 +139,9 @@ Route::get('/help/builder', function () {
     return Inertia::render('help/Builder');
 })->name('help.builder');
 
-Route::get('/help/blocks', function () {
-    return Inertia::render('help/Blocks');
-})->name('help.blocks');
+Route::get('/help/blocks', [HelpController::class, 'show'])
+    ->defaults('slug', 'blocks')
+    ->name('help.blocks');
 
 Route::get('/help/formatting', function () {
     return Inertia::render('help/Formatting');
