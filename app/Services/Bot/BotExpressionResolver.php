@@ -9,6 +9,7 @@ use App\Services\Expressions\ExpressionFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
+use App\Support\Dsl;
 use App\Support\ListItems;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -51,7 +52,12 @@ class BotExpressionResolver
     // after `??`): literal default emitted when the value resolves empty. The
     // default captures lazily up to the closing `]]]` so it may contain spaces
     // and punctuation; the only thing it can't contain is the literal `]]]`.
-    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/';
+    // Built from the shared DSL spec (resources/dsl/dsl.json) so this resolver,
+    // the alert renderer and the overlay renderer cannot drift apart.
+    private static function tagRegex(): string
+    {
+        return Dsl::tagPattern();
+    }
 
     private const int MAX_RESOLVED_LENGTH = 500;
 
@@ -79,7 +85,7 @@ class BotExpressionResolver
         $locale = (string) ($user->preference('locale', 'en-US'));
 
         $resolved = preg_replace_callback(
-            self::TAG_REGEX,
+            self::tagRegex(),
             function (array $matches) use ($controls, $lists, $twitchTags, $botContext, $locale): string {
                 $key = $matches[1];
                 $pipe = ($matches[2] ?? '') !== '' ? $matches[2] : null;

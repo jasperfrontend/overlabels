@@ -101,7 +101,7 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Commands shipped: read (`!control`, `!overlay`), write (`!set`, `!increment`/`!decrement`, `!reset`), plus `!followage`, `!accountage`, `!ping`
 - Permissions via Twitch chat-event badges at command time (no ACL table)
 - **Deliberately deferred**: "Chat Bots" segment in Users-in-Chat (requires EventSub Webhooks; current WS path works fine). Revisit only on rate-limit hits or a bot temp-ban.
-- **Remaining follow-ups** are tracked in Milestone 9 (Bot Expressions hardening) below.
+- **Remaining follow-ups** are tracked in the Backlog at the bottom (Bot Expression follow-ups).
 </details>
 
 <details>
@@ -143,7 +143,21 @@ Completed milestones are kept here as a record of intent vs. reality.
 - Chat-command + dashboard-button triggers (`RecipeChatTriggerService`, `BotRecipeTriggerController`)
 - First-party recipes shipped: **Coin Flip** and **Dice** (validated the abstraction held across two shapes)
 - `/dashboard/recipes` page lists installed instances and fires dashboard buttons
-- **The shippable surface (browse / install / publish / gallery) is NOT done - see Milestone 9 below.**
+
+**Parked by decision, 2026-07-28.** The shippable surface (browse / install / publish / gallery) was
+never built and is not going to be. Recipes are aimed at developers, and that was the wrong audience -
+developers either build their own system or are already deep into another one. Recipes are also *a lot*,
+and not easy at all, which is the opposite of where Overlabels needs to go. The energy went to Blocks and
+the Builder instead (M13), by way of the websocket-powered Lists that came out of this same detour.
+
+The forward ideas that got reverted on 2026-05-13 (Wheel of Fortune Kit and its two stacked commits) went
+because they shipped **JavaScript inside an overlay** - `resources/kits/wheel_of_fortune/overlay.js`, 84
+lines. That is a no-no in Overlabels overlays and remains one.
+
+**The code stays.** `OptionSet` and `Picker` are load-bearing for Lists - `OptionSet` *is* a List. Do not
+"clean up the Recipes layer"; it would take a headline feature with it. Dead weight is only the shell:
+`Recipe`, `RecipeInstance`, `RecipeChatTrigger`, `RecipeInstaller`, the manifest validator, and the
+unlinked `/dashboard/recipes` page.
 </details>
 
 <details>
@@ -168,50 +182,44 @@ Milestone numbers are stable identifiers, not a strict sequence. Work the **Prio
 
 | Priority | Milestone                                               | Status                                      |
 |----------|---------------------------------------------------------|---------------------------------------------|
-| 1 (NOW)  | M9 - Recipes: Producer Layer + Bot Expression Hardening | Engine shipped, surface + follow-ups remain |
+| 1 (NOW)  | M13 - The Builder: Drag & Drop + Blocks That Feel Real  | The direction. Grid + blocks shipped; DnD and the Blocks environment are the work |
 | 2 (NEXT) | M10 - Flows: Reactive Stream-Processing Engine          | Fully designed, no code                     |
 | later    | M11 - Patreon Integration                               | Parked, path-of-least-resistance            |
 | later    | M12 - Broadcast Metering: Enforcement & Monetization    | Foundation live (observe-only); rest parked |
 | later    | M6 - Community (Rebuilt Properly)                       | Parked                                      |
 | later    | M7 - IRL / GPS Session Extensions                       | Parked during code freeze                   |
 | ongoing  | Backlog - loose bugs & polish                           | See bottom                                  |
+| ~~M9~~   | ~~Recipes: Producer Layer~~                             | **Retired 2026-07-28.** Engine stays in the codebase (Lists depend on it); the ambition does not. See the completed-milestones entry |
 
 ---
 
-### Milestone 9 - Recipes: Producer Layer + Bot Expression Hardening
-> *The Recipes engine shipped (Coin Flip, Dice, installer, triggers, instance dashboard). What's*
-> *missing is the surface that lets a non-power-user discover, install, and a power-user publish.*
-> *Plus the small follow-ups owed to Bot Expressions (the consumer half, already live).*
+### Milestone 13 - The Builder: Drag & Drop + Blocks That Feel Real
+> *Overlabels needs a kick-ass drag-and-drop editor powered by Blocks - and Blocks themselves need*
+> *to live in an environment where they feel very real **before** you ever add one to your template*
+> *in the Builder.*
 
-**Recipe install / publish surface (the real gap)**
-- Browse + install UI / gallery. Today `RecipeInstanceController` only has `index` + `fireButton`; installs happen via seeder/tinker. Build the install flow on the existing copy/slug rail (the same machinery kits and overlays use).
-- Authoring + publish flow for third-party recipes (the "Pamela" path): copy/share slug, copy count, author attribution, version field, public/unlisted/private states.
-- **Claude-auditable validation gate before publish** - manifests are 100% declarative precisely so they can be machine-verified for safety. No broken/unsafe recipe reaches the share link.
-- Commit the manifest JSON-schema: `resources/recipes/overlabels_recipe_manifest.schema` is authored but currently untracked.
-- Permissive dependency handling: a recipe declaring `requires_integrations` warns but does not block on install (mirrors overlay-copy behaviour); it "just works" once the user connects the service.
-- Multi-instance with explicit instance slugs; per-recipe install cap (`max_instances_per_user`, admin-configurable). Buyer pays per recipe, not per instance.
+**Why this and not more structure.** The Recipes bet was aimed at developers, and that was the wrong
+audience: developers either build their own little system or are already deep into another one. The
+job is not more expressive power for experts, it is being *easier*. Builder + Blocks is where that
+happens, so it takes the top priority slot outright.
 
-**Kits + first-party content (steps 6+)**
-- **Wheel of Fortune Kit**: bundles a Wheel-flavoured recipe + the platform's Wheel Vue component + suggested overlay template + suggested alert + suggested Bot Expression. The visual personality lives at the Kit layer, never in the recipe.
-- Extend Kits to bundle recipes + Bot Expressions + alerts as install-time defaults (small change, blocks the Wheel kit).
-- Random Viewer recipe (a third shape to keep the manifest honest).
-- Recipe-level declarative TTL in the manifest (`entry_ttl_seconds`) so a recipe can pre-create a List *and* declare its expiry.
+**The editor itself**
+- Real drag-and-drop composition, not just the drag-to-move that shipped with the grid. Placement, reordering, and resizing should feel direct and physical.
+- The floor to clear: someone who has never read a help page can put a working overlay together and see it happening as they go.
+- Accretion, not a rewrite (see the UI philosophy note below). Each improvement lands as its own "this one thing was dumb" fix.
 
-**Manifest design choices still to resolve**
-- Align the trigger `permissions` enum with the Bot Expression permission vocabulary (one consistent set for users).
-- Decide whether scheduled triggers ("fire this picker every 30 min") ship in a v2 manifest or stay out of recipes entirely.
+**Blocks that feel real before placement**
+- Today `BlockPickerModal.vue` renders a static `screenshot_url` `<img>`. A screenshot is the opposite of real - it is stale, it is not *your* data, and it tells you nothing about how the block behaves.
+- A Block should be live and inspectable in the library: rendered through the normal pipeline, with real values, before it is ever committed to a template. No surprises at placement time.
+- The reality comes from the existing render path, not from shipping new JavaScript into overlays - that constraint is what killed the reverted Wheel kit and it still holds.
 
-**Bot Expression follow-ups (consumer half - small wins)**
-- `c:` reference validation at save time (today a typo saves clean and resolves empty at fire time).
-- `!commands` meta-command listing enabled, non-hidden expressions per channel - cheap onboarding win.
-- Per-user cooldowns (v1 is per-channel only): `cooldown_scope` enum + invocations table.
-- Channel-level anti-spam cap on `bot_chat_outbox`, separate from per-expression cooldown.
-- Tag autocomplete inside the expression textarea (CodeMirror-shaped surface; non-trivial).
-- Document the outbox cadence (1-2s delay) in user-facing docs.
+**Open questions (deliberately unanswered - design before building)**
+- What *is* the environment? A richer library modal, a dedicated Blocks page, a persistent preview surface alongside the canvas?
+- How live is "live" - real user data, sample data, or a mix? (The playground pattern says a real sample-data service beats hand-picked examples.)
+- What does inspecting a Block reveal, and how much before it feels like structure again?
 
-**Far future (named, not scheduled)**
-- Visual node-editor builder for authoring recipes.
-- Marketplace: discoverability, ratings, paid recipes, price-tag-on-slug.
+**Adjacent, already noted, not yet scheduled**
+- Block as a search/filter dimension in Controls search (from the Hot Blocks thread; do not build unprompted).
 
 ---
 
@@ -328,8 +336,19 @@ Not milestone-shaped; tracked here so they don't get lost. Roughly ordered by sh
 - **Recheck `[[[tag]]]` autocomplete** in the editor.
 - **Answered, kept for the record**: "set a control value through another control" -> no (use Expression Controls). "A bot control that speaks in chat" -> no, superseded by Bot Expressions.
 
+**Bot Expression follow-ups** (moved here 2026-07-28 when M9 was retired - never Recipes work, just small wins owed to the consumer half, which is live). Triaged 2026-07-28:
+
+- **Per-user cooldowns** - a genuine feature gap against StreamElements and Twitch; v1 is per-channel only. **This does not need an invocations table.** The gate only ever answers "is this (expression, chatter) pair cooling down right now?", which is one cache key with a TTL equal to the cooldown - it expires itself, no sweeper, no retention policy. Live keys scale with *fire rate x cooldown window*, not chatters x commands: a 30s cooldown at 20 fires/min holds ~10 keys, single-digit KB per channel. The shared prod Redis (`allkeys-lru --save ""`) is a *good* fit here - unlike metering, an evicted cooldown key just lets one chatter fire once early. Scope: one nullable `cooldown_scope` enum on `bot_expressions`, a cache-reading sibling to `BotChatGate::isOffCooldown()` (which stays pure), `last_fired_at` kept for the settings display. Precedent: `app/Services/Bot/RateLimitLog.php` already does `Cache::put` with a TTL. Bonus: a permanent invocations table would log which chatter ran which command when - the same chatter-behaviour record that got `!commands` rejected below. TTL'd keys never retain it.
+- **Document the outbox cadence** (1-2s delay between command and reply) in `/help/bot/commands`. Streamers currently just experience it as unexplained lag. Easy addition.
+
+**Folded into a bigger want:** `c:` reference validation at save time, and tag autocomplete in the expression textarea. Both are the same shape, and neither should be built for Bot Expressions alone - what Overlabels actually needs is **one all-round validator for the whole DSL**, not a focused validator for one corner of the syntax. Autocomplete rides along with it. **Specced 2026-07-28: [`docs/design/overlabels-dsl-spec.md`](design/overlabels-dsl-spec.md)** - 79 closed terms, five existing tag-matching implementations, seven unintentional divergences between them documented. Not scheduled.
+
+**Rejected, kept for the record:**
+- `!commands` meta-command (listing a channel's expressions in chat) - **deemed a privacy invasion, and that still stands.** Do not re-pitch. Note the `hidden_from_commands` column on `bot_expressions` exists from the original design; it is inert.
+- Channel-level anti-spam cap on `bot_chat_outbox` - **rejected by design.** The outbox is wild-wild-west on purpose: it swallows anything fired at it and spews as much as it can. Surge protection belongs *upstream* of the outbox, never inside it. Do not add throttling, capping, or rate limiting to `BotChatOutbox`.
+
 **Recently cleared (2026-05-24):** GDPR admin delete now hard-deletes all content/history/references behind an all-caps confirmation string; `requestAnimationFrame` overlays hit 60 FPS in every browser (the Edge "failure" was request overload, now fixed); idle Expression Controls are no longer calculated when unreferenced; stream-sessions aggregation discrepancies fixed (a query bug was multiplying output numbers on every event - e.g. 3 raids x 30 viewers read as 90).
 
 ---
 
-*Last updated: 2026-05-24*
+*Last updated: 2026-07-28*

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Dsl;
 use Database\Factories\UserTemplateFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read mixed $used_template_tags
  * @property-read User|null $user
+ *
  * @method static UserTemplateFactory factory($count = null, $state = [])
  * @method static Builder<static>|UserTemplate newModelQuery()
  * @method static Builder<static>|UserTemplate newQuery()
@@ -37,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|UserTemplate whereUpdatedAt($value)
  * @method static Builder<static>|UserTemplate whereUsedTags($value)
  * @method static Builder<static>|UserTemplate whereUserId($value)
+ *
  * @mixin Eloquent
  * @mixin IdeHelperUserTemplate
  */
@@ -85,8 +88,10 @@ class UserTemplate extends Model
     {
         $html = $this->html_content;
 
-        // Find all [[[tag]]] patterns in the HTML
-        preg_match_all('/\[\[\[([^]]+)]]]/', $html, $matches);
+        // Find all [[[tag]]] patterns in the HTML. Uses the shared DSL spec like
+        // every other tag matcher; the old inline `[^]]+` accepted spaces, pipes
+        // and operators as part of the tag NAME (spec D6).
+        preg_match_all(Dsl::tagKeyPattern(), $html, $matches);
 
         foreach ($matches[1] as $tagName) {
             $tag = TemplateTag::where('tag_name', $tagName)->first();

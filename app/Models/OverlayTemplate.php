@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\External\ExternalServiceRegistry;
 use App\Services\FunSlugGenerationService;
 use App\Services\TemplateDataMapperService;
+use App\Support\Dsl;
 use Database\Factories\OverlayTemplateFactory;
 use Eloquent;
 use Exception;
@@ -168,13 +170,18 @@ class OverlayTemplate extends Model
         $caps = $caps ?? $this->owner?->foreachCaps() ?? [];
         $tags = [];
 
-        // Pattern to match [[[tag_name]]] and [[[tag_name|formatter:args]]] syntax.
-        // Pipe args allow word chars, dots, colons, hyphens, and spaces (for patterns like date:dd-MM-yyyy HH:mm).
-        // A trailing `?? default` slot is consumed (lazily, up to `]]]`) but not
-        // captured - the tag name in group 1 stays clean for the allowlist. This
-        // MUST tolerate defaults, otherwise `[[[followers_total ?? 0]]]` fails to
-        // match, the real key is never fetched, and the default would always win.
-        $pattern = '/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:\-]*?)(?:\|[a-zA-Z0-9_.:% -]+)?(?:\s*\?\?\s*.*?)?]]]/';
+        // Matches [[[tag_name]]] and [[[tag_name|formatter:args]]]. A trailing
+        // `?? default` slot is consumed but not captured - the tag name in group
+        // 1 stays clean for the allowlist. This MUST tolerate defaults, otherwise
+        // `[[[followers_total ?? 0]]]` fails to match, the real key is never
+        // fetched, and the default would always win.
+        //
+        // Built from the shared DSL spec (resources/dsl/dsl.json). This used to
+        // be a hand-written pattern and was THE source of the divergences in
+        // docs/design/overlabels-dsl-spec.md: extraction decides what data gets
+        // fetched, so any disagreement with the substitution engines made tags
+        // silently resolve to empty. Do not inline a literal pattern here again.
+        $pattern = Dsl::tagKeyPattern();
 
         // Extract from HTML
         preg_match_all($pattern, $this->html ?? '', $htmlMatches);
@@ -347,10 +354,12 @@ class OverlayTemplate extends Model
     {
         $tags = [];
 
-        // Pattern to match conditional statements: [[[if:tag_name operator value]]]
-        // Also matches: [[[elseif:tag_name operator value]]]
-        // Updated to properly support dots in tag names like event.bits, event.user_name
-        $conditionalPattern = '/\[\[\[(?:if|elseif):([a-zA-Z0-9_.][a-zA-Z0-9_.:]*?)(?:\s*(?:>=|<=|>|<|!=|=)\s*[^]]+)?]]]/';
+        // Matches [[[if:tag_name operator value]]] and the elseif form, capturing
+        // the referenced tag name. Built from the shared DSL spec, which means the
+        // key class now matches plain tag keys exactly - including hyphens, which
+        // the old hand-written pattern rejected (spec D5), and permitting a lone
+        // `]` inside the compared value (spec D7).
+        $conditionalPattern = Dsl::conditionPattern();
 
         preg_match_all($conditionalPattern, $content, $matches);
 
@@ -362,19 +371,43 @@ class OverlayTemplate extends Model
     }
 
     /**
-     * Detect which external services are referenced in the template HTML/CSS
-     * by scanning for [[[c:service:key]]] patterns.
+     * Detect which external services are referenced in the template
+     * HTML/CSS/HEAD by scanning for [[[c:service:key]]] patterns.
+     *
+     * Runs the canonical tag pattern and inspects the resulting keys rather
+     * than matching a bespoke service-shaped regex. The old hand-written
+     * pattern carried two bugs that this shape removes by construction:
+     *   - it had no `?? default` branch, so `[[[c:kofi:total ?? 0]]]` never
+     *     registered Ko-fi and the connect-this-service warning never fired
+     *     (spec D3);
+     *   - it only understood exactly two segments of `[a-zA-Z0-9_]`, so
+     *     longer or dotted/hyphenated keys never matched (spec D4).
+     *
+     * The first segment is checked against the driver registry, so namespaces
+     * that are not integrations (notably `c:list:<slug>`) are never reported.
      *
      * @return string[] List of unique service keys (e.g. ['kofi', 'streamlabs'])
      */
     public function detectRequiredServices(): array
     {
         $services = [];
-        $pattern = '/\[\[\[c:([a-zA-Z0-9_]+):[a-zA-Z0-9_]+(?:\|[a-zA-Z0-9_.:% -]+)?]]]/';
+        $pattern = Dsl::tagKeyPattern();
 
         foreach (['html', 'css', 'head'] as $field) {
             preg_match_all($pattern, $this->{$field} ?? '', $matches);
-            $services = array_merge($services, $matches[1] ?? []);
+
+            foreach ($matches[1] ?? [] as $key) {
+                $segments = Dsl::segments($key);
+
+                // Need at least c:<service>:<key>.
+                if (count($segments) < 3 || $segments[0] !== 'c') {
+                    continue;
+                }
+
+                if (ExternalServiceRegistry::has($segments[1])) {
+                    $services[] = $segments[1];
+                }
+            }
         }
 
         return array_values(array_unique($services));
