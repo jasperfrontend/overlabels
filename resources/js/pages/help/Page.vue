@@ -3,7 +3,7 @@ import { router } from '@inertiajs/vue3';
 import HelpLayout from '@/layouts/HelpLayout.vue';
 import Heading from '@/components/Heading.vue';
 import type { BreadcrumbItem } from '@/types';
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 /**
  * Generic renderer for every help page. Content comes from
@@ -39,6 +39,41 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
   return crumbs;
 });
+
+const content = ref<HTMLElement | null>(null);
+
+/**
+ * Render any TeX the server left as `.help-math` placeholders. KaTeX is
+ * client-side only, so the markdown pipeline stashes the source in a data
+ * attribute and we typeset it here. Loaded lazily so pages without math never
+ * pay for the library.
+ */
+async function renderMath() {
+  const nodes = content.value?.querySelectorAll<HTMLElement>('.help-math:not([data-rendered])');
+  if (!nodes?.length) return;
+
+  const [{ default: katex }] = await Promise.all([
+    import('katex'),
+    import('katex/dist/katex.min.css'),
+  ]);
+
+  nodes.forEach((node) => {
+    const tex = node.dataset.tex ?? '';
+    try {
+      katex.render(tex, node, {
+        displayMode: node.dataset.display === '1',
+        throwOnError: false,
+        output: 'html',
+      });
+    } catch {
+      node.textContent = tex;
+    }
+    node.dataset.rendered = '1';
+  });
+}
+
+onMounted(renderMath);
+watch(() => props.html, () => nextTick(renderMath));
 
 /**
  * Keep SPA navigation for in-app links. Rendered markdown produces plain
@@ -86,6 +121,6 @@ function onContentClick(event: MouseEvent) {
     <!-- Server-rendered from markdown. Safe: the source is repo-controlled
          prose written by us, never user input. -->
     <!-- eslint-disable-next-line vue/no-v-html -->
-    <article class="help-prose" @click="onContentClick" v-html="props.html" />
+    <article ref="content" class="help-prose" @click="onContentClick" v-html="props.html" />
   </HelpLayout>
 </template>

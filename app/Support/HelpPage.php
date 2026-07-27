@@ -102,11 +102,17 @@ final class HelpPage
 
         [$meta, $body] = self::splitFrontmatter($raw);
 
+        // Math is lifted out BEFORE the markdown pass so CommonMark cannot
+        // mangle TeX: `_` would become emphasis and `\` would be eaten as an
+        // escape. Placeholders go back in as elements once the HTML exists.
+        [$body, $math] = self::extractMath($body);
+
         $html = Str::markdown($body, [
             'html_input' => 'allow',
             'allow_unsafe_links' => false,
         ]);
 
+        $html = self::restoreMath($html, $math);
         $html = self::transformCallouts($html);
         [$html, $toc] = self::addHeadingAnchors($html);
 
@@ -157,6 +163,65 @@ final class HelpPage
         }
 
         return [$meta, $body];
+    }
+
+    /**
+     * Pull TeX out of the source and leave inert placeholders behind.
+     *
+     * Delimiters are `$$...$$` for display math and `\(...\)` for inline.
+     * Bare `$...$` is deliberately NOT supported: other help pages talk about
+     * money ("$1 or $1,000"), and a single-dollar rule would happily swallow
+     * the text between two currency amounts.
+     *
+     * @return array{0:string,1:array<int,array{tex:string,display:bool}>}
+     */
+    private static function extractMath(string $body): array
+    {
+        $math = [];
+
+        $stash = function (string $tex, bool $display) use (&$math): string {
+            $math[] = ['tex' => trim($tex), 'display' => $display];
+
+            return '@@OLMATH'.(count($math) - 1).'@@';
+        };
+
+        $body = preg_replace_callback(
+            '/\$\$(.+?)\$\$/s',
+            fn (array $m): string => $stash($m[1], true),
+            $body
+        );
+
+        return [
+            preg_replace_callback(
+                '/\\\\\((.+?)\\\\\)/s',
+                fn (array $m): string => $stash($m[1], false),
+                $body
+            ),
+            $math,
+        ];
+    }
+
+    /**
+     * Swap the placeholders for elements the client renders with KaTeX.
+     *
+     * @param  array<int,array{tex:string,display:bool}>  $math
+     */
+    private static function restoreMath(string $html, array $math): string
+    {
+        foreach ($math as $i => $item) {
+            $tag = $item['display'] ? 'div' : 'span';
+            $element = sprintf(
+                '<%s class="help-math" data-display="%s" data-tex="%s"></%s>',
+                $tag,
+                $item['display'] ? '1' : '0',
+                htmlspecialchars($item['tex'], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                $tag
+            );
+
+            $html = str_replace('@@OLMATH'.$i.'@@', $element, $html);
+        }
+
+        return $html;
     }
 
     /**
