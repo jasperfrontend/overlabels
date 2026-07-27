@@ -5,6 +5,7 @@
 
 import { applyFormatter } from '@/utils/formatters';
 import { TAG_REGEX, encodeHtml } from '@/utils/tagParser';
+import { blockTokenPattern, conditionPattern, MAX_NESTING_DEPTH } from '@/utils/dsl';
 
 interface ConditionalBlock {
     type: 'if' | 'elseif' | 'else';
@@ -37,9 +38,16 @@ type Tag =
     | { kind: 'foreach'; iterable: string; alias: string; index: number; length: number }
     | { kind: 'endforeach'; index: number; length: number };
 
-// Single regex that matches every block-control token.
-// We reset lastIndex before each call so this is safe to share.
-const TOKEN_REGEX = /\[\[\[(if:([^\]]+)|elseif:([^\]]+)|else|endif|foreach:([^\]]+)|endforeach)]]]/g;
+// Single regex that matches every block-control token, built from the shared
+// spec (resources/dsl/dsl.json). We reset lastIndex before each call so this is
+// safe to share. The condition body permits a lone `]` (spec D7) while still
+// being unable to swallow the closing `]]]`.
+const TOKEN_REGEX = blockTokenPattern('g');
+
+// Matches a full condition: key, operator, value. Built from the shared spec so
+// the key character class matches plain tag keys exactly - including hyphens,
+// which the old inline pattern rejected (spec D5).
+const CONDITION_REGEX = conditionPattern();
 
 /**
  * Return the next token at or after `fromIndex` in string `s`, or null.
@@ -346,9 +354,10 @@ export function useConditionalTemplates() {
     const parseCondition = (condition: string): ParsedCondition => {
         condition = condition.trim();
 
-        // Check for comparison operators
-        // Updated regex to support dots and colons in variable names like event.bits, c:wins
-        const comparisonMatch = condition.match(/^([a-zA-Z0-9_.:]+)\s*(>=|<=|>|<|!=|=)\s*(.+)$/);
+        // Check for comparison operators. The pattern comes from the shared DSL
+        // spec, so variable names accept exactly what a plain tag key accepts
+        // (dots, colons and hyphens) and operators are alternated longest-first.
+        const comparisonMatch = condition.match(CONDITION_REGEX);
         if (comparisonMatch) {
             return {
                 variable: comparisonMatch[1],
@@ -432,7 +441,7 @@ export function useConditionalTemplates() {
         depth: number = 0,
         options: ProcessOptions = {},
     ): string => {
-        if (depth > 10) {
+        if (depth > MAX_NESTING_DEPTH) {
             console.warn('Maximum conditional nesting depth reached');
             return template;
         }

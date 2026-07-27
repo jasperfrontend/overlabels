@@ -1,0 +1,60 @@
+{
+  "$schema": "./dsl.schema.json",
+  "$comment": "SHARED SOURCE OF TRUTH for the Overlabels DSL. Read by app/Support/Dsl.php (PHP) and resources/js/utils/dsl.ts (TypeScript). Neither runtime may hand-roll a tag regex - see docs/design/overlabels-dsl-spec.md. Character-class fragments below are written so they are byte-identical valid regex in both PCRE and ECMAScript.",
+
+  "version": 1,
+
+  "lexical": {
+    "open": "\\[\\[\\[",
+    "close": "\\]\\]\\]",
+    "pipeOperator": "\\|",
+    "defaultOperator": "\\?\\?",
+
+    "keyStart": "a-zA-Z0-9_",
+    "keyRest": "a-zA-Z0-9_.:\\-",
+
+    "$comment_pipeArgs": "Space is permitted INSIDE pipe args for patterns like `date:dd-MM-yyyy HH:mm`, but a pipe may not END on whitespace - otherwise the greedy class eats the space before `??` and the formatter receives an arg with a trailing space (spec D8).",
+    "pipeArgs": "a-zA-Z0-9_.:%\\- ",
+    "pipeArgsEnd": "a-zA-Z0-9_.:%\\-",
+
+    "$comment_blockBody": "Any run that cannot swallow the closing ]]]. Permits a single ] inside a condition (spec D7) and still matches across newlines, which the old [^\\]]+ also did.",
+    "blockBody": "(?:[^\\]]|\\](?!\\]\\]))+?"
+  },
+
+  "formatters": {
+    "round": { "args": "optional", "argHint": "decimals", "description": "Round to N decimal places (default 0)." },
+    "number": { "args": "optional", "argHint": "decimals", "description": "Locale-aware number formatting." },
+    "currency": { "args": "optional", "argHint": "ISO 4217 code", "description": "Locale-aware currency; defaults to the locale's currency." },
+    "date": { "args": "optional", "argHint": "preset or pattern", "description": "Locale-aware date/time formatting." },
+    "duration": { "args": "optional", "argHint": "dd:hh:mm:ss pattern", "description": "Seconds to a duration; units overflow into the largest present unit." },
+    "distance": { "args": "optional", "argHint": "unit", "description": "Locale-aware distance formatting." },
+    "speed": { "args": "optional", "argHint": "unit", "description": "Locale-aware speed formatting." },
+    "uppercase": { "args": "none", "description": "Uppercase the value." },
+    "lowercase": { "args": "none", "description": "Lowercase the value." },
+    "login": { "args": "none", "description": "Normalise to a Twitch login (lowercase, no leading @)." },
+    "mention": { "args": "none", "description": "Format as an @mention." }
+  },
+
+  "blockKeywords": ["if", "elseif", "else", "endif", "foreach", "endforeach"],
+
+  "$comment_operators": "Longest-first. `=` is normalised to `==` at evaluation time; there is no `==` in author-facing syntax.",
+  "comparisonOperators": [">=", "<=", "!=", ">", "<", "="],
+
+  "namespaces": {
+    "c": { "resolvesAgainst": "controls", "description": "User and template controls, including namespaced service controls." },
+    "c:list": { "resolvesAgainst": "lists", "description": "A user's Lists." },
+    "event": { "resolvesAgainst": "alertPayload", "description": "The alert payload in scope." },
+    "bot": { "resolvesAgainst": "botContext", "description": "Bot invocation context (args, from_user, channel)." },
+    "loop": { "resolvesAgainst": "foreachScope", "description": "Loop state; valid only inside a foreach body." }
+  },
+
+  "$comment_reservedKeys": "Keys with meaning independent of any namespace.",
+  "reservedKeys": {
+    "raw": { "scope": "foreach", "description": "Dumps the current iteration item as pretty JSON. Brackets are entity-escaped so the dump cannot re-enter tag substitution." }
+  },
+
+  "limits": {
+    "maxNestingDepth": 10,
+    "foreachCapMax": 50
+  }
+}

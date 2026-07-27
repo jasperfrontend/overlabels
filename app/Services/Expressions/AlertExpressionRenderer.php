@@ -4,6 +4,7 @@ namespace App\Services\Expressions;
 
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Support\Dsl;
 
 /**
  * Renders an alert template's `tts_expression` against the same flat
@@ -37,7 +38,12 @@ class AlertExpressionRenderer
 {
     // Group 1: tag key. Group 2 (optional): pipe formatter. Group 3 (optional,
     // after `??`): literal default emitted when the value resolves empty.
-    private const string TAG_REGEX = '/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/';
+    // Built from the shared DSL spec (resources/dsl/dsl.json) so this renderer,
+    // the bot resolver and the overlay renderer cannot drift apart.
+    private static function tagRegex(): string
+    {
+        return Dsl::tagPattern();
+    }
 
     private const int MAX_RESOLVED_LENGTH = 500;
 
@@ -84,7 +90,7 @@ class AlertExpressionRenderer
         $locale = (string) ($user->preference('locale', 'en-US'));
 
         $resolved = preg_replace_callback(
-            self::TAG_REGEX,
+            self::tagRegex(),
             function (array $matches) use ($controls, $templateData, $locale): string {
                 $key = $matches[1];
                 $pipe = ($matches[2] ?? '') !== '' ? $matches[2] : null;

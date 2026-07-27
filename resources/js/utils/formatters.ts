@@ -58,13 +58,20 @@ export function getDefaultCurrency(locale: string): string {
  * e.g. "uppercase" → { name: "uppercase", args: undefined }
  */
 export function parsePipe(pipe: string): { name: string; args?: string } {
+  // Trim to match PHP's ExpressionFormatter::apply(), which has always trimmed.
+  // Without this the two runtimes disagree on a stray edge space: PHP resolves
+  // `currency:EUR ` to a valid EUR format while Intl.NumberFormat rejects the
+  // code "EUR " outright (spec D8). Only the edges are trimmed, so patterns with
+  // meaningful inner spaces like `date:dd-MM-yyyy HH:mm` are untouched.
+  pipe = pipe.trim();
+
   const colonIndex = pipe.indexOf(':');
   if (colonIndex === -1) {
-    return { name: pipe };
+    return { name: pipe.toLowerCase() };
   }
   return {
-    name: pipe.substring(0, colonIndex),
-    args: pipe.substring(colonIndex + 1),
+    name: pipe.substring(0, colonIndex).trim().toLowerCase(),
+    args: pipe.substring(colonIndex + 1).trim(),
   };
 }
 

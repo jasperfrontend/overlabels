@@ -1,12 +1,17 @@
 # The Overlabels DSL - Specification
 
-> **Status:** first written 2026-07-28. This is *descriptive* before it is prescriptive: sections 1-6
-> document what the language actually does today, derived by reading every implementation. Sections
-> 7-10 propose the unified grammar and the validator built on it.
+> **Status:** first written 2026-07-28; **shared spec implemented the same day.** Sections 1-6 are
+> descriptive - what the language does, derived by reading every implementation. Sections 7-10 are
+> prescriptive.
 >
 > **Why it exists.** The DSL grew by accretion over a year of development and was never written down.
-> Five separate implementations now match tags independently, and they do not agree with each other.
-> Nothing here is a redesign - the language is small and mostly coherent. It just needs an owner.
+> Five separate implementations matched tags independently and did not agree with each other. Nothing
+> here is a redesign - the language is small and mostly coherent. It just needed an owner.
+>
+> **What shipped:** the vocabulary and lexical shape now live in `resources/dsl/dsl.json`, read by
+> `app/Support/Dsl.php` and `resources/js/utils/dsl.ts`. All five matchers were rewired onto it and
+> **every divergence below (D1-D8) is fixed**. Divergence sections are kept as the record of what went
+> wrong and why the shared spec exists - do not delete them.
 
 ---
 
@@ -111,11 +116,21 @@ Condition keys are `[a-zA-Z0-9_.:]` in both implementations - no hyphens - while
 them. `[[[my-tag]]]` extracts fine; `[[[if:my-tag = 1]]]` does not extract `my-tag`.
 
 **D6 - The legacy `UserTemplate` matcher accepts anything.**
-`[^]]+` swallows spaces, pipes and operators as part of the tag *name*. Legacy path; flagged so the
-spec doesn't get written against it.
+`[^]]+` swallows spaces, pipes and operators as part of the tag *name*. Legacy path (nothing but its
+own factory references the model); rewired anyway so no matcher in the codebase is hand-rolled.
 
 **D7 - A condition cannot contain `]`.**
 `[^\]]+` in the block-token regex means `[[[if:x = a]b]]]` truncates. Undocumented and unguarded.
+
+**D8 - A trailing space is captured into the pipe, and only PHP survives it.**
+Found while writing the tests for the fixes above, and the only divergence here with a user-visible
+failure rather than a silent one. The pipe character class includes a space (needed for
+`date:dd-MM-yyyy HH:mm`) and is greedy, so `[[[c:kofi:total|currency:EUR ?? none]]]` captures the pipe
+as `currency:EUR ` - with a trailing space. `ExpressionFormatter::apply()` in PHP has always called
+`trim()` and shrugs it off; the TypeScript `parsePipe()` did not, so the overlay renderer handed
+`Intl.NumberFormat` the currency code `"EUR "` and threw. **The same tag worked in a bot expression
+and broke in an overlay.** Fixed twice over: the pipe may no longer end on whitespace, and
+`parsePipe()` now trims and lowercases like its PHP counterpart.
 
 ---
 
@@ -230,7 +245,7 @@ grammar + ──────►├─ backend: save gate on head / html / css
 vocabulary       └─ sanitizer: structural pass, replacing regex stripping
 ```
 
-### 7.2 Source of truth (the one real decision)
+### 7.2 Source of truth - DECIDED: option B, implemented 2026-07-28
 
 If the grammar is written twice it diverges inside a month - and a validator that disagrees with
 itself is **worse than none**, because the editor greenlights what the save rejects. Sections 3-4 are
@@ -247,6 +262,27 @@ Two workable shapes:
 
 Recommendation: **B**. The vocabulary is what actually drifts (see: 11 formatters shipped, 8
 documented). Grammar changes are rare and reviewable; vocabulary changes happen casually.
+
+**Chosen and built.** `resources/dsl/dsl.json` holds the lexical fragments, the formatter table, the
+block keywords, the operators (longest-first), the namespaces and the limits. `app/Support/Dsl.php`
+and `resources/js/utils/dsl.ts` compile identical patterns from it. Every former matcher is rewired:
+
+| Was | Now |
+|---|---|
+| `tagParser.ts` inline regex | `tagPattern()` |
+| `BotExpressionResolver::TAG_REGEX` | `Dsl::tagPattern()` |
+| `AlertExpressionRenderer::TAG_REGEX` | `Dsl::tagPattern()` |
+| `OverlayTemplate::extractTemplateTags` | `Dsl::tagKeyPattern()` |
+| `OverlayTemplate::extractConditionalTags` | `Dsl::conditionPattern()` |
+| `OverlayTemplate::detectRequiredServices` | `Dsl::tagKeyPattern()` + registry check |
+| `UserTemplate::renderWithData` | `Dsl::tagKeyPattern()` |
+| `useConditionalTemplates` TOKEN_REGEX | `blockTokenPattern()` |
+| `useConditionalTemplates` condition regex | `conditionPattern()` |
+| hardcoded depth cap `10` | `MAX_NESTING_DEPTH` |
+
+The static tag list is deliberately **not** in the spec file: those 62 names are per-user rows in
+`template_tags`, generated from the Twitch payload by `GenerateTemplateTags`. The spec owns
+code-level vocabulary only.
 
 ### 7.3 Error taxonomy
 
@@ -282,13 +318,19 @@ Steps 1-3 are independently useful. Step 5 is the item folded in from the Bot Ex
 
 ## 8. Open decisions
 
-1. **Source of truth: A or B** (7.2). Everything else is downstream of this.
-2. **Do the divergences get fixed, or frozen?** D1-D5 are all currently-silent behaviours. Fixing D3
-   changes which templates report a missing integration; fixing D1/D2/D5 makes previously-inert tags
-   start resolving. Small blast radius, but non-zero - it is a real call.
+1. ~~**Source of truth: A or B**~~ - **decided 2026-07-28: B, and built** (7.2).
+2. ~~**Do the divergences get fixed, or frozen?**~~ - **decided: fixed.** All of D1-D8 are closed, with
+   a regression test per divergence in `tests/Unit/DslTest.php` and
+   `tests/Feature/DetectRequiredServicesTest.php`. Full suite green at 1069.
+
+Still open, and all of them belong to the *validator*, which is specced but not built:
+
 3. **Is an unknown static tag an error or a warning?** Erroring is more useful and risks breaking
    saves for templates that already contain typos.
 4. **Does the validator run on existing rows?** A "your saved templates have N issues" report is
    valuable and also potentially alarming.
 5. **Where do the `?? default` semantics get documented for users?** The absence-only rule and the
    pipe-not-applied rule are both surprising and currently only live in code comments.
+6. **Does an unknown formatter become an error?** Today a typo'd formatter silently returns the raw
+   value (5.3). This is the single highest-value diagnostic the parser would unlock, and it is a
+   behaviour change: templates with a typo currently render *something*.

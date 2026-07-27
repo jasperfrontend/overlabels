@@ -1,11 +1,16 @@
 import { applyFormatter } from '@/utils/formatters';
+import { tagPattern } from '@/utils/dsl';
 
 // Matches [[[tag]]], [[[tag|formatter]]], [[[tag|formatter:args]]], and an optional
 // trailing `?? default` slot: [[[tag ?? fallback]]] / [[[tag|formatter ?? fallback]]].
-// - Group 1 (tag key): word chars, dots, colons, hyphens (legacy hyphenated service names)
-// - Group 2 (pipe args, optional): word chars, dots, colons, hyphens, spaces (date patterns like dd-MM-yyyy HH:mm)
+// - Group 1 (tag key): starts with a word char, then word chars, dots, colons, hyphens
+// - Group 2 (pipe args, optional): word chars, dots, colons, hyphens, percent, spaces
+//   (date patterns like dd-MM-yyyy HH:mm, percentage number formats)
 // - Group 3 (default, optional): the literal text after `??`, captured lazily up to the
 //   closing `]]]`. May contain spaces/punctuation; the only thing it can't contain is `]]]`.
+//
+// BUILT FROM THE SHARED SPEC (resources/dsl/dsl.json) via @/utils/dsl, so this and the
+// PHP resolvers cannot drift. Do not inline a literal regex here again.
 //
 // SINGLE-PASS BY DESIGN: this regex runs exactly once per render. Substituted values are never
 // re-scanned for tags. This is the day-one rule that prevents template-injection via user content
@@ -19,7 +24,7 @@ import { applyFormatter } from '@/utils/formatters';
 // no second pass and the result is not re-parsed as a template, the string remains inert text
 // (and encodeHtml below additionally neutralises it for v-html sinks). If you ever feel tempted
 // to add a "just one more pass" loop here, this comment is why you won't.
-export const TAG_REGEX = /\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/g;
+export const TAG_REGEX = tagPattern('g');
 
 // HTML-encode substituted tag values so donor-supplied strings can't break out of attribute or
 // text context when the result is rendered via v-html. Encodes the five chars that matter for
