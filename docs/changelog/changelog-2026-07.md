@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - docs(llms): llms.txt at the site root so an LLM can author templates correctly
+
+A complete, self-contained authoring guide served at `https://overlabels.com/llms.txt` (`public/llms.txt`, static, no route needed). The goal is narrow and testable: an LLM that reads only this file should be able to write a working static, alert, or block template without seeing the codebase.
+
+- **Hard rules first**, because they are the ones an LLM will otherwise violate: no JavaScript (the sanitizer strips it), tags resolve exactly once and never reparse, three fields only, values are HTML-encoded, missing data renders nothing.
+- **The full tag language**: the five tag shapes, all 11 formatters with their real argument behaviour, the three surprising `?? default` rules, conditionals with the single-`=` operator, and `foreach` with `loop.*` and `[[[raw]]]`.
+- **Data reference per template type** - Twitch channel tags, `[[[c:...]]]` controls, the full List read-tag table including the live-ticking `:countdown`, and the `event.*` payload.
+- **Three complete worked examples**, one per template type, each with head/html/css.
+- **Two traps documented after verifying them against the code.** `event.type` is spelled differently by source: Twitch carries the raw dotted EventSub type (`channel.follow`, `channel.subscription.gift`), while external donation services normalise to bare words (`donation`, `subscription`, `shop_order`, `commission`) - which is exactly what lets one alert template serve every provider. And the right-hand side of a condition is always a literal, so `[[[if:channel_followers >= c:follower_goal]]]` compares against the string `c:follower_goal` rather than the control's value.
+- **Block-specific rules** that exist nowhere else: the fill-the-box `:root { width:100%; height:100% }` pattern, `:root`/`html`/`body` being replaced rather than prefixed by the scoper, and the two documented scoping holes (`@keyframes` names are not renamed, so namespace them; write flat CSS because native nesting is opaque to the scoper).
+- A gotchas table and a pointer to `resources/dsl/dsl.json` for anyone extending the engine rather than authoring for it.
+
 ## July 28th, 2026 - feat(dsl): one shared spec for the template language, eight divergences closed
 
 The DSL vocabulary and lexical shape now live in one file, `resources/dsl/dsl.json`, read by `app/Support/Dsl.php` on the PHP side and `resources/js/utils/dsl.ts` on the TypeScript side. Every tag matcher in the codebase was rewired onto it, and the divergences the spec documented are fixed.

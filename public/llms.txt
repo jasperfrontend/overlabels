@@ -1,0 +1,453 @@
+# Overlabels
+
+> Overlabels turns live stream data (Twitch events, donations, GPS, chat, arbitrary counters) into browser-source overlays for OBS. An overlay is plain HTML + CSS with `[[[tags]]]` in it. The tags resolve against live data and update in real time over WebSockets. There is no JavaScript in an overlay - the template language does the work.
+>
+> This file is a complete authoring guide. Read it end to end and you can write a working static, alert, or block template without seeing the codebase.
+
+---
+
+## 1. Hard rules - read these first
+
+These are invariants, not style preferences. Violating any one produces a template that silently fails or gets stripped on save.
+
+1. **No JavaScript. Ever.** `<script>`, `javascript:` URIs, `<iframe>`, `<embed>`, `<object>`, `<form>`, `<input>`, `<button>`, `<textarea>`, `<select>` and `<meta http-equiv="refresh">` are stripped on save by the server-side sanitizer. Do not write a template that depends on scripting. If you want behaviour, express it with conditionals, `foreach`, and formatters.
+2. **Tags resolve exactly once per render.** Substituted values are never re-scanned. If a donor is named `[[[c:foo]]]`, that text renders literally - it does not become a tag. This is the security property that makes user-supplied content safe. Never assume a value can contain a tag that will resolve.
+3. **Three fields only:** `head`, `html`, `css`. There is no JS field in practice.
+4. **Values are HTML-encoded** on the HTML path. You cannot inject markup through a tag value.
+5. **Missing data renders nothing.** No dashes, no "N/A", no invented placeholder. Use `?? default` if you want a fallback.
+6. **Overlays never phone home.** A rendered overlay does not send data back to the server.
+
+---
+
+## 2. Template anatomy
+
+Every template has three fields:
+
+| Field | Purpose |
+|---|---|
+| `head` | `<link>` tags for webfonts, `<style>` blocks. No scripts. |
+| `html` | The markup, containing `[[[tags]]]`. |
+| `css` | Stylesheet. Tags work in here too. |
+
+The rendered page is transparent by default and sized to the OBS browser source. Overlays are added to OBS as a Browser Source pointing at a URL that carries a 64-character access token in the URL **fragment**, so the token never reaches the server.
+
+---
+
+## 3. The three template types
+
+| Type | Lives | Renders | Data it sees |
+|---|---|---|---|
+| **static** | Always on screen | Continuously, updating live | Twitch channel data, controls, lists |
+| **alert** | Fires on an event, then disappears | Once per event, for a set duration | Everything a static sees, **plus `event.*`** |
+| **block** | A reusable fragment | Never alone - composed into a static overlay by the Builder | Same as static, but CSS gets scoped |
+
+A **static** overlay is the normal case: a follower goal bar, a chat box, a timer.
+
+An **alert** is bound to one or more events (a follow, a raid, a Ko-fi donation) with a `duration_ms` (default 5000) and `transition_in` / `transition_out` animations. Alerts are designed to fire *inside* a static overlay's DOM so they inherit its CSS, though adding one straight to OBS also works.
+
+A **block** is a self-contained fragment that the Builder places on a CSS grid. Blocks are the composable unit - see §9 for the rules that only apply to them.
+
+---
+
+## 4. Tag syntax
+
+### 4.1 The shapes
+
+```
+[[[key]]]
+[[[key|formatter]]]
+[[[key|formatter:args]]]
+[[[key ?? default]]]
+[[[key|formatter:args ?? default]]]
+```
+
+A key is one or more segments separated by `.` or `:`. It must **start** with a letter, digit or underscore. Hyphens are allowed inside.
+
+### 4.2 Formatters (pipes)
+
+There are exactly 11. An unknown formatter name silently returns the raw value, so typos are invisible - spell them correctly.
+
+| Formatter | Args | Behaviour |
+|---|---|---|
+| `round` | decimals (default 0) | `[[[c:score\|round:2]]]` |
+| `number` | decimals | Locale-aware thousands separators |
+| `currency` | ISO 4217 code | Defaults to the user's locale currency. `[[[c:kofi:total\|currency:EUR]]]` |
+| `date` | preset or pattern | Presets: `short`, `long`, `date`, `time`. Pattern tokens: `yyyy MM dd HH mm ss` |
+| `duration` | pattern | Seconds in, e.g. `hh:mm:ss`, `mm:ss`, `dd:hh:mm:ss`. Units overflow into the largest present unit. No args = smart auto-format |
+| `distance` | `km` or `mi` | Input is kilometres. **Without args it returns the raw value** |
+| `speed` | `kmh` or `mph` | Input is metres/second. **Without args it returns the raw value** |
+| `uppercase` | none | |
+| `lowercase` | none | |
+| `login` | none | Normalise to a Twitch login (lowercase, strip leading `@`) |
+| `mention` | none | Format as `@name` |
+
+All timestamps in Overlabels are **Unix seconds**. Every control has an automatic `_at` companion holding when it last changed.
+
+### 4.3 `?? default`
+
+```
+[[[c:kofi:latest_donor ?? nobody yet]]]
+```
+
+Three rules that surprise people:
+
+- It fires on **absence only** - null, undefined, or empty string. A present-but-weird value never triggers it.
+- The default is emitted **verbatim**. The pipe is **not** applied to it. `[[[x|currency:EUR ?? 0]]]` renders the literal `0`, not `€0.00`.
+- It is part of the authored template, so it is never rescanned for tags.
+
+### 4.4 Conditionals
+
+```
+[[[if:is_live]]]
+  LIVE
+[[[elseif:c:kofi:donations_received > 10]]]
+  Popular today
+[[[else]]]
+  Offline
+[[[endif]]]
+```
+
+- Operators: `>=` `<=` `!=` `>` `<` `=`. Note **single `=`** for equality, not `==`.
+- A bare key is a boolean test. Falsy: `false`, the strings `"false"` and `"0"`, empty, null.
+- If both sides parse as numbers the comparison is numeric; otherwise it is a string comparison, and `> < >= <=` fall back to lexicographic ordering.
+- Quotes around the right-hand side are stripped, so `= "live"` and `= live` are the same.
+- Nesting works to a depth of **10**.
+
+### 4.5 foreach
+
+```
+[[[foreach:c:list:donors as donor]]]
+  <li>[[[loop.index]]]. [[[donor]]]</li>
+[[[endforeach]]]
+```
+
+- `as <alias>` is optional; the alias defaults to `item`.
+- Inside the body you get `[[[loop.index]]]` (0-based), `[[[loop.first]]]`, `[[[loop.last]]]`, `[[[loop.count]]]`.
+- If items are objects, `[[[alias.field]]]` works.
+- `[[[raw]]]` inside a loop dumps the current item as pretty JSON. Use it to discover an unfamiliar shape, then delete it.
+- Loops over Twitch collections are capped per user (default caps, max 50) to bound render cost.
+- Nesting works, including a `foreach` inside an `if` and vice versa.
+
+**Malformed blocks fail silently.** An unmatched `[[[if:]]]` or `[[[foreach:]]]` aborts processing and leaves raw text on screen. There is no error message. Count your `[[[endif]]]`s.
+
+---
+
+## 5. Available data
+
+### 5.1 Twitch channel tags (static + alert + block)
+
+62 tags, all bare names. The common ones:
+
+```
+user_name  user_login  user_avatar  user_created
+channel_title  channel_game  channel_followers  channel_delay
+followers_total  followers_latest_user_name  followers_latest_date
+```
+
+Also `channel_tags_0` through `channel_tags_9`, subscriber and goal collections (iterate them with `foreach`), and `followed_channels`.
+
+### 5.2 Controls - `[[[c:...]]]`
+
+Controls are named values the streamer owns and can change from the dashboard, from chat, or automatically.
+
+```
+[[[c:my_counter]]]              own control by key
+[[[c:kofi:donations_received]]] service-managed control
+[[[c:kofi:total|currency]]]
+```
+
+Registered services: `kofi`, `streamlabs`, `streamelements`, `fourthwall`, `bmac`, `throne`, `gps`.
+
+Referencing a service control in a template makes the overlay declare that dependency; if the copier has not connected that service they are warned but not blocked, and it starts working once they connect.
+
+### 5.3 Lists - `[[[c:list:<slug>...]]]`
+
+Lists are realtime ordered collections (raffle entries, a queue, quotes).
+
+| Tag | Gives |
+|---|---|
+| `[[[c:list:donors]]]` | The whole list as a JSON array string |
+| `[[[c:list:donors:json]]]` | Full item objects (`id`, `value`, `added_at`, `label`, `weight`, `color`) |
+| `[[[c:list:donors:count]]]` | Item count (`.count` also works) |
+| `[[[c:list:donors.0]]]` | Item at index 0 |
+| `[[[c:list:donors:first]]]` / `:last` | First / last value |
+| `[[[c:list:donors:random]]]` | A random value |
+| `[[[c:list:donors:sum]]]` | Numeric sum, `0` when empty |
+| `[[[c:list:donors:empty]]]` | `1` when empty, else `0` |
+| `[[[c:list:donors:expires_at]]]` | Unix seconds, empty when no expiry |
+| `[[[c:list:donors:countdown]]]` | **Live-ticking** seconds until expiry |
+
+`:countdown` combined with `|duration` gives you a working timer with no scripting:
+
+```html
+<div class="timer">[[[c:list:raffle:countdown|duration:mm:ss ?? 00:00]]]</div>
+```
+
+### 5.4 Event data - `[[[event.*]]]`, alert templates only
+
+Available only while an alert is firing. The set depends on the event type:
+
+```
+event.type  event.user_name  event.user_login  event.user_avatar
+event.message  event.bits  event.viewers
+event.tier  event.tier_display  event.is_gift  event.total  event.cumulative_total
+event.from_broadcaster_user_name        (raids)
+event.reward.title  event.reward.cost  event.user_input   (channel points)
+event.amount.value  event.amount.currency  event.amount.formatted   (donations)
+event.top_contributions.0.user_name  event.last_contribution.user_name   (hype train)
+```
+
+### 5.5 `event.type` values - read this carefully
+
+**`event.type` is spelled differently depending on where the event came from.** This trips people up constantly.
+
+**Twitch events** carry the raw EventSub subscription type, dotted and prefixed:
+
+```
+channel.follow                channel.subscribe
+channel.subscription.gift     channel.subscription.message
+channel.cheer                 channel.raid
+channel.update                channel.channel_points_custom_reward_redemption.add
+channel.hype_train.begin      channel.hype_train.progress    channel.hype_train.end
+channel.goal.begin            channel.goal.progress          channel.goal.end
+channel.poll.begin            channel.poll.progress          channel.poll.end
+channel.prediction.begin      channel.prediction.progress
+channel.prediction.lock       channel.prediction.end
+channel.charity_campaign.donate   channel.charity_campaign.progress
+channel.charity_campaign.start    channel.charity_campaign.stop
+```
+
+**External services** (Ko-fi, StreamLabs, StreamElements, Fourthwall, BMAC, Throne) carry a normalised type instead:
+
+```
+donation   subscription   shop_order   commission
+```
+
+So `[[[if:event.type = follow]]]` matches nothing - it must be `channel.follow`. Meanwhile `donation` is correct as-is, and deliberately so: every donation provider normalises to the same word, which is what lets one alert template serve all of them.
+
+```
+[[[if:event.type = donation]]]
+  [[[event.user_name]]] donated [[[event.amount.formatted]]]
+[[[endif]]]
+```
+
+`event.source` tells you which service fired it (`twitch`, `kofi`, `streamlabs`, ...), for when you do want to distinguish.
+
+### 5.6 The right-hand side of a condition is always a literal
+
+There is no tag-to-tag comparison. `[[[if:channel_followers >= c:follower_goal]]]` compares the follower count against the literal string `c:follower_goal` and will not do what you want. Compare against a constant:
+
+```
+[[[if:channel_followers >= 1000]]]
+```
+
+If you need a dynamic comparison, compute it upstream into a single control (Expression Controls do this) and test that control instead.
+
+---
+
+## 6. Writing a STATIC template
+
+A follower goal bar. Note there is no JavaScript anywhere.
+
+**head**
+```html
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet">
+```
+
+**html**
+```html
+<div class="goal">
+  <div class="goal__label">
+    [[[channel_followers|number]]] / [[[c:follower_goal ?? 1000]]] followers
+  </div>
+  <div class="goal__track">
+    <div class="goal__fill"></div>
+  </div>
+  [[[if:c:goal_percent >= 100]]]
+    <div class="goal__done">Goal reached</div>
+  [[[endif]]]
+</div>
+```
+
+**css**
+```css
+html, body { margin: 0; background: transparent; }
+
+.goal {
+  font-family: Inter, sans-serif;
+  color: #fff;
+  width: 420px;
+}
+.goal__track { height: 14px; background: rgba(255,255,255,.15); border-radius: 7px; overflow: hidden; }
+.goal__fill {
+  height: 100%;
+  background: #a970ff;
+  /* A tag inside CSS - resolves to a number, then gets a unit glued on. */
+  width: [[[c:goal_percent ?? 0]]]%;
+  transition: width .4s ease;
+}
+```
+
+Tags work in CSS. A tag directly followed by a unit (`]]]%`, `]]]px`) is supported.
+
+**A performance note for CSS specifically.** The renderer has a fast path that compiles CSS tags into
+native custom properties once at mount, then updates them without re-parsing the stylesheet. That path
+is skipped for the whole stylesheet if the CSS contains `[[[if:]]]`, `[[[elseif:]]]`, `[[[foreach:]]]`,
+a `?? default`, or a placeholder glued directly to a preceding character (`#[[[hex]]]`). Everything
+still renders correctly, just less efficiently. For a value that updates many times a second, keep the
+CSS tag plain and put the conditional logic in the HTML.
+
+---
+
+## 7. Writing an ALERT template
+
+Alerts render once per event for `duration_ms`, with enter and exit transitions configured outside the template. Write only the thing that appears.
+
+**html**
+```html
+<div class="alert">
+  <img class="alert__avatar" src="[[[event.user_avatar]]]" alt="">
+  <div class="alert__body">
+    [[[if:event.type = channel.follow]]]
+      <strong>[[[event.user_name]]]</strong> just followed
+    [[[elseif:event.type = channel.raid]]]
+      <strong>[[[event.from_broadcaster_user_name]]]</strong>
+      raided with [[[event.viewers|number]]] viewers
+    [[[elseif:event.type = channel.cheer]]]
+      <strong>[[[event.user_name]]]</strong>
+      cheered [[[event.bits|number]]] bits
+    [[[elseif:event.type = channel.subscribe]]]
+      <strong>[[[event.user_name]]]</strong>
+      subscribed at [[[event.tier_display]]]
+    [[[elseif:event.type = donation]]]
+      <strong>[[[event.user_name]]]</strong>
+      tipped [[[event.amount.formatted ?? something nice]]]
+    [[[else]]]
+      <strong>[[[event.user_name]]]</strong> did a thing
+    [[[endif]]]
+
+    [[[if:event.message]]]
+      <p class="alert__msg">[[[event.message]]]</p>
+    [[[endif]]]
+  </div>
+</div>
+```
+
+Notes:
+- Always provide an `[[[else]]]` branch or guard with `[[[if:event.message]]]`, because a field absent for one event type renders as nothing.
+- `event.message` is chatter-supplied. It is HTML-encoded automatically and never reparsed, so it is safe to place directly.
+- Do not animate entry/exit in your CSS - the transitions are applied by the alert system.
+
+---
+
+## 8. Writing a BLOCK template
+
+Blocks are fragments the Builder drops into a grid cell. Everything above applies, plus four rules that exist only for blocks.
+
+### 8.1 Fill the box
+
+The Builder wraps your block in a grid cell that has a definite width and height. Your block must fill it:
+
+```css
+:root { width: 100%; height: 100%; }
+```
+
+If you size yourself in pixels you will not fit the cell the user drew.
+
+### 8.2 CSS gets scoped automatically
+
+On compile, every selector in your block's CSS is prefixed with the placement's unique id, so two blocks using `.label` cannot collide.
+
+- `.label` becomes `#blk-a3f .label`
+- **`:root`, `html` and `body` are REPLACED by the wrapper**, not prefixed. So `:root { --accent: red }` attaches your custom properties to your own block, and `body { background: #000 }` paints your cell, not the whole page. This is why §8.1 works.
+
+### 8.3 Known scoping limitations
+
+- **`@keyframes` names are NOT renamed.** Two *different* blocks each defining `@keyframes pulse` collide, last one wins. Namespace your animation names: `@keyframes myblock-pulse`.
+- **`@font-face` passes through unscoped** - it is global by nature.
+- **Write flat CSS.** Native CSS nesting is treated as opaque; only the top-level selector of a nested tree gets scoped.
+
+### 8.4 Design for key sharing
+
+Controls travel with a block when it is placed. If two blocks both use `[[[c:accent_color]]]`, they share one control and stay in sync - which is usually what a user wants. Choose generic key names for things that should sync and specific ones for things that should not.
+
+### 8.5 A complete block
+
+**html**
+```html
+<div class="chatbox">
+  <h2 class="chatbox__title">[[[c:chat_title ?? Recent chat]]]</h2>
+  <ul class="chatbox__list">
+    [[[foreach:c:list:chat_log as line]]]
+      <li class="chatbox__line">[[[line]]]</li>
+    [[[endforeach]]]
+  </ul>
+  [[[if:c:list:chat_log:empty]]]
+    <p class="chatbox__quiet">Quiet in here</p>
+  [[[endif]]]
+</div>
+```
+
+**css**
+```css
+:root { width: 100%; height: 100%; }
+
+.chatbox {
+  box-sizing: border-box;
+  width: 100%; height: 100%;
+  padding: 12px;
+  background: rgba(0,0,0,.55);
+  border-radius: 10px;
+  color: #fff;
+  font: 14px/1.4 system-ui, sans-serif;
+  overflow: hidden;
+}
+.chatbox__title { margin: 0 0 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+.chatbox__list { margin: 0; padding: 0; list-style: none; }
+.chatbox__line { padding: 2px 0; animation: chatbox-in .25s ease; }
+.chatbox__quiet { opacity: .6; }
+
+/* Namespaced so another block's `in` animation cannot clobber it. */
+@keyframes chatbox-in { from { opacity: 0; transform: translateY(4px); } }
+```
+
+---
+
+## 9. Mistakes to avoid
+
+| Mistake | What happens |
+|---|---|
+| Using `==` for equality | The condition never parses. Use `=`. |
+| `[[[if:event.type = follow]]]` | Matches nothing. Twitch types are dotted: `channel.follow`. |
+| Comparing one tag to another | The right-hand side is a literal string, never resolved. See §5.6. |
+| Misspelling a formatter | Silently returns the raw, unformatted value. |
+| Forgetting `[[[endif]]]` | Processing aborts; raw template text appears on screen. |
+| Expecting `?? default` to be formatted | Defaults are emitted verbatim; the pipe is skipped. |
+| Adding `<script>` for "just a little" behaviour | Stripped on save. |
+| Sizing a block in pixels | It will not fill the grid cell. |
+| Generic `@keyframes` names in a block | Collides with other blocks. |
+| Expecting a value containing a tag to resolve | Tags resolve once. By design. |
+| `distance` / `speed` with no args | Returns the raw number unconverted. Always pass a unit. |
+
+---
+
+## 10. Machine-readable spec
+
+The lexical grammar, the formatter table, block keywords, operators and limits live in one file that both the PHP and TypeScript runtimes read, so they cannot drift:
+
+- `resources/dsl/dsl.json` - the shared spec
+- `docs/design/overlabels-dsl-spec.md` - the full specification, including the formal grammar and the record of eight historical divergences between implementations
+
+If you are extending Overlabels rather than authoring a template: never hand-roll a tag regex. Add the shape to `dsl.json` so both runtimes get it at once.
+
+---
+
+## 11. Links
+
+- Overlabels: https://overlabels.com
+- Help: https://overlabels.com/help
+- Template tags: https://overlabels.com/help/formatting
+- Conditionals: https://overlabels.com/help/conditionals
+- Lists: https://overlabels.com/help/lists
+- Blocks: https://overlabels.com/help/blocks
+- Builder: https://overlabels.com/help/builder
