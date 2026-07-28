@@ -43,6 +43,7 @@ use App\Models\User;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
+use App\Support\HelpPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -103,85 +104,33 @@ Route::get('/help', function () {
     return Inertia::render('help/Index');
 })->name('help');
 
-Route::get('/help/conditionals', function () {
-    return Inertia::render('help/Conditionals');
-})->name('help.conditionals');
+// Help pages are markdown files in resources/help/pages. The route name is
+// derived from the slug ('bot/aliases' -> 'help.bot.aliases'), so adding a page
+// is adding a file - no route, no controller, no Vue component. Registration
+// reads the filesystem once at boot and is captured by route caching.
+foreach (HelpPage::all() as $helpSlug) {
+    $helpName = str_replace('/', '.', $helpSlug);
 
-Route::get('/help/controls', function () {
-    return Inertia::render('help/Controls');
-})->name('help.controls');
+    Route::get('/help/'.$helpSlug, [HelpController::class, 'show'])
+        ->defaults('slug', $helpSlug)
+        ->name('help.'.$helpName);
 
+    // Same page as plain markdown for machines (llms.txt points here).
+    Route::get('/help/'.$helpSlug.'.md', [HelpController::class, 'markdown'])
+        ->defaults('slug', $helpSlug)
+        ->name('help.'.$helpName.'.md');
+}
+
+// Interactive help pages that are NOT prose and stay as Vue components:
+// integration presets renders live data from controlPresets.ts with a fuzzy
+// search, so freezing it into markdown would drift from its source.
 Route::get('/help/integration-presets', function () {
     return Inertia::render('help/IntegrationPresets');
 })->name('help.integration-presets');
 
-Route::get('/help/expressions', function () {
-    return Inertia::render('help/Expressions');
-})->name('help.expressions');
-
-Route::get('/help/bot/aliases', function () {
-    return Inertia::render('help/Aliases');
-})->name('help.bot.aliases');
-
-Route::get('/help/for-creators', function () {
-    return Inertia::render('help/ForCreators');
-})->name('help.for-creators');
-
-Route::get('/help/for-designers', function () {
-    return Inertia::render('help/ForDesigners');
-})->name('help.for-designers');
-
-Route::get('/help/overlays-vs-alerts', function () {
-    return Inertia::render('help/OverlaysVsAlerts');
-})->name('help.overlays-vs-alerts');
-
-Route::get('/help/builder', function () {
-    return Inertia::render('help/Builder');
-})->name('help.builder');
-
-Route::get('/help/blocks', [HelpController::class, 'show'])
-    ->defaults('slug', 'blocks')
-    ->name('help.blocks');
-
-Route::get('/help/formatting', function () {
-    return Inertia::render('help/Formatting');
-})->name('help.formatting');
-
-Route::get('/help/lists', function () {
-    return Inertia::render('help/Lists');
-})->name('help.lists');
-
-Route::get('/help/lists-realtime', function () {
-    return Inertia::render('help/ListsRealtime');
-})->name('help.lists-realtime');
-
-Route::get('/help/math', function () {
-    return Inertia::render('help/Math');
-})->name('help.math');
-
-Route::get('/help/resources', function () {
-    return Inertia::render('help/Resources');
-})->name('help.resources');
-
-Route::get('/help/why-kofi', function () {
-    return Inertia::render('help/WhyKofi');
-})->name('help.why-kofi');
-
-Route::get('/help/why-overlabels', function () {
-    return Inertia::render('help/WhyOverlabels');
-})->name('help.why-overlabels');
-
-Route::get('/help/manifesto', function () {
-    return Inertia::render('help/Manifesto');
-})->name('help.manifesto');
-
 Route::get('/help/bot', function () {
     return Inertia::render('help/bot/Index');
 })->name('help.bot');
-
-Route::get('/help/bot/expressions', function () {
-    return Inertia::render('help/bot/Commands');
-})->name('help.bot.expressions');
 
 // Renamed from /help/bot/commands - keep old links and indexed URLs working.
 Route::redirect('/help/bot/commands', '/help/bot/expressions', 301);

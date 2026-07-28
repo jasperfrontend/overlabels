@@ -444,10 +444,36 @@ If you are extending Overlabels rather than authoring a template: never hand-rol
 
 ## 11. Links
 
+**Every help page is fetchable as plain markdown by appending `.md` to its URL.** That is the machine
+rail: `https://overlabels.com/help/conditionals.md` returns the full source with
+`Content-Type: text/markdown`, byte-identical to what the HTML page renders. The bare URL is an
+Inertia/Vue page and will give you an app shell, not prose - always use the `.md` form.
+
+| Page | Markdown |
+|---|---|
+| Conditionals, foreach, and the full `event.*` catalogue | `/help/conditionals.md` |
+| Formatting pipes and `?? default` | `/help/formatting.md` |
+| Controls (all types, presets, control panel) | `/help/controls.md` |
+| Expression Controls (the math layer) | `/help/expressions.md` |
+| Math engine (waves, modulo, PRNG, timestamp racing) | `/help/math.md` |
+| Lists | `/help/lists.md` |
+| Lists in realtime (read endpoint + WebSocket) | `/help/lists-realtime.md` |
+| Blocks | `/help/blocks.md` |
+| The Builder | `/help/builder.md` |
+| Overlays vs Alerts | `/help/overlays-vs-alerts.md` |
+| Bot expressions reference | `/help/bot/expressions.md` |
+| Bot aliases | `/help/bot/aliases.md` |
+| For creators (system overview) | `/help/for-creators.md` |
+| For designers (handoff guide) | `/help/for-designers.md` |
+| Manifesto | `/help/manifesto.md` |
+| Why Overlabels | `/help/why-overlabels.md` |
+| Why Ko-fi | `/help/why-kofi.md` |
+| Free resources | `/help/resources.md` |
+
+Two help surfaces are interactive apps rather than prose, so they have no `.md` twin:
+`/help/integration-presets` (searchable preset catalogue, rendered live from source) and `/help/reference`
+(fuzzy-search reference). The reference vault is machine-readable as JSON at
+`/help-reference-index.json`.
+
 - Overlabels: https://overlabels.com
-- Help: https://overlabels.com/help
-- Template tags: https://overlabels.com/help/formatting
-- Conditionals: https://overlabels.com/help/conditionals
-- Lists: https://overlabels.com/help/lists
-- Blocks: https://overlabels.com/help/blocks
-- Builder: https://overlabels.com/help/builder
+- Help index: https://overlabels.com/help
