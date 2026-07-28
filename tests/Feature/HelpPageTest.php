@@ -99,6 +99,49 @@ it('keeps every original help route name working', function () {
     }
 });
 
+it('serves the help index at /help and /help.md', function () {
+    // An `index` slug maps to its parent path, so index.md is /help (not
+    // /help/index) and bot/index.md is /help/bot. This is the entry point a
+    // crawler lands on, so it has to carry links to everything else.
+    $this->get('/help')->assertOk();
+
+    $md = $this->get('/help.md');
+    $md->assertOk();
+    $md->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+
+    expect($md->getContent())
+        ->toContain('/help/conditionals')
+        ->toContain('/help/controls')
+        ->toContain('/help/lists');
+
+    $this->get('/help/bot')->assertOk();
+    $this->get('/help/bot.md')->assertOk();
+
+    // The index slug must not also leak out as /help/index.
+    expect(app('router')->getRoutes()->getByName('help.index'))->toBeNull();
+});
+
+it('makes every markdown page reachable from the index', function () {
+    // llms.txt tells a machine that /help.md is the entry point for crawling
+    // the docs, so an unlinked page is effectively undiscoverable. Reachability
+    // is transitive: the bot pages hang off /help/bot.md rather than the root
+    // index, which is a legitimate second hop.
+    $indexes = array_filter(HelpPage::all(), fn ($s) => str_ends_with($s, 'index'));
+
+    $linkText = '';
+    foreach ($indexes as $slug) {
+        $linkText .= file_get_contents(HelpPage::path($slug));
+    }
+
+    foreach (HelpPage::all() as $slug) {
+        if (str_ends_with($slug, 'index')) {
+            continue;
+        }
+
+        expect($linkText)->toContain("/help/{$slug}");
+    }
+});
+
 it('still redirects the old bot commands url', function () {
     $this->get('/help/bot/commands')->assertRedirect('/help/bot/expressions');
 });

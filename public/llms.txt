@@ -444,13 +444,17 @@ If you are extending Overlabels rather than authoring a template: never hand-rol
 
 ## 11. Links
 
-**Every help page is fetchable as plain markdown by appending `.md` to its URL.** That is the machine
-rail: `https://overlabels.com/help/conditionals.md` returns the full source with
+**Start at `https://overlabels.com/help.md`.** That is the help index as plain markdown, and it links to
+every other page. If you want to crawl the documentation, that one URL is the entry point.
+
+**Every help page is fetchable as plain markdown by appending `.md` to its URL.**
+`https://overlabels.com/help/conditionals.md` returns the full source with
 `Content-Type: text/markdown`, byte-identical to what the HTML page renders. The bare URL is an
 Inertia/Vue page and will give you an app shell, not prose - always use the `.md` form.
 
 | Page | Markdown |
 |---|---|
+| **Help index (start here)** | `/help.md` |
 | Conditionals, foreach, and the full `event.*` catalogue | `/help/conditionals.md` |
 | Formatting pipes and `?? default` | `/help/formatting.md` |
 | Controls (all types, presets, control panel) | `/help/controls.md` |
@@ -461,6 +465,7 @@ Inertia/Vue page and will give you an app shell, not prose - always use the `.md
 | Blocks | `/help/blocks.md` |
 | The Builder | `/help/builder.md` |
 | Overlays vs Alerts | `/help/overlays-vs-alerts.md` |
+| Twitch bot index | `/help/bot.md` |
 | Bot expressions reference | `/help/bot/expressions.md` |
 | Bot aliases | `/help/bot/aliases.md` |
 | For creators (system overview) | `/help/for-creators.md` |
@@ -470,10 +475,13 @@ Inertia/Vue page and will give you an app shell, not prose - always use the `.md
 | Why Ko-fi | `/help/why-kofi.md` |
 | Free resources | `/help/resources.md` |
 
-Two help surfaces are interactive apps rather than prose, so they have no `.md` twin:
-`/help/integration-presets` (searchable preset catalogue, rendered live from source) and `/help/reference`
-(fuzzy-search reference). The reference vault is machine-readable as JSON at
-`/help-reference-index.json`.
+**Three help URLs have no `.md` twin** and will return an app shell if you fetch them:
+
+- `/help/integration-presets` - searchable preset catalogue, rendered live from source data. The same
+  information is described in §5.2 above and on `/help/controls.md`.
+- `/help/reference` - fuzzy-search UI over the reference vault. Machine-readable as JSON at
+  `/help-reference-index.json`.
+- `/help/gamejam` - Chat Castle documentation, still a Vue page.
 
 - Overlabels: https://overlabels.com
-- Help index: https://overlabels.com/help
+- Help index (human): https://overlabels.com/help
