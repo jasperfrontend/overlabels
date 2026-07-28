@@ -10,12 +10,13 @@
 
 These are invariants, not style preferences. Violating any one produces a template that silently fails or gets stripped on save.
 
-1. **No JavaScript. Ever.** `<script>`, `javascript:` URIs, `<iframe>`, `<embed>`, `<object>`, `<form>`, `<input>`, `<button>`, `<textarea>`, `<select>` and `<meta http-equiv="refresh">` are stripped on save by the server-side sanitizer. Do not write a template that depends on scripting. If you want behaviour, express it with conditionals, `foreach`, and formatters.
-2. **Tags resolve exactly once per render.** Substituted values are never re-scanned. If a donor is named `[[[c:foo]]]`, that text renders literally - it does not become a tag. This is the security property that makes user-supplied content safe. Never assume a value can contain a tag that will resolve.
-3. **Three fields only:** `head`, `html`, `css`. There is no JS field in practice.
-4. **Values are HTML-encoded** on the HTML path. You cannot inject markup through a tag value.
-5. **Missing data renders nothing.** No dashes, no "N/A", no invented placeholder. Use `?? default` if you want a fallback.
-6. **Overlays never phone home.** A rendered overlay does not send data back to the server.
+1. **No JavaScript. Ever.** `<script>`, `javascript:` URIs (including HTML-entity-encoded ones), inline `on*` handlers, `<iframe>`, `<embed>`, `<object>`, `<form>`, `<input>`, `<button>`, `<textarea>`, `<select>` and `<meta http-equiv="refresh">` are stripped on save by the server-side sanitizer. Do not write a template that depends on scripting. If you want behaviour, express it with conditionals, `foreach`, and formatters.
+2. **`<audio>`, `<video>` and `<source>` are stripped too.** Not for security - for control. A raw `<audio autoplay>` in template HTML instantiates a fresh element per alert, so rapid-fire alerts stack overlapping playback. Alert sound belongs in the `alert_sound_url` field, which is preloaded and cancels the previous sound when a new alert fires.
+3. **Tags resolve exactly once per render.** Substituted values are never re-scanned. If a donor is named `[[[c:foo]]]`, that text renders literally - it does not become a tag. This is the security property that makes user-supplied content safe. Never assume a value can contain a tag that will resolve.
+4. **Three fields only:** `head`, `html`, `css`. A legacy `js` column still exists in the database from the first migration, but it is not in the validation rules for creating or updating a template, so nothing can write to it through the app, and no part of the render pipeline reads it. Populating it is not a route to scripting - treat the three fields as the whole surface.
+5. **Values are HTML-encoded** on the HTML path. You cannot inject markup through a tag value.
+6. **Missing data renders nothing.** No dashes, no "N/A", no invented placeholder. Use `?? default` if you want a fallback.
+7. **Overlays never phone home.** A rendered overlay does not send data back to the server.
 
 ---
 
@@ -45,7 +46,7 @@ A **static** overlay is the normal case: a follower goal bar, a chat box, a time
 
 An **alert** is bound to one or more events (a follow, a raid, a Ko-fi donation) with a `duration_ms` (default 5000) and `transition_in` / `transition_out` animations. Alerts are designed to fire *inside* a static overlay's DOM so they inherit its CSS, though adding one straight to OBS also works.
 
-A **block** is a self-contained fragment that the Builder places on a CSS grid. Blocks are the composable unit - see §9 for the rules that only apply to them.
+A **block** is a self-contained fragment that the Builder places on a CSS grid. Blocks are the composable unit - see §8 for the rules that only apply to them.
 
 ---
 
@@ -94,6 +95,8 @@ Three rules that surprise people:
 - It fires on **absence only** - null, undefined, or empty string. A present-but-weird value never triggers it.
 - The default is emitted **verbatim**. The pipe is **not** applied to it. `[[[x|currency:EUR ?? 0]]]` renders the literal `0`, not `€0.00`.
 - It is part of the authored template, so it is never rescanned for tags.
+- "Verbatim" means the pipe is skipped, **not** that encoding is skipped. On the HTML path the default is HTML-encoded exactly like a resolved value, so `?? <b>none</b>` renders visible angle brackets, not bold text. On the CSS path nothing is encoded, because a stylesheet is not HTML-parsed. Write defaults as plain text.
+- In CSS, a `?? default` anywhere in the stylesheet costs you the fast path - see §6.
 
 ### 4.4 Conditionals
 
@@ -176,6 +179,12 @@ Lists are realtime ordered collections (raffle entries, a queue, quotes).
 | `[[[c:list:donors:empty]]]` | `1` when empty, else `0` |
 | `[[[c:list:donors:expires_at]]]` | Unix seconds, empty when no expiry |
 | `[[[c:list:donors:countdown]]]` | **Live-ticking** seconds until expiry |
+
+**Why index access uses a dot and everything else a colon.** It is not an inconsistency to work
+around: numeric indices are dotted (`donors.0`, `donors.1`) because that is the array-index form the
+`foreach` machinery materialises against, while colon segments are a namespace of named accessors.
+`donors:0` is not a synonym and resolves to nothing. `count` is the one accessor available both ways
+(`.count` and `:count`).
 
 `:countdown` combined with `|duration` gives you a working timer with no scripting:
 
@@ -282,20 +291,29 @@ html, body { margin: 0; background: transparent; }
 .goal__fill {
   height: 100%;
   background: #a970ff;
-  /* A tag inside CSS - resolves to a number, then gets a unit glued on. */
-  width: [[[c:goal_percent ?? 0]]]%;
+  /* A tag inside CSS - resolves to a number, then gets a unit glued on.
+     Deliberately plain: no `?? default` here. See the performance note. */
+  width: [[[c:goal_percent]]]%;
   transition: width .4s ease;
 }
 ```
 
-Tags work in CSS. A tag directly followed by a unit (`]]]%`, `]]]px`) is supported.
+Tags work in CSS. A tag directly followed by a unit (`]]]%`, `]]]px`, `]]]vh`) is supported and stays
+on the fast path - the unit is baked into the value at write time.
 
 **A performance note for CSS specifically.** The renderer has a fast path that compiles CSS tags into
 native custom properties once at mount, then updates them without re-parsing the stylesheet. That path
-is skipped for the whole stylesheet if the CSS contains `[[[if:]]]`, `[[[elseif:]]]`, `[[[foreach:]]]`,
-a `?? default`, or a placeholder glued directly to a preceding character (`#[[[hex]]]`). Everything
-still renders correctly, just less efficiently. For a value that updates many times a second, keep the
-CSS tag plain and put the conditional logic in the HTML.
+is skipped **for the whole stylesheet** if the CSS contains `[[[if:]]]`, `[[[elseif:]]]`,
+`[[[foreach:]]]`, a `?? default`, or a placeholder glued directly to a **preceding** character
+(`#[[[hex]]]`). Everything still renders correctly, just less efficiently.
+
+It is one switch for the entire stylesheet, so a single `?? 0` on a rarely-used rule drops your
+constantly-updating progress bar onto the slow path too. That is why `width: [[[c:goal_percent]]]%`
+above has no default: it is the one value in this template that changes on every follow.
+
+To handle absence without paying that cost, give the **control** a default value instead of writing
+`?? ` in CSS - a control that exists always resolves to something, so the fallback never needs to be
+in the stylesheet. Keep conditional logic in the HTML, where it is free.
 
 ---
 
@@ -424,6 +442,9 @@ Controls travel with a block when it is placed. If two blocks both use `[[[c:acc
 | Forgetting `[[[endif]]]` | Processing aborts; raw template text appears on screen. |
 | Expecting `?? default` to be formatted | Defaults are emitted verbatim; the pipe is skipped. |
 | Adding `<script>` for "just a little" behaviour | Stripped on save. |
+| `<audio>` for an alert sound | Stripped on save. Use the `alert_sound_url` field. |
+| `?? default` on a hot CSS value | Correct output, but the whole stylesheet drops to the slow path. Default the control instead. |
+| `[[[c:list:donors:0]]]` | Indices are dotted: `donors.0`. Colon segments are named accessors. |
 | Sizing a block in pixels | It will not fill the grid cell. |
 | Generic `@keyframes` names in a block | Collides with other blocks. |
 | Expecting a value containing a tag to resolve | Tags resolve once. By design. |
