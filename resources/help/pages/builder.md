@@ -4,6 +4,7 @@ description: "Set up a grid, click a cell, pick a block, save. The Builder compi
 heading: The Builder
 lead: "Overlabels is HTML and CSS all the way down - but you don't have to write any of it. The Builder lets you compose a full overlay by placing ready-made blocks on a grid. Set up the grid, click a cell, pick a block, save. Done."
 canonical: https://overlabels.com/help/builder
+context: builder.create, templates.blocks.library
 ---
 
 ## 1. What the Builder is

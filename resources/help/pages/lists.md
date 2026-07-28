@@ -4,6 +4,7 @@ description: User-owned arrays of values that streamers manage from the dashboar
 heading: Lists in Overlabels
 lead: User-owned arrays of values that streamers manage from the dashboard or chat. Raffles, queues, quote walls, leaderboards, donation goals.
 canonical: https://overlabels.com/help/lists
+context: lists.index
 ---
 
 ## What is a List?

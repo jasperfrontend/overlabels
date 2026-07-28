@@ -1,5 +1,18 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - feat(help): help pages declare where they are relevant
+
+Help only helps if it turns up where the confusion is. The association between a place in the app and the page that explains it now lives in the help page's own frontmatter, and resolves server-side. This is the association layer only - nothing renders yet.
+
+- **`context:` frontmatter** - a flat, comma-separated list of the route names a page covers, optionally narrowed by query constraints: `context: templates.index?type=block, templates.show?type=block, templates.blocks.library, builder.create`. It lives in the markdown for the same reason the prose does: writing the page wires it up, so there is no second file to keep in step, and reading `blocks.md` tells you where it surfaces. Thirteen pages declare a context; the rest (manifesto, why-overlabels, resources) deliberately declare none.
+- **Route names, not URLs.** They are already unique, they survive a URL rewrite, and `$request->route()->getName()` hands one over. Constraints narrow a name down to a *state*, because `/templates` is one route serving four filter states.
+- **Undeclared query parameters are ignored**, so `templates.index?type=block` still matches a URL carrying `filter`, `search`, `sort` and `page`. No allowlist of "meaningful" parameters exists anywhere, because none is needed.
+- **`HelpContext::add()` for what the URL cannot say.** `/templates/{template}` serves blocks, alerts and static overlays alike - the discriminator is the model, not the query string. The controller injects `['type' => $template->type]` and `context: templates.show?type=alert` then matches through the identical code path as a real query parameter. One matcher; the controller decides what the meaningful discriminator is.
+- **Every match is returned, best first**, rather than collapsing to a single winner in the backend - ranked by exact-name-over-wildcard, then constraints pinned down, then how literal the pattern was, then slug for a stable order. There is deliberately no `priority:` key: a page cannot buy rank, it earns it by being more specific.
+- **Two guardrails, both verified to actually fail.** One asserts every declared context names a route that exists, which catches the rename that would otherwise kill contextual help silently. The other caps any single context at three pages, because left alone a generic route like `templates.index` accumulates every page that mentions templates until the help affordance is a link farm - now that is a test failure at authoring time, not a discovery two years later.
+- **Shared as the `help` Inertia prop** (`HelpLink[]`, often empty). `HelpPage` gained `meta()` - a frontmatter-only read that stops at the closing delimiter, since the index reads every page on every request and slurping whole files to get at their first ten lines would mean ~200KB of I/O per request - plus `url()`, which route registration now calls so URL derivation cannot drift.
+- **Tests:** 14 new (`HelpContextTest`), covering the matching rules, both guardrails, and end-to-end resolution of query-string and controller-injected context through real requests. Full suite **1098 passed**; Pint clean.
+
 ## July 28th, 2026 - feat(help): the help index is markdown too, so /help.md is a crawlable entry point
 
 The page conversion left the two navigation pages (`/help` and `/help/bot`) as Vue card grids, which meant a machine could read every individual help page but had no way to *discover* them - the index it would land on was still an empty shell. Both are markdown now.

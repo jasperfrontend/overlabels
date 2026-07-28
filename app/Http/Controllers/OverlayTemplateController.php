@@ -18,6 +18,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
+use App\Support\HelpContext;
 use App\Support\ListItems;
 use Exception;
 use Illuminate\Http\RedirectResponse;
@@ -186,6 +187,10 @@ class OverlayTemplateController extends Controller
         $template->load(['owner:id,name,avatar', 'forkParent:id,name,slug']);
         $template->loadCount('forks');
         $template->loadExists('kits');
+
+        // One route serves blocks, alerts and static overlays, so the URL alone
+        // cannot say which help page belongs here. See App\Support\HelpContext.
+        HelpContext::add(['type' => $template->type]);
 
         $canEdit = auth()->id() === $template->owner_id;
         $controls = $canEdit

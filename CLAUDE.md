@@ -224,6 +224,16 @@ Critical variables:
 - Adding a provider: pick an unused `uint16` with 4-8 filled cells, confirm `iconDistance() >= 6` against every existing icon. Current set's min pairwise distance is 8.
 - Icon SHAPE is keyed by `source` (twitch/kofi/streamlabs/streamelements/bmac/fourthwall/throne), NOT event type - all Twitch events share the Twitch ring. Icon COLOR is keyed by event type for Twitch (and by source for externals - see the reinforcement bullet). Event type is additionally carried by the adjacent text label. `TemplateTable.vue` still uses `eventTypeDotClass` in a different context (which event triggers a template).
 
+## Contextual Help (Implemented Jul 2026)
+
+- Help pages declare where they are relevant, in a flat `context:` frontmatter line: `context: templates.index?type=block, templates.show?type=block, builder.create`. The association lives in the markdown, NOT in a central route map - writing the page wires it up.
+- Key is the **route name**, not the URL. Optional `?k=v` constraints narrow one name down to a state (`/templates` is one route serving four filter states). Wildcards use `Str::is()`, so `settings.bot.*` works.
+- Declared constraints must match; **undeclared query params are ignored** (so `search`/`sort`/`page` never break a match). There is no allowlist of meaningful params and none is needed.
+- `HelpContext::add(['type' => $template->type])` injects context the URL cannot carry (one route, three template types). It merges into the same bag as the query string - one matcher.
+- `HelpContext::for()` returns ALL matches, best first: exact-over-wildcard, then constraint count, then literal pattern length, then slug. No `priority:` key on purpose - specificity is the only currency.
+- Shared as the `help` Inertia prop (`HelpLink[]`). No UI consumes it yet.
+- Two tests are load-bearing: every declared context must name a real route (catches renames), and no single context may resolve to more than 3 pages (stops generic routes rotting into a link farm). Both verified to fail when violated - keep them.
+
 ## Development Workflow
 
 ### Setting Up Twitch Integration

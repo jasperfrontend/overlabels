@@ -4,6 +4,7 @@ description: Learn how to create, manage, and use Controls in your Twitch overla
 heading: How to Use Controls
 lead: Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream.
 canonical: https://overlabels.com/help/controls
+context: settings.controls, controls.index
 ---
 
 You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly

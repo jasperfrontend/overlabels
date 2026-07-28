@@ -4,6 +4,7 @@ description: Blocks are the third template type in Overlabels: small, self-conta
 heading: Blocks
 lead: A block is a small, self-contained overlay piece: a follower counter, a donation goal, anything that can live within Overlabels. Build it once with the same HTML, CSS, and tags as any overlay - then anyone can place it on a grid in the Builder, no code required on their end.
 canonical: https://overlabels.com/help/blocks
+context: templates.index?type=block, templates.show?type=block, templates.blocks.library, builder.create
 ---
 
 ## 1. The third template type

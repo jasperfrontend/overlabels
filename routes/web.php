@@ -108,7 +108,7 @@ Route::get('/kaylin', fn () => response('Kaylin is the voice of Overlabels.', 20
 foreach (HelpPage::all() as $helpSlug) {
     $helpPath = trim((string) preg_replace('#(^|/)index$#', '', $helpSlug), '/');
 
-    $helpUrl = '/help'.($helpPath === '' ? '' : '/'.$helpPath);
+    $helpUrl = HelpPage::url($helpSlug);
     $helpName = 'help'.($helpPath === '' ? '' : '.'.str_replace('/', '.', $helpPath));
 
     Route::get($helpUrl, [HelpController::class, 'show'])
