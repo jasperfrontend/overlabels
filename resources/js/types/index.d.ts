@@ -38,11 +38,23 @@ export interface UsageSummary {
     period: string;
 }
 
+/** A help page that declared the current route in its `context:` frontmatter. */
+export interface HelpLink {
+    slug: string;
+    /** The page's short name, from its `heading` frontmatter. */
+    title: string;
+    /** The page's own opening paragraph, used as the excerpt. */
+    lead: string;
+    url: string;
+}
+
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    /** Contextual help for the current route, best match first. Often empty. */
+    help: HelpLink[];
     flash: FlashMessage;
     isAdmin: boolean;
     impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;

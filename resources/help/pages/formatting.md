@@ -4,6 +4,7 @@ description: Learn how to format numbers, durations, currencies, and dates in yo
 heading: Formatting Pipes
 lead: Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware.
 canonical: https://overlabels.com/help/formatting
+context: templates.edit, templates.create, tags.generator
 ---
 
 No JavaScript required, no external libraries, no build step. Just add a pipe to your tag and you are

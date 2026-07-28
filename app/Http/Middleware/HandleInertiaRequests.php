@@ -6,6 +6,7 @@ use App\Models\StreamState;
 use App\Models\User;
 use App\Services\LockdownService;
 use App\Services\TwitchScopeService;
+use App\Support\HelpContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -62,6 +63,10 @@ class HandleInertiaRequests extends Middleware
                 'fork_wizard' => fn () => $request->session()->get('fork_wizard'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Help pages relevant to wherever the user is standing, best first.
+            // Declared by the pages themselves in `context:` frontmatter, so
+            // this stays empty until a page claims the route.
+            'help' => fn () => HelpContext::forRequest($request),
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
             'lockdown' => fn () => app(LockdownService::class)->getStatus(),
             'streamState' => function () use ($request) {

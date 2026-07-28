@@ -4,6 +4,7 @@ description: The difference between a static overlay and an alert in Overlabels,
 heading: Overlays vs Alerts
 lead: "Overlabels has two kinds of overlay: the always-on static overlay, and the one-shot alert. They look similar in the editor, but they're meant to work together - and understanding how is the difference between a uniform, polished overlay and a bunch of disconnected boxes."
 canonical: https://overlabels.com/help/overlays-vs-alerts
+context: templates.index, templates.show?type=alert
 ---
 
 ## 1. The two kinds: static and alert

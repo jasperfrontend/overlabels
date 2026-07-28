@@ -4,6 +4,7 @@ description: Why Overlabels chose Ko-fi over PayPal for streamer donations. Zero
 heading: Overlabels ♥ Ko-fi
 lead: Why we chose Ko-fi as our first external integration - and why we think you should use it too.
 canonical: https://overlabels.com/help/why-kofi
+context: settings.integrations.kofi.show
 ---
 
 ## Ko-fi is amazing because it's a proper platform

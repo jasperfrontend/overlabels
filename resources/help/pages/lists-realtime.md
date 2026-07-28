@@ -4,6 +4,7 @@ description: "Build a live data page off an Overlabels List: get a token, read t
 heading: Lists in realtime
 lead: Build a page that reads one of your Lists and updates live - a wheel, a leaderboard, a ticker - and drop it into OBS. Step by step.
 canonical: https://overlabels.com/help/lists-realtime
+context: lists.index, tokens.index
 ---
 
 > [!NOTE]

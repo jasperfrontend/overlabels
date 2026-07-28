@@ -4,6 +4,7 @@ description: "Expression Controls in Overlabels: math-powered live data with no 
 heading: Expression Controls
 lead: Math-powered live data, no code and no server. Build chained formulas like the Haversine distance and progress bars, evaluated live as your data changes.
 canonical: https://overlabels.com/help/expressions
+context: settings.controls, controls.index
 ---
 
 ## What is an Expression Control?

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import CommandPalette from '@/components/CommandPalette.vue';
+import HelpBeacon from '@/components/HelpBeacon.vue';
 import ReferencePalette from '@/components/ReferencePalette.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import LinkWarningModal from '@/components/LinkWarningModal.vue';
@@ -34,6 +35,7 @@ onMounted(() => {
     <CommandPalette />
     <ReferencePalette />
     <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />
+    <HelpBeacon />
     <TooltipProvider>
       <slot />
     </TooltipProvider>

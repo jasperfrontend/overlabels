@@ -4,6 +4,7 @@ description: Complete reference for conditional template tags, event data, Ko-fi
 heading: Conditional Tags Reference
 lead: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays.
 canonical: https://overlabels.com/help/conditionals
+context: templates.edit, templates.create, tags.generator
 ---
 
 See your [static Template Tags](/tags) for your account. Need to format numbers, durations, or

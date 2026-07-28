@@ -4,6 +4,7 @@ description: Every chat expression the @overlabels Twitch bot understands - cont
 heading: Bot Expressions
 lead: Every chat expression the @overlabels Twitch bot understands - controls, !ol chat-admin meta-expression, list operations, and built-ins.
 canonical: https://overlabels.com/help/bot/expressions
+context: settings.bot.expressions.*
 section: Bot
 ---
 

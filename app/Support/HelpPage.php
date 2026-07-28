@@ -78,6 +78,71 @@ final class HelpPage
     }
 
     /**
+     * The public URL for a slug.
+     *
+     * An `index` slug collapses to its parent path, so `index` is /help and
+     * `bot/index` is /help/bot. Route registration in routes/web.php derives
+     * URLs the same way and calls through here so the two cannot drift.
+     */
+    public static function url(string $slug): string
+    {
+        $path = trim((string) preg_replace('#(^|/)index$#', '', $slug), '/');
+
+        return '/help'.($path === '' ? '' : '/'.$path);
+    }
+
+    /**
+     * Frontmatter only, without rendering the body.
+     *
+     * Reads line by line and stops at the closing delimiter, because the only
+     * caller that needs this - the help-context index - reads every page on
+     * every request. Slurping whole files to get at their first ten lines would
+     * mean ~200KB of I/O to answer a question the first 1KB already answers.
+     *
+     * @return array<string,string>
+     */
+    public static function meta(string $slug): array
+    {
+        $path = self::path($slug);
+
+        if ($path === null) {
+            return [];
+        }
+
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return [];
+        }
+
+        $lines = [];
+        $first = true;
+
+        while (($line = fgets($handle)) !== false) {
+            $line = rtrim(ltrim($line, "\xEF\xBB\xBF"), "\r\n");
+
+            if ($first) {
+                $first = false;
+                if ($line !== '---') {
+                    break;
+                }
+
+                continue;
+            }
+
+            if ($line === '---') {
+                break;
+            }
+
+            $lines[] = $line;
+        }
+
+        fclose($handle);
+
+        return self::parseFrontmatter(implode("\n", $lines));
+    }
+
+    /**
      * Render a page.
      *
      * @return array{
@@ -152,7 +217,18 @@ final class HelpPage
         $block = substr($normalized, 4, $end - 3);
         $body = ltrim(substr($normalized, $end + 4), "\n");
 
+        return [self::parseFrontmatter($block), $body];
+    }
+
+    /**
+     * Turn a frontmatter block into flat `key => value` pairs.
+     *
+     * @return array<string,string>
+     */
+    private static function parseFrontmatter(string $block): array
+    {
         $meta = [];
+
         foreach (explode("\n", $block) as $line) {
             $line = trim($line);
             if ($line === '' || ! str_contains($line, ':')) {
@@ -162,7 +238,7 @@ final class HelpPage
             $meta[trim($key)] = trim(trim(trim($value), '"\''));
         }
 
-        return [$meta, $body];
+        return $meta;
     }
 
     /**
