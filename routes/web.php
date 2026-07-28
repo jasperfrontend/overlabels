@@ -100,25 +100,25 @@ Route::get('/terms', function () {
 
 Route::get('/kaylin', fn () => response('Kaylin is the voice of Overlabels.', 200, ['Content-Type' => 'text/plain']));
 
-Route::get('/help', function () {
-    return Inertia::render('help/Index');
-})->name('help');
-
-// Help pages are markdown files in resources/help/pages. The route name is
-// derived from the slug ('bot/aliases' -> 'help.bot.aliases'), so adding a page
-// is adding a file - no route, no controller, no Vue component. Registration
+// Help pages are markdown files in resources/help/pages. Both the URL and the
+// route name are derived from the slug, so adding a page is adding a file - no
+// route, no controller, no Vue component. A slug ending in `index` maps to its
+// parent path, so index.md is /help and bot/index.md is /help/bot. Registration
 // reads the filesystem once at boot and is captured by route caching.
 foreach (HelpPage::all() as $helpSlug) {
-    $helpName = str_replace('/', '.', $helpSlug);
+    $helpPath = trim((string) preg_replace('#(^|/)index$#', '', $helpSlug), '/');
 
-    Route::get('/help/'.$helpSlug, [HelpController::class, 'show'])
+    $helpUrl = '/help'.($helpPath === '' ? '' : '/'.$helpPath);
+    $helpName = 'help'.($helpPath === '' ? '' : '.'.str_replace('/', '.', $helpPath));
+
+    Route::get($helpUrl, [HelpController::class, 'show'])
         ->defaults('slug', $helpSlug)
-        ->name('help.'.$helpName);
+        ->name($helpName);
 
     // Same page as plain markdown for machines (llms.txt points here).
-    Route::get('/help/'.$helpSlug.'.md', [HelpController::class, 'markdown'])
+    Route::get($helpUrl.'.md', [HelpController::class, 'markdown'])
         ->defaults('slug', $helpSlug)
-        ->name('help.'.$helpName.'.md');
+        ->name($helpName.'.md');
 }
 
 // Interactive help pages that are NOT prose and stay as Vue components:
@@ -127,10 +127,6 @@ foreach (HelpPage::all() as $helpSlug) {
 Route::get('/help/integration-presets', function () {
     return Inertia::render('help/IntegrationPresets');
 })->name('help.integration-presets');
-
-Route::get('/help/bot', function () {
-    return Inertia::render('help/bot/Index');
-})->name('help.bot');
 
 // Renamed from /help/bot/commands - keep old links and indexed URLs working.
 Route::redirect('/help/bot/commands', '/help/bot/expressions', 301);

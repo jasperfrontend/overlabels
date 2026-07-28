@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - feat(help): the help index is markdown too, so /help.md is a crawlable entry point
+
+The page conversion left the two navigation pages (`/help` and `/help/bot`) as Vue card grids, which meant a machine could read every individual help page but had no way to *discover* them - the index it would land on was still an empty shell. Both are markdown now.
+
+- **A slug ending in `index` maps to its parent path**, so `index.md` serves `/help` and `bot/index.md` serves `/help/bot` - not `/help/index`. Route names `help` and `help.bot` are unchanged, and a test asserts `help.index` never gets registered.
+- **`/help.md` is the crawl entry point.** It carries a link to every other page, and a test asserts reachability transitively across all index pages, so a new page that nobody links to fails the build rather than sitting undiscoverable.
+- The index grew section headings (Start here / Building overlays / The template language / Live data / Chat / Reference) instead of one undifferentiated run of 20 cards. Descriptions are unchanged, verbatim.
+- `HelpCardGrid.vue` had no remaining callers and was removed with the two pages.
+- **llms.txt audited against the codebase**, not against what it claimed. Verified: 11 formatters, 6 comparison operators with `=` (not `==`), nesting depth 10, foreach cap 50, 62 static tags, the sanitiser's stripped-element list, and all ten List read tags. All correct. One thing was **wrong**: it named two help URLs as having no markdown twin when there are three - `/help/gamejam` is still a Vue page and was unlisted. Fixed, with the reason given for each.
+- llms.txt section 11 now leads with `/help.md` as the entry point rather than a flat link list.
+
 ## July 28th, 2026 - refactor(help): help pages are markdown, and machine-readable at last
 
 The `/help/*` pages were hand-written Vue components, which meant their prose lived in the JS bundle and nowhere else: a machine fetching `/help/blocks` got 27 KB of `<head>` and **zero** content. The `llms.txt` links added earlier the same day pointed at exactly those dead ends. Help content is now markdown, rendered server-side, and fetchable as plain markdown.
