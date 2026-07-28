@@ -233,6 +233,7 @@ Critical variables:
 - `HelpContext::for()` returns ALL matches, best first: exact-over-wildcard, then constraint count, then literal pattern length, then slug. No `priority:` key on purpose - specificity is the only currency.
 - Shared as the `help` Inertia prop (`HelpLink[]`: slug, title, lead, url). Card copy uses the page's `heading` + `lead`, NOT `title` + `description` - the latter are written for browser tabs and search results and run too long for a 375px panel. A test caps both at panel length.
 - `HelpBeacon.vue` renders it: floating bottom-right button on every app page (mounted once in `AppLayout`), dot when help matched, 375x650 panel. Links open in a new tab - the point is helping with the page you are on, so navigating away from it would undo the feature.
+- `Alt+H` toggles the beacon, next to `Alt+R` for the tags reference (Alt = open a panel to read, Ctrl = do something). Registered via `useKeyboardShortcuts`, so it self-lists in the `Ctrl+K` dialog - there is no static shortcut list anywhere to update.
 - Two tests are load-bearing: every declared context must name a real route (catches renames), and no single context may resolve to more than 3 pages (stops generic routes rotting into a link farm). Both verified to fail when violated - keep them.
 
 ## Development Workflow

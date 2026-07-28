@@ -13,10 +13,12 @@
  */
 import { usePage } from '@inertiajs/vue3';
 import { CircleQuestionMark, ExternalLink, X } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import type { AppPageProps, HelpLink } from '@/types';
 
 const page = usePage<AppPageProps>();
+const { register } = useKeyboardShortcuts();
 
 const links = computed<HelpLink[]>(() => page.props.help ?? []);
 const hasHelp = computed(() => links.value.length > 0);
@@ -30,6 +32,19 @@ function close(returnFocus = true) {
     if (returnFocus) {
         trigger.value?.focus();
     }
+}
+
+function toggle() {
+    if (!open.value) {
+        open.value = true;
+
+        return;
+    }
+
+    // Only pull focus back to the button when it currently lives inside the
+    // panel. Alt+H to peek and Alt+H to dismiss should leave the caret in the
+    // field the user was already typing in.
+    close(panel.value?.contains(document.activeElement) === true);
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -61,6 +76,13 @@ watch(open, async (isOpen) => {
 // Navigating to a new page resolves different help, so the open panel would be
 // showing the previous route's answers. Close it and let the dot speak instead.
 watch(links, () => close(false));
+
+onMounted(() => {
+    // Alt+H sits next to Alt+R for the tags reference: both open a panel to
+    // read something, where the Ctrl+* shortcuts do things. Registering it here
+    // also lists it in the Ctrl+K shortcuts dialog, which reads the same registry.
+    register('help-beacon', 'alt+h', toggle, { description: 'Help for this page' });
+});
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKeydown);
@@ -155,7 +177,8 @@ onBeforeUnmount(() => {
       class="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-lg transition hover:text-foreground hover:shadow-xl focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       :aria-label="hasHelp ? `Help for this page, ${links.length} page${links.length === 1 ? '' : 's'} available` : 'Help'"
       :aria-expanded="open"
-      @click="open ? close() : (open = true)"
+      title="Help for this page (Alt+H)"
+      @click="toggle"
     >
       <CircleQuestionMark class="h-5 w-5" />
       <span

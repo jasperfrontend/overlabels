@@ -10,6 +10,7 @@ The frontend half of contextual help. A round button in the bottom-right corner 
 - **Links open in a new tab**, because the entire point is helping with the page you are already on - navigating away from it to read about it would undo the feature. The panel stays open behind them.
 - **375x650**, anchored to the button and shrinking to fit: `max-w-[calc(100vw-2rem)]` and `max-h-[calc(100dvh-7rem)]`, so it is a usable sheet on a phone rather than a clipped desktop panel. Escape and click-outside close it, focus moves in on open and returns to the button on close, and an Inertia navigation closes it since the answers it is showing belong to the previous route.
 - **Empty state is honest**: it says no page covers this screen yet and points at the help index, rather than dressing up nothing as something.
+- **`Alt+H` toggles it**, sitting next to `Alt+R` for the tags reference: the two Alt shortcuts open a panel to *read* something, where the Ctrl ones do something. It registers through `useKeyboardShortcuts` like every other shortcut, so it lists itself in the `Ctrl+K` dialog with no second place to update. Toggling shut only pulls focus back to the button when focus was inside the panel, so Alt+H to peek and Alt+H to dismiss leaves the caret in the field you were typing in.
 
 ## July 28th, 2026 - feat(help): help pages declare where they are relevant
 
