@@ -1,0 +1,129 @@
+/*
+ * Styles for help pages rendered from markdown (resources/help/pages/*.md).
+ *
+ * The old hand-written .vue help pages repeated Tailwind classes on every
+ * element - `<p class="mb-4 text-foreground">` nineteen pages over. Markdown
+ * emits bare tags, so the styling lives here once instead. Values are taken
+ * from the previous pages so the rendered result is visually unchanged.
+ */
+
+@layer components {
+    .help-prose {
+        @apply text-foreground;
+    }
+
+    /* Sections were `<section class="mb-14">`; headings carry the rhythm now. */
+    .help-prose h2 {
+        @apply mt-14 mb-4 scroll-mt-24 text-2xl font-bold;
+    }
+
+    .help-prose h2:first-child {
+        @apply mt-0;
+    }
+
+    .help-prose h3 {
+        @apply mt-8 mb-3 scroll-mt-24 text-xl font-semibold;
+    }
+
+    .help-prose h4 {
+        @apply mt-6 mb-2 text-base font-semibold;
+    }
+
+    .help-prose p {
+        @apply mb-4 text-foreground;
+    }
+
+    .help-prose ul {
+        @apply mb-4 list-disc space-y-2 pl-6 text-foreground;
+    }
+
+    .help-prose ol {
+        @apply mb-4 list-decimal space-y-2 pl-6 text-foreground;
+    }
+
+    .help-prose li > ul,
+    .help-prose li > ol {
+        @apply mt-2 mb-0;
+    }
+
+    .help-prose a {
+        @apply cursor-pointer text-violet-400 hover:underline;
+    }
+
+    .help-prose strong {
+        @apply font-semibold text-foreground;
+    }
+
+    /* Inline code. Fenced blocks are handled below and must not inherit this. */
+    .help-prose :not(pre) > code {
+        @apply rounded bg-background px-1.5 py-0.5 font-mono text-sm;
+    }
+
+    .help-prose pre {
+        @apply mb-6 overflow-x-auto border border-sidebar-border bg-background p-4 text-sm;
+    }
+
+    .help-prose pre code {
+        @apply font-mono text-sm text-foreground;
+    }
+
+    .help-prose blockquote {
+        @apply mb-6 border-l-2 border-violet-400 bg-card py-3 pr-4 pl-4 text-foreground;
+    }
+
+    .help-prose blockquote p:last-child {
+        @apply mb-0;
+    }
+
+    /* Wide tables scroll inside their own wrapper rather than the page. */
+    .help-prose table {
+        @apply mb-6 w-full border-collapse text-left text-sm;
+    }
+
+    .help-prose thead th {
+        @apply border-b border-sidebar-border py-2 pr-4 font-semibold text-foreground;
+    }
+
+    .help-prose tbody td {
+        @apply border-b border-sidebar-border/50 py-2 pr-4 align-top text-foreground;
+    }
+
+    .help-prose tbody td code {
+        @apply whitespace-nowrap;
+    }
+
+    .help-prose hr {
+        @apply my-10 border-sidebar-border;
+    }
+
+    .help-prose img {
+        @apply mb-6 max-w-full rounded border border-sidebar-border;
+    }
+
+    .help-prose kbd {
+        @apply rounded border border-sidebar-border px-1 font-mono text-xs;
+    }
+
+    /* Callouts, from `> [!NOTE]` style blockquotes. Colours match the boxes the
+       hand-written help pages used before the markdown conversion. */
+    .help-callout {
+        @apply mb-6 rounded-lg border p-5 text-foreground;
+    }
+
+    .help-callout > :last-child {
+        @apply mb-0;
+    }
+
+    .help-callout--note,
+    .help-callout--important {
+        @apply border-violet-400/40 bg-violet-400/5;
+    }
+
+    .help-callout--warning {
+        @apply border-yellow-500/40 bg-yellow-500/5;
+    }
+
+    .help-callout--tip {
+        @apply border-emerald-500/40 bg-emerald-500/5;
+    }
+}

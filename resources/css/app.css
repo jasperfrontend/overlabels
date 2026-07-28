@@ -3,6 +3,7 @@
 @import './overlabels-buttons.css';
 @import './collection.css';
 @import './tooltips.css';
+@import './help-prose.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
