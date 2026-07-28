@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - docs(llms): fix four defects a model found reading llms.txt
+
+Fed `public/llms.txt` to a fresh model with no repo access and asked what it could not resolve from the text alone. Every complaint it raised was legitimate, and each was verified against the implementation before being fixed.
+
+- **Broken cross-reference.** §3 pointed at §9 for block rules; block rules are §8 (§9 is the mistakes table). All five internal `§` references now resolve.
+- **The example contradicted its own advice.** §6 documents a CSS fast path that is skipped when the stylesheet contains a `?? default`, then used `width: [[[c:goal_percent ?? 0]]]%;` on the one value in the template that updates constantly. Confirmed against `compileCssBindings()` in `tagParser.ts`: the `??` bails the whole stylesheet, and the bail is stylesheet-wide, not per-rule. The example is now plain, with a note on why, and the guidance is to default the *control* rather than write `??` in CSS. Also corrected a detail the reader got half-right: a trailing unit (`]]]%`, `]]]px`) is fine and stays on the fast path - only a *preceding* glued character bails.
+- **`?? default` encoding was unspecified.** "Emitted verbatim" said the pipe is skipped but never said whether the default is HTML-encoded. It is, on the HTML path, exactly like a resolved value (`tagParser.ts:60`), and it is not on the CSS path. Now stated.
+- **The `js` field hedge.** "There is no JS field in practice" invited the question of what happens if you populate one. There is a legacy `js` column from the first migration, but it is absent from the validation rules on both create and update, and nothing in the render pipeline reads it. Now said outright instead of hedged.
+- **Two gaps found while verifying**, both real authoring traps: `<audio>`, `<video>` and `<source>` are stripped by the sanitizer (undocumented, and the reason is control over overlapping alert playback, not security), and list indices are dotted (`donors.0`) while every other accessor is colon-namespaced - not an inconsistency but a namespace split, with `count` the one accessor available both ways.
+- Three new rows in the mistakes table, and a stale "seven divergences" in `overlabels-dsl-spec.md` corrected to eight (the doc records D1-D8).
+
 ## July 28th, 2026 - fix(help): links in help prose look like links
 
 The `/help` index is built almost entirely from `- [**Page name**](/help/page) - description` list items, and not one of them read as a link. Two causes, both in `help-prose.css`, no markdown touched.

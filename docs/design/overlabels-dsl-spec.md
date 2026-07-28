@@ -249,7 +249,7 @@ vocabulary       └─ sanitizer: structural pass, replacing regex stripping
 
 If the grammar is written twice it diverges inside a month - and a validator that disagrees with
 itself is **worse than none**, because the editor greenlights what the save rejects. Sections 3-4 are
-the empirical proof: five hand-maintained regexes, seven divergences, zero of them intentional.
+the empirical proof: five hand-maintained regexes, eight divergences, zero of them intentional.
 
 Two workable shapes:
 
