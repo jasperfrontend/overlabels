@@ -1,5 +1,14 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - fix(help): links in help prose look like links
+
+The `/help` index is built almost entirely from `- [**Page name**](/help/page) - description` list items, and not one of them read as a link. Two causes, both in `help-prose.css`, no markdown touched.
+
+- **`[**Bold**](url)` renders as `<a><strong>`**, and the `strong` rule repainted it `text-foreground` - stripping the violet off precisely the links meant to stand out most. `.help-prose a strong` now inherits the link colour.
+- **Links carry a permanent underline** instead of one that only appeared on hover. Colour alone is not an affordance: it is invisible to anyone with a colour vision deficiency, and it cannot be discovered without already suspecting there is something there to hover over. Same redundant-encoding rule the events feed follows for provider icons - the underline carries the meaning, colour reinforces it. It sits at 40% opacity so a paragraph with several links still reads as prose rather than as a fence, and firms up on hover.
+- The table-of-contents card is deliberately left alone. It is a numbered list under a "Table of contents" heading in its own bordered box, so it already reads as navigation, and underlining every entry would be heavy for no gain.
+- Markdown sources are byte-identical, so `/help/*.md` and the crawlable index are unchanged.
+
 ## July 28th, 2026 - feat(help): the help beacon
 
 The frontend half of contextual help. A round button in the bottom-right corner of every app page, with a dot when the current route has help behind it, opening a panel with the relevant pages.
