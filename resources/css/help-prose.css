@@ -46,12 +46,34 @@
         @apply mt-2 mb-0;
     }
 
+    /*
+     * Links keep a permanent underline, not one that only appears on hover.
+     * Colour on its own is not an affordance - it is invisible to anyone with a
+     * colour vision deficiency, and it cannot be discovered without already
+     * suspecting there is something there to hover. This is the same redundant
+     * encoding rule the events feed follows for provider icons: shape (here,
+     * the underline) carries the meaning, colour reinforces it.
+     *
+     * The underline sits at 40% so a paragraph with several links still reads
+     * as prose rather than as a fence, and firms up on hover.
+     */
     .help-prose a {
-        @apply cursor-pointer text-violet-400 hover:underline;
+        @apply cursor-pointer text-violet-400 underline decoration-violet-400/40 underline-offset-2 transition-colors hover:decoration-violet-400;
     }
 
     .help-prose strong {
         @apply font-semibold text-foreground;
+    }
+
+    /*
+     * `[**Bold link**](...)` renders as <a><strong>, so the rule above would
+     * repaint the text `text-foreground` and strip the violet from exactly the
+     * links that were meant to stand out most. The /help index is built almost
+     * entirely from these, and every one of them read as plain bold text.
+     * Higher specificity wins here regardless of source order.
+     */
+    .help-prose a strong {
+        @apply text-inherit;
     }
 
     /* Inline code. Fenced blocks are handled below and must not inherit this. */
