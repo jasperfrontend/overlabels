@@ -13,10 +13,12 @@
  */
 import { usePage } from '@inertiajs/vue3';
 import { CircleQuestionMark, ExternalLink, X } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import type { AppPageProps, HelpLink } from '@/types';
 
 const page = usePage<AppPageProps>();
+const { register } = useKeyboardShortcuts();
 
 const links = computed<HelpLink[]>(() => page.props.help ?? []);
 const hasHelp = computed(() => links.value.length > 0);
@@ -30,6 +32,19 @@ function close(returnFocus = true) {
     if (returnFocus) {
         trigger.value?.focus();
     }
+}
+
+function toggle() {
+    if (!open.value) {
+        open.value = true;
+
+        return;
+    }
+
+    // Only pull focus back to the button when it currently lives inside the
+    // panel. Alt+H to peek and Alt+H to dismiss should leave the caret in the
+    // field the user was already typing in.
+    close(panel.value?.contains(document.activeElement) === true);
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -46,12 +61,28 @@ function onPointerDown(event: PointerEvent) {
     }
 }
 
+/**
+ * Land on the first article, so opening the panel and pressing Enter reads the
+ * most relevant page. Tab walks the rest.
+ *
+ * The panel itself is the fallback for the empty state, where there is no
+ * article to land on but Escape still has to work. Focusing a link rather than
+ * the container is also the better screen-reader result: the dialog's label is
+ * announced on entry either way, and the user arrives on something actionable
+ * instead of having to hunt for it.
+ */
+function focusFirstArticle() {
+    const first = panel.value?.querySelector<HTMLElement>('[data-help-article]');
+
+    (first ?? panel.value)?.focus();
+}
+
 watch(open, async (isOpen) => {
     if (isOpen) {
         window.addEventListener('keydown', onKeydown);
         window.addEventListener('pointerdown', onPointerDown);
         await nextTick();
-        panel.value?.focus();
+        focusFirstArticle();
     } else {
         window.removeEventListener('keydown', onKeydown);
         window.removeEventListener('pointerdown', onPointerDown);
@@ -61,6 +92,13 @@ watch(open, async (isOpen) => {
 // Navigating to a new page resolves different help, so the open panel would be
 // showing the previous route's answers. Close it and let the dot speak instead.
 watch(links, () => close(false));
+
+onMounted(() => {
+    // Alt+H sits next to Alt+R for the tags reference: both open a panel to
+    // read something, where the Ctrl+* shortcuts do things. Registering it here
+    // also lists it in the Ctrl+K shortcuts dialog, which reads the same registry.
+    register('help-beacon', 'alt+h', toggle, { description: 'Help for this page' });
+});
 
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', onKeydown);
@@ -94,7 +132,7 @@ onBeforeUnmount(() => {
           </div>
           <button
             type="button"
-            class="-mr-1 cursor-pointer rounded-md p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            class="-mr-1 cursor-pointer rounded-md p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
             aria-label="Close help"
             @click="close()"
           >
@@ -109,7 +147,8 @@ onBeforeUnmount(() => {
                 :href="link.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="block cursor-pointer px-4 py-4 transition hover:bg-accent/50"
+                data-help-article
+                class="block cursor-pointer px-4 py-4 transition hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none focus-visible:-outline-offset-2"
               >
                 <h3 class="text-sm font-medium text-foreground">{{ link.title }}</h3>
                 <p v-if="link.lead" class="mt-1.5 text-sm leading-relaxed text-foreground/80">
@@ -139,7 +178,7 @@ onBeforeUnmount(() => {
             href="/help"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-foreground hover:text-violet-500 dark:hover:text-violet-400"
+            class="inline-flex cursor-pointer items-center gap-1 rounded-sm text-xs font-medium text-foreground hover:text-violet-500 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none dark:hover:text-violet-400"
           >
             Browse all help
             <ExternalLink class="h-3 w-3" aria-hidden="true" />
@@ -155,7 +194,8 @@ onBeforeUnmount(() => {
       class="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-lg transition hover:text-foreground hover:shadow-xl focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
       :aria-label="hasHelp ? `Help for this page, ${links.length} page${links.length === 1 ? '' : 's'} available` : 'Help'"
       :aria-expanded="open"
-      @click="open ? close() : (open = true)"
+      title="Help for this page (Alt+H)"
+      @click="toggle"
     >
       <CircleQuestionMark class="h-5 w-5" />
       <span
