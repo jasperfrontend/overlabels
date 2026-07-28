@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 28th, 2026 - feat(help): the help beacon
+
+The frontend half of contextual help. A round button in the bottom-right corner of every app page, with a dot when the current route has help behind it, opening a panel with the relevant pages.
+
+- **`HelpBeacon.vue`**, mounted once in `AppLayout` beside the other global singletons, so all 60 app pages get it and no page opts in. Help pages themselves use `HelpLayout` and are untouched.
+- **The dot is the point.** It is the difference between a help button you learn to ignore and one that tells you, before you click, that there is something here worth reading. It only appears when the route actually resolved help.
+- **The excerpt is the page's own `lead`.** Every help page already opens with one, written to introduce it, running 94 to 275 characters - which is exactly a panel card. No markdown render, no body read, no second summary to keep in sync with the prose. `heading` is used over `title` for the same reason: "Blocks" fits a 375px panel, "Blocks - reusable building pieces for the Builder" does not. A test holds both to a length the panel can show.
+- **Links open in a new tab**, because the entire point is helping with the page you are already on - navigating away from it to read about it would undo the feature. The panel stays open behind them.
+- **375x650**, anchored to the button and shrinking to fit: `max-w-[calc(100vw-2rem)]` and `max-h-[calc(100dvh-7rem)]`, so it is a usable sheet on a phone rather than a clipped desktop panel. Escape and click-outside close it, focus moves in on open and returns to the button on close, and an Inertia navigation closes it since the answers it is showing belong to the previous route.
+- **Empty state is honest**: it says no page covers this screen yet and points at the help index, rather than dressing up nothing as something.
+
 ## July 28th, 2026 - feat(help): help pages declare where they are relevant
 
 Help only helps if it turns up where the confusion is. The association between a place in the app and the page that explains it now lives in the help page's own frontmatter, and resolves server-side. This is the association layer only - nothing renders yet.

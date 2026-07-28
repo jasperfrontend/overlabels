@@ -19,7 +19,27 @@ it('matches a page that named the route outright', function () {
     $slugs = array_column(HelpContext::for('lists.index'), 'slug');
 
     expect($slugs)->toContain('lists')
-        ->and(HelpContext::for('lists.index')[0])->toHaveKeys(['slug', 'title', 'url']);
+        ->and(HelpContext::for('lists.index')[0])->toHaveKeys(['slug', 'title', 'lead', 'url']);
+});
+
+it('carries card copy short enough for a 375px panel', function () {
+    // The beacon shows the page's own `heading` and `lead`, not its `title` and
+    // `description` - those are written for a browser tab and a search result,
+    // and the title in particular runs long ("Blocks - reusable building pieces
+    // for the Builder"). Every page that claims a context has to be presentable.
+    foreach (HelpPage::all() as $slug) {
+        if (HelpContext::declared($slug) === []) {
+            continue;
+        }
+
+        $card = HelpContext::for(HelpContext::declared($slug)[0]['pattern'], HelpContext::declared($slug)[0]['constraints']);
+        $card = collect($card)->firstWhere('slug', $slug);
+
+        expect($card['title'])->not->toBeEmpty()
+            ->and(strlen($card['title']))->toBeLessThanOrEqual(40, "{$slug} has a long panel title")
+            ->and($card['lead'])->not->toBeEmpty("{$slug} has no lead to preview")
+            ->and(strlen($card['lead']))->toBeLessThanOrEqual(320, "{$slug} has a long panel lead");
+    }
 });
 
 it('returns nothing for a route no page claimed', function () {

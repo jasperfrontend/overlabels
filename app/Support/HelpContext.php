@@ -35,8 +35,8 @@ final class HelpContext
     /** @var array<string,array<int,array{slug:string,pattern:string,constraints:array<string,string>}>>|null */
     private static ?array $index = null;
 
-    /** @var array<string,string> Slug to title, filled while indexing. */
-    private static array $titles = [];
+    /** @var array<string,array{title:string,lead:string}> Slug to card copy, filled while indexing. */
+    private static array $cards = [];
 
     /**
      * Add context the URL does not carry.
@@ -133,7 +133,8 @@ final class HelpContext
         return array_values(array_map(
             fn (array $match): array => [
                 'slug' => $match['slug'],
-                'title' => self::$titles[$match['slug']] ?? Str::headline($match['slug']),
+                'title' => self::$cards[$match['slug']]['title'] ?? Str::headline($match['slug']),
+                'lead' => self::$cards[$match['slug']]['lead'] ?? '',
                 'url' => HelpPage::url($match['slug']),
             ],
             $matches
@@ -192,11 +193,22 @@ final class HelpContext
         }
 
         $index = [];
-        self::$titles = [];
+        self::$cards = [];
 
         foreach (HelpPage::all() as $slug) {
             $meta = HelpPage::meta($slug);
-            self::$titles[$slug] = $meta['title'] ?? Str::headline($slug);
+
+            self::$cards[$slug] = [
+                // `heading` is the page's own short name ("Blocks"); `title` is
+                // written for a browser tab and search results ("Blocks -
+                // reusable building pieces for the Builder"), which is too long
+                // for a 375px panel. Prefer the heading, fall back to the title.
+                'title' => $meta['heading'] ?? $meta['title'] ?? Str::headline($slug),
+                // The lead is already the page's opening paragraph, authored to
+                // introduce it. That makes it the excerpt, at no render cost -
+                // no markdown pass, no body read, nothing to keep in sync.
+                'lead' => $meta['lead'] ?? $meta['description'] ?? '',
+            ];
 
             foreach (self::parse($slug, $meta['context'] ?? '') as $entry) {
                 $index[$entry['pattern']][] = $entry;
