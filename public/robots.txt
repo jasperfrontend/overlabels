@@ -1,4 +1,9 @@
 User-agent: *
 Disallow:
 
+# Writing an Overlabels template? The complete authoring guide, in one plain
+# text file: https://overlabels.com/llms.txt
+# (A comment on purpose - llms.txt has no ratified robots.txt directive, and an
+# invented one would just be ignored by every compliant parser anyway.)
+
 Sitemap: https://overlabels.com/sitemap.xml
