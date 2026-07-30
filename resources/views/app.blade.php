@@ -34,6 +34,13 @@
             }
         </style>
         <link rel="icon" href="/favicon.png" sizes="any">
+        {{-- Discovery hint for the machine-readable authoring guide. The root
+             path is the real contract (llmstxt.org fixes /llms.txt and defines
+             no link relation), so this is a hint on top, not the contract.
+             `rel="llms-txt"` rather than `rel="alternate"` on purpose: llms.txt
+             is not an alternate representation of whatever page you are on, and
+             claiming so would be a lie to every crawler that understands it. --}}
+        <link rel="llms-txt" type="text/plain" href="/llms.txt" title="Overlabels authoring guide for LLMs">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 

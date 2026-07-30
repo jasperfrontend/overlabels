@@ -1,5 +1,18 @@
 # CHANGELOG JULY 2026
 
+## July 30th, 2026 - fix(llms): make llms.txt reachable and findable
+
+Two agents reported they were "not allowed" to read `https://overlabels.com/llms.txt`. The file was never the problem. It answers `200 text/plain` in 23,469 bytes to every user agent tried, including `Claude-User`, `ClaudeBot` and an empty one; `robots.txt` allows everything; there is no `X-Robots-Tag`; and `http://` does a clean same-host 301. Both refusals were client-side and unrelated to each other: one agent ran in a cloud sandbox whose default network policy is an allowlist of package registries and Anthropic hosts, so the request never left the VM, and the other hit a per-domain fetch permission prompt. Neither is fixable from this end.
+
+Auditing to prove that, though, turned up three gaps that were costing readers we could actually have had.
+
+- **No CORS header.** `Access-Control-Allow-Origin` was absent and `OPTIONS` returned 405, so any browser-context agent reading the guide cross-origin got a CORS failure. Now sent for `/llms.txt` and every `.md` help twin, which are public and unauthenticated anyway. This does nothing for sandbox egress blocks, which are somebody else's allowlist, and the Caddyfile comment says so to stop a future reader from expecting otherwise. The matcher is a `path_regexp`, not a `path` list, because Caddy's path wildcard does not cross a `/`: the obvious `/help/*.md` validated fine, served fine, and silently missed `/help/bot/expressions.md` and `/help/bot/aliases.md`. Caught by booting the real image and checking all 21 URLs rather than trusting the config to parse.
+- **Nothing pointed at the file.** It was not linked from the document head, not mentioned in `robots.txt`, and not in `sitemap.xml`. Anything that did not already know the URL had no way to find it. Added to all three. The head link uses `rel="llms-txt"` rather than `rel="alternate"`, because llms.txt is not an alternate representation of whatever page you happen to be on and saying so would be a lie to any crawler that understands the relation. The root path stays the actual contract; these are hints on top of it.
+- **`www.overlabels.com` did not resolve at all.** Not a redirect, `NXDOMAIN`, so anything guessing the `www` host got a dead name rather than the site. An `A` record now points it at the box, which means the redirect has to happen here: `www` is added to the web role's `hosts:` so kamal-proxy terminates TLS for it, and the Caddyfile 301s it to the apex with `{uri}` so the path survives. Worth knowing that Kamal's `ensure_one_host_for_ssl` sounds like it forbids this and does not - it counts *servers*, not hostnames, and this role deploys to one, so automatic Let's Encrypt covers both names. Verified the emitted args are `--host="overlabels.com" --host="www.overlabels.com" --tls`.
+
+> [!IMPORTANT]
+> Between the DNS record and this deploy, `www` resolves but has no certificate, so an https request to it fails the TLS handshake and a browser shows a security warning. That is worse than the `NXDOMAIN` it replaced. Deploy promptly.
+
 ## July 28th, 2026 - docs(llms): fix four defects a model found reading llms.txt
 
 Fed `public/llms.txt` to a fresh model with no repo access and asked what it could not resolve from the text alone. Every complaint it raised was legitimate, and each was verified against the implementation before being fixed.

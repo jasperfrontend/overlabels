@@ -18,7 +18,17 @@ servers:
       - 172.235.171.209
     proxy:
       ssl: true
-      host: overlabels.com
+      # www is here only so kamal-proxy will terminate TLS for it; the Caddyfile
+      # 301s it straight to the apex. DNS points www at this box, so without the
+      # entry the name resolves and then fails the TLS handshake, which browsers
+      # present as a security warning - strictly worse than the old NXDOMAIN.
+      # Automatic Let's Encrypt covers both names: the single-host restriction in
+      # Kamal counts *servers* (role.rb `ensure_one_host_for_ssl`), not hostnames,
+      # and this role deploys to one. Use `hosts:` not `host:` - setting both is a
+      # validation error.
+      hosts:
+        - overlabels.com
+        - www.overlabels.com
       app_port: 80
       healthcheck:
         interval: 5

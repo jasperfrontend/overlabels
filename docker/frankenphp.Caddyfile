@@ -23,5 +23,26 @@
 		format console
 	}
 
+	# www exists only to redirect. kamal-proxy terminates TLS for it (see the
+	# `hosts:` list in config/deploy.yml) and forwards here with the original
+	# Host header intact; without this the app would serve on a second hostname
+	# and split every canonical URL. {uri} keeps path and query, so
+	# www.overlabels.com/llms.txt lands on the file rather than the homepage.
+	@www host www.overlabels.com
+	redir @www https://overlabels.com{uri} 301
+
+	# Machine-readable docs are fetched cross-origin by browser-context agents
+	# (in-page tooling, extensions, sandboxed LLM clients), which get a CORS
+	# failure without this. Everything matched here is public and
+	# unauthenticated already, so `*` gives away nothing a plain GET doesn't.
+	# Note this does NOT help agents whose sandbox blocks the host outright -
+	# that is an egress allowlist on their side, not a header we can send.
+	# A regexp rather than a `path` list because Caddy's path wildcard does not
+	# cross a `/`: `/help/*.md` matches /help/controls.md but silently misses
+	# /help/bot/expressions.md and /help/bot/aliases.md. This holds at any depth,
+	# so a future nested page is covered without touching this file.
+	@machine_readable path_regexp ^/(llms\.txt|help(/[\w-]+)*\.md)$
+	header @machine_readable Access-Control-Allow-Origin "*"
+
 	php_server
 }
