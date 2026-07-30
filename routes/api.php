@@ -324,3 +324,12 @@ Route::get('/eventsub-health-check', function () {
         ], 500);
     }
 })->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
+// Unmatched /api/* would otherwise fall through to the `Route::fallback` in
+// web.php and come back as the HTML 404 page. A client doing `if (response.ok)`
+// saw 200, then choked parsing `<!doctype html>` - "route does not exist" turned
+// into a parse error at the call site with nothing pointing at the cause.
+//
+// Fallback routes always match last, and this one carries the `api` prefix, so
+// it only claims requests the web fallback would have taken anyway.
+Route::fallback(fn () => response()->json(['message' => 'Not Found.'], 404));
