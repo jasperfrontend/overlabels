@@ -203,7 +203,7 @@ Critical variables:
 - All admin controllers in `app/Http/Controllers/Admin/`
 - Vue pages in `resources/js/pages/admin/` (lowercase)
 - `isAdmin` + `impersonating` shared via `HandleInertiaRequests::share()`
-- In tests: use `OverlayTemplate::factory()->create(['fork_of_id' => null])` to avoid recursion
+- `OverlayTemplate::factory()` defaults `fork_of_id` to null (use `->forked()` to create a parent). Never give a self-referential FK a nested factory as its default - it recurses with no base case, commits one User per level via `owner_id`, and never lands a single template. See `FactoryRecursionTest`
 - `tests/Pest.php` updated to `->in('Feature', 'Unit')` for Laravel TestCase in unit tests
 
 ## Alert Targeting (Implemented Mar 2026)
