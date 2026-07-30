@@ -35,10 +35,7 @@ it('routes POST /broadcasting/auth to the BroadcastController, not the fallback 
 });
 
 it('still 404s for genuinely unknown routes', function () {
-    $response = $this->get('/this-route-does-not-exist-anywhere');
-
-    // The 404 view returns HTTP 200 with the error HTML (existing
-    // app behaviour) - we only check that some HTML response comes
-    // back rather than a 500.
-    expect($response->getStatusCode())->toBeIn([200, 404]);
+    // This used to accept [200, 404] because the fallback answered 200 with the
+    // 404 page. See NotFoundResponseTest for the full contract.
+    $this->get('/this-route-does-not-exist-anywhere')->assertNotFound();
 });

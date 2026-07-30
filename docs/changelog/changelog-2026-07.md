@@ -1,5 +1,16 @@
 # CHANGELOG JULY 2026
 
+## July 30th, 2026 - fix(http): a missing page now says 404 in the status line
+
+Found by crawling the site like a dumb indexer rather than like someone who knows it. Every unknown URL answered `200 OK` while serving a page titled "404 - Not Found". The body told the truth and the status line did not, and status is what machines branch on.
+
+- **`PageController::notfound()` returned `view('errors.404')`**, and `view()` defaults to 200. One missing argument. The 404 *view* was never at fault: `abort(404)` renders that same page with a correct status, which the admin routes prove.
+- **Unmatched `/api/*` was the sharper case.** `routes/api.php` had no fallback of its own, so API misses fell through to the *web* fallback and came back as `200 text/html`. A client doing `if (response.ok)` saw success and then choked parsing `<!doctype html>`, turning "route does not exist" into a parse error with nothing pointing at the cause. There is now an API fallback returning JSON, and it wins for `/api/*` because Laravel registers api routes ahead of web ones (verified, not assumed).
+- **Left alone deliberately:** `/overlay/{slug}` still answers 200 for a slug that does not exist. The access token lives in the URL fragment, which browsers never send, so at request time the server genuinely cannot know whether the slug is valid. A 404 there would be a lie. `NotFoundResponseTest` has a test whose only job is to stop a future tidy-up from "fixing" it.
+- The old `BroadcastingAuthRouteTest` assertion accepted `[200, 404]` and called the 200 "existing app behaviour". Tightened to `assertNotFound()`.
+
+No live damage had been done: all 153 sitemap URLs resolve, so nothing dead was being advertised. The exposure was prospective (rename a page and the old URL silently keeps answering 200) and agent-facing (the "append `.md` to any help URL" convention llms.txt documents had no error case at all).
+
 ## July 30th, 2026 - fix(llms): make llms.txt reachable and findable
 
 Two agents reported they were "not allowed" to read `https://overlabels.com/llms.txt`. The file was never the problem. It answers `200 text/plain` in 23,469 bytes to every user agent tried, including `Claude-User`, `ClaudeBot` and an empty one; `robots.txt` allows everything; there is no `X-Robots-Tag`; and `http://` does a clean same-host 301. Both refusals were client-side and unrelated to each other: one agent ran in a cloud sandbox whose default network policy is an allowlist of package registries and Anthropic hosts, so the request never left the VM, and the other hit a per-domain fetch permission prompt. Neither is fixable from this end.
