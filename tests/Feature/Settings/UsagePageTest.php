@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Inertia\Testing\AssertableInertia as Assert;
+
+uses(DatabaseTransactions::class);
 
 test('guests cannot reach the usage page', function () {
     $this->get('/settings/usage')

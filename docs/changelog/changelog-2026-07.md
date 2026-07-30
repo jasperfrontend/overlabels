@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 31st, 2026 - test: close the row leaks and guard against new ones
+
+Follow-up to the factory recursion fix. Isolation in this suite is opt-in - a file declares `DatabaseTransactions` or its rows are committed for good - and 27 files declared nothing. That is a silent failure mode: the file passes, and the only symptom is junk slowly accumulating in whatever database the suite was pointed at.
+
+Rather than guess from the source, each of the 27 was measured: snapshot every table's row count, run that one file, snapshot again. **Five actually leaked.** The other 22 never touch a database at all, and giving them a transaction would have bought nothing but a slower suite.
+
+- **`DatabaseTransactions` added to the five that leaked** - `DashboardTest` (+1 user per run), `HelpContextTest` (+3 users, +1 template, +1 stream state), `Settings/UsagePageTest` (+2), `SettingsForeachCapsTest` (+6) and `GhostUserTest` (+3). All five now measure clean, and the full suite measures **zero drift** across every table on a back-to-back run.
+- Only four of those five are in this commit. `tests/Unit/GhostUserTest.php` is named in `.gitignore` and has been since February, along with `OverlayControlSanitizationTest` and five test files that no longer exist on disk. They run locally and have never run in CI. The fix is applied to the working copy; un-ignoring them is a separate call, since nobody knows whether they still pass on a clean checkout.
+- **`TestIsolationTest`** guards the omission at authoring time, since the next person to add a test file will not know the rule exists. It resolves each `::create()` / `::factory()` call against the file's own `use` imports and only counts it when the class is really an Eloquent model - which is the whole trick, because `Request::create()` and `User::create()` are indistinguishable to a plain regex, and a naive pattern flagged all five service-driver tests as offenders on the first attempt. A second test pins the detector itself against a model, a lookalike, and an aliased import, so the guard cannot quietly stop matching and pass for the wrong reason.
+- Verified to fail when violated: removing the trait from `DashboardTest` trips the guard and names the write (`Feature/DashboardTest.php (User::factory())`).
+- Worth knowing: the two `RefreshDatabase` files run `migrate:fresh` partway through the suite, so a run truncates the test database rather than merely rolling back. Harmless for a throwaway database, surprising if you were keeping anything in there.
+
 ## July 31st, 2026 - fix(factories): stop OverlayTemplateFactory recursing forever
 
 The local dev database had 19,767 users, of which 19,684 were Faker names. They all landed inside a single 38 minute window on June 1st, in one uninterrupted run: ids 84 through 19842 with no gaps at all, no pause longer than 3 seconds, and not one row created in any other table. Telescope has 2,252 entries from that window and not a single user insert among them, because the process died before it ever flushed its buffer.

@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+
+uses(DatabaseTransactions::class);
 
 test('guests are redirected to the login page', function () {
     $response = $this->get('/dashboard');
