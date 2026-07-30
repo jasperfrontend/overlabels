@@ -10,7 +10,9 @@ A ban locked someone out of the website and left their stream untouched. `CheckB
 - **Public templates of banned users deliberately survive.** One may have shipped as part of a kit, and it stays something people and models can learn from. There is a test whose only job is to make a future "clean up banned users' content" pass argue with a stated decision instead of silently reversing it.
 - **Package quirk worth knowing.** Banhammer's `BanObserver` dispatches `new ModelWasBanned($ban->bannable(), $ban)` with parentheses, so `$event->model` is the MorphTo *relation*, not the banned model, and `instanceof User` on it is always false. Confirmed against v2.4 by capturing the event: the payload is `Relations\MorphTo` while `$event->ban->bannable` is the `App\Models\User`. The listener reads the ban and still prefers `$event->model` when it ever holds a User, so a fixed upstream keeps working.
 
-Not done, flagged instead: the `/banned` route and its Vue page are now orphaned, and unbanning does not restore revoked tokens (they are stored as sha256 and shown once, so nothing can hand the plaintext back - an unbanned user mints a new token and repoints OBS).
+- **The `/banned` explanation page is deleted**, route and Vue page both. It existed only as the redirect target, and with nothing redirecting there it addressed an audience that can no longer reach it. The OAuth callback, which also sent banned users there on login, now `abort(404)`s instead - the callback is not the place to make an exception to a rule the rest of the app applies.
+
+Not done, flagged instead: unbanning does not restore revoked tokens. They are stored as sha256 and shown once, so nothing can hand the plaintext back - an unbanned user mints a new token and repoints OBS.
 
 ## July 30th, 2026 - fix(http): a missing page now says 404 in the status line
 

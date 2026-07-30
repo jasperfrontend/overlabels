@@ -302,8 +302,13 @@ test('ban creates audit log entry', function () {
 
 // Banned page is accessible
 
-test('banned page renders', function () {
-    $this->get('/banned')->assertOk();
+test('the banned explanation page is gone entirely', function () {
+    // It existed only as the redirect target. Nothing redirects there now, a
+    // banned requester 404s on everything, and the route and Vue page are
+    // deleted - so it is a 404 for everyone, not just the banned.
+    $this->get('/banned')->assertNotFound();
+
+    expect(app('router')->getRoutes()->getByName('banned'))->toBeNull();
 });
 
 // Sessions page shows ban status
