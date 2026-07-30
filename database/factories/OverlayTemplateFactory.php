@@ -32,8 +32,21 @@ class OverlayTemplateFactory extends Factory
             'updated_at' => Carbon::now(),
 
             'owner_id' => User::factory(),
-            'fork_of_id' => OverlayTemplate::factory(),
+
+            // Self-referential FK - MUST default to null. A nested
+            // OverlayTemplate::factory() here recurses forever, committing one
+            // User per level and never a single template. Use ->forked() when a
+            // parent is actually wanted.
+            'fork_of_id' => null,
         ];
+    }
+
+    /**
+     * Copy of another template (creates the parent it was copied from).
+     */
+    public function forked(): static
+    {
+        return $this->state(fn () => ['fork_of_id' => OverlayTemplate::factory()]);
     }
 
     public function alert(): static
