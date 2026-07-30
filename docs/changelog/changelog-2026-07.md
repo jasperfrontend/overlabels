@@ -1,5 +1,30 @@
 # CHANGELOG JULY 2026
 
+## July 31st, 2026 - fix(ban): a ban now reaches the overlay, not just the login
+
+A ban locked someone out of the website and left their stream untouched. `CheckBanned` inspects the *requester*, and an overlay render arrives from OBS carrying an access token and no session, so `$request->user()` is null and a user ban never fired. Verified before changing anything: after banning the owner, `/api/overlay/render` still returned 200 with the template HTML.
+
+- **A ban revokes every active overlay access token.** This works at the only identity the render request actually presents. IP bans needed nothing here - `IP::isBanned($request->ip())` already rejects those at request time, wherever they land, so there is no need to guess which users sit behind an address and no risk of nuking a bystander on shared egress.
+- **A ban ends every session, on every path.** Both admin flows already deleted sessions inline, but the CLI ban in `routes/console.php` did not. Moving it into the listener means anything reaching `->ban()` ends the session rather than each caller having to remember. The inline deletes stay as defence in depth; they are idempotent.
+- **A banned requester now gets a hard 404 on everything**, user ban and IP ban alike. Previously a redirect to `/banned` on web and a 403 on API. A 403 confirms the resource is there; 404 concedes nothing. The `/banned` exemption is gone too, so that page is no longer reachable by the only people it addressed.
+- **Public templates of banned users deliberately survive.** One may have shipped as part of a kit, and it stays something people and models can learn from. There is a test whose only job is to make a future "clean up banned users' content" pass argue with a stated decision instead of silently reversing it.
+- **Package quirk worth knowing.** Banhammer's `BanObserver` dispatches `new ModelWasBanned($ban->bannable(), $ban)` with parentheses, so `$event->model` is the MorphTo *relation*, not the banned model, and `instanceof User` on it is always false. Confirmed against v2.4 by capturing the event: the payload is `Relations\MorphTo` while `$event->ban->bannable` is the `App\Models\User`. The listener reads the ban and still prefers `$event->model` when it ever holds a User, so a fixed upstream keeps working.
+
+- **The `/banned` explanation page is deleted**, route and Vue page both. It existed only as the redirect target, and with nothing redirecting there it addressed an audience that can no longer reach it. The OAuth callback, which also sent banned users there on login, now `abort(404)`s instead - the callback is not the place to make an exception to a rule the rest of the app applies.
+
+Not done, flagged instead: unbanning does not restore revoked tokens. They are stored as sha256 and shown once, so nothing can hand the plaintext back - an unbanned user mints a new token and repoints OBS.
+
+## July 30th, 2026 - fix(http): a missing page now says 404 in the status line
+
+Found by crawling the site like a dumb indexer rather than like someone who knows it. Every unknown URL answered `200 OK` while serving a page titled "404 - Not Found". The body told the truth and the status line did not, and status is what machines branch on.
+
+- **`PageController::notfound()` returned `view('errors.404')`**, and `view()` defaults to 200. One missing argument. The 404 *view* was never at fault: `abort(404)` renders that same page with a correct status, which the admin routes prove.
+- **Unmatched `/api/*` was the sharper case.** `routes/api.php` had no fallback of its own, so API misses fell through to the *web* fallback and came back as `200 text/html`. A client doing `if (response.ok)` saw success and then choked parsing `<!doctype html>`, turning "route does not exist" into a parse error with nothing pointing at the cause. There is now an API fallback returning JSON, and it wins for `/api/*` because Laravel registers api routes ahead of web ones (verified, not assumed).
+- **Left alone deliberately:** `/overlay/{slug}` still answers 200 for a slug that does not exist. The access token lives in the URL fragment, which browsers never send, so at request time the server genuinely cannot know whether the slug is valid. A 404 there would be a lie. `NotFoundResponseTest` has a test whose only job is to stop a future tidy-up from "fixing" it.
+- The old `BroadcastingAuthRouteTest` assertion accepted `[200, 404]` and called the 200 "existing app behaviour". Tightened to `assertNotFound()`.
+
+No live damage had been done: all 153 sitemap URLs resolve, so nothing dead was being advertised. The exposure was prospective (rename a page and the old URL silently keeps answering 200) and agent-facing (the "append `.md` to any help URL" convention llms.txt documents had no error case at all).
+
 ## July 30th, 2026 - fix(llms): make llms.txt reachable and findable
 
 Two agents reported they were "not allowed" to read `https://overlabels.com/llms.txt`. The file was never the problem. It answers `200 text/plain` in 23,469 bytes to every user agent tried, including `Claude-User`, `ClaudeBot` and an empty one; `robots.txt` allows everything; there is no `X-Robots-Tag`; and `http://` does a clean same-host 301. Both refusals were client-side and unrelated to each other: one agent ran in a cloud sandbox whose default network policy is an allowlist of package registries and Anthropic hosts, so the request never left the VM, and the other hit a per-domain fetch permission prompt. Neither is fixable from this end.

@@ -23,29 +23,56 @@ function createAdmin(array $attrs = []): User
 
 // Middleware tests
 
-test('banned user is redirected to /banned', function () {
+// A banned requester gets a hard 404 everywhere. These three used to expect a
+// redirect to /banned (web) and a 403 (API). A 403 confirms the resource is
+// there; 404 concedes nothing.
+
+test('banned user hard-404s on web requests', function () {
     $user = createUser();
     $user->ban();
 
     $this->actingAs($user)
         ->get('/dashboard')
-        ->assertRedirect('/banned');
+        ->assertNotFound();
 });
 
-test('banned IP is blocked on web requests', function () {
+test('banned IP hard-404s on web requests', function () {
     $ip = '192.168.99.99';
     IP::ban($ip);
 
     $this->get('/dashboard', ['REMOTE_ADDR' => $ip])
-        ->assertRedirect('/banned');
+        ->assertNotFound();
 });
 
-test('banned IP gets 403 on API overlay render', function () {
+test('banned IP gets a JSON 404 on API overlay render', function () {
     $ip = '192.168.99.99';
     IP::ban($ip);
 
     $this->postJson('/api/overlay/render', [], ['REMOTE_ADDR' => $ip])
-        ->assertStatus(403);
+        ->assertNotFound()
+        ->assertJson(['message' => 'Not Found.']);
+});
+
+test('a banned user gets nothing, including the old banned page', function () {
+    $user = createUser();
+    $user->ban();
+
+    // No exemption survives: /banned was the redirect target and is now just
+    // another URL a banned requester cannot see.
+    foreach (['/dashboard', '/banned', '/', '/help'] as $path) {
+        $this->actingAs($user)->get($path)->assertNotFound();
+    }
+});
+
+test('webhooks still get through for a banned IP', function () {
+    // The one exemption that must hold: these are inbound from Twitch/Ko-fi and
+    // carry their own signature checks, so an IP ban must not take delivery
+    // down for everyone sharing that egress.
+    $ip = '192.168.99.99';
+    IP::ban($ip);
+
+    expect($this->post('/api/webhooks/kofi/some-token', [], ['REMOTE_ADDR' => $ip])->getStatusCode())
+        ->not->toBe(404);
 });
 
 test('admin bypasses user ban check', function () {
@@ -275,8 +302,13 @@ test('ban creates audit log entry', function () {
 
 // Banned page is accessible
 
-test('banned page renders', function () {
-    $this->get('/banned')->assertOk();
+test('the banned explanation page is gone entirely', function () {
+    // It existed only as the redirect target. Nothing redirects there now, a
+    // banned requester 404s on everything, and the route and Vue page are
+    // deleted - so it is a 404 for everyone, not just the banned.
+    $this->get('/banned')->assertNotFound();
+
+    expect(app('router')->getRoutes()->getByName('banned'))->toBeNull();
 });
 
 // Sessions page shows ban status
@@ -303,6 +335,6 @@ test('sessions page shows ban status flags', function () {
     $sessionItem = collect($sessions)->firstWhere('id', 'test-session-status');
 
     expect($sessionItem)->not->toBeNull()
-        ->and((array)$sessionItem)->toHaveKeys(['is_user_banned', 'is_ip_banned'])
+        ->and((array) $sessionItem)->toHaveKeys(['is_user_banned', 'is_ip_banned'])
         ->and($sessionItem->is_user_banned)->toBeTrue();
 });

@@ -361,13 +361,15 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
 
         Auth::login($user);
 
-        // Block banned users from logging in
+        // Block banned users from logging in. 404 rather than a redirect to an
+        // explanation page: a banned requester gets nothing anywhere else, and
+        // the OAuth callback is not the place to make an exception.
         if ($user->isBanned()) {
             Auth::logout();
             request()->session()->invalidate();
             request()->session()->regenerateToken();
 
-            return redirect('/banned');
+            abort(404);
         }
 
         $currentMissingScopes = $scopeService->getMissingScopes($user);
@@ -640,8 +642,6 @@ Route::get('/map/{slug}/{sessionId}', [MapController::class, 'session'])->name('
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';
-
-Route::get('/banned', fn () => Inertia::render('Banned'))->name('banned');
 
 // Final 404 handler. Must be Route::fallback (not Route::any with a
 // wildcard) because the latter wins by registration order over routes
