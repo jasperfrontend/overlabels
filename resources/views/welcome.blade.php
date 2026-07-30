@@ -28,6 +28,10 @@
     </style>
 
     <link rel="icon" href="/favicon.png" sizes="any">
+    {{-- Duplicated from app.blade.php on purpose: the homepage is a standalone
+         view (routes/web.php `view('welcome')`), not the Inertia shell, so it
+         inherits nothing from it. This is the page a crawler reaches first. --}}
+    <link rel="llms-txt" type="text/plain" href="/llms.txt" title="Overlabels authoring guide for LLMs">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
