@@ -11,8 +11,14 @@ class CheckBanned
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Don't block the banned page or webhook endpoints
-        if ($request->is('banned', 'api/twitch/webhook', 'api/webhooks/*', 'api/eventsub-health-check')) {
+        // Inbound machine endpoints only. These carry their own secret/signature
+        // checks and are called by Twitch, Ko-fi and friends, so an IP ban must
+        // not take webhook delivery down for everyone sharing that egress.
+        //
+        // `banned` used to be exempt here so the redirect target stayed
+        // reachable. There is no redirect any more - a banned requester gets a
+        // hard 404 on everything, that page included.
+        if ($request->is('api/twitch/webhook', 'api/webhooks/*', 'api/eventsub-health-check')) {
             return $next($request);
         }
 
@@ -38,12 +44,17 @@ class CheckBanned
         return $next($request);
     }
 
+    /**
+     * A banned requester gets a hard 404 on everything, not a redirect and not
+     * a 403. 403 confirms the resource exists; 404 says nothing at all, which
+     * is the intended posture. Applies identically to user bans and IP bans.
+     */
     private function blocked(Request $request): Response
     {
         if ($request->expectsJson() || $request->is('api/*')) {
-            return response()->json(['message' => 'Access denied.'], 403);
+            return response()->json(['message' => 'Not Found.'], 404);
         }
 
-        return redirect('/banned');
+        return response()->view('errors.404', [], 404);
     }
 }

@@ -1,5 +1,17 @@
 # CHANGELOG JULY 2026
 
+## July 31st, 2026 - fix(ban): a ban now reaches the overlay, not just the login
+
+A ban locked someone out of the website and left their stream untouched. `CheckBanned` inspects the *requester*, and an overlay render arrives from OBS carrying an access token and no session, so `$request->user()` is null and a user ban never fired. Verified before changing anything: after banning the owner, `/api/overlay/render` still returned 200 with the template HTML.
+
+- **A ban revokes every active overlay access token.** This works at the only identity the render request actually presents. IP bans needed nothing here - `IP::isBanned($request->ip())` already rejects those at request time, wherever they land, so there is no need to guess which users sit behind an address and no risk of nuking a bystander on shared egress.
+- **A ban ends every session, on every path.** Both admin flows already deleted sessions inline, but the CLI ban in `routes/console.php` did not. Moving it into the listener means anything reaching `->ban()` ends the session rather than each caller having to remember. The inline deletes stay as defence in depth; they are idempotent.
+- **A banned requester now gets a hard 404 on everything**, user ban and IP ban alike. Previously a redirect to `/banned` on web and a 403 on API. A 403 confirms the resource is there; 404 concedes nothing. The `/banned` exemption is gone too, so that page is no longer reachable by the only people it addressed.
+- **Public templates of banned users deliberately survive.** One may have shipped as part of a kit, and it stays something people and models can learn from. There is a test whose only job is to make a future "clean up banned users' content" pass argue with a stated decision instead of silently reversing it.
+- **Package quirk worth knowing.** Banhammer's `BanObserver` dispatches `new ModelWasBanned($ban->bannable(), $ban)` with parentheses, so `$event->model` is the MorphTo *relation*, not the banned model, and `instanceof User` on it is always false. Confirmed against v2.4 by capturing the event: the payload is `Relations\MorphTo` while `$event->ban->bannable` is the `App\Models\User`. The listener reads the ban and still prefers `$event->model` when it ever holds a User, so a fixed upstream keeps working.
+
+Not done, flagged instead: the `/banned` route and its Vue page are now orphaned, and unbanning does not restore revoked tokens (they are stored as sha256 and shown once, so nothing can hand the plaintext back - an unbanned user mints a new token and repoints OBS).
+
 ## July 30th, 2026 - fix(http): a missing page now says 404 in the status line
 
 Found by crawling the site like a dumb indexer rather than like someone who knows it. Every unknown URL answered `200 OK` while serving a page titled "404 - Not Found". The body told the truth and the status line did not, and status is what machines branch on.
