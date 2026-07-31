@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import type { BuilderMetadata } from '@/types';
 import BuilderCanvas from '@/components/builder/BuilderCanvas.vue';
 import BuilderGridControls from '@/components/builder/BuilderGridControls.vue';
 import BlockPickerModal, { type LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
 import SelectedBlockPanel from '@/components/builder/SelectedBlockPanel.vue';
+import BuilderStylePanel from '@/components/builder/BuilderStylePanel.vue';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
 import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
@@ -31,6 +32,11 @@ function refreshSelectedFromSource() {
 function syncAllFromSource() {
   if (syncAll() > 0) emit('dirty');
 }
+
+// The Style panel writes straight into the state refs, so dirtiness is watched
+// rather than emitted - keeps the panel identical on the /builder page, which
+// has no dirty tracking at all.
+watch([state.customCss, state.customHead], () => emit('dirty'));
 
 const pickerOpen = ref(false);
 const pickerCell = ref<{ x: number; y: number } | null>(null);
@@ -138,6 +144,12 @@ defineExpose({
         Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
         Shift + arrows to resize, Delete to remove. Save with the page's Save button.
       </p>
+
+      <BuilderStylePanel
+        v-model:css="state.customCss.value"
+        v-model:head="state.customHead.value"
+        :placements="state.placements.value"
+      />
     </div>
 
     <div class="space-y-4">

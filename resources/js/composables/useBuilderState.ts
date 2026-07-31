@@ -27,6 +27,12 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
     const placements = ref<BuilderPlacement[]>(initial?.placements ? [...initial.placements] : []);
     const selectedId = ref<string | null>(null);
 
+    // Overlay-level overrides, appended last at compile time. Kept here rather
+    // than in the template's css/head columns because those are recomposed from
+    // scratch on every save and would eat anything typed into them.
+    const customCss = ref(initial?.custom_css ?? '');
+    const customHead = ref(initial?.custom_head ?? '');
+
     // instance_id -> control defs, only for blocks placed this session.
     const sessionControlDefs = new Map<string, BuilderControlDef[]>();
 
@@ -201,6 +207,8 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
             grid: { ...grid.value },
             canvas: { ...canvas.value },
             placements: placements.value.map((p) => ({ ...p, snapshot: { ...p.snapshot } })),
+            custom_css: customCss.value,
+            custom_head: customHead.value,
         };
     }
 
@@ -210,6 +218,8 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         placements,
         selectedId,
         selected,
+        customCss,
+        customHead,
         occupied,
         clampSpan,
         addPlacement,

@@ -10,6 +10,9 @@ import { prefixCss } from '@/utils/prefixCss';
  * The output is what the render pipeline consumes - the Builder metadata is
  * provenance for re-editing, never dereferenced at render time.
  */
+/** Wrapper the grid lives on, and the scope every overlay-level override gets. */
+export const BUILDER_ROOT = '#builder-root';
+
 export function composeBuilderTemplate(state: BuilderMetadata): { head: string; html: string; css: string } {
     const { grid, canvas, placements } = state;
 
@@ -46,11 +49,30 @@ export function composeBuilderTemplate(state: BuilderMetadata): { head: string; 
         if (scoped) cssParts.push(scoped);
     }
 
+    // The user's own CSS goes last so it wins ties on source order, and is
+    // scoped to the grid root so it can actually TIE: a block's `.value` rule
+    // compiles to `#blk-a3f2 .value` (1,1,0), which a bare `.value` (0,1,0)
+    // could never beat no matter how far down the file it sat. Scoped to
+    // `#builder-root .value` it matches that specificity and wins on order.
+    const custom = prefixCss(state.custom_css ?? '', BUILDER_ROOT);
+    if (custom) cssParts.push(`/* Your CSS */\n${custom}`);
+
     return {
-        head: dedupeHead(placements),
+        head: composeHead(placements, state.custom_head ?? ''),
         html,
         css: cssParts.join('\n\n'),
     };
+}
+
+/**
+ * Block heads first (deduped), the user's own head last. The user's is never
+ * deduped against the blocks': if they want to re-declare a font the blocks
+ * already pull in, that is their call and later wins anyway.
+ */
+function composeHead(placements: BuilderPlacement[], customHead: string): string {
+    const parts = [dedupeHead(placements), customHead.trim()].filter(Boolean);
+
+    return parts.join('\n');
 }
 
 /**

@@ -11,6 +11,7 @@ import BuilderCanvas from '@/components/builder/BuilderCanvas.vue';
 import BuilderGridControls from '@/components/builder/BuilderGridControls.vue';
 import BlockPickerModal, { type LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
 import SelectedBlockPanel from '@/components/builder/SelectedBlockPanel.vue';
+import BuilderStylePanel from '@/components/builder/BuilderStylePanel.vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
 import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
@@ -252,6 +253,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
             Shift + arrows to resize, Delete to remove.
           </p>
+
+          <BuilderStylePanel
+            v-model:css="state.customCss.value"
+            v-model:head="state.customHead.value"
+            :placements="state.placements.value"
+          />
         </div>
 
         <div class="space-y-4">
