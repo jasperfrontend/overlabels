@@ -4,8 +4,11 @@ use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Support\HelpContext;
 use App\Support\HelpPage;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+
+uses(DatabaseTransactions::class);
 
 /**
  * Contextual help is declared by the help pages themselves, in a `context:`

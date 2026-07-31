@@ -272,16 +272,17 @@ function restore() {
             </CardContent>
           </Card>
 
-          <!-- Donation-style integration seed values (donations_received) -->
+          <!-- Donation-style integration seed values (total_received) -->
           <Card v-if="!user.is_system_user && connectedSeedIntegrations.length">
             <CardHeader>
-              <CardTitle>Donation Counter Seed Values</CardTitle>
+              <CardTitle>Donation Total Seed Values</CardTitle>
             </CardHeader>
             <CardContent>
               <p class="mb-4 text-sm text-muted-foreground">
-                Override the user's <code>donations_received</code> seed value for any connected donation-style
-                integration. This bypasses the one-time lock the user-facing settings enforce, so use it to correct
-                mistakes after the user has already set their starting count.
+                Override the user's <code>total_received</code> seed value for any connected donation-style
+                integration. This is the running monetary total, so decimals are expected. It bypasses the one-time
+                lock the user-facing settings enforce, so use it to correct mistakes after the user has already set
+                their starting total.
               </p>
               <div class="space-y-4">
                 <div
@@ -302,6 +303,7 @@ function restore() {
                       v-model="seedForms[seed.service].initial_count"
                       min="0"
                       max="9999999"
+                      step="0.01"
                       class="rounded border px-3 py-1.5 text-sm bg-background w-32"
                     />
                     <Button

@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+
+uses(DatabaseTransactions::class);
 
 test('PATCH /settings/foreach-caps saves all four caps to preferences', function () {
     $user = User::factory()->create();

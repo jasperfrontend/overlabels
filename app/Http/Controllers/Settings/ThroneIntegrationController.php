@@ -112,22 +112,28 @@ class ThroneIntegrationController extends Controller
             return response()->json(['error' => 'Not connected.'], 404);
         }
 
+        // This seeds `total_received`, which is an amount and not a count, so
+        // fractional values are the normal case: a streamer already sitting on
+        // 65.35 has to be able to say exactly that. The frontend settles the
+        // decimal separator, so what arrives here is always dot-separated.
         $validated = $request->validate([
-            'initial_count' => 'required|integer|min:0|max:9999999',
+            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
         ]);
 
-        $this->controlService->seedTotalReceived($user, 'throne', $validated['initial_count']);
+        $seedValue = $this->controlService->normalizeSeedAmount($validated['initial_count']);
+
+        $this->controlService->seedTotalReceived($user, 'throne', $seedValue);
 
         $settings = $integration->settings ?? [];
         $integration->settings = array_merge($settings, [
             'donations_seed_set' => true,
-            'donations_seed_value' => $validated['initial_count'],
+            'donations_seed_value' => $seedValue,
         ]);
         $integration->save();
 
         return response()->json([
             'donations_seed_set' => true,
-            'donations_seed_value' => $validated['initial_count'],
+            'donations_seed_value' => $seedValue,
         ]);
     }
 

@@ -12,6 +12,7 @@ use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
 use App\Models\User;
 use App\Services\AdminAuditService;
+use App\Services\External\ExternalControlService;
 use App\Services\UserDeletionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ use Inertia\Response;
 class AdminUserController extends Controller
 {
     /**
-     * Donation-style integrations whose donations_received seed value can be
+     * Donation-style integrations whose total_received seed value can be
      * (re)set from the admin panel. Each entry is [service_key => display_name].
      */
     private const SEEDABLE_SERVICES = [
@@ -30,9 +31,13 @@ class AdminUserController extends Controller
         'streamelements' => 'StreamElements',
         'fourthwall' => 'Fourthwall',
         'bmac' => 'Buy Me a Coffee',
+        'throne' => 'Throne',
     ];
 
-    public function __construct(private readonly AdminAuditService $audit) {}
+    public function __construct(
+        private readonly AdminAuditService $audit,
+        private readonly ExternalControlService $controlService,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -233,10 +238,14 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Admin override for the donations_received seed value on any donation-
-     * style integration (Ko-fi, StreamLabs, StreamElements, Fourthwall, BMAC).
-     * Bypasses the one-time lock the user-facing settings enforce, so admins
-     * can correct mistakes after the fact.
+     * Admin override for the total_received seed value on any donation-style
+     * integration. Bypasses the one-time lock the user-facing settings enforce,
+     * so admins can correct mistakes after the fact.
+     *
+     * Writes through the same service method the user-facing seed uses. It has
+     * to be `total_received`, the running monetary total: `donations_received`
+     * counts how many donations arrived, not what they were worth, and seeding
+     * a euro amount into it silently inflates the count.
      */
     public function updateIntegrationSeed(Request $request, int $id, string $service): RedirectResponse
     {
@@ -247,8 +256,10 @@ class AdminUserController extends Controller
         $user = User::withTrashed()->findOrFail($id);
         $admin = $request->user();
 
+        // Matches the user-facing seed rule: these values are amounts, so a
+        // seed the user set as 65.35 has to survive an admin round-trip.
         $validated = $request->validate([
-            'initial_count' => 'required|integer|min:0|max:9999999',
+            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
         ]);
 
         $integration = ExternalIntegration::where('user_id', $user->id)
@@ -261,21 +272,19 @@ class AdminUserController extends Controller
             return back()->withErrors(['initial_count' => "User has no $label integration."]);
         }
 
-        OverlayControl::where('user_id', $user->id)
-            ->where('source', $service)
-            ->where('key', 'donations_received')
-            ->where('source_managed', true)
-            ->update(['value' => (string) $validated['initial_count']]);
+        $seedValue = $this->controlService->normalizeSeedAmount($validated['initial_count']);
+
+        $this->controlService->seedTotalReceived($user, $service, $seedValue);
 
         $integration->settings = array_merge($integration->settings ?? [], [
             'donations_seed_set' => true,
-            'donations_seed_value' => $validated['initial_count'],
+            'donations_seed_value' => $seedValue,
         ]);
         $integration->save();
 
         $this->audit->log($admin, 'user.integration_seed_updated', 'User', $user->id, [
             'service' => $service,
-            'initial_count' => $validated['initial_count'],
+            'initial_count' => $seedValue,
         ], $request);
 
         return back()->with('message', self::SEEDABLE_SERVICES[$service].' seed value updated.');

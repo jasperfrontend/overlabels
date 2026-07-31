@@ -92,7 +92,8 @@ it('reports follow age when the chatter follows the channel', function () {
     expect($reply)
         ->toContain('you have been following for')
         ->toContain('2 years')
-        ->toContain('3 months');
+        ->toContain('2 months')
+        ->toContain('30 days');
 });
 
 it('reports not-following when Helix returns an empty data array', function () {

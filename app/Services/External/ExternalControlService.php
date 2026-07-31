@@ -74,11 +74,27 @@ class ExternalControlService
     }
 
     /**
+     * Normalize a user-supplied seed amount to the one shape the rest of the
+     * pipeline expects: a number with at most 2 decimal places. Whole amounts
+     * stay ints, so a seed of 1256 never round-trips into "1256.00" and starts
+     * showing decimals in an overlay that never had them.
+     */
+    public function normalizeSeedAmount(int|float|string $value): int|float
+    {
+        $amount = round((float) $value, 2);
+
+        return $amount == (int) $amount ? (int) $amount : $amount;
+    }
+
+    /**
      * Seed the running total on the source's `total_received` service-managed
      * control. Used when a streamer raised some money before connecting and
      * wants their donation goal to start partway, e.g. €30 already in.
+     *
+     * This is an amount, not a count, so fractional values are expected: a
+     * streamer sitting on €65.35 seeds exactly that.
      */
-    public function seedTotalReceived(User $user, string $source, int|string $value): void
+    public function seedTotalReceived(User $user, string $source, int|float|string $value): void
     {
         OverlayControl::where('user_id', $user->id)
             ->where('source', $source)
