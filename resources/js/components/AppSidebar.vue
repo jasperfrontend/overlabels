@@ -143,9 +143,15 @@ const adminNavItems = computed<NavItem[]>(() => {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton as-child>
-            <Link :href="user ? route('dashboard.index') : '/'">
+            <!-- Guests land on '/', which is a plain Blade view rather than an
+                 Inertia page, so it needs a real anchor - an Inertia <Link>
+                 would XHR it and get the non-Inertia error dialog. -->
+            <Link v-if="user" :href="route('dashboard.index')">
               <AppLogo />
             </Link>
+            <a v-else href="/" class="cursor-pointer">
+              <AppLogo />
+            </a>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

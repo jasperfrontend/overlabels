@@ -21,11 +21,12 @@ const lastUpdated = 'May 14, 2026';
       <nav class="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
-            <Link href="/" class="flex items-center gap-2.5">
+            <!-- Plain anchor: '/' is a Blade view, not an Inertia page. -->
+            <a href="/" class="flex cursor-pointer items-center gap-2.5">
               <img src="/favicon.png" alt="" class="w-8 h-8" />
               <span class="text-lg font-bold tracking-tight">Overlabels</span>
               <Badge variant="outline" class="text-xs">Beta</Badge>
-            </Link>
+            </a>
             <div class="flex items-center gap-6">
               <Link href="/help"
                     class="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition-colors">Docs
@@ -227,10 +228,10 @@ const lastUpdated = 'May 14, 2026';
 
         <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
           <Button variant="outline" asChild>
-            <Link href="/" class="gap-2">
+            <a href="/" class="cursor-pointer gap-2">
               <ArrowLeft class="h-4 w-4" />
               Back to Home
-            </Link>
+            </a>
           </Button>
         </div>
       </div>
