@@ -154,6 +154,11 @@ export interface BuilderMetadata {
   grid: { cols: number; rows: number; gap: number };
   canvas: { width: number; height: number };
   placements: BuilderPlacement[];
+  // Overlay-level overrides the user typed in the Builder's Style panel. Input
+  // to the compile, never output of it - the composed head/css are rebuilt from
+  // scratch on every save, so these have to survive here.
+  custom_css?: string;
+  custom_head?: string;
 }
 
 export interface OverlayTemplate {

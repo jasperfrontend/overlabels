@@ -1,4 +1,5 @@
 import { onMounted, onUnmounted, ref } from 'vue';
+import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 
 type ShortcutCallback = (event: KeyboardEvent) => void;
 
@@ -28,11 +29,7 @@ function matchesKeyCombination(event: KeyboardEvent, keyCombination: string[]): 
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
-  const inInput =
-    event.target instanceof HTMLInputElement ||
-    event.target instanceof HTMLTextAreaElement ||
-    event.target instanceof HTMLSelectElement ||
-    (event.target instanceof HTMLElement && event.target.isContentEditable);
+  const inInput = isTextEntryTarget(event.target);
 
   // A modal owns the keyboard while it's open: single-key page shortcuts must
   // not reach through it (e.g. 'e' jumping a <select> to "Expression", or 'a'

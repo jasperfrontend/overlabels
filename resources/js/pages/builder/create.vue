@@ -11,12 +11,14 @@ import BuilderCanvas from '@/components/builder/BuilderCanvas.vue';
 import BuilderGridControls from '@/components/builder/BuilderGridControls.vue';
 import BlockPickerModal, { type LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
 import SelectedBlockPanel from '@/components/builder/SelectedBlockPanel.vue';
+import BuilderStylePanel from '@/components/builder/BuilderStylePanel.vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
 import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
+import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 import { ExternalLink, Save } from '@lucide/vue';
 
 const props = defineProps<{
@@ -184,8 +186,7 @@ async function save() {
 // Keyboard: arrows move the selected block, shift+arrows resize, Delete removes.
 function onKeydown(e: KeyboardEvent) {
   if (!state.selectedId.value || pickerOpen.value || showPreview.value) return;
-  const target = e.target as HTMLElement | null;
-  if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+  if (isTextEntryTarget(e.target)) return;
 
   const id = state.selectedId.value;
   const actions: Record<string, () => void> = {
@@ -252,6 +253,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
             Shift + arrows to resize, Delete to remove.
           </p>
+
+          <BuilderStylePanel
+            v-model:css="state.customCss.value"
+            v-model:head="state.customHead.value"
+            :placements="state.placements.value"
+          />
         </div>
 
         <div class="space-y-4">

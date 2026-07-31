@@ -3,6 +3,7 @@ import '../../css/app.css';
 import { createApp } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import type { ChannelAuthorizationCallback } from 'pusher-js';
 import EventsFeed from './EventsFeed.vue';
 import { initializeTheme } from '@/composables/useAppearance';
 
@@ -15,7 +16,7 @@ import { initializeTheme } from '@/composables/useAppearance';
 // instead; it only ever signs the token owner's own private channels.
 function feedAuthorizer(channel: { name: string }) {
   return {
-    authorize: (socketId: string, callback: (err: Error | null, data: unknown) => void) => {
+    authorize: (socketId: string, callback: ChannelAuthorizationCallback) => {
       const feed = (window as any).__EVENTS_FEED__ || {};
       if (!feed.token) {
         callback(new Error('Feed token unavailable for channel auth'), null);

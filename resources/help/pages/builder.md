@@ -88,7 +88,44 @@ controls wears a little pill naming the block that uses it, so you always know w
   are flagged "Not used by any block" on the Controls tab, where deleting them is one click - your call,
   never automatic.
 
-## 6. Editing later, refreshing blocks, ejecting
+## 6. Making it yours: CSS and fonts
+
+Blocks arrive with their own look, and for a lot of overlays that's the end of it. When it isn't,
+open **Your CSS and fonts** under the canvas. It's optional, it starts closed, and nothing about the
+Builder changes if you never touch it.
+
+The panel lists the class names that actually exist in the blocks you placed, so you're picking from
+real targets instead of guessing. Classes the block styles itself come first, because those are the
+ones worth overriding. Click one and it drops an empty rule into the editor for you:
+
+```css
+.value {
+  color: #fbbf24;
+  font-size: 3rem;
+}
+```
+
+Two things make this work the way you'd hope:
+
+- **Your CSS is scoped for you**, the same way a block author's is. Write plain selectors; the
+  Builder attaches them to your overlay's grid root when it compiles.
+- **Your CSS is applied last.** A rule you write here beats the same selector inside a block, so
+  taking over `.value` from a block you didn't build takes one line and no `!important`.
+
+`.builder-cell` is on every block's wrapper, which makes it the handle for "all of them at once" -
+padding, a shared background, or letting a glow escape the wrapper's `overflow: hidden`.
+
+Below the CSS box is a small field for **fonts and other `<head>` tags**. Drop a Google Fonts link in
+and set `font-family` in your CSS to restyle the whole overlay in two lines. It's added after the
+head tags the blocks bring along themselves, so yours wins. Scripts are stripped on save, here as
+everywhere else.
+
+> [!NOTE]
+> Both of these live with your composition, not in the compiled output, so they survive every re-save
+> and every layout change. Tags work in CSS too: `color: [[[c:accent_color]]]` makes a control drive
+> your styling live.
+
+## 7. Editing later, refreshing blocks, ejecting
 
 Reopen a composed overlay's edit page and the Code tab shows the grid editor again, with your layout
 exactly as you left it. Two things worth knowing:

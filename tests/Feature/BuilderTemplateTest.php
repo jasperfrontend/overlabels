@@ -118,6 +118,52 @@ test('script tags in placement snapshots are stripped on save', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Overlay-level custom CSS and <head>
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('custom css and head round-trip on the builder metadata', function () {
+    $user = builderUser();
+
+    postComposedOverlay($user, [
+        'custom_css' => '.c { color: gold; }',
+        'custom_head' => '<link href="https://fonts.example/inter.css" rel="stylesheet">',
+    ])->assertOk();
+
+    $template = OverlayTemplate::where('owner_id', $user->id)->first();
+    expect($template->metadata['builder']['custom_css'])->toBe('.c { color: gold; }')
+        ->and($template->metadata['builder']['custom_head'])
+        ->toBe('<link href="https://fonts.example/inter.css" rel="stylesheet">');
+});
+
+test('a composed overlay without custom css stores it as an empty string', function () {
+    $user = builderUser();
+    postComposedOverlay($user)->assertOk();
+
+    $template = OverlayTemplate::where('owner_id', $user->id)->first();
+    expect($template->metadata['builder']['custom_css'])->toBe('')
+        ->and($template->metadata['builder']['custom_head'])->toBe('');
+});
+
+test('scripts in the custom head are stripped on save', function () {
+    $user = builderUser();
+
+    postComposedOverlay($user, [
+        'custom_head' => '<link rel="stylesheet" href="https://fonts.example/inter.css"><script>alert(1)</script>',
+    ])->assertOk();
+
+    $template = OverlayTemplate::where('owner_id', $user->id)->first();
+    expect($template->metadata['builder']['custom_head'])
+        ->not->toContain('<script')
+        ->toContain('fonts.example');
+});
+
+test('builder metadata rejects oversized custom css', function () {
+    $user = builderUser();
+
+    postComposedOverlay($user, ['custom_css' => str_repeat('x', 70000)])->assertUnprocessable();
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Eject: metadata.builder = null converts to a hand-edited overlay
 // ──────────────────────────────────────────────────────────────────────────────
 

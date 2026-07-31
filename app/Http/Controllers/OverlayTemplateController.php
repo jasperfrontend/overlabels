@@ -857,6 +857,11 @@ class OverlayTemplateController extends Controller
             'metadata.builder.canvas' => 'required_with:metadata.builder|array',
             'metadata.builder.canvas.width' => 'required_with:metadata.builder|integer|min:16|max:7680',
             'metadata.builder.canvas.height' => 'required_with:metadata.builder|integer|min:16|max:4320',
+            // The user's own overlay-level CSS and <head>, appended last at
+            // compile time. They live here and not in the css/head columns
+            // because those are recomposed from scratch on every Builder save.
+            'metadata.builder.custom_css' => 'sometimes|nullable|string|max:65535',
+            'metadata.builder.custom_head' => 'sometimes|nullable|string|max:65535',
             'metadata.builder.placements' => 'sometimes|array|max:40',
             'metadata.builder.placements.*.instance_id' => 'required|alpha_num:ascii|max:8',
             'metadata.builder.placements.*.block_template_id' => 'required|integer',
@@ -898,6 +903,17 @@ class OverlayTemplateController extends Controller
                     array_merge(['head' => '', 'html' => '', 'css' => ''], $placement['snapshot'] ?? [])
                 );
             }
+        }
+
+        // The user's own CSS and <head> get the same treatment as the snapshots:
+        // both re-enter the editor and the compiled output on every re-save.
+        if (isset($metadata['builder'])) {
+            $custom = HtmlSanitizationService::sanitizeTemplateFields([
+                'css' => $metadata['builder']['custom_css'] ?? '',
+                'head' => $metadata['builder']['custom_head'] ?? '',
+            ]);
+            $metadata['builder']['custom_css'] = $custom['css'];
+            $metadata['builder']['custom_head'] = $custom['head'];
         }
 
         $validated['metadata'] = $metadata ?: null;

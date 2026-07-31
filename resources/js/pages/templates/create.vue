@@ -145,7 +145,7 @@ onMounted(() => {
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
         <div class="rounded-sm rounded-b-none border border-b-0 border-sidebar bg-sidebar-accent">
-          <div class="flex border-b border-violet-600 dark:border-violet-400">
+          <div class="flex border-b border-violet-600">
             <button
               v-for="(tab, index) in mainTabs"
               :key="tab.key"
@@ -171,75 +171,75 @@ onMounted(() => {
           <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5">
             <!-- Overlay Type - deliberate first choice that unlocks the rest of the form -->
             <div>
-              <label class="mb-2 block text-sm font-medium text-accent-foreground">Overlay Type *</label>
+              <label class="mb-2 block text-sm font-medium text-accent-foreground">Choose the type of content you wish to create</label>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'static' ? 'border-violet-400 bg-violet-400/10 dark:bg-violet-400/5' : 'border-sidebar'"
+                  :class="form.type === 'static' ? 'border-violet-400 dark:bg-violet-400/5' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="static" class="sr-only" required />
-                  <div class="flex items-start">
-                    <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                  <span class="flex items-start w-full">
+                    <span
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'static' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'static'" class="h-2 w-2 rounded-full bg-white" />
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
+                      <span v-if="form.type === 'static'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                    </span>
+                    <span>
+                      <span class="flex items-center gap-2">
                         <Layout class="h-4 w-4" />
                         <span class="text-sm font-medium">Static Overlay</span>
-                      </div>
-                      <p class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower
-                        count, stream title, etc.)</p>
-                    </div>
-                  </div>
+                      </span>
+                      <span class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower
+                        count, stream title, etc.)</span>
+                    </span>
+                  </span>
                 </label>
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10 dark:bg-violet-500/5' : 'border-sidebar'"
+                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="alert" class="sr-only" required />
-                  <div class="flex items-start">
-                    <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                  <span class="flex items-start w-full">
+                    <span
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'alert'" class="h-2 w-2 rounded-full bg-white" />
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
+                      <span v-if="form.type === 'alert'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                    </span>
+                    <span>
+                      <span class="flex items-center gap-2">
                         <Zap class="h-4 w-4" />
                         <span class="text-sm font-medium">Event Alert</span>
-                      </div>
-                      <p class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower,
-                        subscription, raid, etc.)</p>
-                    </div>
-                  </div>
+                      </span>
+                      <span class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower,
+                        subscription, raid, etc.)</span>
+                    </span>
+                  </span>
                 </label>
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10 dark:bg-violet-500/5' : 'border-sidebar'"
+                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="block" class="sr-only" required />
-                  <div class="flex items-start">
-                    <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                  <span class="flex items-start w-full">
+                    <span
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'block' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'block'" class="h-2 w-2 rounded-full bg-white" />
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
+                      <span v-if="form.type === 'block'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                    </span>
+                    <span>
+                      <span class="flex items-center gap-2">
                         <Blocks class="h-4 w-4" />
                         <span class="text-sm font-medium">Block</span>
-                      </div>
-                      <p class="mt-1 text-sm text-muted-foreground">A reusable piece for the Builder. Other streamers
-                        place blocks on a grid to compose an overlay.</p>
-                    </div>
-                  </div>
+                      </span>
+                      <span class="mt-1 text-sm text-muted-foreground">A reusable piece for the Builder. Other streamers
+                        place blocks on a grid to compose an overlay.</span>
+                    </span>
+                  </span>
                 </label>
               </div>
               <div v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</div>
