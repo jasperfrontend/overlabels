@@ -1,5 +1,13 @@
 # CHANGELOG JULY 2026
 
+## August 1st, 2026 - feat(builder): drag-to-resize, and a canvas you can actually read
+
+Three complaints about the Builder canvas, all downstream of one thing: the canvas is drawn at 1920x1080 and scaled to fit, so every piece of UI chrome on it was being drawn at roughly a third of its intended size.
+
+- **Chrome is now authored in screen pixels and divided back out by the scale factor.** A 1px border lands near 0.35px, and Firefox renders that on some edges of a box and not others, which is why block outlines appeared as a left border here, a top border there, and nothing at all elsewhere. Outlines, handles, and the block-name label all now specify sizes that survive the transform. The label went from about 4px to legible as a side effect, which was the same bug wearing a different hat.
+- **Occupied and free cells are told apart by fill, not by outline.** The checkerboard moved off the grid container and onto the empty cells only, so free space reads as texture and a placed block reads as a solid tile. Previously both were checkerboard with a hairline outline, which meant a block rendering mostly transparency - very common for overlays - was indistinguishable from nothing at all until you hovered it. Trade-off worth naming: block previews no longer sit on a checkerboard, so a transparent block now previews against the flat canvas.
+- **Drag-to-resize from any edge or corner.** Hovering a block reveals four edge strips and four corner grips; drag one and only that side moves, with the opposite side pinned. Deliberately chunky, because at a 0.35 scale a subtle affordance is an invisible one. `setRect()` joins `moveTo()` in `useBuilderState` as the second absolute mutator, and runs through the same `fits()` check, so a resize can no more overlap a neighbour or leave the grid than a move can - it simply stops at the last rect that fit. Handles cap at a share of the block (22% for edges, 30% for corners) so a 1x1 block on a 24x24 grid keeps a middle to drag from. Shift+arrows still resize from the keyboard, and the handles are `aria-hidden` because that keyboard path is the accessible one.
+
 ## July 31st, 2026 - feat(builder): overlay-level CSS and fonts
 
 Composing in the Builder meant giving up the head/CSS tabs entirely, so a composed overlay looked exactly like the sum of its blocks and no further. You can now restyle one, without giving up the grid tools and without ejecting.

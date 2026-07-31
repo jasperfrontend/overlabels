@@ -148,6 +148,26 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         return true;
     }
 
+    /**
+     * Absolute rect (drag-to-resize from an edge or corner). Unlike resize(),
+     * which only ever grows the bottom-right, this moves the dragged side and
+     * leaves the opposite one pinned. Rejected wholesale when it would overlap
+     * or leave the grid, so a drag past a neighbour stops at the last good
+     * rect - same feel as drag-to-move. True when the rect actually changed.
+     */
+    function setRect(id: string, x: number, y: number, w: number, h: number): boolean {
+        const p = placements.value.find((pl) => pl.instance_id === id);
+        if (!p) return false;
+        if (p.x === x && p.y === y && p.w === w && p.h === h) return false;
+        if (!fits(x, y, w, h, id)) return false;
+        p.x = x;
+        p.y = y;
+        p.w = w;
+        p.h = h;
+        placements.value = [...placements.value];
+        return true;
+    }
+
     function move(id: string, dx: number, dy: number): void {
         const p = placements.value.find((pl) => pl.instance_id === id);
         if (!p) return;
@@ -227,6 +247,7 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         syncBlockNames,
         move,
         moveTo,
+        setRect,
         resize,
         remove,
         setGrid,
