@@ -247,8 +247,10 @@ class AdminUserController extends Controller
         $user = User::withTrashed()->findOrFail($id);
         $admin = $request->user();
 
+        // Matches the user-facing seed rule: these values are amounts, so a
+        // seed the user set as 65.35 has to survive an admin round-trip.
         $validated = $request->validate([
-            'initial_count' => 'required|integer|min:0|max:9999999',
+            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
         ]);
 
         $integration = ExternalIntegration::where('user_id', $user->id)

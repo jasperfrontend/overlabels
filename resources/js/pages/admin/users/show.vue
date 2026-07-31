@@ -302,6 +302,7 @@ function restore() {
                       v-model="seedForms[seed.service].initial_count"
                       min="0"
                       max="9999999"
+                      step="0.01"
                       class="rounded border px-3 py-1.5 text-sm bg-background w-32"
                     />
                     <Button

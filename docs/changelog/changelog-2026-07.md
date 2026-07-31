@@ -1,5 +1,22 @@
 # CHANGELOG JULY 2026
 
+## July 31st, 2026 - fix(integrations): the starting donation seed takes decimals
+
+A user with $65.35 already raised on Ko-fi could not enter it. The field took integers only, and what he saw when he tried was "Something went wrong." - the frontend read `data.error` from the failure, but a Laravel validation rejection returns `{message, errors}`, so the one sentence explaining the problem was the one sentence never displayed.
+
+The rule was wrong from the start. The field is labelled "Starting donation count", but it seeds `total_received`, and every driver accumulates that control as `(float) $event->getAmount()`. It has always been money. `required|integer` was rejecting the exact values it exists to hold.
+
+- **`numeric|decimal:0,2` on all six** - Ko-fi, StreamLabs, StreamElements, Fourthwall, BMAC and Throne. `decimal:0,2` rather than bare `numeric` because `numeric` also waves through `1e5`, and two places is what money has.
+- **The input is now a text field**, not `type="number"`. That was the other half of the bug: a number input's default `step` is 1, so `65.35` is a step mismatch, and its handling of a typed comma is up to the browser's locale. Free text plus `inputmode="decimal"` sidesteps both and still gets the numeric keypad on a phone.
+- **`parseAmountInput` settles the separator before anything is sent.** A streamer in Rotterdam types `65,35` and one in Denver types `65.35` for the same amount and both are right, so the browser resolves it and the server only ever sees one shape. Both separators present means the last one is the decimal point; a repeated separator is grouping; anything but a group of three trailing digits is decimal. Only `1,234` is genuinely ambiguous - 1234 in Denver, 1.234 in Rotterdam - and there the user's own `users.locale` breaks the tie, which is the setting's whole purpose. A live "Saving as ..." line under the field shows the resolved number in their locale, so the guess is never silent.
+- **Whole amounts stay whole.** `normalizeSeedAmount()` returns an int when the value has no fractional part, so seeding 1256 does not start rendering `1256.00` in an overlay that never had decimals. Pinned by a test.
+- **The admin override moved too**, or this change would have broken it: it pre-fills its form from `donations_seed_value` and posts it straight back, so the first user to seed 65.35 would have made that panel un-saveable.
+- **Corrected copy that named the wrong control.** Every one of the six said the seed feeds your `donations_received` controls. It does not and never did - it writes `total_received`. Headings and the test-mode reset warning now say "total" rather than "count", which is also what the value is.
+- 36 tests across the six services: a fractional amount lands on the control, a whole one stays whole, three-decimal precision and negatives are refused, locale notation is refused at the boundary on purpose, and a seeded 65.35 survives a test-mode round trip - the one path that resets service-managed controls and has to put the seed back rather than zero.
+
+> [!NOTE]
+> The admin override still writes to `donations_received` while the user-facing seed writes `total_received`, so "correcting" a user's seed touches a different control than the user set. Both stamp the same `donations_seed_value` key. Pre-existing, untouched here, and worth a decision.
+
 ## July 31st, 2026 - test: close the row leaks and guard against new ones
 
 Follow-up to the factory recursion fix. Isolation in this suite is opt-in - a file declares `DatabaseTransactions` or its rows are committed for good - and 27 files declared nothing. That is a silent failure mode: the file passes, and the only symptom is junk slowly accumulating in whatever database the suite was pointed at.

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
 
 interface IntegrationData {
@@ -50,25 +51,37 @@ const form = useForm({
 const testMode = ref(props.integration.test_mode ?? false);
 const testModeLoading = ref(false);
 
-// Starting donation count — one-time seed, locked after setting
-const seedCount = ref<number | null>(null);
+// Starting donation total - one-time seed, locked after setting.
+// This is money, not a tally, so it is a free-text field: the streamer types
+// "65,35" or "65.35" depending on where they live and parseAmountInput settles
+// it into the single number the server expects.
+const seedInput = ref('');
 const seedLoading = ref(false);
 const seedError = ref<string | null>(null);
 const donationsSeedSet = ref(props.integration.donations_seed_set);
 const donationsSeedValue = ref(props.integration.donations_seed_value);
 
+const seedAmount = computed(() => parseAmountInput(seedInput.value, userLocale.value));
+const seedExample = computed(() => (1256.5).toLocaleString(userLocale.value, { minimumFractionDigits: 2 }));
+const seedUnreadable = computed(() => seedInput.value.trim() !== '' && seedAmount.value === null);
+const seedPreview = computed(() =>
+  seedAmount.value === null ? null : seedAmount.value.toLocaleString(userLocale.value, { maximumFractionDigits: 2 })
+);
+
 async function setSeedCount() {
-  if (seedCount.value === null || seedCount.value < 0) return;
+  const amount = seedAmount.value;
+  if (amount === null || amount < 0) return;
   seedLoading.value = true;
   seedError.value = null;
   try {
     const { data } = await axios.post('/settings/integrations/kofi/seed-count', {
-      initial_count: seedCount.value
+      initial_count: amount
     });
     donationsSeedSet.value = data.donations_seed_set;
     donationsSeedValue.value = data.donations_seed_value;
   } catch (e: any) {
-    seedError.value = e.response?.data?.error ?? 'Something went wrong.';
+    seedError.value =
+      e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
   } finally {
     seedLoading.value = false;
   }
@@ -273,7 +286,7 @@ function formatDate(iso: string | null): string {
             <p class="text-muted-foreground text-sm">
               Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
               <span v-if="testMode" class="text-yellow-500 font-bold">
-                          Turn this off before going live — your donation count will reset to {{ donationsSeedValue ?? 0 }}.
+                          Turn this off before going live — your donation total will reset to {{ donationsSeedValue ?? 0 }}.
                       </span>
             </p>
             <div v-if="testMode"
@@ -283,38 +296,44 @@ function formatDate(iso: string | null): string {
           </div>
         </template>
 
-        <!-- Starting donation count (one-time seed) -->
+        <!-- Starting donation total (one-time seed) -->
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Starting donation count</p>
+            <p class="font-medium text-sm">Starting donation total</p>
 
             <!-- Already seeded — locked -->
             <template v-if="donationsSeedSet">
               <p class="text-muted-foreground text-sm">
-                Starting count set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong>.
-                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:donations_received]]]</code>
+                Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong>.
+                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:kofi:total_received]]]</code>
                 controls started from this value.
               </p>
               <div class="flex gap-2 items-start">
                 <div class="flex-1 space-y-1">
                   <input
-                    v-model.number="seedCount"
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 1256"
+                    v-model="seedInput"
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    :placeholder="'e.g. ' + seedExample"
                     :disabled="seedLoading"
                     class="input-border"
                   />
+                  <p v-if="seedUnreadable" class="text-destructive text-xs">
+                    That doesn't look like an amount. Try {{ seedExample }}.
+                  </p>
+                  <p v-else-if="seedPreview" class="text-muted-foreground text-xs">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
-                  :disabled="seedLoading || seedCount === null"
+                  class="cursor-pointer"
+                  :disabled="seedLoading || seedAmount === null"
                   @click="setSeedCount"
                 >
-                  {{ seedLoading ? 'Saving…' : 'Set starting count' }}
+                  {{ seedLoading ? 'Saving…' : 'Set starting total' }}
                 </Button>
               </div>
             </template>
@@ -322,29 +341,36 @@ function formatDate(iso: string | null): string {
             <!-- Not seeded yet -->
             <template v-else>
               <p class="text-muted-foreground text-sm">
-                Had Ko-fi donations before joining? Set your starting count so your overlay doesn't begin at zero.
-                This can only be set once. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">donations_received</code>
+                Had Ko-fi donations before joining? Set the total you already raised so your overlay doesn't begin at
+                zero. Decimals are fine, in whichever notation you write money.
+                All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">total_received</code>
                 controls update immediately.
               </p>
               <div class="flex gap-2 items-start">
                 <div class="flex-1 space-y-1">
                   <input
-                    v-model.number="seedCount"
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 1256"
+                    v-model="seedInput"
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    :placeholder="'e.g. ' + seedExample"
                     :disabled="seedLoading"
                     class="input-border"
                   />
+                  <p v-if="seedUnreadable" class="text-destructive text-xs">
+                    That doesn't look like an amount. Try {{ seedExample }}.
+                  </p>
+                  <p v-else-if="seedPreview" class="text-muted-foreground text-xs">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
-                  :disabled="seedLoading || seedCount === null"
+                  class="cursor-pointer"
+                  :disabled="seedLoading || seedAmount === null"
                   @click="setSeedCount"
                 >
-                  {{ seedLoading ? 'Saving…' : 'Set starting count' }}
+                  {{ seedLoading ? 'Saving…' : 'Set starting total' }}
                 </Button>
               </div>
             </template>
