@@ -1,5 +1,18 @@
 # CHANGELOG JULY 2026
 
+## August 1st, 2026 - fix(nav): clicking the logo as a guest rendered the homepage in a dialog
+
+Visit `/help` logged out, click the Overlabels logo, and the entire homepage appeared inside a near-fullscreen box floating on top of the help page. The URL stayed on `/help`, because nothing had navigated anywhere.
+
+That box was never ours. It is `#inertia-error-dialog`, Inertia's "this response was not an Inertia response" panel, sized `calc(100vw - 100px)` by `calc(100vh - 100px)` with the raw response dropped into a sandboxed iframe. The chain: the help pages render through `AppLayout`, whose sidebar logo was an Inertia `<Link>` pointing at `/` for guests, and `/` returns `view('welcome')` - a plain Blade page with no `x-inertia` header. Inertia XHR'd it, got back a full HTML document, and did the only thing it knows how to do with one. Logged in it worked purely by accident, because that branch pointed at the dashboard, which is a real Inertia page.
+
+Worth knowing for anyone reading this later: Inertia 3 does not dev-gate that dialog. It ships to production, which is why this was visible on the live site rather than only on localhost.
+
+- **Eight links were pointing an Inertia `<Link>` at a Blade route**, not one. The sidebar logo was just the one that got noticed. The same trap sat in both auth layouts, both the Privacy and Terms nav logos and their "Back to Home" buttons, the public preview brand strip, and the guest "Connect" link in `UserInfo`. Privacy and Terms are `Inertia::render` and guest-reachable, so those were live too - confirmed by reproducing it on `/privacy` before touching anything. All eight are now plain `<a>` elements, which is what a link to a non-Inertia page has always needed to be.
+- **A global `httpException` handler in `app.ts` as the backstop.** A 2xx HTML response to an Inertia request means "this URL is a real page, not an Inertia endpoint", so it now does what the click intended and performs a real navigation instead of popping the dialog. That covers the ninth link, whenever someone adds it.
+- **Errors deliberately still get the dialog.** A blown-up server render in a full-page iframe is the one case where it earns its keep, so only successful HTML responses are intercepted.
+- **The pending URL comes from the visit, not the response.** `HttpExceptionResponse` is typed as status, data and headers only - the axios `config.url` is there at runtime but is not part of the contract, and Inertia's `HttpClient` interface reads like a client swap is coming. So the handler tracks the in-flight visit's typed `url` from the `start` event instead. Prefetches are skipped: they are speculative, and yanking the tab somewhere off the back of a link nobody clicked would be a worse bug than the one being fixed.
+
 ## August 1st, 2026 - ui(builder): move the block name out from under the resize grip
 
 Spotted by a friend of the author within seconds of seeing the canvas: the block-name chip sits flush in the top-left corner, which is now exactly where the northwest resize grip lives, so the grip reads as part of the label. The "Source updated" badge had the same problem in the top-right.

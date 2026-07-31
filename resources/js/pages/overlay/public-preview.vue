@@ -156,11 +156,12 @@ const activeSource = computed(() => {
     <div class="mx-auto max-w-450 p-4 lg:p-6">
       <!-- Slim brand strip -->
       <div class="mb-4 flex items-center justify-between">
-        <Link href="/" class="flex items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
+        <!-- Plain anchor: '/' is a Blade view, not an Inertia page. -->
+        <a href="/" class="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
           <img src="/favicon-light.svg" alt="" class="h-6 w-6 dark:hidden" />
           <img src="/favicon.png" alt="" class="hidden h-6 w-6 dark:block" />
           Overlabels
-        </Link>
+        </a>
         <Link
           v-if="isAuthed"
           :href="route('dashboard.index')"

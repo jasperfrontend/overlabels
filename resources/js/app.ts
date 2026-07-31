@@ -1,6 +1,6 @@
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { createPinia } from 'pinia'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
@@ -38,6 +38,37 @@ axios.interceptors.response.use(
         return Promise.reject(error);
     },
 );
+
+// Inertia only recognises responses carrying the x-inertia header. Point an
+// Inertia <Link> at a plain Blade route (the marketing homepage at '/', say)
+// and the XHR comes back as a full HTML document, which Inertia answers by
+// popping #inertia-error-dialog - a calc(100vw-100px) <dialog> that renders
+// the entire response in an iframe on top of whatever page you were on. The
+// URL never changes, so it reads as a bug rather than a navigation. Inertia 3
+// does not dev-gate that dialog, so it ships to users.
+//
+// A 2xx HTML response just means "this URL is a real page, not an Inertia
+// endpoint", so do what the click intended and navigate to it for real.
+// Error responses still get the dialog - seeing a blown-up server render is
+// the one case where it earns its keep.
+// The httpException payload carries status/data/headers but no URL, so track
+// the visit that is in flight. Prefetches are skipped: they are speculative,
+// and hijacking the tab off the back of one nobody clicked would be worse than
+// the dialog. Errors intentionally fall through to Inertia's default.
+let pendingVisitUrl: URL | null = null;
+
+router.on('start', (event) => {
+    pendingVisitUrl = event.detail.visit.prefetch ? null : event.detail.visit.url;
+});
+
+router.on('httpException', (event) => {
+    const { status, data } = event.detail.response;
+
+    if (status >= 200 && status < 300 && typeof data === 'string' && pendingVisitUrl) {
+        event.preventDefault();
+        window.location.href = pendingVisitUrl.href;
+    }
+});
 
 const pinia = createPinia()
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

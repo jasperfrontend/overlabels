@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
 import { useStreamState } from '@/composables/useStreamState';
 import type { User } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const { isLive, isTransitioning, uptime } = useStreamState();
@@ -48,8 +48,9 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     <span v-else class="text-xs text-muted-foreground font-mono w-25">Not streaming</span>
   </div>
   <div v-else>
-    <Link href="/">
+    <!-- Plain anchor: '/' is a Blade view, not an Inertia page. -->
+    <a href="/" class="cursor-pointer">
       <span class="truncate text-xs text-muted-foreground">Connect</span>
-    </Link>
+    </a>
   </div>
 </template>
