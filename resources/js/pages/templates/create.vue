@@ -171,19 +171,19 @@ onMounted(() => {
           <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5">
             <!-- Overlay Type - deliberate first choice that unlocks the rest of the form -->
             <div>
-              <label class="mb-2 block text-sm font-medium text-accent-foreground">Overlay Type *</label>
+              <label class="mb-2 block text-sm font-medium text-accent-foreground">Choose the type of content you wish to create</label>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'static' ? 'border-violet-400 bg-violet-400/10 dark:bg-violet-400/5' : 'border-sidebar'"
+                  :class="form.type === 'static' ? 'border-violet-400 dark:bg-violet-400/5' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="static" class="sr-only" required />
-                  <div class="flex items-start">
+                  <div class="flex items-start w-full">
                     <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'static' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'static'" class="h-2 w-2 rounded-full bg-white" />
+                      <div v-if="form.type === 'static'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
                     </div>
                     <div>
                       <div class="flex items-center gap-2">
@@ -198,15 +198,15 @@ onMounted(() => {
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10 dark:bg-violet-500/5' : 'border-sidebar'"
+                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="alert" class="sr-only" required />
-                  <div class="flex items-start">
+                  <div class="flex items-start w-full">
                     <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'alert'" class="h-2 w-2 rounded-full bg-white" />
+                      <div v-if="form.type === 'alert'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
                     </div>
                     <div>
                       <div class="flex items-center gap-2">
@@ -221,15 +221,15 @@ onMounted(() => {
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10 dark:bg-violet-500/5' : 'border-sidebar'"
+                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="block" class="sr-only" required />
-                  <div class="flex items-start">
+                  <div class="flex items-start w-full">
                     <div
-                      class="mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full border-2"
+                      class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'block' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <div v-if="form.type === 'block'" class="h-2 w-2 rounded-full bg-white" />
+                      <div v-if="form.type === 'block'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
                     </div>
                     <div>
                       <div class="flex items-center gap-2">
