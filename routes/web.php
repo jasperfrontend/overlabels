@@ -139,6 +139,15 @@ Route::get('/help/reference/{category?}/{slug?}', [HelpReferenceController::clas
     ->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
     ->name('help.reference');
 
+// Updates (blog-style platform announcements). Public: these are announcement
+// posts we want linkable from anywhere and indexable, so a login wall would
+// defeat the point. The controller only ever queries the published() scope
+// (published_at <= now), so future-dated posts stay invisible to guests.
+Route::prefix('updates')->name('updates.')->group(function () {
+    Route::get('/', [UpdateController::class, 'index'])->name('index');
+    Route::get('/{slug}', [UpdateController::class, 'show'])->name('show')->where('slug', '[a-z0-9-]+');
+});
+
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
@@ -533,12 +542,6 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
         Route::put('/{template}/triggers', [OverlayTemplateController::class, 'updateTriggers'])->name('triggers');
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
-    });
-
-    // Updates (blog-style platform announcements)
-    Route::prefix('updates')->name('updates.')->group(function () {
-        Route::get('/', [UpdateController::class, 'index'])->name('index');
-        Route::get('/{slug}', [UpdateController::class, 'show'])->name('show')->where('slug', '[a-z0-9-]+');
     });
 
     // Cloudinary uploads - all image uploads route through here so we can

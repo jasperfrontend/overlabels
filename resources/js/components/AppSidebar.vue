@@ -99,6 +99,7 @@ const learnNavItems = computed<NavItem[]>(() =>
 
 const helpNavItems: NavItem[] = [
   { title: 'Help', href: '/help', icon: BookOpen },
+  { title: 'Updates', href: '/updates', icon: Newspaper },
   { title: 'Conditional Tags', href: '/help/conditionals', icon: Brackets },
   { title: 'Controls', href: '/help/controls', icon: SlidersHorizontal },
   { title: 'Math Engine', href: '/help/math', icon: Sigma },

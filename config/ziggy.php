@@ -40,7 +40,7 @@ $hidden = [
 return [
     'groups' => [
         // Logged-out visitors: only the handful of genuinely public routes.
-        'guest' => ['login', 'home', 'help.*', 'privacy', 'terms'],
+        'guest' => ['login', 'home', 'help.*', 'updates.*', 'privacy', 'terms'],
         // Authenticated non-admins: everything except admin routes and the hidden set.
         'user' => array_merge(['*', '!admin.*'], $hidden),
         // Admins: everything except the hidden set (admin routes kept).
