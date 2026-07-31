@@ -10,6 +10,7 @@ import BuilderStylePanel from '@/components/builder/BuilderStylePanel.vue';
 import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilderState';
 import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
+import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 
 // The Builder editing surface inside the template edit page's Code tab.
 // The page owns saving: it calls compose()/serialize()/controlsForImport()
@@ -91,8 +92,7 @@ const setGrid = markDirty(state.setGrid);
 
 function onKeydown(e: KeyboardEvent) {
   if (!state.selectedId.value || pickerOpen.value) return;
-  const target = e.target as HTMLElement | null;
-  if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+  if (isTextEntryTarget(e.target)) return;
 
   const actions: Record<string, () => void> = {
     ArrowLeft: () => (e.shiftKey ? resize(-1, 0) : move(-1, 0)),

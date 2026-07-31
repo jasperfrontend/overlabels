@@ -18,6 +18,7 @@ import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
+import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 import { ExternalLink, Save } from '@lucide/vue';
 
 const props = defineProps<{
@@ -185,8 +186,7 @@ async function save() {
 // Keyboard: arrows move the selected block, shift+arrows resize, Delete removes.
 function onKeydown(e: KeyboardEvent) {
   if (!state.selectedId.value || pickerOpen.value || showPreview.value) return;
-  const target = e.target as HTMLElement | null;
-  if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+  if (isTextEntryTarget(e.target)) return;
 
   const id = state.selectedId.value;
   const actions: Record<string, () => void> = {
