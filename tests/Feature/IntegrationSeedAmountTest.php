@@ -100,6 +100,57 @@ test('seed rejects a negative amount', function (string $service) {
     expect(seededTotal($user, $service))->toBe('0');
 })->with($services);
 
+// --- Admin override ------------------------------------------------------------
+
+test('the admin override seeds the monetary total, not the donation count', function (string $service) {
+    // `donations_received` counts how many donations arrived; `total_received`
+    // is what they were worth. The admin panel wrote the euro amount into the
+    // counter, silently inflating it. Both controls exist here so the test can
+    // see the value land in one and leave the other alone.
+    $user = seedableUser($service);
+
+    OverlayControl::provisionServiceControl($user, $service, [
+        'key' => 'donations_received',
+        'type' => 'counter',
+        'label' => 'Donations Received',
+        'value' => '0',
+    ]);
+
+    $admin = User::factory()->create([
+        'twitch_id' => (string) fake()->unique()->randomNumber(9),
+        'role' => 'admin',
+    ]);
+
+    $this->actingAs($admin)
+        ->post("/admin/users/$user->id/integration-seed/$service", ['initial_count' => 65.35])
+        ->assertRedirect();
+
+    expect(seededTotal($user, $service))->toBe('65.35')
+        ->and(OverlayControl::where('user_id', $user->id)
+            ->where('source', $service)
+            ->where('key', 'donations_received')
+            ->value('value'))->toBe('0');
+})->with($services);
+
+test('the admin override accepts a seed the user already set as a decimal', function (string $service) {
+    // The admin form pre-fills from donations_seed_value and posts it straight
+    // back, so a user-set 65.35 has to survive the round trip.
+    $user = seedableUser($service);
+    $this->postJson("/settings/integrations/$service/seed-count", ['initial_count' => 65.35])->assertOk();
+
+    $admin = User::factory()->create([
+        'twitch_id' => (string) fake()->unique()->randomNumber(9),
+        'role' => 'admin',
+    ]);
+
+    $this->actingAs($admin)
+        ->post("/admin/users/$user->id/integration-seed/$service", ['initial_count' => 65.35])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect(seededTotal($user, $service))->toBe('65.35');
+})->with($services);
+
 test('a fractional seed survives a test-mode round trip', function (string $service) {
     // Turning test mode off resets service-managed controls, and the seeded
     // total is the one value that must come back instead of dropping to 0.

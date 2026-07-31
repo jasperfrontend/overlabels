@@ -32,7 +32,7 @@ Route::prefix('admin')
         Route::post('/users/{user}/integration-seed/{service}', [AdminUserController::class, 'updateIntegrationSeed'])
             ->name('users.integration-seed')
             ->withTrashed()
-            ->where('service', 'kofi|streamlabs|streamelements|fourthwall|bmac');
+            ->where('service', 'kofi|streamlabs|streamelements|fourthwall|bmac|throne');
 
         // Kits
         Route::get('/kits', [AdminKitController::class, 'index'])->name('kits.index');
