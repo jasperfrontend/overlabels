@@ -86,6 +86,9 @@ const move = markDirty((dx: number, dy: number) => state.move(state.selectedId.v
 const moveTo = (id: string, x: number, y: number) => {
   if (state.moveTo(id, x, y)) emit('dirty');
 };
+const resizeTo = (id: string, x: number, y: number, w: number, h: number) => {
+  if (state.setRect(id, x, y, w, h)) emit('dirty');
+};
 const resize = markDirty((dw: number, dh: number) => state.resize(state.selectedId.value!, dw, dh));
 const removeSelected = markDirty(() => state.remove(state.selectedId.value!));
 const setGrid = markDirty(state.setGrid);
@@ -137,6 +140,7 @@ defineExpose({
         @cell-click="onCellClick"
         @select="(id) => (state.selectedId.value = id)"
         @move-to="moveTo"
+        @resize-to="resizeTo"
         @sync-all="syncAllFromSource"
       />
 

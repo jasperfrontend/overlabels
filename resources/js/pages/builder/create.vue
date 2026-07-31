@@ -246,6 +246,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             @cell-click="onCellClick"
             @select="(id) => (state.selectedId.value = id)"
             @move-to="(id, x, y) => state.moveTo(id, x, y)"
+            @resize-to="(id, x, y, w, h) => state.setRect(id, x, y, w, h)"
             @sync-all="syncAllFromSource"
           />
 
