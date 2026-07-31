@@ -36,6 +36,22 @@ const EDGE_PX = 9;
 // handle as a share of the block keeps a middle to drag from at any size.
 const handleSize = (screenPx: number, cap: string) => `min(${px(screenPx)}, ${cap})`;
 
+// Both corner caps are shares of the block, so the chips that tuck in beside
+// them have to be inset by the same expression rather than a fixed number -
+// otherwise a small block insets its label further than the block is wide.
+const cornerInset = computed(() => handleSize(HANDLE_PX, '30%'));
+const edgeInset = computed(() => handleSize(EDGE_PX, '22%'));
+
+/**
+ * The name chip and the stale badge sit just inside the top corner grips.
+ * Flush to the corner they were sitting *under* the grab handles, which reads
+ * as the handle being part of the label.
+ */
+const chipStyle = computed(() => ({
+  top: edgeInset.value,
+  maxWidth: `calc(100% - ${cornerInset.value} - ${cornerInset.value})`,
+}));
+
 const outline = computed(() =>
   props.selected
     ? `${px(OUTLINE_SELECTED_PX)} solid var(--color-violet-500)`
@@ -136,15 +152,15 @@ const gridArea = computed(
       :title="placement.block_name"
     />
     <div
-      class="pointer-events-none absolute top-0 left-0 max-w-full truncate bg-sidebar-accent/90 font-mono text-foreground"
-      :style="{ fontSize: px(12), padding: `${px(1)} ${px(6)}` }"
+      class="pointer-events-none absolute truncate bg-sidebar-accent/90 font-mono text-foreground"
+      :style="{ ...chipStyle, left: cornerInset, fontSize: px(12), padding: `${px(1)} ${px(6)}` }"
     >
       {{ placement.block_name }}
     </div>
     <div
       v-if="sourceStale"
-      class="pointer-events-none absolute top-0 right-0 bg-amber-500/90 font-medium text-black"
-      :style="{ fontSize: px(10), padding: `${px(1)} ${px(6)}` }"
+      class="pointer-events-none absolute truncate bg-amber-500/90 font-medium text-black"
+      :style="{ ...chipStyle, right: cornerInset, fontSize: px(10), padding: `${px(1)} ${px(6)}` }"
       title="The source of this block changed since it was placed. Select it to refresh."
     >
       Source updated

@@ -1,5 +1,11 @@
 # CHANGELOG JULY 2026
 
+## August 1st, 2026 - ui(builder): move the block name out from under the resize grip
+
+Spotted by a friend of the author within seconds of seeing the canvas: the block-name chip sits flush in the top-left corner, which is now exactly where the northwest resize grip lives, so the grip reads as part of the label. The "Source updated" badge had the same problem in the top-right.
+
+Both chips now tuck in just past the corner grips. The inset reuses the same `min(px, %)` expression the handles are capped with rather than a fixed number, so on a small block - where a grip is a share of the block rather than 13px - the label insets by exactly as much as the grip actually took, instead of by more than the block is wide.
+
 ## August 1st, 2026 - feat(builder): drag-to-resize, and a canvas you can actually read
 
 Three complaints about the Builder canvas, all downstream of one thing: the canvas is drawn at 1920x1080 and scaled to fit, so every piece of UI chrome on it was being drawn at roughly a third of its intended size.
