@@ -449,11 +449,10 @@ Route::get('/auth/redirect/fw', [FourthwallIntegrationController::class, 'callba
     ->middleware('auth.redirect')
     ->name('auth.callback.fourthwall');
 
-Route::post('/logout', function () {
-    Auth::logout();
-
-    return redirect('/');
-});
+// Logout lives in routes/auth.php (named 'logout'). A duplicate POST /logout
+// closure used to sit here and never ran: RouteCollection keys on method+URI,
+// auth.php is required further down this file, and the later registration
+// wins. Editing it had no effect on anything.
 
 Route::middleware('auth.redirect')->group(function () {
 

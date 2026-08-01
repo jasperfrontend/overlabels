@@ -55,10 +55,22 @@ axios.interceptors.response.use(
 // the visit that is in flight. Prefetches are skipped: they are speculative,
 // and hijacking the tab off the back of one nobody clicked would be worse than
 // the dialog. Errors intentionally fall through to Inertia's default.
+//
+// Only GET visits are tracked. The visit URL is the URL the request STARTED
+// at, which only equals the URL the HTML came back from when nothing
+// redirected in between. A non-GET visit that ends on a plain HTML page got
+// there via a redirect by definition, so the visit URL is guaranteed to be the
+// wrong target - navigating to it re-issues the write as a GET, which is at
+// best a 404 and at worst a repeated action. (This is exactly how logout
+// broke: POST /logout redirected to '/', and the handler sent the browser to
+// GET /logout, which has no route.) Server side, the fix for a non-GET landing
+// on a Blade page is Inertia::location().
 let pendingVisitUrl: URL | null = null;
 
 router.on('start', (event) => {
-    pendingVisitUrl = event.detail.visit.prefetch ? null : event.detail.visit.url;
+    const { prefetch, method, url } = event.detail.visit;
+
+    pendingVisitUrl = prefetch || method !== 'get' ? null : url;
 });
 
 router.on('httpException', (event) => {
