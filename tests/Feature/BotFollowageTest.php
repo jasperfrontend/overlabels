@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +16,21 @@ beforeEach(function () {
         'services.twitch.client_secret' => 'test-client-secret',
     ]);
     Cache::flush();
+
+    // Freeze the clock, same as BotAccountageTest and for the same reason.
+    // HumanDuration walks calendar units, so now()->subMonths(N) run on a high
+    // day-of-month clamps into a short month and shifts the answer by a whole
+    // unit: on the 31st, subMonths(3) targets a 30-day month and comes back as
+    // "2 months, 30 days" instead of "3 months". That made the assertions below
+    // pass or fail depending on the date the suite happened to run. The 15th
+    // cannot overflow any month, and a frozen now() is identical to the
+    // controller's Carbon::now(), so the durations are exact rather than
+    // approximate.
+    Carbon::setTestNow(Carbon::create(2026, 6, 15, 12));
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
 });
 
 function followageOwner(string $login = 'streamer_b', string $twitchId = '99999999'): User
@@ -89,11 +105,10 @@ it('reports follow age when the chatter follows the channel', function () {
         'chatter_display_name' => 'Viewer',
     ])->assertOk()->json('reply');
 
-    expect($reply)
-        ->toContain('you have been following for')
-        ->toContain('2 years')
-        ->toContain('2 months')
-        ->toContain('30 days');
+    // Exact, not toContain: a frozen clock makes the span exactly 2y3m, so
+    // there is nothing to be approximate about, and the whole sentence is what
+    // chat actually sees.
+    expect($reply)->toBe('you have been following for 2 years, 3 months');
 });
 
 it('reports not-following when Helix returns an empty data array', function () {
@@ -142,9 +157,7 @@ it('resolves target_login via Helix users when provided', function () {
         'target_login' => 'targetuser',
     ])->assertOk()->json('reply');
 
-    expect($reply)
-        ->toContain('@TargetUser has been following for')
-        ->toContain('5 days');
+    expect($reply)->toBe('@TargetUser has been following for 5 days');
 });
 
 it('returns "no twitch user" when target_login does not resolve', function () {
