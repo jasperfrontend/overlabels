@@ -1,5 +1,24 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - feat(reference): integration controls are generated from the drivers now, not remembered
+
+The reference is a vault of hand-written markdown, which is the right call for Twitch tags: they change when Twitch changes, which is rarely and loudly. It is the wrong call for integration controls, which are defined in PHP and change whenever a driver does. Left to hand-maintenance, it had converged exactly where you would expect: 4 of 7 services documented, none of them completely, and every one of the four asserting that the shared donation schema covered "all four integrations" when seven drivers provision those same six keys.
+
+Finding them was itself the argument. Ko-fi's page was filed as `ko-fi-auto-provisioned-controls` while its service key is `kofi`, so it did not turn up in a search for the thing it documents. Buy Me a Coffee, Throne and GPS had no page at all.
+
+There is now an `integration-controls` category, emitted from `getAutoProvisionedControls()` on each registered driver. Eight pages: one per service, plus an index.
+
+- **`php artisan help:build-integration-controls`** reads `ExternalServiceRegistry` and writes the markdown. Adding a service to the registry adds its reference pages, its sitemap URLs and its rows in `help-reference-index.json`, with no separate documentation step to forget.
+- **The output is committed, not gitignored.** That way the diff appears in review when a driver changes, and - the part that made this cheap - every existing consumer keeps working untouched. The Blade pages, the sitemap, the JSON index and the Alt+R palette's Vite glob all already handle `.md` files. Zero consumers changed.
+- **`--check` fails when the committed files no longer match the drivers**, and a test runs it. Verified the way these things have to be verified: renamed one Ko-fi control label, watched it fail and name `kofi.md`, put it back.
+- **The shared six are separated from what each service adds**, because flattening them into one table is what makes someone think `latest_item_name` is portable. Ko-fi, StreamLabs, StreamElements and Fourthwall have exactly the six; Buy Me a Coffee adds one; Throne adds three. GPS shares none of them and is labelled as not using the schema at all rather than pretending to extend it.
+- **`ExternalServiceRegistry::displayName()`** now owns the service-name map. It was a private method on `IntegrationController` and a second inline copy in `AdminUserController`; the generator needed a third, which is how you end up with "Streamlabs" and "StreamLabs" both being correct somewhere. IntegrationController delegates now. AdminUserController still has its copy and could follow.
+- **`llms.txt` carries the shared-schema rule inline** and points at the generated index for exact keys, so a model reading the file alone learns that swapping `c:kofi:` for `c:streamlabs:` is a valid port.
+
+- **The four hand-written pages they replace are gone**, with 301s from their old URLs to the generated ones. They were filed under `eventsub-tags` despite documenting controls rather than EventSub tags, nothing anywhere linked to them, and their central claim had gone stale. The reference is the best-indexed part of the site, so retiring a page there means redirecting it, not deleting the URL.
+
+The Ko-fi, StreamLabs, StreamElements and Fourthwall `*-events` and `*-event-tags` entries are untouched: those document `event.*` payload fields, which is a different thing that is still hand-written for good reason.
+
 ## August 4th, 2026 - docs(llms): the homepage now says out loud that machines are welcome
 
 Yesterday's work gave `/llms.txt` a page pointing at it inside the reference. The reference is well indexed, so that was the right first move, but it left the strongest page on the site out of the chain: the homepage is plain Blade, canonical, priority 1.0, and the first thing anything crawls. Its only mention of the file was `<link rel="llms-txt">` in the head, which is exactly the non-link that started this whole problem.

@@ -161,6 +161,17 @@ Controls are named values the streamer owns and can change from the dashboard, f
 
 Registered services: `kofi`, `streamlabs`, `streamelements`, `fourthwall`, `bmac`, `throne`, `gps`.
 
+Every donation service provisions the same six keys, so swapping the prefix ports a template between
+them: `donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`,
+`latest_donation_currency`, `total_received`. Ko-fi, StreamLabs, StreamElements and Fourthwall have
+exactly those six; Buy Me a Coffee adds `latest_support_type`; Throne adds `latest_item_name`,
+`latest_item_thumbnail_url` and `latest_is_surprise_gift`. GPS is a different shape entirely and shares
+none of them.
+
+The exact key list per service is generated from the drivers rather than written by hand, so it cannot
+drift from the running app: `/help/reference/integration-controls/all-integration-controls`, with one
+page per service beside it.
+
 Referencing a service control in a template makes the overlay declare that dependency; if the copier has not connected that service they are warned but not blocked, and it starts working once they connect.
 
 ### 5.3 Lists - `[[[c:list:<slug>...]]]`
@@ -505,6 +516,7 @@ describe the machine-readable surfaces themselves:
 | `/help/reference/for-machines/llms-txt` | This file: what is in it, and how to hand it to an assistant |
 | `/help/reference/for-machines/markdown-endpoints` | The "append `.md`" convention |
 | `/help/reference/for-machines/help-reference-index-json` | The full tag catalogue as JSON |
+| `/help/reference/integration-controls/all-integration-controls` | Every control each integration provisions, generated from the drivers |
 
 **Two help URLs have no `.md` twin** and will return an app shell if you fetch them:
 
