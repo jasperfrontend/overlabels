@@ -95,16 +95,6 @@ class IntegrationController extends Controller
 
     private function serviceName(string $key): string
     {
-        return match ($key) {
-            'kofi' => 'Ko-fi',
-            'gps' => 'Overlabels GPS',
-            'streamlabs' => 'Streamlabs',
-            'streamelements' => 'StreamElements',
-            'throne' => 'Throne',
-            'patreon' => 'Patreon',
-            'fourthwall' => 'Fourthwall',
-            'bmac' => 'Buy Me a Coffee',
-            default => ucfirst($key),
-        };
+        return ExternalServiceRegistry::displayName($key);
     }
 }

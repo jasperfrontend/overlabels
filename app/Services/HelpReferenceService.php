@@ -16,6 +16,7 @@ class HelpReferenceService
         'eventsub-tags' => 'EventSub Tags',
         'eventsub-events' => 'EventSub Events',
         'foreach-loops' => 'Foreach Loops',
+        'integration-controls' => 'Integration Controls',
         'for-machines' => 'For Machines',
     ];
 
@@ -27,6 +28,7 @@ class HelpReferenceService
         'eventsub-tags',
         'eventsub-events',
         'foreach-loops',
+        'integration-controls',
         'for-machines',
     ];
 

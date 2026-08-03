@@ -17,11 +17,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   'eventsub-events': 'EventSub Events',
   'eventsub-tags': 'EventSub Tags',
   'foreach-loops': 'Foreach Loops',
+  'integration-controls': 'Integration Controls',
   'for-machines': 'For Machines',
 };
 
 // Mirrors HelpReferenceService::CATEGORY_ORDER - keep both in sync.
-const CATEGORY_ORDER = ['template-tags', 'eventsub-tags', 'eventsub-events', 'foreach-loops', 'for-machines'];
+const CATEGORY_ORDER = ['template-tags', 'eventsub-tags', 'eventsub-events', 'foreach-loops', 'integration-controls', 'for-machines'];
 
 const modules = import.meta.glob('/resources/help/reference/**/*.md', {
   query: '?raw',

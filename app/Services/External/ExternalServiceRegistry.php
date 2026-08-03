@@ -56,4 +56,28 @@ class ExternalServiceRegistry
     {
         return array_keys(static::$drivers);
     }
+
+    /**
+     * Human-facing name for a service key.
+     *
+     * Lives here rather than in a controller because the generated reference
+     * pages need it too, and a second hand-maintained copy is how "Streamlabs"
+     * and "StreamLabs" end up both being right somewhere. Patreon is listed
+     * without a driver on purpose: it is a known service name used in settings
+     * copy before any integration exists for it.
+     */
+    public static function displayName(string $service): string
+    {
+        return match ($service) {
+            'kofi' => 'Ko-fi',
+            'gps' => 'Overlabels GPS',
+            'streamlabs' => 'Streamlabs',
+            'streamelements' => 'StreamElements',
+            'throne' => 'Throne',
+            'patreon' => 'Patreon',
+            'fourthwall' => 'Fourthwall',
+            'bmac' => 'Buy Me a Coffee',
+            default => ucfirst($service),
+        };
+    }
 }

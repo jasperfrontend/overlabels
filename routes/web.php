@@ -136,6 +136,29 @@ Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');
 })->name('help.gamejam');
 
+// The hand-written per-service control pages were replaced by the generated
+// `integration-controls` category. They were filed under eventsub-tags despite
+// documenting controls, and they had gone stale - each claimed the shared
+// schema covered "all four integrations" when it is seven. These must be
+// declared BEFORE the catch-all reference route, which would otherwise match
+// them and 404 on the missing markdown. Reference pages are the best-indexed
+// part of the site, so they get 301s rather than dead URLs.
+// Keyed by old slug because it does not always match the service key: Ko-fi's
+// page was filed as `ko-fi-...` while the registry key is `kofi`, which is the
+// reason that entry survived a search for "kofi" in the first place.
+foreach ([
+    'ko-fi-auto-provisioned-controls' => 'kofi',
+    'streamlabs-auto-provisioned-controls' => 'streamlabs',
+    'streamelements-auto-provisioned-controls' => 'streamelements',
+    'fourthwall-auto-provisioned-controls' => 'fourthwall',
+] as $legacySlug => $service) {
+    Route::redirect(
+        "/help/reference/eventsub-tags/{$legacySlug}",
+        "/help/reference/integration-controls/{$service}",
+        301,
+    );
+}
+
 Route::get('/help/reference/{category?}/{slug?}', [HelpReferenceController::class, 'show'])
     ->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
     ->name('help.reference');
