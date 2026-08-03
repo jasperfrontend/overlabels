@@ -74,10 +74,27 @@ const filters = ref(normalizeFilters(props.filters));
 // pagination links carry it.
 const hiddenTypes = ref<string[]>(loadHiddenTypes());
 
+// The search term we last asked the server for. A response can only ever echo
+// something we already knew, so writing its `search` back into the box would
+// undo whatever has been typed since the request left - the network is always
+// at least one round trip behind the keyboard, and characters typed while a
+// request is in flight would disappear a beat after appearing. Anything that
+// does NOT match this is news (back/forward, a shared link), so we take it.
+let dispatchedSearch = filters.value.search;
+
 watch(
   () => props.filters,
   (newFilters) => {
-    filters.value = normalizeFilters(newFilters);
+    const incoming = normalizeFilters(newFilters);
+    const isOwnEcho = incoming.search === dispatchedSearch;
+
+    filters.value = {
+      ...incoming,
+      // The dropdowns can't be mid-edit, so they always take the server's word.
+      search: isOwnEcho ? filters.value.search : incoming.search,
+    };
+
+    if (!isOwnEcho) dispatchedSearch = incoming.search;
   },
   { deep: true },
 );
@@ -92,6 +109,8 @@ function buildQuery(): Record<string, string> {
 }
 
 function applyFilter() {
+  dispatchedSearch = filters.value.search;
+
   router.get(route('dashboard.events'), buildQuery(), {
     preserveState: true,
     preserveScroll: true,
