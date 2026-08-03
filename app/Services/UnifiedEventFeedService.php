@@ -128,6 +128,71 @@ class UnifiedEventFeedService
     }
 
     /**
+     * Delete explicitly picked rows. Ids are per-table and collide across the
+     * two sources, so callers pass them pre-split - `source === 'twitch'` picks
+     * twitch_events, every other source is a service name in external_events.
+     *
+     * The user_id scope is the authorization boundary, not a nicety:
+     * twitch_events.user_id is nullable (events for unknown broadcasters), so a
+     * bare whereIn would reach rows that belong to nobody.
+     *
+     * @param  array<int, int>  $twitchIds
+     * @param  array<int, int>  $externalIds
+     * @return int rows deleted
+     */
+    public function deleteByIds(int $userId, array $twitchIds, array $externalIds): int
+    {
+        return DB::transaction(function () use ($userId, $twitchIds, $externalIds): int {
+            $deleted = 0;
+
+            if (! empty($twitchIds)) {
+                $deleted += DB::table('twitch_events')
+                    ->where('user_id', $userId)
+                    ->whereIn('id', $twitchIds)
+                    ->delete();
+            }
+
+            if (! empty($externalIds)) {
+                $deleted += DB::table('external_events')
+                    ->where('user_id', $userId)
+                    // GPS rows never surface in this feed, so they can never be
+                    // picked from it either - guards a spoofed source value.
+                    ->where('service', '!=', 'gps')
+                    ->whereIn('id', $externalIds)
+                    ->delete();
+            }
+
+            return $deleted;
+        });
+    }
+
+    /**
+     * Delete every row matching the current feed filters, re-derived server-side
+     * rather than trusting a client-supplied id list. This is what backs
+     * "select all N matching these filters" - the filter UI doubles as the
+     * selector, so the user decides what counts as junk per cleanup.
+     *
+     * @param  array{search: string, source: string, event_type: string, hidden_types: array<int, string>, range: string}  $filters
+     * @return int rows deleted
+     */
+    public function deleteMatching(int $userId, array $filters): int
+    {
+        return DB::transaction(function () use ($userId, $filters): int {
+            $twitch = DB::table('twitch_events')->where('user_id', $userId);
+            $external = DB::table('external_events')
+                ->where('user_id', $userId)
+                ->where('service', '!=', 'gps');
+
+            // Same filter pass the read query uses, so what gets deleted is
+            // exactly what the page was showing. A source filter turns the other
+            // builder into `1 = 0`, which deletes nothing.
+            $this->applyFilters($twitch, $external, $filters);
+
+            return $twitch->delete() + $external->delete();
+        });
+    }
+
+    /**
      * @param  array{search: string, source: string, event_type: string, hidden_types: array<int, string>, range: string}  $filters
      */
     private function applyFilters(QueryBuilder $twitch, QueryBuilder $external, array $filters): void
@@ -168,8 +233,24 @@ class UnifiedEventFeedService
 
         if ($filters['search'] !== '') {
             $like = '%'.addcslashes($filters['search'], '%_\\').'%';
-            $twitch->whereRaw('event_data::text ILIKE ?', [$like]);
-            $external->whereRaw('normalized_payload::text ILIKE ?', [$like]);
+
+            // The event type is searched alongside the payload, because the
+            // words people read in the feed often live only in the type. A poll
+            // payload never contains the string "poll" - so searching "poll"
+            // used to find nothing, while "po" found polls by accident, via the
+            // "po" in the payload's `channel_points_voting` key.
+            //
+            // Both branches must stay grouped: an ungrouped orWhere would climb
+            // out past the user_id scope and the gps exclusion, and this same
+            // method backs deleteMatching().
+            $twitch->where(function (QueryBuilder $q) use ($like): void {
+                $q->whereRaw('event_data::text ILIKE ?', [$like])
+                    ->orWhere('event_type', 'ilike', $like);
+            });
+            $external->where(function (QueryBuilder $q) use ($like): void {
+                $q->whereRaw('normalized_payload::text ILIKE ?', [$like])
+                    ->orWhere('event_type', 'ilike', $like);
+            });
         }
     }
 }

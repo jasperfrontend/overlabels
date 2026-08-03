@@ -69,22 +69,23 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $recentTemplates = OverlayTemplate::where('owner_id', $user->id)
-            ->with('owner:id,name,avatar')
-            ->latest('updated_at')
-            ->limit(20)
-            ->get();
-
         $filters = $eventFeed->normalizeFilters($request);
         $paginator = $eventFeed->paginate($user->id, $filters, 20)->withQueryString();
-        $facets = $eventFeed->facets($user->id);
 
+        // Only the feed itself responds to a filter change, and search runs on
+        // every keystroke batch. The rest is deferred behind closures so a
+        // partial reload that asks for `recentEvents` alone does not also pay
+        // for the template list, the facet counts and the user's lists.
         return Inertia::render('dashboard/recents', [
-            'recentTemplates' => $recentTemplates,
+            'recentTemplates' => fn () => OverlayTemplate::where('owner_id', $user->id)
+                ->with('owner:id,name,avatar')
+                ->latest('updated_at')
+                ->limit(20)
+                ->get(),
             'recentEvents' => $paginator,
             'filters' => $filters,
-            'facets' => $facets,
-            'userLists' => $this->eventFeedLists($user->id),
+            'facets' => fn () => $eventFeed->facets($user->id),
+            'userLists' => fn () => $this->eventFeedLists($user->id),
         ]);
     }
 

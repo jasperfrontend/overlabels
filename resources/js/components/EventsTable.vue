@@ -15,11 +15,19 @@ const props = defineProps<{
   // session-authed dashboard routes; used by the events feed, which has no
   // session and no Inertia. Requires the token's `write` ability server-side.
   token?: string;
+  // Opt-in row selection for bulk delete. Only the session-authed recents page
+  // passes this - the token-authed feed shares this component but must not be
+  // able to destroy events.
+  selectable?: boolean;
+  // Selected row keys, `${source}:${id}`. Ids collide between twitch_events and
+  // external_events, so the source has to be part of the key.
+  selection?: string[];
 }>();
 
 const emit = defineEmits<{
   // Replay outcome for pages without Inertia flash messages (the events feed).
   'replay-result': [result: { message: string; type: string }];
+  'update:selection': [keys: string[]];
 }>();
 
 const replayingId = ref<number | null>(null);
@@ -37,6 +45,11 @@ const expandedGifts = ref<Set<number>>(new Set());
 interface DisplayRow {
   event: UnifiedEvent;
   recipients: UnifiedEvent[];
+  // Rows this one absorbed and that are therefore not rendered on their own:
+  // gift recipients, plus the bare sub that the resub pass hides. Selection has
+  // to carry them, otherwise deleting the visible row un-hides its leftovers
+  // and they reappear in the feed ungrouped.
+  covered: UnifiedEvent[];
 }
 
 const GIFT_EVENT = 'channel.subscription.gift';
@@ -56,6 +69,9 @@ const displayRows = computed<DisplayRow[]>(() => {
   const list = props.events;
   const claimed = new Set<number>();
   const recipientsByGift = new Map<number, UnifiedEvent[]>();
+  // Every hidden row, keyed by the visible row that swallowed it. All the
+  // grouping below is Twitch-only, so plain numeric ids are unambiguous here.
+  const coveredByOwner = new Map<number, UnifiedEvent[]>();
 
   // Walk oldest -> newest so "the next N recipients" reads naturally in time.
   const chronological = [...list].reverse();
@@ -82,7 +98,10 @@ const displayRows = computed<DisplayRow[]>(() => {
       recipients.push(sub);
     }
 
-    if (recipients.length > 0) recipientsByGift.set(gift.id, recipients);
+    if (recipients.length > 0) {
+      recipientsByGift.set(gift.id, recipients);
+      coveredByOwner.set(gift.id, [...recipients]);
+    }
   }
 
   // Second pass: drop the bare self-sub that Twitch emits alongside each resub.
@@ -97,7 +116,7 @@ const displayRows = computed<DisplayRow[]>(() => {
     const resubTime = Date.parse(resub.created_at);
 
     // Claim the closest unclaimed self-sub from the same user within the window.
-    let bestId = -1;
+    let best: UnifiedEvent | null = null;
     let bestDelta = Infinity;
     for (const sub of chronological) {
       if (claimed.has(sub.id)) continue;
@@ -109,19 +128,65 @@ const displayRows = computed<DisplayRow[]>(() => {
       const delta = Math.abs(Date.parse(sub.created_at) - resubTime);
       if (delta <= RESUB_DEDUP_WINDOW_MS && delta < bestDelta) {
         bestDelta = delta;
-        bestId = sub.id;
+        best = sub;
       }
     }
-    if (bestId >= 0) claimed.add(bestId);
+    if (best) {
+      claimed.add(best.id);
+      coveredByOwner.set(resub.id, [...(coveredByOwner.get(resub.id) ?? []), best]);
+    }
   }
 
   const rows: DisplayRow[] = [];
   for (const event of list) {
     if (claimed.has(event.id)) continue;
-    rows.push({ event, recipients: recipientsByGift.get(event.id) ?? [] });
+    rows.push({
+      event,
+      recipients: recipientsByGift.get(event.id) ?? [],
+      covered: coveredByOwner.get(event.id) ?? [],
+    });
   }
   return rows;
 });
+
+/* ----------------------------- Row selection ----------------------------- */
+
+function rowKey(event: UnifiedEvent): string {
+  return `${event.source}:${event.id}`;
+}
+
+// A row stands for itself plus everything it hid, so selecting it deletes the
+// whole visual group rather than stranding its recipients.
+function keysFor(event: UnifiedEvent, covered: UnifiedEvent[]): string[] {
+  return [rowKey(event), ...covered.map(rowKey)];
+}
+
+const selectedKeys = computed(() => new Set(props.selection ?? []));
+
+function isRowSelected(event: UnifiedEvent): boolean {
+  return selectedKeys.value.has(rowKey(event));
+}
+
+function toggleRow(event: UnifiedEvent, covered: UnifiedEvent[]) {
+  const next = new Set(selectedKeys.value);
+  const keys = keysFor(event, covered);
+  if (isRowSelected(event)) keys.forEach((k) => next.delete(k));
+  else keys.forEach((k) => next.add(k));
+  emit('update:selection', [...next]);
+}
+
+const pageKeys = computed(() => displayRows.value.flatMap((r) => keysFor(r.event, r.covered)));
+
+const allOnPageSelected = computed(
+  () => displayRows.value.length > 0 && displayRows.value.every((r) => isRowSelected(r.event)),
+);
+
+function togglePage() {
+  const next = new Set(selectedKeys.value);
+  if (allOnPageSelected.value) pageKeys.value.forEach((k) => next.delete(k));
+  else pageKeys.value.forEach((k) => next.add(k));
+  emit('update:selection', [...next]);
+}
 
 function isExpanded(id: number): boolean {
   return expandedGifts.value.has(id);
@@ -362,7 +427,25 @@ function relativeTime(iso: string): string {
 
 <template>
   <div class="flex flex-col gap-2 mt-4">
-    <div v-for="{ event, recipients } in displayRows" :key="`${event.source}-${event.id}`" class="flex flex-col gap-1">
+    <label
+      v-if="selectable && displayRows.length > 0"
+      class="mb-1 flex w-fit cursor-pointer items-center gap-2 text-xs text-foreground"
+    >
+      <input type="checkbox" class="cursor-pointer" :checked="allOnPageSelected" @change="togglePage" />
+      Select everything on this page
+    </label>
+
+    <div v-for="{ event, recipients, covered } in displayRows" :key="`${event.source}-${event.id}`" class="flex flex-col gap-1">
+    <div class="flex items-start gap-2">
+      <input
+        v-if="selectable"
+        type="checkbox"
+        class="mt-2 shrink-0 cursor-pointer"
+        :checked="isRowSelected(event)"
+        :aria-label="`Select ${who(event) ? who(event) + ' ' : ''}${label(event)}`"
+        @change="toggleRow(event, covered)"
+      />
+    <div class="min-w-0 flex-1">
     <Popover
       :open="confirmingId === event.id"
       @update:open="(open: boolean) => (confirmingId = open && canReplay(event) ? event.id : null)"
@@ -435,6 +518,8 @@ function relativeTime(iso: string): string {
         <span class="font-medium">{{ who(recipient) }}</span>
         <span v-if="details(recipient)" class="text-foreground/70">{{ details(recipient) }}</span>
       </div>
+    </div>
+    </div>
     </div>
     </div>
 
