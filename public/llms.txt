@@ -496,13 +496,23 @@ Inertia/Vue page and will give you an app shell, not prose - always use the `.md
 | Why Ko-fi | `/help/why-kofi.md` |
 | Free resources | `/help/resources.md` |
 
-**Three help URLs have no `.md` twin** and will return an app shell if you fetch them:
+**The reference vault is plain server-rendered HTML** and needs no `.md` suffix. Every entry lives at
+`/help/reference/{category}/{slug}` and each one is listed individually in `sitemap.xml`. Three of them
+describe the machine-readable surfaces themselves:
+
+| Page | What it covers |
+|---|---|
+| `/help/reference/for-machines/llms-txt` | This file: what is in it, and how to hand it to an assistant |
+| `/help/reference/for-machines/markdown-endpoints` | The "append `.md`" convention |
+| `/help/reference/for-machines/help-reference-index-json` | The full tag catalogue as JSON |
+
+**Two help URLs have no `.md` twin** and will return an app shell if you fetch them:
 
 - `/help/integration-presets` - searchable preset catalogue, rendered live from source data. The same
   information is described in §5.2 above and on `/help/controls.md`.
-- `/help/reference` - fuzzy-search UI over the reference vault. Machine-readable as JSON at
-  `/help-reference-index.json`.
 - `/help/gamejam` - Chat Castle documentation, still a Vue page.
 
 - Overlabels: https://overlabels.com
 - Help index (human): https://overlabels.com/help
+- This file, explained: https://overlabels.com/help/reference/for-machines/llms-txt
+- Full tag catalogue as JSON: https://overlabels.com/help-reference-index.json

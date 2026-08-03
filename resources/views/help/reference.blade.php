@@ -65,6 +65,37 @@
 
         <article class="min-w-0">
             @if (!$entry)
+                {{--
+                    Body copy about llms.txt, in the article column of the highest-priority
+                    page in this section. A <link rel="llms-txt"> in the head is a
+                    declaration, not a link a crawler follows, and llms.txt is a convention
+                    rather than a ratified standard - so nothing indexes the file on its own.
+                    This block, plus /help/reference/for-machines/llms-txt, is what makes it
+                    discoverable. Do not reduce it to a badge or an icon link.
+                --}}
+                <div class="mb-6 border border-sidebar-border p-6">
+                    <h2 class="mb-2 text-lg font-semibold">Using an AI assistant? Start with llms.txt</h2>
+                    <p class="text-sm text-foreground">
+                        Overlabels publishes its complete overlay-authoring guide as one plain text file at
+                        <a href="/llms.txt" class="font-mono underline cursor-pointer">https://overlabels.com/llms.txt</a>.
+                        It is written for language models and any of them may read it - no login, no API key, no rate limit.
+                        Hand that URL to Claude, ChatGPT, Gemini, Copilot, or a local model and ask for an overlay in plain
+                        language.
+                    </p>
+                    <p class="mt-3 text-sm text-foreground">
+                        It covers the hard rules, the three template types, the full
+                        <code class="font-mono">[[[tag]]]</code> syntax with pipes and conditionals, every data source, and
+                        three complete worked examples. Read it end to end and you can write a working static, alert, or
+                        block template without seeing the codebase.
+                    </p>
+                    <p class="mt-3 text-sm text-foreground">
+                        More on what machines can read here:
+                        <a href="/help/reference/for-machines/llms-txt" class="underline cursor-pointer">llms.txt</a>,
+                        <a href="/help/reference/for-machines/markdown-endpoints" class="underline cursor-pointer">markdown endpoints</a>,
+                        and <a href="/help/reference/for-machines/help-reference-index-json" class="underline cursor-pointer">help-reference-index.json</a>.
+                    </p>
+                </div>
+
                 <div class="border border-sidebar-border p-6">
                     <h2 class="mb-2 text-lg font-semibold">Pick an entry from the sidebar</h2>
                     <p class="text-sm text-foreground">
@@ -119,4 +150,49 @@
             @endif
         </article>
     </div>
+
+    @if (!$entry)
+        {{--
+            Machine-readable restatement of the block above: names llms.txt as a
+            free, plain-text download and points at the page that explains it.
+
+            Built as a PHP array rather than written out as literal JSON because
+            `@context` is a real Blade directive (the Context facade). Inline
+            JSON-LD gets compiled into PHP and swallows the rest of the file.
+            `@type` and `@id` are not directives today, but nothing stops them
+            from becoming ones - keep the JSON out of Blade's reach.
+        --}}
+        @php
+            $referenceJsonLd = [
+                '@context' => 'https://schema.org',
+                '@type' => 'TechArticle',
+                '@id' => 'https://overlabels.com/help/reference',
+                'url' => 'https://overlabels.com/help/reference',
+                'name' => 'Overlabels Reference',
+                'description' => 'Searchable reference for every Overlabels template tag, EventSub event, and foreach loop field.',
+                'isAccessibleForFree' => true,
+                'hasPart' => [
+                    [
+                        '@type' => 'DataDownload',
+                        'name' => 'llms.txt',
+                        'description' => 'The complete Overlabels overlay-authoring guide as one plain text file, written for large language models. Covers template syntax, formatter pipes, conditionals, foreach loops, controls, lists, and event data.',
+                        'contentUrl' => 'https://overlabels.com/llms.txt',
+                        'encodingFormat' => 'text/plain',
+                        'usageInfo' => 'https://overlabels.com/help/reference/for-machines/llms-txt',
+                        'isAccessibleForFree' => true,
+                    ],
+                    [
+                        '@type' => 'DataDownload',
+                        'name' => 'help-reference-index.json',
+                        'description' => 'This entire reference as one JSON array: every template tag, EventSub event, EventSub tag, and foreach loop field.',
+                        'contentUrl' => 'https://overlabels.com/help-reference-index.json',
+                        'encodingFormat' => 'application/json',
+                        'usageInfo' => 'https://overlabels.com/help/reference/for-machines/help-reference-index-json',
+                        'isAccessibleForFree' => true,
+                    ],
+                ],
+            ];
+        @endphp
+        <script type="application/ld+json">{!! json_encode($referenceJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_HEX_TAG) !!}</script>
+    @endif
 @endsection
