@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import EventsTable from '@/components/EventsTable.vue';
-import EmptyState from '@/components/EmptyState.vue';
+import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -376,26 +376,12 @@ function eventTypeLabel(type: string): string {
     <div v-else-if="initialized" class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.length > 0" :events="events" :token="token" @replay-result="onReplayResult" />
 
-      <!-- The advice is only useful if it names a filter that is actually set,
-           and the search box may be hidden behind the collapsed filter panel,
-           so the way out is offered here rather than described. -->
-      <EmptyState v-else>
-        <template v-if="filters.search">
-          No events match <span class="font-medium text-foreground">"{{ filters.search }}"</span>.
-          <button
-            type="button"
-            class="cursor-pointer underline underline-offset-2 hover:text-foreground"
-            @click="clearSearch"
-          >
-            Clear the search</button><template v-if="filters.range !== 'all'"> or widen the time range</template>.
-        </template>
-        <template v-else-if="filters.range !== 'all'">
-          No events in this time range. Try widening it.
-        </template>
-        <template v-else>
-          No events match your filters.
-        </template>
-      </EmptyState>
+      <EventsEmptyState
+        v-else
+        :search="filters.search"
+        :range="filters.range"
+        @clear-search="clearSearch"
+      />
 
       <div v-if="meta.last_page > 1" class="mt-4 flex items-center justify-between gap-2 pb-2 text-sm">
         <button
