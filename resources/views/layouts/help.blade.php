@@ -24,6 +24,14 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
+    {{--
+        These reference pages are the only server-rendered HTML documentation on
+        the site (every /help/* prose page is an Inertia shell), so they are the
+        pages a crawler actually reads. Declare llms.txt here too - app.blade.php
+        and welcome.blade.php already do.
+    --}}
+    <link rel="llms-txt" type="text/plain" href="/llms.txt" title="Overlabels authoring guide for LLMs">
+
     <title>{{ $pageTitle ?? 'Reference - Overlabels' }}</title>
     <meta name="description" content="{{ $pageDescription ?? '' }}" />
     @if (!empty($canonicalUrl))
@@ -73,6 +81,14 @@
     <main class="mx-auto max-w-6xl px-4 py-6">
         @yield('content')
     </main>
+
+    <footer class="border-t border-sidebar-border">
+        <div class="mx-auto max-w-6xl px-4 py-4 text-xs text-foreground">
+            Building an overlay with an AI assistant? The complete authoring guide is one plain text file:
+            <a href="/llms.txt" class="font-mono underline cursor-pointer">https://overlabels.com/llms.txt</a>
+            (<a href="/help/reference/for-machines/llms-txt" class="underline cursor-pointer">what is this?</a>).
+        </div>
+    </footer>
 
     <div id="help-toast-root" aria-live="polite" aria-atomic="true"></div>
 </body>

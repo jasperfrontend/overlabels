@@ -1,5 +1,20 @@
 # CHANGELOG AUGUST 2026
 
+## August 3rd, 2026 - docs(llms): llms.txt now has a page pointing at it, because a meta tag is not a link
+
+Overlabels has published a complete overlay-authoring guide at `/llms.txt` for a while, and every attempt to get an assistant to actually read it ran into the same wall: it would not fetch a URL nothing had indexed, and nothing would index a URL nothing linked to. The `<link rel="llms-txt">` in the document head reads like a link but is not one - crawlers follow anchors, and `llms.txt` is a convention rather than a ratified standard, so no crawler goes looking for it on its own. The file was published and invisible.
+
+It now has a page whose whole subject is the file, on the one part of this site a crawler can actually read.
+
+- **`/help/reference/for-machines/llms-txt`.** The reference vault is plain server-rendered Blade - every `/help/*` prose page is an Inertia shell that hands a fetcher ~27KB of `<head>` and no words. So the reference is the only crawlable HTML documentation on the site, and that is where this belongs. The entry says what the file contains, states in plain language that any model may read it, and includes a copy-pasteable prompt for handing the URL to an assistant.
+- **Two neighbours, so the category is not a lonely SEO page.** `markdown-endpoints` documents the "append `.md` to any help URL" convention, and `help-reference-index-json` documents the full tag catalogue as JSON. All three were already described inside `llms.txt` itself, with nowhere on the web to point at.
+- **Body copy on `/help/reference` proper**, in the article column above the fold - the highest-priority page in the section, and the first thing in `<main>`. Not a badge, not an icon link. There is a comment in the Blade saying so.
+- **A footer on every reference page**, so all 140 of them link to the file rather than just the index.
+- **JSON-LD** naming `llms.txt` as a free `DataDownload` with `encodingFormat: text/plain`, which is the machine-readable way to say the thing the prose says.
+- **The link is reciprocal now.** `llms.txt` §11 points back at the page that explains it, and `sitemap.xml` moved the file from priority 0.5 to 0.9 - nothing on this site matters more to a machine reader.
+- **`@context` is a Blade directive.** Writing the JSON-LD out as literal JSON compiled `"@context"` into a call to the Context facade and swallowed the rest of the template, which took the entire reference down with it. The structured data is built as a PHP array and `json_encode`d, so Blade never sees the `@`-prefixed keys. `@type` and `@id` are not directives today; nothing says they will not be.
+- **Eight tests pin the chain** from sitemap to index page to explainer to the file and back, including one that fails if `public/help-reference-index.json` is left unregenerated after a new entry is added.
+
 ## August 3rd, 2026 - ui(events): the events feed's empty state now offers the way out instead of describing it
 
 "No events match your filters. Try widening the time range or clearing search." Two problems: the advice was static, so it suggested clearing a search you had not typed and widening a range already set to All Time; and it described an action rather than offering one, while the filter panel it refers to is collapsible, so the search box was often not even on screen.

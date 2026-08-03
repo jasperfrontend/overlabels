@@ -17,8 +17,11 @@ class SitemapController extends Controller
     private const STATIC_PATHS = [
         ['path' => '/', 'priority' => '1.0', 'changefreq' => 'weekly'],
         // Not an HTML page, but a sitemap may list any URL on the site, and this
-        // is the one file we most want a crawler to find on its own.
-        ['path' => '/llms.txt', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        // is the one file we most want a crawler to find on its own. Ranked just
+        // under the homepage: a sitemap priority is relative within the site, and
+        // nothing here matters more to a machine reader. Its explainer page at
+        // /help/reference/for-machines/llms-txt is what actually links to it.
+        ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/help', 'priority' => '0.8', 'changefreq' => 'monthly'],

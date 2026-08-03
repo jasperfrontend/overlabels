@@ -17,9 +17,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   'eventsub-events': 'EventSub Events',
   'eventsub-tags': 'EventSub Tags',
   'foreach-loops': 'Foreach Loops',
+  'for-machines': 'For Machines',
 };
 
-const CATEGORY_ORDER = ['template-tags', 'eventsub-tags', 'eventsub-events', 'foreach-loops'];
+// Mirrors HelpReferenceService::CATEGORY_ORDER - keep both in sync.
+const CATEGORY_ORDER = ['template-tags', 'eventsub-tags', 'eventsub-events', 'foreach-loops', 'for-machines'];
 
 const modules = import.meta.glob('/resources/help/reference/**/*.md', {
   query: '?raw',
@@ -44,7 +46,7 @@ const entries: HelpEntry[] = Object.entries(modules)
     const [, category, slug] = match;
     const body = raw.trim();
     // const tag = `[[[${slug}]]]`;
-    const tag = slug.includes("-") ? '' : `[[[${slug}]]]`;
+    const tag = slug.includes('-') ? '' : `[[[${slug}]]]`;
     return {
       category,
       categoryLabel: CATEGORY_LABELS[category] ?? humanize(category),
@@ -111,9 +113,7 @@ function preprocessMarkdown(md: string): string {
       // In prose, also preserve inline-code spans. Split on backticks, even
       // indexes are normal prose, odd are inline code content (kept as-is).
       const inlineParts = part.split(/(`[^`\n]*`)/g);
-      return inlineParts
-        .map((seg, j) => (j % 2 === 1 ? seg : rewriteWikilinks(seg)))
-        .join('');
+      return inlineParts.map((seg, j) => (j % 2 === 1 ? seg : rewriteWikilinks(seg))).join('');
     })
     .join('');
 }
