@@ -6,6 +6,7 @@ use App\Events\UserRegistered;
 use App\Http\Controllers\AlertMuteController;
 use App\Http\Controllers\CloudinaryUploadController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventDeletionController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\FreesoundController;
@@ -625,6 +626,10 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Replay a stored external (Ko-fi, etc.) event as an alert
     Route::post('/external-events/{externalEvent}/replay', [ExternalEventController::class, 'replay'])->name('external-events.replay');
+
+    // Bulk-remove rows from the recent-events feed (test events, bot spam).
+    // Spans both event tables, so it takes {source, id} pairs rather than ids.
+    Route::post('/events/bulk-delete', [EventDeletionController::class, 'destroy'])->name('events.bulk-delete');
 
     // Twitch events API - protected by authentication
     Route::prefix('/api/twitch/events')->middleware('auth:sanctum')->group(function () {

@@ -7,7 +7,7 @@ import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
-import { Check, ListPlus, Radio, RefreshCw } from '@lucide/vue';
+import { Check, ListPlus, Radio, RefreshCw, Trash2 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -125,6 +125,73 @@ watch(
   },
   { immediate: true }
 );
+
+/* ------------------ Bulk delete: clearing out the feed ------------------ */
+
+// Keys are `${source}:${id}` - ids collide between the two event tables, so the
+// source has to travel with them all the way to the server.
+const selection = ref<string[]>([]);
+// Set by the "select all N matching" hatch. When on, the server re-derives the
+// set from the filters instead of taking the id list, so it can reach rows that
+// were never rendered on this page.
+const selectAllMatching = ref(false);
+const confirmingDelete = ref(false);
+const deleting = ref(false);
+
+const deleteCount = computed(() =>
+  selectAllMatching.value ? props.recentEvents.total : selection.value.length,
+);
+
+// Offer the filter-scoped escape hatch whenever the picks cannot already cover
+// everything the current filters match.
+const showSelectAllHatch = computed(
+  () => !selectAllMatching.value && selection.value.length > 0 && props.recentEvents.total > selection.value.length,
+);
+
+// Anything that changes which rows are on screen invalidates the picks, and a
+// stale key from a previous page would delete a row the user can no longer see.
+watch(
+  () => props.recentEvents.data,
+  () => {
+    selection.value = [];
+    selectAllMatching.value = false;
+    confirmingDelete.value = false;
+  },
+);
+
+function clearSelection() {
+  selection.value = [];
+  selectAllMatching.value = false;
+  confirmingDelete.value = false;
+}
+
+function performDelete() {
+  if (deleting.value || deleteCount.value === 0) return;
+  deleting.value = true;
+
+  // Filters ride on the query string so the server can run them through the
+  // same normalizeFilters() the feed itself uses.
+  const query = new URLSearchParams(buildQuery()).toString();
+  const url = `${route('events.bulk-delete')}${query ? `?${query}` : ''}`;
+
+  const payload = selectAllMatching.value
+    ? { all: true }
+    : {
+        events: selection.value.map((key) => {
+          const split = key.indexOf(':');
+          return { source: key.slice(0, split), id: Number(key.slice(split + 1)) };
+        }),
+      };
+
+  router.post(url, payload, {
+    preserveScroll: true,
+    preserveState: true,
+    onFinish: () => {
+      deleting.value = false;
+      clearSelection();
+    },
+  });
+}
 
 const refreshing = ref(false);
 
@@ -542,7 +609,68 @@ const breadcrumbs = [
         </div>
 
         <div class="transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
-          <EventsTable v-if="recentEvents.data.length > 0" :events="recentEvents.data" />
+          <!-- Selection action bar. Doubles as the confirm step so the whole
+               interaction stays in place instead of opening a dialog. -->
+          <div
+            v-if="deleteCount > 0"
+            class="mb-3 rounded-sm border border-sidebar-border bg-sidebar p-3"
+          >
+            <template v-if="!confirmingDelete">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm text-foreground">
+                  {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }} selected
+                </span>
+                <button class="btn btn-danger btn-xs cursor-pointer" @click="confirmingDelete = true">
+                  <Trash2 class="h-3.5 w-3.5" />
+                  Delete
+                </button>
+                <button class="btn btn-chill btn-xs cursor-pointer" @click="clearSelection">Clear</button>
+              </div>
+              <button
+                v-if="showSelectAllHatch"
+                class="mt-2 cursor-pointer text-sm text-primary underline"
+                @click="selectAllMatching = true"
+              >
+                Select all {{ recentEvents.total }} events matching these filters
+              </button>
+            </template>
+
+            <div v-else class="flex flex-col gap-3">
+              <div>
+                <p class="text-sm font-medium text-foreground">
+                  Delete {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }}?
+                </p>
+                <p class="mt-1 text-sm text-foreground">
+                  This permanently removes them from your event feed, and they will no longer count
+                  toward your stream stats. Controls like donation counters are not affected.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <button
+                  class="btn btn-danger btn-xs cursor-pointer disabled:opacity-50"
+                  :disabled="deleting"
+                  @click="performDelete"
+                >
+                  {{ deleting ? 'Deleting...' : 'Yes, delete' }}
+                </button>
+                <button
+                  class="btn btn-chill btn-xs cursor-pointer disabled:opacity-50"
+                  :disabled="deleting"
+                  @click="confirmingDelete = false"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <EventsTable
+            v-if="recentEvents.data.length > 0"
+            :events="recentEvents.data"
+            selectable
+            :selection="selection"
+            @update:selection="selection = $event"
+          />
 
           <EmptyState
             v-else
