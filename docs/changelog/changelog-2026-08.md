@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 3rd, 2026 - ui(events): the events feed's empty state now offers the way out instead of describing it
+
+"No events match your filters. Try widening the time range or clearing search." Two problems: the advice was static, so it suggested clearing a search you had not typed and widening a range already set to All Time; and it described an action rather than offering one, while the filter panel it refers to is collapsible, so the search box was often not even on screen.
+
+The empty state now says which of your filters is actually responsible, quotes the search term back at you, and makes clearing it a button.
+
+- **Three branches, each one true.** A search is named and clearable; a narrowed time range is called out on its own; anything else falls back to the plain message. No sentence mentions a filter that is not set.
+- **`EmptyState` grew a default slot**, so callers that need markup in the copy can pass it while `message` keeps working. The slot falls back to `message`, and every existing caller passes a plain string or the named `action` slot, so nothing else changed.
+- **Clearing cancels the pending debounce** before it applies, so a keystroke still in flight cannot land after the clear and re-filter the list behind you.
+- **Only the token-authed feed has this so far.** `/dashboard/recents` and `/dashboard/events` still carry the old static sentence.
+
 ## August 3rd, 2026 - ui(events): the list-feed card on Recent Activity is collapsed by default
 
 "Send these events to a list" occupied most of the first screen of Recent Activity: a title, an explanatory paragraph, a status block, a three-column configuration grid, an event-type fieldset and a save button, all above the events you came to look at. Since the hash-authed feed route landed, mirroring events into a list is a cool thing to have rather than something you need on the way in, and it was pushing the actual point of the page below the fold.

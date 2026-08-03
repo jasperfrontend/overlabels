@@ -169,6 +169,15 @@ const debounceSearch = debounce(() => {
   applyFilter();
 }, 300);
 
+// Offered from the empty state, where the filter panel may well be collapsed
+// and the search box out of sight. Cancels any pending debounce so the cleared
+// value cannot be followed by a stale one.
+function clearSearch() {
+  debounceSearch.cancel();
+  filters.value.search = '';
+  applyFilter();
+}
+
 function goToPage(target: number) {
   if (target < 1 || target > meta.value.last_page || target === page.value) return;
   page.value = target;
@@ -367,7 +376,26 @@ function eventTypeLabel(type: string): string {
     <div v-else-if="initialized" class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.length > 0" :events="events" :token="token" @replay-result="onReplayResult" />
 
-      <EmptyState v-else message="No events match your filters. Try widening the time range or clearing search." />
+      <!-- The advice is only useful if it names a filter that is actually set,
+           and the search box may be hidden behind the collapsed filter panel,
+           so the way out is offered here rather than described. -->
+      <EmptyState v-else>
+        <template v-if="filters.search">
+          No events match <span class="font-medium text-foreground">"{{ filters.search }}"</span>.
+          <button
+            type="button"
+            class="cursor-pointer underline underline-offset-2 hover:text-foreground"
+            @click="clearSearch"
+          >
+            Clear the search</button><template v-if="filters.range !== 'all'"> or widen the time range</template>.
+        </template>
+        <template v-else-if="filters.range !== 'all'">
+          No events in this time range. Try widening it.
+        </template>
+        <template v-else>
+          No events match your filters.
+        </template>
+      </EmptyState>
 
       <div v-if="meta.last_page > 1" class="mt-4 flex items-center justify-between gap-2 pb-2 text-sm">
         <button
