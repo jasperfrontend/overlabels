@@ -83,10 +83,27 @@ function normalizeFilters(input?: FiltersShape) {
 
 const filters = ref(normalizeFilters(props.filters));
 
+// The search term we last asked the server for. A response can only ever echo
+// something we already knew, so writing its `search` back into the box would
+// undo whatever has been typed since the request left - the network is always
+// at least one round trip behind the keyboard, and characters typed while a
+// request is in flight would disappear a beat after appearing. Anything that
+// does NOT match this is news (back/forward, a shared link), so we take it.
+let dispatchedSearch = filters.value.search;
+
 watch(
   () => props.filters,
   (newFilters) => {
-    filters.value = normalizeFilters(newFilters);
+    const incoming = normalizeFilters(newFilters);
+    const isOwnEcho = incoming.search === dispatchedSearch;
+
+    filters.value = {
+      ...incoming,
+      // The dropdowns can't be mid-edit, so they always take the server's word.
+      search: isOwnEcho ? filters.value.search : incoming.search,
+    };
+
+    if (!isOwnEcho) dispatchedSearch = incoming.search;
   },
   { deep: true },
 );
@@ -101,15 +118,26 @@ function buildQuery(): Record<string, string> {
 }
 
 function applyFilter() {
+  dispatchedSearch = filters.value.search;
+
   router.get(route('dashboard.recents'), buildQuery(), {
     preserveState: true,
     preserveScroll: true,
+    // Search-as-you-type would otherwise leave a history entry per keystroke
+    // batch, so going back walks you through `t`, `te`, `tes` before leaving.
+    replace: true,
+    // Templates, facets and lists cannot change from a filter, and the
+    // controller defers them behind closures, so leaving them out keeps their
+    // queries off every keystroke as well as their bytes off the wire.
+    only: ['recentEvents', 'filters'],
   });
 }
 
+// Long enough to sit through the pause for a modifier key. A filter on a table
+// you are reading can afford to wait; it is not the whole UI.
 const debounceSearch = debounce(() => {
   applyFilter();
-}, 300);
+}, 500);
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
