@@ -9,7 +9,7 @@ The empty state now says which of your filters is actually responsible, quotes t
 - **Three branches, each one true.** A search is named and clearable; a narrowed time range is called out on its own; anything else falls back to the plain message. No sentence mentions a filter that is not set.
 - **`EmptyState` grew a default slot**, so callers that need markup in the copy can pass it while `message` keeps working. The slot falls back to `message`, and every existing caller passes a plain string or the named `action` slot, so nothing else changed.
 - **Clearing cancels the pending debounce** before it applies, so a keystroke still in flight cannot land after the clear and re-filter the list behind you.
-- **Only the token-authed feed has this so far.** `/dashboard/recents` and `/dashboard/events` still carry the old static sentence.
+- **All three feeds got it**, since the same sentence was copy-pasted across the token-authed feed, `/dashboard/recents` and `/dashboard/events`.
 
 ## August 3rd, 2026 - ui(events): the list-feed card on Recent Activity is collapsed by default
 

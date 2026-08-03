@@ -139,6 +139,15 @@ const debounceSearch = debounce(() => {
   applyFilter();
 }, 500);
 
+// Offered from the empty state. Cancels any pending debounce so the cleared
+// value cannot be followed by a stale one, and goes through applyFilter() so
+// the echo guard above records the empty term as dispatched.
+function clearSearch() {
+  debounceSearch.cancel();
+  filters.value.search = '';
+  applyFilter();
+}
+
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -727,10 +736,25 @@ const breadcrumbs = [
             @update:selection="selection = $event"
           />
 
-          <EmptyState
-            v-else
-            message="No events match your filters. Try widening the time range or clearing search."
-          />
+          <!-- The advice only names a filter that is actually set, and the
+               way out is offered here rather than described. -->
+          <EmptyState v-else>
+            <template v-if="filters.search">
+              No events match <span class="font-medium text-foreground">"{{ filters.search }}"</span>.
+              <button
+                type="button"
+                class="cursor-pointer underline underline-offset-2 hover:text-foreground"
+                @click="clearSearch"
+              >
+                Clear the search</button><template v-if="filters.range !== 'all'"> or widen the time range</template>.
+            </template>
+            <template v-else-if="filters.range !== 'all'">
+              No events in this time range. Try widening it.
+            </template>
+            <template v-else>
+              No events match your filters.
+            </template>
+          </EmptyState>
 
           <!-- Pagination -->
           <div v-if="recentEvents.last_page > 1" class="mt-6">
