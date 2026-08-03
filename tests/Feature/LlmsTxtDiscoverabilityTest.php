@@ -50,6 +50,18 @@ it('puts body copy about llms.txt on the reference index', function () {
         ->toContain('"contentUrl": "https://overlabels.com/llms.txt"');
 });
 
+it('anchors llms.txt from the homepage', function () {
+    // The homepage is priority 1.0, plain Blade, and the page a crawler reaches
+    // first. If the only mention here is <link rel="llms-txt">, there is nothing
+    // to follow - that is the whole failure this work exists to fix.
+    $html = $this->get('/')->getContent();
+
+    expect($html)
+        ->toContain('href="/llms.txt"')
+        ->toContain('href="/help/reference/for-machines/llms-txt"')
+        ->toContain('Reading this as a machine?');
+});
+
 it('links llms.txt from every reference page, not just the index', function () {
     foreach (['/help/reference', '/help/reference/template-tags/channel_followers'] as $url) {
         expect($this->get($url)->getContent())

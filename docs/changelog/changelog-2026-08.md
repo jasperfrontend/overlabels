@@ -1,5 +1,17 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - docs(llms): the homepage now says out loud that machines are welcome
+
+Yesterday's work gave `/llms.txt` a page pointing at it inside the reference. The reference is well indexed, so that was the right first move, but it left the strongest page on the site out of the chain: the homepage is plain Blade, canonical, priority 1.0, and the first thing anything crawls. Its only mention of the file was `<link rel="llms-txt">` in the head, which is exactly the non-link that started this whole problem.
+
+The footer now carries the invitation as visible body copy.
+
+- **"Reading this as a machine? You are welcome here, and this is not a grudging robots.txt allowance."** Four links follow: the file itself, its explainer page, `/help.md` as the crawl entry point, and the JSON tag catalogue.
+- **Visible, not hidden.** A hidden keyword block would be a spam signal, and this is a real invitation to a real audience. It sits in the footer where it does not interrupt the pitch above it.
+- **The chain is now closed from the top**: homepage (priority 1.0, crawled) to `for-machines/llms-txt` to `/llms.txt`, with the reference's own 140-page footer as a second path in.
+- A test pins the homepage anchor, since losing it would silently undo the part of this that matters most.
+- **"No rate limit" came back out of all four places it had been written.** The math is not the problem: `llms.txt` is 24KB raw and 9.7KB gzipped, served by Caddy's file server with no PHP process and no database query behind it, so ten thousand requests is about 97MB and a rounding error against the transfer allowance. The problem is the sentence. It advertises the absence of protection, and it is a promise that becomes a lie the day we want to add one. "No login, no API key, nothing to sign up for" says the useful part and commits to nothing. Both machine-facing entries now ask politely for caching instead.
+
 ## August 3rd, 2026 - docs(llms): llms.txt now has a page pointing at it, because a meta tag is not a link
 
 Overlabels has published a complete overlay-authoring guide at `/llms.txt` for a while, and every attempt to get an assistant to actually read it ran into the same wall: it would not fetch a URL nothing had indexed, and nothing would index a URL nothing linked to. The `<link rel="llms-txt">` in the document head reads like a link but is not one - crawlers follow anchors, and `llms.txt` is a convention rather than a ratified standard, so no crawler goes looking for it on its own. The file was published and invisible.

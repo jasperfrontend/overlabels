@@ -78,7 +78,7 @@
                     <p class="text-sm text-foreground">
                         Overlabels publishes its complete overlay-authoring guide as one plain text file at
                         <a href="/llms.txt" class="font-mono underline cursor-pointer">https://overlabels.com/llms.txt</a>.
-                        It is written for language models and any of them may read it - no login, no API key, no rate limit.
+                        It is written for language models and any of them may read it - no login, no API key, nothing to sign up for.
                         Hand that URL to Claude, ChatGPT, Gemini, Copilot, or a local model and ask for an overlay in plain
                         language.
                     </p>
