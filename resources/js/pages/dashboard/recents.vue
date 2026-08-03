@@ -7,7 +7,7 @@ import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
-import { Check, ListPlus, Radio, RefreshCw, Trash2 } from '@lucide/vue';
+import { Check, ChevronDown, ChevronRight, ListPlus, Radio, RefreshCw, Trash2 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -254,6 +254,10 @@ function eventTypeLabel(type: string): string {
 
 /* -------- Recent-events feed: point a list at this event stream -------- */
 
+// Collapsed by default: pointing a list at this stream is a nice-to-have, and
+// the page's job is letting you glance at what just happened.
+const feedPanelOpen = ref(false);
+
 const selectedListId = ref<number | null>(null);
 const feedEnabled = ref(false);
 const allTypes = ref(true);
@@ -464,21 +468,43 @@ const breadcrumbs = [
 
         <!-- Send these events to a list -->
         <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
-          <div class="flex items-start gap-3">
-            <ListPlus class="mt-0.5 h-5 w-5 shrink-0" />
-            <div class="min-w-0 flex-1 space-y-1">
-              <h3 class="font-semibold text-foreground">Send these events to a list</h3>
-              <p class="text-sm text-foreground">
-                Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay
-                (loop it with <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
-                <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app
-                <a href="/help/lists-realtime" class="text-violet-400 hover:underline" target="_blank">over websockets</a>.
-                Turning it on backfills the list with events that already happened.
-              </p>
-            </div>
-          </div>
+          <h3>
+            <button
+              type="button"
+              class="flex w-full cursor-pointer items-center gap-3 text-left"
+              :aria-expanded="feedPanelOpen"
+              aria-controls="feed-panel"
+              @click="feedPanelOpen = !feedPanelOpen"
+            >
+              <ListPlus class="h-5 w-5 shrink-0" />
+              <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                <span class="font-semibold text-foreground">Send these events to a list</span>
+                <!-- Collapsed, the one thing still worth surfacing is whether a
+                     feed is actually running, and only when one is - otherwise
+                     this is exactly the noise the collapse is here to remove. -->
+                <span
+                  v-if="!feedPanelOpen && activeFeeds.length > 0"
+                  class="flex items-center gap-1.5 text-xs text-foreground"
+                >
+                  <span class="h-2 w-2 shrink-0 rounded-full bg-green-500"></span>
+                  {{ activeFeeds.length }} {{ activeFeeds.length === 1 ? 'list' : 'lists' }} receiving
+                </span>
+              </span>
+              <ChevronDown v-if="feedPanelOpen" class="h-4 w-4 shrink-0" />
+              <ChevronRight v-else class="h-4 w-4 shrink-0" />
+            </button>
+          </h3>
 
-          <!-- Always-visible state: which lists are receiving events right now -->
+          <div v-if="feedPanelOpen" id="feed-panel">
+            <p class="mt-3 text-sm text-foreground">
+              Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay
+              (loop it with <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
+              <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app
+              <a href="/help/lists-realtime" class="text-violet-400 hover:underline" target="_blank">over websockets</a>.
+              Turning it on backfills the list with events that already happened.
+            </p>
+
+          <!-- Which lists are receiving events right now -->
           <div class="mt-4 border-t border-sidebar-border pt-4">
             <div v-if="activeFeeds.length === 0" class="flex items-center gap-2 text-sm text-foreground">
               <span class="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50"></span>
@@ -633,6 +659,7 @@ const breadcrumbs = [
               </span>
               <span v-else-if="selectedList && feedDirty" class="text-sm text-amber-500">Unsaved changes</span>
             </div>
+          </div>
           </div>
         </div>
 
