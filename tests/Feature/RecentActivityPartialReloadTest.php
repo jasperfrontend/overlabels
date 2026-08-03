@@ -77,6 +77,47 @@ it('omits the filter-independent props from a partial reload', function () {
         ->assertJsonMissingPath('props.userLists');
 });
 
+// A poll payload has no "poll" in it anywhere - the word only exists in the
+// event type. Searching "po" used to match polls purely by accident, through
+// the "po" in the payload's `channel_points_voting` key, so typing the word out
+// in full made results disappear.
+it('finds events by event type, not just by payload', function () {
+    $user = rpUser();
+    $poll = TwitchEvent::create([
+        'user_id' => $user->id,
+        'event_type' => 'channel.poll.end',
+        'event_data' => ['title' => 'Which game next', 'channel_points_voting' => ['is_enabled' => false]],
+        'twitch_timestamp' => now(),
+        'processed' => false,
+    ]);
+    rpEvent($user, 'Alice');
+
+    $this->actingAs($user)
+        ->get(route('dashboard.recents', ['search' => 'poll']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('recentEvents.data', 1)
+            ->where('recentEvents.data.0.id', $poll->id)
+        );
+});
+
+// The type match is an OR against the payload match. Ungrouped, it would climb
+// out past the user_id scope and show every user's polls to everybody.
+it('keeps the event-type search inside the user scope', function () {
+    $user = rpUser();
+    $other = rpUser();
+    TwitchEvent::create([
+        'user_id' => $other->id,
+        'event_type' => 'channel.poll.end',
+        'event_data' => ['title' => 'Not yours'],
+        'twitch_timestamp' => now(),
+        'processed' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard.recents', ['search' => 'poll']))
+        ->assertInertia(fn (Assert $page) => $page->has('recentEvents.data', 0));
+});
+
 it('still filters the feed on a partial reload', function () {
     $user = rpUser();
     rpEvent($user, 'spam_bot_9000');

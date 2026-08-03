@@ -213,6 +213,25 @@ it('honours the search filter against the stored payload', function () {
         ->and(TwitchEvent::find($real->id))->not->toBeNull();
 });
 
+// deleteMatching() shares applyFilters() with the feed, so the event-type
+// search reaches the delete path too - including its user scoping, which an
+// ungrouped OR would have broken in the most destructive possible way.
+it('honours an event-type search and stays inside the acting user', function () {
+    $user = bdUser();
+    $other = bdUser();
+    $mine = bdTwitchEvent($user, 'channel.poll.end', ['title' => 'Which game next']);
+    $follow = bdTwitchEvent($user, 'channel.follow');
+    $theirs = bdTwitchEvent($other, 'channel.poll.end', ['title' => 'Not yours']);
+
+    $this->actingAs($user)
+        ->post(route('events.bulk-delete').'?search=poll', ['all' => true])
+        ->assertRedirect();
+
+    expect(TwitchEvent::find($mine->id))->toBeNull()
+        ->and(TwitchEvent::find($follow->id))->not->toBeNull()
+        ->and(TwitchEvent::find($theirs->id))->not->toBeNull();
+});
+
 it('honours the range filter and spares older rows', function () {
     $user = bdUser();
     $recent = bdTwitchEvent($user);

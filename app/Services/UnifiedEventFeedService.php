@@ -233,8 +233,24 @@ class UnifiedEventFeedService
 
         if ($filters['search'] !== '') {
             $like = '%'.addcslashes($filters['search'], '%_\\').'%';
-            $twitch->whereRaw('event_data::text ILIKE ?', [$like]);
-            $external->whereRaw('normalized_payload::text ILIKE ?', [$like]);
+
+            // The event type is searched alongside the payload, because the
+            // words people read in the feed often live only in the type. A poll
+            // payload never contains the string "poll" - so searching "poll"
+            // used to find nothing, while "po" found polls by accident, via the
+            // "po" in the payload's `channel_points_voting` key.
+            //
+            // Both branches must stay grouped: an ungrouped orWhere would climb
+            // out past the user_id scope and the gps exclusion, and this same
+            // method backs deleteMatching().
+            $twitch->where(function (QueryBuilder $q) use ($like): void {
+                $q->whereRaw('event_data::text ILIKE ?', [$like])
+                    ->orWhere('event_type', 'ilike', $like);
+            });
+            $external->where(function (QueryBuilder $q) use ($like): void {
+                $q->whereRaw('normalized_payload::text ILIKE ?', [$like])
+                    ->orWhere('event_type', 'ilike', $like);
+            });
         }
     }
 }
