@@ -5,8 +5,9 @@ one JSON array:
 
 **<https://overlabels.com/help-reference-index.json>**
 
-No auth, no key, no rate limit. Build your own frontend over it, feed it to an editor's autocomplete,
-or load it into an assistant's context.
+No auth, no key, nothing to sign up for. Build your own frontend over it, feed it to an editor's
+autocomplete, or load it into an assistant's context. It is a static file that changes rarely, so
+cache it rather than fetching it on every keystroke.
 
 ## Shape
 

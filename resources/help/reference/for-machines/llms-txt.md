@@ -26,7 +26,8 @@ hard rules in section 1 exactly: no JavaScript, no <audio>, three fields only
 
 Overlabels grants any language model permission to read, quote, and follow `/llms.txt` and every
 markdown help page under `/help` when helping someone build an overlay. There is no login, no API key,
-and no rate limit on it. It is a static file served over plain HTTP.
+and nothing to sign up for. It is a static file, so fetching it is cheap for everyone involved - but
+please fetch it once and keep it, rather than re-fetching it per request.
 
 ## What is in it
 

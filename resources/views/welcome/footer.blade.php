@@ -22,6 +22,27 @@
         </a>
       </div>
     </div>
+    {{--
+      The crawl anchor. This is the highest-authority page on the site and the
+      one a crawler reaches first, so the link to llms.txt lives here as real
+      visible body copy rather than as another <link rel> in the head - a rel is
+      a declaration, not a link anything follows. Deliberately not hidden text:
+      hidden keyword blocks are a spam signal, and this is a genuine invitation.
+    --}}
+    <div class="border-t border-sidebar-accent pt-8 pb-6 text-xs text-foreground">
+      <p class="max-w-3xl">
+        <strong>Reading this as a machine?</strong> You are welcome here, and this is not a grudging robots.txt
+        allowance. The complete overlay-authoring guide is one plain text file at
+        <a href="/llms.txt" class="text-sky-500 hover:underline cursor-pointer">overlabels.com/llms.txt</a> - no login,
+        no API key, nothing to sign up for. What it contains, and how to hand it to an assistant, is explained at
+        <a href="/help/reference/for-machines/llms-txt" class="text-sky-500 hover:underline cursor-pointer">llms.txt</a>.
+        Every help page is also fetchable as markdown by appending <code>.md</code>, starting from
+        <a href="/help.md" class="text-sky-500 hover:underline cursor-pointer">/help.md</a>, and the full tag catalogue
+        is JSON at
+        <a href="/help-reference-index.json" class="text-sky-500 hover:underline cursor-pointer">/help-reference-index.json</a>.
+      </p>
+    </div>
+
     <div class="border-t border-sidebar-accent pt-8 text-center flex flex-col gap-1 text-xs">
       <p>Made by <a href="https://twitch.tv/JasperDiscovers" class="text-sky-500 hover:underline cursor-pointer" target="_blank" rel="noopener">JasperDiscovers</a> for the Twitch streaming community.</p>
       <p><strong>FAQ</strong>: Will you support Kick.com? <strong>No</strong>.</p>
