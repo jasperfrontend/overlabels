@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import EventsTable from '@/components/EventsTable.vue';
-import EmptyState from '@/components/EmptyState.vue';
+import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
 import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -168,6 +168,15 @@ function hideAllTypes() {
 const debounceSearch = debounce(() => {
   applyFilter();
 }, 300);
+
+// Offered from the empty state, where the filter panel may well be collapsed
+// and the search box out of sight. Cancels any pending debounce so the cleared
+// value cannot be followed by a stale one.
+function clearSearch() {
+  debounceSearch.cancel();
+  filters.value.search = '';
+  applyFilter();
+}
 
 function goToPage(target: number) {
   if (target < 1 || target > meta.value.last_page || target === page.value) return;
@@ -367,7 +376,12 @@ function eventTypeLabel(type: string): string {
     <div v-else-if="initialized" class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.length > 0" :events="events" :token="token" @replay-result="onReplayResult" />
 
-      <EmptyState v-else message="No events match your filters. Try widening the time range or clearing search." />
+      <EventsEmptyState
+        v-else
+        :search="filters.search"
+        :range="filters.range"
+        @clear-search="clearSearch"
+      />
 
       <div v-if="meta.last_page > 1" class="mt-4 flex items-center justify-between gap-2 pb-2 text-sm">
         <button

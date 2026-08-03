@@ -2,7 +2,9 @@
 import type { Component } from 'vue';
 
 withDefaults(defineProps<{
-  message: string;
+  // Plain-text message. Pass default slot content instead when the copy needs
+  // markup, such as an inline button that undoes whatever emptied the list.
+  message?: string;
   colspan?: number;
   icon?: Component;
   title?: string;
@@ -16,7 +18,7 @@ withDefaults(defineProps<{
   <!-- Table row variant — used inside <tbody> -->
   <tr v-if="colspan !== undefined">
     <td :colspan="colspan" class="px-3 py-6 text-center text-sm text-muted-foreground">
-      {{ message }}
+      <slot>{{ message }}</slot>
     </td>
   </tr>
 
@@ -30,7 +32,9 @@ withDefaults(defineProps<{
   >
     <component v-if="icon" :is="icon" class="mb-4 h-12 w-12 text-muted-foreground/50" />
     <h3 v-if="title" class="mb-2 text-lg font-semibold">{{ title }}</h3>
-    <p :class="['text-muted-foreground', title ? 'mb-6 max-w-sm text-sm' : 'text-sm']">{{ message }}</p>
+    <p :class="['text-muted-foreground', title ? 'mb-6 max-w-sm text-sm' : 'text-sm']">
+      <slot>{{ message }}</slot>
+    </p>
     <slot name="action" />
   </div>
 </template>

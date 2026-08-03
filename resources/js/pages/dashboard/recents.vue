@@ -5,12 +5,12 @@ import { Head, usePage, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import EmptyState from '@/components/EmptyState.vue';
+import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
 import { Check, ChevronDown, ChevronRight, ListPlus, Radio, RefreshCw, Trash2 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
-import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
+import { useEventFilters, type EventFiltersShape } from '@/composables/useEventFilters';
 import type { AppPageProps, OverlayTemplate } from '@/types';
 
 interface FeedList {
@@ -52,13 +52,6 @@ interface PaginatedEvents {
   current_page: number;
 }
 
-interface FiltersShape {
-  search?: string;
-  source?: string;
-  event_type?: string;
-  range?: string;
-}
-
 interface FilterFacets {
   sources: string[];
   event_types: string[];
@@ -67,46 +60,10 @@ interface FilterFacets {
 const props = defineProps<{
   recentTemplates: OverlayTemplate[];
   recentEvents: PaginatedEvents;
-  filters?: FiltersShape;
+  filters?: EventFiltersShape;
   facets: FilterFacets;
   userLists: FeedList[];
 }>();
-
-function normalizeFilters(input?: FiltersShape) {
-  return {
-    search: input?.search || '',
-    source: input?.source || '',
-    event_type: input?.event_type || '',
-    range: input?.range || 'all',
-  };
-}
-
-const filters = ref(normalizeFilters(props.filters));
-
-// The search term we last asked the server for. A response can only ever echo
-// something we already knew, so writing its `search` back into the box would
-// undo whatever has been typed since the request left - the network is always
-// at least one round trip behind the keyboard, and characters typed while a
-// request is in flight would disappear a beat after appearing. Anything that
-// does NOT match this is news (back/forward, a shared link), so we take it.
-let dispatchedSearch = filters.value.search;
-
-watch(
-  () => props.filters,
-  (newFilters) => {
-    const incoming = normalizeFilters(newFilters);
-    const isOwnEcho = incoming.search === dispatchedSearch;
-
-    filters.value = {
-      ...incoming,
-      // The dropdowns can't be mid-edit, so they always take the server's word.
-      search: isOwnEcho ? filters.value.search : incoming.search,
-    };
-
-    if (!isOwnEcho) dispatchedSearch = incoming.search;
-  },
-  { deep: true },
-);
 
 function buildQuery(): Record<string, string> {
   const params: Record<string, string> = {};
@@ -117,27 +74,24 @@ function buildQuery(): Record<string, string> {
   return params;
 }
 
-function applyFilter() {
-  dispatchedSearch = filters.value.search;
-
-  router.get(route('dashboard.recents'), buildQuery(), {
-    preserveState: true,
-    preserveScroll: true,
-    // Search-as-you-type would otherwise leave a history entry per keystroke
-    // batch, so going back walks you through `t`, `te`, `tes` before leaving.
-    replace: true,
-    // Templates, facets and lists cannot change from a filter, and the
-    // controller defers them behind closures, so leaving them out keeps their
-    // queries off every keystroke as well as their bytes off the wire.
-    only: ['recentEvents', 'filters'],
-  });
-}
-
-// Long enough to sit through the pause for a modifier key. A filter on a table
-// you are reading can afford to wait; it is not the whole UI.
-const debounceSearch = debounce(() => {
-  applyFilter();
-}, 500);
+const { filters, applyFilter, debounceSearch, clearSearch } = useEventFilters({
+  serverFilters: () => props.filters,
+  // Long enough to sit through the pause for a modifier key. A filter on a
+  // table you are reading can afford to wait; it is not the whole UI.
+  debounceMs: 500,
+  apply: () =>
+    router.get(route('dashboard.recents'), buildQuery(), {
+      preserveState: true,
+      preserveScroll: true,
+      // Search-as-you-type would otherwise leave a history entry per keystroke
+      // batch, so going back walks you through `t`, `te`, `tes` before leaving.
+      replace: true,
+      // Templates, facets and lists cannot change from a filter, and the
+      // controller defers them behind closures, so leaving them out keeps their
+      // queries off every keystroke as well as their bytes off the wire.
+      only: ['recentEvents', 'filters'],
+    }),
+});
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -727,9 +681,11 @@ const breadcrumbs = [
             @update:selection="selection = $event"
           />
 
-          <EmptyState
+          <EventsEmptyState
             v-else
-            message="No events match your filters. Try widening the time range or clearing search."
+            :search="filters.search"
+            :range="filters.range"
+            @clear-search="clearSearch"
           />
 
           <!-- Pagination -->

@@ -1,5 +1,19 @@
 # CHANGELOG AUGUST 2026
 
+## August 3rd, 2026 - ui(events): the events feed's empty state now offers the way out instead of describing it
+
+"No events match your filters. Try widening the time range or clearing search." Two problems: the advice was static, so it suggested clearing a search you had not typed and widening a range already set to All Time; and it described an action rather than offering one, while the filter panel it refers to is collapsible, so the search box was often not even on screen.
+
+The empty state now says which of your filters is actually responsible, quotes the search term back at you, and makes clearing it a button.
+
+- **Three branches, each one true.** A search is named and clearable; a narrowed time range is called out on its own; anything else falls back to the plain message. No sentence mentions a filter that is not set.
+- **`EmptyState` grew a default slot**, so callers that need markup in the copy can pass it while `message` keeps working. The slot falls back to `message`, and every existing caller passes a plain string or the named `action` slot, so nothing else changed.
+- **Clearing cancels the pending debounce** before it applies, so a keystroke still in flight cannot land after the clear and re-filter the list behind you.
+- **All three feeds got it**, since the same sentence was copy-pasted across the token-authed feed, `/dashboard/recents` and `/dashboard/events`.
+- **`/dashboard/events` also got the echo guard** that Recent Activity received earlier the same day. It had been carrying the identical character-eating search box the whole time - same wholesale replacement of the local filter object on every response, same one-round-trip-stale value written back into the field being typed in. Found while adding the empty state to the same file.
+- **Then all of it got deduplicated**, because writing the same guard twice is how the second page came to be missing it in the first place. `useEventFilters` now owns the filter ref, the echo guard, the debounce and the clear for both Inertia feeds; `EventsEmptyState` owns the empty copy for all three. 200 lines out of the three consumers, ~90 back as shared code, and one place left to get it wrong.
+- **The token-authed feed deliberately does not use the composable.** Its filters are local state that never round-trips through props, so it has no echo to guard against - wiring it through a watcher that watches nothing would be indirection bought with no bug fixed. It shares the empty state and nothing else.
+
 ## August 3rd, 2026 - ui(events): the list-feed card on Recent Activity is collapsed by default
 
 "Send these events to a list" occupied most of the first screen of Recent Activity: a title, an explanatory paragraph, a status block, a three-column configuration grid, an event-type fieldset and a save button, all above the events you came to look at. Since the hash-authed feed route landed, mirroring events into a list is a cool thing to have rather than something you need on the way in, and it was pushing the actual point of the page below the fold.

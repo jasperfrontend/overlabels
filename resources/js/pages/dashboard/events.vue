@@ -4,10 +4,10 @@ import { Head, usePage, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import EmptyState from '@/components/EmptyState.vue';
+import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
-import debounce from 'lodash/debounce';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
+import { useEventFilters, type EventFiltersShape } from '@/composables/useEventFilters';
 import { loadHiddenTypes, saveHiddenTypes } from '@/utils/hiddenEventTypes';
 import type { AppPageProps } from '@/types';
 
@@ -38,12 +38,9 @@ interface PaginatedEvents {
   current_page: number;
 }
 
-interface FiltersShape {
-  search?: string;
-  source?: string;
-  event_type?: string;
+/** Adds the per-device event-type filter this page mirrors into the query. */
+interface FiltersShape extends EventFiltersShape {
   hidden_types?: string[];
-  range?: string;
 }
 
 interface FilterFacets {
@@ -58,29 +55,10 @@ const props = defineProps<{
   alertsMuted: boolean;
 }>();
 
-function normalizeFilters(input?: FiltersShape) {
-  return {
-    search: input?.search || '',
-    source: input?.source || '',
-    event_type: input?.event_type || '',
-    range: input?.range || 'all',
-  };
-}
-
-const filters = ref(normalizeFilters(props.filters));
-
 // Subtractive event-type filter, persisted per device. Source of truth is
 // localStorage; we mirror it into the query string so the server filters and
 // pagination links carry it.
 const hiddenTypes = ref<string[]>(loadHiddenTypes());
-
-watch(
-  () => props.filters,
-  (newFilters) => {
-    filters.value = normalizeFilters(newFilters);
-  },
-  { deep: true },
-);
 
 function buildQuery(): Record<string, string> {
   const params: Record<string, string> = {};
@@ -91,12 +69,14 @@ function buildQuery(): Record<string, string> {
   return params;
 }
 
-function applyFilter() {
-  router.get(route('dashboard.events'), buildQuery(), {
-    preserveState: true,
-    preserveScroll: true,
-  });
-}
+const { filters, applyFilter, debounceSearch, clearSearch } = useEventFilters({
+  serverFilters: () => props.filters,
+  apply: () =>
+    router.get(route('dashboard.events'), buildQuery(), {
+      preserveState: true,
+      preserveScroll: true,
+    }),
+});
 
 function isTypeVisible(type: string): boolean {
   return !hiddenTypes.value.includes(type);
@@ -132,10 +112,6 @@ onMounted(() => {
     applyFilter();
   }
 });
-
-const debounceSearch = debounce(() => {
-  applyFilter();
-}, 300);
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -310,7 +286,12 @@ function eventTypeLabel(type: string): string {
     <div class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.data.length > 0" :events="events.data" />
 
-      <EmptyState v-else message="No events match your filters. Try widening the time range or clearing search." />
+      <EventsEmptyState
+        v-else
+        :search="filters.search"
+        :range="filters.range"
+        @clear-search="clearSearch"
+      />
 
       <div v-if="events.last_page > 1" class="mt-4">
         <Pagination :links="events.links" :from="events.from" :to="events.to" :total="events.total" />
