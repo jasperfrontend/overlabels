@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - docs(readme): the README documented 2 of 5 donation integrations
+
+Opened the README expecting to strip StreamElements out of it and found there was nothing to strip - the External Integrations section never covered it. What it did cover was Ko-fi and StreamLabs, and nothing else. Fourthwall, Buy Me a Coffee and Throne have all shipped since that section was written, so the front door of the repo was describing 2 of the 5 donation services that actually exist.
+
+- **The shared six-key schema is stated once, up front.** Writing out the same six-row table five times would have tripled the section for no information gain. Stating it once and letting each service list only what it adds beyond the six is also the honest shape of the thing - the portability of a template between services *is* the feature, and a repeated table buries it.
+- **The auto-provision claim was wrong in the first draft and got caught before commit.** "All five provision six controls on connect" reads plausibly and is false: only StreamLabs and Fourthwall call `provision()` on connect. Ko-fi, BMAC and Throne rely on the user adding controls from presets, and `applyUpdates()` only ever updates controls that already exist - it never creates one. A reader following the old wording would have connected Throne, seen no controls appear, and concluded the integration was broken.
+- **BMAC and Throne get their extras documented with the conditional that makes them useful**, rather than as bare table rows: `latest_support_type` driving a per-type alert, and `latest_is_surprise_gift` working with the truthiness form of `[[[if:]]]` because `"0"` is falsy under the rules the README already states two sections earlier.
+- **The self-hosting env block now distinguishes OAuth from per-user auth.** It listed only the StreamLabs variables, which implied the others needed something. Fourthwall's five `FW_*` variables were missing, and Ko-fi, BMAC and Throne need no environment configuration at all because they authenticate per-user with a token or a signature. Worth saying explicitly - "nothing to configure" is information.
+- **The tip line dropped StreamElements**, which was the one and only mention of it in the file, and the one place the removal actually did reach the README. Ko-fi only now.
+
 ## August 4th, 2026 - chore(integrations): StreamElements is gone
 
 Razer, which acquired StreamElements, put up an accept-or-delete-your-account dialog for a new privacy policy. Buried in it is a clause claiming ownership of user-submitted and user-generated content, including the right to hand it to third parties. That is not a thing Overlabels wants to route a streamer's donation data through, so the integration is removed rather than deprecated.
