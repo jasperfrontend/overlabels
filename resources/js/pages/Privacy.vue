@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'May 14, 2026';
+const lastUpdated = 'August 4, 2026';
 </script>
 
 <template>
@@ -70,6 +70,7 @@ const lastUpdated = 'May 14, 2026';
               <li>Overlay templates and configurations you create</li>
               <li>Lists you create through the dashboard or chat commands, including the values your viewers contribute (chatter display names, custom messages, etc.)</li>
               <li>Communication data when you contact our support</li>
+              <li>Reports you submit about a publicly listed overlay (see "Reporting a public overlay" below)</li>
             </ul>
 
             <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Information Collected
@@ -151,6 +152,26 @@ const lastUpdated = 'May 14, 2026';
               Lists you delete are removed immediately, along with all their associated snapshots (including pinned
               ones). Configuring a List with a deadline causes its contents to be snapshotted, cleared, and the List
               disabled at that moment; the resulting snapshot follows the same 30-day retention rule.
+            </p>
+
+            <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800 dark:text-gray-200">Reporting a public overlay</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Every publicly listed overlay carries a "Report" button. Submitting a report stores the reason you wrote,
+              which overlay it was about, the date, and the IP address the report was sent from. If you are logged in it
+              also stores your Overlabels account, so we can see who filed it. If you are not logged in it stores the
+              email address you entered instead. We do not verify that address; it exists only so we can reply to you
+              about the report, and we do not add it to any mailing list.
+            </p>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              The IP address is stored to detect people filing large numbers of reports, and for nothing else. Reports
+              are visible only to Overlabels administrators. They are not shown to the person whose overlay you
+              reported, and we do not tell them who reported it.
+            </p>
+            <p class="text-gray-600 dark:text-gray-400">
+              A report is deleted automatically 180 days after an administrator marks it as handled, which removes the
+              reason, the email address and the IP address along with it. Administrators can also delete a report at any
+              time before that. You can ask us to delete a report you filed by contacting us at the address in section
+              12; if you filed it anonymously, write from the address you used so we can find it.
             </p>
           </section>
 

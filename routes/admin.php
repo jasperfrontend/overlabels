@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminBanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminKitController;
 use App\Http\Controllers\Admin\AdminLockdownController;
+use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTemplateTagController;
@@ -76,6 +77,11 @@ Route::prefix('admin')
         Route::post('/bans', [AdminBanController::class, 'store'])->name('bans.store');
         Route::delete('/bans/{ban}', [AdminBanController::class, 'destroy'])->name('bans.destroy');
         Route::post('/bans/from-session', [AdminBanController::class, 'banFromSession'])->name('bans.from-session');
+
+        // User reports (public overlays reported by visitors)
+        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+        Route::patch('/reports/{report}', [AdminReportController::class, 'update'])->name('reports.update');
+        Route::delete('/reports/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
 
         // Logs
         Route::delete('/logs/prune', [AdminAccessLogController::class, 'prune'])->name('logs.prune');

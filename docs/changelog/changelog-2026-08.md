@@ -1,5 +1,31 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - feat(moderation): public overlays can be reported
+
+Every public overlay had a share URL, an OpenGraph card and a copy button, and no way at all to tell anyone something was wrong with it. The gallery is user-generated content served from our domain, so the absence of a report path was the gap.
+
+There is now a Report button on every public overlay preview, and a User Reports page in the admin panel where the reports land.
+
+- **The report row renders even when the overlay has no description.** The old block was `v-if="template.description"`, so on a description-less overlay the entire container was absent. Putting the button inside it would have made reporting available only on overlays whose owner happened to write a description. The description is now the optional half of that row, not the thing that gates it, and `ml-auto` rather than `justify-between` keeps the button hard right either way.
+
+- **Logged-out visitors can report.** This is the point of the feature: someone arriving from a shared link is exactly who spots a problem, and they are the least likely to have an account. They give an email address instead of an identity. That email is never verified and is stated as unverified in the admin table, because a typed-in address proves nothing.
+
+- **No captcha.** Three cheap layers instead: a honeypot field, a timing trap, and a tight per-IP throttle (3/hour, 10/day). The timing trap's render timestamp is signed with `Crypt::encryptString`, so a bot cannot back-date the field to look like a slow human. It deliberately never expires - its only job is to prove the timestamp came from us, and expiring it would silently reject a real person who left the tab open. Turnstile stays an option if this ever gets abused; it was not worth an external processor in the privacy policy on day one.
+
+- **Every rejection returns the ordinary success response.** Honeypot, timing trap, forged ticket, duplicate submission: all of them redirect back exactly like a real report, and write nothing. Telling a bot which check it tripped is how it learns to pass the next one. Four tests assert this, which is the only way to keep it from being "fixed" into a helpful error message later.
+
+- **Reports outlive the overlay they are about.** `overlay_template_id` is nullable with `nullOnDelete`, and the slug and name are snapshotted onto the row. Deleting the overlay is often the outcome of acting on the report, so cascading the delete would erase the record of why it happened. The admin table strikes through the name and says "overlay deleted".
+
+- **Deleting a report copies its reason into the audit log first.** The audit log is the append-only record of what admins acted on; a report vanishing from it without a trace would defeat that.
+
+- **One open report per reporter per overlay**, which stops a double-clicked submit button and stops one person padding the queue.
+
+- **Retention is 180 days after an admin marks a report handled**, swept daily. Only reports actually marked as read are swept, so nothing disappears out of the queue unreviewed. That sweep is what caps how long the reporter's email and IP are kept, and section 6 of the privacy policy now commits to it in those words.
+
+The privacy policy gained a "Reporting a public overlay" subsection covering what is stored, that the IP is for spotting mass filers and nothing else, that reports are admin-only and the reported user is never told who filed, and how to have one deleted.
+
+The dialog copy states where the report goes and stops there. It does not promise review, a timeframe, or an outcome.
+
 ## August 4th, 2026 - feat(reference): integration controls are generated from the drivers now, not remembered
 
 The reference is a vault of hand-written markdown, which is the right call for Twitch tags: they change when Twitch changes, which is rarely and loudly. It is the wrong call for integration controls, which are defined in PHP and change whenever a driver does. Left to hand-maintenance, it had converged exactly where you would expect: 4 of 7 services documented, none of them completely, and every one of the four asserting that the shared donation schema covered "all four integrations" when seven drivers provision those same six keys.

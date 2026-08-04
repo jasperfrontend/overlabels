@@ -471,6 +471,9 @@ class OverlayTemplateController extends Controller
                     'avatar' => $template->owner->avatar,
                 ] : null,
             ],
+            // Signed render timestamp backing the report form's timing trap.
+            // See OverlayReportController::issueTicket().
+            'reportTicket' => OverlayReportController::issueTicket(),
         ]);
     }
 
