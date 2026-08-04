@@ -179,7 +179,7 @@ function openReport() {
 }
 
 function submitReport() {
-  reportForm.post(route('overlay.report', props.template.slug), {
+  reportForm.post(route('reports.store', props.template.slug), {
     preserveScroll: true,
     onSuccess: () => {
       reportForm.reset('reason', 'email', 'website');

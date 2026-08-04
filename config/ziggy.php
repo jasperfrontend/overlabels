@@ -40,7 +40,12 @@ $hidden = [
 return [
     'groups' => [
         // Logged-out visitors: only the handful of genuinely public routes.
-        'guest' => ['login', 'home', 'help.*', 'updates.*', 'privacy', 'terms'],
+        // `reports.store` is here because the public overlay preview lets
+        // logged-out visitors report an overlay, so the page has to be able to
+        // resolve that route. It is deliberately not named `overlay.report`:
+        // `!overlay.*` below would veto it, since Ziggy lets a negation
+        // override an explicit include.
+        'guest' => ['login', 'home', 'help.*', 'updates.*', 'privacy', 'terms', 'reports.store'],
         // Authenticated non-admins: everything except admin routes and the hidden set.
         'user' => array_merge(['*', '!admin.*'], $hidden),
         // Admins: everything except the hidden set (admin routes kept).

@@ -282,9 +282,17 @@ Route::get('/overlay/{slug}/public/screenshot', [OverlayTemplateController::clas
 // people who see a public overlay arrived from a shared link and have no
 // account. Spam defence is the throttle plus the honeypot/timing checks in
 // the controller.
+//
+// Named `reports.store` rather than `overlay.report` even though it lives
+// under /overlay: config/ziggy.php hides `!overlay.*` from every frontend
+// payload, and Ziggy's filter lets a negation veto an explicit include, so a
+// route under that name cannot be exposed to the client without punching a
+// hole in the blanket deny. This is the one overlay route the frontend has to
+// be able to call, so it sits outside that namespace instead. It pairs with
+// the admin.reports.* routes that read the same table.
 Route::post('/overlay/{slug}/report', [OverlayReportController::class, 'store'])
     ->middleware('throttle:overlay-report')
-    ->name('overlay.report')
+    ->name('reports.store')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
 // Initiate login with Twitch

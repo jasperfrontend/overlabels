@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\RateLimiter;
+use Tighten\Ziggy\Ziggy;
 
 uses(DatabaseTransactions::class);
 
@@ -61,7 +62,7 @@ beforeEach(function () {
 test('a logged out visitor can report a public overlay', function () {
     $template = publicTemplate();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload())
+    $this->post(route('reports.store', $template->slug), reportPayload())
         ->assertRedirect();
 
     $report = OverlayReport::where('overlay_template_id', $template->id)->sole();
@@ -79,7 +80,7 @@ test('a logged in reporter is recorded by account, not by email', function () {
     $reporter = reportUser();
 
     $this->actingAs($reporter)
-        ->post(route('overlay.report', $template->slug), reportPayload(['email' => null]))
+        ->post(route('reports.store', $template->slug), reportPayload(['email' => null]))
         ->assertRedirect();
 
     $report = OverlayReport::where('overlay_template_id', $template->id)->sole();
@@ -92,7 +93,7 @@ test('a logged in reporter is recorded by account, not by email', function () {
 test('a logged out visitor must supply an email', function () {
     $template = publicTemplate();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload(['email' => null]))
+    $this->post(route('reports.store', $template->slug), reportPayload(['email' => null]))
         ->assertSessionHasErrors('email');
 
     expect(OverlayReport::count())->toBe(0);
@@ -102,7 +103,7 @@ test('a logged in reporter does not have to supply an email', function () {
     $template = publicTemplate();
 
     $this->actingAs(reportUser())
-        ->post(route('overlay.report', $template->slug), reportPayload(['email' => null]))
+        ->post(route('reports.store', $template->slug), reportPayload(['email' => null]))
         ->assertSessionHasNoErrors();
 
     expect(OverlayReport::count())->toBe(1);
@@ -111,7 +112,7 @@ test('a logged in reporter does not have to supply an email', function () {
 test('a one word reason is rejected', function () {
     $template = publicTemplate();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload(['reason' => 'bad']))
+    $this->post(route('reports.store', $template->slug), reportPayload(['reason' => 'bad']))
         ->assertSessionHasErrors('reason');
 
     expect(OverlayReport::count())->toBe(0);
@@ -120,7 +121,7 @@ test('a one word reason is rejected', function () {
 test('a private overlay cannot be reported', function () {
     $template = publicTemplate(['is_public' => false]);
 
-    $this->post(route('overlay.report', $template->slug), reportPayload())
+    $this->post(route('reports.store', $template->slug), reportPayload())
         ->assertNotFound();
 
     expect(OverlayReport::count())->toBe(0);
@@ -134,7 +135,7 @@ test('a private overlay cannot be reported', function () {
 test('a filled honeypot is silently discarded', function () {
     $template = publicTemplate();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload([
+    $this->post(route('reports.store', $template->slug), reportPayload([
         'website' => 'https://spam.example',
     ]))->assertRedirect()->assertSessionHasNoErrors();
 
@@ -146,7 +147,7 @@ test('an instant submission is silently discarded', function () {
 
     // Ticket minted right now: nobody reads an overlay and writes a reason in
     // under the minimum fill time.
-    $this->post(route('overlay.report', $template->slug), reportPayload([
+    $this->post(route('reports.store', $template->slug), reportPayload([
         'ticket' => OverlayReportController::issueTicket(),
     ]))->assertRedirect()->assertSessionHasNoErrors();
 
@@ -157,11 +158,11 @@ test('a forged or missing ticket is silently discarded', function () {
     $template = publicTemplate();
 
     // A bot that back-dates the timestamp cannot sign it.
-    $this->post(route('overlay.report', $template->slug), reportPayload([
+    $this->post(route('reports.store', $template->slug), reportPayload([
         'ticket' => (string) now()->subHour()->timestamp,
     ]))->assertRedirect()->assertSessionHasNoErrors();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload(['ticket' => null]))
+    $this->post(route('reports.store', $template->slug), reportPayload(['ticket' => null]))
         ->assertRedirect()->assertSessionHasNoErrors();
 
     expect(OverlayReport::count())->toBe(0);
@@ -171,8 +172,8 @@ test('the same reporter cannot stack open reports on one overlay', function () {
     $template = publicTemplate();
     $reporter = reportUser();
 
-    $this->actingAs($reporter)->post(route('overlay.report', $template->slug), reportPayload());
-    $this->actingAs($reporter)->post(route('overlay.report', $template->slug), reportPayload([
+    $this->actingAs($reporter)->post(route('reports.store', $template->slug), reportPayload());
+    $this->actingAs($reporter)->post(route('reports.store', $template->slug), reportPayload([
         'reason' => 'A second attempt at saying the same thing again.',
     ]));
 
@@ -182,8 +183,8 @@ test('the same reporter cannot stack open reports on one overlay', function () {
 test('a different reporter can still report the same overlay', function () {
     $template = publicTemplate();
 
-    $this->actingAs(reportUser())->post(route('overlay.report', $template->slug), reportPayload());
-    $this->actingAs(reportUser())->post(route('overlay.report', $template->slug), reportPayload());
+    $this->actingAs(reportUser())->post(route('reports.store', $template->slug), reportPayload());
+    $this->actingAs(reportUser())->post(route('reports.store', $template->slug), reportPayload());
 
     expect(OverlayReport::where('overlay_template_id', $template->id)->count())->toBe(2);
 });
@@ -193,11 +194,11 @@ test('the throttle cuts a flood of reports off', function () {
 
     // The limiter allows 3/hour per IP; the fourth is the one that must fail.
     foreach ($templates->take(3) as $template) {
-        $this->post(route('overlay.report', $template->slug), reportPayload())
+        $this->post(route('reports.store', $template->slug), reportPayload())
             ->assertRedirect();
     }
 
-    $this->post(route('overlay.report', $templates[3]->slug), reportPayload())
+    $this->post(route('reports.store', $templates[3]->slug), reportPayload())
         ->assertStatus(429);
 
     expect(OverlayReport::count())->toBe(3);
@@ -210,7 +211,7 @@ test('the throttle cuts a flood of reports off', function () {
 test('deleting the overlay keeps the report and its snapshot', function () {
     $template = publicTemplate();
 
-    $this->post(route('overlay.report', $template->slug), reportPayload());
+    $this->post(route('reports.store', $template->slug), reportPayload());
 
     $slug = $template->slug;
     $name = $template->name;
@@ -226,6 +227,19 @@ test('deleting the overlay keeps the report and its snapshot', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 // The public preview page
 // ──────────────────────────────────────────────────────────────────────────────
+
+test('every ziggy group can resolve the report route', function (string $group) {
+    // The submit button calls route('reports.store') in the browser, so the
+    // name has to survive config/ziggy.php's filter for whichever group the
+    // visitor gets. It previously did not: named `overlay.report` it was
+    // vetoed by the `!overlay.*` negation in $hidden, and Ziggy lets a
+    // negation override an explicit include, so it could not be added back.
+    // Logged-out visitors got "route 'overlay.report' is not in the route
+    // list" the moment they hit Submit.
+    $routes = (new Ziggy($group))->toArray()['routes'];
+
+    expect($routes)->toHaveKey('reports.store');
+})->with(['guest', 'user', 'admin']);
 
 test('the public preview ships a usable report ticket', function () {
     $template = publicTemplate();

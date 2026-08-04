@@ -26,6 +26,8 @@ The privacy policy gained a "Reporting a public overlay" subsection covering wha
 
 The dialog copy states where the report goes and stops there. It does not promise review, a timeframe, or an outcome.
 
+**The route is named `reports.store`, not `overlay.report`.** The first name shipped broken: `config/ziggy.php` hides `!overlay.*` from every frontend payload, and Ziggy's `filter()` returns `false` the moment a `!` pattern matches, so a negation beats an explicit include. The name could not be added back to any group, and hitting Submit threw `route 'overlay.report' is not in the route list` in the browser. Narrowing `!overlay.*` into per-route negations would have fixed it too, at the cost of turning a blanket deny into an allowlist of denies where the next `overlay.*` route silently ships to every client. Moving the route out of that namespace keeps the deny intact; the URL is still `/overlay/{slug}/report`, and the name now pairs with `admin.reports.*`. A parametrised test asserts all three Ziggy groups can resolve it, and was checked to fail without the guest entry.
+
 ## August 4th, 2026 - feat(reference): integration controls are generated from the drivers now, not remembered
 
 The reference is a vault of hand-written markdown, which is the right call for Twitch tags: they change when Twitch changes, which is rarely and loudly. It is the wrong call for integration controls, which are defined in PHP and change whenever a driver does. Left to hand-maintenance, it had converged exactly where you would expect: 4 of 7 services documented, none of them completely, and every one of the four asserting that the shared donation schema covered "all four integrations" when seven drivers provision those same six keys.
