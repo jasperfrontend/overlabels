@@ -45,7 +45,7 @@
 
     <div class="border-t border-sidebar-accent pt-8 text-center flex flex-col gap-1 text-xs">
       <p>Made by <a href="https://twitch.tv/JasperDiscovers" class="text-sky-500 hover:underline cursor-pointer" target="_blank" rel="noopener">JasperDiscovers</a> for the Twitch streaming community.</p>
-      <p><strong>FAQ</strong>: Will you support StreamElements and/or Kick.com? <strong>No</strong>.</p>
+      <p><strong>FAQ</strong>: Will you ever support StreamElements and/or Kick.com? <strong>No</strong>.</p>
     </div>
   </div>
 </footer>
