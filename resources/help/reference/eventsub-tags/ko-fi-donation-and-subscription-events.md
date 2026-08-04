@@ -11,4 +11,4 @@ example:
 <div class="message">[[[if:event.message]]][[[event.message]]][[[endif]]]</div>
 ```
 
-note: these tags stack on top of the [[All Ko-fi Events]] common tags.
+note: these tags stack on top of the [[all-ko-fi-events|All Ko-fi Events]] common tags.
