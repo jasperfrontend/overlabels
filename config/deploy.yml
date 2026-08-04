@@ -3,9 +3,8 @@
 # Single Linode Shared 4 GB VM in Frankfurt (eu-central). One Docker image
 # (built from the repo root Dockerfile) drives four roles: web, queue,
 # scheduler, reverb. Postgres/Redis run as accessories on the same host.
-# StreamLabs and StreamElements listeners are accessories built from
-# Dockerfile.streamlabs-listener / Dockerfile.streamelements-listener and
-# pushed to GHCR by the deploy workflow.
+# The StreamLabs listener is an accessory built from
+# Dockerfile.streamlabs-listener and pushed to GHCR by the deploy workflow.
 #
 # Replace 172.235.171.209 with the Linode public IP once the VM is provisioned.
 
@@ -230,8 +229,6 @@ env:
     - STREAMLABS_CLIENT_SECRET
     - STREAMLABS_LISTENER_SECRET
 
-    - STREAMELEMENTS_LISTENER_SECRET
-
     - EXPRESSION_ENGINE_SECRET
 
     - FW_CLIENT_ID
@@ -305,17 +302,6 @@ accessories:
         APP_URL: https://overlabels.com
       secret:
         - STREAMLABS_LISTENER_SECRET
-    options:
-      memory: 128m
-
-  streamelements-listener:
-    image: ghcr.io/jasperfrontend/overlabels-streamelements-listener:latest
-    host: 172.235.171.209
-    env:
-      clear:
-        APP_URL: https://overlabels.com
-      secret:
-        - STREAMELEMENTS_LISTENER_SECRET
     options:
       memory: 128m
 

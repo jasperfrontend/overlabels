@@ -7,7 +7,6 @@ import {
   KOFI_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
-  STREAMELEMENTS_PRESETS,
   FOURTHWALL_PRESETS,
   BMAC_PRESETS,
   THRONE_PRESETS,
@@ -22,7 +21,6 @@ import {
   MapPinned,
   Megaphone,
   ShoppingBag,
-  Sparkles,
   Tv,
   type LucideIcon,
 } from '@lucide/vue';
@@ -62,13 +60,6 @@ const sections: ServiceSection[] = [
     description: 'Donation data from your connected Streamlabs account, delivered live through the Socket.IO listener.',
     icon: Megaphone,
     presets: STREAMLABS_PRESETS,
-  },
-  {
-    source: 'streamelements',
-    label: serviceLabel('streamelements'),
-    description: 'Tip data from your connected StreamElements account. Authenticated with a JWT you generate in their dashboard.',
-    icon: Sparkles,
-    presets: STREAMELEMENTS_PRESETS,
   },
   {
     source: 'fourthwall',
@@ -139,7 +130,7 @@ function copyTag(tag: string) {
     <title>Integration Presets - Overlabels</title>
     <meta
       name="description"
-      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, Throne, and Overlabels GPS."
+      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, Throne, and Overlabels GPS."
     />
   </Head>
 

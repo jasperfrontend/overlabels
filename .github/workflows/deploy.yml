@@ -54,18 +54,6 @@ jobs:
           cache-from: type=gha,scope=streamlabs-listener
           cache-to: type=gha,mode=max,scope=streamlabs-listener
 
-      - name: Build & push streamelements-listener
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile.streamelements-listener
-          push: true
-          tags: |
-            ghcr.io/jasperfrontend/overlabels-streamelements-listener:latest
-            ghcr.io/jasperfrontend/overlabels-streamelements-listener:${{ github.sha }}
-          cache-from: type=gha,scope=streamelements-listener
-          cache-to: type=gha,mode=max,scope=streamelements-listener
-
       - name: Build & push expression-engine
         uses: docker/build-push-action@v7
         with:
@@ -101,7 +89,6 @@ jobs:
           STREAMLABS_CLIENT_ID: ${{ secrets.STREAMLABS_CLIENT_ID }}
           STREAMLABS_CLIENT_SECRET: ${{ secrets.STREAMLABS_CLIENT_SECRET }}
           STREAMLABS_LISTENER_SECRET: ${{ secrets.STREAMLABS_LISTENER_SECRET }}
-          STREAMELEMENTS_LISTENER_SECRET: ${{ secrets.STREAMELEMENTS_LISTENER_SECRET }}
           EXPRESSION_ENGINE_SECRET: ${{ secrets.EXPRESSION_ENGINE_SECRET }}
           FW_CLIENT_ID: ${{ secrets.FW_CLIENT_ID }}
           FW_CLIENT_SECRET: ${{ secrets.FW_CLIENT_SECRET }}
@@ -130,7 +117,6 @@ jobs:
                      TWITCH_CLIENT_ID TWITCH_CLIENT_SECRET TWITCH_WEBHOOK_SECRET \
                      TWITCHBOT_CLIENT_ID TWITCHBOT_CLIENT_SECRET TWITCHBOT_LISTENER_SECRET \
                      STREAMLABS_CLIENT_ID STREAMLABS_CLIENT_SECRET STREAMLABS_LISTENER_SECRET \
-                     STREAMELEMENTS_LISTENER_SECRET \
                      EXPRESSION_ENGINE_SECRET \
                      FW_CLIENT_ID FW_CLIENT_SECRET FW_AUTH_URL FW_REDIRECT_URL FW_HMAC \
                      CLOUDINARY_URL \

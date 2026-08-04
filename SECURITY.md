@@ -28,7 +28,7 @@ In scope:
 
 - The Overlabels web application (this repository)
 - The overlay rendering pipeline and access-token model
-- External integration webhooks (Ko-fi, StreamLabs, StreamElements, etc.)
+- External integration webhooks (Ko-fi, StreamLabs, etc.)
 - The Twitch EventSub webhook handler
 - The companion bot and mobile clients in their respective repos
 

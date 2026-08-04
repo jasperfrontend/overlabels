@@ -323,7 +323,7 @@ HTML and it resolves the same way.
 
 ### The shared donation family
 
-Every donation service (Ko-fi, StreamLabs, StreamElements, Fourthwall, Buy Me a Coffee, Throne) exposes
+Every donation service (Ko-fi, StreamLabs, Fourthwall, Buy Me a Coffee, Throne) exposes
 the same six-key shape, so you can swap services - or combine them - without relearning the keys:
 
 ```
@@ -346,7 +346,6 @@ and surprise-gift flag; Buy Me a Coffee adds the latest support type.
 | Twitch | Per-stream counters (follows, subs, raids, cheers, bits) that reset when you go live. Available the moment you connect Twitch. |
 | Ko-fi | Donation, subscription, and shop-sale data from your connected Ko-fi account. |
 | StreamLabs | Live donation data delivered through the StreamLabs listener. |
-| StreamElements | Tip data authenticated with a JWT you generate in the SE dashboard. |
 | Fourthwall | Donation and tip data for creators using Fourthwall for merch and supporter tiers. |
 | Buy Me a Coffee | Supporter and membership data, including the latest support type. |
 | Throne | Gift data plus Throne-only extras: item name, product thumbnail URL, and a surprise-gift flag. |
@@ -594,7 +593,7 @@ Example - seconds since the latest donation:
 now() - max(
   c.kofi.latest_donor_at,
   c.streamlabs.latest_donor_at,
-  c.streamelements.latest_donor_at
+  c.fourthwall.latest_donor_at
 )
 ```
 

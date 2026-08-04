@@ -159,11 +159,11 @@ Controls are named values the streamer owns and can change from the dashboard, f
 [[[c:kofi:total|currency]]]
 ```
 
-Registered services: `kofi`, `streamlabs`, `streamelements`, `fourthwall`, `bmac`, `throne`, `gps`.
+Registered services: `kofi`, `streamlabs`, `fourthwall`, `bmac`, `throne`, `gps`.
 
 Every donation service provisions the same six keys, so swapping the prefix ports a template between
 them: `donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`,
-`latest_donation_currency`, `total_received`. Ko-fi, StreamLabs, StreamElements and Fourthwall have
+`latest_donation_currency`, `total_received`. Ko-fi, StreamLabs and Fourthwall have
 exactly those six; Buy Me a Coffee adds `latest_support_type`; Throne adds `latest_item_name`,
 `latest_item_thumbnail_url` and `latest_is_surprise_gift`. GPS is a different shape entirely and shares
 none of them.
@@ -237,7 +237,7 @@ channel.charity_campaign.donate   channel.charity_campaign.progress
 channel.charity_campaign.start    channel.charity_campaign.stop
 ```
 
-**External services** (Ko-fi, StreamLabs, StreamElements, Fourthwall, BMAC, Throne) carry a normalised type instead:
+**External services** (Ko-fi, StreamLabs, Fourthwall, BMAC, Throne) carry a normalised type instead:
 
 ```
 donation   subscription   shop_order   commission

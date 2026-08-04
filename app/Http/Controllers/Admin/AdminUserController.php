@@ -28,7 +28,6 @@ class AdminUserController extends Controller
     private const SEEDABLE_SERVICES = [
         'kofi' => 'Ko-fi',
         'streamlabs' => 'StreamLabs',
-        'streamelements' => 'StreamElements',
         'fourthwall' => 'Fourthwall',
         'bmac' => 'Buy Me a Coffee',
         'throne' => 'Throne',

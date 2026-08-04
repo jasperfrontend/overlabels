@@ -238,7 +238,7 @@ The technical pages a designer might want to skim, to see what their design will
 - [For Creators](/help/for-creators) - the system overview. What Overlabels is beneath the HTML/CSS
   surface, including the no-JS rule and why it exists.
 - [Integration Presets](/help/integration-presets) - the catalog of every live data field across Twitch,
-  Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS. Useful for marking "this is
+  Ko-fi, Streamlabs, Fourthwall, BMAC, and Overlabels GPS. Useful for marking "this is
   live data" in a design handoff.
 - [Controls](/help/controls) - the seven mutable value types the streamer can adjust live during a
   stream.

@@ -39,10 +39,6 @@ return [
         'listener_secret' => env('STREAMLABS_LISTENER_SECRET'),
     ],
 
-    'streamelements' => [
-        'listener_secret' => env('STREAMELEMENTS_LISTENER_SECRET'),
-    ],
-
     'fourthwall' => [
         'client_id' => env('FW_CLIENT_ID'),
         'client_secret' => env('FW_CLIENT_SECRET'),

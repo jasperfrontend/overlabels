@@ -166,7 +166,6 @@ function sourceLabel(source: string): string {
     twitch: 'Twitch',
     kofi: 'Ko-fi',
     streamlabs: 'StreamLabs',
-    streamelements: 'StreamElements',
     bmac: 'Buy Me a Coffee',
     fourthwall: 'Fourthwall',
   };

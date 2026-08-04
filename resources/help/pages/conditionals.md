@@ -1,8 +1,8 @@
 ---
 title: Conditional Tags Reference
-description: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays.
+description: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and Fourthwall integration tags in Overlabels overlays.
 heading: Conditional Tags Reference
-lead: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, StreamElements, and Fourthwall integration tags in Overlabels overlays.
+lead: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and Fourthwall integration tags in Overlabels overlays.
 canonical: https://overlabels.com/help/conditionals
 context: templates.edit, templates.create, tags.generator
 ---
@@ -250,7 +250,7 @@ add it when you want smooth animations on repeated items.
 
 Tags available in alert templates, grouped by source.
 
-BMAC, Ko-fi, StreamLabs, StreamElements, and Fourthwall all expose the same six core control keys. Pair
+BMAC, Ko-fi, StreamLabs, and Fourthwall all expose the same six core control keys. Pair
 them with `latest()`/`oldest()` over the `_at` companion timestamps to pick the most recent supporter
 across every connected service.
 
@@ -968,7 +968,7 @@ Six controls are created on connect and kept up to date with every donation, sub
 | `[[[c:kofi:total_received]]]` | Running total of all Ko-fi amounts (session) |
 
 > [!NOTE]
-> Ko-fi, StreamLabs, StreamElements, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:kofi:, c:streamlabs:, c:streamelements:, c:fourthwall:) and the template keeps working.
+> Ko-fi, StreamLabs, and Fourthwall share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:kofi:, c:streamlabs:, c:fourthwall:) and the template keeps working.
 
 #### All Ko-fi Events
 
@@ -1031,7 +1031,7 @@ Six controls are created on connect and kept up to date with every donation
 | `[[[c:streamlabs:total_received]]]` | Running total of all donation amounts (session) |
 
 > [!NOTE]
-> StreamLabs, Ko-fi, StreamElements, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:streamlabs:, c:kofi:, c:streamelements:, c:fourthwall:) and the template keeps working.
+> StreamLabs, Ko-fi, and Fourthwall share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:streamlabs:, c:kofi:, c:fourthwall:) and the template keeps working.
 
 #### StreamLabs Donation Event Tags
 
@@ -1059,52 +1059,6 @@ Available in alert templates triggered by StreamLabs donations
 </div>
 ```
 
-### StreamElements
-
-#### StreamElements Auto-provisioned Controls
-
-Six controls are created on connect and kept up to date with every tip
-
-**Use in any template with the [[[c:streamelements:key]]] syntax**
-
-| Tag | Description |
-|---|---|
-| `[[[c:streamelements:donations_received]]]` | Total number of tips received (counter) |
-| `[[[c:streamelements:latest_donor_name]]]` | Name of the most recent tipper |
-| `[[[c:streamelements:latest_donation_amount]]]` | Amount of the most recent tip |
-| `[[[c:streamelements:latest_donation_message]]]` | Message from the most recent tipper |
-| `[[[c:streamelements:latest_donation_currency]]]` | Currency of the most recent tip (e.g. USD) |
-| `[[[c:streamelements:total_received]]]` | Running total of all tip amounts (session) |
-
-> [!NOTE]
-> StreamElements, Ko-fi, StreamLabs, and Fourthwall share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:streamelements:, c:kofi:, c:streamlabs:, c:fourthwall:) and the template keeps working.
-
-#### StreamElements Tip Event Tags
-
-Available in alert templates triggered by StreamElements tips
-
-**Event Tags**
-
-| Tag | Description |
-|---|---|
-| `[[[event.from_name]]]` | Name of the tipper |
-| `[[[event.message]]]` | Tipper's message |
-| `[[[event.amount]]]` | Tip amount (e.g. "5.00") |
-| `[[[event.currency]]]` | Currency code (e.g. "USD") |
-| `[[[event.formatted_amount]]]` | Formatted amount (e.g. "$5.00") |
-| `[[[event.type]]]` | Always "donation" (SE "tip" is normalized to "donation") |
-| `[[[event.source]]]` | Always "StreamElements" - useful for reusing alert templates across donation services |
-| `[[[event.transaction_id]]]` | Unique event identifier |
-
-```html
-<div class="donation">
-  [[[event.from_name]]] tipped [[[event.formatted_amount]]]!
-  [[[if:event.message]]]
-    <p class="message">[[[event.message]]]</p>
-  [[[endif]]]
-</div>
-```
-
 ### Fourthwall
 
 #### Fourthwall Auto-provisioned Controls
@@ -1123,7 +1077,7 @@ Six controls are created on connect and kept up to date with every donation
 | `[[[c:fourthwall:total_received]]]` | Running total of all donation amounts (session) |
 
 > [!NOTE]
-> Fourthwall, Ko-fi, StreamLabs, and StreamElements share a unified control schema - the six keys are identical across all four integrations, so you can swap the prefix (c:fourthwall:, c:kofi:, c:streamlabs:, c:streamelements:) and the template keeps working.
+> Fourthwall, Ko-fi, and StreamLabs share a unified control schema - the six keys are identical across all three integrations, so you can swap the prefix (c:fourthwall:, c:kofi:, c:streamlabs:) and the template keeps working.
 
 #### Fourthwall Donation Event Tags
 
@@ -1170,7 +1124,7 @@ Seven controls track every BMAC event - donations, commissions, extras, membersh
 | `[[[c:bmac:latest_support_type]]]` | Type of the most recent support: Supporter, Commission, Extra, Membership, Subscription, or Wishlist |
 
 > [!NOTE]
-> BMAC shares the same six core control keys as Ko-fi, StreamLabs, StreamElements, and Fourthwall. Swap the prefix (c:kofi:, c:bmac:, etc.) and the same template renders for all five integrations. Use latest()/oldest() over the _at companion timestamps to pick the most recent supporter across services.
+> BMAC shares the same six core control keys as Ko-fi, StreamLabs, and Fourthwall. Swap the prefix (c:kofi:, c:bmac:, etc.) and the same template renders for all four integrations. Use latest()/oldest() over the _at companion timestamps to pick the most recent supporter across services.
 
 #### All BMAC Events
 

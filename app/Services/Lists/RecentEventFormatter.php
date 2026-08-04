@@ -77,9 +77,6 @@ class RecentEventFormatter
             'shop_order' => 'Fourthwall shop order',
             'commission' => 'Fourthwall commission',
         ],
-        'streamelements' => [
-            'donation' => 'StreamElements tip',
-        ],
     ];
 
     /**

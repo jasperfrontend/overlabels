@@ -25,7 +25,7 @@ become an Overlabels Bot Expressions expert.
 ## Controls
 
 Read and write your overlay controls from chat. The bot only ever touches controls you created yourself -
-service-managed controls (Ko-fi, StreamLabs, StreamElements counters) are intentionally invisible to
+service-managed controls (Ko-fi, StreamLabs, Fourthwall counters) are intentionally invisible to
 chat. Requires `!enablecontrols` on your channel.
 
 | Expression | Tier | What it does |

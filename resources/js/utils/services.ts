@@ -8,7 +8,6 @@
  */
 export const SERVICE_LABELS: Record<string, string> = {
   kofi: 'Ko-fi',
-  streamelements: 'StreamElements',
   streamlabs: 'Streamlabs',
   twitch: 'Twitch',
   fourthwall: 'Fourthwall',

@@ -263,11 +263,11 @@ signals:
 $$\text{most\_recent\_donor} = \underset{s \in \text{sources}}{\operatorname{argmax}}\ t_{s}$$
 
 ```
-// Who tipped most recently - Ko-fi, Streamlabs, or StreamElements?
+// Who tipped most recently - Ko-fi, Streamlabs, or Fourthwall?
 latest(
   c.kofi.latest_donor_name_at, c.kofi.latest_donor_name,
   c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
-  c.streamelements.latest_donor_name_at, c.streamelements.latest_donor_name
+  c.fourthwall.latest_donor_name_at, c.fourthwall.latest_donor_name
 )
 ```
 
@@ -279,10 +279,10 @@ the opposite - perfect for "slowest response", "first to arrive", "longest since
 
 ```
 // Unified donation counter
-c.kofi.donations_received + c.streamlabs.donations_received + c.streamelements.donations_received
+c.kofi.donations_received + c.streamlabs.donations_received + c.fourthwall.donations_received
 
 // Unified total received amount
-c.kofi.total_received + c.streamlabs.total_received + c.streamelements.total_received
+c.kofi.total_received + c.streamlabs.total_received + c.fourthwall.total_received
 ```
 
 ### "Is this subscriber actually a gift?"

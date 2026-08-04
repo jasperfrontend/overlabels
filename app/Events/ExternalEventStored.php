@@ -7,7 +7,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Fired right after an ExternalEvent row is persisted (Ko-fi, StreamLabs,
- * StreamElements, BMAC, Fourthwall, ...). The symmetric counterpart to
+ * BMAC, Fourthwall, ...). The symmetric counterpart to
  * TwitchEventReceived, which the Twitch ingest path already dispatches.
  *
  * Unlike TwitchEventReceived this does NOT broadcast - external services

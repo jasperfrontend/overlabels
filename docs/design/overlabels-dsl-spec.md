@@ -31,7 +31,7 @@ resolvable at validate time against the user's own records:
 | Namespace | Resolves against |
 |---|---|
 | `c:<key>` | user's controls (template-scoped and user-scoped) |
-| `c:<service>:<key>` | service-managed controls (kofi, streamlabs, streamelements, fourthwall, gps) |
+| `c:<service>:<key>` | service-managed controls (kofi, streamlabs, fourthwall, gps) |
 | `c:list:<slug>` | user's Lists |
 | `event.*` | the alert payload in scope |
 | `bot:*` | bot invocation context (`bot:args.0`, `bot:from_user`, ...) |

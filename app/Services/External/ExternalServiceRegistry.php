@@ -7,7 +7,6 @@ use App\Services\External\Drivers\BMACServiceDriver;
 use App\Services\External\Drivers\FourthwallServiceDriver;
 use App\Services\External\Drivers\GpsServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
-use App\Services\External\Drivers\StreamElementsServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
 use App\Services\External\Drivers\ThroneServiceDriver;
 use InvalidArgumentException;
@@ -21,7 +20,6 @@ class ExternalServiceRegistry
         'kofi' => KofiServiceDriver::class,
         'gps' => GpsServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
-        'streamelements' => StreamElementsServiceDriver::class,
         'fourthwall' => FourthwallServiceDriver::class,
         'bmac' => BMACServiceDriver::class,
         'throne' => ThroneServiceDriver::class,
@@ -72,7 +70,6 @@ class ExternalServiceRegistry
             'kofi' => 'Ko-fi',
             'gps' => 'Overlabels GPS',
             'streamlabs' => 'Streamlabs',
-            'streamelements' => 'StreamElements',
             'throne' => 'Throne',
             'patreon' => 'Patreon',
             'fourthwall' => 'Fourthwall',

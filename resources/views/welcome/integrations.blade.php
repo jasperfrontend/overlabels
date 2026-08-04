@@ -24,12 +24,6 @@
             'tagline' => 'Live donation tracking via OAuth',
             'description' => 'One click to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.',
         ],
-        'streamelements' => [
-            'name' => 'StreamElements',
-            'namespace' => 'streamelements',
-            'tagline' => 'Live donation tracking via JWT',
-            'description' => 'Paste your JWT token to authenticate. Overlabels listens for donations in real time and auto-provisions six controls the moment you connect.',
-        ],
         'throne' => [
             'name' => 'NEW: Throne',
             'namespace' => 'throne',
@@ -45,7 +39,7 @@
         'latest_donation_message',
         'latest_donation_currency',
     ];
-    $latestServices = ['kofi', 'fourthwall', 'bmac', 'streamelements', 'streamlabs', 'throne'];
+    $latestServices = ['kofi', 'fourthwall', 'bmac', 'streamlabs', 'throne'];
 @endphp
 <section id="integrations" class="scroll-mt-16 border-b border-b-sidebar-border py-24">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +49,7 @@
       </div>
       <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Show donations from different sources.</h2>
       <p class="mb-12 max-w-2xl text-lg text-foreground">
-        Connect your Ko-fi, Fourthwall, Buy Me a Coffee, StreamElements, Streamlabs or <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Throne account and Overlabels automatically tracks every donation in real time.
+        Connect your Ko-fi, Fourthwall, Buy Me a Coffee, Streamlabs or <span class="bg-violet-400/10 border border-violet-400 px-1.5 py-0.5 text-xs uppercase tracking-wide ml-1 -top-0.5 relative rounded-full">NEW:</span> Throne account and Overlabels automatically tracks every donation in real time.
         Counters update, alerts fire, and your overlay stays current - all without touching a single line of code
         after setup.
       </p>
@@ -124,7 +118,7 @@
         </div>
       </div>
       <p class="mt-3 text-sm text-muted-foreground">
-        Ko-fi, Fourthwall, Buy Me a Coffee, StreamElements, Streamlabs and Throne expose the same normalized event tags. Write your donation alert once and it works for
+        Ko-fi, Fourthwall, Buy Me a Coffee, Streamlabs and Throne expose the same normalized event tags. Write your donation alert once and it works for
         all of them - <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1 text-xs text-amber-700 dark:text-amber-400">[[[event.source]]]</code>
         tells your overlay which platform it came from.
       </p>
@@ -133,13 +127,13 @@
       <div class="mt-16 border-t border-sidebar-border pt-16">
         <span class="inline-flex items-center border-transparent bg-accent text-foreground font-semibold transition-colors mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">No vendor lock-in</span>
         <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-          Six donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
+          Five donation services plus Twitch bits. One <code class="font-mono text-sky-500">latest()</code>.
         </h3>
         <p class="mb-4 max-w-3xl text-lg text-foreground">
           Every other overlay tool on the market is owned by a donation platform. Streamlabs' overlays show Streamlabs donations. StreamElements' overlays show StreamElements donations. Ko-fi's overlays show Ko-fi donations. That's not a bug, it's the business model.
         </p>
         <p class="mb-8 max-w-3xl text-lg text-foreground">
-          Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all six donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, six pipes.</strong>
+          Overlabels doesn't sell donation ingest, so we don't care which service the money came through. Pass all five donation services plus Twitch bits into a single <code class="rounded bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 font-mono text-base text-sky-500">latest()</code> function and you get the actual most-recent supporter across any of your connected revenue streams. <strong>One name, one amount, five pipes.</strong>
         </p>
 
         <div class="overflow-hidden rounded-sm max-w-3xl hover:max-w-full transition-all">

@@ -85,7 +85,6 @@ class ExternalEventTemplateMapping extends Model
         'bmac' => ['donation'],
         'fourthwall' => ['donation'],
         'kofi' => ['donation'],
-        'streamelements' => ['donation'],
         'streamlabs' => ['donation'],
         'throne' => ['donation'],
     ];
@@ -130,9 +129,6 @@ class ExternalEventTemplateMapping extends Model
             'subscription' => 'Ko-fi Subscription',
             'shop_order' => 'Ko-fi Shop Order',
             'commission' => 'Ko-fi Commission',
-        ],
-        'streamelements' => [
-            'donation' => 'StreamElements Tip',
         ],
         'streamlabs' => [
             'donation' => 'Streamlabs Donation',
