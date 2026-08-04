@@ -5,6 +5,7 @@ use App\Models\CloudinaryUpload;
 use App\Models\ExternalEvent;
 use App\Models\ListSnapshot;
 use App\Models\OverlayAccessLog;
+use App\Models\OverlayReport;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
@@ -187,6 +188,15 @@ Schedule::call(fn () => TwitchEvent::where('created_at', '<', now()->subDays(90)
 
 Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:external-events')->withoutOverlapping();
+
+// Auto-prune handled overlay reports after 180 days. Only reports an admin has
+// actually marked as read are swept, so nothing disappears out of the queue
+// unreviewed. This is what caps how long a reporter's email and IP are kept,
+// and the privacy policy commits to it.
+Schedule::call(fn () => OverlayReport::where('status', OverlayReport::STATUS_READ)
+    ->where('reviewed_at', '<', now()->subDays(180))
+    ->delete()
+)->daily()->name('prune:overlay-reports')->withoutOverlapping();
 
 // Auto-prune list snapshots older than 30 days. Pinned snapshots are
 // exempt - streamers explicitly opt into keeping those forever. Runs

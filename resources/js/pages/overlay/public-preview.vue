@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +24,7 @@ import {
   CodeIcon,
   Eye,
   FileCode2Icon,
+  Flag,
   GitFork,
   ImageOff,
   PaletteIcon,
@@ -46,6 +54,7 @@ interface PreviewTemplate {
 
 const props = defineProps<{
   template: PreviewTemplate;
+  reportTicket: string;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -148,6 +157,36 @@ const activeSource = computed(() => {
   const v = props.template[activeSourceTab.value];
   return typeof v === 'string' && v.length > 0 ? v : '';
 });
+
+// Reporting. Logged-out visitors can report too, because most people who land
+// on a public overlay arrived from a shared link and have no account. Their
+// submission carries an email instead of an identity, plus the honeypot below
+// and the server-signed ticket that backs the timing trap.
+const showReport = ref(false);
+const reportSent = ref(false);
+
+const reportForm = useForm({
+  reason: '',
+  email: '',
+  ticket: props.reportTicket,
+  website: '', // honeypot: hidden from humans, filled in by bots
+});
+
+function openReport() {
+  reportSent.value = false;
+  reportForm.clearErrors();
+  showReport.value = true;
+}
+
+function submitReport() {
+  reportForm.post(route('reports.store', props.template.slug), {
+    preserveScroll: true,
+    onSuccess: () => {
+      reportForm.reset('reason', 'email', 'website');
+      reportSent.value = true;
+    },
+  });
+}
 </script>
 
 <template>
@@ -317,13 +356,117 @@ const activeSource = computed(() => {
         </div>
       </div>
 
-      <!-- Description -->
-      <div
-        v-if="template.description"
-        class="mt-4 border border-sidebar-border bg-card p-4 text-sm text-foreground whitespace-pre-wrap"
-      >
-        {{ template.description }}
+      <!--
+        Description + report. The row renders even without a description: the
+        report button has to be reachable on every public overlay, and the
+        description is the optional half of this pairing, not the other way
+        round. `ml-auto` (rather than justify-between) keeps the button hard
+        right whether or not there is a description beside it.
+      -->
+      <div class="mt-4 flex flex-col gap-4 border border-sidebar-border bg-card p-4 sm:flex-row sm:items-start">
+        <p v-if="template.description" class="text-sm text-foreground whitespace-pre-wrap">
+          {{ template.description }}
+        </p>
+        <button type="button" class="ovl-btn shrink-0 cursor-pointer self-start sm:ml-auto" @click="openReport">
+          <Flag class="h-3.5 w-3.5" />
+          <span>Report</span>
+        </button>
       </div>
+
+      <!-- Report dialog -->
+      <Dialog :open="showReport" @update:open="showReport = $event">
+        <DialogContent class="max-w-lg sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{{ reportSent ? 'Report sent' : 'Report this overlay' }}</DialogTitle>
+            <DialogDescription>
+              <template v-if="reportSent">
+                Your report about "{{ template.name }}" has been sent to the Overlabels admins.
+              </template>
+              <template v-else>
+                This sends a report about "{{ template.name }}" to the Overlabels admins.
+              </template>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form v-if="!reportSent" class="space-y-4" @submit.prevent="submitReport">
+            <div>
+              <label for="report-reason" class="mb-1.5 block text-sm font-medium text-foreground">
+                Why are you reporting it?
+              </label>
+              <textarea
+                id="report-reason"
+                v-model="reportForm.reason"
+                rows="5"
+                maxlength="2000"
+                required
+                placeholder="Be specific about what is wrong with this overlay."
+                class="w-full border border-sidebar-border bg-background p-2.5 text-sm text-foreground focus:border-violet-400 focus:outline-none"
+              />
+              <p v-if="reportForm.errors.reason" class="mt-1 text-xs text-destructive">
+                {{ reportForm.errors.reason }}
+              </p>
+            </div>
+
+            <div v-if="isAuthed" class="text-sm text-foreground">
+              Reporting as <span class="text-violet-400">{{ page.props.auth?.user?.name }}</span>.
+            </div>
+            <div v-else>
+              <label for="report-email" class="mb-1.5 block text-sm font-medium text-foreground">
+                Your email address
+              </label>
+              <input
+                id="report-email"
+                v-model="reportForm.email"
+                type="email"
+                maxlength="255"
+                required
+                placeholder="you@example.com"
+                class="w-full border border-sidebar-border bg-background p-2.5 text-sm text-foreground focus:border-violet-400 focus:outline-none"
+              />
+              <p class="mt-1 text-xs text-foreground">
+                Stored with the report so an admin can follow up, and for nothing else. See the
+                <a href="/privacy" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">
+                  privacy policy</a>.
+              </p>
+              <p v-if="reportForm.errors.email" class="mt-1 text-xs text-destructive">
+                {{ reportForm.errors.email }}
+              </p>
+            </div>
+
+            <!--
+              Honeypot. Hidden from humans and from screen readers; bots that
+              scrape the form and fill every field give themselves away. The
+              server discards those submissions silently.
+            -->
+            <div class="hidden" aria-hidden="true">
+              <label for="report-website">Website</label>
+              <input id="report-website" v-model="reportForm.website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <DialogFooter>
+              <div class="flex w-full flex-col gap-3">
+                <div class="flex items-center justify-end gap-2">
+                  <button type="button" class="ovl-btn cursor-pointer" @click="showReport = false">Cancel</button>
+                  <button
+                    type="submit"
+                    class="ovl-btn-copy cursor-pointer disabled:opacity-50"
+                    :disabled="reportForm.processing"
+                  >
+                    {{ reportForm.processing ? 'Sending...' : 'Submit report' }}
+                  </button>
+                </div>
+                <p class="text-xs text-foreground">
+                  Knowingly filing a false report can get your own account banned. Only submit this if you are sure.
+                </p>
+              </div>
+            </DialogFooter>
+          </form>
+
+          <DialogFooter v-else>
+            <button type="button" class="ovl-btn cursor-pointer" @click="showReport = false">Close</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <!-- Fullscreen screenshot dialog -->
       <Dialog :open="showScreenshot" @update:open="showScreenshot = $event">

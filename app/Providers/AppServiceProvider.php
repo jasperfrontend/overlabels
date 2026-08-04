@@ -119,6 +119,17 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Public overlay reports. Deliberately tight: a real person reports a
+        // handful of overlays in their life, so anything above this is spam.
+        // Keyed per IP because the endpoint is open to logged-out visitors,
+        // and this limiter is the main thing standing in for a captcha.
+        RateLimiter::for('overlay-report', function (Request $request) {
+            return [
+                Limit::perHour(3)->by($request->ip()),
+                Limit::perDay(10)->by($request->ip()),
+            ];
+        });
+
         // Bot internal endpoints (token/commands/controls/outbox/settings).
         // The bot is a single Railway service hitting us from one IP, so the
         // bucket is global. Outbox alone polls every 2s = 30/min, so the limit
