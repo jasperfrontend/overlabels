@@ -336,11 +336,10 @@ swapping the namespace and nothing else.
 
 Two services extend the schema with their own keys; the six above are always available.
 
-**How the controls get created differs by service.** StreamLabs and Fourthwall create all six for you the
-moment you connect. For Ko-fi, Buy Me a Coffee, and Throne you add the ones you want from presets in the
-control editor, so your dashboard only carries the values your overlay actually uses. Either way the
-integration owns the value once the control exists: service-managed controls are read-only to you and to
-the API, and update only when the service sends new data.
+**Connect a service and its controls appear.** All of them, automatically, the moment the connection is
+made. They are service-managed: read-only to you and to the API, updating only when the service sends new
+data. The presets list in the control editor is there for authoring, so you can see which keys exist while
+writing a template, not because anything needs adding by hand.
 
 Because every control carries an `_at` companion timestamp, you can compare across services to find the
 genuinely most recent supporter regardless of which platform they used:
@@ -398,8 +397,7 @@ Event types: `donation`
 ### Buy Me a Coffee
 
 Paste your Buy Me a Coffee verification token, set your webhook URL, done. Buy Me a Coffee covers more than
-one-off donations, so it offers **seven** controls: the shared six plus a support type. Add the ones you
-need from presets in the control editor.
+one-off donations, so it provisions **seven** controls: the shared six plus a support type.
 
 | Control              | Type   | Holds                                                                          |
 |----------------------|--------|--------------------------------------------------------------------------------|
@@ -421,8 +419,7 @@ Combine it with a conditional to render a different alert per support type:
 
 Connect Throne and paste your Overlabels webhook URL into Throne. There is no token to copy - Throne signs
 every webhook with its own key, which Overlabels verifies. Throne delivers gifts rather than cash, so it
-offers **nine** controls: the shared six plus three gift-specific ones. Add the ones you need from presets
-in the control editor.
+provisions **nine** controls: the shared six plus three gift-specific ones.
 
 | Control                     | Type   | Holds                                       |
 |-----------------------------|--------|---------------------------------------------|

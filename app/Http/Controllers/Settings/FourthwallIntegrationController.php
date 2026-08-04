@@ -2,64 +2,42 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Http\Controllers\Controller;
 use App\Models\ExternalIntegration;
 use App\Services\External\ExternalControlService;
-use App\Services\External\ExternalServiceRegistry;
 use App\Services\External\FourthwallApiClient;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Inertia\Response;
 use Throwable;
 
-class FourthwallIntegrationController extends Controller
+class FourthwallIntegrationController extends DonationIntegrationController
 {
-    private const SERVICE = 'fourthwall';
-
     private const WEBHOOK_EVENT_TYPES = ['DONATION'];
 
     private const OAUTH_STATE_SESSION_KEY = 'fw_oauth_state';
 
     public function __construct(
-        private readonly ExternalControlService $controlService,
+        ExternalControlService $controlService,
         private readonly FourthwallApiClient $apiClient,
-    ) {}
+    ) {
+        parent::__construct($controlService);
+    }
 
-    public function show(): Response
+    protected function service(): string
     {
-        $user = auth()->user();
+        return 'fourthwall';
+    }
 
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE)
-            ->first();
-
-        $settings = $integration?->settings ?? [];
-
-        return Inertia::render('settings/integrations/fourthwall', [
-            'integration' => $integration ? [
-                'connected' => true,
-                'enabled' => $integration->enabled,
-                'test_mode' => $integration->test_mode,
-                'last_received_at' => $integration->last_received_at?->toIso8601String(),
-                'settings' => $settings,
-                'donations_seed_set' => ! empty($settings['donations_seed_set']),
-                'donations_seed_value' => $settings['donations_seed_value'] ?? null,
-            ] : [
-                'connected' => false,
-                'enabled' => false,
-                'test_mode' => false,
-                'last_received_at' => null,
-                'settings' => [],
-                'donations_seed_set' => false,
-                'donations_seed_value' => null,
-            ],
-        ]);
+    /**
+     * Fourthwall registers its own webhook through the API during the OAuth
+     * callback, so the user never has to copy a URL anywhere.
+     */
+    protected function showsWebhookUrl(): bool
+    {
+        return false;
     }
 
     /**
@@ -128,14 +106,9 @@ class FourthwallIntegrationController extends Controller
 
         $user = auth()->user();
 
-        $isNew = ! ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE)
-            ->exists();
+        $isNew = ! $this->integration($user);
 
-        $integration = ExternalIntegration::firstOrCreate(
-            ['user_id' => $user->id, 'service' => self::SERVICE],
-            ['enabled' => true]
-        );
+        $integration = $this->connectIntegration($user);
 
         // Preserve any existing webhook_id so we can clean it up before registering a new one.
         $previousCredentials = $integration->getCredentialsDecrypted();
@@ -169,8 +142,12 @@ class FourthwallIntegrationController extends Controller
             ]);
 
             // Fresh connects with no webhook are useless - roll the row back so the
-            // next attempt starts clean. Reconnects keep their previous state.
+            // next attempt starts clean. The controls provisioned on the way in have
+            // to go with it, or a failed first connect leaves six orphaned
+            // service-managed controls that nothing can write and the user cannot
+            // delete. Reconnects keep their previous state, controls included.
             if ($isNew) {
+                $this->controlService->deprovision($user, $this->service());
                 $integration->delete();
             }
 
@@ -190,105 +167,20 @@ class FourthwallIntegrationController extends Controller
         $integration->setCredentialsEncrypted($credentials);
         $integration->save();
 
-        if ($isNew) {
-            $driver = ExternalServiceRegistry::driver(self::SERVICE);
-            $this->controlService->provision($user, $driver);
-        }
-
         return redirect()->route('settings.integrations.fourthwall.show')
             ->with('success', 'Fourthwall connected successfully.');
     }
 
-    public function setTestMode(Request $request): JsonResponse
+    /**
+     * Deregister the remote webhook before the integration row goes away.
+     */
+    protected function beforeDisconnect(ExternalIntegration $integration): void
     {
-        $user = auth()->user();
+        $webhookId = $integration->getCredentialsDecrypted()['webhook_id'] ?? null;
 
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE)
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
+        if ($webhookId) {
+            $this->bestEffortDeregister($integration, $webhookId);
         }
-
-        $validated = $request->validate(['test_mode' => 'required|boolean']);
-
-        $integration->update(['test_mode' => $validated['test_mode']]);
-
-        if (! $validated['test_mode']) {
-            $settings = $integration->settings ?? [];
-            $this->controlService->resetServiceManagedControls(
-                $user,
-                self::SERVICE,
-                isset($settings['donations_seed_value']) ? (string) $settings['donations_seed_value'] : null,
-            );
-        }
-
-        return response()->json(['test_mode' => $integration->test_mode]);
-    }
-
-    public function seedDonationCount(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE)
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
-        }
-
-        $settings = $integration->settings ?? [];
-
-        //        if (! empty($settings['donations_seed_set'])) {
-        //            return response()->json(['error' => 'Starting count has already been set.'], 403);
-        //        }
-
-        // This seeds `total_received`, which is an amount and not a count, so
-        // fractional values are the normal case: a streamer already sitting on
-        // 65.35 has to be able to say exactly that. The frontend settles the
-        // decimal separator, so what arrives here is always dot-separated.
-        $validated = $request->validate([
-            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
-        ]);
-
-        $seedValue = $this->controlService->normalizeSeedAmount($validated['initial_count']);
-
-        $this->controlService->seedTotalReceived($user, self::SERVICE, $seedValue);
-
-        $integration->settings = array_merge($settings, [
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-        $integration->save();
-
-        return response()->json([
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-    }
-
-    public function disconnect(): RedirectResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', self::SERVICE)
-            ->first();
-
-        if ($integration) {
-            $webhookId = $integration->getCredentialsDecrypted()['webhook_id'] ?? null;
-            if ($webhookId) {
-                $this->bestEffortDeregister($integration, $webhookId);
-            }
-
-            $this->controlService->deprovision($user, self::SERVICE);
-            $integration->delete();
-        }
-
-        return redirect()->route('settings.integrations.index')
-            ->with('success', 'Fourthwall disconnected.');
     }
 
     /**

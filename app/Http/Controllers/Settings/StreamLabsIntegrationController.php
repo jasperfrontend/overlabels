@@ -2,55 +2,27 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Http\Controllers\Controller;
-use App\Models\ExternalIntegration;
-use App\Services\External\ExternalControlService;
-use App\Services\External\ExternalServiceRegistry;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
-use Inertia\Response;
 use Random\RandomException;
 
-class StreamLabsIntegrationController extends Controller
+class StreamLabsIntegrationController extends DonationIntegrationController
 {
-    public function __construct(
-        private readonly ExternalControlService $controlService,
-    ) {}
-
-    public function show(): Response
+    protected function service(): string
     {
-        $user = auth()->user();
+        return 'streamlabs';
+    }
 
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'streamlabs')
-            ->first();
-
-        $settings = $integration->settings ?? [];
-
-        return Inertia::render('settings/integrations/streamlabs', [
-            'integration' => $integration ? [
-                'connected' => true,
-                'enabled' => $integration->enabled,
-                'test_mode' => $integration->test_mode,
-                'last_received_at' => $integration->last_received_at?->toIso8601String(),
-                'settings' => $settings,
-                'donations_seed_set' => ! empty($settings['donations_seed_set']),
-                'donations_seed_value' => $settings['donations_seed_value'] ?? null,
-            ] : [
-                'connected' => false,
-                'enabled' => false,
-                'test_mode' => false,
-                'last_received_at' => null,
-                'settings' => [],
-                'donations_seed_set' => false,
-                'donations_seed_value' => null,
-            ],
-        ]);
+    /**
+     * Streamlabs is pulled over Socket.IO by the listener accessory rather than
+     * pushed to us, so there is no inbound webhook URL for the user to copy.
+     */
+    protected function showsWebhookUrl(): bool
+    {
+        return false;
     }
 
     /**
@@ -130,14 +102,7 @@ class StreamLabsIntegrationController extends Controller
 
         $user = auth()->user();
 
-        $isNew = ! ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'streamlabs')
-            ->exists();
-
-        $integration = ExternalIntegration::firstOrCreate(
-            ['user_id' => $user->id, 'service' => 'streamlabs'],
-            ['enabled' => true]
-        );
+        $integration = $this->connectIntegration($user);
 
         $integration->setCredentialsEncrypted([
             'access_token' => $accessToken,
@@ -148,101 +113,7 @@ class StreamLabsIntegrationController extends Controller
         $integration->enabled = true;
         $integration->save();
 
-        // Auto-provision controls on first connection
-        if ($isNew) {
-            $driver = ExternalServiceRegistry::driver('streamlabs');
-            $this->controlService->provision($user, $driver);
-        }
-
         return redirect()->route('settings.integrations.streamlabs.show')
             ->with('success', 'StreamLabs connected successfully.');
-    }
-
-    public function setTestMode(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'streamlabs')
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
-        }
-
-        $validated = $request->validate(['test_mode' => 'required|boolean']);
-
-        $integration->update(['test_mode' => $validated['test_mode']]);
-
-        // When test mode is turned OFF, reset all service-managed controls to defaults
-        if (! $validated['test_mode']) {
-            $settings = $integration->settings ?? [];
-            $this->controlService->resetServiceManagedControls(
-                $user,
-                'streamlabs',
-                isset($settings['donations_seed_value']) ? (string) $settings['donations_seed_value'] : null,
-            );
-        }
-
-        return response()->json(['test_mode' => $integration->test_mode]);
-    }
-
-    public function seedDonationCount(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'streamlabs')
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
-        }
-
-        $settings = $integration->settings ?? [];
-
-        //        if (! empty($settings['donations_seed_set'])) {
-        //            return response()->json(['error' => 'Starting count has already been set.'], 403);
-        //        }
-
-        // This seeds `total_received`, which is an amount and not a count, so
-        // fractional values are the normal case: a streamer already sitting on
-        // 65.35 has to be able to say exactly that. The frontend settles the
-        // decimal separator, so what arrives here is always dot-separated.
-        $validated = $request->validate([
-            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
-        ]);
-
-        $seedValue = $this->controlService->normalizeSeedAmount($validated['initial_count']);
-
-        $this->controlService->seedTotalReceived($user, 'streamlabs', $seedValue);
-
-        $integration->settings = array_merge($settings, [
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-        $integration->save();
-
-        return response()->json([
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-    }
-
-    public function disconnect(): RedirectResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'streamlabs')
-            ->first();
-
-        if ($integration) {
-            $this->controlService->deprovision($user, 'streamlabs');
-            $integration->delete();
-        }
-
-        return redirect()->route('settings.integrations.index')
-            ->with('success', 'StreamLabs disconnected.');
     }
 }
