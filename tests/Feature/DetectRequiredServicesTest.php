@@ -32,8 +32,8 @@ it('D3: detects a service control tag with both a pipe and a default', function 
 });
 
 it('D4: detects a service tag whose key has more than two segments', function () {
-    expect(templateWith('[[[c:streamelements:latest:donor_name]]]')->detectRequiredServices())
-        ->toBe(['streamelements']);
+    expect(templateWith('[[[c:fourthwall:latest:donor_name]]]')->detectRequiredServices())
+        ->toBe(['fourthwall']);
 });
 
 it('does not report list tags as an integration', function () {

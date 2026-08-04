@@ -36,14 +36,14 @@
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
     <title>Overlabels &bull; Reactive Twitch overlays for people who code</title>
-    <meta name="description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source." />
+    <meta name="description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and Fourthwall. Free and open source." />
     <link rel="canonical" href="https://overlabels.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://overlabels.com/" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="Overlabels • Reactive Twitch overlays for people who code" />
-    <meta property="og:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts and donation tracking from Ko-fi, Streamlabs, StreamElements, Buy Me A Coffee, FourthWall and Throne. Free and open source." />
+    <meta property="og:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts and donation tracking from Ko-fi, Streamlabs, Buy Me A Coffee, FourthWall and Throne. Free and open source." />
     <meta property="og:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -51,7 +51,7 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Overlabels • Reactive Twitch overlays for people who code" />
-    <meta name="twitter:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and StreamElements. Free and open source." />
+    <meta name="twitter:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and Fourthwall. Free and open source." />
     <meta name="twitter:image" content="https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg" />
     <meta name="twitter:image:alt" content="Overlabels • reactive Twitch overlays for people who code" />
 

@@ -49,7 +49,7 @@ it('aggregates external donation income per session, split by service and curren
     $mid = now()->subHours(2);
     makeDonation($user->id, 'kofi', '50.00', 'USD', 'alice', $mid, 'love the stream!');
     makeDonation($user->id, 'kofi', '9.00', 'USD', 'bob', $mid);
-    makeDonation($user->id, 'streamelements', '25.00', 'EUR', 'chris', $mid, 'o7');
+    makeDonation($user->id, 'fourthwall', '25.00', 'EUR', 'chris', $mid, 'o7');
 
     // Outside the window (5 hours ago) - must NOT be counted for this session.
     makeDonation($user->id, 'kofi', '999.00', 'USD', 'ghost', now()->subHours(5));
@@ -76,15 +76,15 @@ it('aggregates external donation income per session, split by service and curren
         expect($income['count'])->toBe(3);
         expect($income['donations'])->toHaveCount(3);
 
-        // Totals: Ko-fi USD 59.00 over 2 donations, SE EUR 25.00 over 1.
+        // Totals: Ko-fi USD 59.00 over 2 donations, Fourthwall EUR 25.00 over 1.
         $kofi = collect($income['totals'])->firstWhere('service', 'kofi');
         expect($kofi['currency'])->toBe('USD');
         expect($kofi['count'])->toBe(2);
         expect((float) $kofi['total'])->toEqual(59.0);
 
-        $se = collect($income['totals'])->firstWhere('service', 'streamelements');
-        expect($se['currency'])->toBe('EUR');
-        expect((float) $se['total'])->toEqual(25.0);
+        $fourthwall = collect($income['totals'])->firstWhere('service', 'fourthwall');
+        expect($fourthwall['currency'])->toBe('EUR');
+        expect((float) $fourthwall['total'])->toEqual(25.0);
     });
 });
 

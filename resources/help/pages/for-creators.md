@@ -43,7 +43,7 @@ Sources today:
 
 - **Twitch** - per-stream counters, latest cheer / latest donor, follower / sub / raid / redemption
   tallies
-- **Ko-fi**, **Streamlabs**, **StreamElements**, **Fourthwall**, **Buy Me a Coffee** - donations and tips
+- **Ko-fi**, **Streamlabs**, **Fourthwall**, **Buy Me a Coffee** - donations and tips
 - **Overlabels GPS** - live phone GPS: lat, lng, speed, distance, battery, accuracy, plus session
   aggregates
 - **Time itself** - `now()` and `now_ms()` are bare functions in expressions that always return the
@@ -192,7 +192,7 @@ The rest of the help section is the developer-style reference for each primitive
 - [Controls](/help/controls) - the seven control types and how they behave on an overlay.
 - [Expression Controls](/help/expressions) - the math layer in full, with the Haversine walkthrough.
 - [Integration Presets](/help/integration-presets) - the catalog of every auto-managed Control across
-  Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS.
+  Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, and Overlabels GPS.
 - [Math Engine](/help/math) - waves, modulo wheels, pseudo-random one-liners, timestamp racing.
 - [Conditional and Event Tags](/help/conditionals) - if/else logic in templates.
 - [Formatting Pipes](/help/formatting) - locale-aware number, currency, duration, distance, and speed

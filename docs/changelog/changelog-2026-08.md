@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - chore(integrations): StreamElements is gone
+
+Razer, which acquired StreamElements, put up an accept-or-delete-your-account dialog for a new privacy policy. Buried in it is a clause claiming ownership of user-submitted and user-generated content, including the right to hand it to third parties. That is not a thing Overlabels wants to route a streamer's donation data through, so the integration is removed rather than deprecated.
+
+Being honest about what this is: Razer will not notice, and no data is protected by the removal - Overlabels pulled tips *out* of StreamElements, it never sent anything in. It is a statement about what this project is willing to maintain. The reason to make it now rather than later is that it costs nothing now: zero users were connected, so nobody's overlay breaks. In a year it would have broken real people's setups.
+
+- **The whole surface went, not just the connect button.** The driver, the settings controller and page, the five settings routes, the internal integrations endpoint, `streamelements-listener.mjs` with its Dockerfile and GHCR build step, the Kamal accessory, and `STREAMELEMENTS_LISTENER_SECRET` in all four places it was declared. The settings integrations list is built from `ExternalServiceRegistry`, so dropping the registry entry removed the card with no separate edit.
+- **A migration purges the data**, and it has to. Service-managed controls answer 403 to `setValue()` and `update()`, so six undeletable, permanently stale controls per connected user would have sat in the dashboard forever with no driver left to write them. The encrypted JWTs go too - keeping the credential while dropping the integration would be the wrong half of the decision. It is deliberately irreversible; `down()` cannot invent a JWT it never had.
+- **The reference pages regenerated themselves.** `help:build-integration-controls` reads the registry, so `streamelements.md` was deleted and `all-integration-controls.md` rewritten by running the command, which is exactly the property that was built in last week. The hand-written `streamelements-tip-event-tags.md` and its 301 redirect were removed by hand, redirect included - pointing a preserved URL at a page that no longer exists is worse than letting it 404.
+- **Copy that counted the services was recounted.** Six donation services became five (Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne), including "six pipes" in the `latest()` section and the three meta descriptions on the homepage. The code sample under it loops `$latestServices`, so it dropped a line on its own.
+- **Comparative mentions stay.** "StreamElements-style widget" in `EventFeedAppender`, "other bots (StreamElements, Nightbot, Fossabot)" in the lists help, and the line in the integrations section about every overlay tool being owned by a donation platform are all describing the market, not advertising an integration. The last one arguably reads better now.
+- **Twitch is not the same case, before anyone asks.** Twitch is the substrate; there is no product without it. StreamElements was one of six interchangeable donation sources, and declining an optional integration is a choice that exists.
+
 ## August 4th, 2026 - fix(templates): Add to OBS is a main tab now, not a code editor tab
 
 The Builder replaces the Code tab wholesale for overlays composed from blocks, which is the point of it. What went unnoticed is that Add to OBS lived physically inside the code editor, as the fifth entry in its vertical HEAD/BODY/CSS/TW3 strip. Overriding the Code tab took the browser-source URL with it, so a Builder overlay could be composed, saved and previewed, and then had no way at all of reaching OBS.

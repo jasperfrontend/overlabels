@@ -250,7 +250,7 @@ props.controls.forEach((ctrl) => {
   }
 });
 
-// Listen for external control updates (bot, Ko-fi, StreamElements, etc.) so the
+// Listen for external control updates (bot, Ko-fi, Streamlabs, etc.) so the
 // panel reflects changes without a page reload.
 const page = usePage();
 const twitchId = computed<string | null>(() => {

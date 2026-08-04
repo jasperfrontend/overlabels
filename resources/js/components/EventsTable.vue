@@ -301,9 +301,6 @@ const externalEventLabels: Record<string, Record<string, string>> = {
     shop_order: 'Fourthwall shop order',
     commission: 'Fourthwall commission',
   },
-  streamelements: {
-    donation: 'StreamElements tip',
-  }
 };
 
 // Flat map - every Twitch event type resolves to exactly one human label.

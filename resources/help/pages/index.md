@@ -50,7 +50,7 @@ canonical: https://overlabels.com/help
 - [**Expression Controls**](/help/expressions) - math-powered live data - no code, no server. Build
   chained formulas like the Haversine distance, donation progress bars, and more.
 - [**Integration Presets**](/help/integration-presets) - every auto-managed control across Twitch, Ko-fi,
-  Streamlabs, StreamElements, Fourthwall, BMAC, and Overlabels GPS - all in one searchable reference.
+  Streamlabs, Fourthwall, BMAC, and Overlabels GPS - all in one searchable reference.
 - [**Lists**](/help/lists) - user-owned arrays of values. Raffles, queues, quote walls, leaderboards,
   donation goals - all driven from the dashboard or chat with one primitive and ten verbs.
 - [**Lists in realtime**](/help/lists-realtime) - the builder guide: read a List as JSON, subscribe to

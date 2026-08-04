@@ -175,23 +175,20 @@ Critical variables:
 - Template syntax: `[[[c:streamlabs:donations_received]]]`
 - In tests: use `postJson` with `X-Listener-Secret` header (NOT form-encoded like Ko-fi)
 
-### StreamElements Integration
+### StreamElements: REMOVED (Aug 2026)
 
-- JWT-based (NOT OAuth): StreamElements does not have self-serve OAuth app registration. Users generate a JWT from their dashboard (Account > Channels > Show secrets > JWT Token) and paste it into the Overlabels settings page
-- JWTs have no refresh flow - if revoked, user must paste a new one. This trade-off is why the integration is JWT rather than OAuth
-- WebSocket: Socket.IO at `https://realtime.streamelements.com`. After connect, `socket.emit('authenticate', { method: 'jwt', token: jwtToken })`. Listen for `'authenticated'` (channelId), `'unauthorized'`, `'event'`
-- Only `tip` event type supported - payload shape: `{ _id, channel, type: 'tip', data: { username, displayName, amount, message, currency, tipId } }`. Driver's `parseEventType()` maps `tip` -> `donation` so alert templates can target `[[[if:event.type = donation]]]` across Ko-fi, StreamLabs, and SE uniformly
-- Uses Socket.IO (pull model) via server-side Node.js listener, NOT webhooks
-- `streamelements-listener.mjs` bridges SE Socket.IO -> POST to `/api/webhooks/streamelements/{webhook_token}`
-- Internal API `GET /api/internal/streamelements/integrations` is polled every 60s and returns `jwt_token` + `listener_secret` per integration. Authenticated by `STREAMELEMENTS_LISTENER_SECRET`
-- Listener reconnects when JWT changes (checks cached token vs new one from poll). On `unauthorized`, drops connection; user must save a new JWT to recover
-- Verification: `X-Listener-Secret` header checked against per-integration `listener_secret` credential
-- Auto-provisions 6 controls (donation-family naming, aligned with Ko-fi and StreamLabs): `donations_received`, `latest_donor_name`, `latest_donation_amount`, `latest_donation_message`, `latest_donation_currency`, `total_received`
-- Credentials stored (encrypted): `jwt_token`, `listener_secret`
-- Env vars: `STREAMELEMENTS_LISTENER_SECRET` only (no client id/secret)
-- Settings routes: under `settings/integrations/streamelements` prefix. `POST /settings/integrations/streamelements` saves/replaces the JWT. Seed method named `seedDonationCount()`, settings keys `donations_seed_set`/`donations_seed_value`
-- Template syntax: `[[[c:streamelements:donations_received]]]`
-- In tests: use `postJson` with `X-Listener-Secret` header (same as StreamLabs). Test credentials shape: `['jwt_token' => ..., 'listener_secret' => ...]`
+The StreamElements integration was built in Apr 2026 and removed entirely on 2026-08-04, after
+Razer (which acquired StreamElements) changed the privacy policy to claim ownership of
+user-generated content, with an accept-or-delete-your-account dialog. Nobody was using it.
+
+Do NOT rebuild it, and do not propose it when listing candidate donation integrations. The
+decision is about the counterparty, not the code. Removed: driver, settings controller and page,
+the Socket.IO listener + its Dockerfile + Kamal accessory, the internal integrations endpoint,
+`STREAMELEMENTS_LISTENER_SECRET`, and all provisioned control data (via migration
+`2026_08_04_120000_purge_streamelements_integration_data`).
+
+Donation services are now five: Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne. Copy that
+counts them ("five donation services", "five pipes") lives in `resources/views/welcome/`.
 
 ## Admin Panel (Implemented Feb 2026)
 

@@ -203,7 +203,7 @@ GPS coordinates are in degrees, so always convert before passing them to trig fu
 
 ### Expression Controls can reference service presets
 
-Any of the GPS, Twitch, Ko-fi, Streamlabs, StreamElements, Fourthwall, or BMAC preset controls are
+Any of the GPS, Twitch, Ko-fi, Streamlabs, Fourthwall, or BMAC preset controls are
 referenceable with `c.service.key`. A donation progress bar that moves toward a goal is just
 `c.kofi.total_received / c.goal_amount * 100`. See [Integration Presets](/help/integration-presets) for
 the full catalog.

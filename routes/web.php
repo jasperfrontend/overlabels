@@ -150,7 +150,6 @@ Route::get('/help/gamejam', function () {
 foreach ([
     'ko-fi-auto-provisioned-controls' => 'kofi',
     'streamlabs-auto-provisioned-controls' => 'streamlabs',
-    'streamelements-auto-provisioned-controls' => 'streamelements',
     'fourthwall-auto-provisioned-controls' => 'fourthwall',
 ] as $legacySlug => $service) {
     Route::redirect(

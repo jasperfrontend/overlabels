@@ -85,7 +85,6 @@ it('301s the retired hand-written control pages to their generated replacements'
     $retired = [
         'ko-fi-auto-provisioned-controls' => 'kofi',
         'streamlabs-auto-provisioned-controls' => 'streamlabs',
-        'streamelements-auto-provisioned-controls' => 'streamelements',
         'fourthwall-auto-provisioned-controls' => 'fourthwall',
     ];
 

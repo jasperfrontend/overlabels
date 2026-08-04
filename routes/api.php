@@ -189,37 +189,6 @@ Route::get('/internal/streamlabs/integrations', function () {
     ->middleware(['throttle:10,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
 
-// Internal endpoint for StreamElements Node.js listener to fetch active integrations.
-// Returns the per-user JWT used for Socket.IO authentication at realtime.streamelements.com.
-Route::get('/internal/streamelements/integrations', function () {
-    $secret = config('services.streamelements.listener_secret');
-
-    if (empty($secret) || ! hash_equals($secret, (string) request()->header('X-Internal-Secret', ''))) {
-        abort(403);
-    }
-
-    $integrations = ExternalIntegration::where('service', 'streamelements')
-        ->where('enabled', true)
-        ->get()
-        ->map(function ($integration) {
-            $credentials = $integration->getCredentialsDecrypted();
-
-            return [
-                'id' => $integration->id,
-                'user_id' => $integration->user_id,
-                'webhook_token' => $integration->webhook_token,
-                'jwt_token' => $credentials['jwt_token'] ?? null,
-                'listener_secret' => $credentials['listener_secret'] ?? null,
-            ];
-        })
-        ->filter(fn ($i) => $i['jwt_token'] && $i['listener_secret'])
-        ->values();
-
-    return response()->json(['integrations' => $integrations]);
-})
-    ->middleware(['throttle:10,1'])
-    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
-
 // Internal endpoints for the @overlabels Twitch bot service (separate repo/Railway service).
 // Auth: X-Internal-Secret header, validated by bot.internal middleware.
 // Two throttle buckets: gamejam votes get their own per-channel bucket so a

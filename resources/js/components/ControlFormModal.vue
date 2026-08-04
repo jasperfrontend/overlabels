@@ -27,7 +27,6 @@ import {
   KOFI_PRESETS,
   GPS_PRESETS,
   STREAMLABS_PRESETS,
-  STREAMELEMENTS_PRESETS,
   FOURTHWALL_PRESETS,
   BMAC_PRESETS,
   THRONE_PRESETS,
@@ -107,9 +106,6 @@ const showGpsPresets = computed(
 const showStreamLabsPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamlabs'),
 );
-const showStreamElementsPresets = computed(
-  () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('streamelements'),
-);
 const showFourthwallPresets = computed(
   () => !isEditing.value && !isCopying.value && props.template?.type === 'static' && (props.connectedServices ?? []).includes('fourthwall'),
 );
@@ -159,9 +155,6 @@ const availableGpsPresets = computed(() =>
 );
 const availableStreamLabsPresets = computed(() =>
   STREAMLABS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamlabs', p.key) && matchesPresetSearch('streamlabs', p)),
-);
-const availableStreamElementsPresets = computed(() =>
-  STREAMELEMENTS_PRESETS.filter((p) => !isPresetAlreadyAdded('streamelements', p.key) && matchesPresetSearch('streamelements', p)),
 );
 const availableFourthwallPresets = computed(() =>
   FOURTHWALL_PRESETS.filter((p) => !isPresetAlreadyAdded('fourthwall', p.key) && matchesPresetSearch('fourthwall', p)),
@@ -520,7 +513,7 @@ async function save() {
           <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>
 
           <!-- Service Presets -->
-          <div v-if="showTwitchPresets || showAlertsPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showStreamElementsPresets || showFourthwallPresets || showBmacPresets || showThronePresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
+          <div v-if="showTwitchPresets || showAlertsPresets || showKofiPresets || showGpsPresets || showStreamLabsPresets || showFourthwallPresets || showBmacPresets || showThronePresets" class="space-y-2 border border-violet-400/30 bg-violet-400/5 p-3">
             <div class="flex items-center justify-between gap-2">
               <p class="text-sm font-medium text-violet-500 dark:text-violet-400">Stream Controls</p>
               <a
@@ -595,16 +588,6 @@ async function save() {
                     v-for="preset in availableStreamLabsPresets"
                     :key="'streamlabs:' + preset.key"
                     :value="'streamlabs:' + preset.key"
-                  >
-                    {{ preset.label }} ({{ preset.type }})
-                  </ComboboxItem>
-                </ComboboxGroup>
-                <ComboboxGroup v-if="showStreamElementsPresets && availableStreamElementsPresets.length">
-                  <ComboboxLabel>StreamElements</ComboboxLabel>
-                  <ComboboxItem
-                    v-for="preset in availableStreamElementsPresets"
-                    :key="'streamelements:' + preset.key"
-                    :value="'streamelements:' + preset.key"
                   >
                     {{ preset.label }} ({{ preset.type }})
                   </ComboboxItem>

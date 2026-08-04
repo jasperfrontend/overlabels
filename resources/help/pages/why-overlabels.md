@@ -10,7 +10,7 @@ If that sentence excited you, you're in the right place. Strap in.
 
 ## Why being third-party matters a lot
 
-Overlabels doesn't care where your donation came from. StreamElements, StreamLabs, Ko-fi, Fourthwall,
+Overlabels doesn't care where your donation came from. StreamLabs, Ko-fi, Fourthwall,
 Twitch Bits - they're all just *money that showed up*. We normalize every payload into a common shape and
 expose it as a Control you can reference anywhere in your template.
 
@@ -26,7 +26,6 @@ One function:
 latest(
   c.streamlabs.latest_donor_name_at,     c.streamlabs.latest_donor_name,
   c.kofi.latest_donor_name_at,           c.kofi.latest_donor_name,
-  c.streamelements.latest_donor_name_at, c.streamelements.latest_donor_name,
   c.fourthwall.latest_donor_name_at,     c.fourthwall.latest_donor_name,
   c.bmac.latest_donor_name_at,           c.bmac.latest_donor_name,
   c.twitch.latest_cheerer_name_at,       c.twitch.latest_cheerer_name
@@ -49,7 +48,6 @@ an Expression Control into your overlay and unleash:
 ```
 c.kofi.donations_received +
 c.streamlabs.donations_received +
-c.streamelements.donations_received +
 c.fourthwall.donations_received +
 (c.twitch.cheers_this_stream / 100)
 ```
@@ -71,12 +69,12 @@ you can reference anywhere in your template. Seven types:
 - **Random** - picks a new value every N ms within a range
 - **Expression** - the big one. Math over every other value in the system.
 
-Service-managed Controls (Ko-fi, StreamLabs, StreamElements, Fourthwall, Overlabels Mobile...)
+Service-managed Controls (Ko-fi, StreamLabs, Fourthwall, Overlabels Mobile...)
 auto-update from their source and cannot be manually edited - the data is *real*. User Controls are yours
 to fiddle with. Either way, every Control can be read by any Expression and targeted by any conditional.
 
 Want to compare your follower count to your subscriber count? Want to fire an alert when the combined
-StreamElements + Ko-fi total crosses €100 in a single stream session? Want to flash a boolean ON when
+Fourthwall + Ko-fi total crosses €100 in a single stream session? Want to flash a boolean ON when
 your bits-per-minute spikes above your stream average? You have the building blocks. Read
 [/help/controls](/help/controls) for the full list.
 

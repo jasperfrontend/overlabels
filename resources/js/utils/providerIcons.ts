@@ -26,7 +26,6 @@ export interface ProviderIcon {
 export const PROVIDER_ICONS: Record<string, ProviderIcon> = {
   twitch: { bits: 0x6996, label: 'Twitch' }, // ring
   fourthwall: { bits: 0x9669, label: 'Fourthwall' }, // x
-  streamelements: { bits: 0xf00f, label: 'StreamElements' }, // top + bottom bar
   streamlabs: { bits: 0x9999, label: 'StreamLabs' }, // left + right bar
   bmac: { bits: 0xa5a5, label: 'Buy Me a Coffee' }, // checker
   kofi: { bits: 0x00ff, label: 'Ko-fi' }, // solid base

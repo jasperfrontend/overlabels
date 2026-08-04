@@ -14,7 +14,7 @@ uses(DatabaseTransactions::class);
  * decimals. Locale notation ("65,35") is the frontend's job to normalize, so it
  * is rejected here on purpose.
  */
-$services = ['kofi', 'streamlabs', 'streamelements', 'fourthwall', 'bmac', 'throne'];
+$services = ['kofi', 'streamlabs', 'fourthwall', 'bmac', 'throne'];
 
 function seedableUser(string $service): User
 {

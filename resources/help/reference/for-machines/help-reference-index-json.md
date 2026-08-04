@@ -38,7 +38,7 @@ It is the same data the fuzzy search on this page runs against.
 
 The `integration-controls` category is itself generated, one step further back: it is emitted from the
 external service drivers in PHP rather than hand-written, so the control keys listed for Ko-fi,
-StreamLabs, StreamElements, Fourthwall, Buy Me a Coffee, Throne and Overlabels GPS are the keys the
+StreamLabs, Fourthwall, Buy Me a Coffee, Throne and Overlabels GPS are the keys the
 running app actually provisions. Connecting a new service adds its entries with no separate
 documentation step.
 

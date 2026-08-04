@@ -24,15 +24,6 @@ export const STREAMLABS_PRESETS: ServicePreset[] = [
   { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
 ];
 
-export const STREAMELEMENTS_PRESETS: ServicePreset[] = [
-  { key: 'donations_received', label: 'StreamElements Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'StreamElements Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'StreamElements Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'StreamElements Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'StreamElements Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'StreamElements Total Received (session)', type: 'number' },
-];
-
 export const FOURTHWALL_PRESETS: ServicePreset[] = [
   { key: 'donations_received', label: 'Fourthwall Donations Received', type: 'counter' },
   { key: 'latest_donor_name', label: 'Fourthwall Latest Donor Name', type: 'text' },
@@ -110,7 +101,6 @@ export function getPresetsForSource(source: string): ServicePreset[] {
     case 'kofi': return KOFI_PRESETS;
     case 'gps': return GPS_PRESETS;
     case 'streamlabs': return STREAMLABS_PRESETS;
-    case 'streamelements': return STREAMELEMENTS_PRESETS;
     case 'fourthwall': return FOURTHWALL_PRESETS;
     case 'bmac': return BMAC_PRESETS;
     case 'throne': return THRONE_PRESETS;

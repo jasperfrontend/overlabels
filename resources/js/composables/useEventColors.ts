@@ -29,7 +29,6 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   kofi: { dot: 'text-[#ff5a16]', border: 'hover:border-l-[#ff5a16]' },
   streamlabs: { dot: 'text-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
-  streamelements: { dot: 'text-[#0691ff]', border: 'hover:border-l-[#0691ff]' },
   twitch: { dot: 'text-[#9146ff]', border: 'hover:border-l-[#9146ff]' },
   bmac: { dot: 'text-[#ffdd00]', border: 'hover:border-l-[#ffdd00]' },
   fourthwall: { dot: 'text-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },

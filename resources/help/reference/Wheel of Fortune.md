@@ -2,7 +2,7 @@
 
 ## A new Internal Integration for Overlabels: the Wheel of Fortune
 
-**Internal**, not External. The `ExternalServiceDriver` contract is shaped around parsing and verifying payloads that originate outside Overlabels (Ko-fi, StreamLabs, StreamElements, BMAC, Fourthwall). The Wheel has no outside payload, no credentials, no listener, no signature to verify. The spin originates inside Overlabels, the RNG runs inside Overlabels, the result is authoritative the moment it is computed. Forcing it through `ExternalServiceDriver` would mean stubbing `verifyRequest` to `return true` and `normalizeEvent` would just rewrap data we already had in process. That is the contract lying about what is happening.
+**Internal**, not External. The `ExternalServiceDriver` contract is shaped around parsing and verifying payloads that originate outside Overlabels (Ko-fi, StreamLabs, BMAC, Fourthwall). The Wheel has no outside payload, no credentials, no listener, no signature to verify. The spin originates inside Overlabels, the RNG runs inside Overlabels, the result is authoritative the moment it is computed. Forcing it through `ExternalServiceDriver` would mean stubbing `verifyRequest` to `return true` and `normalizeEvent` would just rewrap data we already had in process. That is the contract lying about what is happening.
 
 Internally the name is `wheel`.
 

@@ -250,7 +250,7 @@ function saveForeachCaps() {
         <ul class="list-disc space-y-1 pl-5 text-sm text-foreground">
           <li>All your overlay templates and alert templates are deleted.</li>
           <li>All your access tokens stop working immediately and any OBS browser source using them goes blank.</li>
-          <li>Ko-fi, StreamLabs, StreamElements, Fourthwall, Buy Me a Coffee, and other integrations are disconnected.</li>
+          <li>Ko-fi, StreamLabs, Fourthwall, Buy Me a Coffee, and other integrations are disconnected.</li>
           <li>Your bot commands, custom controls, custom tags, and stream history are erased.</li>
           <li>If you re-authenticate with Twitch later, you will start from scratch as a brand-new account.</li>
         </ul>
