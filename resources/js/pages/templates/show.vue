@@ -4,7 +4,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
-import AddToObsButton from '@/components/AddToObsButton.vue';
+import AddToObsPanel from '@/components/templates/AddToObsPanel.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
 import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
@@ -67,17 +67,8 @@ const props = defineProps<{
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
   { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
-  { key: 'add-to-obs', label: 'OBS', icon: VideoIcon, color: 'text-violet-500 dark:text-violet-400' }
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' }
 ];
-
-// OBS browser-source URL is owner-only (the token is user-scoped). Available for
-// both static and alert overlays - alerts are usually rendered inside a static
-// overlay, but adding one straight to OBS is valid too, so we inform rather than gate.
-// Blocks are Builder ingredients, not standalone overlays, so no OBS tab for them.
-const visibleEditorTabs = computed(() =>
-  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || (props.canEdit && props.template?.type !== 'block')),
-);
 
 const mainTabs = computed(() => {
   const tabs: Array<{ key: string; label: string; icon: any }> = [
@@ -91,6 +82,11 @@ const mainTabs = computed(() => {
   if (props.canEdit && props.template?.type === 'alert') {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: TargetIcon });
+  }
+  // Always last. The browser-source URL carries a user-scoped token, so this is
+  // owner-only; blocks are Builder ingredients, not standalone overlays.
+  if (props.canEdit && props.template?.type !== 'block') {
+    tabs.push({ key: 'obs', label: 'Add to OBS', icon: VideoIcon });
   }
   return tabs;
 });
@@ -131,7 +127,7 @@ onMounted(() => {
     if (props.template?.id) router.visit(route('templates.edit', props.template.id));
   }, { description: 'Edit this overlay' });
 
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 7; i++) {
     register(`switch-tab-${i}`, `${i}`, () => {
       const tab = mainTabs.value[i - 1];
       if (tab) mainTab.value = tab.key;
@@ -359,13 +355,18 @@ const breadcrumbs: BreadcrumbItem[] = [
           <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
         </div>
 
+        <!-- Add to OBS tab (owner only) -->
+        <div v-if="canEdit && mainTab === 'obs'" class="mb-6 p-4 pt-6">
+          <AddToObsPanel :template="props.template" />
+        </div>
+
         <!-- Code Tabs (overview only) -->
         <div v-if="!canEdit || mainTab === 'overview'" class="overflow-hidden">
           <div v-show="showCode" class="flex min-h-[30vh] overflow-hidden">
             <!-- File tabs sidebar -->
             <div class="flex flex-col bg-sidebar text-sidebar-foreground">
               <button
-                v-for="tab in visibleEditorTabs"
+                v-for="tab in editorTabs"
                 :key="tab.key"
                 @click="activeTab = tab.key"
                 :class="[
@@ -379,54 +380,17 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span>{{ tab.label }}</span>
               </button>
             </div>
-            <!-- Code panel -->
+            <!-- Code panel (read-only) -->
             <div class="relative flex-1 min-w-0 text-gray-700 dark:text-accent-foreground">
-              <!-- Add to OBS panel -->
-              <div
-                v-if="activeTab === 'add-to-obs'"
-                class="h-[50vh] overflow-auto p-6 text-sm text-foreground bg-white dark:bg-[#160e21]"
-              >
-                <div class="mx-auto max-w-2xl space-y-4">
-                  <div class="flex items-center gap-3">
-                    <VideoIcon class="size-6 text-violet-500 dark:text-violet-400" />
-                    <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
-                  </div>
-                  <p>
-                    Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
-                  </p>
-                  <div
-                    v-if="props.template?.type === 'alert'"
-                    class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90"
-                  >
-                    <p class="font-medium text-violet-700 dark:text-violet-300">Heads up: you're adding an alert directly to OBS</p>
-                    <p>
-                      That works fine, but alerts are usually far more powerful rendered inside a static overlay, where they inherit its structure and styling.
-                      <a
-                        :href="route('help.overlays-vs-alerts')"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="cursor-pointer font-medium text-violet-600 underline hover:text-violet-500 dark:text-violet-300"
-                      >Read "Overlays vs Alerts"</a>
-                      so you know what you're doing.
-                    </p>
-                  </div>
-                  <div>
-                    <AddToObsButton :template="props.template" />
-                  </div>
-                </div>
+              <div class="h-[50vh] w-full overflow-auto p-4 bg-white dark:bg-[#160e21]">
+                <code class="text-sm whitespace-break-spaces overflow-hidden text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code>
               </div>
-              <!-- Read-only code view -->
-              <template v-else>
-                <div class="h-[50vh] w-full overflow-auto p-4 bg-white dark:bg-[#160e21]">
-                  <code class="text-sm whitespace-break-spaces overflow-hidden text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code>
-                </div>
-                <button
-                  @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
-                  class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
-                >
-                  Copy {{ activeTab.toUpperCase() }}
-                </button>
-              </template>
+              <button
+                @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"
+                class="btn btn-sm btn-chill absolute top-4 right-8 w-30"
+              >
+                Copy {{ activeTab.toUpperCase() }}
+              </button>
             </div>
           </div>
 
