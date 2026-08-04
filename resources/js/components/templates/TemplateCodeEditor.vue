@@ -6,17 +6,11 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind, Video } from '@lucide/vue';
-import AddToObsButton from '@/components/AddToObsButton.vue';
+import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind } from '@lucide/vue';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
-
-const props = defineProps<{
-  template?: { id: number; name: string; slug: string };
-  templateType?: string;
-}>();
 
 // Detect dark mode reactively via MutationObserver on <html> class
 const isDark = ref(document.documentElement.classList.contains('dark'));
@@ -40,16 +34,9 @@ const editorTabs = [
   { key: 'body', label: 'BODY', icon: Code, color: 'text-cyan-500 dark:text-cyan-400' },
   { key: 'css', label: 'CSS', icon: Palette, color: 'text-lime-500 dark:text-lime-400' },
   { key: 'tailwind', label: 'TW3', icon: Wind, color: 'text-sky-500 dark:text-sky-400' },
-  { key: 'add-to-obs', label: 'OBS', icon: Video, color: 'text-violet-500 dark:text-violet-400' },
 ] as const;
 
 type CodeTab = (typeof editorTabs)[number]['key'];
-
-// OBS tab generates a browser-source URL, which only exists once the overlay is saved.
-// Blocks are Builder ingredients, not standalone overlays, so they never get the tab.
-const visibleTabs = computed(() =>
-  editorTabs.filter((tab) => tab.key !== 'add-to-obs' || (props.template && props.templateType !== 'block')),
-);
 
 const codeTab = ref<CodeTab>('body');
 const isExpanded = ref(false);
@@ -94,7 +81,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
         <!-- Vertical file tabs -->
         <div class="flex flex-col bg-sidebar text-sidebar-foreground">
           <button
-            v-for="tab in visibleTabs"
+            v-for="tab in editorTabs"
             :key="tab.key"
             type="button"
             @click="codeTab = tab.key"
@@ -240,45 +227,6 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
               </p>
             </div>
           </div>
-
-          <!-- Add to OBS panel -->
-          <div
-            v-show="codeTab === 'add-to-obs'"
-            v-if="props.template"
-            class="absolute inset-0 overflow-auto p-6 text-sm text-foreground"
-          >
-            <div class="mx-auto max-w-2xl space-y-4">
-              <div class="flex items-center gap-3">
-                <Video class="size-6 text-violet-500 dark:text-violet-400" />
-                <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
-              </div>
-              <p>
-                Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
-              </p>
-
-              <div
-                v-if="props.templateType === 'alert'"
-                class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90"
-              >
-                <p class="font-medium text-violet-700 dark:text-violet-300">Heads up: you're adding an alert directly to OBS</p>
-                <p>
-                  That works fine, but alerts are usually far more powerful rendered inside a static overlay, where they inherit its structure and styling.
-                  <a
-                    :href="route('help.overlays-vs-alerts')"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="cursor-pointer font-medium text-violet-600 underline hover:text-violet-500 dark:text-violet-300"
-                  >Read "Overlays vs Alerts"</a>
-                  so you know what you're doing.
-                </p>
-              </div>
-
-              <div>
-                <AddToObsButton :template="props.template" />
-              </div>
-            </div>
-          </div>
-
 
           <!-- Fullscreen hint bar -->
           <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground">

@@ -27,6 +27,7 @@ defineExpose({ generateOBSUrl });
 
 <template>
   <button
+    type="button"
     @click="generateOBSUrl()"
     class="flex gap-2 py-4 btn btn-secondary w-full"
     title="Add this overlay to your OBS"

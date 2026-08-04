@@ -1,5 +1,21 @@
 # CHANGELOG AUGUST 2026
 
+## August 4th, 2026 - fix(templates): Add to OBS is a main tab now, not a code editor tab
+
+The Builder replaces the Code tab wholesale for overlays composed from blocks, which is the point of it. What went unnoticed is that Add to OBS lived physically inside the code editor, as the fifth entry in its vertical HEAD/BODY/CSS/TW3 strip. Overriding the Code tab took the browser-source URL with it, so a Builder overlay could be composed, saved and previewed, and then had no way at all of reaching OBS.
+
+Add to OBS is now the last main tab on both the overlay page and the edit page, alongside Details and Controls, where it no longer depends on which editor is rendering underneath it.
+
+- **The panel is one component now**, `components/templates/AddToObsPanel.vue`. The heading, the prose, the "you are adding an alert directly to OBS" warning and the button existed as two near-identical copies, one in show.vue and one in TemplateCodeEditor.vue. Moving it was the moment to stop having two.
+
+- **Digits still map to tabs, and now they map to all of them.** The edit page runs to ten tabs on an alert overlay, so 1-9 select the first nine and 0 takes the tenth. The old loop stopped at 8 while alerts already had nine tabs, which meant Effects had no key; it does now. The overlay page tops out at seven.
+
+- **Blocks still do not get the tab.** A block is a Builder ingredient, not a standalone overlay, so there is no browser source to add. Same gate as before, moved with the panel. On the overlay page it stays owner-only for the same reason as always: the URL carries a user-scoped token.
+
+- **The button is `type="button"` now.** It sits inside the edit page's form, where a bare button is a submit button, so clicking Add to OBS opened the dialog and saved the overlay at the same time. That was true in its old home too and was easy to miss, because the save happened behind a modal that had just told you to look away from your stream.
+
+- **TemplateCodeEditor lost its `template` and `templateType` props.** They existed only to feed the OBS tab, and create.vue never passed them, which is why the tab was already absent when creating an overlay.
+
 ## August 4th, 2026 - feat(moderation): public overlays can be reported
 
 Every public overlay had a share URL, an OpenGraph card and a copy button, and no way at all to tell anyone something was wrong with it. The gallery is user-generated content served from our domain, so the absence of a report path was the gap.

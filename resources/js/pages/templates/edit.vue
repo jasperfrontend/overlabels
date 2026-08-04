@@ -8,6 +8,7 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
+import AddToObsPanel from '@/components/templates/AddToObsPanel.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
@@ -36,6 +37,7 @@ import {
   SquarePenIcon,
   Target,
   ImageIcon,
+  Video,
   Volume2,
   Zap,
   Search,
@@ -232,6 +234,11 @@ const mainTabs = computed(() => {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
     tabs.push({ key: 'tts', label: 'Effects', icon: Volume2 });
+  }
+  // Always last. Blocks are Builder ingredients, not standalone overlays, so
+  // they never get a browser-source URL.
+  if (props.template.type !== 'block') {
+    tabs.push({ key: 'obs', label: 'Add to OBS', icon: Video });
   }
   return tabs;
 });
@@ -503,8 +510,10 @@ onMounted(() => {
     { description: 'Preview in new tab' }
   );
 
-  for (let i = 1; i <= 8; i++) {
-    register(`switch-tab-${i}`, `${i}`, () => {
+  // Digits 1-9 pick the first nine tabs, 0 the tenth: alert overlays run to ten
+  // tabs with Add to OBS on the end.
+  for (let i = 1; i <= 10; i++) {
+    register(`switch-tab-${i}`, i === 10 ? '0' : `${i}`, () => {
       const tab = mainTabs.value[i - 1];
       if (tab) mainTab.value = tab.key;
     }, { description: `Switch to tab ${i}` });
@@ -637,8 +646,6 @@ onMounted(() => {
           />
           <TemplateCodeEditor
             v-else
-            :template-type="props.template.type"
-            :template="props.template"
             v-show="mainTab === 'code'"
             v-model:head="form.head"
             v-model:body="form.html"
@@ -966,6 +973,11 @@ onMounted(() => {
                 </ul>
               </aside>
             </div>
+          </div>
+
+          <!-- Add to OBS Tab -->
+          <div v-if="mainTab === 'obs'" class="p-4 pt-6">
+            <AddToObsPanel :template="props.template" />
           </div>
         </div>
 
