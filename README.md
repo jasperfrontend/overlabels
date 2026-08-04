@@ -311,6 +311,47 @@ Overlabels connects to external services that drive controls and trigger alerts 
 Each integration normalises incoming data into the same control and alert pipeline, your template syntax stays
 the same regardless of the source.
 
+Overlabels does not sell donation ingest, so it has no reason to care which service the money came through.
+Every donation integration is a first-class citizen.
+
+### The Shared Donation Schema
+
+All five donation integrations - Ko-fi, StreamLabs, Fourthwall, Buy Me a Coffee, and Throne - expose the
+**same six controls**. Only the prefix changes, so a template written against one service ports to another by
+swapping the namespace and nothing else.
+
+| Control                     | Type      | Holds                            |
+|-----------------------------|-----------|----------------------------------|
+| `donations_received`        | `counter` | Number of donations received     |
+| `latest_donor_name`         | `text`    | Most recent donor                |
+| `latest_donation_amount`    | `number`  | Most recent donation amount      |
+| `latest_donation_message`   | `text`    | Most recent donation message     |
+| `latest_donation_currency`  | `text`    | Most recent donation currency    |
+| `total_received`            | `number`  | Running total for the session    |
+
+```html
+<span>[[[c:kofi:latest_donor_name]]]</span>
+<span>[[[c:throne:latest_donor_name]]]</span>
+```
+
+Two services extend the schema with their own keys; the six above are always available.
+
+**Connect a service and its controls appear.** All of them, automatically, the moment the connection is
+made. They are service-managed: read-only to you and to the API, updating only when the service sends new
+data. The presets list in the control editor is there for authoring, so you can see which keys exist while
+writing a template, not because anything needs adding by hand.
+
+Because every control carries an `_at` companion timestamp, you can compare across services to find the
+genuinely most recent supporter regardless of which platform they used:
+
+```
+latest(
+  c.kofi.latest_donor_name_at,       c.kofi.latest_donor_name,
+  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
+  c.throne.latest_donor_name_at,     c.throne.latest_donor_name
+)
+```
+
 ### Ko-fi
 
 Ko-fi webhooks deliver donation, subscription, shop order, and commission events.
@@ -323,23 +364,16 @@ Controls use the `kofi:` namespace:
 <span>[[[c:kofi:latest_donor_name]]]</span>
 ```
 
-Ko-fi controls are added manually from presets in the control editor when the integration is connected.
+Event types: `donation`, `subscription`, `shop_order`, `commission`
+
+Ko-fi controls are added from presets in the control editor once the integration is connected.
 
 ### StreamLabs
 
-StreamLabs connects via OAuth and delivers donation events through a Socket.IO bridge. On connection,
-six controls are automatically provisioned:
+StreamLabs connects via OAuth - one click, no token to paste - and delivers donation events through a
+Socket.IO bridge rather than webhooks. The six shared controls are provisioned automatically on connect.
 
-| Control                               | Description                   |
-|---------------------------------------|-------------------------------|
-| `streamlabs:donations_received`       | Total donation count          |
-| `streamlabs:latest_donor_name`        | Most recent donor             |
-| `streamlabs:latest_donation_amount`   | Most recent donation amount   |
-| `streamlabs:latest_donation_message`  | Most recent donation message  |
-| `streamlabs:latest_donation_currency` | Most recent donation currency |
-| `streamlabs:total_received`           | Total amount received         |
-
-Reference them like any other control:
+Event types: `donation`
 
 ```html
 
@@ -347,6 +381,62 @@ Reference them like any other control:
   [[[c:streamlabs:latest_donor_name]]] donated
   [[[c:streamlabs:latest_donation_amount]]] [[[c:streamlabs:latest_donation_currency]]]
 </div>
+```
+
+### Fourthwall
+
+Fourthwall connects via OAuth from the integration page - two clicks, no token to paste. The six shared
+controls are provisioned automatically on connect.
+
+Event types: `donation`
+
+```html
+<span>[[[c:fourthwall:latest_donor_name]]] tipped [[[c:fourthwall:latest_donation_amount]]]</span>
+```
+
+### Buy Me a Coffee
+
+Paste your Buy Me a Coffee verification token, set your webhook URL, done. Buy Me a Coffee covers more than
+one-off donations, so it provisions **seven** controls: the shared six plus a support type.
+
+| Control              | Type   | Holds                                                                          |
+|----------------------|--------|--------------------------------------------------------------------------------|
+| `latest_support_type`| `text` | `Supporter`, `Commission`, `Extra`, `Membership`, `Subscription`, or `Wishlist` |
+
+Event types: `donation`, `commission`, `extra`, `membership`, `recurring`, `wishlist`
+
+Combine it with a conditional to render a different alert per support type:
+
+```html
+[[[if:c:bmac:latest_support_type = Membership]]]
+<span>[[[c:bmac:latest_donor_name]]] joined the membership!</span>
+[[[else]]]
+<span>[[[c:bmac:latest_donor_name]]] bought a coffee</span>
+[[[endif]]]
+```
+
+### Throne
+
+Connect Throne and paste your Overlabels webhook URL into Throne. There is no token to copy - Throne signs
+every webhook with its own key, which Overlabels verifies. Throne delivers gifts rather than cash, so it
+provisions **nine** controls: the shared six plus three gift-specific ones.
+
+| Control                     | Type   | Holds                                       |
+|-----------------------------|--------|---------------------------------------------|
+| `latest_item_name`          | `text` | Name of the most recent gift                |
+| `latest_item_thumbnail_url` | `text` | Product image URL, ready for an `<img src>` |
+| `latest_is_surprise_gift`   | `text` | `1` when the gift was a surprise, else `0`  |
+
+Event types: `donation`
+
+`latest_is_surprise_gift` works directly with the truthiness form of a conditional, since `"0"` is falsy:
+
+```html
+<img src="[[[c:throne:latest_item_thumbnail_url]]]" alt="[[[c:throne:latest_item_name]]]">
+
+[[[if:c:throne:latest_is_surprise_gift]]]
+<span>A surprise gift from [[[c:throne:latest_donor_name]]]!</span>
+[[[endif]]]
 ```
 
 ### Integration Pipeline
@@ -564,10 +654,21 @@ BROADCAST_CONNECTION=reverb
 
 **Optional (for external integrations):**
 
+Only the OAuth-based integrations need app credentials. Ko-fi, Buy Me a Coffee, and Throne authenticate
+per-user with a token or signature, so they need no environment configuration at all.
+
 ```env
+# StreamLabs (OAuth + Socket.IO listener)
 STREAMLABS_CLIENT_ID=
 STREAMLABS_CLIENT_SECRET=
 STREAMLABS_LISTENER_SECRET=
+
+# Fourthwall (OAuth)
+FW_CLIENT_ID=
+FW_CLIENT_SECRET=
+FW_AUTH_URL=
+FW_REDIRECT_URL=
+FW_HMAC=
 ```
 
 Your `APP_URL` must be publicly reachable for Twitch EventSub webhooks to deliver.
@@ -607,9 +708,8 @@ for my PhpStorm licence is more expensive than the cost of hosting Overlabels it
 ### But that still doesn't explain how you plan on making Overlabels sustainable?
 Don't worry. I have plans ❤. For now, Overlabels is small and easy to maintain.
 
-Of course you're free to send me a [Ko-fi](https://ko-fi.com/jasperfromoverlabels) or 
-[StreamElements](https://streamelements.com/jasperdiscovers/tip) tip if you like what I do! Be sure to mention
-this README somewhere in your tip so I can link your support back to Overlabels.
+Of course you're free to send me a [Ko-fi](https://ko-fi.com/jasperfromoverlabels) tip if you like what I do!
+Be sure to mention this README somewhere in your tip so I can link your support back to Overlabels.
 
 ---
 

@@ -2,60 +2,19 @@
 
 namespace App\Http\Controllers\Settings;
 
-use App\Http\Controllers\Controller;
-use App\Models\ExternalIntegration;
-use App\Services\External\ExternalControlService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
-class KofiIntegrationController extends Controller
+class KofiIntegrationController extends DonationIntegrationController
 {
-    public function __construct(
-        private readonly ExternalControlService $controlService,
-    ) {}
-
-    public function show(): Response
+    protected function service(): string
     {
-        $user = auth()->user();
+        return 'kofi';
+    }
 
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
-            ->first();
-
-        $webhookUrl = $integration
-            ? url("/api/webhooks/kofi/$integration->webhook_token")
-            : null;
-
-        $credentials = $integration?->getCredentialsDecrypted() ?? [];
-
-        $settings = $integration->settings ?? [];
-
-        return Inertia::render('settings/integrations/kofi', [
-            'integration' => $integration ? [
-                'connected' => true,
-                'enabled' => $integration->enabled,
-                'test_mode' => $integration->test_mode,
-                'webhook_url' => $webhookUrl,
-                'last_received_at' => $integration->last_received_at?->toIso8601String(),
-                'settings' => $settings,
-                'has_token' => ! empty($credentials['verification_token']),
-                'donations_seed_set' => ! empty($settings['donations_seed_set']),
-                'donations_seed_value' => $settings['donations_seed_value'] ?? null,
-            ] : [
-                'connected' => false,
-                'enabled' => false,
-                'test_mode' => false,
-                'webhook_url' => null,
-                'last_received_at' => null,
-                'settings' => [],
-                'has_token' => false,
-                'donations_seed_set' => false,
-                'donations_seed_value' => null,
-            ],
-        ]);
+    protected function credentialFlags(): array
+    {
+        return ['has_token' => 'verification_token'];
     }
 
     public function save(Request $request): RedirectResponse
@@ -69,14 +28,10 @@ class KofiIntegrationController extends Controller
             'enabled' => 'nullable|boolean',
         ]);
 
-        $isNew = ! ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->exists();
+        $isNew = ! $this->integration($user);
 
-        $integration = ExternalIntegration::firstOrCreate(
-            ['user_id' => $user->id, 'service' => 'kofi'],
-            ['enabled' => true]
-        );
+        $integration = $this->connectIntegration($user);
 
-        // Encrypt and store credentials
         $integration->setCredentialsEncrypted([
             'verification_token' => $validated['verification_token'],
         ]);
@@ -92,93 +47,5 @@ class KofiIntegrationController extends Controller
         $integration->save();
 
         return back()->with('success', 'Ko-fi integration saved.');
-    }
-
-    public function setTestMode(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
-        }
-
-        $validated = $request->validate(['test_mode' => 'required|boolean']);
-
-        $integration->update(['test_mode' => $validated['test_mode']]);
-
-        // When test mode is turned OFF, reset all service-managed controls to defaults
-        if (! $validated['test_mode']) {
-            $settings = $integration->settings ?? [];
-            $this->controlService->resetServiceManagedControls(
-                $user,
-                'kofi',
-                isset($settings['donations_seed_value']) ? (string) $settings['donations_seed_value'] : null,
-            );
-        }
-
-        return response()->json(['test_mode' => $integration->test_mode]);
-    }
-
-    public function seedDonationCount(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
-            ->first();
-
-        if (! $integration) {
-            return response()->json(['error' => 'Not connected.'], 404);
-        }
-
-        $settings = $integration->settings ?? [];
-
-        //        if (! empty($settings['donations_seed_set'])) {
-        //            return response()->json(['error' => 'Starting count has already been set.'], 403);
-        //        }
-
-        // This seeds `total_received`, which is an amount and not a count, so
-        // fractional values are the normal case: a streamer already sitting on
-        // 65.35 has to be able to say exactly that. The frontend settles the
-        // decimal separator, so what arrives here is always dot-separated.
-        $validated = $request->validate([
-            'initial_count' => 'required|numeric|decimal:0,2|min:0|max:9999999',
-        ]);
-
-        $seedValue = $this->controlService->normalizeSeedAmount($validated['initial_count']);
-
-        $this->controlService->seedTotalReceived($user, 'kofi', $seedValue);
-
-        $integration->settings = array_merge($settings, [
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-        $integration->save();
-
-        return response()->json([
-            'donations_seed_set' => true,
-            'donations_seed_value' => $seedValue,
-        ]);
-    }
-
-    public function disconnect(): RedirectResponse
-    {
-        $user = auth()->user();
-
-        $integration = ExternalIntegration::where('user_id', $user->id)
-            ->where('service', 'kofi')
-            ->first();
-
-        if ($integration) {
-            $this->controlService->deprovision($user, 'kofi');
-            $integration->delete();
-        }
-
-        return redirect()->route('settings.integrations.index')
-            ->with('success', 'Ko-fi disconnected.');
     }
 }

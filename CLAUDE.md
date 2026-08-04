@@ -145,11 +145,19 @@ Critical variables:
 - `ExternalEvent` append-only model (UPDATED_AT = null), global dedup on (service, message_id)
 - `ControlValueUpdated::dispatch()` uses variadic `...$arguments` - use POSITIONAL args, not named args
 
+### Donation integration controllers (consolidated Aug 2026)
+
+- The five donation integrations (kofi, streamlabs, fourthwall, bmac, throne) all extend `DonationIntegrationController`. It owns `show()`, `setTestMode()`, `seedDonationCount()` and `disconnect()`; subclasses supply `service()` and their connect flow only. GPS deliberately does NOT extend it (telemetry, not donations - no test mode, no seed).
+- Subclass hooks: `credentialFlags()` (prop name => credential key, for `has_token`-style booleans), `showsWebhookUrl()` (false for the OAuth pair), `beforeDisconnect()` (Fourthwall deregisters its remote webhook).
+- **Every connect flow MUST go through `connectIntegration()`.** That is the single place `provision()` is called, which is what makes "connect a service, get its controls" true. Before this, only streamlabs/fourthwall/gps provisioned - kofi/bmac/throne gave you a working webhook and zero controls to read it from, because the render payload is built from control rows (`OverlayTemplateController` render query).
+- `provision()` is idempotent, so it is called on EVERY connect, not just the first. A driver that gains a control later picks it up on the next reconnect.
+- `IntegrationProvisioningTest` pins this; 6 of its 8 tests were verified to fail when the `provision()` call is removed. It also asserts structurally that every donation service's show route resolves to a `DonationIntegrationController` subclass, so a sixth integration cannot reintroduce the bug with a hand-rolled controller.
+
 ### Ko-fi Integration
 
 - Ko-fi driver: payload is form-encoded body with `data` JSON field - use `$request->input('data')` to get string
   - In tests: use `$this->post(url, ['data' => json_encode($payload)])` NOT `postJson`
-- Ko-fi controls: NO auto-provision on connect - user explicitly adds from ControlFormModal on static templates
+- Ko-fi controls ARE auto-provisioned on connect, like every other integration (fixed Aug 2026 - it previously provisioned nothing). Provisioning and template-authoring are separate concerns: provisioning creates the user-scoped rows, the presets modal is how you discover which keys exist while writing a template.
 - `ControlFormModal.vue` shows Ko-fi presets when `connectedServices` includes 'kofi' AND template.type === 'static'
 - `ExternalControlService::applyUpdates()` uses `->with('template')->get()` (not `->first()`); loops all matching controls
 - `OverlayControl` relationship is `template()` not `overlayTemplate()` - use `$control->template?->slug`
