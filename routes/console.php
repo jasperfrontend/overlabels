@@ -281,3 +281,16 @@ Schedule::call(function () {
         }
     }
 })->weekly()->name('tts:cleanup')->withoutOverlapping();
+
+// Nightly Postgres dump to Cloudflare R2. 03:00 UTC is 05:00 in Amsterdam,
+// which is the quietest the box gets. The scheduler container runs in UTC
+// (config/app.php pins it), so this is not subject to DST drift.
+//
+// Deliberately NOT ->runInBackground(): the command's own catch block is what
+// sends the Discord alert, and detaching it would put failures out of reach of
+// the scheduler's exit-code handling for no benefit on a job this short.
+Schedule::command('backup:database')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->name('backup:database')
+    ->appendOutputTo(storage_path('logs/backup-database.log'));

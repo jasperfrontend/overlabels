@@ -20,6 +20,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "mchev/banhammer": "^2.4",
         "opis/json-schema": "^2.6",
         "socialiteproviders/twitch": "^5.4",

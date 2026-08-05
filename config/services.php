@@ -102,6 +102,14 @@ return [
         'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
     ],
 
+    // Discord webhook that `backup:database` shouts at when a nightly dump
+    // fails. A backup system nobody hears fail is worse than none, so this is
+    // the only alerting the backup has - leave it unset and failures are
+    // log-only.
+    'backups' => [
+        'alert_webhook' => env('BACKUP_ALERT_WEBHOOK_URL'),
+    ],
+
     'elevenlabs' => [
         'api_key' => env('ELEVENLABS_API_KEY'),
         // Kaylin - "the voice of Overlabels". Single voice for all TTS.
