@@ -82,10 +82,25 @@ your own machine.
 
 This is the half that has to work. Do it at least once after any change here.
 
-Local dev runs Postgres 17.5 with the client tools at
-`C:\Program Files\PostgreSQL\17\bin`, which is **not** on PATH by default in Git
-Bash. Restoring a 16.x plain-SQL dump into 17.5 is fine - plain SQL restores
-forward across major versions.
+Restore with the **PostgreSQL 18** client at `C:\Program Files\PostgreSQL\18\bin`,
+which is **not** on PATH by default in Git Bash. Restoring a 16.x plain-SQL dump
+into the local 17.5 server is fine - plain SQL restores forward across major
+versions.
+
+> **Use 18, not 17.** These dumps open with `\restrict` and close with
+> `\unrestrict` - a psql meta-command added in PostgreSQL 18 and backpatched
+> only as far as 17.6, added to stop a malicious object name from smuggling
+> psql commands into a restore. The local psql is 17.5, which predates it.
+> Verified behaviour:
+>
+> | client | result |
+> | --- | --- |
+> | psql 17.5, default | `invalid command \restrict`, then continues - restores, but the guard silently does not apply |
+> | psql 17.5, `ON_ERROR_STOP=on` | aborts immediately, exit code 3 |
+> | psql 18.3 | clean, exit 0 |
+>
+> Since the restore below sets `ON_ERROR_STOP=on` - which you want, so a failure
+> stops rather than leaving a half-populated database - psql 17 fails outright.
 
 ### 1. Get a dump
 
@@ -95,7 +110,7 @@ newest object > Download. Or with rclone/aws-cli if you have one configured.
 ### 2. Restore it
 
 ```bash
-export PATH="/c/Program Files/PostgreSQL/17/bin:$PATH"
+export PATH="/c/Program Files/PostgreSQL/18/bin:$PATH"
 
 # Fresh target database, so a half-restore can't leave you with a mix of
 # local junk and prod rows.
@@ -103,7 +118,10 @@ dropdb -U postgres -h 127.0.0.1 --if-exists laravel_foxes
 createdb -U postgres -h 127.0.0.1 laravel_foxes
 
 # The dump is gzipped plain SQL, so psql eats it directly off a pipe.
-gunzip -c overlabels-2026-08-05-030000.sql.gz | psql -U postgres -h 127.0.0.1 -d laravel_foxes
+# ON_ERROR_STOP=on is what turns a partial restore into a loud failure instead
+# of a database that looks fine and is missing a table somewhere in the middle.
+gunzip -c overlabels-2026-08-05-030000.sql.gz \
+  | psql -v ON_ERROR_STOP=on -U postgres -h 127.0.0.1 -d laravel_foxes
 ```
 
 `--no-owner --no-privileges` at dump time means nothing in the file references

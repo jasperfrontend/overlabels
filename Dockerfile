@@ -57,11 +57,19 @@ ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/relea
 
 # postgresql-client-16 supplies pg_dump for the nightly `backup:database` job
 # (scheduler role). pg_dump refuses to run against a server newer than itself,
-# and prod is Postgres 16 while Debian bookworm only ships client 15 - so the
-# client comes from PGDG rather than Debian. The signing key is kept
-# ASCII-armored and referenced via signed-by, which apt >= 2.4 reads directly,
-# so no gnupg is needed in the runtime image. $VERSION_CODENAME keeps this
-# correct if the FrankenPHP base moves off bookworm.
+# and prod is Postgres 16.13.
+#
+# The FrankenPHP base is Debian 13 (trixie), whose own repos ship client 17 -
+# which would have worked against a 16 server unaided. The client is pinned to
+# 16 from PGDG anyway so the major stays explicit rather than drifting whenever
+# the base image moves. That pin is a real tradeoff, not a free win: upgrading
+# prod Postgres past 16 means bumping this line the same day, or backups fail
+# that night.
+#
+# The signing key is kept ASCII-armored and referenced via signed-by, which
+# apt >= 2.4 reads directly, so no gnupg is needed in the runtime image.
+# $VERSION_CODENAME resolves the repo suite at build time - hardcoding one would
+# have pointed a bookworm repo at a trixie system.
 RUN install-php-extensions \
         pcntl \
         pdo_pgsql \
