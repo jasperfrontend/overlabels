@@ -55,6 +55,13 @@ FROM dunglas/frankenphp:1-php8.4 AS runtime
 # install-php-extensions handles compilation, deps, and config in one shot
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
+# postgresql-client-16 supplies pg_dump for the nightly `backup:database` job
+# (scheduler role). pg_dump refuses to run against a server newer than itself,
+# and prod is Postgres 16 while Debian bookworm only ships client 15 - so the
+# client comes from PGDG rather than Debian. The signing key is kept
+# ASCII-armored and referenced via signed-by, which apt >= 2.4 reads directly,
+# so no gnupg is needed in the runtime image. $VERSION_CODENAME keeps this
+# correct if the FrankenPHP base moves off bookworm.
 RUN install-php-extensions \
         pcntl \
         pdo_pgsql \
@@ -69,6 +76,12 @@ RUN install-php-extensions \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /etc/apt/keyrings/pgdg.asc \
+    && echo "deb [signed-by=/etc/apt/keyrings/pgdg.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 \
+    && pg_dump --version \
     && rm -rf /var/lib/apt/lists/*
 
 # resvg: SVG -> PNG renderer for help/reference OG images. Pinned so dev and

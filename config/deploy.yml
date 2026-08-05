@@ -208,6 +208,14 @@ env:
     ELEVENLABS_VOICE_ID: AYQJi30bKdh5rHiPdUGX
     ELEVENLABS_MODEL_ID: eleven_flash_v2_5
 
+    # Cloudflare R2 target for the nightly `backup:database` dump. Neither of
+    # these is a credential; the account id and keys are secrets below. The
+    # jurisdiction MUST stay `eu` - it is what keeps the objects in the EU and
+    # it is also part of the endpoint hostname, so changing it here silently
+    # points the backup at a bucket that does not exist.
+    R2_BUCKET: overlabels-backups
+    R2_JURISDICTION: eu
+
   secret:
     - APP_KEY
     - DB_PASSWORD
@@ -247,6 +255,14 @@ env:
     - DEPLOY_WEBHOOK_SECRET
 
     - ELEVENLABS_API_KEY
+
+    # R2 credentials for the nightly database backup, plus the Discord webhook
+    # the backup shouts at when it fails. Scoped to Object Read & Write on the
+    # overlabels-backups bucket only.
+    - R2_ACCESS_KEY_ID
+    - R2_SECRET_ACCESS_KEY
+    - R2_ACCOUNT_ID
+    - BACKUP_ALERT_WEBHOOK_URL
 
 aliases:
   console: app exec --interactive --reuse "php artisan tinker"

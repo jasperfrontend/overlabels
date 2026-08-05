@@ -198,6 +198,18 @@ the Socket.IO listener + its Dockerfile + Kamal accessory, the internal integrat
 Donation services are now five: Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne. Copy that
 counts them ("five donation services", "five pipes") lives in `resources/views/welcome/`.
 
+## Database Backups (Implemented Aug 2026)
+
+- Nightly `pg_dump` at 03:00 UTC from the scheduler role to Cloudflare R2. See `docs/deploy/database-backups.md` - it is the restore procedure too.
+- `BackupDatabase` command: dump -> implausibility floor (10 KB) -> stream to `r2` disk -> read size back to verify -> delete local. Any failure posts to `BACKUP_ALERT_WEBHOOK_URL` (Discord, optional).
+- The app image carries `postgresql-client-16` from **PGDG, not Debian** - pg_dump refuses to run against a newer server and bookworm only ships 15. Bumping prod Postgres past 16 means bumping this in the Dockerfile too, or backups fail that night.
+- Dump flags `--no-owner --no-privileges` are load-bearing: without them a restore aborts on the unknown `overlabels` role anywhere but prod.
+- The bucket is `overlabels-backups`, **EU jurisdiction**. The jurisdiction is part of the endpoint host (`<account>.eu.r2.cloudflarestorage.com`); the non-jurisdictional host 403s, which looks exactly like a bad credential. Check `R2_JURISDICTION` before rotating keys.
+- Dumps are NOT client-side encrypted. Deliberate: EU jurisdiction + Cloudflare DPA/SCCs + R2 at-rest AES-256 covers it, and a passphrase living only in GitHub secrets is a single point of failure that destroys every historical backup. Do not re-pitch encrypting them.
+- Retention is a 30-day R2 lifecycle rule set on the bucket, deliberately not code.
+- The `r2` disk is the only one with `throw => true` (a silent false would report a failed upload as a good backup) and pins `request_checksum_calculation`/`response_checksum_validation` to `when_required`, because aws-sdk-php >= 3.337 defaults to CRC32 trailers that R2 has been inconsistent about accepting.
+- Adding any Kamal secret means THREE places: the `env:` block in `.github/workflows/deploy.yml`, the variable list in the loop that writes `.kamal/secrets`, and `env.secret:` in `config/deploy.yml`. GitHub secrets are the source of truth; `.kamal/secrets` is regenerated every deploy. The local `.kamal/secrets` is drifted and unused.
+
 ## Admin Panel (Implemented Feb 2026)
 
 - `role` varchar + `is_system_user` bool + `softDeletes` on `users` table
