@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 5th, 2026 - fix(docs): the restore procedure named a psql that cannot read our own dumps
+
+Verifying the first real backup - by inspecting the `.sql` rather than restoring it - turned up two things the docs asserted confidently and wrongly.
+
+- **The restore procedure pointed at psql 17, which aborts on our dumps.** Every dump pg_dump 16.14 writes now opens with `\restrict` and closes with `\unrestrict`, a psql meta-command added in PostgreSQL 18 and backpatched only as far as 17.6, there to stop a malicious object name smuggling psql commands into a restore. The local client is 17.5. By default it prints `invalid command \restrict` and carries on, restoring fine but with the guard silently inactive; under `ON_ERROR_STOP=on` it aborts with exit code 3. The procedure now uses the psql 18 binaries and sets `ON_ERROR_STOP=on` explicitly, so a partial restore is loud rather than a database that looks fine and is missing a table from the middle.
+- **The Dockerfile justified its PGDG repo with the wrong operating system.** The comment claimed Debian bookworm ships only client 15. The FrankenPHP base is Debian 13 (trixie), which ships client 17 - it would have dumped a 16 server unaided, so the PGDG repo was never load-bearing the way the comment said. It stays, because pinning the client major explicitly beats letting it drift with the base image, but the comment now says that instead of inventing a constraint. The `$VERSION_CODENAME` lookup turns out to have been the part actually doing work: a hardcoded suite would have pointed a bookworm repo at a trixie system.
+
+The dump itself checked out: completion marker present, 61 tables with 61 `COPY` blocks, 92 indexes, 71 foreign keys, zero `OWNER TO` or `GRANT` statements, and row counts identical to production on every table that does not grow by itself.
+
 ## August 5th, 2026 - feat(ops): production had no database backup
 
 Linode's weekly VM snapshot was the only copy of production, and a VM snapshot is not a database backup. It is an image of a running disk taken while Postgres was mid-write, it restores as a whole machine or not at all, and on a bad day it is six days stale. Fifty-two megabytes of users, templates, overlays, controls and stream history, with a week-long worst case.
