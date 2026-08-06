@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - feat(ops): a backup that never runs is now louder than one that fails
+
+The Discord webhook only ever answered one of the two questions. It fires when the backup runs and fails. It cannot fire when the backup never runs at all, because the thing that would send the message is the thing that is down - and silence from a dead scheduler is indistinguishable from silence after a perfect night. Healthchecks.io alerts on the absence of a ping, which is the only shape of check that works when the failure mode is "nothing happened".
+
+- **It is three lines, because Laravel already had this.** `pingOnSuccess()` and `pingOnFailure()` are built into the scheduler. No new command, no new service, no HTTP client of our own - the entire feature is a conditional on the existing schedule entry.
+- **The ping hangs off the schedule, not the command, and that distinction is the whole point.** Attached to the command, a manual `php artisan backup:database` would satisfy the switch and reset the timer - so the one thing the switch exists to catch, a scheduler that has quietly stopped firing, could be masked by a human doing the backup by hand. On the schedule, only the scheduler can feed it.
+- **Failures ping `/fail` rather than just staying quiet**, so a broken backup flips the check immediately instead of waiting out the 30-minute grace period. Healthchecks and Discord now agree rather than reporting on different clocks.
+- **A Healthchecks outage cannot fail a backup.** `Event::pingCallback()` already catches transport exceptions and reports them rather than throwing - checked in the framework source rather than assumed, because a monitoring tool that can break the thing it monitors is worse than no monitoring.
+- **The tests drive the real callbacks.** A recording HTTP client is bound in place of Guzzle and the event's success and failure paths are invoked with actual exit codes, so they assert the URLs genuinely requested rather than that some callback happens to be registered. Both were verified to fail with the ping block disabled.
+- **An empty `HC_PING_URL` registers no pings at all**, so nothing breaks in dev or CI, and `rtrim()` guards the one input mistake that would 404 every failure ping: a trailing slash on the env var.
+
 ## August 6th, 2026 - docs(ops): the backup stopped being a guess
 
 The nightly job fired on its own at 03:00 UTC, and the object it produced was pulled back out of R2 and restored into local dev. Zero errors, 54,061 rows across 61 tables, and then the actual application ran on top of it: Twitch login, templates and controls, a static overlay authenticating off its URL-fragment token, and a live follower alert arriving through EventSub and Reverb. Production was untouched - EventSub subscription count identical before and after.
