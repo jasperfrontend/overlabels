@@ -51,7 +51,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Triggers', href: '/alerts' },
+  { title: 'Triggers', href: '/triggers' },
 ];
 
 const externalByService = computed(() => {

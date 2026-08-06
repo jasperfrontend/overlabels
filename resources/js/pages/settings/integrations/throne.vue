@@ -161,7 +161,7 @@ function formatDate(iso: string | null): string {
                 Copy the webhook URL below into your Throne webhook settings and save (there's a button for it right there).
               </li>
               <li>
-                Go to <a href="/alerts" class="font-medium text-violet-400 hover:underline">Alerts Builder</a>
+                Go to <a href="/triggers" class="font-medium text-violet-400 hover:underline">Triggers</a>
                 to choose which alert template fires for Throne gifts.
               </li>
               <li>

@@ -630,9 +630,13 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/{kit}/fork', [KitController::class, 'fork'])->name('fork');
     });
 
-    // Event alerts overview - read-only matrix; per-template editing lives on
+    // Trigger overview - read-only matrix; per-template editing lives on
     // the template edit page (Triggers tab).
-    Route::get('/alerts', [EventTemplateMappingController::class, 'index'])->name('events.index');
+    Route::get('/triggers', [EventTemplateMappingController::class, 'index'])->name('triggers.index');
+
+    // Old URL, kept so existing bookmarks and open tabs don't 404. Unnamed on
+    // purpose: nothing should link here, and Ziggy skips unnamed routes.
+    Route::redirect('/alerts', '/triggers', 301);
 
     // EventSub connect - called from settings/integrations/index.vue
     Route::post('/eventsub/connect', [IntegrationController::class, 'connectEventSub'])

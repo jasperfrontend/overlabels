@@ -39,10 +39,10 @@ test('two identical cheer conditions flag the later template as shadowed', funct
     }
 
     $this->actingAs($user)
-        ->get('/alerts')
+        ->get('/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
-            ->component('events/index')
+            ->component('triggers/index')
             ->has('twitchMappings', 2)
             ->where('twitchMappings.0.condition_type', 'exactly')
             ->where('twitchMappings.0.condition_value', 100)
@@ -69,10 +69,10 @@ test('different cheer conditions never collide', function () {
     ]);
 
     $this->actingAs($user)
-        ->get('/alerts')
+        ->get('/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
-            ->component('events/index')
+            ->component('triggers/index')
             ->has('twitchMappings', 2)
             ->where('twitchMappings.0.shadowed_by', null)
             ->where('twitchMappings.1.shadowed_by', null)
@@ -96,7 +96,7 @@ test('an exactly 100 does not shadow an at_least 100 (it still fires at other am
     ]);
 
     $this->actingAs($user)
-        ->get('/alerts')
+        ->get('/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
             ->where('twitchMappings.0.shadowed_by', null)
@@ -118,7 +118,7 @@ test('identical donation conditions flag the shadowed external row', function ()
     }
 
     $this->actingAs($user)
-        ->get('/alerts')
+        ->get('/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
             ->has('externalMappings', 2)
@@ -145,7 +145,7 @@ test('a disabled duplicate does not shadow the enabled one', function () {
     ]);
 
     $this->actingAs($user)
-        ->get('/alerts')
+        ->get('/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
             ->has('twitchMappings', 1)
