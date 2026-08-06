@@ -424,7 +424,7 @@ const controlsCounter = computed(() => controls.value.length);
           @update:open="toggleGroup(group.label)"
         >
           <CollapsibleTrigger
-            class="group flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left overlabels-background"
+            class="group flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left collection-row"
             :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
           >
             <ChevronRight
@@ -440,7 +440,7 @@ const controlsCounter = computed(() => controls.value.length);
               <div
                 v-for="ctrl in group.controls"
                 :key="ctrl.id"
-                class="row group/row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all overlabels-background"
+                class="row group/row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all collection-row"
                 role="button"
                 tabindex="0"
                 :title="`Click to edit ${ctrl.label || ctrl.key}`"

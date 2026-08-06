@@ -4,7 +4,6 @@ import { router, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
-import EmptyState from '@/components/EmptyState.vue';
 import Heading from '@/components/Heading.vue';
 import debounce from 'lodash/debounce';
 import { Newspaper } from '@lucide/vue';
@@ -148,12 +147,10 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <UpdatesList
-        v-if="props.updates?.data?.length"
-        :updates="props.updates.data"
+        :updates="props.updates?.data ?? []"
         :is-admin="isAdmin"
+        empty-message="No updates yet. Check back soon."
       />
-
-      <EmptyState v-else message="No updates yet. Check back soon." />
 
       <div v-if="props.updates?.last_page > 1" class="mt-6">
         <Pagination

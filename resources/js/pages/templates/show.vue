@@ -156,7 +156,7 @@ const {
 } = useTemplateActions(props.template, { redirectAfterDelete: () => listContext.href });
 
 // Non-AJAX fork entry points (the Copy button on /overlay/{slug}/public,
-// the dropdown items in TemplateCard/TemplateList/TemplateTable that use
+// the dropdown items in TemplateCard/TemplateCollection that use
 // router.post) can't open the wizard inline because they trigger a full
 // navigation to this page. The controller flashes the wizard payload onto
 // the session and we pick it up here so controls still get imported.

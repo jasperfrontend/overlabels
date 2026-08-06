@@ -1,6 +1,15 @@
 @layer components {
-  .overlabels-background {
-    @apply border-l-2 border-l-accent transition-all px-4 py-2;
+  /**
+   * The row skin shared by every collection surface - templates, triggers,
+   * lists, updates, events, controls. Left accent bar that lights up violet on
+   * hover and deepens with a gradient wash on press.
+   *
+   * Padding is deliberately not here. It is layout, not skin, and baking it in
+   * is what made every caller override it with a different value.
+   * `CollectionList` sets p-3; anything using the skin directly sets its own.
+   */
+  .collection-row {
+    @apply border-l-2 border-l-accent transition-all;
     @apply hover:border-l-violet-400 hover:bg-sidebar-accent dark:hover:bg-accent/50;
     @apply active:border-l-violet-500 active:bg-linear-to-r active:from-violet-400/20;
   }

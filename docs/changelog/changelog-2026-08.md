@@ -1,5 +1,21 @@
 # CHANGELOG AUGUST 2026
 
+## August 6th, 2026 - refactor(ui): five list designs for one idea
+
+`TemplateTable` rendered no table. It was a table once, the contents got rewritten, the name stayed. Next to it sat `TemplateList`, which was that component copy-pasted and drifted. `UpdatesList` was a third copy of the same row. And `/triggers` and `/dashboard/lists` had each invented their own list from scratch, with their own borders, their own hover, and in the case of Lists no `:active` state at all. Five designs, one idea.
+
+There is now one `CollectionList`, and everything that renders a collection of rows goes through it.
+
+- **`.overlabels-background` was already the house row skin** - left accent bar, violet on hover, gradient wash on press - and four of the six surfaces already used it. The two that reinvented themselves simply hadn't found it. It is renamed `.collection-row`, which is what it is, and it no longer carries padding: every caller was overriding that anyway with a different value, which is how one skin produced four densities.
+- **Rows navigate by stretched link.** The row is a plain container with an absolutely positioned `<Link>` covering it. That is strictly better than either pattern it replaces: `TemplateTable` used `role="button"` on a div with `router.visit`, which gives you no middle-click, no ctrl-click, no "open in new tab" and no "copy link address"; `TemplateList` nested its dropdown button inside the `<a>`, which is invalid HTML and meant clicking the kebab also navigated. Action buttons now just sit above the link on `z-10` instead of stopping propagation.
+- **Actions stay visible below `md`.** They were `opacity-0` until hover, and a touch device has no hover, so on a phone the kebab menu was unreachable on every template row.
+- **Merging the two template components resolved four behaviour bugs**, all of them cases where the copy had drifted from the original. `TemplateList` offered Delete on kit-bound templates the server rejects. It said "Fork template", which CLAUDE.md forbids in frontend copy. Its "Preview (inline)" and "Preview (new tab)" pointed at the same URL. And its "Copy link for OBS" copied a URL ending in the literal string `YOUR_TOKEN_HERE`. The merged `TemplateCollection` keeps the correct behaviour from each side, including the copy-confirmation checkmark, which only the list had.
+- **The external event label was reading "bmac: donation".** It came from a hardcoded map covering Ko-fi and Streamlabs, written before the other three donation services existed. It now derives from `SERVICE_LABELS`, the thing that already exists for this, so Throne and Buy Me a Coffee read like Ko-fi always did and the sixth integration needs no edit here.
+- **`/triggers` rendered its Twitch rows and its external rows as two copies of the same 30 lines.** They are one `v-for` over sections now. A shadowed trigger takes the accent bar amber rather than adding a second border in a different colour system.
+- **Four hand-rolled empty states became `EmptyState`**, which also already existed.
+
+`EventsTable` and `ControlsManager` keep their own row markup - they wrap each row in a popover and a collapsible respectively, so they are not the same shape - but they were already on the shared skin and still are, so they move with it.
+
 ## August 6th, 2026 - fix(routing): the Triggers page was called three different things
 
 The nav said "Triggers". The URL said `/alerts`. The Inertia component said `events/index`. Three names for one page, and the only way to know they were the same page was to have written it.

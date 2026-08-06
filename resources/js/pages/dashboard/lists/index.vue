@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
+import CollectionList from '@/components/CollectionList.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -67,7 +69,13 @@ function contentMatch(list: ListRow, q: string): string | null {
   return list.items.find(item => item.toLowerCase().includes(q)) ?? null;
 }
 
-const filteredLists = computed<{ list: ListRow; hint: string | null }[]>(() => {
+/** A list plus, when the query only matched its contents, the item that hit. */
+interface ListSearchResult {
+  list: ListRow;
+  hint: string | null;
+}
+
+const filteredLists = computed<ListSearchResult[]>(() => {
   const q = search.value.trim().toLowerCase();
   if (!q) return lists.value.map(list => ({ list, hint: null }));
 
@@ -83,6 +91,10 @@ const filteredLists = computed<{ list: ListRow; hint: string | null }[]>(() => {
   }
   return out;
 });
+
+const rowKey = ({ list }: ListSearchResult) => list.id;
+const rowHref = ({ list }: ListSearchResult) => route('lists.show', list.slug);
+const rowLabel = ({ list }: ListSearchResult) => list.label || list.slug;
 
 function lastUpdated(ts: number | null): string {
   if (!ts) return '';
@@ -299,13 +311,13 @@ onUnmounted(() => {
       </Card>
 
       <!-- Empty state: no lists at all -->
-      <div v-if="lists.length === 0" class="border border-sidebar-border border-dashed p-10 text-center">
-        <ChefHat class="mx-auto h-10 w-10 text-muted-foreground" />
-        <p class="mt-4 text-foreground">No lists yet.</p>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Create one above to use it across your overlays.
-        </p>
-      </div>
+      <EmptyState
+        v-if="lists.length === 0"
+        dashed
+        :icon="ChefHat"
+        title="No lists yet."
+        message="Create one above to use it across your overlays."
+      />
 
       <template v-else>
         <!-- Search box: filters by slug, label, and item contents -->
@@ -319,43 +331,43 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- Compact rows -->
-        <div v-if="filteredLists.length" class="space-y-1">
-          <Link
-            v-for="{ list, hint } in filteredLists"
-            :key="list.id"
-            :href="route('lists.show', list.slug)"
-            class="flex cursor-pointer items-start justify-between gap-3 border border-sidebar-border p-3 transition hover:bg-sidebar-accent"
-          >
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-1.5">
-                <ListIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span class="truncate font-medium text-foreground">{{ list.label || list.slug }}</span>
-                <LockIcon v-if="!list.user_editable && list.recipe_instance_id !== null" class="h-3 w-3 text-muted-foreground" />
-                <Badge v-if="list.disabled_at !== null" variant="destructive" class="text-[10px]">
-                  <PowerOffIcon class="mr-1 h-2.5 w-2.5" />
-                  Disabled
-                </Badge>
-                <Badge v-if="list.recipe" variant="secondary" class="text-[10px]">{{ list.recipe.name }}</Badge>
-              </div>
-              <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">{{ list.slug }}</div>
-              <div class="mt-0.5 text-[11px] text-muted-foreground">
-                {{ list.items.length }} item{{ list.items.length === 1 ? '' : 's' }}
-                <span v-if="list.updated_at">• updated {{ lastUpdated(list.updated_at) }}</span>
-              </div>
-              <div v-if="hint" class="mt-0.5 truncate text-[11px] text-muted-foreground">
-                matches: <span class="font-mono text-foreground">{{ hint }}</span>
-              </div>
+        <CollectionList
+          :items="filteredLists"
+          :item-key="rowKey"
+          :href="rowHref"
+          :label="rowLabel"
+        >
+          <template #item="{ item: { list, hint } }">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <ListIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span class="truncate font-medium text-foreground">{{ list.label || list.slug }}</span>
+              <LockIcon v-if="!list.user_editable && list.recipe_instance_id !== null" class="h-3 w-3 text-muted-foreground" />
+              <Badge v-if="list.disabled_at !== null" variant="destructive" class="text-[10px]">
+                <PowerOffIcon class="mr-1 h-2.5 w-2.5" />
+                Disabled
+              </Badge>
+              <Badge v-if="list.recipe" variant="secondary" class="text-[10px]">{{ list.recipe.name }}</Badge>
             </div>
-          </Link>
-        </div>
+            <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">{{ list.slug }}</div>
+            <div class="mt-0.5 text-[11px] text-muted-foreground">
+              {{ list.items.length }} item{{ list.items.length === 1 ? '' : 's' }}
+              <span v-if="list.updated_at">• updated {{ lastUpdated(list.updated_at) }}</span>
+            </div>
+            <div v-if="hint" class="mt-0.5 truncate text-[11px] text-muted-foreground">
+              matches: <span class="font-mono text-foreground">{{ hint }}</span>
+            </div>
+          </template>
 
-        <!-- Empty state: search matched nothing -->
-        <div v-else class="border border-sidebar-border border-dashed p-10 text-center">
-          <SearchIcon class="mx-auto h-8 w-8 text-muted-foreground" />
-          <p class="mt-3 text-foreground">No lists match "{{ search }}".</p>
-          <p class="mt-1 text-sm text-muted-foreground">Try a different name, slug, or item.</p>
-        </div>
+          <!-- Empty state: search matched nothing. The no-lists-at-all case is
+               handled above, before the search box renders. -->
+          <template #empty>
+            <EmptyState
+              dashed
+              :icon="SearchIcon"
+              :message="`No lists match &quot;${search}&quot;. Try a different name, slug, or item.`"
+            />
+          </template>
+        </CollectionList>
       </template>
 
       <!-- Meta-command settings: opt into !list (mod+) for chat actions -->

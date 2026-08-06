@@ -3,11 +3,10 @@ import { ref, computed, watch, watchEffect } from 'vue';
 import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
-import TemplateTable from '@/components/TemplateTable.vue';
+import TemplateCollection from '@/components/TemplateCollection.vue';
 import debounce from 'lodash/debounce';
 import { PlusIcon, Layers, Bell, Blocks } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
-import EmptyState from '@/components/EmptyState.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import type { AppPageProps } from '@/types';
 import { recordListContext } from '@/composables/useListContext';
@@ -217,17 +216,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
       </div>
 
-      <!-- Overlays Table -->
-      <TemplateTable
-        v-if="templates?.data?.length"
-        :templates="templates.data"
+      <TemplateCollection
+        :templates="templates?.data ?? []"
         :show-owner="true"
         :show-event="filters.type === 'alert'"
         :current-user-id="currentUserId"
+        empty-message="No overlays found. Try adjusting your filters or create a new overlay."
       />
-
-      <!-- Empty State -->
-      <EmptyState v-else message="No overlays found. Try adjusting your filters or create a new overlay." />
 
       <!-- Pagination -->
       <div v-if="templates?.last_page > 1" class="mt-6">
