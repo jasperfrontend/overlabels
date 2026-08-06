@@ -1,6 +1,6 @@
 # Claude Code Memory Export
 
-Last updated: 2026-04-12
+Last updated: 2026-08-06
 
 ---
 
@@ -253,6 +253,17 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `HelpBeacon.vue` renders it: floating bottom-right button on every app page (mounted once in `AppLayout`), dot when help matched, 375x650 panel. Links open in a new tab - the point is helping with the page you are on, so navigating away from it would undo the feature.
 - `Alt+H` toggles the beacon, next to `Alt+R` for the tags reference (Alt = open a panel to read, Ctrl = do something). Registered via `useKeyboardShortcuts`, so it self-lists in the `Ctrl+K` dialog - there is no static shortcut list anywhere to update.
 - Two tests are load-bearing: every declared context must name a real route (catches renames), and no single context may resolve to more than 3 pages (stops generic routes rotting into a link farm). Both verified to fail when violated - keep them.
+
+## Collection List (Implemented Aug 2026)
+
+- `CollectionList.vue` is the ONE component for rendering a collection of rows. Generic (`generic="TItem"`), typed, with `item` / `actions` / `empty` slots. Every page that lists things uses it. A sixth list design is the regression this exists to prevent.
+- It replaced five designs for one idea. `TemplateTable.vue` (rendered no table - a relic name from when it was one) and `TemplateList.vue` (a copy of it that had drifted) are both deleted, merged into `TemplateCollection.vue`. `/triggers` and `/dashboard/lists` had each invented their own row from scratch.
+- The row skin is `.collection-row` in `resources/css/collection.css` (renamed from `.overlabels-background`, which described nothing). It carries border + hover + active ONLY. Padding is deliberately not in it: baking padding into a skin is what let every caller override it with a different value and produce four densities from one class. `CollectionList` sets `p-3`; anything using the skin directly sets its own.
+- **Rows navigate by stretched link**: the row is a plain container with an absolutely positioned `<Link>` covering it. This is why middle-click, ctrl-click and "copy link address" work. Interactive content inside the `item` slot needs its own `relative z-10`, since the stretched link paints over anything unpositioned. Do NOT go back to `role="button"` + `router.visit` (loses all anchor semantics) or to nesting buttons inside an `<a>` (invalid HTML; the nested button also navigates).
+- Actions are hover-revealed only from `md` up. Below that they stay visible - a touch device has no hover, and hiding them there made the kebab menu unreachable.
+- **`EventsTable.vue` and `ControlsManager.vue` are deliberately NOT converted.** Each row is wrapped in a popover / collapsible respectively, so they are a different shape, not the same row with different content. They stay on `.collection-row` so they still move with the skin. Do not "finish the job" unprompted.
+- Empty states go through `EmptyState.vue` (via `emptyMessage`/`emptyDashed` props or the `empty` slot), not hand-rolled dashed divs.
+- External event labels derive from `SERVICE_LABELS` in `resources/js/utils/services.ts`. The old hardcoded per-service map covered Ko-fi and Streamlabs only and had rotted into "bmac: donation" for the three donation services added after it was written.
 
 ## Development Workflow
 
