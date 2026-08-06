@@ -1,5 +1,13 @@
 # CHANGELOG AUGUST 2026
 
+## August 6th, 2026 - docs(ops): the backup stopped being a guess
+
+The nightly job fired on its own at 03:00 UTC, and the object it produced was pulled back out of R2 and restored into local dev. Zero errors, 54,061 rows across 61 tables, and then the actual application ran on top of it: Twitch login, templates and controls, a static overlay authenticating off its URL-fragment token, and a live follower alert arriving through EventSub and Reverb. Production was untouched - EventSub subscription count identical before and after.
+
+- **The doc now records that, because "no restore test" had become false in both directions it claimed.** The R2 read path and the restore had never been exercised when that line was written; now they have, with the specifics worth re-checking against: row-for-row parity with every `COPY` block, 55 sequences ahead of their table's max id, 71 foreign keys validated, 0 pending migrations.
+- **The remaining gap is stated more precisely than "manual".** Nothing detects a dump that uploads cleanly and will not restore. The nightly run proves the write path every night and proves nothing at all about the read path, which is the half you need on the worst day.
+- **It names the three changes that should trigger redoing it**: the dump flags, the pinned client major, and the `r2` disk config. Each can break a restore while leaving the nightly run looking perfectly healthy, which is exactly the failure mode this whole exercise exists to catch.
+
 ## August 6th, 2026 - refactor(ui): five list designs for one idea
 
 `TemplateTable` rendered no table. It was a table once, the contents got rewritten, the name stayed. Next to it sat `TemplateList`, which was that component copy-pasted and drifted. `UpdatesList` was a third copy of the same row. And `/triggers` and `/dashboard/lists` had each invented their own list from scratch, with their own borders, their own hover, and in the case of Lists no `:active` state at all. Five designs, one idea.

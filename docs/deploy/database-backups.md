@@ -162,11 +162,37 @@ docker exec $(docker ps -qf name=overlabels-scheduler) php artisan backup:databa
 
 That writes an object to R2 and touches nothing in the database.
 
+## Verified end to end (2026-08-06)
+
+The whole circuit has been walked once, by hand, against real production data.
+A backup nobody has restored is a guess, so this is the record that it stopped
+being one.
+
+- The 03:00 UTC scheduled run fired on its own and produced
+  `daily/overlabels-2026-08-06-030015.sql.gz` (1.7 MB).
+- That object was pulled back out of R2 and restored into local dev with psql 18
+  and `ON_ERROR_STOP=on`: **zero errors**, 54,061 rows across 61 tables.
+- Integrity after restore: row-for-row parity with every `COPY` block in the
+  dump, 55 sequences all ahead of their table's max id, 71 foreign keys
+  validated, 0 pending migrations.
+- The restored database then ran the application: Twitch login, templates and
+  controls listing, a static overlay authenticating off its URL-fragment token,
+  and a live follower alert arriving through EventSub and Reverb.
+- Production was unaffected throughout - EventSub subscription count identical
+  before and after (421/388 enabled).
+
+Worth redoing after any change to the dump flags, the pinned client major, or
+the `r2` disk config. Those are the three things that can break a restore while
+leaving the nightly run looking perfectly healthy.
+
 ## Known gaps
 
 - **No dead-man's switch.** A failed backup shouts. A backup that never runs at
   all - scheduler container down, container never restarted after a bad deploy -
   is silent. Closing that needs an external pinger (Healthchecks.io or similar),
   which is another third party and was not worth it on day one.
-- **No automated restore test.** The test suite verifies the dump is real gzip
-  containing real SQL, but the R2 network hop and the restore are manual.
+- **The restore is not automated.** The test suite verifies a dump is real gzip
+  containing real SQL, and the nightly run exercises the write path to R2 every
+  night. The R2 *read* and the restore itself only happen when someone does them
+  by hand, as above. Nothing detects a dump that uploads fine and will not
+  restore.
