@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - fix(deps): Dependabot could not update anything, and had been failing silently
+
+Dependabot tried to ship a security update for `league/commonmark` and died with "Your requirements could not be resolved to an installable set of packages". The interesting part is that it had nothing to do with commonmark, and it would have broken every future composer security update the same way.
+
+Dependabot injects its own `config.platform.php`, and set it to `8.4` - which composer reads as **8.4.0**. That number is the floor of our `require: php ^8.4`. Meanwhile `nunomaduro/collision` pulls `symfony/console` v8.1.1, which requires `php >=8.4.1`. So resolution failed on a constraint three packages away from the one being updated, before commonmark was ever considered.
+
+- **The PHP constraint was simply false.** `^8.4` claimed the app runs on 8.4.0. It cannot - symfony/console needs 8.4.1. Local dev is on 8.4.24 and prod is a FrankenPHP 8.4 image, so nothing ever surfaced it. `require.php` is now `^8.4.1`, which is the truth.
+- **`config.platform.php` is now pinned explicitly to 8.4.1.** Dependabot's own error says "overridden via config.platform", so it honours one that already exists - that is the lever that actually fixes the automation. It also makes resolution identical on a laptop, in CI, and in the Docker build, rather than silently depending on whichever PHP the `composer:2` image happens to ship that week.
+- **The six advisories were real but not reachable.** All denial-of-service via crafted markdown, five high and one medium, published the day before. Both CommonMark call sites read from `resource_path('help/reference')` and `resource_path('help/pages')` - repo files, authored by us. No user-supplied markdown reaches the parser and there are no markdown mailables, so exploiting it required commit access. Worth fixing, not worth panicking, and Dependabot being broken did not leave anything exposed.
+- **The update moved exactly one package.** `league/commonmark` 2.8.3 -> 2.9.0, no installs, no removals, nothing else touched. `composer audit` now reports no advisories, and the suite passes 1233.
+
 ## August 7th, 2026 - feat(ops): a backup that never runs is now louder than one that fails
 
 The Discord webhook only ever answered one of the two questions. It fires when the backup runs and fails. It cannot fire when the backup never runs at all, because the thing that would send the message is the thing that is down - and silence from a dead scheduler is indistinguishable from silence after a perfect night. Healthchecks.io alerts on the absence of a ping, which is the only shape of check that works when the failure mode is "nothing happened".
