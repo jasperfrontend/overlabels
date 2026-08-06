@@ -10,7 +10,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.4.1",
         "ext-pdo": "*",
         "cloudinary/cloudinary_php": "^3.1",
         "inertiajs/inertia-laravel": "^3.0",
@@ -94,6 +94,9 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "platform": {
+            "php": "8.4.1"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
