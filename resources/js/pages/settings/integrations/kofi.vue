@@ -175,7 +175,7 @@ function formatDate(iso: string | null): string {
           <p class="font-medium text-foreground">What to do next</p>
           <ol class="list-decimal pl-4 space-y-1">
             <li>
-              Go to <a href="/alerts" class="text-violet-400 hover:underline font-medium">Alerts Builder</a>
+              Go to <a href="/triggers" class="text-violet-400 hover:underline font-medium">Triggers</a>
               to configure which alert template fires for each Ko-fi event type (Donation, Subscription, etc.).
             </li>
             <li>

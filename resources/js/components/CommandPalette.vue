@@ -63,7 +63,7 @@ const items = computed<PaletteItem[]>(() => {
     { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
     { id: 'blocks', label: 'My blocks', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=block', icon: Blocks, keywords: ['builder', 'pieces'] },
     { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
-    { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('events.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
+    { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('triggers.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
     { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
     { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },

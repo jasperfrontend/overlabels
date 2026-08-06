@@ -450,9 +450,9 @@ function relativeTime(iso: string): string {
       <PopoverTrigger as-child>
         <div
           :class="[
-            'group flex items-start justify-between gap-4 flex-row overlabels-background',
+            'group flex items-start justify-between gap-4 flex-row px-4 py-2 collection-row',
             eventHoverBorderClass(event),
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer overlabels-background transition-all duration-100' : '',
+            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer transition-all duration-100' : '',
             confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
             confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
 

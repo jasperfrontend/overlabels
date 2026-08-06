@@ -505,7 +505,7 @@ function dismiss() {
 
         <div class="flex flex-wrap gap-3 pt-2">
           <Button variant="outline" as="a" :href="route('testing.index')" class="gap-2"> Testing Guide </Button>
-          <Button variant="outline" as="a" :href="route('events.index')" class="gap-2"> Review Alert Mappings </Button>
+          <Button variant="outline" as="a" :href="route('triggers.index')" class="gap-2"> Review Alert Mappings </Button>
           <Button @click="dismiss" class="gap-2">
             Let's go!
             <Rocket class="h-4 w-4" />

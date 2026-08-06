@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
-import TemplateList from '@/components/TemplateList.vue';
+import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -83,7 +83,7 @@ const breadcrumbs = [
               :create-href="route('templates.create')"
               create-title="Create a new Overlay"
             />
-            <TemplateList :templates="props.userStaticTemplates" :current-user-id="userId" />
+            <TemplateCollection :templates="props.userStaticTemplates" :current-user-id="userId" class="my-4" />
           </section>
 
           <section v-if="props.userAlertTemplates.length > 0" class="flex-1 p-4">
@@ -94,7 +94,7 @@ const breadcrumbs = [
               :create-href="route('templates.create')"
               create-title="Create a new Alert"
             />
-            <TemplateList :templates="props.userAlertTemplates" :current-user-id="userId" />
+            <TemplateCollection :templates="props.userAlertTemplates" :current-user-id="userId" class="my-4" />
           </section>
 
           <section class="flex-1 p-4">
