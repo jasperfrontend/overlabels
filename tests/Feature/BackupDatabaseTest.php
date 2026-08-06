@@ -1,9 +1,13 @@
 <?php
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Process\Process;
 
 /**
@@ -150,4 +154,68 @@ it('is scheduled nightly at 03:00 UTC', function () {
     expect($events)->toHaveCount(1);
     expect($events->first()->expression)->toBe('0 3 * * *');
     expect(config('app.timezone'))->toBe('UTC');
+});
+
+/*
+ * The dead-man's switch. These drive Laravel's real ping callbacks with a
+ * recording HTTP client in place of Guzzle, so they assert the URLs actually
+ * requested rather than that some callback happens to be registered.
+ */
+function backupScheduleEvent(): Event
+{
+    return collect(app(Schedule::class)->events())
+        ->first(fn ($event) => str_contains((string) $event->command, 'backup:database'));
+}
+
+/** Swap Guzzle for a recorder; Event::getHttpClient() prefers this binding. */
+function recordPings(): ArrayObject
+{
+    $seen = new ArrayObject;
+
+    $client = new class($seen) extends Client
+    {
+        public function __construct(private ArrayObject $seen)
+        {
+            parent::__construct();
+        }
+
+        public function request(string $method, $uri = '', array $options = []): ResponseInterface
+        {
+            $this->seen[] = $uri;
+
+            return new Response(200);
+        }
+    };
+
+    app()->instance(Client::class, $client);
+
+    return $seen;
+}
+
+it('pings the healthcheck url when the backup succeeds', function () {
+    $seen = recordPings();
+
+    $event = backupScheduleEvent();
+    $event->exitCode = 0;
+    $event->callAfterCallbacks(app());
+
+    expect(iterator_to_array($seen))->toBe([config('services.backups.healthcheck_url')]);
+});
+
+it('pings the /fail endpoint when the backup fails', function () {
+    $seen = recordPings();
+
+    $event = backupScheduleEvent();
+    $event->exitCode = 1;
+    $event->callAfterCallbacks(app());
+
+    expect(iterator_to_array($seen))->toBe([config('services.backups.healthcheck_url').'/fail']);
+});
+
+it('does not double-slash the fail url when the ping url has a trailing slash', function () {
+    // rtrim() in routes/console.php is the only thing standing between a
+    // trailing slash in the env var and a 404 on every failure ping.
+    $url = 'https://hc-ping.test/uuid/';
+
+    expect(rtrim($url, '/').'/fail')->toBe('https://hc-ping.test/uuid/fail');
 });

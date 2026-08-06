@@ -289,8 +289,33 @@ Schedule::call(function () {
 // Deliberately NOT ->runInBackground(): the command's own catch block is what
 // sends the Discord alert, and detaching it would put failures out of reach of
 // the scheduler's exit-code handling for no benefit on a job this short.
-Schedule::command('backup:database')
+$backup = Schedule::command('backup:database')
     ->dailyAt('03:00')
     ->withoutOverlapping()
     ->name('backup:database')
     ->appendOutputTo(storage_path('logs/backup-database.log'));
+
+/*
+ * Dead-man's switch (Healthchecks.io).
+ *
+ * The Discord webhook inside BackupDatabase covers "the backup ran and failed".
+ * It cannot cover "the backup never ran at all" - a dead scheduler container
+ * sends nothing, and silence is indistinguishable from success. Healthchecks
+ * alerts on the ABSENCE of this ping, so the check is owned by something that
+ * is not us.
+ *
+ * Deliberately attached to the SCHEDULE and not to the command: a manual
+ * `php artisan backup:database` then cannot satisfy the switch, so a scheduler
+ * that has quietly stopped firing still gets reported.
+ *
+ * The `/fail` ping means a failed backup flips the check immediately rather
+ * than waiting out the grace period, so Healthchecks and Discord agree.
+ *
+ * Laravel's pings are already best-effort - Event::pingCallback() catches
+ * transport exceptions and reports them - so a Healthchecks outage can never
+ * turn a good backup into a failed one.
+ */
+if ($healthcheck = config('services.backups.healthcheck_url')) {
+    $backup->pingOnSuccess($healthcheck)
+        ->pingOnFailure(rtrim($healthcheck, '/').'/fail');
+}

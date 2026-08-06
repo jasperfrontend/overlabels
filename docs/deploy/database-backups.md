@@ -162,11 +162,69 @@ docker exec $(docker ps -qf name=overlabels-scheduler) php artisan backup:databa
 
 That writes an object to R2 and touches nothing in the database.
 
+## Verified end to end (2026-08-06)
+
+The whole circuit has been walked once, by hand, against real production data.
+A backup nobody has restored is a guess, so this is the record that it stopped
+being one.
+
+- The 03:00 UTC scheduled run fired on its own and produced
+  `daily/overlabels-2026-08-06-030015.sql.gz` (1.7 MB).
+- That object was pulled back out of R2 and restored into local dev with psql 18
+  and `ON_ERROR_STOP=on`: **zero errors**, 54,061 rows across 61 tables.
+- Integrity after restore: row-for-row parity with every `COPY` block in the
+  dump, 55 sequences all ahead of their table's max id, 71 foreign keys
+  validated, 0 pending migrations.
+- The restored database then ran the application: Twitch login, templates and
+  controls listing, a static overlay authenticating off its URL-fragment token,
+  and a live follower alert arriving through EventSub and Reverb.
+- Production was unaffected throughout - EventSub subscription count identical
+  before and after (421/388 enabled).
+
+Worth redoing after any change to the dump flags, the pinned client major, or
+the `r2` disk config. Those are the three things that can break a restore while
+leaving the nightly run looking perfectly healthy.
+
+## Dead-man's switch (Healthchecks.io)
+
+The Discord webhook covers "the backup ran and failed". It cannot cover "the
+backup never ran" - a dead scheduler container sends nothing, and silence is
+indistinguishable from success. Healthchecks alerts on the **absence** of a
+ping, so the thing doing the checking is not the thing that might be down.
+
+Wired in `routes/console.php` with Laravel's built-in scheduler pings:
+
+- success -> `GET $HC_PING_URL`
+- failure -> `GET $HC_PING_URL/fail`, so a failed backup flips the check
+  immediately instead of waiting out the grace period
+
+Attached to the **schedule**, not the command. That is deliberate: a manual
+`php artisan backup:database` therefore cannot satisfy the switch, so a
+scheduler that has quietly stopped firing still gets reported.
+
+Laravel's pings are best-effort by design (`Event::pingCallback()` catches
+transport exceptions and reports them), so a Healthchecks outage can never turn
+a good backup into a failed one. Leaving `HC_PING_URL` empty registers no pings
+at all.
+
+### Check configuration
+
+- **Period: 1 day.** The backup is daily at 03:00 UTC.
+- **Grace: 30 minutes.** The dump itself takes about two seconds. Thirty minutes
+  absorbs a slow night or a deploy that overlaps 03:00, without being so loose
+  that a dead scheduler goes unnoticed for a whole day.
+
+An alert therefore fires at about **03:30 UTC** on the first night the backup
+does not run.
+
 ## Known gaps
 
-- **No dead-man's switch.** A failed backup shouts. A backup that never runs at
-  all - scheduler container down, container never restarted after a bad deploy -
-  is silent. Closing that needs an external pinger (Healthchecks.io or similar),
-  which is another third party and was not worth it on day one.
-- **No automated restore test.** The test suite verifies the dump is real gzip
-  containing real SQL, but the R2 network hop and the restore are manual.
+- **The restore is not automated.** The test suite verifies a dump is real gzip
+  containing real SQL, and the nightly run exercises the write path to R2 every
+  night. The R2 *read* and the restore itself only happen when someone does them
+  by hand, as above. Nothing detects a dump that uploads fine and will not
+  restore.
+- **The switch cannot tell "backed up" from "backed up something useless".** It
+  proves the command exited 0. The 10 KB implausibility floor and the upload
+  size check are what make that exit code mean something, but no assertion about
+  the dump's *contents* reaches Healthchecks.

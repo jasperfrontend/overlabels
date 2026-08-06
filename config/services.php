@@ -108,6 +108,11 @@ return [
     // log-only.
     'backups' => [
         'alert_webhook' => env('BACKUP_ALERT_WEBHOOK_URL'),
+        // Healthchecks.io dead-man's switch. The webhook above covers "the
+        // backup ran and failed"; this covers "the backup never ran", which
+        // nothing inside the app can report on because the thing that would
+        // report it is the thing that is down.
+        'healthcheck_url' => env('HC_PING_URL'),
     ],
 
     'elevenlabs' => [
