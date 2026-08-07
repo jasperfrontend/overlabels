@@ -153,7 +153,7 @@ primitives.
 
 ## 5. Decoded: the pseudo-random one-liner
 
-This expression returns a seemingly random integer from 1 to 9, changing twice per second:
+This expression returns a seemingly random integer from 1 to 9, changing once per second:
 
 ```
 floor(fract(sin(now() / 2) * 1000) * 9) + 1
@@ -163,8 +163,8 @@ It is a variant of the classic shader-language pseudo-random trick \(\text{fract
 is not cryptographic - do not roll dice in a contract with it - but for visual sparkle it is beautiful.
 Let us take it apart.
 
-1. `now() / 2` - time, but ticking in half-second units. Any monotonically-rising value works here.
-   Dividing slows the churn.
+1. `now() / 2` - time, advancing by 0.5 on each once-per-second tick. Any monotonically-rising value works
+   here. Dividing slows the churn.
 2. `sin(...)` - maps the growing input into \([-1, 1]\). On its own, too smooth to be random.
 3. `... * 1000` - scales that smooth wave up. The *integer part* of the result is now big and varied; the
    *fractional part* is where the chaos lives. Multiplying by a large number amplifies how fast the
@@ -363,19 +363,38 @@ t.last_raid_from ? t.last_raid_from + " raided with " + t.last_raid_viewers_peak
 
 ### Time resolution: `now()` vs `now_ms()`
 
-The engine runs a shared 250 ms ticker that re-evaluates any expression containing `now()` or `now_ms()`,
-so time-based formulas update on their own - no heartbeat control needed. But the *source value* decides
-the resolution:
+In a live overlay, any expression containing `now()` or `now_ms()` is re-evaluated on a shared
+`requestAnimationFrame` ticker - once per display frame, so roughly 60 times a second. Both functions ride
+the same loop and neither is throttled, so time-based formulas update on their own with no heartbeat
+control needed.
 
-- `now()` returns *integer* seconds. Even though the ticker fires 4x a second, `now()` returns the same
-  number for four ticks in a row, so anything derived from it only visibly changes every 1 s. Perfect for
-  clocks, uptimes, banner rotations.
-- `now_ms()` returns milliseconds. Use it when you want sub-second motion, e.g.
-  `mod(floor(now_ms() / 250), 3)` to cycle 4x a second, or `sin(now_ms() / 500)` for a smooth ~3 Hz wave.
+What differs is the *value*, and the value is what you actually see move:
 
-For continuous visual motion (opacity pulses, CSS transforms) prefer CSS animations - they run at the
-browser's frame rate. Use expressions for *discrete* time-driven state that other parts of the overlay
-react to.
+- `now()` returns *integer* seconds. It hands back the same number for ~60 consecutive frames, and the
+  ticker skips the write when the result has not changed - so anything derived from it visibly changes
+  once per second. Perfect for clocks, uptimes, banner rotations.
+- `now_ms()` returns milliseconds. It is a new number on every frame, so it drives genuinely smooth
+  motion. Use it for anything sub-second: `mod(floor(now_ms() / 250), 3)` to step 4x a second, or
+  `sin(now_ms() / 500)` for a smooth wave that cycles about every 3.1 s.
+
+> [!WARNING]
+> Swapping one function for the other **rescales your whole formula by 1000x**. `sin(now_ms() / 600)`
+> completes a cycle every 3.8 seconds; `sin(now() / 600)` completes one every 63 minutes. The second is
+> not running slower - it is a different wave. When you switch to `now()`, shrink your divisor by 1000.
+
+Rescaling cannot rescue `now()` for animation, either. Speed it up enough to see and its once-per-second
+steps become visible jumps, so you get a staircase instead of a wave. Smooth motion is `now_ms()`, always.
+
+For purely decorative motion (opacity pulses, CSS transforms) CSS animations remain the better tool - not
+because they are faster, but because they run on the compositor without writing overlay data or
+re-rendering anything. Reach for expressions when the time-driven value is *state* that other parts of the
+overlay need to read.
+
+### The editor preview does not tick
+
+The preview inside the expression control editor re-evaluates when you *change the text*, not on a timer.
+A time-based formula looks frozen there no matter which function it uses. The preview exists to confirm
+that an expression parses and produces a sane value - save it into an overlay to watch it move.
 
 ### Radians, not degrees
 
@@ -407,9 +426,9 @@ label.
 
 ## Now go build something weird
 
-The entire engine fits in one file - `resources/js/composables/useExpressionEngine.ts` - and the whole
-whitelist is readable in about ten seconds. Every function above is a primitive you can combine. The real
-power is in what you chain together.
+The evaluator fits in one file - `resources/js/lib/expression-engine/engine.mjs`, shared by the overlay
+and the server-side sidecar - and the whole whitelist is readable in about ten seconds. Every function
+above is a primitive you can combine. The real power is in what you chain together.
 
 Want the companion pages? [Controls](/help/controls), [Conditionals](/help/conditionals),
 [Formatting Pipes](/help/formatting).
