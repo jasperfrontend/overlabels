@@ -25,6 +25,28 @@ class StreamSessionService
     ];
 
     /**
+     * Control keys reset to their reset_value at the start of every stream.
+     *
+     * Scoped by key rather than by source on purpose. The `latest_cheer*` presets
+     * also carry source='twitch', but they are most-recent values, not per-stream
+     * tallies, and every equivalent on the five donation services persists across
+     * streams. Resetting them was collateral from this filter predating them, and
+     * it broke the bits/donation parity those presets were added to provide.
+     *
+     * A key belongs here only if its label promises per-stream scope.
+     */
+    public const array PER_STREAM_CONTROL_KEYS = [
+        'follows_this_stream',
+        'subs_this_stream',
+        'gift_subs_this_stream',
+        'resubs_this_stream',
+        'raids_this_stream',
+        'redemptions_this_stream',
+        'cheers_this_stream',
+        'bits_this_stream',
+    ];
+
+    /**
      * Control presets users can add to their overlays.
      */
     public const array CONTROL_PRESETS = [
@@ -161,12 +183,13 @@ class StreamSessionService
     }
 
     /**
-     * Reset all twitch source controls to their reset_value (or 0) and broadcast each.
+     * Reset the per-stream twitch controls to their reset_value (or 0) and broadcast each.
      */
     private function resetControls(User $user): void
     {
         $controls = OverlayControl::where('user_id', $user->id)
             ->where('source', 'twitch')
+            ->whereIn('key', self::PER_STREAM_CONTROL_KEYS)
             ->where('source_managed', true)
             ->with('template')
             ->get();
@@ -189,7 +212,7 @@ class StreamSessionService
 
         }
 
-        Log::info("Reset twitch controls for user {$user->id}", [
+        Log::info("Reset per-stream twitch controls for user {$user->id}", [
             'count' => $controls->count(),
         ]);
     }

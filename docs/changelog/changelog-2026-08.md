@@ -1,5 +1,17 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - fix(controls): your latest cheerer stopped being erased at every go-live
+
+`c:twitch:latest_cheerer_name` was wiped to a literal `"0"` the moment a stream started, and its 25 equivalents across Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne were not. Same idea, opposite lifecycle, and the only thing separating them was which code path created the row.
+
+- **Nobody ever decided this.** `resetControls()` arrived in March with six presets, every one of them named `*_this_stream`. Resetting them *is* the feature and it was exactly right. Five weeks later the `channel.cheer` presets landed - explicitly "so bits payloads can drive overlays the same way donations do" - and the three `latest_cheer*` ones inherited the reset purely because they share `source='twitch'`. The filter predated the controls it was erasing.
+- **So the reset broke the one thing that commit set out to build.** Bits parity with donations was the stated goal, and `latest_donor_name` persisting while `latest_cheerer_name` did not is precisely the parity failing. It stayed invisible for four months because you only notice when you race the two against each other.
+- **The reset is now scoped by key, not by source.** The eight `*_this_stream` counters still reset at go-live, because that is the only thing implementing what their labels promise - they increment additively and nothing else ever zeroes them. The three `latest_cheer*` controls no longer do. A key earns its place on the list only if its label promises per-stream scope.
+- **This is the pattern the GPS integration already used.** Its reset takes an explicit key list and deliberately leaves cumulative `distance` alone behind a separate manual button. The twitch path was the one place resetting by source with no filter.
+- **`latest()` racing across services now behaves as documented.** Twitch was the only competitor whose `_at` moved at go-live, so it won every race at stream start holding `"0"`. Nothing about `latest()` changed - it was reporting the freshest write, correctly, the whole time.
+- **You may notice this on your next stream.** An overlay that went blank at go-live and stayed blank until someone cheered will now keep showing the previous cheerer. That is what the label says it does, but it is a visible change rather than a silent one.
+- **Nine tests pin it**, and the three that assert the new behaviour were verified to fail against the old filter. The rest cover the scoping that was already right - other users, other sources, and user-created controls that merely share a key name - so a future change cannot widen the blast radius unnoticed.
+
 ## August 7th, 2026 - fix(deps): Dependabot could not update anything, and had been failing silently
 
 Dependabot tried to ship a security update for `league/commonmark` and died with "Your requirements could not be resolved to an installable set of packages". The interesting part is that it had nothing to do with commonmark, and it would have broken every future composer security update the same way.
