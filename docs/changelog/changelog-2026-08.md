@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - feat(dashboard): a welcome card, so the dashboard opens with a greeting instead of four lists
+
+The dashboard was four boxes with a list in each. Functional and clean, and not remotely inviting. There is now a card above them holding your avatar, your name, and one tile each for the four things underneath: static overlays, alerts, recent events, recent updates.
+
+- **The tiles are the same four destinations the section headers already point at**, built from the same `route()` calls with the same parameters. Nothing new is reachable from here; it is the existing dashboard, said once at the top in a form you can hit without reading four headings first.
+- **Each tile takes a different colour from the button palette**, which is the whole reason the card works. Four identical violet tiles would have been tidier and would have made you read all four labels every time. The colours are `overlabels-buttons.css` classes used as a palette rather than for their action semantics, which is noted in the component so nobody later "fixes" `btn-cancel` on the events tile into something that cancels.
+- **Dismissable, and it remembers per device.** The state lives in `localStorage` under `overlabels:welcome-card-dismissed`, read synchronously during setup so a card you dismissed does not flash on screen before hiding itself. Storage failures (private mode) are swallowed and the card simply shows.
+- **Dismissing leaves a small "Bring back the welcome card" button** where the card was, right-aligned above the grid. Dismissing something permanently with no way back is how a dashboard ends up with a feature nobody can find again.
+- **The component owns both states rather than the page**, so `dashboard/index.vue` gained one tag and one import. The restore button has to appear exactly where the card was, and threading that through the page would have split one decision across two files.
+
 ## August 7th, 2026 - docs(help): what the `_at` companion actually holds
 
 Section 8 of the math page called `_at` "the timestamp of its last change". It is `$control->updated_at`, so it moves on any write at all - including provisioning a control you have never received on. "Last write" is what it means, and the page now says so in both places it comes up.
