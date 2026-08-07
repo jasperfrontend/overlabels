@@ -121,6 +121,17 @@ Critical variables:
 - Namespaced broadcast key: "kofi:donations_received" -> stored in data as "c:kofi:donations_received"
 - Empty `overlay_slug` in broadcast = user-scoped; OverlayRenderer applies to all overlays
 
+### Control reset lifecycle (fixed Aug 2026)
+
+- **The go-live reset is scoped by KEY, never by source.** `StreamSessionService::resetControls()` selects on `PER_STREAM_CONTROL_KEYS`, the eight `*_this_stream` counters. Do not widen it back to `where('source', 'twitch')` with no key filter.
+- A key belongs on that list only if its label promises per-stream scope. The reset is the *only* thing implementing that promise: `handleEvent()` increments purely additively (`$current + $step`) and nothing else ever zeroes a counter.
+- The three `latest_cheer*` presets deliberately do NOT reset. They are most-recent values, and all 25 equivalents across the five donation services persist across streams. They were swept into the reset for four months because they share `source='twitch'` with controls the filter predated - which broke the bits/donation parity they were added (`c6be780`) to provide.
+- `latest_cheerer_name` is a `text` control with no `config`, so the old reset wrote `(string) ($control->config['reset_value'] ?? 0)` = the literal string `"0"` into it. `"0"` is falsy in conditionals (`useConditionalTemplates.ts`) but a bare `[[[c:key]]]` renders it verbatim - `replaceTagsWithFormatting` blanks only on undefined/null/object/`''`, and `?? default` backstops absence only.
+- `_at` is `$control->updated_at` (`OverlayTemplateController` render query), so ANY write moves it. That is why a control being reset at go-live won every `latest()` race at stream start. `latest()`/`toComparable()` are correct and are not the place to fix anything.
+- `GpsIntegrationController::resetControls()` is the reference shape: explicit key list, per-session keys only, cumulative `distance` left alone behind a separate manual endpoint.
+- Pinned by `tests/Feature/StreamControlResetTest.php` (9 tests). Three assert the behaviour and were verified to fail against the old filter; the rest pin scoping (other users, other sources, user-created controls sharing a key name).
+- A per-control "should this survive the reset" toggle was discussed and deliberately parked. If revisited: `config['reset_on_stream_start']` needs no migration, but `update()`/`setValue()` 403 on `source_managed` - which is every control the reset touches - so it needs a carve-out or a separate surface.
+
 ## Pipe Formatting System (Implemented Apr 2026)
 
 - Syntax: `[[[tag_name|formatter]]]` or `[[[tag_name|formatter:args]]]`
