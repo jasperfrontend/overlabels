@@ -1,5 +1,12 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - docs(help): what the `_at` companion actually holds
+
+Section 8 of the math page called `_at` "the timestamp of its last change". It is `$control->updated_at`, so it moves on any write at all - including provisioning a control you have never received on. "Last write" is what it means, and the page now says so in both places it comes up.
+
+- **The wording is not pedantry, it is the whole basis of the race.** `latest()` picks a winner by comparing these timestamps, so whether they mean "last change" or "last write" is the difference between the documented pattern working and returning something you did not expect.
+- **The never-connected case is now stated explicitly**, because it is the reassuring half and it was missing: a service you have not wired up resolves to nothing, `toComparable()` maps that to \(-\infty\), and it loses every race. You can list all six services in a `latest()` call before connecting any of them.
+
 ## August 7th, 2026 - docs(help): the math page described a ticker that never existed
 
 The Math Engine page said the engine runs "a shared 250 ms ticker" that fires "4x a second". It does not, and it never did. Time-dependent expressions have been driven by `requestAnimationFrame` since May 2nd, and the math page was written on July 28th - so this was not documentation drifting behind a change, it was wrong on the day it was authored. The 250 ms figure appears to have been borrowed from `OverlayRenderer.vue`, where **timer controls** genuinely do tick on a 250 ms interval. Different subsystem, same overlay.

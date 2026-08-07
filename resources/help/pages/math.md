@@ -77,7 +77,7 @@ time in seconds. Time only matters once you *take its fractional part*, *feed it
 *compare it to another timestamp*. Three tricks cover most of the design space.
 
 Overlabels also stamps every control with an automatic companion: `c:key_at` is the Unix timestamp of the
-last change to `c:key`. This is what turns `latest()` into a cross-service race.
+last *write* to `c:key`. This is what turns `latest()` into a cross-service race.
 
 ### Elapsed seconds since an event
 
@@ -265,7 +265,7 @@ a lighthouse-style pulse that never dips below zero. Great for "intensity".
 ## 8. Winners and timestamp racing
 
 This is the trick the rest of the streaming ecosystem does not have. Every control in Overlabels has an
-automatic `_at` companion that stores *the Unix timestamp of its last change*. That means you can race
+automatic `_at` companion that stores *the Unix timestamp of its last write*. That means you can race
 signals:
 
 $$\text{most\_recent\_donor} = \underset{s \in \text{sources}}{\operatorname{argmax}}\ t_{s}$$
@@ -282,6 +282,9 @@ latest(
 The value at each odd position is a timestamp; the even position next to it is the label you want
 returned. `latest()` picks the biggest timestamp and returns its paired label. `oldest()` / `argmin()` do
 the opposite - perfect for "slowest response", "first to arrive", "longest since".
+
+A service you have never connected is safe to leave in the list: the reference resolves to nothing, which
+races as \(-\infty\) and always loses. Nothing on a pipe means nothing to show.
 
 ### Sum across services
 
