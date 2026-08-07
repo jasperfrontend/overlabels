@@ -78,7 +78,7 @@ const tiles = [
 <template>
   <!-- py-0 hands all vertical padding to the inner wrapper, so the card has one
        source of spacing rather than Card's py-4 stacked on top of it. -->
-  <Card v-if="!dismissed" class="relative mb-6 py-0">
+  <Card v-if="!dismissed" class="relative rounded-md m-4 mb-6 py-0">
     <button
       type="button"
       class="btn btn-plain btn-xs absolute top-2 right-2"
@@ -89,7 +89,7 @@ const tiles = [
       <X class="h-4 w-4" />
     </button>
 
-    <div class="flex flex-col items-center px-4 py-6 text-center sm:py-8">
+    <div class="flex flex-col items-center px-4 py-12 text-center">
       <Avatar class="size-20 ring-2 ring-violet-400/40 ring-offset-2 ring-offset-background">
         <AvatarImage v-if="user?.avatar" :src="user.avatar" :alt="user.name" />
         <AvatarFallback class="bg-neutral-200 text-xl font-semibold text-black dark:bg-neutral-700 dark:text-white">
@@ -116,10 +116,10 @@ const tiles = [
     </div>
   </Card>
 
-  <div v-else class="mt-4 mb-6 flex justify-end">
+  <div v-else class="mt-4 mr-4 mb-6 flex justify-end">
     <button type="button" class="btn btn-chill btn-xs" @click="setDismissed(false)">
       <Undo2 class="mr-2 h-3.5 w-3.5" />
-      Bring back the welcome card
+      Show welcome
     </button>
   </div>
 </template>
