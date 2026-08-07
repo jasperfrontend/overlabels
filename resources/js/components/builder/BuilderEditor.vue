@@ -17,7 +17,7 @@ import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 // via the exposed API when its Save button submits.
 const props = defineProps<{
   initial: BuilderMetadata;
-  sampleData: Record<string, string>;
+  sampleData: Record<string, unknown>;
   blocks: LibraryBlock[];
 }>();
 

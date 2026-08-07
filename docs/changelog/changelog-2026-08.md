@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 8th, 2026 - fix(previews): control tags resolve in previews
+
+`getSampleTemplateData()` returns 53 keys and every one of them is a static Twitch tag. There is not a single `c:` key in it, and there never was, so no control has ever resolved in any preview on any surface. `[[[followers_total]]]` worked and `[[[c:myname]]]` did not, which is the entire pattern behind "control-heavy overlays show basically nothing in preview".
+
+- **The values were already on the page.** The edit route ships `userScopedControls` and the template's own `controls` for the controls manager; the Builder holds `BuilderControlDef`s for the blocks placed in this session. None of it reached the preview, which received `sampleData` and nothing else. No new endpoint, no new query - the bag handed to the renderer now carries `c:` entries built from data the page already had.
+- **Key derivation mirrors the render query exactly**, because a preview that resolves a different set of keys than the overlay is worse than one that resolves none. Source-managed controls use the namespaced broadcast key (`c:kofi:donations_received`), everything else uses `c:` plus the raw key, and each gets its automatic `_at` companion in Unix seconds. Membership matches too: every template-scoped control, plus user-scoped ones that are source-managed - which is what `userScopedControls` already filters to.
+- **Timers are computed rather than read**, since their stored `value` is not the number on screen. That logic already existed as `resolvePreviewValue()` inside `ExpressionBuilder.vue`; it moved to `controlPreview.ts` and the modal now imports it, because leaving a second copy behind is what the previous commit was about.
+- **Random-mode numbers deliberately return their stored value** instead of rolling a fresh one. The server rerolls on each render, but a canvas whose numbers change on every keystroke reads as broken.
+- **Builder control definitions carry no timestamps**, so their `_at` companion is left absent rather than faked to `now()`. An overlay that has never been saved has no last-write time and should not claim one.
+- **Verified against real local data**, rendering template 232 with its own controls: `[[[c:bb_block_contents]]]` went from empty to "Hello Jasper" and `<img src="">` became `<img src="https://jasper.monster/sharex/...">`.
+
 ## August 8th, 2026 - fix(previews): previews render through the same pipeline the live overlay uses
 
 Every preview surface had its own tag substituter, and all three were the same twelve lines copied around: loop over the sample data, build a literal regex per key by string interpolation, replace. `resources/dsl/dsl.json` opens with a comment forbidding exactly this, and the reason is on display here - a regex built as `[[[${tag}]]]` can only match a bare tag, so `[[[followers_total|number]]]` never matched its own sample value even though the value was sitting right there in the same object.

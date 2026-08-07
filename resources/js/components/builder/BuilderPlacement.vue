@@ -8,7 +8,7 @@ export type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 const props = defineProps<{
   placement: BuilderPlacement;
-  sampleData: Record<string, string>;
+  sampleData: Record<string, unknown>;
   selected: boolean;
   sourceStale?: boolean;
   /** Canvas scale factor, so chrome can be sized in screen pixels. */

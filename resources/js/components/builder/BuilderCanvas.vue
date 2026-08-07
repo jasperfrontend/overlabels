@@ -8,7 +8,7 @@ const props = defineProps<{
   canvas: { width: number; height: number };
   placements: BuilderPlacementType[];
   selectedId: string | null;
-  sampleData: Record<string, string>;
+  sampleData: Record<string, unknown>;
   isCellOccupied: (x: number, y: number) => boolean;
   stalePlacementIds?: Set<string>;
 }>();

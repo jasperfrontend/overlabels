@@ -20,6 +20,7 @@ import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 import { renderTemplateSource } from '@/utils/renderTemplate';
+import { controlsToPreviewData } from '@/utils/controlPreview';
 import { ExternalLink, Save } from '@lucide/vue';
 
 const props = defineProps<{
@@ -33,6 +34,14 @@ const locale = computed(() => page.props.auth.user?.locale ?? 'en-US');
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Builder', href: '/builder' }];
 
 const state = useBuilderState();
+
+// Blocks placed here bring control *definitions* rather than saved rows - the
+// rows are only created on save - so previews resolve `c:` tags from those
+// defaults. Recomputes as blocks are added or removed.
+const previewData = computed<Record<string, unknown>>(() => ({
+  ...props.sampleData,
+  ...controlsToPreviewData(state.controlsForImport()),
+}));
 const { stalePlacementIds, refreshPlacement, syncAll, noteFreshSource } = useBlockSourceSync(state);
 
 function refreshSelectedFromSource() {
@@ -118,8 +127,8 @@ function previewOverlay() {
   // Same two-pass pipeline the live overlay uses, so the composed preview
   // matches what OBS will show - pipes, `??` defaults, conditionals and
   // foreach included. See renderTemplateSource.
-  const previewBody = renderTemplateSource(html, props.sampleData, locale.value, true);
-  const previewCss = renderTemplateSource(css, props.sampleData, locale.value, false);
+  const previewBody = renderTemplateSource(html, previewData.value, locale.value, true);
+  const previewCss = renderTemplateSource(css, previewData.value, locale.value, false);
 
   previewHtml.value = `<!DOCTYPE html>
 <html lang="en">
@@ -240,7 +249,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             :canvas="state.canvas.value"
             :placements="state.placements.value"
             :selected-id="state.selectedId.value"
-            :sample-data="props.sampleData"
+            :sample-data="previewData"
             :is-cell-occupied="(x, y) => state.occupied(x, y)"
             :stale-placement-ids="stalePlacementIds"
             @cell-click="onCellClick"

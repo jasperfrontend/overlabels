@@ -18,6 +18,7 @@ import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
+import { controlsToPreviewData } from '@/utils/controlPreview';
 import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
 import BuilderEditor from '@/components/builder/BuilderEditor.vue';
 import type { LibraryBlock } from '@/components/builder/BlockPickerModal.vue';
@@ -245,6 +246,19 @@ const mainTabs = computed(() => {
 
 const mainTab = ref<string>('code');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
+
+// Previews resolve control tags the same way the live overlay does, so the bag
+// handed to the renderer carries `c:` entries alongside the Twitch sample data.
+// Membership mirrors the render query: every template-scoped control, plus the
+// user-scoped ones that are source-managed (which is what `userScopedControls`
+// already is). Template controls are merged last so they win a key clash; the
+// server resolves that by sort_order, which does not survive the split here.
+// Rebuilds as localControls changes, so adding a control updates the preview.
+const previewData = computed<Record<string, unknown>>(() => ({
+  ...(props.sampleData ?? {}),
+  ...controlsToPreviewData(props.userScopedControls ?? []),
+  ...controlsToPreviewData(localControls.value),
+}));
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -639,7 +653,7 @@ onMounted(() => {
             v-show="mainTab === 'code'"
             ref="builderEditor"
             :initial="props.template.metadata.builder"
-            :sample-data="props.sampleData ?? {}"
+            :sample-data="previewData"
             :blocks="props.builderBlocks ?? []"
             @dirty="builderDirty = true"
             @error="(msg) => pushToast(msg, 'warning')"
