@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useForm, Head, Link } from '@inertiajs/vue3';
+import { useForm, Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import type { AppPageProps, BreadcrumbItem } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -14,10 +14,14 @@ import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
+import { renderTemplateSource } from '@/utils/renderTemplate';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
 }>();
+
+const page = usePage<AppPageProps>();
+const locale = computed(() => page.props.auth.user?.locale ?? 'en-US');
 
 const form = useForm({
   name: '',
@@ -96,13 +100,13 @@ const submitForm = async () => {
 };
 
 const previewTemplate = (): void => {
-  let htmlContent = form.html;
-  let cssContent = form.css;
-  Object.entries(props.sampleData).forEach(([tag, value]) => {
-    const tagPattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
-    htmlContent = htmlContent.replace(tagPattern, value);
-    cssContent = cssContent.replace(tagPattern, value);
-  });
+  // Same two-pass pipeline the live overlay uses, so the preview matches what
+  // OBS will show. The previous approach built a literal regex per sample key,
+  // so it only ever matched a bare [[[tag]]]: anything with a pipe or a `??`
+  // default was left on screen raw, and conditionals and foreach blocks were
+  // never resolved at all.
+  const htmlContent = renderTemplateSource(form.html, props.sampleData, locale.value, true);
+  const cssContent = renderTemplateSource(form.css, props.sampleData, locale.value, false);
 
   previewHtml.value = `<!DOCTYPE html>
 <html lang="en">

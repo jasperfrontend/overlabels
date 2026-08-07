@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import type { AppPageProps, BreadcrumbItem } from '@/types';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import PublicToggle from '@/components/PublicToggle.vue';
@@ -19,12 +19,16 @@ import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
+import { renderTemplateSource } from '@/utils/renderTemplate';
 import { ExternalLink, Save } from '@lucide/vue';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
   blocks: LibraryBlock[];
 }>();
+
+const page = usePage<AppPageProps>();
+const locale = computed(() => page.props.auth.user?.locale ?? 'en-US');
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Builder', href: '/builder' }];
 
@@ -111,15 +115,11 @@ const composed = computed(() => composeBuilderTemplate(state.serialize()));
 
 function previewOverlay() {
   const { head, html, css } = composed.value;
-  let previewBody = html;
-  let previewCss = css;
-  Object.entries(props.sampleData).forEach(([tag, value]) => {
-    const pattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
-    previewBody = previewBody.replace(pattern, value);
-    previewCss = previewCss.replace(pattern, value);
-  });
-  previewBody = previewBody.replace(/\[\[\[[^\]]*]]]/g, '');
-  previewCss = previewCss.replace(/\[\[\[[^\]]*]]]/g, '');
+  // Same two-pass pipeline the live overlay uses, so the composed preview
+  // matches what OBS will show - pipes, `??` defaults, conditionals and
+  // foreach included. See renderTemplateSource.
+  const previewBody = renderTemplateSource(html, props.sampleData, locale.value, true);
+  const previewCss = renderTemplateSource(css, props.sampleData, locale.value, false);
 
   previewHtml.value = `<!DOCTYPE html>
 <html lang="en">

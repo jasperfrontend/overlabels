@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { BuilderPlacement } from '@/types';
+import { usePage } from '@inertiajs/vue3';
+import type { AppPageProps, BuilderPlacement } from '@/types';
+import { renderTemplateSource } from '@/utils/renderTemplate';
 
 export type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
@@ -25,6 +27,9 @@ const emit = defineEmits<{
 // edges and not others - the borders here are specified thick enough that they
 // survive the transform.
 const px = (screenPx: number) => `${screenPx / props.scale}px`;
+
+const page = usePage<AppPageProps>();
+const locale = computed(() => page.props.auth.user?.locale ?? 'en-US');
 
 const OUTLINE_PX = 2;
 const OUTLINE_SELECTED_PX = 3;
@@ -104,20 +109,16 @@ function onHandlePointerDown(handle: ResizeHandle, e: PointerEvent) {
   emit('resizeStart', props.placement.instance_id, handle, e);
 }
 
-// Same preview approach as the template create page: substitute sample data
-// into the block's code, strip leftover tag/conditional markers for visual
-// cleanliness, render in a sandboxed iframe (free style isolation).
+// Render through the same two-pass pipeline the live overlay uses, so a block
+// previews the way it will actually ship. The previous approach built a literal
+// regex per sample key, which could only ever match a bare [[[tag]]] - anything
+// carrying a pipe or a `??` default fell through and was then deleted outright
+// by a catch-all strip, along with every conditional and foreach marker.
+// Absent values still collapse to '' here, but now `??` defaults get their turn
+// first. Rendered in a sandboxed iframe for free style isolation.
 const previewDoc = computed(() => {
-  let html = props.placement.snapshot.html;
-  let css = props.placement.snapshot.css;
-
-  Object.entries(props.sampleData).forEach(([tag, value]) => {
-    const pattern = new RegExp(`\\[\\[\\[${tag}]]]`, 'g');
-    html = html.replace(pattern, value);
-    css = css.replace(pattern, value);
-  });
-  html = html.replace(/\[\[\[[^\]]*]]]/g, '');
-  css = css.replace(/\[\[\[[^\]]*]]]/g, '');
+  const html = renderTemplateSource(props.placement.snapshot.html, props.sampleData, locale.value, true);
+  const css = renderTemplateSource(props.placement.snapshot.css, props.sampleData, locale.value, false);
 
   // height:100% on html/body mirrors the compiled environment: there the
   // block's wrapper is a grid item with a definite height, so a block using
