@@ -98,18 +98,26 @@ The canonical animation primitive. A sine wave with amplitude \(A\), period \(T\
 $$y(t) = A \sin\!\left(\frac{2\pi t}{T}\right) + C$$
 
 Map that one formula to controls and you have a breathing badge, a pulsing circle, a lighthouse sweep, or
-a subtle bob. The pattern:
+a subtle bob. Every example here uses `now_ms()`, so \(T\) is written in *milliseconds* - a 6-second
+period is `6000`:
 
 ```
 // 1 Hz pulse, mapped to 0..1 (use as opacity / scale normaliser)
-0.5 + 0.5 * sin(2 * PI * now())
+0.5 + 0.5 * sin(2 * PI * now_ms() / 1000)
 
 // Slow breathe, ±5% around 1.0, period 6 s
-1 + 0.05 * sin(2 * PI * now() / 6)
+1 + 0.05 * sin(2 * PI * now_ms() / 6000)
 
 // Lighthouse sweep, 0..1 once every 8 s (always positive)
-abs(sin(PI * now() / 8))
+abs(sin(PI * now_ms() / 8000))
 ```
+
+> [!WARNING]
+> These will not work with `now()`. It returns whole seconds, so it feeds a wave a handful of distinct
+> values per cycle and you get a staircase. The 1 Hz pulse degenerates completely: `sin(2 * PI * now())`
+> is \(\sin(2\pi n)\) for integer \(n\), which is **always zero**, so the whole expression sits at a
+> constant `0.5` and never moves. Anything continuous takes `now_ms()`. See
+> [section 10](#pitfalls-and-things-that-will-not-work).
 
 The generalised *remap* from \([-1, 1]\) into any range \([\text{lo}, \text{hi}]\) is a template worth
 memorising:
@@ -123,10 +131,10 @@ one orbit:
 
 ```
 // c:orbit_x
-40 * sin(2 * PI * now() / 5)
+40 * sin(2 * PI * now_ms() / 5000)
 
 // c:orbit_y (3:2 frequency ratio -> a classic Lissajous)
-40 * cos(2 * PI * now() / 7.5)
+40 * cos(2 * PI * now_ms() / 7500)
 ```
 
 ## 4. Sawtooth, ramps, and `fract()`
@@ -138,13 +146,13 @@ $$\text{fract}(x) = x - \lfloor x \rfloor \quad\in [0,\,1)$$
 
 ```
 // 10-second loop, ramps 0 -> 1
-fract(now() / 10)
+fract(now_ms() / 10000)
 
 // Same loop, reversed: 1 -> 0
-1 - fract(now() / 10)
+1 - fract(now_ms() / 10000)
 
 // Triangle wave via abs of a shifted sawtooth: 0 -> 1 -> 0 every 4 s
-abs(2 * fract(now() / 4) - 1)
+abs(2 * fract(now_ms() / 4000) - 1)
 ```
 
 The triangle trick deserves its own line. Start with a sawtooth, scale it to \([0, 2]\), subtract 1 to
@@ -213,7 +221,7 @@ mod(floor(now() / 5), 3)
 mod(floor(now() / 86400), 365)
 
 // Ping-pong 0 -> 1 -> 0 smoothly: triangle then normalise
-abs(2 * fract(now() / 6) - 1)
+abs(2 * fract(now_ms() / 6000) - 1)
 ```
 
 Pair `mod` with a conditional to rotate overlay text:
@@ -325,13 +333,19 @@ That is \(\text{pct} = \frac{F \bmod 1000}{10}\) wearing a clamp guard. Wire it 
 
 ### Fade in the latest follower's name
 
-Every tag has an automatic `_at` Unix timestamp companion. Combine it with `now()` and `clamp` to get a
+Every tag has an automatic `_at` Unix timestamp companion. Combine it with `now_ms()` and `clamp` to get a
 two-second fade-in on every new follow:
 
 ```
 // c:greet_opacity ->
-clamp(0, (now() - t.followers_latest_user_name_at) / 2, 1)
+clamp(0, (now_ms() - t.followers_latest_user_name_at * 1000) / 2000, 1)
 ```
+
+Note the `* 1000`. Every `_at` companion is Unix *seconds*, so it has to be lifted into milliseconds
+before it can be subtracted from `now_ms()`. Forget it and you get a number around 1.7 billion, which
+`clamp` dutifully pins to `1` - a fade that is always finished. With `now()` on both sides the units line
+up, but a two-second fade would only have three frames to play with, so `now_ms()` is the right tool and
+the multiply is the price.
 
 ### Greeting copy that switches on the event shape
 
