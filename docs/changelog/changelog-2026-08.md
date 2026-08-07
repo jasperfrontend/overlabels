@@ -1,5 +1,32 @@
 # CHANGELOG AUGUST 2026
 
+## August 7th, 2026 - docs(help): what the `_at` companion actually holds
+
+Section 8 of the math page called `_at` "the timestamp of its last change". It is `$control->updated_at`, so it moves on any write at all - including provisioning a control you have never received on. "Last write" is what it means, and the page now says so in both places it comes up.
+
+- **The wording is not pedantry, it is the whole basis of the race.** `latest()` picks a winner by comparing these timestamps, so whether they mean "last change" or "last write" is the difference between the documented pattern working and returning something you did not expect.
+- **The never-connected case is now stated explicitly**, because it is the reassuring half and it was missing: a service you have not wired up resolves to nothing, `toComparable()` maps that to \(-\infty\), and it loses every race. You can list all six services in a `latest()` call before connecting any of them.
+
+## August 7th, 2026 - docs(help): the math page described a ticker that never existed
+
+The Math Engine page said the engine runs "a shared 250 ms ticker" that fires "4x a second". It does not, and it never did. Time-dependent expressions have been driven by `requestAnimationFrame` since May 2nd, and the math page was written on July 28th - so this was not documentation drifting behind a change, it was wrong on the day it was authored. The 250 ms figure appears to have been borrowed from `OverlayRenderer.vue`, where **timer controls** genuinely do tick on a 250 ms interval. Different subsystem, same overlay.
+
+- **The mechanism was wrong but the advice was right, so only the mechanism moved.** `now()` really does produce 1-second granularity - not because it is ticked slower, but because it returns integer seconds and `tickFrame` skips the write when the result string is unchanged. It is re-evaluated ~60 times a second and writes once. That distinction is now stated instead of being papered over with a fictional tick rate.
+- **The 1000x rescaling trap is documented for the first time**, and it is the thing that actually bites. Swapping `now_ms()` for `now()` in a working formula does not slow it down, it produces a different wave: `sin(now_ms() / 600)` cycles every 3.8 seconds, `sin(now() / 600)` cycles every 63 minutes. The page told people to reach for `now_ms()` for sub-second motion and never mentioned that the divisor has to move with it.
+- **"Prefer CSS animations, they run at the browser's frame rate" was true and is now false**, since the expression ticker runs at frame rate too. The recommendation survives on its real merit - compositor, no data writes, no re-render - rather than on a speed claim that stopped being true.
+- **Two arithmetic errors went with it.** `sin(now_ms() / 500)` was labelled a "~3 Hz wave"; it advances 2 rad/s, so it is a 3.1 second period, about 0.32 Hz. And the pseudo-random one-liner in section 5 was described as changing "twice per second" - `now()` cannot change anything twice per second.
+- **The engine's own address was stale.** The closing line still pointed at `resources/js/composables/useExpressionEngine.ts` as the whole engine; the evaluator moved to `resources/js/lib/expression-engine/engine.mjs` when the Node sidecar landed, and the composable is now a Vue wrapper around it.
+- **A new subsection records that the editor preview does not tick at all.** `ExpressionBuilder.vue` re-evaluates on text change, nothing else, so every time-based formula looks frozen in the preview regardless of which function it uses. Toggling a space to force an update is a real technique and now it is a documented one.
+
+Then the same audit found that the animation examples themselves were built on `now()`, which is the one thing the corrected section 10 says not to do. Nine formulas across sections 3, 4, 6 and 9 now use `now_ms()` with divisors scaled to milliseconds.
+
+- **The headline example was a dead formula.** `0.5 + 0.5 * sin(2 * PI * now())`, presented as a "1 Hz pulse" and the first animation anyone would copy, is a constant `0.5`. `now()` is always an integer, \(\sin(2\pi n)\) is always zero, so the pulse never pulses. It sat on the page as a worked example of the page's own central technique. It is now `now_ms() / 1000` and genuinely oscillates 0 to 1 every second.
+- **The rest moved because they were staircases, not waves.** The 6-second breathe had six distinct values per cycle, the Lissajous orbit five, the 4-second triangle four. They animated, technically, in the sense that a flipbook with four pages animates.
+- **The two-second fade-in needed a unit conversion, and that conversion is now called out.** `_at` companions are Unix *seconds*, so `now_ms() - x_at` is off by a factor of 1000 and lands around 1.7 billion, which `clamp` pins to `1` - a fade that is permanently finished, failing silently and looking like nothing is wrong. The example multiplies the `_at` by 1000 and the page explains why.
+- **The discrete examples were deliberately left alone.** The modulo wheel, the quantised `floor(now() / N)` random rolls, and the elapsed-time subtractions are all correct uses of `now()` - they want one value per second, which is exactly what it gives. Converting those would have been churn.
+- **Every converted formula was executed against the real engine** with `Date.now()` stubbed, sampled across a full cycle, and checked for range, distinct-value count and return-to-start. The 1 Hz pulse went from one distinct value to eight.
+- **The new cross-reference anchor was verified against the renderer, not assumed.** `addHeadingAnchors()` strips the leading section number, so the id is `pitfalls-and-things-that-will-not-work`, not `10-pitfalls-...` - which is what both a standard markdown slugger and the IDE's link checker expect. The IDE still flags it; the IDE is wrong.
+
 ## August 7th, 2026 - fix(controls): your latest cheerer stopped being erased at every go-live
 
 `c:twitch:latest_cheerer_name` was wiped to a literal `"0"` the moment a stream started, and its 25 equivalents across Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne were not. Same idea, opposite lifecycle, and the only thing separating them was which code path created the row.
