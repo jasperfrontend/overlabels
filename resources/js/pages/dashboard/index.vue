@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import OnboardingWizard from '@/components/OnboardingWizard.vue';
+import WelcomeCard from '@/components/WelcomeCard.vue';
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
@@ -73,8 +74,9 @@ const breadcrumbs = [
 
       <div v-else>
 
-        <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
+        <WelcomeCard />
 
+        <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
           <section v-if="props.userStaticTemplates.length > 0" class="flex-1 p-4">
             <DashboardSectionHeader
               title="My overlays"
