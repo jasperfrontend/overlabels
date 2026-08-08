@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 8th, 2026 - fix(previews): control tags resolve in previews
+
+`getSampleTemplateData()` returns 53 keys and every one of them is a static Twitch tag. There is not a single `c:` key in it, and there never was, so no control has ever resolved in any preview on any surface. `[[[followers_total]]]` worked and `[[[c:myname]]]` did not, which is the entire pattern behind "control-heavy overlays show basically nothing in preview".
+
+- **The values were already on the page.** The edit route ships `userScopedControls` and the template's own `controls` for the controls manager; the Builder holds `BuilderControlDef`s for the blocks placed in this session. None of it reached the preview, which received `sampleData` and nothing else. No new endpoint, no new query - the bag handed to the renderer now carries `c:` entries built from data the page already had.
+- **Key derivation mirrors the render query exactly**, because a preview that resolves a different set of keys than the overlay is worse than one that resolves none. Source-managed controls use the namespaced broadcast key (`c:kofi:donations_received`), everything else uses `c:` plus the raw key, and each gets its automatic `_at` companion in Unix seconds. Membership matches too: every template-scoped control, plus user-scoped ones that are source-managed - which is what `userScopedControls` already filters to.
+- **Timers are computed rather than read**, since their stored `value` is not the number on screen. That logic already existed as `resolvePreviewValue()` inside `ExpressionBuilder.vue`; it moved to `controlPreview.ts` and the modal now imports it, because leaving a second copy behind is what the previous commit was about.
+- **Random-mode numbers deliberately return their stored value** instead of rolling a fresh one. The server rerolls on each render, but a canvas whose numbers change on every keystroke reads as broken.
+- **Builder control definitions carry no timestamps**, so their `_at` companion is left absent rather than faked to `now()`. An overlay that has never been saved has no last-write time and should not claim one.
+- **Verified against real local data**, rendering template 232 with its own controls: `[[[c:bb_block_contents]]]` went from empty to "Hello Jasper" and `<img src="">` became `<img src="https://jasper.monster/sharex/...">`.
+
+## August 8th, 2026 - fix(previews): previews render through the same pipeline the live overlay uses
+
+Every preview surface had its own tag substituter, and all three were the same twelve lines copied around: loop over the sample data, build a literal regex per key by string interpolation, replace. `resources/dsl/dsl.json` opens with a comment forbidding exactly this, and the reason is on display here - a regex built as `[[[${tag}]]]` can only match a bare tag, so `[[[followers_total|number]]]` never matched its own sample value even though the value was sitting right there in the same object.
+
+- **What happened to a tag that did not match depended on which preview you opened.** The Builder canvas and the composed-overlay preview both followed up with a catch-all `replace(/\[\[\[[^\]]*]]]/g, '')`, which deleted it. The overlay create page did not, so the same tag stayed on screen as raw `[[[c:bb_block_contents]]]`. One bug, two symptoms, and the comment in `BuilderPlacement.vue` claiming it used the "same preview approach as the template create page" was close enough to stop anyone looking.
+- **The catch-all strip also ate the block syntax**, which is the part that made control-heavy blocks look broken rather than merely empty. `[[[if:...]]]BIG[[[else]]]small[[[endif]]]` had its markers removed and rendered `BIGsmall`; a `foreach` rendered its body exactly once with the loop markers gone. Neither construct was ever evaluated in a preview.
+- **All three now call `renderTemplateSource()`**, a small util that runs `processTemplate` then `replaceTagsWithFormatting` - the same two passes, in the same order, that `OverlayRenderer.parseSource()` runs. Previews cannot drift from what OBS shows, because there is no second implementation left to drift.
+- **Deleting the strip is not a regression.** `replaceTagsWithFormatting` already resolves an absent value to `''`, so unmatched tags still vanish. They now go through `?? default` on the way, so `[[[c:donations ?? nothing yet]]]` shows its fallback instead of being erased along with everything else.
+- **Locale reaches previews for the first time.** It comes off `auth.user.locale`, which `HandleInertiaRequests` already shares, so `currency` and `date` and `number` format the way that user has them set rather than not formatting at all.
+- **Verified against the real modules rather than by reading them**, bundling the util with esbuild and running it in node: pipes resolve (`1,234`), `??` fires, both conditional branches select correctly, `foreach` emits one node per item, HTML values stay entity-encoded, and the CSS path stays unencoded so `.a > .b` survives.
+- **`useHelpReference.ts` keeps its own tag regex on purpose.** It wraps literal tags in clickable `<code>` for the help pages, where resolving them is precisely what you do not want.
+
 ## August 7th, 2026 - feat(dashboard): a welcome card, so the dashboard opens with a greeting instead of four lists
 
 The dashboard was four boxes with a list in each. Functional and clean, and not remotely inviting. There is now a card above them holding your avatar, your name, and one tile each for the four things underneath: static overlays, alerts, recent events, recent updates.
