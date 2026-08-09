@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 9th, 2026 - chore(github): issue forms that ask the questions I was going to ask anyway
+
+GitHub's community standards checklist wants five files. Two of them earn their place on merit and the rest are paperwork for a repo recruiting contributors, which this one is not. These are the two.
+
+- **The bug form asks where in Overlabels and where you were viewing it**, because those two answers do most of the narrowing. An overlay misbehaving in OBS but fine in a browser tab is a different bug from one that is broken in both, and that question used to cost a round trip every single time.
+- **It asks for the overlay slug and explicitly not the URL.** The part after `#` in an overlay URL is the access token, and someone reporting a rendering bug should not have to already know that before pasting what looks like the obvious identifier.
+- **The console field explains how to get one.** OBS browser sources cannot show console errors, so "check the console" is useless advice on its own; the field tells you to open the same URL in a normal tab and press F12.
+- **Only two fields are required**, plus a checkbox confirming this is not a security report. The audience here is streamers, and a form that demands a commit SHA and a minimal reproduction is a form that gets abandoned.
+- **Security reports are routed away from the issue tracker** in three places: the intro text, a contact link that sends you to `SECURITY.md`, and that required checkbox. `SECURITY.md` asks for private disclosure and an issue form is exactly where someone would ignore it by accident.
+- **The idea form asks what you were trying to do on stream** before it asks what you want built, and asks how you work around it today. The workaround is frequently the smaller feature.
+- **The PR template is a checklist for me**, since I am the only person opening pull requests here. It pins the changelog entry, the migration rollback, and the two rules I break most often: em dashes in user-facing copy, and saying "Fork" where the UI says "Copy".
+- **No licence file yet.** `composer.json` still claims MIT from the Laravel skeleton while the repo has none, which is a contradiction rather than a missing checkbox, and it is a product decision that deserves its own sitting rather than a drive-by fix.
+
 ## August 8th, 2026 - fix(previews): control tags resolve in previews
 
 `getSampleTemplateData()` returns 53 keys and every one of them is a static Twitch tag. There is not a single `c:` key in it, and there never was, so no control has ever resolved in any preview on any surface. `[[[followers_total]]]` worked and `[[[c:myname]]]` did not, which is the entire pattern behind "control-heavy overlays show basically nothing in preview".

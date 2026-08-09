@@ -1,0 +1,29 @@
+name: Idea or feature request
+description: Suggest something Overlabels could do
+labels: ["Enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. The most useful ones describe the thing you were trying to do on stream, not the feature you think would solve it - that leaves room for a simpler answer than either of us had in mind.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: What's the situation on your stream where Overlabels gets in your way or falls short?
+      placeholder: I want my alert to look different for a 5 euro tip than for a 50 euro one, but I have to build two separate alerts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What did you have in mind?
+      description: Optional. If you already have a shape for it, describe it here.
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: How are you working around it today?
+      description: Optional, but genuinely useful. Sometimes the workaround is the feature.
