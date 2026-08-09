@@ -1,3 +1,4 @@
+
 # The Overlabels DSL - Specification
 
 > **Status:** first written 2026-07-28; **shared spec implemented the same day.** Sections 1-6 are
