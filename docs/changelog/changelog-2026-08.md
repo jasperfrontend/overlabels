@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 9th, 2026 - chore(license): Overlabels is AGPL-3.0-or-later
+
+The repository has never had a licence. `composer.json` said `"license": "MIT"`, which arrived in `783b81fc "Laravel? Pretty cool!"` as part of the starter kit's default metadata and was never a decision anyone made. Meanwhile GitHub reported no licence at all, because there was no `LICENSE` file to report. Those two facts contradicted each other in public on every commit.
+
+- **AGPL-3.0-or-later, not MIT**, because Overlabels is a hosted service whose sustainability plan is still unwritten. MIT lets anyone take this codebase closed and run a competing hosted Overlabels; the AGPL's section 13 means anyone who hosts a *modified* version has to offer its source to the people using it. It keeps the open-source claim in `SECURITY.md` honest without handing away the one thing that is actually the product.
+- **The cost of copyleft is normally that it deters contributors, and here that cost is currently zero.** 1398 commits, all mine, plus dependabot. Zero forks. This is the cheapest moment the decision will ever be available.
+- **The licence body is byte-identical to the FSF original**, verified with `cmp` against `gnu.org/licenses/agpl-3.0.txt`. The copyright line sits in a header above it rather than inside it, because the document's own terms permit verbatim copies only. The header is the FSF's recommended notice, whose "or (at your option) any later version" is the part that actually encodes the `-or-later`.
+- **Four manifests now agree**: `composer.json` switched off MIT, `package.json` gained a `license` field it never had, `package-lock.json` picked the same value up in its root entry via `npm install --package-lock-only` (one line, no dependency churn), and no third-party `license` field in the lockfile was touched, since those describe other people's packages.
+- **Forward-only.** No history rewritten, no force-push, no existing commit touched. Code already distributed while the manifest claimed MIT was distributed under that claim and nothing here retroactively changes that. With zero forks the practical exposure is theoretical, but the README says what happened rather than pretending the switch was clean.
+- **The README distinguishes the code from your templates.** The Copying section promises "no licensing restrictions" on public templates, and a licence section three screens further down is exactly where someone would conflate the two. The AGPL governs the source; your overlays remain yours.
+
 ## August 9th, 2026 - chore(github): issue forms that ask the questions I was going to ask anyway
 
 GitHub's community standards checklist wants five files. Two of them earn their place on merit and the rest are paperwork for a repo recruiting contributors, which this one is not. These are the two.
