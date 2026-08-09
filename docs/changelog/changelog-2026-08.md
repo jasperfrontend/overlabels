@@ -1,5 +1,41 @@
 # CHANGELOG AUGUST 2026
 
+> Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
+
+## August 9th, 2026 - docs(community): CONTRIBUTING and a code of conduct
+
+The last two items on GitHub's community checklist, written now rather than earlier because both were downstream of the licence. CONTRIBUTING is where the sign-off requirement lives, and that requirement did not exist until there was a licence for contributions to be made under.
+
+- **The most useful line in CONTRIBUTING is "open an issue before starting anything substantial"**, followed by the note that this project grows by accretion rather than redesign. A rewrite of a working area is the pull request most likely to be declined here, and someone deserves to know that before spending a weekend on one, not after.
+- **House rules for user-facing copy are written down for the first time.** No em dashes, "Copy" and never "Fork", gender-neutral wording, render nothing when data is missing, `text-foreground` for body copy, `cursor-pointer` on anything clickable. These are small, they are enforced strictly, and until now they existed only as review comments after the fact.
+- **Setup is a link, not a copy.** The README already documents self-hosting with the full environment variable list; duplicating it into CONTRIBUTING would produce two sets of instructions that drift apart, and the one nobody updates is the one people read.
+- **DCO rather than a CLA, and the difference matters.** `git commit -s` certifies that a contributor had the right to submit their work. It does *not* assign copyright, and it does *not* grant the right to relicense their contribution later. A CLA would, at the cost of friction that deters casual contributors. With zero outside contributions to date nothing is foreclosed either way, so the decision waits until someone actually opens a pull request.
+- **Contributor Covenant 2.1, verbatim**, with the one `[INSERT CONTACT METHOD]` placeholder filled with the same address `SECURITY.md` uses. It governs the repository's issues and pull requests. It is not a claim about what the software does for streamers, which stays true to Overlabels not being a safety tool.
+
+## August 9th, 2026 - chore(license): Overlabels is AGPL-3.0-or-later
+
+The repository has never had a licence. `composer.json` said `"license": "MIT"`, which arrived in `783b81fc "Laravel? Pretty cool!"` as part of the starter kit's default metadata and was never a decision anyone made. Meanwhile GitHub reported no licence at all, because there was no `LICENSE` file to report. Those two facts contradicted each other in public on every commit.
+
+- **AGPL-3.0-or-later, not MIT**, because Overlabels is a hosted service whose sustainability plan is still unwritten. MIT lets anyone take this codebase closed and run a competing hosted Overlabels; the AGPL's section 13 means anyone who hosts a *modified* version has to offer its source to the people using it. It keeps the open-source claim in `SECURITY.md` honest without handing away the one thing that is actually the product.
+- **The cost of copyleft is normally that it deters contributors, and here that cost is currently zero.** 1398 commits, all mine, plus dependabot. Zero forks. This is the cheapest moment the decision will ever be available.
+- **The licence body is byte-identical to the FSF original**, verified with `cmp` against `gnu.org/licenses/agpl-3.0.txt`. The copyright line sits in a header above it rather than inside it, because the document's own terms permit verbatim copies only. The header is the FSF's recommended notice, whose "or (at your option) any later version" is the part that actually encodes the `-or-later`.
+- **Four manifests now agree**: `composer.json` switched off MIT, `package.json` gained a `license` field it never had, `package-lock.json` picked the same value up in its root entry via `npm install --package-lock-only` (one line, no dependency churn), and no third-party `license` field in the lockfile was touched, since those describe other people's packages.
+- **Forward-only.** No history rewritten, no force-push, no existing commit touched. Code already distributed while the manifest claimed MIT was distributed under that claim and nothing here retroactively changes that. With zero forks the practical exposure is theoretical, but the README says what happened rather than pretending the switch was clean.
+- **The README distinguishes the code from your templates.** The Copying section promises "no licensing restrictions" on public templates, and a licence section three screens further down is exactly where someone would conflate the two. The AGPL governs the source; your overlays remain yours.
+
+## August 9th, 2026 - chore(github): issue forms that ask the questions I was going to ask anyway
+
+GitHub's community standards checklist wants five files. Two of them earn their place on merit and the rest are paperwork for a repo recruiting contributors, which this one is not. These are the two.
+
+- **The bug form asks where in Overlabels and where you were viewing it**, because those two answers do most of the narrowing. An overlay misbehaving in OBS but fine in a browser tab is a different bug from one that is broken in both, and that question used to cost a round trip every single time.
+- **It asks for the overlay slug and explicitly not the URL.** The part after `#` in an overlay URL is the access token, and someone reporting a rendering bug should not have to already know that before pasting what looks like the obvious identifier.
+- **The console field explains how to get one.** OBS browser sources cannot show console errors, so "check the console" is useless advice on its own; the field tells you to open the same URL in a normal tab and press F12.
+- **Only two fields are required**, plus a checkbox confirming this is not a security report. The audience here is streamers, and a form that demands a commit SHA and a minimal reproduction is a form that gets abandoned.
+- **Security reports are routed away from the issue tracker** in three places: the intro text, a contact link that sends you to `SECURITY.md`, and that required checkbox. `SECURITY.md` asks for private disclosure and an issue form is exactly where someone would ignore it by accident.
+- **The idea form asks what you were trying to do on stream** before it asks what you want built, and asks how you work around it today. The workaround is frequently the smaller feature.
+- **The PR template is a checklist for me**, since I am the only person opening pull requests here. It pins the changelog entry, the migration rollback, and the two rules I break most often: em dashes in user-facing copy, and saying "Fork" where the UI says "Copy".
+- **No licence file yet.** `composer.json` still claims MIT from the Laravel skeleton while the repo has none, which is a contradiction rather than a missing checkbox, and it is a product decision that deserves its own sitting rather than a drive-by fix.
+
 ## August 8th, 2026 - fix(previews): control tags resolve in previews
 
 `getSampleTemplateData()` returns 53 keys and every one of them is a static Twitch tag. There is not a single `c:` key in it, and there never was, so no control has ever resolved in any preview on any surface. `[[[followers_total]]]` worked and `[[[c:myname]]]` did not, which is the entire pattern behind "control-heavy overlays show basically nothing in preview".

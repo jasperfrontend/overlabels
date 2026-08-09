@@ -713,9 +713,37 @@ Be sure to mention this README somewhere in your tip so I can link your support 
 
 ---
 
+## License
+
+Overlabels is licensed under the **GNU Affero General Public License, version 3 or later**
+(`AGPL-3.0-or-later`), as of August 9th, 2026. The full text is in [LICENSE](LICENSE).
+
+Before that date this repository carried no licence at all. The `composer.json` metadata declared
+`"license": "MIT"`, but that line arrived untouched in the initial Laravel scaffold commit
+(`783b81fc`) as part of the starter kit's default metadata, and was never a deliberate choice. No
+`LICENSE` file was ever published in this repository granting MIT terms. The AGPL applies going
+forward from the date above; this is a forward-only relicense and no history has been rewritten.
+
+What this means in practice:
+
+- You can read, run, modify and share the source code freely.
+- If you **self-host a modified version** and other people can reach it over a network, section 13
+  of the AGPL requires you to offer those users the source of your modified version. Running an
+  unmodified copy for yourself carries no such obligation.
+- This governs the **Overlabels source code**. It does not govern the overlay templates, kits and
+  controls you create with Overlabels - those are yours, and the copying rules for them are
+  described under [Copying](#copying).
+
+---
+
 ## Contributing
 
 If you have questions, ideas, or improvements, open an issue or submit a pull request.
 Overlabels grows best when people build on top of it.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the workflow, the house rules for user-facing copy, and how
+to sign off your commits. Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Contributions are accepted under the same AGPL-3.0-or-later terms as the rest of the project.
 
 ~ JasperDiscovers

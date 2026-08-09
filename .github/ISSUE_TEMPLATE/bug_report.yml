@@ -1,0 +1,100 @@
+name: Bug report
+description: Something in Overlabels isn't working the way it should
+labels: ["Bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. You don't need to fill in every field - the first two are the ones that matter most.
+
+        If you think you've found a **security** issue, please don't file it here. See [SECURITY.md](https://github.com/jasperfrontend/overlabels/blob/main/SECURITY.md) instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: My follower count overlay showed 0 after I went live, but the dashboard shows the right number.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in Overlabels?
+      description: Pick the closest one. If you're not sure, pick "Not sure".
+      options:
+        - A static overlay
+        - An alert overlay
+        - The overlay builder
+        - Controls
+        - An integration (Ko-fi, Streamlabs, Buy Me a Coffee, Fourthwall, Throne)
+        - The Twitch bot
+        - The GPS / mobile app
+        - The website itself (dashboard, settings, templates list)
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where were you viewing it?
+      description: Overlays behave differently in OBS than in a normal browser tab, so this narrows things down fast.
+      options:
+        - In OBS (browser source)
+        - In a normal browser tab
+        - Both - it happens in either
+        - Not applicable
+      default: 0
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can we make it happen again?
+      description: Rough steps are fine. "It happens every time I go live" is a useful answer.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Go live
+        4. The overlay shows ...
+
+  - type: input
+    id: overlay-url
+    attributes:
+      label: Overlay slug (optional)
+      description: |
+        The slug only, please - **not** the full overlay URL. The part after `#` in that URL is your access token and would let anyone view your overlay.
+      placeholder: my-follower-goal
+
+  - type: textarea
+    id: tags
+    attributes:
+      label: Tags or controls involved (optional)
+      description: If specific tags misbehaved, paste them here.
+      placeholder: "[[[follower_count]]] and [[[c:kofi:donations_received]]]"
+      render: text
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (optional)
+      description: |
+        OBS browser sources can't show you console errors. To check for them, open the same overlay URL in a normal browser tab, press F12, and look at the Console tab.
+      render: text
+
+  - type: input
+    id: versions
+    attributes:
+      label: Browser and OBS version (optional)
+      placeholder: Firefox 141, OBS 31.0.2
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before you file
+      options:
+        - label: I've checked that no one has already reported this
+          required: false
+        - label: This isn't a security vulnerability (those go to the email in SECURITY.md)
+          required: true
