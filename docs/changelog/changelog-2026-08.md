@@ -2,6 +2,14 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 9th, 2026 - chore(cleanup): delete parse_tags.js
+
+A 38-line debugging script in the repo root that read `resources/templates/template-tags.json` and printed its shape to the console. Committed once in `b069963e` during the `TemplateDataMapperService` refactor and never touched again.
+
+- **Its input no longer exists.** `resources/templates/template-tags.json` is gone, so the script would throw on its `readFileSync` before printing anything. Dead in the strong sense, not merely unused.
+- **Nothing referenced it but `.dockerignore`**, and that line existed only to keep it out of the image. Removed alongside it, since an ignore rule for a file that does not exist is just a smaller piece of the same litter.
+- **`tmp_screenshot.png` stays.** It is still in use, and its `.dockerignore` line stays with it.
+
 ## August 9th, 2026 - fix(deps): nanoid 3.3.16 to 3.3.18 for CVE-2026-67213
 
 Dependabot alert 92, high severity: custom nanoid generators can loop indefinitely when size is zero. Fixed in 3.3.17; the lockfile picked up 3.3.18.

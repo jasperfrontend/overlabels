@@ -52,6 +52,5 @@ _ide_helper_models.php
 backup-*.sql
 backup.sql
 tmp_screenshot.png
-parse_tags.js
 nul
 "public/css classes.txt"
