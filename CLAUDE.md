@@ -300,6 +300,26 @@ Always create migrations for schema changes. Test rollback before committing. Us
 
 ## Workflow Preferences
 
+### STOP: check the working tree first
+
+**At the start of EVERY conversation, run `git status` before doing anything the user asked for.**
+
+If the working tree is dirty (any modified, staged, or untracked files), **do not start the task**.
+Stop, show the user exactly which files are dirty, and tell them the tree should be cleaned first -
+committed, stashed, or discarded, their choice. Then wait.
+
+Be strict about this. Jasper consistently forgets he has uncommitted work in progress, and it is not
+good: the risk is that unrelated changes get swept into a commit, or that his work in progress gets
+clobbered by a checkout, a stash, or a branch switch that a later step needs to make.
+
+- This applies to the whole tree, not just files related to the request. Dirty is dirty.
+- Being careful to stage selectively is **not** a substitute for stopping. Do that only after he
+  has been told and has decided to continue.
+- The only way past this is Jasper explicitly saying to proceed anyway after being warned. Once he
+  has said so, continue without raising it again for the rest of that conversation.
+
+### Committing and pushing
+
 - At the end of every logical unit of work, prepare a commit: update CHANGELOG (docs/changelog/changelog-YYYY-MM.md - per-month files) first, then commit everything together - one commit. Do NOT push automatically. Ask the user for confirmation before pushing.
 - If unsure whether to commit first or apply changes first, commit first then apply
 - NEVER use em dashes in user-facing copy or code. Use hyphens with spaces instead.
