@@ -1,5 +1,17 @@
 # CHANGELOG AUGUST 2026
 
+> Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
+
+## August 9th, 2026 - docs(community): CONTRIBUTING and a code of conduct
+
+The last two items on GitHub's community checklist, written now rather than earlier because both were downstream of the licence. CONTRIBUTING is where the sign-off requirement lives, and that requirement did not exist until there was a licence for contributions to be made under.
+
+- **The most useful line in CONTRIBUTING is "open an issue before starting anything substantial"**, followed by the note that this project grows by accretion rather than redesign. A rewrite of a working area is the pull request most likely to be declined here, and someone deserves to know that before spending a weekend on one, not after.
+- **House rules for user-facing copy are written down for the first time.** No em dashes, "Copy" and never "Fork", gender-neutral wording, render nothing when data is missing, `text-foreground` for body copy, `cursor-pointer` on anything clickable. These are small, they are enforced strictly, and until now they existed only as review comments after the fact.
+- **Setup is a link, not a copy.** The README already documents self-hosting with the full environment variable list; duplicating it into CONTRIBUTING would produce two sets of instructions that drift apart, and the one nobody updates is the one people read.
+- **DCO rather than a CLA, and the difference matters.** `git commit -s` certifies that a contributor had the right to submit their work. It does *not* assign copyright, and it does *not* grant the right to relicense their contribution later. A CLA would, at the cost of friction that deters casual contributors. With zero outside contributions to date nothing is foreclosed either way, so the decision waits until someone actually opens a pull request.
+- **Contributor Covenant 2.1, verbatim**, with the one `[INSERT CONTACT METHOD]` placeholder filled with the same address `SECURITY.md` uses. It governs the repository's issues and pull requests. It is not a claim about what the software does for streamers, which stays true to Overlabels not being a safety tool.
+
 ## August 9th, 2026 - chore(license): Overlabels is AGPL-3.0-or-later
 
 The repository has never had a licence. `composer.json` said `"license": "MIT"`, which arrived in `783b81fc "Laravel? Pretty cool!"` as part of the starter kit's default metadata and was never a decision anyone made. Meanwhile GitHub reported no licence at all, because there was no `LICENSE` file to report. Those two facts contradicted each other in public on every commit.

@@ -741,6 +741,9 @@ What this means in practice:
 If you have questions, ideas, or improvements, open an issue or submit a pull request.
 Overlabels grows best when people build on top of it.
 
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the workflow, the house rules for user-facing copy, and how
+to sign off your commits. Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 Contributions are accepted under the same AGPL-3.0-or-later terms as the rest of the project.
 
 ~ JasperDiscovers
