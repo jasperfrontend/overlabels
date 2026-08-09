@@ -2,6 +2,17 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 9th, 2026 - fix(license): GitHub reported the licence as "Other"
+
+The relicense landed and GitHub's API still returned `{"key":"other","name":"Other"}`. The community checklist went green because that only asks whether a licence file exists, but the repo sidebar said "Other" and anything reading the licence programmatically got nothing.
+
+- **The header above the licence text was the cause.** GitHub runs [licensee](https://github.com/licensee/licensee), which normalises `LICENSE` and needs 98% similarity to a known licence. It strips copyright lines specifically, but the header also carried the FSF "This program is free software" notice, a title line and a separator rule. Running licensee locally scored the file at **88.91%** against AGPL-3.0, nowhere near the threshold and a long way from the ~98% that had been assumed when the header was written.
+- **The fix is one line of header instead of nineteen.** `Copyright (c) 2026 JasperDiscovers`, a blank line, then the verbatim text. That line matches the copyright regex licensee strips, so what remains is the canonical document. Scores **98.86%** via the Dice matcher.
+- **Pure verbatim with no header scores 100% via the Exact matcher**, and is what most AGPL projects ship. It was not chosen because the copyright line is wanted in the file; the 98.86% result is deterministic rather than fuzzy, so the smaller margin costs nothing in practice.
+- **The FSF notice moved to the README's licence section**, which is its actual home. It is the "how to apply these terms to your program" boilerplate, not part of the licence, and it was never doing any work inside `LICENSE`.
+- **The licence body is still byte-identical to `gnu.org/licenses/agpl-3.0.txt`**, re-verified with `cmp` after the change.
+- **Verified before pushing this time, not predicted.** `licensee detect .` on the working tree returns `License: AGPL-3.0`, with `LICENSE`, `README.md` and `package.json` all matching. The previous round asserted GitHub would detect it cleanly on reasoning alone and was wrong by nine percentage points.
+
 ## August 9th, 2026 - docs(community): CONTRIBUTING and a code of conduct
 
 The last two items on GitHub's community checklist, written now rather than earlier because both were downstream of the licence. CONTRIBUTING is where the sign-off requirement lives, and that requirement did not exist until there was a licence for contributions to be made under.
