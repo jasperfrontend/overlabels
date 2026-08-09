@@ -67,10 +67,13 @@ export const CONTROL_TYPES: ControlTypeMeta[] = [
     type: 'text',
     name: 'Text',
     tagline: 'Any words you want on screen, changed whenever you like.',
-    exampleName: 'Now playing',
+    exampleName: 'Welcome message',
     blurb:
-      'A free-form line of text. Type a new value in your dashboard and every overlay showing it updates straight away. No reload, no restarting the browser source.',
-    goodFor: ['What you are playing right now', 'A shoutout to the last raider', 'The current chapter, quest or task'],
+      'A free-form line of text. It holds whatever you type and nothing else changes it. When you do type a new value, every overlay showing it updates straight away. No reload, no restarting the browser source.',
+    // Deliberately generic. A text control never fills itself in, so examples
+    // like "Now playing" or "Last raider" imply an automatic update that does
+    // not exist. Anything live belongs in a Ready-made control or an Expression.
+    goodFor: ['Any words you want to write yourself', 'A welcome message for your viewers', 'Your handle, socials or pronouns'],
     icon: Type,
     accent: {
       icon: 'bg-sky-500/12 text-sky-600 dark:bg-sky-400/12 dark:text-sky-300',
@@ -80,7 +83,7 @@ export const CONTROL_TYPES: ControlTypeMeta[] = [
       ringFocus: 'focus-visible:ring-sky-500/40 dark:focus-visible:ring-sky-400/30',
       text: 'text-sky-600 dark:text-sky-300',
     },
-    demo: { kind: 'text', value: 'Now playing: Hollow Knight' },
+    demo: { kind: 'text', value: 'Hello world' },
   },
   {
     type: 'number',
@@ -105,10 +108,10 @@ export const CONTROL_TYPES: ControlTypeMeta[] = [
     type: 'counter',
     name: 'Counter',
     tagline: 'One number, one click. Up, down, reset.',
-    exampleName: 'Death counter',
+    exampleName: 'Win counter',
     blurb:
       'A number built for using while you are live. Your dashboard gives it plus and minus buttons and a reset, so you are one click away from bumping it mid-sentence.',
-    goodFor: ['Deaths, wins, attempts', 'Times you said the thing', 'Anything chat likes to keep score of'],
+    goodFor: ['Wins, losses, attempts', 'Times you said the thing', 'Anything chat likes to keep score of'],
     icon: Hash,
     accent: {
       icon: 'bg-emerald-500/12 text-emerald-600 dark:bg-emerald-400/12 dark:text-emerald-300',
@@ -118,7 +121,7 @@ export const CONTROL_TYPES: ControlTypeMeta[] = [
       ringFocus: 'focus-visible:ring-emerald-500/40 dark:focus-visible:ring-emerald-400/30',
       text: 'text-emerald-600 dark:text-emerald-300',
     },
-    demo: { kind: 'counter', label: 'Deaths', value: 12 },
+    demo: { kind: 'counter', label: 'Wins', value: 12 },
   },
   {
     type: 'timer',

@@ -197,7 +197,7 @@ const dialogDescription = computed(() => {
 });
 
 /**
- * Placeholders follow the chosen type. A switch suggesting "Death counter"
+ * Placeholders follow the chosen type. A switch suggesting "Win counter"
  * teaches the wrong thing about what a switch is for, so the example comes from
  * the catalog entry and matches that type's demo.
  */
@@ -534,6 +534,17 @@ async function save() {
       @open-auto-focus="onOpenAutoFocus"
     >
       <div class="border-b border-sidebar-border px-6 py-5 sm:px-8">
+        <!-- Mirrors the footer's Back. The dialog is tall enough that the
+             footer can be a long way from where the eye is. -->
+        <button
+          v-if="step === 'configure' && !isEditing"
+          type="button"
+          class="mb-2 flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+          @click="backToPicker"
+        >
+          <ArrowLeft class="size-3.5" />
+          Back to all controls
+        </button>
         <DialogTitle class="text-2xl font-semibold tracking-tight text-foreground">{{ dialogTitle }}</DialogTitle>
         <DialogDescription class="mt-1.5 max-w-4xl text-sm text-foreground/75">
           {{ dialogDescription }}
@@ -557,7 +568,7 @@ async function save() {
         <div
           v-if="step === 'configure'"
           class="grid gap-8 lg:grid-cols-3"
-          :class="form.type === 'expression' && !isPresetMode ? 'xl:grid-cols-4' : ''"
+          :class="form.type === 'expression' && !isPresetMode ? 'xl:grid-cols-[6fr_6fr_8fr]' : ''"
         >
           <!-- Rail: what you picked, why it is good, and the tag you will paste. -->
           <aside class="space-y-5 lg:col-span-1">
@@ -919,10 +930,12 @@ async function save() {
             </section>
           </div>
 
-          <!-- Expression builder gets its own column, because a formula needs room. -->
+          <!-- Expression builder gets its own column, because a formula needs room.
+               At xl the three columns are 30/30/40 (see grid-cols above), so each
+               takes a single track; below that the builder drops to its own row. -->
           <div
             v-if="form.type === 'expression' && !isPresetMode"
-            class="lg:col-span-3 xl:col-span-2"
+            class="lg:col-span-3 xl:col-span-1"
           >
             <ExpressionBuilder
               v-model="expressionText"
