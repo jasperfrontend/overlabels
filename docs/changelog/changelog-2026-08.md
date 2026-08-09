@@ -2,6 +2,15 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 9th, 2026 - fix(deps): nanoid 3.3.16 to 3.3.18 for CVE-2026-67213
+
+Dependabot alert 92, high severity: custom nanoid generators can loop indefinitely when size is zero. Fixed in 3.3.17; the lockfile picked up 3.3.18.
+
+- **Transitive and build-time only.** One `nanoid` in the tree, required by `postcss` at `^3.3.16`, which arrives via `tailwindcss` and `@tailwindcss/vite`. GitHub labels the scope "runtime" because those two sit in `dependencies` rather than `devDependencies`, but postcss runs under Vite at build time and nanoid never reaches a browser bundle. The practical exposure was nil; the fix was a three-line lockfile change, so the calculus never got interesting.
+- **`npm update nanoid` was enough** because the existing `^3.3.16` range already admits the patch. No manifest edit, no override, no forced resolution.
+- **`npm run build` verified afterwards**, clean in 5.33s. A dependency bump that is not build-checked is a guess, even a patch-level one.
+- **This is the security-advisory carve-out to "let majors cook"**, not a departure from it. Patch releases that close an advisory go in immediately; the waiting rule is about majors and feature minors.
+
 ## August 9th, 2026 - fix(license): GitHub reported the licence as "Other"
 
 The relicense landed and GitHub's API still returned `{"key":"other","name":"Other"}`. The community checklist went green because that only asks whether a licence file exists, but the repo sidebar said "Other" and anything reading the licence programmatically got nothing.
