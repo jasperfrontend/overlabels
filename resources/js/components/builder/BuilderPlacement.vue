@@ -139,7 +139,7 @@ const gridArea = computed(
   <div
     :style="{ gridArea, outline, outlineOffset: `-${px(selected ? OUTLINE_SELECTED_PX : OUTLINE_PX)}` }"
     :class="[
-      'group relative min-h-0 min-w-0 cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing',
+      'group transition-all relative min-h-0 min-w-0 cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing',
       selected ? 'z-10' : '',
     ]"
     @click.stop="emit('select', placement.instance_id)"
@@ -153,7 +153,7 @@ const gridArea = computed(
       :title="placement.block_name"
     />
     <div
-      class="pointer-events-none absolute truncate bg-sidebar-accent/90 font-mono text-foreground"
+      class="pointer-events-none absolute truncate bg-sidebar-accent/90 font-mono text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       :style="{ ...chipStyle, left: cornerInset, fontSize: px(12), padding: `${px(1)} ${px(6)}` }"
     >
       {{ placement.block_name }}
