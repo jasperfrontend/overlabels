@@ -13,15 +13,23 @@ use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
- * Nightly Postgres dump, shipped to Cloudflare R2.
+ * Nightly Postgres dump, shipped to Cloudflare R2 and Scaleway Object Storage.
  *
  * Runs in the scheduler role, which already has DB_HOST/DB_PASSWORD injected
  * and can reach the `overlabels-postgres` accessory over the Kamal network, so
  * this needs no database credentials of its own. Retention is NOT handled here:
- * the R2 bucket carries a 30-day lifecycle rule, which is one less thing that
- * can have a bug and delete the wrong object.
+ * both buckets carry a 30-day lifecycle rule, which is one less thing that can
+ * have a bug and delete the wrong object.
  *
- * @see docs/deploy/restore.md for the other half of this - restoring a dump.
+ * Two providers is the "2" in 3-2-1. The dump is taken ONCE and the same file
+ * is pushed to each disk under an identical key, so the two copies are
+ * byte-identical rather than two dumps of a database that moved in between.
+ *
+ * Every disk is attempted even after one fails - see uploadAll(). A fail-fast
+ * loop would mean a Cloudflare outage silently costs you the Scaleway copy too,
+ * which is the exact correlated failure a second provider exists to prevent.
+ *
+ * @see docs/deploy/database-backups.md for the other half of this - restoring a dump.
  */
 class BackupDatabase extends Command
 {
@@ -37,7 +45,7 @@ class BackupDatabase extends Command
     private const DUMP_TIMEOUT_SECONDS = 1800;
 
     protected $signature = 'backup:database
-                            {--disk=r2 : Filesystem disk to upload the dump to}
+                            {--disk=* : Filesystem disks to upload the dump to (repeatable; defaults to services.backups.disks)}
                             {--keep-local : Keep the dump on local disk after a successful upload}';
 
     protected $description = 'Dump the Postgres database and ship it to object storage';
@@ -48,28 +56,59 @@ class BackupDatabase extends Command
         $localPath = null;
 
         try {
+            $disks = $this->disks();
             $localPath = $this->dump();
             $bytes = filesize($localPath);
-            $key = $this->upload($localPath, (string) $this->option('disk'));
 
+            // One key for every destination. Derived once so the copies are
+            // addressable by the same name whichever provider you reach for.
+            $key = 'daily/'.basename($localPath);
+
+            $results = $this->uploadAll($localPath, $key, $disks);
             $seconds = round(microtime(true) - $startedAt, 1);
+
+            $failed = array_filter($results, fn (?string $error) => $error !== null);
+
+            if ($failed !== []) {
+                Log::error('Database backup FAILED', [
+                    'key' => $key,
+                    'bytes' => $bytes,
+                    'seconds' => $seconds,
+                    'results' => $results,
+                ]);
+
+                $this->error(sprintf(
+                    'Backup failed on %d of %d destinations: %s',
+                    count($failed),
+                    count($results),
+                    implode(', ', array_keys($failed)),
+                ));
+
+                $this->shout($this->summarise($failed), $results);
+
+                return self::FAILURE;
+            }
 
             Log::info('Database backup uploaded', [
                 'key' => $key,
                 'bytes' => $bytes,
                 'seconds' => $seconds,
+                'disks' => array_keys($results),
             ]);
 
             $this->info(sprintf(
-                'Backed up %s to %s:%s in %ss.',
+                'Backed up %s to %s (key %s) in %ss.',
                 $this->humanBytes($bytes),
-                $this->option('disk'),
+                implode(' + ', array_keys($results)),
                 $key,
                 $seconds,
             ));
 
             return self::SUCCESS;
         } catch (Throwable $e) {
+            // Only reachable before any upload is attempted - the dump itself,
+            // or a misconfigured disk list. Per-disk failures are handled above
+            // so that one dead provider cannot skip the others.
             Log::error('Database backup FAILED', [
                 'error' => $e->getMessage(),
                 'exception' => $e::class,
@@ -88,6 +127,73 @@ class BackupDatabase extends Command
                 File::delete($localPath);
             }
         }
+    }
+
+    /**
+     * Resolve the destinations for this run: --disk if given, else config.
+     *
+     * @return list<string>
+     */
+    private function disks(): array
+    {
+        /** @var list<string> $disks */
+        $disks = $this->option('disk') ?: config('services.backups.disks', []);
+
+        $disks = array_values(array_unique(array_filter(array_map('trim', $disks))));
+
+        if ($disks === []) {
+            // A run with nowhere to put the dump would otherwise exit 0 having
+            // backed up nothing at all, which is the worst possible outcome:
+            // a green healthcheck and no data.
+            throw new RuntimeException(
+                'No backup destinations configured. Set BACKUP_DISKS or pass --disk.'
+            );
+        }
+
+        return $disks;
+    }
+
+    /**
+     * Upload the dump to every destination, and keep going after a failure.
+     *
+     * Returns a disk => error map, where null means the copy landed and was
+     * verified. The caller decides the exit code from that; this method never
+     * throws for an upload failure, because "R2 is down" must not be allowed to
+     * mean "we also skipped Scaleway".
+     *
+     * @param  list<string>  $disks
+     * @return array<string, string|null>
+     */
+    private function uploadAll(string $path, string $key, array $disks): array
+    {
+        $results = [];
+
+        foreach ($disks as $disk) {
+            try {
+                $this->upload($path, $key, $disk);
+                $results[$disk] = null;
+                $this->line("  <info>ok</info>    {$disk}:{$key}");
+            } catch (Throwable $e) {
+                $results[$disk] = $e->getMessage();
+                $this->line("  <fg=red>fail</>  {$disk}: ".$e->getMessage());
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Human-readable one-liner for the disks that failed.
+     *
+     * @param  array<string, string|null>  $failed
+     */
+    private function summarise(array $failed): string
+    {
+        return implode("\n", array_map(
+            fn (string $disk, ?string $error) => "{$disk}: {$error}",
+            array_keys($failed),
+            $failed,
+        ));
     }
 
     /**
@@ -159,13 +265,10 @@ class BackupDatabase extends Command
 
     /**
      * Stream the dump to the given disk and verify it arrived intact.
-     *
-     * @return string the object key it was written to
      */
-    private function upload(string $path, string $disk): string
+    private function upload(string $path, string $key, string $name): void
     {
-        $key = 'daily/'.basename($path);
-        $disk = Storage::disk($disk);
+        $disk = Storage::disk($name);
 
         $stream = fopen($path, 'rb');
 
@@ -190,11 +293,9 @@ class BackupDatabase extends Command
 
         if ($remoteBytes !== $localBytes) {
             throw new RuntimeException(
-                "Uploaded object size mismatch for {$key}: local {$localBytes} bytes, remote {$remoteBytes} bytes."
+                "Uploaded object size mismatch for {$name}:{$key}: local {$localBytes} bytes, remote {$remoteBytes} bytes."
             );
         }
-
-        return $key;
     }
 
     private function filename(string $database): string
@@ -205,8 +306,14 @@ class BackupDatabase extends Command
     /**
      * Tell a human the backup broke. Best-effort by design: a failed webhook
      * must not mask the backup failure that is already being logged.
+     *
+     * When some destinations did land, say so explicitly. "R2 has last night's
+     * dump, Scaleway does not" is a very different 03:00 than "there is no
+     * backup", and the message is read at the point where that matters.
+     *
+     * @param  array<string, string|null>  $results  disk => error, null = landed
      */
-    private function shout(string $message): void
+    private function shout(string $message, array $results = []): void
     {
         $url = config('services.backups.alert_webhook');
 
@@ -216,16 +323,39 @@ class BackupDatabase extends Command
             return;
         }
 
+        $fields = [
+            ['name' => 'Host', 'value' => config('app.url'), 'inline' => true],
+        ];
+
+        if ($results !== []) {
+            $landed = array_keys(array_filter($results, fn (?string $e) => $e === null));
+
+            $fields[] = [
+                'name' => 'Destinations',
+                'value' => implode("\n", array_map(
+                    fn (string $disk, ?string $error) => ($error === null ? ':white_check_mark: ' : ':x: ').$disk,
+                    array_keys($results),
+                    $results,
+                )),
+                'inline' => true,
+            ];
+
+            $fields[] = [
+                'name' => 'Copies that landed',
+                'value' => $landed === []
+                    ? 'None - there is NO backup for tonight.'
+                    : implode(', ', $landed),
+                'inline' => false,
+            ];
+        }
+
         try {
             Http::timeout(10)->post($url, [
                 'embeds' => [[
                     'title' => 'Database backup FAILED',
                     'color' => 0xDC2626, // red-600
                     'description' => Str::limit($message, 1800),
-                    'fields' => [
-                        ['name' => 'Host', 'value' => config('app.url'), 'inline' => true],
-                        ['name' => 'Disk', 'value' => (string) $this->option('disk'), 'inline' => true],
-                    ],
+                    'fields' => $fields,
                     'timestamp' => now()->toIso8601String(),
                 ]],
             ]);

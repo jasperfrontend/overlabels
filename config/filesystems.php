@@ -103,6 +103,50 @@ return [
             'response_checksum_validation' => 'when_required',
         ],
 
+        /*
+         * Scaleway Object Storage, the second off-site copy of the nightly
+         * dump. This is the "2 different providers" half of 3-2-1: R2 above is
+         * the same object either way, but a Cloudflare account suspension, a
+         * billing lapse or a fat-fingered bucket delete takes out every copy
+         * that lives behind one login. Nothing user-facing is ever written here
+         * either.
+         *
+         * Region is part of the endpoint hostname and is NOT global: a bucket
+         * in fr-par returns 404 NotFound on the nl-ams host, which reads as a
+         * missing bucket rather than a misrouted request. The bucket lives in
+         * fr-par; check SCW_REGION before concluding the bucket is gone.
+         *
+         * Only the access key and secret are needed. Scaleway's own
+         * SCW_DEFAULT_ORGANIZATION_ID / SCW_DEFAULT_PROJECT_ID are for their
+         * CLI and native API - the S3-compatible API resolves the project from
+         * the access key, so those are deliberately not wired up here.
+         */
+        'scaleway' => [
+            'driver' => 's3',
+            'key' => env('SCW_ACCESS_KEY'),
+            'secret' => env('SCW_SECRET_KEY'),
+            'region' => env('SCW_REGION', 'fr-par'),
+            'bucket' => env('SCW_BUCKET'),
+            'endpoint' => env('SCW_ENDPOINT') ?: sprintf(
+                'https://s3.%s.scw.cloud',
+                env('SCW_REGION', 'fr-par'),
+            ),
+            'use_path_style_endpoint' => true,
+            // Same reasoning as r2: a silent false here would report a failed
+            // upload as a good backup.
+            'throw' => true,
+            'report' => false,
+            /*
+             * Scaleway's S3 layer, like R2's, predates the CRC32 integrity
+             * trailers aws-sdk-php >= 3.337 sends by default. Pin both to the
+             * pre-3.337 behaviour rather than find out on a night we need the
+             * backup; the explicit size check in BackupDatabase::upload()
+             * already covers corruption in transit.
+             */
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+        ],
+
     ],
 
     /*

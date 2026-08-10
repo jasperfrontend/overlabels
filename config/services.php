@@ -107,6 +107,19 @@ return [
     // the only alerting the backup has - leave it unset and failures are
     // log-only.
     'backups' => [
+        /*
+         * Every disk the nightly dump is shipped to. Two providers, so losing
+         * one account does not lose every copy - see docs/deploy/database-backups.md.
+         *
+         * Order is not priority: `backup:database` uploads to all of these and
+         * only then decides its exit code, so a dead first disk can never stop
+         * the second copy from being written. Adding a disk here is the whole
+         * change needed to add a third destination.
+         */
+        'disks' => array_filter(array_map(
+            'trim',
+            explode(',', (string) env('BACKUP_DISKS', 'r2,scaleway')),
+        )),
         'alert_webhook' => env('BACKUP_ALERT_WEBHOOK_URL'),
         // Healthchecks.io dead-man's switch. The webhook above covers "the
         // backup ran and failed"; this covers "the backup never ran", which
