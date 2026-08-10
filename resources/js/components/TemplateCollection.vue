@@ -131,7 +131,7 @@ function handleDelete(t: OverlayTemplate) {
           <Badge v-if="!t.is_public" variant="destructive" class="text-xs">Private</Badge>
         </div>
 
-        <span v-if="t.description" class="max-w-[90%] truncate text-xs">
+        <span v-if="t.description" class="max-w-[90%] truncate text-xs text-muted-foreground">
           {{ t.description }}
         </span>
 
@@ -178,7 +178,7 @@ function handleDelete(t: OverlayTemplate) {
 
           <DropdownMenuItem
             v-if="canDelete(t)"
-            class="cursor-pointer text-destructive focus:text-destructive"
+            class="cursor-pointer text-destructive"
             @click="handleDelete(t)"
           >
             <Trash2 class="mr-2 h-4 w-4" />Delete
