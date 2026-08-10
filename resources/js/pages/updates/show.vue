@@ -26,13 +26,27 @@ const renderedExcerpt = computed(() =>
 // UnoCSS preset-wind3 and stores them on the row. We inject that CSS into
 // <head> while the post is mounted, then strip it on unmount so it doesn't
 // leak utilities into other pages on client-side navigation.
+//
+// The sheet MUST be scoped to the post container. It is a flat set of global
+// utility rules, and UnoCSS emits it unlayered, while Tailwind v4 keeps every
+// utility inside `@layer utilities` - and an unlayered rule beats a layered
+// one outright, whatever the specificity or source order. So a post whose
+// markdown mentions `hidden` anywhere ships a global `.hidden{display:none}`
+// that outranks the app shell's own `hidden md:block`, and the entire sidebar
+// disappears for as long as that post is open (Sidebar.vue builds both the
+// desktop wrapper and the fixed panel out of `hidden` + a `md:` override).
+// `@scope` confines the sheet to post content so it can never reach the shell.
+// A browser without `@scope` support drops the whole block, which costs the
+// post its custom utilities but leaves the app navigable - the safe way to
+// fail of the two.
 const STYLE_ID = 'updates-post-style';
+const POST_SCOPE_ID = 'updates-post';
 function injectPostStyle(css: string) {
   document.getElementById(STYLE_ID)?.remove();
-  if (!css) return;
+  if (!css.trim()) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
-  style.textContent = css;
+  style.textContent = `@scope (#${POST_SCOPE_ID}) {\n${css}\n}`;
   document.head.appendChild(style);
 }
 watch(
@@ -96,15 +110,22 @@ const breadcrumbs: BreadcrumbItem[] = [
               {{ tag }}
             </Link>
           </div>
-
-          <div
-            v-if="renderedExcerpt"
-            class="mt-6 prose prose-invert max-w-none text-lg text-foreground"
-            v-html="renderedExcerpt"
-          />
         </div>
 
-        <article class="prose prose-invert max-w-none text-foreground" v-html="renderedBody" />
+        <!-- Scope root for the post's compiled CSS (see injectPostStyle).
+             Everything inside is author-written markdown - the excerpt and the
+             body, which are exactly the two sources the admin form compiles
+             from. Everything outside is app chrome and must stay out of reach,
+             so do not move the back link, title or tags in here. -->
+        <div :id="POST_SCOPE_ID">
+          <div
+            v-if="renderedExcerpt"
+            class="mb-8 prose prose-invert max-w-none text-lg text-foreground"
+            v-html="renderedExcerpt"
+          />
+
+          <article class="prose prose-invert max-w-none text-foreground" v-html="renderedBody" />
+        </div>
       </div>
     </div>
   </AppLayout>

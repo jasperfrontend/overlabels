@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 10th, 2026 - fix(updates): a blog post could delete the app's navigation
+
+`/updates/overlabels-development-highlights-july-2026` rendered with no sidebar at all. The post body showed up fine, the whole left-hand navigation was simply gone. Every other post on the site was unaffected, which is what made it look like a routing or layout problem rather than a content one.
+
+- **A post's compiled CSS was being injected globally.** `updates/show.vue` takes the `compiled_css` stored on the row and appends it to `<head>` as a plain `<style>` tag. That sheet is a flat set of utility rules, so `.hidden{display:none}` from a post applied to the entire document, not just the post.
+- **Unlayered beats layered, whatever the specificity.** UnoCSS emits its output unlayered; Tailwind v4 keeps every utility inside `@layer utilities`. In the cascade an unlayered declaration outranks a layered one outright, so the post's `.hidden` beat `.md\:block` without being more specific or coming later. Verified against the deployed bundle rather than assumed: `.md\:block{display:block}` does sit inside `@layer utilities{`.
+- **The sidebar is built out of exactly that pair.** `Sidebar.vue` gives the desktop wrapper `hidden md:block` and the fixed panel `hidden ... md:flex`. Both collapsed to `display:none`. `SidebarInset` carries no `hidden`, which is why the article kept rendering and only the navigation vanished, and why it read as a layout bug.
+- **One post in nine triggered it.** Checking the stored CSS of every published post found `.hidden{display:none}` in the July highlights post and nowhere else. It also globally redefined `.fixed`, `.block`, `.grid` and `.border`; those happen to match Tailwind's values, so they were overriding the shell silently rather than visibly.
+- **It does not reproduce locally.** The only post in a fresh database is `welcome-to-overlabels`, whose body carries no classes at all, so its compiled CSS is the inert `--un-*` variable block and nothing collides. Reproducing needs that specific post's markdown.
+- **The fix is `@scope`, not a layer.** Wrapping the sheet in a layer would not have helped, since a later layer still wins; the rules had to stop matching shell elements altogether. `@scope (#updates-post)` confines them to the post container, which now wraps the excerpt and the body and nothing else. The back link, title and tags stay outside it deliberately, since they are app chrome rather than author content.
+- **Scoping happens at injection, not at compile time.** That fixes all nine existing rows without a re-save, and keeps `compileTailwindCss` untouched for overlay templates, where global output is correct and has to stay that way.
+- **Failing without `@scope` support is the safe direction.** A browser that does not understand the at-rule drops the whole block, costing the post its custom utilities but leaving the app navigable. Better than the current failure, which is losing the navigation.
+
 ## August 10th, 2026 - feat(controls): rebuild the Add Control modal as a two-step picker
 
 The Add Control dialog was one scrolling column of form inputs. Only the Text type fit on a 1080p screen. Number, Counter and List writer ran off the bottom entirely, taking the Save button with them, and the only type that got the layout right was Expression, because it happened to open in two columns.

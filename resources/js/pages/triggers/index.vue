@@ -133,9 +133,9 @@ function conditionLabel(row: ConditionFields): string | null {
 <template>
   <Head title="Triggers" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="px-4 py-3">
+    <div class="p-4">
       <div class="mb-4 mt-1 flex items-center gap-2">
-        <Megaphone class="h-6 w-6" />
+        <Megaphone class="mr-2 size-6" />
         <Heading
           title="Triggers"
           description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
