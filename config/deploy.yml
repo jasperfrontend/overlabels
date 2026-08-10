@@ -216,6 +216,14 @@ env:
     R2_BUCKET: overlabels-backups
     R2_JURISDICTION: eu
 
+    # Scaleway Object Storage, the second copy of the same nightly dump. Neither
+    # of these is a credential; the keys are secrets below. The region is part
+    # of the endpoint hostname, so pointing this at a region the bucket is not
+    # in fails as a 404 NotFound - which reads as "the bucket is gone" rather
+    # than "wrong host". The bucket lives in fr-par.
+    SCW_BUCKET: overlabels-backup-backups
+    SCW_REGION: fr-par
+
   secret:
     - APP_KEY
     - DB_PASSWORD
@@ -262,6 +270,12 @@ env:
     - R2_ACCESS_KEY_ID
     - R2_SECRET_ACCESS_KEY
     - R2_ACCOUNT_ID
+    # Scaleway credentials for the second copy of the nightly backup. Only the
+    # access key and secret are needed - Scaleway's S3-compatible API resolves
+    # the project from the key, so SCW_DEFAULT_ORGANIZATION_ID and
+    # SCW_DEFAULT_PROJECT_ID are deliberately not deployed.
+    - SCW_ACCESS_KEY
+    - SCW_SECRET_KEY
     - BACKUP_ALERT_WEBHOOK_URL
     # Healthchecks.io dead-man's switch for the nightly backup. A capability
     # URL - anyone holding it can fake a successful ping - so it lives here
