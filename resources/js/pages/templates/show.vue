@@ -39,6 +39,7 @@ import {
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import { useTemplateActions } from '@/composables/useTemplateActions';
+import { takeSaveNotice } from '@/utils/saveNotice';
 import { captureListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
 import { Badge } from '@/components/ui/badge';
@@ -165,6 +166,15 @@ onMounted(() => {
   const flash = (page.props as any)?.flash;
   if (flash?.fork_wizard) {
     openWizardFromPayload(flash.fork_wizard);
+  }
+
+  // A page that saved and then navigated here (the Builder) leaves its outcome
+  // behind for us to show, since it could not show it itself.
+  const notice = takeSaveNotice();
+  if (notice) {
+    toastMessage.value = notice.message;
+    toastType.value = notice.type;
+    showToast.value = true;
   }
 });
 
