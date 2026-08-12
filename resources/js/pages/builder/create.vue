@@ -17,6 +17,7 @@ import { useBuilderState, type BuilderControlDef } from '@/composables/useBuilde
 import { useBlockSourceSync } from '@/composables/useBlockSourceSync';
 import { composeBuilderTemplate } from '@/utils/composeBuilderTemplate';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
+import { stashSaveNotice } from '@/utils/saveNotice';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
 import { renderTemplateSource } from '@/utils/renderTemplate';
@@ -151,7 +152,7 @@ async function save() {
 
   saving.value = true;
   try {
-    const { sanitized } = sanitizeHtmlFields({ ...composed.value, name: name.value, description: description.value });
+    const { sanitized, removed } = sanitizeHtmlFields({ ...composed.value, name: name.value, description: description.value });
     const compiledCss = await compileTailwindCss({
       html: sanitized.html ?? '',
       head: sanitized.head ?? '',
@@ -174,10 +175,26 @@ async function save() {
       { headers: { Accept: 'application/json' } },
     );
 
+    // The composed output carries the Builder's own CSS and head verbatim, so
+    // the count above covers those editors too. Clean them to match, as the
+    // edit page does: mostly moot when the navigation below happens, but the
+    // controls import can throw and leave the user sitting on this page.
+    state.sanitizeCustom();
+
     const controls = state.controlsForImport();
     if (controls.length) {
       await axios.post(`/templates/${data.template.id}/controls/import`, {
         controls: controls.map((c) => ({ ...c, action: 'create' })),
+      });
+    }
+
+    // Handed to the template page rather than toasted here: this component is
+    // about to unmount, and there is no moment at which a local toast would be
+    // readable.
+    if (removed > 0) {
+      stashSaveNotice({
+        message: `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`,
+        type: 'warning',
       });
     }
 
@@ -252,6 +269,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             :sample-data="previewData"
             :is-cell-occupied="(x, y) => state.occupied(x, y)"
             :stale-placement-ids="stalePlacementIds"
+            :custom-css="state.appliedCss.value"
+            :custom-head="state.appliedHead.value"
             @cell-click="onCellClick"
             @select="(id) => (state.selectedId.value = id)"
             @move-to="(id, x, y) => state.moveTo(id, x, y)"
@@ -268,6 +287,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             v-model:css="state.customCss.value"
             v-model:head="state.customHead.value"
             :placements="state.placements.value"
+            :css-stale="state.cssStale.value"
+            :head-stale="state.headStale.value"
+            @send-to-preview="state.applyStyles"
           />
         </div>
 

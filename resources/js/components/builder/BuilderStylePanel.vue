@@ -13,10 +13,27 @@ import { harvestBuilderClasses } from '@/utils/builderClasses';
 // look; this is where the user bends it to their overlay. Both values are
 // stored in metadata.builder and appended last at compile time - see
 // composeBuilderTemplate.
-const props = defineProps<{ placements: BuilderPlacement[] }>();
+//
+// Whether an editor's content has reached the block previews is surfaced here
+// rather than up by the canvas: the canvas is what goes stale, but the panel is
+// what is on screen when it happens, since you are typing in it. Every part of
+// that signal is laid out so it can appear and disappear without moving
+// anything - the action row is always present and only fades, and the border
+// only changes colour. A block of UI that grows into existence on a keystroke
+// shoves the editor down mid-sentence, and shoves it back up again the moment a
+// typo is fixed.
+const props = defineProps<{
+  placements: BuilderPlacement[];
+  cssStale?: boolean;
+  headStale?: boolean;
+}>();
+
+const emit = defineEmits<{ sendToPreview: [] }>();
 
 const cssValue = defineModel<string>('css', { required: true });
 const headValue = defineModel<string>('head', { required: true });
+
+const stale = computed(() => !!(props.cssStale || props.headStale));
 
 const open = ref(false);
 const showAllClasses = ref(false);
@@ -73,7 +90,15 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
       <ChevronRight v-else class="h-4 w-4 shrink-0" />
       <Palette class="h-4 w-4 shrink-0 text-lime-500 dark:text-lime-400" />
       Your CSS and fonts
-      <span v-if="hasContent" class="h-1.5 w-1.5 rounded-full bg-violet-400" title="This overlay has custom CSS" />
+      <!-- One dot, two meanings, so collapsing the panel with unsent changes
+           still shows something. Swapped rather than added: a second dot would
+           nudge the row every time the state flipped. -->
+      <span
+        v-if="hasContent || stale"
+        class="h-1.5 w-1.5 rounded-full transition-colors"
+        :class="stale ? 'bg-orange-400' : 'bg-violet-400'"
+        :title="stale ? 'Your changes are not in the block previews yet' : 'This overlay has custom CSS'"
+      />
       <span class="ml-auto text-xs font-normal text-muted-foreground">Optional</span>
     </button>
 
@@ -81,6 +106,10 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
       <p class="mb-4 text-sm text-foreground">
         Restyle the blocks on this overlay. Your CSS is scoped to the grid and applied last, so a rule here
         beats the same selector inside a block. Write plain CSS - Overlabels scopes it for you.
+      </p>
+      <p class="mb-4 text-sm text-foreground">
+        The block previews above do not follow along as you type. Send your changes over when you want to look at them -
+        the saved overlay uses what is in these editors either way.
       </p>
 
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
@@ -144,10 +173,29 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
         <!-- CSS + head editors -->
         <div class="min-w-0 space-y-4">
           <div>
-            <label for="builder-custom-css" class="mb-1 block text-xs font-medium tracking-wide text-accent-foreground uppercase">
-              CSS
-            </label>
-            <div class="relative h-64 border border-sidebar-border bg-background">
+            <!-- The action never unmounts, it only fades, so this row's height
+                 is the same whether or not there is anything to send. That is
+                 the whole point: typing a typo and deleting it again must not
+                 push the editor down and pull it back up. -->
+            <div class="mb-1 flex items-center justify-between gap-2">
+              <label for="builder-custom-css" class="block text-xs font-medium tracking-wide text-accent-foreground uppercase">
+                CSS
+              </label>
+              <div
+                class="flex items-center gap-2 transition-opacity duration-200"
+                :class="stale ? 'opacity-100' : 'pointer-events-none opacity-0'"
+                :inert="!stale"
+              >
+                <span class="text-xs text-orange-700 dark:text-orange-300">Not in the previews yet</span>
+                <button type="button" class="btn btn-warning btn-sm cursor-pointer" @click="emit('sendToPreview')">
+                  Send to preview
+                </button>
+              </div>
+            </div>
+            <div
+              class="relative h-64 border bg-background transition-colors"
+              :class="cssStale ? 'border-orange-500/70 dark:border-orange-400/70' : 'border-sidebar-border'"
+            >
               <Codemirror
                 id="builder-custom-css"
                 :key="'builder-css-' + editorKey"
@@ -165,7 +213,10 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
             <label for="builder-custom-head" class="mb-1 block text-xs font-medium tracking-wide text-accent-foreground uppercase">
               Fonts and other &lt;head&gt; tags
             </label>
-            <div class="relative h-28 border border-sidebar-border bg-background">
+            <div
+              class="relative h-28 border bg-background transition-colors"
+              :class="headStale ? 'border-orange-500/70 dark:border-orange-400/70' : 'border-sidebar-border'"
+            >
               <Codemirror
                 id="builder-custom-head"
                 :key="'builder-head-' + editorKey"

@@ -441,6 +441,13 @@ const submitForm = async () => {
   });
   Object.assign(form, sanitized);
 
+  // The composed output carries the Builder's own CSS and head verbatim, so the
+  // count above already covers them and the payload is already clean. What is
+  // still dirty is the editors themselves - nothing re-seeds the Builder after
+  // a save, so without this a stripped <script> stays in the buffer, keeps
+  // reaching the preview iframes, and gets re-reported on every later save.
+  builderEditor.value?.sanitizeCustom();
+
   form.compiled_css = await compileTailwindCss({
     html: form.html,
     head: form.head,
