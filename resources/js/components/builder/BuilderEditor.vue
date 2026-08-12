@@ -115,6 +115,7 @@ onMounted(() => window.addEventListener('keydown', onKeydown));
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
 defineExpose({
+  sanitizeCustom: () => state.sanitizeCustom(),
   compose: () => composeBuilderTemplate(state.serialize()),
   serialize: () => state.serialize(),
   controlsForImport: () => state.controlsForImport(),

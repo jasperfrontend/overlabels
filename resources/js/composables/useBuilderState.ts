@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 import type { BuilderMetadata, BuilderPlacement } from '@/types';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 export interface BuilderControlDef {
     key: string;
@@ -51,6 +52,28 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
     function applyStyles(): void {
         appliedCss.value = customCss.value;
         appliedHead.value = customHead.value;
+    }
+
+    /**
+     * Strip dangerous constructs from the overlay-level editors, in place.
+     * Called by the save paths once the payload has gone out.
+     *
+     * This is NOT the defence, and must not be relied on as one - the client
+     * can simply not run it. The server sanitizes metadata.builder.custom_css
+     * and custom_head on the way in (normalizeMetadata), and that is what keeps
+     * them out of the database. What this fixes is the buffer diverging from
+     * what was stored: nothing re-seeds this composable after a save, so a
+     * <script> the server removed stays in the editor, keeps reaching the
+     * preview iframes, and gets re-reported on every later save. Mirrors what
+     * `Object.assign(form, sanitized)` already does to the plain code editors.
+     *
+     * No count is returned because there is nobody to tell: the composed output
+     * carries both values verbatim, so whatever is in here was already counted
+     * when the composed head/css were sanitized.
+     */
+    function sanitizeCustom(): void {
+        customCss.value = sanitizeHtml(customCss.value).value;
+        customHead.value = sanitizeHtml(customHead.value).value;
     }
 
     // instance_id -> control defs, only for blocks placed this session.
@@ -266,6 +289,7 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         headStale,
         stylesStale,
         applyStyles,
+        sanitizeCustom,
         occupied,
         clampSpan,
         addPlacement,
