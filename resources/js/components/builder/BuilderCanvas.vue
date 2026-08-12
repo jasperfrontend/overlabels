@@ -11,6 +11,9 @@ const props = defineProps<{
   sampleData: Record<string, unknown>;
   isCellOccupied: (x: number, y: number) => boolean;
   stalePlacementIds?: Set<string>;
+  /** The overlay's own CSS and head as last sent to the previews, not as typed. */
+  customCss?: string;
+  customHead?: string;
 }>();
 
 const emit = defineEmits<{
@@ -231,6 +234,8 @@ const emptyCells = computed(() => {
           :selected="placement.instance_id === selectedId"
           :source-stale="stalePlacementIds?.has(placement.instance_id) ?? false"
           :scale="scale"
+          :custom-css="customCss"
+          :custom-head="customHead"
           @select="(id) => emit('select', id)"
           @drag-start="onDragStart"
           @resize-start="onResizeStart"

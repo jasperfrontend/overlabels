@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import type { AppPageProps, BuilderPlacement } from '@/types';
 import { renderTemplateSource } from '@/utils/renderTemplate';
+import { prefixCss } from '@/utils/prefixCss';
+import { BUILDER_ROOT } from '@/utils/composeBuilderTemplate';
 
 export type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
@@ -13,6 +15,9 @@ const props = defineProps<{
   sourceStale?: boolean;
   /** Canvas scale factor, so chrome can be sized in screen pixels. */
   scale: number;
+  /** The overlay's own CSS and head, as last applied to the previews. */
+  customCss?: string;
+  customHead?: string;
 }>();
 
 const emit = defineEmits<{
@@ -116,17 +121,42 @@ function onHandlePointerDown(handle: ResizeHandle, e: PointerEvent) {
 // by a catch-all strip, along with every conditional and foreach marker.
 // Absent values still collapse to '' here, but now `??` defaults get their turn
 // first. Rendered in a sandboxed iframe for free style isolation.
+//
+// The document is a one-cell copy of what composeBuilderTemplate emits: same
+// wrapper elements, same scopes, same order. That structure is what lets the
+// overlay's own CSS land here with the specificity it will really have - a bare
+// `.value` override only ties a block's `.value` because BOTH sides pick up an
+// id, and `:root`/`body` rules are REPLACED by their scope rather than
+// prefixed. Appending the overlay CSS raw would agree with the compiler on the
+// easy cases and quietly disagree on those two.
 const previewDoc = computed(() => {
+  const cellId = `blk-${props.placement.instance_id}`;
   const html = renderTemplateSource(props.placement.snapshot.html, props.sampleData, locale.value, true);
-  const css = renderTemplateSource(props.placement.snapshot.css, props.sampleData, locale.value, false);
+  const blockCss = prefixCss(
+    renderTemplateSource(props.placement.snapshot.css, props.sampleData, locale.value, false),
+    `#${cellId}`,
+  );
+  const overlayCss = prefixCss(
+    renderTemplateSource(props.customCss, props.sampleData, locale.value, false),
+    BUILDER_ROOT,
+  );
 
-  // height:100% on html/body mirrors the compiled environment: there the
-  // block's wrapper is a grid item with a definite height, so a block using
-  // height:100% must resolve the same way inside the preview iframe.
+  // The iframe IS the cell, so 100%/100% wrappers stand in for the grid-area
+  // rule the compiler writes: a definite box for `height: 100%` to resolve
+  // against. Heads go after the styles because that is the order the live
+  // overlay ends up in - injectHead runs after injectStyle.
   return `<!DOCTYPE html>
 <html lang="en">
-  <head><style>html,body{margin:0;padding:0;height:100%;background:transparent;overflow:hidden;}</style><style>${css}</style>${props.placement.snapshot.head}</head>
-  <body>${html}</body>
+  <head>
+    <style>html,body{margin:0;padding:0;height:100%;background:transparent;overflow:hidden;}
+#builder-root{width:100%;height:100%;}
+#${cellId}{width:100%;height:100%;position:relative;overflow:hidden;}</style>
+    <style>${blockCss}</style>
+    <style>${overlayCss}</style>
+    ${props.placement.snapshot.head}
+    ${props.customHead ?? ''}
+  </head>
+  <body><div id="builder-root"><div id="${cellId}" class="builder-cell">${html}</div></div></body>
 </html>`;
 });
 

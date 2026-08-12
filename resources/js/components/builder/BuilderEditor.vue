@@ -137,6 +137,8 @@ defineExpose({
         :sample-data="sampleData"
         :is-cell-occupied="(x, y) => state.occupied(x, y)"
         :stale-placement-ids="stalePlacementIds"
+        :custom-css="state.appliedCss.value"
+        :custom-head="state.appliedHead.value"
         @cell-click="onCellClick"
         @select="(id) => (state.selectedId.value = id)"
         @move-to="moveTo"
@@ -153,6 +155,9 @@ defineExpose({
         v-model:css="state.customCss.value"
         v-model:head="state.customHead.value"
         :placements="state.placements.value"
+        :css-stale="state.cssStale.value"
+        :head-stale="state.headStale.value"
+        @send-to-preview="state.applyStyles"
       />
     </div>
 

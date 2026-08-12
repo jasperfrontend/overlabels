@@ -252,6 +252,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             :sample-data="previewData"
             :is-cell-occupied="(x, y) => state.occupied(x, y)"
             :stale-placement-ids="stalePlacementIds"
+            :custom-css="state.appliedCss.value"
+            :custom-head="state.appliedHead.value"
             @cell-click="onCellClick"
             @select="(id) => (state.selectedId.value = id)"
             @move-to="(id, x, y) => state.moveTo(id, x, y)"
@@ -268,6 +270,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
             v-model:css="state.customCss.value"
             v-model:head="state.customHead.value"
             :placements="state.placements.value"
+            :css-stale="state.cssStale.value"
+            :head-stale="state.headStale.value"
+            @send-to-preview="state.applyStyles"
           />
         </div>
 

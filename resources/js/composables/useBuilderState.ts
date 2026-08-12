@@ -33,6 +33,26 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
     const customCss = ref(initial?.custom_css ?? '');
     const customHead = ref(initial?.custom_head ?? '');
 
+    // What the block previews are currently showing. Deliberately lagging the
+    // editors: applying on every keystroke would rebuild the srcdoc of up to
+    // PLACEMENT_LIMIT iframes, each a full document load carrying its own copy
+    // of a stylesheet with no length limit. The user pushes changes across when
+    // they want to look at them.
+    //
+    // serialize() reads customCss/customHead and must keep doing so. A save
+    // writes what was typed, never what happens to be on the canvas.
+    const appliedCss = ref(customCss.value);
+    const appliedHead = ref(customHead.value);
+
+    const cssStale = computed(() => customCss.value !== appliedCss.value);
+    const headStale = computed(() => customHead.value !== appliedHead.value);
+    const stylesStale = computed(() => cssStale.value || headStale.value);
+
+    function applyStyles(): void {
+        appliedCss.value = customCss.value;
+        appliedHead.value = customHead.value;
+    }
+
     // instance_id -> control defs, only for blocks placed this session.
     const sessionControlDefs = new Map<string, BuilderControlDef[]>();
 
@@ -240,6 +260,12 @@ export function useBuilderState(initial?: BuilderMetadata | null) {
         selected,
         customCss,
         customHead,
+        appliedCss,
+        appliedHead,
+        cssStale,
+        headStale,
+        stylesStale,
+        applyStyles,
         occupied,
         clampSpan,
         addPlacement,
