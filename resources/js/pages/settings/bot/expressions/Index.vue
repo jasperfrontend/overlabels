@@ -6,7 +6,9 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, MessageSquare, Clock } from '@lucide/vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface BotExpression {
   id: number;
   command: string;
@@ -30,8 +32,8 @@ const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Bot expressions', href: '/settings/bot/expressions' },
 ];
 
-function deleteExpression(expression: BotExpression) {
-  if (!confirm(`Delete "!${expression.command}"? This cannot be undone.`)) return;
+async function deleteExpression(expression: BotExpression) {
+  if (!(await confirm({ message: `Delete "!${expression.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
   router.delete(`/settings/bot/expressions/${expression.id}`, {
     preserveScroll: true,
   });

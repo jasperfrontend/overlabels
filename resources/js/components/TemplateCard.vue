@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import type { OverlayTemplate } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const props = defineProps<{
   template: OverlayTemplate;
   showOwner?: boolean;
@@ -66,8 +68,8 @@ const shortUpdatedAt = computed(() => formatDateShort(props.template.updated_at)
 
 const isOwnTemplate = computed(() => !!props.currentUserId && props.template.owner?.id === props.currentUserId);
 
-const handleFork = () => {
-  if (confirm('Are you sure you want to copy this template to your own account?')) {
+const handleFork = async () => {
+  if (await confirm({ message: 'Are you sure you want to copy this template to your own account?', confirmLabel: 'Copy', tone: 'neutral' })) {
     router.post(`/templates/${props.template.id}/fork`);
   }
 };

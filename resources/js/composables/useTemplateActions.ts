@@ -2,7 +2,9 @@ import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { clearListContext } from '@/composables/useListContext';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface TemplateActionOptions {
   // Resolves the URL to return to after a successful delete. Provided by the
   // page (show/edit) so the redirect uses the SAME frozen list context the
@@ -79,7 +81,7 @@ export function useTemplateActions(template: any, options: TemplateActionOptions
       copyChoiceOpen.value = true;
       return;
     }
-    if (!confirm('Copy this template?')) return;
+    if (!(await confirm({ message: 'Copy this template?', confirmLabel: 'Copy', tone: 'neutral' }))) return;
     await performFork();
   };
 
@@ -90,7 +92,7 @@ export function useTemplateActions(template: any, options: TemplateActionOptions
 
   const deleteTemplate = async () => {
     if (!canDelete.value) return;
-    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) return;
+    if (!(await confirm({ message: 'Are you sure you want to delete this template? This action cannot be undone.', confirmLabel: 'Delete' }))) return;
 
     // Use plain axios (not router.delete) so we don't follow the controller's
     // Inertia redirect to /templates - we want to return the user to the

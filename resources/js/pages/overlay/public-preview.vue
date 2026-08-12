@@ -30,7 +30,10 @@ import {
   PaletteIcon,
 } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
+const { confirm } = useConfirm();
 interface OwnerInfo {
   name: string;
   avatar: string | null;
@@ -74,9 +77,14 @@ type CopyKind = 'head' | 'body' | 'css' | 'full';
 const copyFeedback = ref<string>('');
 let feedbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-function confirmCopy(event: Event) {
-  if (!window.confirm('Copy this overlay to your account?')) {
-    event.preventDefault();
+// The dialog is async, so the native submit can never be allowed to proceed
+// inline. Always cancel it, then re-submit the form directly on accept -
+// form.submit() bypasses this handler, so it will not loop.
+async function confirmCopy(event: Event) {
+  event.preventDefault();
+  const form = event.currentTarget as HTMLFormElement;
+  if (await confirm({ message: 'Copy this overlay to your account?', confirmLabel: 'Copy', tone: 'neutral' })) {
+    form.submit();
   }
 }
 
@@ -191,6 +199,10 @@ function submitReport() {
 
 <template>
   <Head :title="`${template.name} - Public Preview`" />
+  <!-- This page renders outside AppLayout, which is where the app's single
+       ConfirmDialog normally lives. Without this mount the copy confirm would
+       resolve to nothing and the button would appear dead. -->
+  <ConfirmDialog />
   <div class="min-h-screen bg-background text-foreground">
     <div class="mx-auto max-w-450 p-4 lg:p-6">
       <!-- Slim brand strip -->

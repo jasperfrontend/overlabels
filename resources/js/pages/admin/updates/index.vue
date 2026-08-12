@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
 import { PencilIcon, PlusIcon, Trash2 } from '@lucide/vue';
 import type { Update } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface Paginator {
   data: Update[];
   total: number;
@@ -47,8 +49,8 @@ function formatDate(iso: string) {
   }).format(new Date(iso));
 }
 
-function handleDelete(u: Update) {
-  if (confirm(`Delete "${u.title}"? This cannot be undone.`)) {
+async function handleDelete(u: Update) {
+  if (await confirm({ message: `Delete "${u.title}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
     router.delete(route('admin.updates.destroy', u.id));
   }
 }

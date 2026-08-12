@@ -5,7 +5,9 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface Token {
   id: number;
   name: string;
@@ -34,8 +36,8 @@ const breadcrumbs = [
   { title: 'Tokens', href: route('admin.tokens.index') }
 ];
 
-function deleteToken(id: number) {
-  if (confirm('Delete this token? This will cascade access logs.')) {
+async function deleteToken(id: number) {
+  if (await confirm({ message: 'Delete this token? This will cascade access logs.', confirmLabel: 'Delete' })) {
     router.delete(route('admin.tokens.destroy', id));
   }
 }

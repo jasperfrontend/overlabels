@@ -11,7 +11,9 @@ import { marked } from 'marked';
 import { ArrowLeft, Save, Trash2, ExternalLink } from '@lucide/vue';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const props = defineProps<{
   update: Update | null;
 }>();
@@ -96,9 +98,9 @@ async function submit() {
   }
 }
 
-function handleDelete() {
+async function handleDelete() {
   if (!props.update) return;
-  if (confirm(`Delete "${props.update.title}"? This cannot be undone.`)) {
+  if (await confirm({ message: `Delete "${props.update.title}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
     router.delete(route('admin.updates.destroy', props.update.id));
   }
 }

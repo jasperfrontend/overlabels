@@ -6,7 +6,9 @@ import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Copy, Eye, RefreshCw, Trash2, AlertCircle, Sparkles } from '@lucide/vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 // Define interfaces for better TypeScript support
 interface TemplateTag {
   id: number;
@@ -258,7 +260,11 @@ const generateTags = async () => {
 
 // Clear all existing tags
 const clearAllTags = async () => {
-  if (!confirm('DO NOT DO THIS UNLESS YOU KNOW WHAT YOU ARE DOING. Are you sure you want to clear all template tags? This cannot be undone. This will also ruin any live overlay or alert you may have created.')) {
+  if (!(await confirm({
+    title: 'Clear all template tags',
+    message: 'DO NOT DO THIS UNLESS YOU KNOW WHAT YOU ARE DOING. Are you sure you want to clear all template tags? This cannot be undone. This will also ruin any live overlay or alert you may have created.',
+    confirmLabel: 'Clear all tags',
+  }))) {
     return;
   }
 
@@ -301,7 +307,7 @@ const clearAllTags = async () => {
 const cleanupRedundantTags = async () => {
   if (isCleaningUp.value) return;
 
-  if (!confirm('Clean up redundant tags like "channel_followers_data_3_user_id"? This will remove all tags with _data_[number]* patterns.')) {
+  if (!(await confirm({ message: 'Clean up redundant tags like "channel_followers_data_3_user_id"? This will remove all tags with _data_[number]* patterns.', confirmLabel: 'Clean up' }))) {
     return;
   }
 

@@ -21,7 +21,9 @@ import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface UserList {
   id: number;
   slug: string;
@@ -90,7 +92,7 @@ function onSaved(saved: OverlayControl) {
 }
 
 async function deleteControl(control: OverlayControl) {
-  if (!confirm(`Delete control "${control.label || control.key}"? This cannot be undone.`)) return;
+  if (!(await confirm({ message: `Delete control "${control.label || control.key}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
 
   try {
     await axios.delete(`/templates/${props.template.id}/controls/${control.id}`);

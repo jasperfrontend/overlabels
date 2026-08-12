@@ -6,7 +6,9 @@ import type { AppPageProps } from '@/types';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const page = usePage<AppPageProps>();
 const toastMessage = ref('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -48,8 +50,12 @@ function getTierStyle(tier: string) {
   }
 }
 
-const confirmExpensiveApiCall = () => {
-  if (confirm('ATTENTION:\nThis refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.')) {
+const confirmExpensiveApiCall = async () => {
+  if (await confirm({
+    title: 'Attention',
+    message: 'This refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.',
+    confirmLabel: 'Refresh everything',
+  })) {
     isRefreshing.value = true;
     router.post(route('twitchdata.refresh.all'), {}, {
       preserveScroll: true,

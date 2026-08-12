@@ -6,7 +6,9 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface BanEntry {
   id: number;
   bannable_type: string | null;
@@ -87,8 +89,8 @@ function submitBan() {
 }
 
 // Unban
-function removeBan(id: number) {
-  if (confirm('Remove this ban?')) {
+async function removeBan(id: number) {
+  if (await confirm({ message: 'Remove this ban?', confirmLabel: 'Remove' })) {
     router.delete(route('admin.bans.destroy', id), { preserveScroll: true });
   }
 }

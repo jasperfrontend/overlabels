@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import type { AdminTemplate } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface User {
   id: number;
   name: string;
@@ -117,8 +119,8 @@ function submitBan() {
   banForm.post(route('admin.bans.store'));
 }
 
-function unban() {
-  if (props.activeBan && confirm('Remove this ban?')) {
+async function unban() {
+  if (props.activeBan && (await confirm({ message: 'Remove this ban?', confirmLabel: 'Remove' }))) {
     router.delete(route('admin.bans.destroy', props.activeBan.id));
   }
 }

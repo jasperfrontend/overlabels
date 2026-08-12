@@ -13,7 +13,9 @@ import CollectionList from '@/components/CollectionList.vue';
 import { useEventColors, EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import { serviceLabel } from '@/utils/services';
 import type { OverlayTemplate } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const props = defineProps<{
   templates: OverlayTemplate[];
   /** Adds the owner to the kebab menu. Used on the public /templates index. */
@@ -98,15 +100,15 @@ async function copyLink(t: OverlayTemplate) {
   }
 }
 
-function handleFork(t: OverlayTemplate) {
-  if (confirm('Copy this template to your own account?')) {
+async function handleFork(t: OverlayTemplate) {
+  if (await confirm({ message: 'Copy this template to your own account?', confirmLabel: 'Copy', tone: 'neutral' })) {
     router.post(`/templates/${t.id}/fork`);
   }
 }
 
-function handleDelete(t: OverlayTemplate) {
+async function handleDelete(t: OverlayTemplate) {
   if (!canDelete(t)) return;
-  if (confirm(`Delete "${t.name}"? This cannot be undone.`)) {
+  if (await confirm({ message: `Delete "${t.name}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
     const returnUrl = window.location.pathname + window.location.search;
     router.delete(`/templates/${t.id}`, {
       onSuccess: () => router.visit(returnUrl),

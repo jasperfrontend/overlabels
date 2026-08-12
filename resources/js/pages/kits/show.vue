@@ -6,7 +6,9 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 import { computed, ref } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm, alert } = useConfirm();
 interface Kit {
   id: number;
   title: string;
@@ -42,19 +44,19 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const handleFork = () => {
-  if (confirm('Copy this kit to your account? This will also copy all templates within the kit.')) {
+const handleFork = async () => {
+  if (await confirm({ message: 'Copy this kit to your account? This will also copy all templates within the kit.', confirmLabel: 'Copy', tone: 'neutral' })) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (props.kit.fork_count > 0) {
-    alert('This kit cannot be deleted because it has been cloned by others.');
+    await alert('This kit cannot be deleted because it has been copied by others.');
     return;
   }
 
-  if (confirm('Are you sure you want to delete this kit? This action cannot be undone.')) {
+  if (await confirm({ message: 'Are you sure you want to delete this kit? This action cannot be undone.', confirmLabel: 'Delete' })) {
     router.delete(`/kits/${props.kit.id}`, {
       onSuccess: () => router.visit('/kits')
     });

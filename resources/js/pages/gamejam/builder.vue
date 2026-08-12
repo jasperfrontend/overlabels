@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Save, Eraser, Paintbrush, RefreshCw } from '@lucide/vue';
+import { useConfirm } from '@/composables/useConfirm';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
+const { alert } = useConfirm();
 interface RoomCell {
   bg?: string;
   overlay?: string;
@@ -161,7 +164,7 @@ async function save() {
     });
     if (!res.ok) {
       const body = await res.text();
-      alert(`Save failed (${res.status}): ${body}`);
+      await alert(`Save failed (${res.status}): ${body}`);
       return;
     }
     dirty.value = false;
@@ -229,6 +232,10 @@ const overlayLayerStyle = computed(() => ({
 
 <template>
   <Head><title>Room Builder - Room {{ room }}</title></Head>
+
+  <!-- Full-screen tool, deliberately outside AppLayout, so it mounts the app's
+       ConfirmDialog itself. -->
+  <ConfirmDialog />
 
   <div class="h-screen bg-background text-foreground flex flex-col overflow-hidden">
 
