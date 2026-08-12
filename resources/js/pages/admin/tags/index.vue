@@ -4,7 +4,9 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface Tag {
   id: number;
   tag_name: string;
@@ -47,14 +49,14 @@ function toggleActive(tag: Tag) {
   form.patch(route('admin.tags.update', tag.id));
 }
 
-function deleteTag(tag: Tag) {
-  if (confirm(`Delete tag "${tag.tag_name}"?`)) {
+async function deleteTag(tag: Tag) {
+  if (await confirm({ message: `Delete tag "${tag.tag_name}"?`, confirmLabel: 'Delete' })) {
     router.delete(route('admin.tags.destroy', tag.id));
   }
 }
 
-function deleteCategory(cat: Category) {
-  if (confirm(`Delete category "${cat.name}"?`)) {
+async function deleteCategory(cat: Category) {
+  if (await confirm({ message: `Delete category "${cat.name}"?`, confirmLabel: 'Delete' })) {
     router.delete(route('admin.tags.categories.destroy', cat.id));
   }
 }

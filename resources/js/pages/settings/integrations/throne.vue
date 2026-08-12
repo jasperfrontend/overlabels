@@ -11,7 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface IntegrationData {
   connected: boolean;
   enabled: boolean;
@@ -105,8 +107,8 @@ async function toggleTestMode() {
   }
 }
 
-function disconnect() {
-  if (confirm('Disconnect Throne? This will remove all Throne controls from your overlays.')) {
+async function disconnect() {
+  if (await confirm({ message: 'Disconnect Throne? This will remove all Throne controls from your overlays.', confirmLabel: 'Disconnect' })) {
     useForm({}).delete('/settings/integrations/throne');
   }
 }

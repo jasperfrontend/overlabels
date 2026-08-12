@@ -3,7 +3,9 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Globe, Lock, Eye, GitFork, Package, Trash2, BookCopy, Pencil } from '@lucide/vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface Kit {
   id: number;
   title: string;
@@ -35,14 +37,14 @@ const props = defineProps<{
 
 const isOwnKit = props.currentUserId && props.kit.owner?.id === props.currentUserId;
 
-const handleFork = () => {
-  if (confirm('Copy this kit to your own account?')) {
+const handleFork = async () => {
+  if (await confirm({ message: 'Copy this kit to your own account?', confirmLabel: 'Copy', tone: 'neutral' })) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };
 
-const handleDelete = () => {
-  if (confirm('Are you sure you want to delete this kit? This action cannot be undone.')) {
+const handleDelete = async () => {
+  if (await confirm({ message: 'Are you sure you want to delete this kit? This action cannot be undone.', confirmLabel: 'Delete' })) {
     router.delete(`/kits/${props.kit.id}`);
   }
 };
@@ -116,7 +118,7 @@ const formatDate = (date: string) => {
 
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
-            <div class="flex items-center gap-1.5" title="Forks">
+            <div class="flex items-center gap-1.5" title="Copies">
               <GitFork class="size-4" />
               <span>{{ kit.fork_count || 0 }}</span>
             </div>

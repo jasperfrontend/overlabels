@@ -8,7 +8,9 @@ import type { AppPageProps } from '@/types';
 import { getDefaultCurrency } from '@/utils/formatters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const breadcrumbItems: BreadcrumbItem[] = [
   {
     title: 'Dashboard',
@@ -44,13 +46,17 @@ const deleteSubmitting = ref(false);
 const deleteError = ref('');
 const DELETE_PHRASE = 'DELETE ACCOUNT';
 
-function submitDeleteAccount() {
+async function submitDeleteAccount() {
   deleteError.value = '';
   if (deleteInput.value !== DELETE_PHRASE) {
     deleteError.value = `You must type ${DELETE_PHRASE} exactly to confirm.`;
     return;
   }
-  if (!window.confirm('Last chance. This permanently deletes your account, all your overlays, access tokens, integrations, tags, and history. There is no undo. Continue?')) {
+  if (!(await confirm({
+    title: 'Last chance',
+    message: 'This permanently deletes your account, all your overlays, access tokens, integrations, tags, and history. There is no undo.',
+    confirmLabel: 'Delete my account',
+  }))) {
     return;
   }
   deleteSubmitting.value = true;

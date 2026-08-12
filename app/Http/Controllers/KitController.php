@@ -22,11 +22,13 @@ class KitController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(12);
 
-        // Get recent public kits for discovery
+        // Get recent public kits for discovery. Copies are excluded so discovery
+        // shows originals only - keyed off forked_from_id rather than the title
+        // prefix, which is display copy and must stay free to change.
         $recentPublicKits = Kit::with(['owner:id,name,avatar', 'templates'])
             ->public()
             ->where('owner_id', '!=', $request->user()->id)
-            ->where('title', 'not like', 'Fork of%')
+            ->whereNull('forked_from_id')
             ->latest()
             ->limit(10)
             ->get();

@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ref } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface SessionUser {
   id: number;
   name: string;
@@ -55,8 +57,8 @@ const breadcrumbs = [
   { title: 'Sessions', href: route('admin.sessions.index') }
 ];
 
-function invalidate(id: string) {
-  if (confirm('Invalidate this session?')) {
+async function invalidate(id: string) {
+  if (await confirm({ message: 'Invalidate this session?', confirmLabel: 'Invalidate' })) {
     router.delete(route('admin.sessions.destroy', id));
   }
 }

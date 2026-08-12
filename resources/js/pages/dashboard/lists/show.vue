@@ -33,7 +33,9 @@ import {
 } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface ListRow {
   id: number;
   slug: string;
@@ -115,13 +117,13 @@ function saveActive() {
   });
 }
 
-function deleteActive() {
+async function deleteActive() {
   if (list.value.recipe_instance_id !== null) {
     toastMessage.value = 'Recipe-managed lists must be removed via the recipe.';
     toastType.value = 'warning';
     return;
   }
-  if (!confirm(`Delete list '${list.value.slug}'? This cannot be undone.`)) return;
+  if (!(await confirm({ message: `Delete list '${list.value.slug}'? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
 
   router.delete(route('lists.destroy', list.value.id), {
     onError: (errors) => {
@@ -418,7 +420,7 @@ async function saveAppender() {
 }
 
 async function deleteAppender(a: AppenderRow) {
-  if (!confirm(`Delete command !${a.command}?`)) return;
+  if (!(await confirm({ message: `Delete command !${a.command}?`, confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/dashboard/lists/${list.value.id}/appenders/${a.id}`);
     appenders.value = appenders.value.filter(x => x.id !== a.id);
@@ -514,7 +516,7 @@ onUnmounted(() => {
 const runningAction = ref<string | null>(null);
 
 async function runAction(action: string, args: string = '', requiresConfirm = false, confirmText = '') {
-  if (requiresConfirm && !confirm(confirmText || `Run '${action}' on '${list.value.slug}'?`)) return;
+  if (requiresConfirm && !(await confirm({ message: confirmText || `Run '${action}' on '${list.value.slug}'?`, confirmLabel: 'Run' }))) return;
 
   runningAction.value = action;
   try {
@@ -673,7 +675,7 @@ async function takeManualSnapshot() {
 }
 
 async function restoreSnapshot(snap: SnapshotRow) {
-  if (!confirm(`Restore '${list.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`)) return;
+  if (!(await confirm({ message: `Restore '${list.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`, confirmLabel: 'Restore' }))) return;
   try {
     await axios.post(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}/restore`);
     await loadSnapshots(list.value.id);
@@ -698,7 +700,7 @@ async function togglePin(snap: SnapshotRow) {
 }
 
 async function deleteSnapshot(snap: SnapshotRow) {
-  if (!confirm(`Delete this snapshot? Cannot be undone.`)) return;
+  if (!(await confirm({ message: 'Delete this snapshot? Cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}`);
     snapshots.value = snapshots.value.filter(s => s.id !== snap.id);

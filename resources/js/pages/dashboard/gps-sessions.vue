@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Gauge, Mountain, Battery, Radio, Map, Trash2, ExternalLink } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
+import { useConfirm } from '@/composables/useConfirm';
 
 
+const { confirm } = useConfirm();
 const SessionMapInline = defineAsyncComponent(() => import('@/components/SessionMapInline.vue'));
 
 interface GpsSession {
@@ -58,7 +60,7 @@ const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const deleting = ref<string | null>(null);
 
 async function deleteSession(sessionId: string) {
-  if (!confirm('Delete this session and all its GPS data? This cannot be undone.')) return;
+  if (!(await confirm({ message: 'Delete this session and all its GPS data? This cannot be undone.', confirmLabel: 'Delete' }))) return;
   deleting.value = sessionId;
   try {
     const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';

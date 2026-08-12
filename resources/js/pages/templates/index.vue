@@ -210,7 +210,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               <option value="created_at">Date created</option>
               <option value="name">Name</option>
               <option value="view_count">Views</option>
-              <option value="fork_count">Forks</option>
+              <option value="fork_count">Copies</option>
             </select>
           </div>
         </div>

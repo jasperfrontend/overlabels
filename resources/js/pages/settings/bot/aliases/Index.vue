@@ -6,7 +6,9 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, CornerDownRight, ArrowRight } from '@lucide/vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface BotAlias {
   id: number;
   command: string;
@@ -29,8 +31,8 @@ const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Bot aliases', href: '/settings/bot/aliases' },
 ];
 
-function deleteAlias(alias: BotAlias) {
-  if (!confirm(`Delete alias "!${alias.command}"? This cannot be undone.`)) return;
+async function deleteAlias(alias: BotAlias) {
+  if (!(await confirm({ message: `Delete alias "!${alias.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
   router.delete(`/settings/bot/aliases/${alias.id}`, {
     preserveScroll: true,
   });

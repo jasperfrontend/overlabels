@@ -4,7 +4,7 @@ import CommandPalette from '@/components/CommandPalette.vue';
 import HelpBeacon from '@/components/HelpBeacon.vue';
 import ReferencePalette from '@/components/ReferencePalette.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
-import LinkWarningModal from '@/components/LinkWarningModal.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import type { BreadcrumbItemType } from '@/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
@@ -31,7 +31,7 @@ onMounted(() => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <LinkWarningModal />
+    <ConfirmDialog />
     <CommandPalette />
     <ReferencePalette />
     <KeyboardShortcutsDialog :show="showKeyboardShortcuts" :shortcuts="keyboardShortcutsList" @close="showKeyboardShortcuts = false" />

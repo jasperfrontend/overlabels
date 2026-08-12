@@ -6,7 +6,9 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface ReportEntry {
   id: number;
   reason: string;
@@ -76,8 +78,8 @@ function setStatus(report: ReportEntry, next: 'open' | 'read') {
   router.patch(route('admin.reports.update', report.id), { status: next }, { preserveScroll: true });
 }
 
-function deleteReport(id: number) {
-  if (confirm('Delete this report? The reason is copied to the audit log first.')) {
+async function deleteReport(id: number) {
+  if (await confirm({ message: 'Delete this report? The reason is copied to the audit log first.', confirmLabel: 'Delete' })) {
     router.delete(route('admin.reports.destroy', id), { preserveScroll: true });
   }
 }

@@ -22,7 +22,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 interface IntegrationData {
   connected: boolean;
   enabled: boolean;
@@ -120,7 +122,7 @@ function save() {
 }
 
 async function resetSession() {
-  if (!confirm('Reset the current session distance and stats to 0? Your lifetime total is not affected.')) return;
+  if (!(await confirm({ message: 'Reset the current session distance and stats to 0? Your lifetime total is not affected.', confirmLabel: 'Reset' }))) return;
   resetting.value = true;
   try {
     await axios.post('/settings/integrations/overlabels-mobile/reset-session');
@@ -150,8 +152,8 @@ async function resetLifetime() {
   }
 }
 
-function regenerateToken() {
-  if (!confirm('Regenerate the token? You will need to scan the new QR code in the app again.')) return;
+async function regenerateToken() {
+  if (!(await confirm({ message: 'Regenerate the token? You will need to scan the new QR code in the app again.', confirmLabel: 'Regenerate' }))) return;
   regenerating.value = true;
   useForm({}).post('/settings/integrations/overlabels-mobile/regenerate-token', {
     preserveScroll: true,
@@ -161,8 +163,8 @@ function regenerateToken() {
   });
 }
 
-function disconnect() {
-  if (confirm('Disconnect Overlabels GPS? This will remove all GPS controls from your overlays.')) {
+async function disconnect() {
+  if (await confirm({ message: 'Disconnect Overlabels GPS? This will remove all GPS controls from your overlays.', confirmLabel: 'Disconnect' })) {
     useForm({}).delete('/settings/integrations/overlabels-mobile');
   }
 }

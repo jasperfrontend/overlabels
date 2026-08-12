@@ -7,7 +7,9 @@ import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
 import { type BreadcrumbItem } from '@/types';
 import { EyeIcon, CodeSquareIcon, CalendarIcon, ClockArrowUpIcon, AlarmClockOffIcon } from '@lucide/vue';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm, alert } = useConfirm();
 /** Types */
 type TokenAbility = 'read' | 'write';
 
@@ -66,34 +68,34 @@ const createToken = async () => {
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to create token:', error);
-    alert('Failed to create token');
+    await alert('Failed to create token');
   }
 };
 
-const copyToken = () => {
+const copyToken = async () => {
   navigator.clipboard.writeText(newToken.value);
-  alert('Token copied to clipboard!');
+  await alert('Token copied to clipboard!');
 };
 
 const revokeToken = async (t: Token) => {
-  if (!confirm('Are you sure you want to revoke this token?')) return;
+  if (!(await confirm({ message: 'Are you sure you want to revoke this token?', confirmLabel: 'Revoke' }))) return;
   try {
     await axios.post(`/tokens/${t.id}/revoke`);
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to revoke token:', error);
-    alert('Failed to revoke token');
+    await alert('Failed to revoke token');
   }
 };
 
 const deleteToken = async (t: Token) => {
-  if (!confirm('Are you sure you want to delete this token? This cannot be undone.')) return;
+  if (!(await confirm({ message: 'Are you sure you want to delete this token? This cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/tokens/${t.id}`);
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to delete token:', error);
-    alert('Failed to delete token');
+    await alert('Failed to delete token');
   }
 };
 

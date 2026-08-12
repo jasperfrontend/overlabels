@@ -5,7 +5,9 @@ import { Check, Eye, LinkIcon, MoreVertical, PencilIcon, Trash2 } from '@lucide/
 import { ref } from 'vue';
 import CollectionList from '@/components/CollectionList.vue';
 import type { Update } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
 
+const { confirm } = useConfirm();
 const props = withDefaults(
   defineProps<{
     updates: Update[];
@@ -43,8 +45,8 @@ async function copyLink(u: Update) {
   }
 }
 
-function handleDelete(u: Update) {
-  if (confirm(`Delete "${u.title}"? This cannot be undone.`)) {
+async function handleDelete(u: Update) {
+  if (await confirm({ message: `Delete "${u.title}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
     router.delete(`/admin/updates/${u.id}`);
   }
 }
