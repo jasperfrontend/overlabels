@@ -256,7 +256,7 @@ function dismiss() {
             <CheckCircle v-if="status.kit_forked" class="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
             <Loader2 v-else class="mt-0.5 h-5 w-5 shrink-0 animate-spin text-yellow-500" />
             <div>
-              <p class="text-sm font-medium">Starter Kit forked</p>
+              <p class="text-sm font-medium">Starter Kit copied</p>
               <p class="text-xs text-muted-foreground">Alert templates copied to your account</p>
             </div>
           </div>
@@ -487,7 +487,7 @@ function dismiss() {
         <ul class="space-y-2 text-sm">
           <li class="flex items-center gap-2">
             <CheckCircle class="h-4 w-4 text-green-500" />
-            Starter kit forked with alert templates
+            Starter kit copied with alert templates
           </li>
           <li class="flex items-center gap-2">
             <CheckCircle class="h-4 w-4 text-green-500" />

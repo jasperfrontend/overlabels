@@ -67,7 +67,7 @@ const shortUpdatedAt = computed(() => formatDateShort(props.template.updated_at)
 const isOwnTemplate = computed(() => !!props.currentUserId && props.template.owner?.id === props.currentUserId);
 
 const handleFork = () => {
-  if (confirm('Are you sure you want to fork this template to your own account?')) {
+  if (confirm('Are you sure you want to copy this template to your own account?')) {
     router.post(`/templates/${props.template.id}/fork`);
   }
 };
@@ -114,7 +114,7 @@ const handleFork = () => {
       </div>
 
       <!-- FOOTER BAR -->
-      <div class="flex items-center justify-between gap-2 border-t pt-5 mt-5">
+      <div class="mt-5 flex items-center justify-between gap-2 border-t pt-5">
         <!-- left: quiet metadata -->
         <div class="flex min-w-0 items-center gap-3 text-xs text-muted-foreground">
           <div class="flex items-center gap-1" :title="`${template.view_count} views`">
@@ -122,7 +122,7 @@ const handleFork = () => {
             <span>{{ compact(template.view_count) }}</span>
           </div>
 
-          <div class="flex items-center gap-1" :title="`${template.fork_count} forks`">
+          <div class="flex items-center gap-1" :title="`${template.fork_count} cop${template.fork_count !== 1 ? 'ies' : 'y'}`">
             <GitFork class="h-3.5 w-3.5" />
             <span>{{ compact(template.fork_count) }}</span>
           </div>
@@ -182,7 +182,7 @@ const handleFork = () => {
 
               <DropdownMenuItem v-if="!isOwnTemplate && template.is_public" @click="handleFork">
                 <GitFork class="mr-2 h-4 w-4" />
-                Fork template
+                Copy template
               </DropdownMenuItem>
 
               <DropdownMenuItem @click="copyLink(detailsHref)">

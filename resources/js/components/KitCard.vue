@@ -116,7 +116,7 @@ const formatDate = (date: string) => {
 
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4 text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
-            <div class="flex items-center gap-1.5" title="Forks">
+            <div class="flex items-center gap-1.5" title="Copies">
               <GitFork class="size-4" />
               <span>{{ kit.fork_count || 0 }}</span>
             </div>

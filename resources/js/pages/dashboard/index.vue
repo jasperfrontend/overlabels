@@ -132,7 +132,7 @@ const breadcrumbs = [
         <Card class="border border-sidebar">
           <CardHeader class="py-4 text-center">
             <CardTitle class="text-2xl">Get Started with Your First Template</CardTitle>
-            <CardDescription class="mt-3 text-base"> Create your own custom overlays or fork one from the community to
+            <CardDescription class="mt-3 text-base"> Create your own custom overlays or copy one from the community to
               get started
             </CardDescription>
           </CardHeader>

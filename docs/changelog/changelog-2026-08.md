@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 13th, 2026 - fix(kits): the Copy button produced something called a Fork
+
+Copy a public kit and it lands in your account titled "Fork of Midnight Purple". The button that made it is labelled "Copy kit to your own account", and the blurb directly above it says "Copy any kit to use it in your own overlays". Three words for one idea on a single screen, and the one the app chose to show you was the one that is never supposed to appear in front of a user.
+
+- **The literal string was load-bearing, which is why this was not a one-character fix.** Public-kit discovery filtered itself with `where('title', 'not like', 'Fork of%')`. Renaming the prefix without touching that line would have quietly dropped every public copy into the discovery list - six of them already exist, five owned by other people. Discovery now filters on `forked_from_id` being null, which is the actual question being asked and cannot be broken by editing display copy.
+- **The two were perfectly correlated, so the swap was safe to make.** Every kit with a `Fork of` title had `forked_from_id` set, and every kit with `forked_from_id` set had the title - checked both directions before changing the filter, rather than assuming the column had been populated consistently since forking shipped.
+- **Existing rows were renamed rather than left as a second dialect.** A migration rewrites the six `Fork of ...` titles to `Copy of ...`. Leaving them would have meant the word survives in the UI for exactly as long as those kits exist, which is indefinitely.
+- **The sweep found a third synonym nobody had noticed.** The kit detail page asked "Clone this kit to your account? This will also clone all templates within the kit." So the same action was Copy on the card, Fork in the result, and Clone in the confirm dialog, depending on which surface you happened to touch it from.
+- **`TemplateCard` and `TemplateCollection` had drifted apart on the same menu item.** One said "Copy template", the other "Fork template" - the same row rendered by two components, one of which had already been fixed at some point and the other not. This is the failure mode `CollectionList` exists to prevent, in a pair that predates it.
+- **Internal naming was deliberately left alone.** `fork_count`, `forked_from_id`, `handleFork`, `ForkImportWizard`, the `/kits/{id}/fork` route and the `GitFork` icon import all stay. The rule is about what a streamer reads, and renaming a route is how you earn a Ziggy failure that no PHP test catches. Only strings that reach a screen were touched.
+- **The admin panel still says Forks, on purpose.** Four spots under `/admin` use the word in table headers and counts. Nobody but the operator sees them, they are the surface where the internal column name is the clearer label, and sweeping them would have widened a copy fix into a tour of the admin views.
+- **Found by looking at the page.** This shipped and sat there; 1245 passing tests had nothing to say about it, because no test asserts what a title says. It surfaced within seconds of actually clicking the button in a browser.
+
 ## August 12th, 2026 - fix(builder): block previews ignored the overlay's own CSS
 
 Place a block that paints itself orange, then use "Your CSS and fonts" to override it to green. Save, and the overlay goes green as instructed. The Builder canvas stays orange, because the block previews never knew that panel existed.

@@ -109,7 +109,7 @@ const submit = () => {
               <div class="space-y-0.5">
                 <Label for="is_public">Make this kit public</Label>
                 <p class="text-sm text-muted-foreground">
-                  Public kits can be discovered and forked by other users
+                  Public kits can be discovered and copied by other users
                 </p>
               </div>
               <Switch

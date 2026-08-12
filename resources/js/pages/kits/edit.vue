@@ -200,7 +200,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div v-if="kit.fork_count > 0"
              class="rounded-lg border border-amber-500/50 bg-amber-50 p-4 dark:bg-amber-950/20">
           <p class="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Note:</strong> This kit has been forked {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : ''
+            <strong>Note:</strong> This kit has been copied {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : ''
             }} and cannot be deleted.
           </p>
         </div>

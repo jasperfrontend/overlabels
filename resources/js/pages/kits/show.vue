@@ -43,7 +43,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const handleFork = () => {
-  if (confirm('Clone this kit to your account? This will also clone all templates within the kit.')) {
+  if (confirm('Copy this kit to your account? This will also copy all templates within the kit.')) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };
