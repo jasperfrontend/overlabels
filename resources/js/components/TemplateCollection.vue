@@ -11,8 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Badge } from '@/components/ui/badge';
 import CollectionList from '@/components/CollectionList.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
-import { useEventColors, EVENT_TYPE_LABELS } from '@/composables/useEventColors';
-import { serviceLabel } from '@/utils/services';
+import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import type { OverlayTemplate } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 
@@ -49,22 +48,6 @@ function firstEvent(t: OverlayTemplate): { eventType: string; source: string; se
   if (ext) return { eventType: ext.event_type, source: ext.service, service: ext.service };
 
   return null;
-}
-
-/**
- * "Ko-fi Donation", "Throne Gift", "Follow". Derived from SERVICE_LABELS rather
- * than a curated per-service map, which had gone stale at Ko-fi and Streamlabs
- * and left the other three donation services reading "bmac: donation".
- */
-function eventLabel(ev: { eventType: string; service?: string }): string {
-  if (!ev.service) return EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType;
-
-  const type = ev.eventType
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-  return `${serviceLabel(ev.service)} ${type}`;
 }
 
 function detailsHref(t: OverlayTemplate) {

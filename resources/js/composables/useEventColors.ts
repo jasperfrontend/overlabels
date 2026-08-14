@@ -1,3 +1,5 @@
+import { serviceLabel } from '@/utils/services';
+
 export interface UnifiedEvent {
   id: number;
   source: string;
@@ -79,6 +81,26 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
   wishlist: 'Wishlist',
   location_update: 'Location Update',
 };
+
+/**
+ * "Ko-fi Donation", "Throne Gift", "Follow". Derived from SERVICE_LABELS rather
+ * than a curated per-service map, which had gone stale at Ko-fi and Streamlabs
+ * and left the other three donation services reading "bmac: donation".
+ *
+ * `service` is external-only and deliberately separate from the `source` the
+ * colours and icons use - passing 'twitch' in here would render "Follow" as
+ * "Twitch Follow".
+ */
+export function eventLabel(ev: { eventType: string; service?: string }): string {
+  if (!ev.service) return EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType;
+
+  const type = ev.eventType
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return `${serviceLabel(ev.service)} ${type}`;
+}
 
 function resolveStyleByType(eventType: string, source?: string) {
   const byType = EVENT_STYLES[eventType];

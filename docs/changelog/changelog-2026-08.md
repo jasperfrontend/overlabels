@@ -2,11 +2,15 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
-## August 14th, 2026 - feat: the event binding on an alert row now has a shape
+## August 14th, 2026 - feat: the event binding on an alert now has a shape
 
-`/templates?type=alert` showed which event fires each alert as a bare run of coloured text under the description. It read like an unstyled hyperlink, and colour was doing the identifying on its own. It now carries the same provider icon the events feed has used since July.
+`/templates?type=alert` showed which event fires each alert as a bare run of coloured text under the description. It read like an unstyled hyperlink, and colour was doing the identifying on its own. It now carries the same provider icon the events feed has used since July, and so does the alert's own detail page.
 
-- **This is the pairing `EventsTable.vue` already ships, applied to the one other surface that answers "what event is this".** Shape carries the source, colour reinforces the event type. No new component, no new abstraction - `ProviderIcon` and `useEventColors` both existed, they just were not used together here.
+- **This is the pairing `EventsTable.vue` already ships, applied to the two other surfaces that answer "what event is this".** Shape carries the source, colour reinforces the event type. No new component, no new abstraction - `ProviderIcon` and `useEventColors` both existed, they just were not used together here.
+- **On `templates/show.vue` the icon sits before the title, and needed no backend change.** The `triggers` prop already carries `assigned.twitch[]` and `assigned.external[]` with the event type and service on them, so nothing new is queried or shipped. It inherits `currentColor` from a wrapper span carrying `eventTypeDotClass`, exactly as the list row does.
+- **The tooltip is on that wrapper rather than on the SVG.** Browsers tooltip a `<title>` *child element* on SVG, not a `title` *attribute*, so putting it on the icon itself would have silently done nothing.
+- **The detail-page icon inherits the list's visibility rules for free.** `buildTriggerData()` is owner-only and alert-only, so `triggers` is null for a static overlay and for anyone viewing someone else's template. That is the same scoping the list has, where mappings are eager-loaded `where('user_id', ...)` - you see your own bindings, on both surfaces.
+- **`eventLabel()` moved from `TemplateCollection.vue` into `useEventColors.ts`.** Two callers now need it, and it belongs beside `EVENT_TYPE_LABELS` rather than in one of the components that renders it. Net removal of scattered logic, not a new layer.
 - **`firstEvent()` now returns `source` and `service` as separate fields, and the split is load-bearing.** `source` is always set, including `'twitch'`, because the icon and the colour need it. `service` is set for external bindings only, because it drives the label prefix - reusing `source` there would render "Follow" as "Twitch Follow".
 - **That fixes a fallback that could never fire.** Twitch bindings previously carried no source at all, so an event type missing from `EVENT_STYLES` could not fall back to Twitch purple - it went straight to slate. The source fallback in `resolveStyleByType()` was unreachable for every Twitch event.
 - **Six Twitch event types were named in `EVENT_TYPE_LABELS` but had no colour.** All three `channel.hype_train.*` (now orange) and all three `channel.goal.*` (now blue). Both hues were unused; one label renders per row, so the only real requirement is that they are clear of the other eight.
