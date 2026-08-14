@@ -33,6 +33,10 @@ canonical: https://overlabels.com/help
   cell, pick a block, save. Compiles to a plain static overlay that works with everything else.
 - [**Blocks**](/help/blocks) - reusable building pieces for the Builder: how to author one, how CSS
   scoping and snapshots keep everyone safe, and how controls travel with your block.
+- [**How an overlay renders**](/help/rendering) - the pipeline end to end: boot, tag replacement,
+  conditionals, live updates, alert render flow, and why scripts are stripped.
+- [**Testing your alerts**](/help/testing) - fire any of 28 real Twitch events at your own account from a
+  terminal, instead of waiting for a real follower.
 
 ## The template language
 
@@ -68,6 +72,8 @@ canonical: https://overlabels.com/help
 
 - [**Reference**](/help/reference) - fuzzy-searchable reference for every template tag, EventSub event,
   and foreach field. Press Alt+r from anywhere.
+- [**Overlay Access Tokens**](/help/tokens) - what the 64-character token in your overlay URL is, why it
+  lives after the `#`, and what to do the moment one leaks.
 - [**Why Ko-fi**](/help/why-kofi) - why we chose Ko-fi as our first External Integration over Patreon,
   Stripe, or built-in payments.
 - [**Free Resources**](/help/resources) - colors, fonts, animations, images, and other tools for building

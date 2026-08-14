@@ -45,6 +45,8 @@ source and it stays in sync with what is actually deployed.
 | [Overlays vs Alerts](https://overlabels.com/help/overlays-vs-alerts)     | The two surfaces and how they fit together        |
 | [The Builder](https://overlabels.com/help/builder)                       | Compose an overlay on a grid, no code required    |
 | [Blocks](https://overlabels.com/help/blocks)                             | Reusable pieces: authoring, CSS scoping, controls |
+| [How an overlay renders](https://overlabels.com/help/rendering)          | The pipeline end to end, and why scripts are stripped |
+| [Testing your alerts](https://overlabels.com/help/testing)               | Fire real Twitch events from a terminal           |
 
 **The template language**
 
@@ -69,6 +71,7 @@ source and it stays in sync with what is actually deployed.
 | Page                                                        | What it covers                                                |
 |-------------------------------------------------------------|---------------------------------------------------------------|
 | [Reference](https://overlabels.com/help/reference)           | Every template tag, EventSub event and foreach field          |
+| [Overlay access tokens](https://overlabels.com/help/tokens)  | The credential in your overlay URL, and what to do if it leaks |
 | [Twitch chat bot](https://overlabels.com/help/bot)           | Letting viewers and mods change controls from chat            |
 | [Free resources](https://overlabels.com/help/resources)      | Colors, fonts, animations and other tools                     |
 
@@ -102,8 +105,10 @@ Connect a service and its controls appear automatically. See
 - No asset hosting.
 - `<script>`, `<iframe>`, `<embed>` and similar tags are stripped from template content before storage.
   External stylesheets, fonts, icon libraries and CDN-hosted CSS are all fine. Inline scripts are not.
+  ([why](https://overlabels.com/help/rendering))
 - Overlay access uses 64-character hex tokens passed in the URL fragment, so they are never sent to the
-  server. Tokens are hashed on storage, revocable, and can expire or be bound to an IP range.
+  server. Tokens are hashed on storage, revocable, and can expire or be pinned to specific client IPs.
+  ([details](https://overlabels.com/help/tokens))
 
 ---
 
