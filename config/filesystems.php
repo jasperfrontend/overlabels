@@ -61,7 +61,7 @@ return [
         ],
 
         /*
-         * Cloudflare R2, used only by `backup:database` to ship nightly Postgres
+         * Cloudflare R2, used only by `backup:database` to ship daily Postgres
          * dumps off the Linode box. Nothing user-facing is ever written here.
          *
          * The bucket is created with EU jurisdiction, which is what keeps the
@@ -104,7 +104,7 @@ return [
         ],
 
         /*
-         * Scaleway Object Storage, the second off-site copy of the nightly
+         * Scaleway Object Storage, the second off-site copy of the daily
          * dump. This is the "2 different providers" half of 3-2-1: R2 above is
          * the same object either way, but a Cloudflare account suspension, a
          * billing lapse or a fat-fingered bucket delete takes out every copy

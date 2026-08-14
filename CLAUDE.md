@@ -211,7 +211,7 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 
 ## Database Backups (Implemented Aug 2026)
 
-- Nightly `pg_dump` at 03:00 UTC from the scheduler role to Cloudflare R2. See `docs/deploy/database-backups.md` - it is the restore procedure too.
+- Daily `pg_dump` at 16:00 UTC from the scheduler role to Cloudflare R2 and Scaleway. Moved off 03:00 on 2026-08-14: the dump is ~1.5 MB and takes seconds, so there was no load window to hide in, and the only thing 03:00 reliably achieved was timing the failure alert to arrive while the one person who can act on it was asleep. 16:00 UTC puts the alert at ~16:30, early evening in Amsterdam. Pinned by `BackupDatabaseTest`. See `docs/deploy/database-backups.md` - it is the restore procedure too.
 - `BackupDatabase` command: dump -> implausibility floor (10 KB) -> stream to `r2` disk -> read size back to verify -> delete local. Any failure posts to `BACKUP_ALERT_WEBHOOK_URL` (Discord, optional).
 - The app image carries `postgresql-client-16` from **PGDG**, and the pin is deliberate. The FrankenPHP base is **Debian 13 (trixie)**, which ships client 17 and would have worked against the 16 server unaided; PGDG exists here to keep the client major explicit instead of drifting with the base image. Bumping prod Postgres past 16 means bumping the Dockerfile the same day, or backups fail that night. The apt line uses `$VERSION_CODENAME` - never hardcode a suite.
 - Dumps open with `\restrict` and close with `\unrestrict` (pg_dump 16.14+). That is a psql meta-command from PG 18, backpatched only to 17.6. **Restore with the psql 18 binaries**: local psql 17.5 warns and continues by default, but aborts with exit 3 under `ON_ERROR_STOP=on`, which the restore procedure sets.

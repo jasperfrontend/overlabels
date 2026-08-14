@@ -176,7 +176,7 @@ it('refuses to run with no destinations configured', function () {
 /*
  * Pins the shipped default by re-evaluating config/services.php itself, not the
  * value beforeEach() sets. Losing a provider from that default would leave the
- * nightly run passing while quietly storing one copy again - green, and no
+ * daily run passing while quietly storing one copy again - green, and no
  * longer 3-2-1. Re-requiring the file picks up its `?: 'r2,scaleway'` fallback
  * because BACKUP_DISKS is unset under phpunit.
  */
@@ -261,15 +261,21 @@ it('refuses to run against a non-postgres connection', function () {
 
 /*
  * The schedule entry is the part that makes this a backup system rather than a
- * command nobody runs, and 03:00 UTC was chosen because it is the quietest the
- * box gets. Pin both so a stray edit to routes/console.php is caught here.
+ * command nobody runs. 16:00 UTC is deliberate and is NOT a "quiet hour" choice:
+ * it puts the failure alert at ~16:30 UTC, early evening in Amsterdam, so a
+ * human is awake to act on it. See "Why 16:00" in docs/deploy/database-backups.md.
+ *
+ * The timezone assertion is load-bearing. The hour only means what the comment
+ * says if the scheduler runs in UTC; flipping config/app.php to Europe/Amsterdam
+ * would keep this cron expression identical while silently making the real run
+ * time drift an hour with DST.
  */
-it('is scheduled nightly at 03:00 UTC', function () {
+it('is scheduled daily at 16:00 UTC', function () {
     $events = collect(app(Schedule::class)->events())
         ->filter(fn ($event) => str_contains((string) $event->command, 'backup:database'));
 
     expect($events)->toHaveCount(1);
-    expect($events->first()->expression)->toBe('0 3 * * *');
+    expect($events->first()->expression)->toBe('0 16 * * *');
     expect(config('app.timezone'))->toBe('UTC');
 });
 

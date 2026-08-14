@@ -102,13 +102,13 @@ return [
         'webhook_url' => env('INTEGRATION_SUGGESTION_WEBHOOK_URL'),
     ],
 
-    // Discord webhook that `backup:database` shouts at when a nightly dump
+    // Discord webhook that `backup:database` shouts at when a daily dump
     // fails. A backup system nobody hears fail is worse than none, so this is
     // the only alerting the backup has - leave it unset and failures are
     // log-only.
     'backups' => [
         /*
-         * Every disk the nightly dump is shipped to. Two providers, so losing
+         * Every disk the daily dump is shipped to. Two providers, so losing
          * one account does not lose every copy - see docs/deploy/database-backups.md.
          *
          * Order is not priority: `backup:database` uploads to all of these and
