@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - ci: the linter now actually says no
+
+Third and last step of the formatting chore. `lint.yml` ran Pint, Prettier and ESLint in write mode for thirteen months: it fixed the code, exited 0, and threw the result away when the runner was destroyed. All three now run in check mode, so the job reports instead of pretending.
+
+- **The gate is six characters and two script names, and it only became possible after the cleanup.** `pint --test`, `npm run format:check`, `npm run lint:check`. Flipping these before the 261-file sweep would have turned CI red on every branch at once, which is why it was the last of three PRs rather than the first.
+- **`lint:check` is new; the other two already existed.** `format:check` has been in `package.json` since the Laravel scaffold and was never wired up. ESLint had only `eslint . --fix`, so the check-mode twin was added alongside it, following the same naming as the pair that was already there. `npm run lint` and `npm run format` are untouched - fixing locally is still one command, CI just will not do it for you.
+- **Each gate was verified to fail before being trusted.** A green run on a clean tree proves nothing, so one deliberate violation per language was planted and confirmed to break the build: a `$a=1;` PHP method for Pint, an over-indented `.ts` export for Prettier, and an unused `const` for ESLint (`@typescript-eslint/no-unused-vars`). Each returned a non-zero exit, and each returned 0 again once the probe was deleted.
+- **Node is pinned and installed from the lockfile now, which a check-mode gate needs and a write-mode one did not.** The job used a bare `npm install` on the runner's default Node with no `actions/setup-node` step. That is survivable when the output is discarded; as a gate it means a Prettier minor could resolve differently on CI than locally and fail a PR that is genuinely fine. Now `node-version: 22` and `npm ci`, matching `tests.yml`.
+- **Permissions dropped from `contents: write` to `contents: read`.** The write scope existed only for the commit-back step. Nothing in this job writes to the repo any more, so it should not be able to.
+- **The commented-out auto-commit step is deleted, and the reasons are written where it used to be.** It sat there from the repo's first commit (`783b81fc`, 24 July 2025) untouched - nobody disabled it, it shipped that way in the Laravel scaffold. Leaving a plausible-looking block commented out is an invitation to uncomment it, and doing so would need `contents: write`, would not work on fork PRs (this repo is public and AGPL, so outside PRs are the point), could retrigger CI from its own push, and - the part nobody would predict - would have rewritten the help pages' teaching examples, since Prettier formats code inside markdown fences.
+- **Both workflow files were parsed with `symfony/yaml` before committing.** A malformed workflow does not fail loudly, it simply never runs - which is the same class of silent-green problem this entire chore was about. Both parse, and every step resolves.
+
 ## August 14th, 2026 - style: 261 files of accumulated drift, formatted once
 
 CI has been generating these exact edits on every push for thirteen months and throwing them away. This is that backlog, applied deliberately instead of discarded silently. No behaviour changes: 1287 tests pass with **3968 assertions, identical to before**.
