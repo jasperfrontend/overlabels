@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kit;
 use App\Models\OverlayTemplate;
 use App\Services\CloudinaryUploadService;
+use App\Services\KitShareService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -115,7 +116,37 @@ class KitController extends Controller
             'kit' => $kit,
             'canEdit' => $kit->owner_id === auth()->id(),
             'canFork' => auth()->check(),
+            // Only public kits have a markdown twin, so the affordance only
+            // appears where the link would actually resolve for whoever the
+            // owner sends it to.
+            'markdownUrl' => $kit->is_public ? route('kits.markdown', $kit) : null,
         ]);
+    }
+
+    /**
+     * The kit as one markdown document: the kit, then every overlay in it.
+     *
+     * Deliberately registered OUTSIDE the auth group that the rest of the kit
+     * routes live in. `kits.show` requires a login, but the point of this
+     * endpoint is that a URL can be handed to a language model, and one behind
+     * an auth wall cannot be. It is safe to open because the document never
+     * contains anything that is not already world-readable: private templates
+     * inside a public kit are listed but their source is withheld, and every
+     * template whose source IS included has its own public `.md`.
+     */
+    public function markdown(Kit $kit, KitShareService $share)
+    {
+        // The kit's own flag, not ownership: this route has no session to
+        // check against, which is the whole reason it sits outside the group.
+        if (! $kit->is_public) {
+            abort(404, 'This kit is private');
+        }
+
+        return response(
+            $share->markdown($kit, route('kits.markdown', $kit)),
+            200,
+            ['Content-Type' => 'text/markdown; charset=utf-8']
+        );
     }
 
     /**
