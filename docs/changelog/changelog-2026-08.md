@@ -2,6 +2,17 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - docs: the README stops competing with the help pages
+
+767 lines down to 216, 4192 words down to 1093. The README had grown a second copy of the documentation - tag tables, control types, conditional operators, a section per donation integration, the full render pipeline - and every one of those had a better version at `overlabels.com/help` that is indexable, searchable and actually in sync with what is deployed. The README now points at them instead of paraphrasing them badly.
+
+- **The help pages are the SEO surface, and a duplicate in a repo README competes with them for nothing.** Every page under `/help` renders as indexable HTML with its own `title`, `description` and `canonical`. The README version had no canonical, no search, and drifted the moment a feature shipped - it had grown far enough to contradict itself, stating on line 339 that connecting a service provisions all its controls automatically and on line 369 that Ko-fi's are added from presets by hand. The first is what `DonationIntegrationController` actually does; the second is what it did before the August consolidation.
+- **All 19 help links were verified against the router, not eyeballed.** `HelpPage::all()` registers one route per markdown file, so a renamed page silently 404s a hardcoded link. Every URL in the new README was checked against `route:list --path=help` output, plus `public/llms.txt`, which is a static file and therefore does not appear in the route list at all.
+- **What stayed is what a GitHub visitor cannot get from the website.** Self-hosting and its env vars, the tech stack, the licence and its relicensing history, contributing, and the sustainability answer. Those are repo questions, not overlay-authoring questions.
+- **Limits got compressed rather than dropped, because two of them are safety-relevant.** The script/iframe/embed stripping and the token model are the two things a security-minded reader looks for first, so they survive as four lines under `## Limits` instead of two full sections.
+- **Four topics have no help page and were cut with nothing to link to:** the render pipeline, onboarding, the `/testing` page, and token security in full. The first three are internal detail a reader does not need before they have an account, and token security survives in condensed form. Worth a help page eventually; not worth a README section in the meantime.
+- **The AGPL section keeps the relicensing paragraph and drops the boilerplate copyright block.** The history of the never-granted MIT line matters and is not written down anywhere else. The GPL warranty notice is in `LICENSE`, where it is legally operative, and repeating it in the README added 15 lines of text nobody reads.
+
 ## August 14th, 2026 - feat: the event binding on an alert now has a shape
 
 `/templates?type=alert` showed which event fires each alert as a bare run of coloured text under the description. It read like an unstyled hyperlink, and colour was doing the identifying on its own. It now carries the same provider icon the events feed has used since July - and so do the alert's own show and edit pages, which never named the bound service at all.
