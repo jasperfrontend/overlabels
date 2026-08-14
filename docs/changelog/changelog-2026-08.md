@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - fix(format): Prettier was one uncommented line away from rewriting the docs
+
+`resources/help/**` is now in `.prettierignore`. Found while investigating why CI runs Pint and throws the result away, which turned out to be the less interesting half of the story.
+
+- **Prettier formats code inside fenced blocks, and the help pages are mostly fenced code.** On `resources/help/pages/blocks.md` it collapses a four-line `<div class="item">` example onto one line, and mangles the CSS sharing that ```html fence because CSS is not valid HTML. That example exists to show a streamer exactly what to type. Reformatting it is not a style fix, it is a content edit. 30 of the 80 help pages Prettier wanted to touch contain fences.
+- **The pages are served verbatim, so this is user-visible.** Every help page has a `.md` twin that `llms.txt` points at, which is the whole point of the contextual-help work. A mangled example is shipped to both people and language models.
+- **The damage was latent, not active, and that is the uncomfortable part.** `lint.yml` runs `npm run format` (write mode, not `--check`), so CI has been generating these edits on every push for months and discarding them when the runner dies. The step that would have committed them is commented out - and has been since the repo's first commit, `783b81fc "Laravel? Pretty cool!"`, 24 July 2025. Nobody disabled it; it arrived that way in the Laravel scaffold and `lint.yml` has never been edited since. That accident is the only reason 80 doc pages are intact.
+- **Which inverts the obvious fix.** "CI throws away its own work, just uncomment the commit step" would have silently rewritten the documentation on the next push. The ignore rule has to land first, before anything makes those fixes durable.
+- **Verified by running the thing that would have caused the damage.** With the rule in place, `npm run format` in write mode modifies 220 files and exactly **0** under `resources/help`. Before the rule, `--check` listed 301 files; after, 221.
+- **Scoped to the whole directory because it is uniformly content.** All 166 files under `resources/help` are markdown. Same reasoning as the existing `resources/views/mail/*` entry: content directories stay out of the formatter.
+- **The 220 remaining files are real drift and are deliberately not fixed here.** Pint wants 38 more. Both get their own pass; this PR is the one line that has to precede it.
+
 ## August 14th, 2026 - chore(ops): the backup moved to 16:00, because nobody reads an alarm at 03:30
 
 The database backup ran at 03:00 UTC for the reason everyone picks 03:00: backups go at night, when the box is quiet. Someone pointed out that this is inherited convention rather than a decision, and they were right. It now runs at 16:00 UTC, which is 18:00 in Amsterdam.

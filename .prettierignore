@@ -1,3 +1,19 @@
 resources/js/components/ui/*
 resources/js/ziggy.js
 resources/views/mail/*
+
+# Help content: 166 hand-written markdown pages, served verbatim as .md to
+# people and to language models. Prettier formats code inside fenced blocks,
+# and these pages are mostly fenced examples showing a streamer exactly what
+# to type. On resources/help/pages/blocks.md it collapses
+#
+#     <div class="item">
+#       [[[follower_count]]] followers
+#     </div>
+#
+# onto one line, and mangles the CSS that shares that ```html fence because it
+# is not valid HTML. 30 of the 80 pages Prettier wants to touch contain fences.
+#
+# Formatting a teaching example is not a style fix, it is a content edit, so
+# this is content and stays out - same reasoning as resources/views/mail above.
+resources/help/**
