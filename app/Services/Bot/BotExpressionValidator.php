@@ -67,6 +67,7 @@ class BotExpressionValidator
         // is a typo the streamer can't see (it just goes blank mid-stream), and
         // a bad counter key would have us silently not counting. Both are
         // cheaper to refuse at the point of writing than to debug live.
+        $this->assertTagsAreReadable($data['expression']);
         $this->assertRandRangesAreValid($data['expression']);
         $this->assertCounterKeysAreValid($userId, $data['expression']);
 
@@ -92,6 +93,46 @@ class BotExpressionValidator
         $data['command'] = $command;
 
         return $data;
+    }
+
+    /**
+     * Catch the tags that would have saved cleanly and then done nothing.
+     *
+     * A misspelled namespace resolves to empty and a malformed bracket run is
+     * printed to chat verbatim, so in both cases the streamer's first hint that
+     * anything is wrong arrives live, in front of an audience, with nothing
+     * pointing at the cause. Refusing at save time costs one retype instead.
+     *
+     * Checked before the rand and counter rules so `[[[rnd:0-69]]]` is reported
+     * as the typo it is rather than as a stray unknown tag.
+     *
+     * @throws ValidationException
+     */
+    private function assertTagsAreReadable(string $expression): void
+    {
+        foreach (BotTags::malformedTags($expression) as $snippet) {
+            throw ValidationException::withMessages([
+                'expression' => "I can't read '$snippet', so chat would see it exactly as written. Tag names join up with a colon and no spaces, like [[[counter:wins]]].",
+            ]);
+        }
+
+        foreach (BotTags::underBracketedTags($expression) as $snippet) {
+            $inner = trim($snippet, '[]');
+
+            throw ValidationException::withMessages([
+                'expression' => "'$snippet' needs three brackets on each side. Try [[[$inner]]] instead.",
+            ]);
+        }
+
+        foreach (BotTags::unknownNamespaces($expression) as $key => $suggestion) {
+            $namespace = explode(':', $key)[0];
+
+            $message = $suggestion !== null
+                ? "There's no '$namespace' tag, so nothing would show up where you put [[[$key]]]. Did you mean '$suggestion'?"
+                : "There's no '$namespace' tag, so nothing would show up where you put [[[$key]]]. The ones you can use in chat are: ".BotTags::namespaceList().'.';
+
+            throw ValidationException::withMessages(['expression' => $message]);
+        }
     }
 
     /**

@@ -146,6 +146,30 @@ is your decision.
 an overlay redrawing isn't something happening. Use `[[[c:wins]]]` to display the total, and let the
 chat command do the counting.
 
+## If you typo it
+
+Overlabels checks these tags when you save, not when they run, so a mistake costs you one retype in
+chat instead of showing up live in front of everyone. If something's off, the bot says so and doesn't
+save the command.
+
+| You wrote | The bot says |
+|---|---|
+| `[[[rnd:0-69]]]` | There's no 'rnd' tag, so nothing would show up where you put `[[[rnd:0-69]]]`. Did you mean 'rand'? |
+| `[[[countr:wins]]]` | There's no 'countr' tag... Did you mean 'counter'? |
+| `[[[counter wins]]]` | I can't read `[[[counter wins]]]`, so chat would see it exactly as written. Tag names join up with a colon and no spaces, like `[[[counter:wins]]]`. |
+| `[[rand:0-69]]` | `[[rand:0-69]]` needs three brackets on each side. Try `[[[rand:0-69]]]` instead. |
+| `[[[rand:-5-5]]]` | That isn't a valid range. Write two whole numbers low to high, like `[[[rand:0-69]]]`. Negative numbers aren't supported. |
+| `[[[rand:69]]]` | Same. Ranges need both a low and a high number. |
+| `[[[counter:my-wins]]]` | 'my-wins' isn't a usable counter name. Use lowercase letters, numbers and underscores, starting with a letter. |
+
+The same checks run on the dashboard, where the message appears under the field.
+
+**One thing that isn't checked:** an ordinary tag name with a typo in it, like `[[[chanel_title]]]`.
+Those are left alone on purpose, because a tag that's simply empty right now (nobody has followed yet,
+say) looks identical, and refusing to save it would block plenty of commands that are perfectly fine. If
+a command runs and part of the sentence is missing, a misspelled tag name is the first thing to check.
+`Alt+R` opens the tag reference from any page in Overlabels, with the real names to copy.
+
 ## Quick reference
 
 | Tag | What it does |
