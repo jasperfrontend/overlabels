@@ -2,6 +2,20 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - chore(deps): Pest 5, and the boring kind of major upgrade
+
+Pest 4.7.8 to 5.1.1, which drags PHPUnit 12.5 to 13.3, `php-code-coverage` to 14.3, all five Pest plugins to 5.x and the entire `sebastian/*` line to new majors. Fifty-odd packages, three of the biggest version numbers in the dev tree, and not one line of test code changed.
+
+- **The pre-flight is the whole story, and it is two checks.** PHPUnit's own upgrade advice is to get the suite clean on 12.5 with no deprecation warnings before going anywhere near 13. Running with `--display-deprecations --display-phpunit-deprecations` on the old version reported nothing, which is the signal that says the upgrade is a lockfile change rather than a project. The second check was grepping for every API PHPUnit 13 removed - `Assert::isType()`, `assertContainsOnly()`, `containsOnly()`, `testClassName()`, `Configuration::includeTestSuite()`/`excludeTestSuite()`, `--dont-report-useless-tests`, `#[CoversNothing]` on methods, `#[RunClassInSeparateProcess]` - plus the newly hard-deprecated `any()` matcher. Zero hits across the project.
+- **A grep that finds nothing is worth exactly nothing until you prove it can find something.** "No matches" is the same output whether the codebase is clean or the pattern is broken, so the removed-API sweep was re-run against `expect(`, `createMock`, `getMockBuilder` and friends: 1271 hits across 94 files. Only then does the empty result mean anything.
+- **The assertion count is the real proof, not the pass count.** 1287 passed and 6 skipped both before and after, which is reassuring but weak - a test that quietly stops asserting still passes. The suite reports **3968 assertions on both sides**, identical. That is what rules out a test having been silently neutered by a changed matcher.
+- **The six skips are the same six, and they are environmental.** All are `BackupDatabaseTest` cases skipping on `pg_dump is not on PATH`, which is a Windows dev box fact and has nothing to do with Pest. Checked by name rather than by count, since six-before and six-after would look identical even if the set had changed entirely.
+- **PHP 8.4 is now a floor rather than a preference, and CI already met it.** Pest 5 raises the minimum from 8.3, and PHPUnit 13 drops 8.3 support outright. Both `tests.yml` and `lint.yml` were already pinned to 8.4, and `composer.json` already required `^8.4.1` with the platform pinned to 8.4.1. Nothing to do, but it is the check that would have turned a green local run into a red pipeline.
+- **None of this reaches production.** The Dockerfile installs with `--no-dev`, so Pest and PHPUnit have never been in the deployed image. The blast radius is the test suite and CI, which is why a major of this size is a reasonable thing to do on a Tuesday.
+- **CI needed no edit either.** `tests.yml` invokes a bare `./vendor/bin/pest` with no version-specific flags, so there was nothing pinned to the old major to update.
+- **`composer.json` moved by two lines.** The `require-dev` constraints for `pestphp/pest` and `pestphp/pest-plugin-laravel`, both `^4.0` to `^5.0`. No test file, no config file, no `phpunit.xml`, no `tests/Pest.php`.
+- **Two new transitive packages and one departure.** `sebastian/file-filter` and `sebastian/git-state` arrive as PHPUnit 13 dependencies; `composer/xdebug-handler` drops out. Noted because a lockfile that gains packages during an upgrade is worth reading rather than skimming.
+
 ## August 14th, 2026 - chore(deps): the routine sweep, and one advisory worth clearing
 
 Both trees audited, everything in range applied, nothing widened. `composer audit` was clean before and after. `npm audit` was not: one high-severity advisory, now closed.
