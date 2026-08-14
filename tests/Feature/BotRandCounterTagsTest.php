@@ -361,6 +361,106 @@ it('never touches a service-managed control of the same name', function () {
 // Provisioning is idempotent
 // ──────────────────────────────────────────────────────────────────────────────
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Near misses are caught while writing, not live in front of an audience.
+//
+// Every case here used to save cleanly and then fail silently or print
+// brackets at chat. What is pinned is that saving is REFUSED and that the
+// reason names the actual mistake - a generic "invalid expression" would pass
+// the first half of that and be no more use than the silence it replaced.
+// ──────────────────────────────────────────────────────────────────────────────
+
+function expectSaveRefused(User $user, string $body): string
+{
+    try {
+        app(BotExpressionValidator::class)->validateAndNormalize($user->id, [
+            'command' => 'oops',
+            'expression' => $body,
+            'permission_level' => 'everyone',
+            'cooldown_seconds' => 0,
+            'enabled' => true,
+            'hidden_from_commands' => false,
+        ]);
+    } catch (ValidationException $e) {
+        return implode(' ', $e->errors()['expression'] ?? []);
+    }
+
+    throw new Exception("expected '$body' to be refused, but it saved");
+}
+
+it('suggests the right tag when a namespace is misspelled', function (string $body, string $wanted) {
+    // These resolved to empty and the number just vanished mid-sentence.
+    expect(expectSaveRefused(makeTagUser(), $body))->toContain("Did you mean '$wanted'?");
+})->with([
+    'rnd' => ['level: [[[rnd:0-69]]]', 'rand'],
+    'random' => ['level: [[[random:0-69]]]', 'rand'],
+    'countr' => ['won [[[countr:wins]]]', 'counter'],
+    'counters' => ['won [[[counters:wins]]]', 'counter'],
+    'bto' => ['hi [[[bto:from_user]]]', 'bot'],
+]);
+
+it('lists the usable tags when a namespace is nothing like a real one', function () {
+    $message = expectSaveRefused(makeTagUser(), 'hello [[[zzzzzzzz:wins]]]');
+
+    expect($message)->toContain('rand')->toContain('counter')->not->toContain('Did you mean');
+});
+
+it('refuses a bracket run it cannot read, which chat would print verbatim', function (string $body) {
+    expect(expectSaveRefused(makeTagUser(), $body))->toContain('chat would see it exactly as written');
+})->with([
+    'space instead of colon' => 'won [[[counter wins]]] times',
+    'space in rand' => 'level [[[rand 0-69]]]',
+    // Block syntax works in overlays; the bot resolver does no block
+    // processing, so it would have gone out as literal text.
+    'conditional' => 'you have [[[if:c:wins > 3]]]lots[[[endif]]]',
+    'unterminated' => 'won [[[counter:wins times',
+]);
+
+it('refuses a tag with too few brackets and shows the fixed version', function () {
+    expect(expectSaveRefused(makeTagUser(), 'level: [[rand:0-69]]'))
+        ->toContain('three brackets')
+        ->toContain('[[[rand:0-69]]]');
+});
+
+it('leaves ordinary bracketed prose alone', function () {
+    // The under-bracket check only fires on something that really is a tag,
+    // so this must still save.
+    $data = app(BotExpressionValidator::class)->validateAndNormalize(makeTagUser()->id, [
+        'command' => 'shrug',
+        'expression' => '[[shrug]] well, [[citation needed]]',
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'enabled' => true,
+        'hidden_from_commands' => false,
+    ]);
+
+    expect($data['expression'])->toBe('[[shrug]] well, [[citation needed]]');
+});
+
+it('still accepts every namespace that really works in chat', function (string $body) {
+    $user = makeTagUser();
+
+    $data = app(BotExpressionValidator::class)->validateAndNormalize($user->id, [
+        'command' => 'fine',
+        'expression' => $body,
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'enabled' => true,
+        'hidden_from_commands' => false,
+    ]);
+
+    expect($data['expression'])->toBe($body);
+})->with([
+    'control' => '[[[c:wins]]]',
+    'list' => '[[[c:list:donors:count]]]',
+    'bot context' => 'hi [[[bot:from_user]]]',
+    'positional arg' => 'you said [[[bot:args.0]]]',
+    'bare twitch tag' => 'title: [[[channel_title]]]',
+    'pipe' => '[[[rand:0-1000000|number]]]',
+    'default value' => '[[[c:wins ?? nobody yet]]]',
+    'everything at once' => '[[[bot:from_user]]] rolled [[[rand:1-6]]], now on [[[counter:wins]]] ([[[c:list:donors:count]]] donors)',
+]);
+
 it('provisions idempotently and reports only what it created', function () {
     $user = makeTagUser();
     $counters = app(BotCounterService::class);
