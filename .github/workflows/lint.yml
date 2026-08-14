@@ -10,8 +10,10 @@ on:
       - develop
       - main
 
+# Read-only. This job reports; it never writes to the repo. See the note at the
+# bottom about why it does not commit its own fixes.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   quality:
@@ -24,22 +26,53 @@ jobs:
         with:
           php-version: '8.4'
 
+      # Pinned, and installed from the lockfile. A style gate has to be
+      # deterministic: with a bare `npm install` on the runner's default Node,
+      # a Prettier minor could resolve differently here than locally and fail a
+      # PR that is actually fine. Mirrors tests.yml.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
       - name: Install Dependencies
         run: |
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm install
+          npm ci
 
+      # All three run in CHECK mode: they report and fail, they do not rewrite.
+      # Until 2026-08-14 these were `pint`, `npm run format` and `npm run lint`
+      # - all write mode - so the job fixed the code, exited 0, and threw the
+      # result away when the runner was destroyed. Thirteen months of style
+      # drift accumulated behind a green tick.
       - name: Run Pint
-        run: vendor/bin/pint
+        run: vendor/bin/pint --test
 
       - name: Format Frontend
-        run: npm run format
+        run: npm run format:check
 
       - name: Lint Frontend
-        run: npm run lint
+        run: npm run lint:check
 
-      # - name: Commit Changes
-      #   uses: stefanzweifel/git-auto-commit-action@v5
-      #   with:
-      #     commit_message: fix code style
-      #     commit_options: '--no-verify'
+# There is deliberately no commit-back step.
+#
+# A `stefanzweifel/git-auto-commit-action` step lived here, commented out, from
+# the repo's first commit (783b81fc, 24 Jul 2025) until it was removed on
+# 2026-08-14. Nobody had disabled it; it arrived that way in the Laravel
+# scaffold and was never revisited.
+#
+# It stays gone, and now on purpose:
+#
+#   - it needs `contents: write`, widening this job from reporting to writing
+#   - it cannot work on pull requests from forks, which get no write token -
+#     and this repo is public and AGPL, so outside PRs are the point
+#   - a push from CI can retrigger CI
+#   - it had already been silently generating WRONG fixes: Prettier reformats
+#     code inside markdown fences, so enabling it would have rewritten the
+#     help pages' teaching examples (hence resources/help/** in
+#     .prettierignore, added in #219)
+#
+# Check mode gets the same protection with none of that. `npm run format` and
+# `npm run lint` still exist for fixing locally; CI just refuses to do it for
+# you.
