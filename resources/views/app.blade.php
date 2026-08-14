@@ -41,6 +41,14 @@
              is not an alternate representation of whatever page you are on, and
              claiming so would be a lie to every crawler that understands it. --}}
         <link rel="llms-txt" type="text/plain" href="/llms.txt" title="Overlabels authoring guide for LLMs">
+        {{-- Markdown twin of this specific page, where one exists. Shared by
+             the controller (see OverlayTemplateController::servePublic).
+             `rel="alternate"` is accurate here in a way it would not be for
+             llms.txt above: the .md is genuinely this page's content in
+             another representation, not a separate document. --}}
+        @isset($alternateMarkdown)
+            <link rel="alternate" type="text/markdown" href="{{ $alternateMarkdown }}" title="This overlay as markdown">
+        @endisset
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 

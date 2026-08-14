@@ -19,15 +19,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { VisuallyHidden } from 'reka-ui';
 import {
+  BellRing,
   Check,
   ChevronDown,
   CodeIcon,
   Eye,
   FileCode2Icon,
+  FileText,
   Flag,
   GitFork,
   ImageOff,
+  ListIcon,
   PaletteIcon,
+  PlugZap,
+  SlidersHorizontal,
 } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
@@ -55,10 +60,94 @@ interface PreviewTemplate {
   owner: OwnerInfo | null;
 }
 
+// The structured description of everything in this overlay beyond its source:
+// which controls it defines, which integrations it needs connected, how its
+// alert is wired. Built server-side by OverlayShareService, which also renders
+// the markdown twin from the same document - so this panel and the .md can
+// never disagree about what an overlay requires.
+interface ShareControl {
+  key: string;
+  tag: string;
+  label: string | null;
+  description: string | null;
+  type: string;
+  value: string | null;
+  config: Record<string, unknown> | null;
+  used: boolean;
+}
+
+interface ShareServiceControl {
+  key: string;
+  tag: string;
+  label: string | null;
+  type: string | null;
+  known: boolean;
+}
+
+interface ShareService {
+  service: string;
+  label: string;
+  controls: ShareServiceControl[];
+}
+
+interface ShareTrigger {
+  source: string;
+  label: string;
+  condition_type: string | null;
+  condition_value: string | null;
+  duration_ms: number;
+}
+
+interface ShareAlert {
+  sound_url: string | null;
+  tts_expression: string | null;
+  tts_delay_ms: number | null;
+  bot_message_expression: string | null;
+  triggers: ShareTrigger[];
+}
+
+interface ShareDocument {
+  controls: ShareControl[];
+  services: ShareService[];
+  lists: Array<{ slug: string; tag: string }>;
+  dataTags: string[];
+  alert: ShareAlert | null;
+  blocks: string[];
+}
+
 const props = defineProps<{
   template: PreviewTemplate;
   reportTicket: string;
+  share: ShareDocument;
+  markdownUrl: string;
 }>();
+
+const hasRequirements = computed(
+  () => props.share.services.length > 0 || props.share.lists.length > 0,
+);
+
+// Whether there is anything to say beyond the source itself. An overlay with no
+// controls, no integrations and no alert wiring gets no panel rather than three
+// empty ones.
+const hasShareDetail = computed(
+  () =>
+    props.share.controls.length > 0 ||
+    hasRequirements.value ||
+    props.share.alert !== null ||
+    props.share.dataTags.length > 0,
+);
+
+// An expression control stores its formula in config.expression rather than in
+// value, so it needs pulling out separately or the row reads as empty.
+function controlFormula(control: ShareControl): string | null {
+  const expression = control.config?.expression;
+  return typeof expression === 'string' && expression.length > 0 ? expression : null;
+}
+
+function triggerCondition(trigger: ShareTrigger): string {
+  if (!trigger.condition_type || trigger.condition_type === 'any') return 'any';
+  return `${trigger.condition_type.replace(/_/g, ' ')} ${trigger.condition_value ?? ''}`.trim();
+}
 
 const page = usePage<AppPageProps>();
 const isAuthed = computed(() => !!page.props.auth?.user);
@@ -72,7 +161,7 @@ const csrf = computed(() => {
   return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
 });
 
-type CopyKind = 'head' | 'body' | 'css' | 'full';
+type CopyKind = 'head' | 'body' | 'css' | 'full' | 'markdown';
 
 const copyFeedback = ref<string>('');
 let feedbackTimer: ReturnType<typeof setTimeout> | null = null;
@@ -117,6 +206,7 @@ const copyLabels: Record<CopyKind, string> = {
   body: 'BODY',
   css: 'CSS',
   full: 'Complete template',
+  markdown: 'Markdown URL',
 };
 
 function copy(kind: CopyKind) {
@@ -133,6 +223,11 @@ function copy(kind: CopyKind) {
       break;
     case 'full':
       value = buildCompleteTemplate();
+      break;
+    case 'markdown':
+      // The URL, not the document. Pasting a link is what people actually do
+      // with an LLM, and every current model fetches it.
+      value = props.markdownUrl;
       break;
   }
 
@@ -282,6 +377,14 @@ function submitReport() {
                 Complete template
                 <span class="ml-auto text-xs text-foreground">.html</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel class="text-xs uppercase tracking-wider text-violet-400">
+                For an LLM
+              </DropdownMenuLabel>
+              <DropdownMenuItem class="cursor-pointer rounded-none focus:bg-sidebar focus:text-violet-400" @click="copy('markdown')">
+                Markdown URL
+                <span class="ml-auto text-xs text-foreground">.md</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -365,6 +468,223 @@ function submitReport() {
           <div class="flex items-center justify-between border-t border-sidebar-border px-4 py-2.5 text-sm text-foreground">
             <span class="text-violet-400">Source</span>
           </div>
+        </div>
+      </div>
+
+      <!--
+        Everything in this overlay that is not its source. Before this existed
+        the page showed head/html/css and nothing else, so nobody could tell
+        what an overlay needed until after they had copied it.
+      -->
+      <div v-if="hasShareDetail" class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <!--
+          Controls span both columns: it is a four-column table, and an overlay
+          with a lot of expression controls turns into a very tall, very narrow
+          panel at half width.
+        -->
+        <div v-if="share.controls.length" class="border border-sidebar-border bg-card lg:col-span-2">
+          <div class="flex items-center gap-2 border-b border-sidebar-border px-4 py-2.5 text-sm">
+            <SlidersHorizontal class="h-3.5 w-3.5 text-violet-400" />
+            <span class="text-violet-400">Controls</span>
+            <span class="ml-auto text-xs text-foreground">{{ share.controls.length }}</span>
+          </div>
+          <div class="p-4">
+            <p class="mb-3 text-sm text-foreground">
+              Named values the overlay reads with
+              <code class="bg-sidebar px-1 py-0.5 text-xs">[[[c:key]]]</code>. Copying the overlay
+              recreates these with the defaults shown.
+            </p>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="text-foreground">
+                  <tr class="border-b border-sidebar-border">
+                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Tag</th>
+                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Type</th>
+                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Label</th>
+                    <th class="py-1.5 font-medium uppercase tracking-wider">Default</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="control in share.controls" :key="control.key">
+                    <tr class="border-b border-sidebar-border/50" :class="{ 'border-0': controlFormula(control) }">
+                      <td class="py-1.5 pr-3 align-top">
+                        <code class="text-violet-400">[[[{{ control.tag }}]]]</code>
+                        <!--
+                          A control defined on the overlay but never written into
+                          its source. Worth surfacing: it is usually either read by
+                          an expression control, or a leftover.
+                        -->
+                        <span v-if="!control.used" class="ml-1 text-foreground opacity-70">(unused)</span>
+                      </td>
+                      <td class="py-1.5 pr-3 align-top text-foreground">{{ control.type }}</td>
+                      <td class="py-1.5 pr-3 align-top text-foreground">{{ control.label }}</td>
+                      <td class="py-1.5 align-top text-foreground">
+                        <code v-if="control.value">{{ control.value }}</code>
+                      </td>
+                    </tr>
+                    <!--
+                      An expression control's formula lives in config, not value,
+                      so the Default cell above is blank for it. On a maths-driven
+                      overlay the formulas are the whole overlay.
+                    -->
+                    <tr v-if="controlFormula(control)" class="border-b border-sidebar-border/50 last:border-0">
+                      <td colspan="4" class="pb-1.5 align-top">
+                        <code class="block overflow-x-auto bg-sidebar px-1.5 py-1 text-xs text-foreground">
+                          {{ controlFormula(control) }}
+                        </code>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integrations and lists that must exist before this renders -->
+        <div v-if="hasRequirements" class="border border-sidebar-border bg-card">
+          <div class="flex items-center gap-2 border-b border-sidebar-border px-4 py-2.5 text-sm">
+            <PlugZap class="h-3.5 w-3.5 text-violet-400" />
+            <span class="text-violet-400">Requirements</span>
+          </div>
+          <div class="space-y-4 p-4">
+            <div v-if="share.services.length">
+              <p class="mb-3 text-sm text-foreground">
+                This overlay reads live data from these services. Connect them under Settings ->
+                Integrations; their controls are provisioned for you and are not part of the copy.
+              </p>
+              <div v-for="service in share.services" :key="service.service" class="mb-3 last:mb-0">
+                <div class="mb-1.5 text-xs uppercase tracking-wider text-violet-400">
+                  {{ service.label }}
+                </div>
+                <ul class="space-y-1">
+                  <li
+                    v-for="control in service.controls"
+                    :key="control.tag"
+                    class="flex flex-wrap items-baseline gap-x-2 text-xs"
+                  >
+                    <code class="text-violet-400">[[[{{ control.tag }}]]]</code>
+                    <span v-if="control.known" class="text-foreground">{{ control.label }}</span>
+                    <span v-else class="text-destructive">
+                      not provided by {{ service.label }} - likely a typo
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div v-if="share.lists.length">
+              <div class="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-violet-400">
+                <ListIcon class="h-3.5 w-3.5" />
+                Lists
+              </div>
+              <p class="mb-2 text-sm text-foreground">
+                Lists hold their own data and are not copied. Create one with a matching slug under
+                Lists.
+              </p>
+              <ul class="space-y-1">
+                <li v-for="list in share.lists" :key="list.slug" class="text-xs">
+                  <code class="text-violet-400">[[[{{ list.tag }}]]]</code>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert-only: sound, TTS, chat message, and the author's triggers -->
+        <div v-if="share.alert" class="border border-sidebar-border bg-card">
+          <div class="flex items-center gap-2 border-b border-sidebar-border px-4 py-2.5 text-sm">
+            <BellRing class="h-3.5 w-3.5 text-violet-400" />
+            <span class="text-violet-400">Alert behaviour</span>
+          </div>
+          <div class="space-y-3 p-4 text-sm text-foreground">
+            <ul class="space-y-1">
+              <li v-if="share.alert.sound_url">Plays a sound when it fires.</li>
+              <li v-if="share.alert.tts_expression">
+                Speaks via text to speech<span v-if="share.alert.tts_delay_ms">
+                  after {{ share.alert.tts_delay_ms }}ms</span>:
+                <code class="bg-sidebar px-1 py-0.5 text-xs">{{ share.alert.tts_expression }}</code>
+              </li>
+              <li v-if="share.alert.bot_message_expression">
+                Posts to chat:
+                <code class="bg-sidebar px-1 py-0.5 text-xs">
+                  {{ share.alert.bot_message_expression }}
+                </code>
+              </li>
+              <li
+                v-if="
+                  !share.alert.sound_url &&
+                  !share.alert.tts_expression &&
+                  !share.alert.bot_message_expression
+                "
+              >
+                No sound, speech or chat message. This alert is purely visual.
+              </li>
+            </ul>
+
+            <div v-if="share.alert.triggers.length">
+              <div class="mb-1.5 text-xs uppercase tracking-wider text-violet-400">
+                How the author wired it
+              </div>
+              <p class="mb-2">
+                Triggers are not copied - you bind your own. Shown because they explain what the
+                markup expects.
+              </p>
+              <ul class="space-y-1 text-xs">
+                <li v-for="(trigger, i) in share.alert.triggers" :key="i">
+                  <span class="text-foreground">{{ trigger.label }}</span>
+                  <span class="text-foreground opacity-70">
+                    - {{ triggerCondition(trigger) }}, {{ trigger.duration_ms }}ms
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live data tags, so the shape of what it reads is visible at a glance -->
+        <div v-if="share.dataTags.length" class="border border-sidebar-border bg-card lg:col-span-2">
+          <div class="flex items-center gap-2 border-b border-sidebar-border px-4 py-2.5 text-sm">
+            <FileText class="h-3.5 w-3.5 text-violet-400" />
+            <span class="text-violet-400">Live data tags</span>
+            <span class="ml-auto text-xs text-foreground">{{ share.dataTags.length }}</span>
+          </div>
+          <div class="p-4">
+            <p class="mb-3 text-sm text-foreground">
+              Resolved against Twitch channel data<span v-if="template.type === 'alert'">
+                and the firing event</span>. A tag with no data renders as nothing.
+            </p>
+            <div class="flex flex-wrap gap-1.5">
+              <code
+                v-for="tag in share.dataTags"
+                :key="tag"
+                class="border border-sidebar-border bg-sidebar px-1.5 py-0.5 text-xs text-violet-400"
+              >
+                [[[{{ tag }}]]]
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!--
+        Machine-readable twin. Named on the page rather than left to the
+        <link rel="alternate"> in the head: handing someone a URL to paste into
+        an LLM is the whole point of it existing, and nobody reads link tags.
+      -->
+      <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border border-sidebar-border bg-card p-4">
+        <FileText class="h-4 w-4 shrink-0 text-violet-400" />
+        <p class="text-sm text-foreground">
+          Give this URL to an LLM and it gets the whole overlay: source, controls, integrations and
+          alert wiring in one document.
+        </p>
+        <div class="ml-auto flex items-center gap-2">
+          <a :href="markdownUrl" target="_blank" rel="noopener" class="ovl-btn cursor-pointer">
+            View .md
+          </a>
+          <button type="button" class="ovl-btn cursor-pointer" @click="copy('markdown')">
+            Copy URL
+          </button>
         </div>
       </div>
 

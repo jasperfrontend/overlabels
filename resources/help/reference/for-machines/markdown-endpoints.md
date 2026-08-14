@@ -19,6 +19,28 @@ The exceptions are the pages under `/help/reference` - the page you are reading 
 server-rendered HTML on purpose, so they can be read directly with no suffix, and they are the pages
 listed individually in `sitemap.xml`.
 
+## Public overlays have a .md too
+
+The convention is not limited to prose. Any public overlay is fetchable as one self-contained
+markdown document:
+
+```
+https://overlabels.com/overlay/<slug>/public      -> the preview page (HTML)
+https://overlabels.com/overlay/<slug>/public.md   -> text/markdown, the whole overlay
+```
+
+Unlike the help pages, this one is generated rather than a file on disk, because an overlay is not a
+document - it is a template plus its controls, the integrations it reads from, and its alert wiring.
+The `.md` carries all of that, which is what makes a single URL enough to hand an overlay to a
+language model.
+
+Two things are deliberately absent: the values of controls managed by a connected service (they hold
+live account data - a real donor's name, actual revenue), and anything belonging to the owner's
+account beyond the overlay itself. Values for controls the overlay defines are included, because
+those are the author's design defaults and are exactly what copying the overlay gives you.
+
+A private overlay returns 404, the same as its preview page.
+
 ## Start at the index
 
 ```

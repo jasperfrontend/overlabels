@@ -474,7 +474,36 @@ If you are extending Overlabels rather than authoring a template: never hand-rol
 
 ---
 
-## 11. Links
+## 11. Reading somebody's actual overlay
+
+Everything above teaches the language. If you have been given a specific overlay to work on, you can fetch it whole:
+
+```
+https://overlabels.com/overlay/<slug>/public      -> the preview page (HTML)
+https://overlabels.com/overlay/<slug>/public.md   -> the same overlay as one markdown document
+```
+
+The `.md` form is a complete, self-contained description of that overlay, and one fetch is enough to understand it:
+
+- its `head`, `html` and `css` verbatim - these three fields are the entire overlay, nothing else is rendered
+- every **control** it defines: tag, type, label, default value, and whether the source actually references it
+- every **integration** it needs connected (Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne, GPS) and which tags read from each
+- every **List** it reads
+- for alerts: the sound, text-to-speech and chat-message configuration, plus how the author wired its triggers
+- the live data tags it reads
+
+This is the thing to ask for when someone says "help me with my overlay" and pastes a link. If they give you the bare preview URL, add `.md` yourself.
+
+Two caveats worth stating back to the user:
+
+1. **Control values are defaults, not live data.** Values are shown only for controls the overlay defines. Controls belonging to a connected service are described by type and label but carry no value, because those hold live account data (a real donor's name, actual revenue).
+2. **Triggers and Lists are not copied.** They belong to the author's account. An alert's trigger list tells you what the markup expects; it does not carry over to whoever copies the overlay.
+
+Only public overlays have a `.md`. A private one returns 404, the same as its preview page.
+
+---
+
+## 12. Links
 
 **Start at `https://overlabels.com/help.md`.** That is the help index as plain markdown, and it links to
 every other page. If you want to crawl the documentation, that one URL is the entry point.
