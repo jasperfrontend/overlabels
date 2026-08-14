@@ -45,7 +45,7 @@ A kit is nine overlays that are meant to be installed as a set. `/kits/{id}.md` 
 - **`kits/{kit}` would happily match `3.md`.** It has no numeric constraint, so the markdown route only wins by being registered first. A test resolves the URL through the router and asserts which route it lands on, rather than trusting registration order to stay put.
 - **The affordance only appears on public kits.** `markdownUrl` is null otherwise, so the owner of a private kit is never offered a link to their own 404.
 
-## August 14th, 2026 - feat(share): an overlay you can hand to a person or to an LLM
+## August 14th, 2026 - feat(ui): fifty grey boxes with the domain name at the top
 
 Forty-four `window.confirm()` calls and six `window.alert()` calls, spread across kits, templates, controls, lists, tokens, six integration pages, the admin panel and account deletion. Every one of them an unstyled grey box with the domain name at the top, ignoring the theme entirely, in an app whose whole pitch is that your overlays look like you made them on purpose.
 
