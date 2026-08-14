@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - feat(ci): the types were being checked by memory
+
+`vue-tsc` has been a devDependency for months and nothing ever ran it. Not the build, not either workflow, not an npm script - there was no `typecheck` script to run. Vite strips types with esbuild without checking them, so a type error could pass the build, pass the linter, pass 1287 tests and land on main. The only thing standing between a broken type and production was remembering to type `vue-tsc --noEmit` by hand.
+
+- **It was already clean, which is the surprise.** The worry going in was a triage batch: turn on a gate that has never run and inherit fifty errors. `vue-tsc --noEmit` exited 0 on the first try. Months of running it manually had genuinely held the line - the gate just makes that durable instead of dependent on mood.
+- **The gate was verified to fail before it was trusted.** A green run on a clean codebase proves nothing; a script that checks the wrong files is also green. Two throwaway probes were planted and confirmed to break the build - a `const streamerName: string = 42` in a `.ts` file, and a `const viewers: number = 'not a number'` inside a `.vue` SFC - each returning `TS2322` and exit code 2. Both were then deleted and the clean run re-confirmed.
+- **The `.vue` probe is the one that mattered.** Almost all of this codebase is Single File Components, and a plain `tsc` cannot read them at all. Proving the `.ts` case only would have left the gate looking real while ignoring the overwhelming majority of the code it is supposed to guard.
+- **It went in `tests.yml`, not `lint.yml`, and that is deliberate despite `lint.yml` being the obvious home.** The linter workflow runs a bare `npm install` on the runner's default Node with no `actions/setup-node` step, so it can resolve versions the lockfile never saw. `tests.yml` pins Node 22 and installs with `npm ci`. A type gate is only as trustworthy as the tree it runs against, so it belongs with the exact one.
+- **Placed immediately after `npm ci`, before composer.** The check needs only `node_modules` and committed source - `resources/js/types/ziggy.d.ts` is tracked rather than generated, so it does not wait on `ziggy:generate`, the database or the build. A type error now fails in seconds instead of after the full install-migrate-build chain.
+- **This is why the `list_writer` union gap sat unnoticed in June.** A legitimate control type was missing from the `OverlayControl.type` union in `types/index.d.ts` and nothing complained, because nothing was looking. That class of latent inconsistency is what the gate is for.
+- **Unrelated to the TypeScript 7 question, and not a step toward it.** TS 7 remains a hard block: it ships without a public compiler API, so `vue-tsc` cannot embed it and `typescript-eslint` caps its peer range at `<6.1.0`. Adding this gate does not move that, and running the check more often does not make the upgrade any closer.
+
 ## August 14th, 2026 - chore(deps): Pest 5, and the boring kind of major upgrade
 
 Pest 4.7.8 to 5.1.1, which drags PHPUnit 12.5 to 13.3, `php-code-coverage` to 14.3, all five Pest plugins to 5.x and the entire `sebastian/*` line to new majors. Fifty-odd packages, three of the biggest version numbers in the dev tree, and not one line of test code changed.

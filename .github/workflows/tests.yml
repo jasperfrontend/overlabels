@@ -69,6 +69,19 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      # Types are checked here rather than in lint.yml because this job pins
+      # Node and installs from the lockfile with `npm ci`; lint.yml runs a
+      # bare `npm install` on the runner's default Node, which can resolve
+      # versions the lockfile never saw. A type gate wants the exact tree.
+      #
+      # Placed here because it needs only node_modules and committed source
+      # (resources/js/types/ziggy.d.ts is tracked, not generated), so it has
+      # no dependency on composer, ziggy:generate or the database. A type
+      # error therefore fails in seconds rather than after the whole
+      # install-migrate-build chain.
+      - name: Typecheck Frontend
+        run: npm run typecheck
+
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
