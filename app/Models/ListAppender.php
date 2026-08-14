@@ -14,13 +14,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $target_list_id
- * @property string $command           Without leading "!"
+ * @property string $command Without leading "!"
  * @property string $permission_level
  * @property int $cooldown_seconds
  * @property string $value_template
  * @property string|null $args_empty_reply
  * @property string|null $success_reply
- * @property string $dedup_policy      'none' | 'per_chatter' | 'per_chatter_per_stream'
+ * @property string $dedup_policy 'none' | 'per_chatter' | 'per_chatter_per_stream'
  * @property int|null $max_size
  * @property bool $enabled
  * @property Carbon|null $last_fired_at

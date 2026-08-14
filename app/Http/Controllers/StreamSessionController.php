@@ -128,6 +128,7 @@ class StreamSessionController extends Controller
      * Falls back to (started_at, ended_at|now()) when no anchor event exists.
      *
      * @return array<int, array<string, mixed>> keyed by session_id
+     *
      * @throws DateMalformedStringException
      */
     private function loadSessionsWithWindows(int $userId): array
@@ -225,7 +226,7 @@ class StreamSessionController extends Controller
      * subsequent aggregate query can join against per-session windows in SQL.
      *
      * @param  array<int, array<string, mixed>>  $sessions
-     * @return array{0: string, 1: array<int, mixed>}  [sql_fragment, bindings]
+     * @return array{0: string, 1: array<int, mixed>} [sql_fragment, bindings]
      */
     private function buildWindowsCte(array $sessions): array
     {
@@ -489,6 +490,7 @@ class StreamSessionController extends Controller
      * in PHP. Excludes follows, cheers, redemptions, and poll.progress on purpose.
      *
      * @return array<int, array<string, array<int, array<string, mixed>>>>
+     *
      * @throws DateMalformedStringException
      */
     private function loadBoundedListEvents(int $userId): array
@@ -642,6 +644,7 @@ class StreamSessionController extends Controller
      * Bounded by RESUB_MESSAGE_LIMIT per session via window function.
      *
      * @return array<int, array<int, array<string, mixed>>>
+     *
      * @throws DateMalformedStringException
      */
     private function loadResubMessages(int $userId): array
@@ -711,6 +714,7 @@ class StreamSessionController extends Controller
      * donations. Currencies are never summed across each other - no FX guessing.
      *
      * @return array<int, array{totals: array<int, array<string, mixed>>, count: int, donations: array<int, array<string, mixed>>}>
+     *
      * @throws DateMalformedStringException
      */
     private function loadExternalIncome(int $userId): array

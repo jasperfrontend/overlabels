@@ -57,12 +57,7 @@ export function tagPattern(flags = 'g'): RegExp {
 export function blockTokenPattern(flags = 'g'): RegExp {
   const body = lex.blockBody;
 
-  return new RegExp(
-    lex.open +
-      `(if:(${body})|elseif:(${body})|else|endif|foreach:(${body})|endforeach)` +
-      lex.close,
-    flags,
-  );
+  return new RegExp(lex.open + `(if:(${body})|elseif:(${body})|else|endif|foreach:(${body})|endforeach)` + lex.close, flags);
 }
 
 /**
@@ -70,13 +65,9 @@ export function blockTokenPattern(flags = 'g'): RegExp {
  * Operators are alternated longest-first so `>=` wins over `>`.
  */
 export function conditionPattern(): RegExp {
-  const ops = spec.comparisonOperators
-    .map((op) => op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('|');
+  const ops = spec.comparisonOperators.map((op) => op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
 
-  return new RegExp(
-    `^([${lex.keyStart}][${lex.keyRest}]*)\\s*(${ops})\\s*(.+)$`,
-  );
+  return new RegExp(`^([${lex.keyStart}][${lex.keyRest}]*)\\s*(${ops})\\s*(.+)$`);
 }
 
 export type FormatterName = keyof typeof spec.formatters;

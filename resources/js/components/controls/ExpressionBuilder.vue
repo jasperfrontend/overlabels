@@ -3,12 +3,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import axios from 'axios';
 import jsep from 'jsep';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ExternalLink, FunctionSquare } from '@lucide/vue';
 import { buildContext, evaluate, ARG_FUNCTIONS, SUPPORTED_FUNCTIONS } from '@/composables/useExpressionEngine';
 import type { OverlayControl } from '@/types';
@@ -46,9 +41,12 @@ const emit = defineEmits<{
 const expressionText = ref(props.modelValue);
 const textareaEl = ref<HTMLTextAreaElement | null>(null);
 
-watch(() => props.modelValue, (val) => {
-  if (val !== expressionText.value) expressionText.value = val;
-});
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val !== expressionText.value) expressionText.value = val;
+  },
+);
 
 watch(expressionText, (val) => {
   emit('update:modelValue', val);
@@ -115,16 +113,13 @@ const liveTwitchTags = ref<Record<string, unknown> | null>(null);
 onMounted(async () => {
   const csrf = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
   try {
-    const res = await axios.get<{ tags?: Record<string, unknown> }>(
-      route('expression.tags'),
-      {
-        withCredentials: true,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
-        },
+    const res = await axios.get<{ tags?: Record<string, unknown> }>(route('expression.tags'), {
+      withCredentials: true,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
       },
-    );
+    });
     liveTwitchTags.value = res.data?.tags ?? {};
   } catch (err) {
     // Fall back to mocks; preview still works, just with placeholder values.
@@ -147,49 +142,53 @@ function mockTwitchTag(name: string): unknown {
   return `(${name})`;
 }
 
-watch([expressionText, liveTwitchTags], ([text]) => {
-  expressionError.value = '';
-  expressionPreview.value = '';
-  if (!text.trim()) return;
+watch(
+  [expressionText, liveTwitchTags],
+  ([text]) => {
+    expressionError.value = '';
+    expressionPreview.value = '';
+    if (!text.trim()) return;
 
-  if (text.length > 500) {
-    expressionError.value = 'Expression must be 500 characters or less.';
-    return;
-  }
-
-  try {
-    const ast = jsep(text);
-
-    const fnError = validateFunctions(ast);
-    if (fnError) {
-      expressionError.value = fnError;
+    if (text.length > 500) {
+      expressionError.value = 'Expression must be 500 characters or less.';
       return;
     }
 
-    const mockData: Record<string, unknown> = {};
-    for (const ctrl of props.availableControls) {
-      const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
-      mockData[key] = controlPreviewValue(ctrl);
-    }
+    try {
+      const ast = jsep(text);
 
-    // For every t.<name> reference, prefer the live server value; fall back
-    // to a shape-aware mock (or the previous placeholder) if the fetch is
-    // still pending or the tag is missing from the response.
-    const live = liveTwitchTags.value ?? {};
-    for (const match of text.matchAll(/\bt\.([a-z][a-z0-9_]*)/g)) {
-      const tagName = match[1];
-      const key = `t:${tagName}`;
-      if (mockData[key] !== undefined) continue;
-      mockData[key] = live[tagName] !== undefined ? live[tagName] : mockTwitchTag(tagName);
-    }
+      const fnError = validateFunctions(ast);
+      if (fnError) {
+        expressionError.value = fnError;
+        return;
+      }
 
-    const ctx = buildContext(mockData);
-    const result = evaluate(ast, ctx);
-    expressionPreview.value = result === null || result === undefined ? '' : String(result);
-  } catch {
-    expressionError.value = 'Invalid expression syntax.';
-  }
-}, { immediate: true });
+      const mockData: Record<string, unknown> = {};
+      for (const ctrl of props.availableControls) {
+        const key = ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
+        mockData[key] = controlPreviewValue(ctrl);
+      }
+
+      // For every t.<name> reference, prefer the live server value; fall back
+      // to a shape-aware mock (or the previous placeholder) if the fetch is
+      // still pending or the tag is missing from the response.
+      const live = liveTwitchTags.value ?? {};
+      for (const match of text.matchAll(/\bt\.([a-z][a-z0-9_]*)/g)) {
+        const tagName = match[1];
+        const key = `t:${tagName}`;
+        if (mockData[key] !== undefined) continue;
+        mockData[key] = live[tagName] !== undefined ? live[tagName] : mockTwitchTag(tagName);
+      }
+
+      const ctx = buildContext(mockData);
+      const result = evaluate(ast, ctx);
+      expressionPreview.value = result === null || result === undefined ? '' : String(result);
+    } catch {
+      expressionError.value = 'Invalid expression syntax.';
+    }
+  },
+  { immediate: true },
+);
 
 // Track cursor position so inserts land where the user last had focus
 const lastCursor = ref<number | null>(null);
@@ -270,10 +269,13 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
   };
 
   // Custom first, then services alphabetically
-  const order = ['custom', ...Object.keys(groups).filter((k) => k !== 'custom').sort()];
-  return order
-    .filter((k) => groups[k]?.length)
-    .map((k) => ({ label: sourceLabels[k] ?? k, controls: groups[k] }));
+  const order = [
+    'custom',
+    ...Object.keys(groups)
+      .filter((k) => k !== 'custom')
+      .sort(),
+  ];
+  return order.filter((k) => groups[k]?.length).map((k) => ({ label: sourceLabels[k] ?? k, controls: groups[k] }));
 });
 </script>
 
@@ -284,7 +286,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
       <div class="flex items-center gap-1">
         <button
           type="button"
-          class="flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-background transition cursor-pointer"
+          class="flex cursor-pointer items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground transition hover:bg-background hover:text-foreground"
           title="Browse all available functions"
           @click="functionsOpen = true"
         >
@@ -295,7 +297,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
           href="/help/expressions"
           target="_blank"
           rel="noopener"
-          class="flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:bg-background transition cursor-pointer"
+          class="flex cursor-pointer items-center gap-1 rounded-sm px-2 py-0.5 text-xs text-muted-foreground transition hover:bg-background hover:text-foreground"
           title="Open the full Expression Controls reference in a new tab"
         >
           <ExternalLink class="size-3.5" />
@@ -312,7 +314,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
         ref="textareaEl"
         v-model="expressionText"
         rows="3"
-        class="w-full rounded-sm border border-sidebar bg-background px-3 py-2 mt-1 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none font-mono text-sm resize-y"
+        class="mt-1 w-full resize-y rounded-sm border border-sidebar bg-background px-3 py-2 font-mono text-sm text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
         :class="{ 'border-destructive': expressionError }"
         placeholder="e.g. c.wins / (c.wins + c.losses) * 100"
         @blur="saveCursor"
@@ -327,41 +329,35 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
         <Label>Available controls</Label>
         <span class="text-xs text-muted-foreground">click to insert</span>
       </div>
-      <input
-        type="text"
-        v-model="controlFilter"
-        placeholder="Filter controls..."
-        class="h-7 w-full text-xs input-border"
-      />
-      <div class="max-h-50 overflow-y-auto space-y-2">
+      <input type="text" v-model="controlFilter" placeholder="Filter controls..." class="input-border h-7 w-full text-xs" />
+      <div class="max-h-50 space-y-2 overflow-y-auto">
         <div v-for="group in filteredGroupedControls" :key="group.label">
-          <p class="text-xs font-semibold text-muted-foreground mb-1 sticky top-0 bg-violet-400/5 py-0.5">{{ group.label }}</p>
+          <p class="sticky top-0 mb-1 bg-violet-400/5 py-0.5 text-xs font-semibold text-muted-foreground">{{ group.label }}</p>
           <div class="grid grid-cols-2 gap-1">
             <button
               v-for="ctrl in group.controls"
               :key="ctrl.id"
               type="button"
               :title="ctrl.label ? `${ctrl.label} - ${expressionRef(ctrl)}` : expressionRef(ctrl)"
-              class="rounded-sm border border-sidebar bg-background overflow-hidden cursor-pointer px-2 py-1 font-mono text-left text-xs text-foreground/80 hover:text-violet-400 hover:border-violet-400/40 transition"
+              class="cursor-pointer overflow-hidden rounded-sm border border-sidebar bg-background px-2 py-1 text-left font-mono text-xs text-foreground/80 transition hover:border-violet-400/40 hover:text-violet-400"
               @click="insertVariable(ctrl)"
             >
               {{ expressionRef(ctrl) }}
-              <span v-if="ctrl.label" class="block text-[10px] text-muted-foreground font-sans truncate">{{ ctrl.label }}</span>
+              <span v-if="ctrl.label" class="block truncate font-sans text-[10px] text-muted-foreground">{{ ctrl.label }}</span>
             </button>
           </div>
         </div>
-        <p v-if="!filteredGroupedControls.length" class="text-xs text-muted-foreground py-2 text-center">No controls match your filter.</p>
+        <p v-if="!filteredGroupedControls.length" class="py-2 text-center text-xs text-muted-foreground">No controls match your filter.</p>
       </div>
     </div>
 
     <!-- Live preview -->
     <div v-if="expressionText.trim() && !expressionError" class="space-y-1">
       <Label>Preview</Label>
-      <div class="rounded-sm bg-black/5 dark:bg-white/5 px-3 py-1.5 font-mono text-sm">
+      <div class="rounded-sm bg-black/5 px-3 py-1.5 font-mono text-sm dark:bg-white/5">
         {{ expressionPreview !== '' ? expressionPreview : '(empty)' }}
       </div>
     </div>
-
   </div>
 
   <!-- Functions picker dialog -->
@@ -371,20 +367,20 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
         <DialogTitle>Available functions</DialogTitle>
       </DialogHeader>
       <p class="text-xs text-muted-foreground">
-        Click any function to copy it to your clipboard, then paste it into your expression.
-        For full descriptions, examples, and the Haversine walkthrough, see the
+        Click any function to copy it to your clipboard, then paste it into your expression. For full descriptions, examples, and the Haversine
+        walkthrough, see the
         <a href="/help/expressions" target="_blank" rel="noopener" class="text-violet-400 hover:underline">Expression Controls reference</a>.
       </p>
-      <div class="space-y-3 max-h-[60vh] overflow-y-auto">
+      <div class="max-h-[60vh] space-y-3 overflow-y-auto">
         <div v-for="group in FUNCTION_GROUPS" :key="group.label">
-          <p class="text-xs font-semibold text-muted-foreground mb-1">{{ group.label }}</p>
+          <p class="mb-1 text-xs font-semibold text-muted-foreground">{{ group.label }}</p>
           <div class="flex flex-wrap gap-1">
             <button
               v-for="fn in group.functions"
               :key="fn"
               type="button"
               :title="copiedSnippet === `${fn}()` ? 'Copied!' : `Copy ${fn}() to clipboard`"
-              class="rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 hover:text-violet-400 hover:border-violet-400/40 transition cursor-pointer"
+              class="cursor-pointer rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 transition hover:border-violet-400/40 hover:text-violet-400"
               @click="copySnippet(`${fn}()`)"
             >
               {{ copiedSnippet === `${fn}()` ? 'Copied!' : `${fn}()` }}
@@ -392,14 +388,14 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
           </div>
         </div>
         <div>
-          <p class="text-xs font-semibold text-muted-foreground mb-1">Constants</p>
+          <p class="mb-1 text-xs font-semibold text-muted-foreground">Constants</p>
           <div class="flex flex-wrap gap-1">
             <button
               v-for="c in CONSTANTS"
               :key="c"
               type="button"
               :title="copiedSnippet === c ? 'Copied!' : `Copy ${c} to clipboard`"
-              class="rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 hover:text-violet-400 hover:border-violet-400/40 transition cursor-pointer"
+              class="cursor-pointer rounded-sm border border-sidebar bg-background px-2 py-0.5 font-mono text-xs text-foreground/80 transition hover:border-violet-400/40 hover:text-violet-400"
               @click="copySnippet(c)"
             >
               {{ copiedSnippet === c ? 'Copied!' : c }}

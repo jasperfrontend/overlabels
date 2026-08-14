@@ -1,5 +1,5 @@
 import Pusher from 'pusher-js';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 const hasNewVersion = ref(false);
 let pusher: Pusher | null = null;

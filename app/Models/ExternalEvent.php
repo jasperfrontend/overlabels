@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property bool $alert_dispatched
  * @property Carbon $created_at
  * @property-read User|null $user
+ *
  * @method static Builder<static>|ExternalEvent newModelQuery()
  * @method static Builder<static>|ExternalEvent newQuery()
  * @method static Builder<static>|ExternalEvent query()
@@ -33,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ExternalEvent whereRawPayload($value)
  * @method static Builder<static>|ExternalEvent whereService($value)
  * @method static Builder<static>|ExternalEvent whereUserId($value)
+ *
  * @mixin Eloquent
  * @mixin IdeHelperExternalEvent
  */

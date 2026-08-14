@@ -17,7 +17,6 @@ const props = defineProps<Props>();
 const page = usePage();
 const auth = computed(() => page.props.auth);
 
-
 const { getInitials } = useInitials();
 const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !== '');
 </script>
@@ -26,26 +25,19 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
   <span class="relative inline-flex size-10 items-center justify-center p-1">
     <Avatar v-if="showAvatar" class="size-8 overflow-hidden rounded-full">
       <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
-      <AvatarFallback
-        class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
+      <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
         {{ getInitials(auth.user?.name) }}
       </AvatarFallback>
     </Avatar>
-    <span
-      v-if="isLive"
-      class="absolute top-0 right-0 size-2 rounded-full bg-green-500 ring-2 ring-background"
-    />
-    <span
-      v-else-if="isTransitioning"
-      class="absolute top-0 right-0 size-2 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"
-    />
+    <span v-if="isLive" class="absolute top-0 right-0 size-2 rounded-full bg-green-500 ring-2 ring-background" />
+    <span v-else-if="isTransitioning" class="absolute top-0 right-0 size-2 animate-pulse rounded-full bg-orange-400 ring-2 ring-background" />
   </span>
 
   <div class="grid flex-1 text-left text-sm leading-tight" v-if="user">
     <span class="truncate font-medium">{{ user.name }}</span>
-    <span v-if="isLive" class="text-xs text-green-400 font-mono w-30">Live for {{ uptime }}</span>
-    <span v-else-if="isTransitioning" class="text-xs text-yellow-400 font-mono w-25">Checking stream</span>
-    <span v-else class="text-xs text-muted-foreground font-mono w-25">Not streaming</span>
+    <span v-if="isLive" class="w-30 font-mono text-xs text-green-400">Live for {{ uptime }}</span>
+    <span v-else-if="isTransitioning" class="w-25 font-mono text-xs text-yellow-400">Checking stream</span>
+    <span v-else class="w-25 font-mono text-xs text-muted-foreground">Not streaming</span>
   </div>
   <div v-else>
     <!-- Plain anchor: '/' is a Blade view, not an Inertia page. -->

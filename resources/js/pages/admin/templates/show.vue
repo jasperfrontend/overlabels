@@ -17,7 +17,7 @@ const props = defineProps<{
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
   { title: 'Templates', href: route('admin.templates.index') },
-  { title: props.template.name, href: route('admin.templates.show', props.template.id) }
+  { title: props.template.name, href: route('admin.templates.show', props.template.id) },
 ];
 
 const visibilityForm = useForm({ is_public: props.template.is_public });
@@ -35,9 +35,11 @@ function submitDelete() {
 </script>
 
 <template>
-  <Head><title>Admin — {{ template.name }}</title></Head>
+  <Head
+    ><title>Admin — {{ template.name }}</title></Head
+  >
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex flex-col gap-6 p-4 max-w-3xl">
+    <div class="flex max-w-3xl flex-col gap-6 p-4">
       <div class="flex items-start justify-between">
         <div>
           <h1 class="text-2xl font-bold">{{ template.name }}</h1>
@@ -45,19 +47,16 @@ function submitDelete() {
         </div>
         <div class="flex gap-2">
           <Badge variant="outline">{{ template.type }}</Badge>
-          <Badge :variant="template.is_public ? 'default' : 'secondary'">{{ template.is_public ? 'public' : 'private'
-            }}
-          </Badge>
+          <Badge :variant="template.is_public ? 'default' : 'secondary'">{{ template.is_public ? 'public' : 'private' }} </Badge>
         </div>
       </div>
 
       <Card>
-        <CardContent class="pt-4 grid grid-cols-2 gap-4 text-sm">
+        <CardContent class="grid grid-cols-2 gap-4 pt-4 text-sm">
           <div>
             <span class="text-muted-foreground">Owner</span>
             <div>
-              <a v-if="template.owner" :href="route('admin.users.show', template.owner.id)"
-                 class="hover:underline">{{ template.owner.name }}</a>
+              <a v-if="template.owner" :href="route('admin.users.show', template.owner.id)" class="hover:underline">{{ template.owner.name }}</a>
               <span v-else>—</span>
             </div>
           </div>

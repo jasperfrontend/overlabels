@@ -22,14 +22,14 @@ const { processTemplate } = useConditionalTemplates();
  * would corrupt selectors like `.a > .b`.
  */
 export function renderTemplateSource(
-    source: string | null | undefined,
-    data: Record<string, unknown>,
-    locale: string,
-    encode: boolean = true,
+  source: string | null | undefined,
+  data: Record<string, unknown>,
+  locale: string,
+  encode: boolean = true,
 ): string {
-    if (!source) return '';
+  if (!source) return '';
 
-    const withBlocks = processTemplate(source, data, { locale, encode });
+  const withBlocks = processTemplate(source, data, { locale, encode });
 
-    return replaceTagsWithFormatting(withBlocks, data, locale, encode);
+  return replaceTagsWithFormatting(withBlocks, data, locale, encode);
 }

@@ -12,12 +12,12 @@ import type { AppPageProps } from '@/types';
 import { computed } from 'vue';
 
 withDefaults(
-    defineProps<{
-        breadcrumbs?: BreadcrumbItemType[];
-    }>(),
-    {
-        breadcrumbs: () => [],
-    },
+  defineProps<{
+    breadcrumbs?: BreadcrumbItemType[];
+  }>(),
+  {
+    breadcrumbs: () => [],
+  },
 );
 
 const page = usePage<AppPageProps>();
@@ -25,30 +25,30 @@ const user = computed(() => page.props.auth.user);
 </script>
 
 <template>
-    <header
-        class="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/70 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
-    >
-        <div class="flex w-full items-center">
-          <div class="flex items-center gap-2">
-            <SidebarTrigger class="-ml-1" />
-            <template v-if="breadcrumbs && breadcrumbs.length > 0">
-                <Breadcrumbs class="hidden md:block" :breadcrumbs="breadcrumbs" />
-            </template>
-          </div>
-          <div class="ml-auto w-auto flex items-center">
-            <div v-if="user" class="p-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger class="group flex items-center gap-2 p-2 px-3 rounded hover:bg-sidebar-accent cursor-pointer outline-none">
-                  <UserInfo :user="user" />
-                  <ChevronDown class="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="min-w-56 rounded-lg" side="bottom" align="end" :side-offset="4">
-                  <UserMenuContent :user="user" />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <DarkModeToggle />
-          </div>
+  <header
+    class="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/70 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4"
+  >
+    <div class="flex w-full items-center">
+      <div class="flex items-center gap-2">
+        <SidebarTrigger class="-ml-1" />
+        <template v-if="breadcrumbs && breadcrumbs.length > 0">
+          <Breadcrumbs class="hidden md:block" :breadcrumbs="breadcrumbs" />
+        </template>
+      </div>
+      <div class="ml-auto flex w-auto items-center">
+        <div v-if="user" class="p-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger class="group flex cursor-pointer items-center gap-2 rounded p-2 px-3 outline-none hover:bg-sidebar-accent">
+              <UserInfo :user="user" />
+              <ChevronDown class="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="min-w-56 rounded-lg" side="bottom" align="end" :side-offset="4">
+              <UserMenuContent :user="user" />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-    </header>
+        <DarkModeToggle />
+      </div>
+    </div>
+  </header>
 </template>

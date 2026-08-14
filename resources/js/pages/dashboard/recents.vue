@@ -105,7 +105,7 @@ watch(
       toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 /* ------------------ Bulk delete: clearing out the feed ------------------ */
@@ -120,9 +120,7 @@ const selectAllMatching = ref(false);
 const confirmingDelete = ref(false);
 const deleting = ref(false);
 
-const deleteCount = computed(() =>
-  selectAllMatching.value ? props.recentEvents.total : selection.value.length,
-);
+const deleteCount = computed(() => (selectAllMatching.value ? props.recentEvents.total : selection.value.length));
 
 // Offer the filter-scoped escape hatch whenever the picks cannot already cover
 // everything the current filters match.
@@ -186,7 +184,7 @@ function refresh() {
       setTimeout(() => {
         refreshing.value = false;
       }, 600);
-    }
+    },
   });
 }
 
@@ -223,9 +221,7 @@ const feedSaved = ref(false);
 // answer, independent of whatever is half-typed in the form below.
 const activeFeeds = computed(() => props.userLists.filter((l) => l.feed_enabled));
 
-const selectedList = computed(() =>
-  props.userLists.find((l) => l.id === selectedListId.value) ?? null,
-);
+const selectedList = computed(() => props.userLists.find((l) => l.id === selectedListId.value) ?? null);
 
 // Has the form drifted from the selected list's saved config? Drives the
 // button label and a "you have unsaved changes" hint.
@@ -269,9 +265,13 @@ watch(selectedListId, () => {
 
 // Any manual edit clears the "Saved" confirmation so it always reflects the
 // last persisted state, never a stale tick next to changed inputs.
-watch([feedEnabled, allTypes, selectedTypes, feedMaxItems], () => {
-  if (!savingFeed.value) feedSaved.value = false;
-}, { deep: true });
+watch(
+  [feedEnabled, allTypes, selectedTypes, feedMaxItems],
+  () => {
+    if (!savingFeed.value) feedSaved.value = false;
+  },
+  { deep: true },
+);
 
 function toggleType(type: string, checked: boolean) {
   if (checked) {
@@ -320,12 +320,12 @@ function stopFeed(list: FeedList) {
 const breadcrumbs = [
   {
     title: 'Dashboard',
-    href: '/dashboard'
+    href: '/dashboard',
   },
   {
     title: 'Recent events',
-    href: '/dashboard/recents'
-  }
+    href: '/dashboard/recents',
+  },
 ];
 </script>
 
@@ -342,7 +342,7 @@ const breadcrumbs = [
           <div class="flex items-center gap-3">
             <Radio class="mr-1 h-6 w-6" />
             <Heading title="Recent alerts and stream events" />
-            <button class="btn btn-chill btn-xs gap-1.5 cursor-pointer" :disabled="refreshing" @click="refresh">
+            <button class="btn btn-chill btn-xs cursor-pointer gap-1.5" :disabled="refreshing" @click="refresh">
               <RefreshCw class="h-3 w-3" :class="{ 'animate-spin': refreshing }" />
               {{ refreshing ? 'Working' : 'Refresh' }}
             </button>
@@ -371,12 +371,7 @@ const breadcrumbs = [
             <!-- Source -->
             <div class="flex flex-col gap-1">
               <label for="filter-source">Source</label>
-              <select
-                v-model="filters.source"
-                @change="applyFilter"
-                class="input-border h-10 w-full cursor-pointer"
-                id="filter-source"
-              >
+              <select v-model="filters.source" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-source">
                 <option value="">All sources</option>
                 <option v-for="src in facets.sources" :key="src" :value="src">
                   {{ sourceLabel(src) }}
@@ -387,12 +382,7 @@ const breadcrumbs = [
             <!-- Event Type -->
             <div class="flex flex-col gap-1">
               <label for="filter-event-type">Event type</label>
-              <select
-                v-model="filters.event_type"
-                @change="applyFilter"
-                class="input-border h-10 w-full cursor-pointer"
-                id="filter-event-type"
-              >
+              <select v-model="filters.event_type" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-event-type">
                 <option value="">All event types</option>
                 <option v-for="type in facets.event_types" :key="type" :value="type">
                   {{ eventTypeLabel(type) }}
@@ -403,12 +393,7 @@ const breadcrumbs = [
             <!-- Time Range -->
             <div class="flex flex-col gap-1">
               <label for="filter-range">Time range</label>
-              <select
-                v-model="filters.range"
-                @change="applyFilter"
-                class="input-border h-10 w-full cursor-pointer"
-                id="filter-range"
-              >
+              <select v-model="filters.range" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-range">
                 <option value="all">All time</option>
                 <option value="hour">Last hour</option>
                 <option value="24h">Last 24 hours</option>
@@ -435,10 +420,7 @@ const breadcrumbs = [
                 <!-- Collapsed, the one thing still worth surfacing is whether a
                      feed is actually running, and only when one is - otherwise
                      this is exactly the noise the collapse is here to remove. -->
-                <span
-                  v-if="!feedPanelOpen && activeFeeds.length > 0"
-                  class="flex items-center gap-1.5 text-xs text-foreground"
-                >
+                <span v-if="!feedPanelOpen && activeFeeds.length > 0" class="flex items-center gap-1.5 text-xs text-foreground">
                   <span class="h-2 w-2 shrink-0 rounded-full bg-green-500"></span>
                   {{ activeFeeds.length }} {{ activeFeeds.length === 1 ? 'list' : 'lists' }} receiving
                 </span>
@@ -450,222 +432,175 @@ const breadcrumbs = [
 
           <div v-if="feedPanelOpen" id="feed-panel">
             <p class="mt-3 text-sm text-foreground">
-              Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay
-              (loop it with <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
+              Mirror your recent events into one of your Lists - a live "recent events" feed you can drop into any overlay (loop it with
+              <code class="rounded-sm bg-background px-1 py-0.5 text-xs">foreach</code> and cap with
               <code class="rounded-sm bg-background px-1 py-0.5 text-xs">list.x.index</code>) or read from your own app
-              <a href="/help/lists-realtime" class="text-violet-400 hover:underline" target="_blank">over websockets</a>.
-              Turning it on backfills the list with events that already happened.
+              <a href="/help/lists-realtime" class="text-violet-400 hover:underline" target="_blank">over websockets</a>. Turning it on backfills the
+              list with events that already happened.
             </p>
 
-          <!-- Which lists are receiving events right now -->
-          <div class="mt-4 border-t border-sidebar-border pt-4">
-            <div v-if="activeFeeds.length === 0" class="flex items-center gap-2 text-sm text-foreground">
-              <span class="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50"></span>
-              No lists are receiving events yet. Pick one below to start a feed.
-            </div>
-            <div v-else class="space-y-2">
-              <p class="text-sm font-medium text-foreground">
-                Receiving events ({{ activeFeeds.length }} {{ activeFeeds.length === 1 ? 'list' : 'lists' }}):
-              </p>
-              <ul class="space-y-1.5">
-                <li
-                  v-for="f in activeFeeds"
-                  :key="f.id"
-                  class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
-                >
-                  <span
-                    class="h-2 w-2 shrink-0 rounded-full"
-                    :class="f.disabled ? 'bg-amber-500' : 'bg-green-500'"
-                    :title="f.disabled ? 'List is disabled - appends are paused' : 'Receiving events'"
-                  ></span>
-                  <a :href="`/dashboard/lists/${f.slug}`" class="font-medium text-foreground hover:underline cursor-pointer">
-                    {{ f.label || f.slug }}
-                  </a>
-                  <span class="text-foreground">·</span>
-                  <span class="text-foreground">{{ typeSummary(f.feed_types) }}</span>
-                  <span class="text-foreground">·</span>
-                  <span class="font-medium text-foreground">{{ f.items_count }} captured</span>
-                  <span v-if="f.last_item" class="max-w-[18rem] truncate text-foreground">- latest: "{{ f.last_item }}"</span>
-                  <span v-if="f.disabled" class="text-amber-500">- list disabled, appends paused</span>
-                  <button
-                    type="button"
-                    class="btn btn-chill btn-xs cursor-pointer"
-                    @click="selectedListId = f.id"
-                  >
-                    Edit
-                  </button>
-                  <button type="button" class="btn btn-chill btn-xs cursor-pointer" @click="stopFeed(f)">
-                    Turn off
-                  </button>
-                </li>
-              </ul>
-              <p class="text-xs text-foreground">Counts update when you Refresh after an event fires.</p>
-            </div>
-          </div>
-
-          <div v-if="userLists.length === 0" class="mt-4 text-sm text-foreground">
-            You don't have any editable lists yet.
-            <a href="/dashboard/lists" class="text-primary underline cursor-pointer">Create a list</a> first, then come back here.
-          </div>
-
-          <div v-else class="mt-4 space-y-4 border-t border-sidebar-border pt-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <!-- Target list -->
-              <div class="flex flex-col gap-1">
-                <label for="feed-list">Configure a list</label>
-                <select
-                  v-model="selectedListId"
-                  class="input-border h-10 w-full cursor-pointer"
-                  id="feed-list"
-                >
-                  <option :value="null">- pick a list -</option>
-                  <option v-for="l in userLists" :key="l.id" :value="l.id">
-                    {{ l.label || l.slug }}{{ l.feed_enabled ? ' (feed on)' : '' }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Keep latest N -->
-              <div class="flex flex-col gap-1">
-                <label for="feed-cap">Keep latest</label>
-                <input
-                  v-model.number="feedMaxItems"
-                  :disabled="!selectedList"
-                  type="number"
-                  min="1"
-                  max="500"
-                  class="input-border h-10 w-full disabled:opacity-50"
-                  id="feed-cap"
-                />
-              </div>
-
-              <!-- Enabled -->
-              <div class="flex flex-col gap-1">
-                <label for="feed-enabled">Enable?</label>
-                <label for="feed-enabled" class="flex h-10 items-center gap-2" :class="selectedList ? 'cursor-pointer' : 'opacity-50'">
-                  <input id="feed-enabled" type="checkbox" v-model="feedEnabled" :disabled="!selectedList" class="cursor-pointer" />
-                  <span class="text-sm text-foreground">Enabled</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Current state of the selected list -->
-            <div v-if="selectedList" class="flex flex-wrap items-center gap-2 text-sm text-foreground">
-              <template v-if="selectedList.feed_enabled">
-                <span class="h-2 w-2 shrink-0 rounded-full bg-green-500"></span>
-                <span>Active feed - {{ selectedList.items_count }} events captured</span>
-                <span v-if="selectedList.last_item" class="max-w-[18rem] truncate">- latest: "{{ selectedList.last_item }}"</span>
-              </template>
-              <template v-else>
+            <!-- Which lists are receiving events right now -->
+            <div class="mt-4 border-t border-sidebar-border pt-4">
+              <div v-if="activeFeeds.length === 0" class="flex items-center gap-2 text-sm text-foreground">
                 <span class="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50"></span>
-                <span>Not a feed yet{{ selectedList.items_count ? ` - has ${selectedList.items_count} existing items` : '' }}</span>
-              </template>
-              <span v-if="selectedList.disabled" class="text-amber-500">
-                - this list is disabled, so it won't capture events until you re-enable it on the list page
-              </span>
-            </div>
-
-            <!-- Event type filter -->
-            <fieldset v-if="selectedList" class="space-y-2" :disabled="!feedEnabled" :class="feedEnabled ? '' : 'opacity-50'">
-              <label class="flex w-fit items-center gap-2 cursor-pointer">
-                <input type="checkbox" v-model="allTypes" class="cursor-pointer" />
-                <span class="text-sm text-foreground">All event types</span>
-              </label>
-
-              <div v-if="!allTypes" class="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
-                <label
-                  v-for="type in facets.event_types"
-                  :key="type"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="selectedTypes.includes(type)"
-                    @change="toggleType(type, ($event.target as HTMLInputElement).checked)"
-                    class="cursor-pointer"
-                  />
-                  <span class="truncate text-sm text-foreground">{{ eventTypeLabel(type) }}</span>
-                </label>
+                No lists are receiving events yet. Pick one below to start a feed.
               </div>
-              <p v-if="!allTypes && facets.event_types.length === 0" class="text-sm text-foreground">
-                No event types recorded yet - leave "All event types" on to capture everything going forward.
-              </p>
-            </fieldset>
-
-            <div class="flex flex-wrap items-center gap-3">
-              <button
-                class="btn btn-primary cursor-pointer disabled:opacity-50"
-                :disabled="!selectedList || savingFeed || (!feedDirty && feedSaved)"
-                @click="saveFeed"
-              >
-                {{ saveLabel }}
-              </button>
-              <a
-                v-if="selectedList"
-                :href="`/dashboard/lists/${selectedList.slug}`"
-                class="text-sm text-primary underline cursor-pointer"
-              >
-                View list
-              </a>
-              <span v-if="feedSaved && !feedDirty" class="flex items-center gap-1 text-sm text-green-500">
-                <Check class="h-4 w-4" /> Saved
-              </span>
-              <span v-else-if="selectedList && feedDirty" class="text-sm text-amber-500">Unsaved changes</span>
+              <div v-else class="space-y-2">
+                <p class="text-sm font-medium text-foreground">
+                  Receiving events ({{ activeFeeds.length }} {{ activeFeeds.length === 1 ? 'list' : 'lists' }}):
+                </p>
+                <ul class="space-y-1.5">
+                  <li v-for="f in activeFeeds" :key="f.id" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                    <span
+                      class="h-2 w-2 shrink-0 rounded-full"
+                      :class="f.disabled ? 'bg-amber-500' : 'bg-green-500'"
+                      :title="f.disabled ? 'List is disabled - appends are paused' : 'Receiving events'"
+                    ></span>
+                    <a :href="`/dashboard/lists/${f.slug}`" class="cursor-pointer font-medium text-foreground hover:underline">
+                      {{ f.label || f.slug }}
+                    </a>
+                    <span class="text-foreground">·</span>
+                    <span class="text-foreground">{{ typeSummary(f.feed_types) }}</span>
+                    <span class="text-foreground">·</span>
+                    <span class="font-medium text-foreground">{{ f.items_count }} captured</span>
+                    <span v-if="f.last_item" class="max-w-[18rem] truncate text-foreground">- latest: "{{ f.last_item }}"</span>
+                    <span v-if="f.disabled" class="text-amber-500">- list disabled, appends paused</span>
+                    <button type="button" class="btn btn-chill btn-xs cursor-pointer" @click="selectedListId = f.id">Edit</button>
+                    <button type="button" class="btn btn-chill btn-xs cursor-pointer" @click="stopFeed(f)">Turn off</button>
+                  </li>
+                </ul>
+                <p class="text-xs text-foreground">Counts update when you Refresh after an event fires.</p>
+              </div>
             </div>
-          </div>
+
+            <div v-if="userLists.length === 0" class="mt-4 text-sm text-foreground">
+              You don't have any editable lists yet.
+              <a href="/dashboard/lists" class="cursor-pointer text-primary underline">Create a list</a> first, then come back here.
+            </div>
+
+            <div v-else class="mt-4 space-y-4 border-t border-sidebar-border pt-4">
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <!-- Target list -->
+                <div class="flex flex-col gap-1">
+                  <label for="feed-list">Configure a list</label>
+                  <select v-model="selectedListId" class="input-border h-10 w-full cursor-pointer" id="feed-list">
+                    <option :value="null">- pick a list -</option>
+                    <option v-for="l in userLists" :key="l.id" :value="l.id">{{ l.label || l.slug }}{{ l.feed_enabled ? ' (feed on)' : '' }}</option>
+                  </select>
+                </div>
+
+                <!-- Keep latest N -->
+                <div class="flex flex-col gap-1">
+                  <label for="feed-cap">Keep latest</label>
+                  <input
+                    v-model.number="feedMaxItems"
+                    :disabled="!selectedList"
+                    type="number"
+                    min="1"
+                    max="500"
+                    class="input-border h-10 w-full disabled:opacity-50"
+                    id="feed-cap"
+                  />
+                </div>
+
+                <!-- Enabled -->
+                <div class="flex flex-col gap-1">
+                  <label for="feed-enabled">Enable?</label>
+                  <label for="feed-enabled" class="flex h-10 items-center gap-2" :class="selectedList ? 'cursor-pointer' : 'opacity-50'">
+                    <input id="feed-enabled" type="checkbox" v-model="feedEnabled" :disabled="!selectedList" class="cursor-pointer" />
+                    <span class="text-sm text-foreground">Enabled</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Current state of the selected list -->
+              <div v-if="selectedList" class="flex flex-wrap items-center gap-2 text-sm text-foreground">
+                <template v-if="selectedList.feed_enabled">
+                  <span class="h-2 w-2 shrink-0 rounded-full bg-green-500"></span>
+                  <span>Active feed - {{ selectedList.items_count }} events captured</span>
+                  <span v-if="selectedList.last_item" class="max-w-[18rem] truncate">- latest: "{{ selectedList.last_item }}"</span>
+                </template>
+                <template v-else>
+                  <span class="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50"></span>
+                  <span>Not a feed yet{{ selectedList.items_count ? ` - has ${selectedList.items_count} existing items` : '' }}</span>
+                </template>
+                <span v-if="selectedList.disabled" class="text-amber-500">
+                  - this list is disabled, so it won't capture events until you re-enable it on the list page
+                </span>
+              </div>
+
+              <!-- Event type filter -->
+              <fieldset v-if="selectedList" class="space-y-2" :disabled="!feedEnabled" :class="feedEnabled ? '' : 'opacity-50'">
+                <label class="flex w-fit cursor-pointer items-center gap-2">
+                  <input type="checkbox" v-model="allTypes" class="cursor-pointer" />
+                  <span class="text-sm text-foreground">All event types</span>
+                </label>
+
+                <div v-if="!allTypes" class="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                  <label v-for="type in facets.event_types" :key="type" class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :checked="selectedTypes.includes(type)"
+                      @change="toggleType(type, ($event.target as HTMLInputElement).checked)"
+                      class="cursor-pointer"
+                    />
+                    <span class="truncate text-sm text-foreground">{{ eventTypeLabel(type) }}</span>
+                  </label>
+                </div>
+                <p v-if="!allTypes && facets.event_types.length === 0" class="text-sm text-foreground">
+                  No event types recorded yet - leave "All event types" on to capture everything going forward.
+                </p>
+              </fieldset>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <button
+                  class="btn btn-primary cursor-pointer disabled:opacity-50"
+                  :disabled="!selectedList || savingFeed || (!feedDirty && feedSaved)"
+                  @click="saveFeed"
+                >
+                  {{ saveLabel }}
+                </button>
+                <a v-if="selectedList" :href="`/dashboard/lists/${selectedList.slug}`" class="cursor-pointer text-sm text-primary underline">
+                  View list
+                </a>
+                <span v-if="feedSaved && !feedDirty" class="flex items-center gap-1 text-sm text-green-500"> <Check class="h-4 w-4" /> Saved </span>
+                <span v-else-if="selectedList && feedDirty" class="text-sm text-amber-500">Unsaved changes</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
           <!-- Selection action bar. Doubles as the confirm step so the whole
                interaction stays in place instead of opening a dialog. -->
-          <div
-            v-if="deleteCount > 0"
-            class="mb-3 rounded-sm border border-sidebar-border bg-sidebar p-3"
-          >
+          <div v-if="deleteCount > 0" class="mb-3 rounded-sm border border-sidebar-border bg-sidebar p-3">
             <template v-if="!confirmingDelete">
               <div class="flex flex-wrap items-center gap-3">
-                <span class="text-sm text-foreground">
-                  {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }} selected
-                </span>
+                <span class="text-sm text-foreground"> {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }} selected </span>
                 <button class="btn btn-danger btn-xs cursor-pointer" @click="confirmingDelete = true">
                   <Trash2 class="h-3.5 w-3.5" />
                   Delete
                 </button>
                 <button class="btn btn-chill btn-xs cursor-pointer" @click="clearSelection">Clear</button>
               </div>
-              <button
-                v-if="showSelectAllHatch"
-                class="mt-2 cursor-pointer text-sm text-primary underline"
-                @click="selectAllMatching = true"
-              >
+              <button v-if="showSelectAllHatch" class="mt-2 cursor-pointer text-sm text-primary underline" @click="selectAllMatching = true">
                 Select all {{ recentEvents.total }} events matching these filters
               </button>
             </template>
 
             <div v-else class="flex flex-col gap-3">
               <div>
-                <p class="text-sm font-medium text-foreground">
-                  Delete {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }}?
-                </p>
+                <p class="text-sm font-medium text-foreground">Delete {{ deleteCount }} event{{ deleteCount === 1 ? '' : 's' }}?</p>
                 <p class="mt-1 text-sm text-foreground">
-                  This permanently removes them from your event feed, and they will no longer count
-                  toward your stream stats. Controls like donation counters are not affected.
+                  This permanently removes them from your event feed, and they will no longer count toward your stream stats. Controls like donation
+                  counters are not affected.
                 </p>
               </div>
               <div class="flex flex-wrap items-center gap-3">
-                <button
-                  class="btn btn-danger btn-xs cursor-pointer disabled:opacity-50"
-                  :disabled="deleting"
-                  @click="performDelete"
-                >
+                <button class="btn btn-danger btn-xs cursor-pointer disabled:opacity-50" :disabled="deleting" @click="performDelete">
                   {{ deleting ? 'Deleting...' : 'Yes, delete' }}
                 </button>
-                <button
-                  class="btn btn-chill btn-xs cursor-pointer disabled:opacity-50"
-                  :disabled="deleting"
-                  @click="confirmingDelete = false"
-                >
+                <button class="btn btn-chill btn-xs cursor-pointer disabled:opacity-50" :disabled="deleting" @click="confirmingDelete = false">
                   Cancel
                 </button>
               </div>
@@ -680,21 +615,11 @@ const breadcrumbs = [
             @update:selection="selection = $event"
           />
 
-          <EventsEmptyState
-            v-else
-            :search="filters.search"
-            :range="filters.range"
-            @clear-search="clearSearch"
-          />
+          <EventsEmptyState v-else :search="filters.search" :range="filters.range" @clear-search="clearSearch" />
 
           <!-- Pagination -->
           <div v-if="recentEvents.last_page > 1" class="mt-6">
-            <Pagination
-              :links="recentEvents.links"
-              :from="recentEvents.from"
-              :to="recentEvents.to"
-              :total="recentEvents.total"
-            />
+            <Pagination :links="recentEvents.links" :from="recentEvents.from" :to="recentEvents.to" :total="recentEvents.total" />
           </div>
         </div>
       </section>

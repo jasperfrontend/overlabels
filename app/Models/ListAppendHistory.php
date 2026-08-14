@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Append-only ledger of every successful list-append fire. Powers:
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $chatter_login
  * @property string $value
  * @property int|null $stream_session_id
- * @property \Illuminate\Support\Carbon $fired_at
+ * @property Carbon $fired_at
  */
 class ListAppendHistory extends Model
 {

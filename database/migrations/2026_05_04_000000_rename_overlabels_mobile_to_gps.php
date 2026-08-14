@@ -52,10 +52,10 @@ return new class extends Migration
             ->count();
 
         if ($conflicts > 0) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Cannot proceed: $conflicts user-scoped control(s) have key='gps'. ".
                 "The 'gps' slug is being claimed for the renamed Overlabels mobile service. ".
-                "Rename those custom controls before running this migration."
+                'Rename those custom controls before running this migration.'
             );
         }
 
@@ -192,6 +192,7 @@ return new class extends Migration
                         $isAt = str_ends_with($key, '_at');
                         $base = $isAt ? substr($key, 0, -3) : $key;
                         $oldBase = $reverseMap[$base] ?? $base;
+
                         return 'overlabels-mobile:'.$oldBase.($isAt ? '_at' : '');
                     }, $config['dependencies'])));
                     if ($newDeps !== $config['dependencies']) {
@@ -240,6 +241,7 @@ return new class extends Migration
         $isAt = str_ends_with($key, '_at');
         $base = $isAt ? substr($key, 0, -3) : $key;
         $newBase = self::KEY_MAP[$base] ?? $base;
+
         return $newBase.($isAt ? '_at' : '');
     }
 
@@ -277,6 +279,7 @@ return new class extends Migration
                 return $dep;
             }
             $key = substr($dep, strlen('overlabels-mobile:'));
+
             return 'gps:'.$this->mapKey($key);
         }, $deps);
 
@@ -302,6 +305,7 @@ return new class extends Migration
             $isAt = str_ends_with($key, '_at');
             $base = $isAt ? substr($key, 0, -3) : $key;
             $oldBase = $reverseMap[$base] ?? $base;
+
             return $oldBase.($isAt ? '_at' : '');
         };
 
@@ -321,6 +325,7 @@ return new class extends Migration
                 $isAt = str_ends_with($key, '_at');
                 $base = $isAt ? substr($key, 0, -3) : $key;
                 $oldBase = $reverseMap[$base] ?? $base;
+
                 return '[[[c:overlabels-mobile:'.$oldBase.($isAt ? '_at' : '').$m[2].']]]';
             },
             $content

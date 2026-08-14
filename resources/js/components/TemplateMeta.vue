@@ -56,12 +56,9 @@ function copyTag(tag: string, event: MouseEvent) {
 <template>
   <div>
     <div class="bg-background">
-      <div class="max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-2 rounded-sm p-4 text-sm">
-        <div
-          class="flex items-center"
-          :title="`Created ${new Date(createdAt).toLocaleDateString(userLocale)}`"
-        >
-          <span class="text-violet-400"><CalendarIcon class="size-4 -mt-0.5" /></span>
+      <div class="grid max-w-2xl grid-cols-1 gap-2 rounded-sm p-4 text-sm md:grid-cols-2">
+        <div class="flex items-center" :title="`Created ${new Date(createdAt).toLocaleDateString(userLocale)}`">
+          <span class="text-violet-400"><CalendarIcon class="-mt-0.5 size-4" /></span>
           <span class="ml-2">Created: {{ new Date(createdAt).toLocaleDateString(userLocale) }}</span>
         </div>
 
@@ -70,19 +67,19 @@ function copyTag(tag: string, event: MouseEvent) {
           class="flex items-center"
           :title="`Last updated ${new Date(updatedAt).toLocaleDateString(userLocale)}`"
         >
-          <span class="text-violet-400"><CalendarIcon class="size-4 -mt-0.5" /></span>
+          <span class="text-violet-400"><CalendarIcon class="-mt-0.5 size-4" /></span>
           <span class="ml-2">Last updated: {{ new Date(updatedAt).toLocaleDateString(userLocale) }}</span>
         </div>
         <div class="flex items-center" :title="`${viewCount} ${viewCount === 1 ? ' view' : 'views'}`">
-          <span class="text-violet-400"><EyeIcon class="size-4 -mt-0.5" /></span>
+          <span class="text-violet-400"><EyeIcon class="-mt-0.5 size-4" /></span>
           <span class="ml-2">{{ viewCount === 1 ? 'View' : 'Views' }}: {{ viewCount }}</span>
         </div>
         <div class="flex items-center" :title="`Owned by ${owner}`">
-          <span class="text-violet-400"><UserStar class="size-4 -mt-0.5" /></span>
+          <span class="text-violet-400"><UserStar class="-mt-0.5 size-4" /></span>
           <span class="ml-2">Owner: {{ owner }}</span>
         </div>
         <div class="flex items-center" :title="`Copies ${forkCount}`">
-          <span class="text-violet-400"><Copy class="size-4 -mt-0.5" /></span>
+          <span class="text-violet-400"><Copy class="-mt-0.5 size-4" /></span>
           <span class="ml-2">Copies: {{ forkCount }}</span>
         </div>
         <div v-if="forkParent" class="col-span-2">
@@ -122,7 +119,7 @@ function copyTag(tag: string, event: MouseEvent) {
           :key="tag"
           type="button"
           class="btn btn-chill btn-xs cursor-pointer font-mono transition-colors"
-          :class="copiedTag === tag ? 'ring-1 ring-green-500 dark:bg-green-300 text-accent-foreground dark:text-accent' : ''"
+          :class="copiedTag === tag ? 'text-accent-foreground ring-1 ring-green-500 dark:bg-green-300 dark:text-accent' : ''"
           :title="`Copy [[[${tag}]]] to clipboard`"
           @click="copyTag(tag, $event)"
         >

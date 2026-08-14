@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\EventTemplateMapping;
-use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayTemplate;
 use App\Models\User;

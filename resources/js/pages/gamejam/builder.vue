@@ -57,9 +57,7 @@ function makeEmptyGrid(w: number, h: number): (RoomCell | null)[][] {
   return Array.from({ length: h }, () => Array.from({ length: w }, () => null));
 }
 
-const cells = ref<(RoomCell | null)[][]>(
-  props.roomFile?.cells ?? makeEmptyGrid(width.value, height.value),
-);
+const cells = ref<(RoomCell | null)[][]>(props.roomFile?.cells ?? makeEmptyGrid(width.value, height.value));
 
 const manifest = ref<AssetManifest>({ tiles: [], objects: [], sounds: [] });
 const manifestLoading = ref(false);
@@ -206,11 +204,14 @@ const usedTiles = computed(() => {
     for (const cell of row) {
       if (!cell?.bg || seen.has(cell.bg)) continue;
       const known = manifest.value.tiles.find((t) => t.path === cell.bg);
-      seen.set(cell.bg, known ?? {
-        name: cell.bg.split('/').pop() ?? cell.bg,
-        path: cell.bg,
-        size: 0,
-      });
+      seen.set(
+        cell.bg,
+        known ?? {
+          name: cell.bg.split('/').pop() ?? cell.bg,
+          path: cell.bg,
+          size: 0,
+        },
+      );
     }
   }
   return Array.from(seen.values());
@@ -231,69 +232,49 @@ const overlayLayerStyle = computed(() => ({
 </script>
 
 <template>
-  <Head><title>Room Builder - Room {{ room }}</title></Head>
+  <Head
+    ><title>Room Builder - Room {{ room }}</title></Head
+  >
 
   <!-- Full-screen tool, deliberately outside AppLayout, so it mounts the app's
        ConfirmDialog itself. -->
   <ConfirmDialog />
 
-  <div class="h-screen bg-background text-foreground flex flex-col overflow-hidden">
-
-    <div class="flex-1 min-h-0 grid grid-cols-[280px_1fr_240px] gap-0">
+  <div class="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div class="grid min-h-0 flex-1 grid-cols-[280px_1fr_240px] gap-0">
       <!-- Asset sidebar -->
-      <aside class="border-r border-border flex flex-col overflow-y-auto min-h-0">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+      <aside class="flex min-h-0 flex-col overflow-y-auto border-r border-border">
+        <div class="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
             <div class="text-sm font-medium">Tiles</div>
-            <div class="text-xs text-foreground">
-              public/rooms/{{ room }}/tiles/
-            </div>
+            <div class="text-xs text-foreground">public/rooms/{{ room }}/tiles/</div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="cursor-pointer"
-            :disabled="manifestLoading"
-            title="Reload asset folder"
-            @click="loadManifest"
-          >
+          <Button variant="ghost" size="sm" class="cursor-pointer" :disabled="manifestLoading" title="Reload asset folder" @click="loadManifest">
             <RefreshCw class="size-4" :class="{ 'animate-spin': manifestLoading }" />
           </Button>
         </div>
 
-        <div class="flex gap-2 px-4 py-2 border-b border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            class="cursor-pointer flex-1"
-            :class="{ 'ring-2 ring-primary': !eraseMode }"
-            @click="eraseMode = false"
-          >
-            <Paintbrush class="size-4 mr-1" />
+        <div class="flex gap-2 border-b border-border px-4 py-2">
+          <Button variant="outline" size="sm" class="flex-1 cursor-pointer" :class="{ 'ring-2 ring-primary': !eraseMode }" @click="eraseMode = false">
+            <Paintbrush class="mr-1 size-4" />
             Paint
           </Button>
           <Button
             variant="outline"
             size="sm"
-            class="cursor-pointer flex-1"
+            class="flex-1 cursor-pointer"
             :class="{ 'ring-2 ring-destructive': eraseMode }"
             @click="eraseMode = true"
           >
-            <Eraser class="size-4 mr-1" />
+            <Eraser class="mr-1 size-4" />
             Erase
           </Button>
         </div>
 
-        <div class="flex flex-col gap-2 px-4 py-3 border-b border-border">
+        <div class="flex flex-col gap-2 border-b border-border px-4 py-3">
           <div class="flex flex-col gap-1">
             <Label for="filter-input" class="text-xs">CSS Filter</Label>
-            <Input
-              id="filter-input"
-              v-model="filter"
-              placeholder="hue-rotate(180deg)"
-              class="text-xs"
-              @update:model-value="dirty = true"
-            />
+            <Input id="filter-input" v-model="filter" placeholder="hue-rotate(180deg)" class="text-xs" @update:model-value="dirty = true" />
           </div>
           <div class="flex items-end gap-2">
             <div class="flex flex-col gap-1">
@@ -302,11 +283,11 @@ const overlayLayerStyle = computed(() => ({
                 id="overlay-color-input"
                 v-model="overlayColor"
                 type="color"
-                class="w-16 h-8 p-0.5 cursor-pointer"
+                class="h-8 w-16 cursor-pointer p-0.5"
                 @update:model-value="dirty = true"
               />
             </div>
-            <div class="flex flex-col gap-1 flex-1">
+            <div class="flex flex-1 flex-col gap-1">
               <Label for="overlay-opacity-input" class="text-xs">Opacity ({{ overlayOpacity.toFixed(2) }})</Label>
               <input
                 id="overlay-opacity-input"
@@ -322,51 +303,41 @@ const overlayLayerStyle = computed(() => ({
           </div>
         </div>
 
-        <div class="px-4 py-2 border-b border-border">
+        <div class="border-b border-border px-4 py-2">
           <Label for="tile-search-input" class="text-xs">Search tiles</Label>
-          <Input
-            id="tile-search-input"
-            v-model="tileSearch"
-            placeholder="Filter by filename..."
-            class="text-xs mt-1"
-          />
+          <Input id="tile-search-input" v-model="tileSearch" placeholder="Filter by filename..." class="mt-1 text-xs" />
         </div>
 
         <div class="flex-1 p-3">
-          <div v-if="manifest.tiles.length === 0" class="text-xs text-foreground p-2 leading-relaxed">
+          <div v-if="manifest.tiles.length === 0" class="p-2 text-xs leading-relaxed text-foreground">
             No tiles yet. Drop PNGs into
-            <code class="bg-muted px-1 rounded">public/rooms/{{ room }}/tiles/</code>
+            <code class="rounded bg-muted px-1">public/rooms/{{ room }}/tiles/</code>
             then hit the refresh button.
           </div>
-          <div v-else-if="filteredTiles.length === 0" class="text-xs text-foreground p-2 leading-relaxed">
-            No tiles match <code class="bg-muted px-1 rounded">{{ tileSearch }}</code>.
+          <div v-else-if="filteredTiles.length === 0" class="p-2 text-xs leading-relaxed text-foreground">
+            No tiles match <code class="rounded bg-muted px-1">{{ tileSearch }}</code
+            >.
           </div>
           <div v-else class="grid grid-cols-3 gap-2">
             <button
               v-for="asset in filteredTiles"
               :key="asset.path"
               type="button"
-              class="aspect-square rounded border border-border bg-muted overflow-hidden hover:border-primary cursor-pointer relative"
-              :class="{ 'ring-2 ring-primary border-primary': selectedAsset === asset.path }"
+              class="relative aspect-square cursor-pointer overflow-hidden rounded border border-border bg-muted hover:border-primary"
+              :class="{ 'border-primary ring-2 ring-primary': selectedAsset === asset.path }"
               :title="asset.name"
-              @click="selectedAsset = asset.path; eraseMode = false"
+              @click="
+                selectedAsset = asset.path;
+                eraseMode = false;
+              "
             >
-              <img
-                :src="asset.path"
-                :alt="asset.name"
-                class="w-full h-full object-cover pixelated"
-                :style="floorImgStyle"
-              />
-              <div
-                v-if="overlayOpacity > 0"
-                class="pointer-events-none absolute inset-0"
-                :style="overlayLayerStyle"
-              ></div>
+              <img :src="asset.path" :alt="asset.name" class="pixelated h-full w-full object-cover" :style="floorImgStyle" />
+              <div v-if="overlayOpacity > 0" class="pointer-events-none absolute inset-0" :style="overlayLayerStyle"></div>
             </button>
           </div>
         </div>
 
-        <div class="border-t border-border px-4 py-2 text-xs text-foreground flex items-center justify-between">
+        <div class="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-foreground">
           <span v-if="tileSearch">{{ filteredTiles.length }} / {{ manifest.tiles.length }} tile{{ manifest.tiles.length === 1 ? '' : 's' }}</span>
           <span v-else>{{ manifest.tiles.length }} tile{{ manifest.tiles.length === 1 ? '' : 's' }}</span>
           <span>{{ paintedCount }} / {{ totalCells }} painted</span>
@@ -374,27 +345,18 @@ const overlayLayerStyle = computed(() => ({
       </aside>
 
       <!-- Canvas -->
-      <main
-        class="overflow-hidden min-h-0 p-6 flex flex-col items-start select-none"
-        @mouseup="stopPaint"
-        @mouseleave="stopPaint"
-      >
+      <main class="flex min-h-0 flex-col items-start overflow-hidden p-6 select-none" @mouseup="stopPaint" @mouseleave="stopPaint">
         <!-- Top bar -->
-        <header class="flex flex-wrap items-end gap-4 border-b border-border mb-8 px-6 py-4">
+        <header class="mb-8 flex flex-wrap items-end gap-4 border-b border-border px-6 py-4">
           <div>
             <div class="text-xs text-muted-foreground">Room Builder (dev)</div>
             <h1 class="text-xl font-semibold">Room {{ room }}</h1>
           </div>
 
-          <div class="flex items-end gap-3 ml-auto flex-wrap">
+          <div class="ml-auto flex flex-wrap items-end gap-3">
             <div class="flex flex-col gap-1">
               <Label for="tileset-input" class="text-xs">Tileset</Label>
-              <Input
-                id="tileset-input"
-                v-model="tileset"
-                class="w-40"
-                @update:model-value="dirty = true"
-              />
+              <Input id="tileset-input" v-model="tileset" class="w-40" @update:model-value="dirty = true" />
             </div>
             <div class="flex flex-col gap-1">
               <Label for="width-input" class="text-xs">Width</Label>
@@ -411,12 +373,8 @@ const overlayLayerStyle = computed(() => ({
                 <Button variant="outline" class="cursor-pointer" @click="jumpToRoom">Go</Button>
               </div>
             </div>
-            <Button
-              :disabled="saving || !dirty"
-              class="cursor-pointer"
-              @click="save"
-            >
-              <Save class="size-4 mr-2" />
+            <Button :disabled="saving || !dirty" class="cursor-pointer" @click="save">
+              <Save class="mr-2 size-4" />
               {{ saving ? 'Saving...' : dirty ? 'Save' : 'Saved' }}
             </Button>
           </div>
@@ -429,15 +387,11 @@ const overlayLayerStyle = computed(() => ({
               gridTemplateRows: `repeat(${height}, ${cellSize}px)`,
             }"
           >
-            <div
-              v-for="(row, y) in cells"
-              :key="`r-${y}`"
-              style="display: contents"
-            >
+            <div v-for="(row, y) in cells" :key="`r-${y}`" style="display: contents">
               <div
                 v-for="(cell, x) in row"
                 :key="`c-${x}-${y}`"
-                class="relative border border-border/40 bg-muted/40 hover:ring-1 hover:ring-primary cursor-pointer"
+                class="relative cursor-pointer border border-border/40 bg-muted/40 hover:ring-1 hover:ring-primary"
                 :style="{ width: `${cellSize}px`, height: `${cellSize}px` }"
                 :title="`(${x + 1}, ${y + 1})${cell?.bg ? ' ' + cell.bg : ''}`"
                 @mousedown="onCellMouseDown($event, x, y)"
@@ -447,7 +401,7 @@ const overlayLayerStyle = computed(() => ({
                   v-if="cell?.bg"
                   :src="cell.bg"
                   alt=""
-                  class="absolute inset-0 w-full h-full object-cover pixelated pointer-events-none"
+                  class="pixelated pointer-events-none absolute inset-0 h-full w-full object-cover"
                   :style="floorImgStyle"
                 />
               </div>
@@ -456,25 +410,19 @@ const overlayLayerStyle = computed(() => ({
           <!-- Overlay color layer sits above floor tiles but below any future
                item layer (sprites, zombies, etc.). Grid covers the full inner
                area, so inset-0 on the relative wrapper matches exactly. -->
-          <div
-            v-if="overlayOpacity > 0"
-            class="pointer-events-none absolute inset-0"
-            :style="overlayLayerStyle"
-          ></div>
+          <div v-if="overlayOpacity > 0" class="pointer-events-none absolute inset-0" :style="overlayLayerStyle"></div>
         </div>
       </main>
 
       <!-- Used tiles sidebar -->
-      <aside class="border-l border-border flex flex-col overflow-y-auto min-h-0">
-        <div class="px-4 py-3 border-b border-border">
+      <aside class="flex min-h-0 flex-col overflow-y-auto border-l border-border">
+        <div class="border-b border-border px-4 py-3">
           <div class="text-sm font-medium">Used tiles</div>
-          <div class="text-xs text-foreground">
-            Tiles already painted on the grid
-          </div>
+          <div class="text-xs text-foreground">Tiles already painted on the grid</div>
         </div>
 
         <div class="flex-1 p-3">
-          <div v-if="usedTiles.length === 0" class="text-xs text-foreground p-2 leading-relaxed">
+          <div v-if="usedTiles.length === 0" class="p-2 text-xs leading-relaxed text-foreground">
             No tiles painted yet. Pick a tile from the left and start painting.
           </div>
           <div v-else class="grid grid-cols-3 gap-2">
@@ -482,27 +430,21 @@ const overlayLayerStyle = computed(() => ({
               v-for="asset in usedTiles"
               :key="asset.path"
               type="button"
-              class="aspect-square rounded border border-border bg-muted overflow-hidden hover:border-primary cursor-pointer relative"
-              :class="{ 'ring-2 ring-primary border-primary': selectedAsset === asset.path }"
+              class="relative aspect-square cursor-pointer overflow-hidden rounded border border-border bg-muted hover:border-primary"
+              :class="{ 'border-primary ring-2 ring-primary': selectedAsset === asset.path }"
               :title="asset.name"
-              @click="selectedAsset = asset.path; eraseMode = false"
+              @click="
+                selectedAsset = asset.path;
+                eraseMode = false;
+              "
             >
-              <img
-                :src="asset.path"
-                :alt="asset.name"
-                class="w-full h-full object-cover pixelated"
-                :style="floorImgStyle"
-              />
-              <div
-                v-if="overlayOpacity > 0"
-                class="pointer-events-none absolute inset-0"
-                :style="overlayLayerStyle"
-              ></div>
+              <img :src="asset.path" :alt="asset.name" class="pixelated h-full w-full object-cover" :style="floorImgStyle" />
+              <div v-if="overlayOpacity > 0" class="pointer-events-none absolute inset-0" :style="overlayLayerStyle"></div>
             </button>
           </div>
         </div>
 
-        <div class="border-t border-border px-4 py-2 text-xs text-foreground flex items-center justify-between">
+        <div class="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-foreground">
           <span>{{ usedTiles.length }} unique</span>
           <span>{{ paintedCount }} painted</span>
         </div>
@@ -510,7 +452,7 @@ const overlayLayerStyle = computed(() => ({
     </div>
 
     <!-- Status footer -->
-    <footer class="border-t border-border px-6 py-2 text-xs text-foreground flex items-center justify-between">
+    <footer class="flex items-center justify-between border-t border-border px-6 py-2 text-xs text-foreground">
       <div>
         <span v-if="dirty" class="text-amber-500">Unsaved changes</span>
         <span v-else-if="lastSavedAt">Saved at {{ lastSavedAt }} - resources/js/rooms/{{ room }}.json</span>
@@ -518,7 +460,9 @@ const overlayLayerStyle = computed(() => ({
       </div>
       <div class="flex gap-4">
         <span>Cell size: {{ cellSize }}px</span>
-        <span v-if="selectedAsset && !eraseMode">Selected: <code class="bg-muted px-1 rounded">{{ selectedAsset.split('/').pop() }}</code></span>
+        <span v-if="selectedAsset && !eraseMode"
+          >Selected: <code class="rounded bg-muted px-1">{{ selectedAsset.split('/').pop() }}</code></span
+        >
         <span v-else-if="eraseMode" class="text-destructive">Erase mode</span>
         <span v-else class="text-muted-foreground">Pick a tile on the left to start painting</span>
       </div>

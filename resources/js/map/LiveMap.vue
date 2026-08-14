@@ -67,9 +67,7 @@ function goOffline() {
 // keep showing the streamer's name after they've gone offline, and updates
 // to show it when a viewer is watching through a live transition.
 watch(isLive, (live) => {
-  document.title = live
-    ? `${props.streamerName}'s live location - Overlabels`
-    : 'Live location - Overlabels';
+  document.title = live ? `${props.streamerName}'s live location - Overlabels` : 'Live location - Overlabels';
 });
 
 // Initial position + history fetch - only when the server says we're live.
@@ -98,9 +96,7 @@ onMounted(async () => {
             for (const feature of geojson.features ?? []) {
               if (feature.geometry?.type === 'LineString') {
                 // GeoJSON is [lng, lat], Leaflet wants [lat, lng]
-                trail.value = feature.geometry.coordinates.map(
-                  (c: number[]) => [c[1], c[0]] as [number, number],
-                );
+                trail.value = feature.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
                 seededTrailLength.value = trail.value.length;
                 break;
               }
@@ -200,7 +196,15 @@ const markerIcon = new Icon({
          Flips to the live map automatically when the first location_update
          arrives over WebSocket. -->
     <div v-if="!isLive" class="map-offline">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <path d="M5 12.55a11 11 0 0 1 14.08 0" />
         <path d="M1.42 9a16 16 0 0 1 21.16 0" />
         <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
@@ -216,14 +220,7 @@ const markerIcon = new Icon({
 
     <div v-else-if="loading" class="map-loading">Loading map...</div>
 
-    <l-map
-      v-else
-      ref="mapRef"
-      :zoom="zoom"
-      :center="center"
-      :use-global-leaflet="false"
-      class="map-leaflet"
-    >
+    <l-map v-else ref="mapRef" :zoom="zoom" :center="center" :use-global-leaflet="false" class="map-leaflet">
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
@@ -231,23 +228,14 @@ const markerIcon = new Icon({
       />
 
       <!-- Trail polyline -->
-      <l-polyline
-        v-if="trail.length > 1"
-        :lat-lngs="trail"
-        :color="'#7c3aed'"
-        :weight="4"
-        :opacity="0.8"
-      />
+      <l-polyline v-if="trail.length > 1" :lat-lngs="trail" :color="'#7c3aed'" :weight="4" :opacity="0.8" />
 
       <!-- Current position marker -->
-      <l-marker
-        v-if="hasPosition"
-        :lat-lng="center"
-        :icon="markerIcon"
-      >
+      <l-marker v-if="hasPosition" :lat-lng="center" :icon="markerIcon">
         <l-popup>
-          <div style="font-family: system-ui; font-size: 13px;">
-            <strong>{{ streamerName }}</strong><br>
+          <div style="font-family: system-ui; font-size: 13px">
+            <strong>{{ streamerName }}</strong
+            ><br />
             <span v-if="position">{{ formatSpeed(position.speed) }}</span>
           </div>
         </l-popup>
@@ -271,7 +259,10 @@ const markerIcon = new Icon({
   padding: 10px 16px;
   background: #171717;
   border-bottom: 1px solid #262626;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #e5e5e5;
   font-size: 14px;
   flex-shrink: 0;
@@ -306,8 +297,13 @@ const markerIcon = new Icon({
   color: #737373;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 .map-loading {
   flex: 1;
@@ -329,7 +325,10 @@ const markerIcon = new Icon({
   padding: 1.5rem;
   background: #2f2e42;
   color: #eae9f6;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 .map-offline svg {
   width: 64px;
@@ -356,7 +355,11 @@ const markerIcon = new Icon({
   color: #a5a3c4;
 }
 @media (max-width: 640px) {
-  .map-offline h1 { font-size: 22px; }
-  .map-offline p { font-size: 14px; }
+  .map-offline h1 {
+    font-size: 22px;
+  }
+  .map-offline p {
+    font-size: 14px;
+  }
 }
 </style>

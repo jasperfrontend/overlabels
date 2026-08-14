@@ -105,5 +105,4 @@ class BotExpressionService
 
         return $context;
     }
-
 }

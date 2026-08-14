@@ -2,7 +2,6 @@
 
 use App\Events\ExternalEventStored;
 use App\Events\TwitchEventReceived;
-use App\Models\ExternalEvent;
 use App\Models\OptionSet;
 use App\Models\TwitchEvent;
 use App\Models\User;

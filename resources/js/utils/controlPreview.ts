@@ -14,14 +14,14 @@
  * no id, source or timestamps, so everything after `type` is optional.
  */
 export interface PreviewableControl {
-    key: string;
-    type: string;
-    value: string | null;
-    config?: Record<string, any> | null;
-    source?: string | null;
-    source_managed?: boolean;
-    created_at?: string;
-    updated_at?: string;
+  key: string;
+  type: string;
+  value: string | null;
+  config?: Record<string, any> | null;
+  source?: string | null;
+  source_managed?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -36,33 +36,33 @@ export interface PreviewableControl {
  * rolling a new one: a preview that changes on every re-render reads as broken.
  */
 export function controlPreviewValue(ctrl: PreviewableControl): unknown {
-    if (ctrl.type === 'timer') {
-        const cfg = ctrl.config ?? {};
-        const mode = cfg.mode ?? 'countup';
-        const offset = Number(cfg.offset_seconds ?? 0);
+  if (ctrl.type === 'timer') {
+    const cfg = ctrl.config ?? {};
+    const mode = cfg.mode ?? 'countup';
+    const offset = Number(cfg.offset_seconds ?? 0);
 
-        if (mode === 'countto') {
-            const target = cfg.target_datetime ? new Date(cfg.target_datetime).getTime() : null;
-            if (!target) return 0;
-            return Math.max(0, Math.floor((target - Date.now()) / 1000));
-        }
-
-        let elapsed = offset;
-        if (cfg.running && cfg.started_at) {
-            elapsed = offset + Math.floor((Date.now() - new Date(cfg.started_at).getTime()) / 1000);
-        }
-
-        const base = Number(cfg.base_seconds ?? 0);
-
-        return mode === 'countdown' ? Math.max(0, base - elapsed) : elapsed;
+    if (mode === 'countto') {
+      const target = cfg.target_datetime ? new Date(cfg.target_datetime).getTime() : null;
+      if (!target) return 0;
+      return Math.max(0, Math.floor((target - Date.now()) / 1000));
     }
 
-    return ctrl.value ?? '';
+    let elapsed = offset;
+    if (cfg.running && cfg.started_at) {
+      elapsed = offset + Math.floor((Date.now() - new Date(cfg.started_at).getTime()) / 1000);
+    }
+
+    const base = Number(cfg.base_seconds ?? 0);
+
+    return mode === 'countdown' ? Math.max(0, base - elapsed) : elapsed;
+  }
+
+  return ctrl.value ?? '';
 }
 
 /** Mirrors OverlayControl::broadcastKey() for the source case. */
 function dataKeyFor(ctrl: PreviewableControl): string {
-    return ctrl.source_managed && ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
+  return ctrl.source_managed && ctrl.source ? `c:${ctrl.source}:${ctrl.key}` : `c:${ctrl.key}`;
 }
 
 /**
@@ -71,23 +71,23 @@ function dataKeyFor(ctrl: PreviewableControl): string {
  * exists in both.
  */
 export function controlsToPreviewData(controls: PreviewableControl[]): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
+  const out: Record<string, unknown> = {};
 
-    for (const ctrl of controls) {
-        if (!ctrl?.key) continue;
+  for (const ctrl of controls) {
+    if (!ctrl?.key) continue;
 
-        const dataKey = dataKeyFor(ctrl);
-        out[dataKey] = controlPreviewValue(ctrl);
+    const dataKey = dataKeyFor(ctrl);
+    out[dataKey] = controlPreviewValue(ctrl);
 
-        // Every control carries an automatic `_at` companion in Unix seconds.
-        // Builder definitions have no timestamps yet, so theirs stays absent
-        // rather than being faked to now().
-        const stamp = ctrl.updated_at ?? ctrl.created_at;
-        if (stamp) {
-            const ms = new Date(stamp).getTime();
-            if (!isNaN(ms)) out[`${dataKey}_at`] = String(Math.floor(ms / 1000));
-        }
+    // Every control carries an automatic `_at` companion in Unix seconds.
+    // Builder definitions have no timestamps yet, so theirs stays absent
+    // rather than being faked to now().
+    const stamp = ctrl.updated_at ?? ctrl.created_at;
+    if (stamp) {
+      const ms = new Date(stamp).getTime();
+      if (!isNaN(ms)) out[`${dataKey}_at`] = String(Math.floor(ms / 1000));
     }
+  }
 
-    return out;
+  return out;
 }

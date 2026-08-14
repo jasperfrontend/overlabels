@@ -19,18 +19,11 @@ defineEmits<{ 'clear-search': [] }>();
   <EmptyState>
     <template v-if="search">
       No events match <span class="font-medium text-foreground">"{{ search }}"</span>.
-      <button
-        type="button"
-        class="cursor-pointer underline underline-offset-2 hover:text-foreground"
-        @click="$emit('clear-search')"
-      >
-        Clear the search</button><template v-if="range !== 'all'"> or widen the time range</template>.
+      <button type="button" class="cursor-pointer underline underline-offset-2 hover:text-foreground" @click="$emit('clear-search')">
+        Clear the search</button
+      ><template v-if="range !== 'all'"> or widen the time range</template>.
     </template>
-    <template v-else-if="range !== 'all'">
-      No events in this time range. Try widening it.
-    </template>
-    <template v-else>
-      No events match your filters.
-    </template>
+    <template v-else-if="range !== 'all'"> No events in this time range. Try widening it. </template>
+    <template v-else> No events match your filters. </template>
   </EmptyState>
 </template>

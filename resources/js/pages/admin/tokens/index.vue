@@ -33,7 +33,7 @@ defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Tokens', href: route('admin.tokens.index') }
+  { title: 'Tokens', href: route('admin.tokens.index') },
 ];
 
 async function deleteToken(id: number) {
@@ -48,11 +48,15 @@ const showPruneConfirm = ref(false);
 function submitPrune() {
   router.delete(route('admin.tokens.prune'), {
     data: { period: prunePeriod.value },
-    onSuccess: () => { showPruneConfirm.value = false; },
+    onSuccess: () => {
+      showPruneConfirm.value = false;
+    },
   });
 }
 
-watch(prunePeriod, () => { showPruneConfirm.value = false; });
+watch(prunePeriod, () => {
+  showPruneConfirm.value = false;
+});
 </script>
 
 <template>
@@ -68,7 +72,7 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
       <!-- Prune bar -->
       <div class="flex flex-wrap items-center gap-2 rounded border border-destructive/30 bg-destructive/5 px-3 py-2">
         <span class="text-sm text-muted-foreground">Prune unused tokens (0 uses) older than</span>
-        <select v-model="prunePeriod" class="rounded border px-2 py-1 text-sm bg-background">
+        <select v-model="prunePeriod" class="rounded border bg-background px-2 py-1 text-sm">
           <option value="6">6 months</option>
           <option value="12">12 months</option>
           <option value="24">24 months</option>
@@ -77,7 +81,9 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
         <template v-if="!showPruneConfirm">
           <button
             class="rounded border border-destructive px-3 py-1 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            @click="showPruneConfirm = true">Prune
+            @click="showPruneConfirm = true"
+          >
+            Prune
           </button>
         </template>
         <template v-else>
@@ -86,15 +92,16 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
           </span>
           <button
             class="rounded border border-destructive bg-destructive px-3 py-1 text-sm text-destructive-foreground hover:bg-destructive/90"
-            @click="submitPrune">Yes, prune
+            @click="submitPrune"
+          >
+            Yes, prune
           </button>
-          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">Cancel
-          </button>
+          <button class="rounded border px-3 py-1 text-sm hover:bg-muted" @click="showPruneConfirm = false">Cancel</button>
         </template>
       </div>
 
       <!-- Card view (< lg) -->
-      <div class="lg:hidden space-y-2">
+      <div class="space-y-2 lg:hidden">
         <EmptyState v-if="tokens.data.length === 0" message="No tokens found." />
         <div v-for="token in tokens.data" :key="`card-${token.id}`" class="rounded border p-3 text-sm">
           <div class="flex items-start justify-between gap-2">
@@ -103,18 +110,16 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
               <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
             </div>
             <div class="flex shrink-0 gap-2">
-              <a :href="route('admin.tokens.show', token.id)" class="text-primary text-xs hover:underline">View</a>
+              <a :href="route('admin.tokens.show', token.id)" class="text-xs text-primary hover:underline">View</a>
               <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
             </div>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
-            <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }}
-            </Badge>
+            <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }} </Badge>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span v-if="token.user">
-              Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name
-              }}</a>
+              Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
             </span>
             <span>{{ token.access_count }} uses</span>
             <span>Expires: {{ token.expires_at ?? 'Never' }}</span>
@@ -123,50 +128,52 @@ watch(prunePeriod, () => { showPruneConfirm.value = false; });
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
+      <div class="hidden overflow-x-auto rounded border border-sidebar lg:block">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2">Name / Prefix</th>
-            <th class="px-3 py-2">Owner</th>
-            <th class="px-3 py-2">Status</th>
-            <th class="px-3 py-2">Uses</th>
-            <th class="px-3 py-2">Expires</th>
-            <th class="px-3 py-2"></th>
-          </tr>
+            <tr>
+              <th class="px-3 py-2">Name / Prefix</th>
+              <th class="px-3 py-2">Owner</th>
+              <th class="px-3 py-2">Status</th>
+              <th class="px-3 py-2">Uses</th>
+              <th class="px-3 py-2">Expires</th>
+              <th class="px-3 py-2"></th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="token in tokens.data" :key="token.id" class="border-t border-sidebar">
-            <td class="px-3 py-2">
-              <div class="font-medium">{{ token.name }}</div>
-              <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
-            </td>
-            <td class="px-3 py-2">
-              <a v-if="token.user" :href="route('admin.users.show', token.user.id)"
-                 class="hover:underline">{{ token.user.name }}</a>
-              <span v-else class="text-muted-foreground">—</span>
-            </td>
-            <td class="px-3 py-2">
-              <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive'
-                }}
-              </Badge>
-            </td>
-            <td class="px-3 py-2">{{ token.access_count }}</td>
-            <td class="px-3 py-2 text-xs text-muted-foreground">{{ token.expires_at ?? 'Never' }}</td>
-            <td class="px-3 py-2 flex gap-2">
-              <a :href="route('admin.tokens.show', token.id)" class="text-primary text-xs hover:underline">View</a>
-              <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
-            </td>
-          </tr>
-          <EmptyState v-if="tokens.data.length === 0" :colspan="6" message="No tokens found." />
+            <tr v-for="token in tokens.data" :key="token.id" class="border-t border-sidebar">
+              <td class="px-3 py-2">
+                <div class="font-medium">{{ token.name }}</div>
+                <div class="font-mono text-xs text-muted-foreground">{{ token.token_prefix }}…</div>
+              </td>
+              <td class="px-3 py-2">
+                <a v-if="token.user" :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
+                <span v-else class="text-muted-foreground">—</span>
+              </td>
+              <td class="px-3 py-2">
+                <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }} </Badge>
+              </td>
+              <td class="px-3 py-2">{{ token.access_count }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ token.expires_at ?? 'Never' }}</td>
+              <td class="flex gap-2 px-3 py-2">
+                <a :href="route('admin.tokens.show', token.id)" class="text-xs text-primary hover:underline">View</a>
+                <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>
+              </td>
+            </tr>
+            <EmptyState v-if="tokens.data.length === 0" :colspan="6" message="No tokens found." />
           </tbody>
         </table>
       </div>
 
       <div class="flex gap-1">
         <template v-for="link in tokens.links" :key="link.label">
-          <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm"
-             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+          <a
+            v-if="link.url"
+            :href="link.url"
+            class="rounded border px-3 py-1 text-sm"
+            :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
+            v-html="link.label"
+          />
           <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
         </template>
       </div>

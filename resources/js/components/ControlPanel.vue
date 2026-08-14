@@ -287,7 +287,6 @@ function handleControlUpdated(event: any) {
   }
 }
 
-
 const controlsCounter = computed(() => props.controls.length);
 
 onMounted(() => {
@@ -367,21 +366,21 @@ async function toggleBoolean(ctrl: OverlayControl) {
       <div class="mb-4 flex items-center gap-3">
         <div class="relative flex-1 gap-2">
           <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            v-model="searchQuery"
-            placeholder="Filter controls..."
-            class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
-          />
+          <input v-model="searchQuery" placeholder="Filter controls..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
         </div>
       </div>
 
       <!-- Count and collapse/expand toggle -->
       <div class="mb-3 flex items-center text-xs text-muted-foreground">
         <span v-if="searchQuery">
-          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
+          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{
+            filteredGroupedControls.length !== 1 ? 's' : ''
+          }}
         </span>
         <span v-else>
-          {{ controls.length }} control{{ controls.length !== 1 ? 's' : null }} across {{ groupedControls.length }} group{{ groupedControls.length !== 1 ? 's' : '' }}
+          {{ controls.length }} control{{ controls.length !== 1 ? 's' : null }} across {{ groupedControls.length }} group{{
+            groupedControls.length !== 1 ? 's' : ''
+          }}
         </span>
         <button
           v-if="filteredGroupedControls.length > 0"
@@ -408,36 +407,56 @@ async function toggleBoolean(ctrl: OverlayControl) {
           @update:open="toggleGroup(group.label)"
         >
           <CollapsibleTrigger
-            class="group flex w-full cursor-pointer bg-sidebar items-center gap-2 rounded-md px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
-            :class="{ 'bg-sidebar-accent/50 rounded-b-none pb-0': isGroupExpanded(group.label) }"
+            class="group flex w-full cursor-pointer items-center gap-2 rounded-md bg-sidebar px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
+            :class="{ 'rounded-b-none bg-sidebar-accent/50 pb-0': isGroupExpanded(group.label) }"
           >
-            <ChevronRight
-              :size="14"
-              class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
-            />
+            <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
             <span class="text-sm font-medium">{{ group.label }}</span>
-            <span class="ml-auto text-xs px-2.5 py-1.5 bg-card">{{ group.controls.length }}</span>
+            <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.controls.length }}</span>
           </CollapsibleTrigger>
 
           <CollapsibleContent>
-            <div class="grid grid-cols-1 bg-sidebar/50 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-              <div v-for="ctrl in group.controls" :key="ctrl.id" :class="[
-                'p-3 transition-all duration-500 bg-sidebar border border-sidebar-border',
-                !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && isTimerRunning(ctrl) && 'bg-linear-to-br from-green-500/15 to-background',
-                !ctrl.source_managed && ctrl.type === 'timer' && ctrl.config?.mode !== 'countto' && !isTimerRunning(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-                !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-              ]">
+            <div class="grid grid-cols-1 gap-4 bg-sidebar/50 p-4 lg:grid-cols-2 xl:grid-cols-3">
+              <div
+                v-for="ctrl in group.controls"
+                :key="ctrl.id"
+                :class="[
+                  'border border-sidebar-border bg-sidebar p-3 transition-all duration-500',
+                  !ctrl.source_managed &&
+                    ctrl.type === 'timer' &&
+                    ctrl.config?.mode !== 'countto' &&
+                    isTimerRunning(ctrl) &&
+                    'bg-linear-to-br from-green-500/15 to-background',
+                  !ctrl.source_managed &&
+                    ctrl.type === 'timer' &&
+                    ctrl.config?.mode !== 'countto' &&
+                    !isTimerRunning(ctrl) &&
+                    'bg-linear-to-br from-red-500/15 to-background',
+                  !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
+                ]"
+              >
                 <div class="mb-2">
-                  <div class="flex items-start justify-between mb-4 gap-3">
-                    <div class="flex min-w-0 flex-col gap-1 items-start">
-                      <label :for="`cp-input-${ctrl.id}`"><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label>
-                      <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
+                  <div class="mb-4 flex items-start justify-between gap-3">
+                    <div class="flex min-w-0 flex-col items-start gap-1">
+                      <label :for="`cp-input-${ctrl.id}`"
+                        ><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label
+                      >
+                      <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
                       <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
                     </div>
-                    <div class="flex flex-col text-center gap-2">
+                    <div class="flex flex-col gap-2 text-center">
                       <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
-                      <span v-if="isTwitchOffline(ctrl)" title="This Control only works when you're streaming" class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground">Offline</span>
-                      <span v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'" class="inline-flex items-center gap-1 bg-mauve-300/50 dark:bg-mauve-700/50 rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground" :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`">
+                      <span
+                        v-if="isTwitchOffline(ctrl)"
+                        title="This Control only works when you're streaming"
+                        class="rounded-full border border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground"
+                        >Offline</span
+                      >
+                      <span
+                        v-if="ctrl.source && ctrl.source_managed && ctrl.source !== 'twitch'"
+                        class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
+                        :title="`Managed by ${SERVICE_LABELS[ctrl.source]} - Updates automatically`"
+                      >
                         <LockIcon class="h-2.5 w-2.5" />
                         {{ SERVICE_LABELS[ctrl.source] }}
                       </span>
@@ -447,14 +466,14 @@ async function toggleBoolean(ctrl: OverlayControl) {
 
                 <!-- Source-managed: read-only value display -->
                 <div v-if="ctrl.source_managed" class="flex items-center gap-3">
-                  <div class="min-w-0 flex-1 font-mono text-sm text-foreground truncate">
+                  <div class="min-w-0 flex-1 truncate font-mono text-sm text-foreground">
                     {{ ctrl.value ?? '-' }}
                   </div>
                 </div>
 
                 <!-- Text control -->
                 <template v-else-if="ctrl.type === 'text'">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex group gap-0">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-0">
                     <input
                       type="text"
                       :id="`cp-input-${ctrl.id}`"
@@ -467,7 +486,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                     />
                     <button
                       type="submit"
-                      class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0"
+                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
                       :disabled="saving[ctrl.id]"
                     >
                       <SaveIcon class="h-3.5 w-3.5" />
@@ -490,7 +509,11 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       :step="ctrl.config?.step ?? 1"
                       class="peer input-border flex-1"
                     />
-                    <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
+                    <button
+                      type="submit"
+                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
+                      :disabled="saving[ctrl.id]"
+                    >
                       <SaveIcon class="h-3.5 w-3.5" />
                     </button>
                   </form>
@@ -514,10 +537,20 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       >
                         −
                       </button>
-                      <button class="btn btn-sm btn-primary px-3 text-lg" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'increment')" title="Increment">
+                      <button
+                        class="btn btn-sm btn-primary px-3 text-lg"
+                        :disabled="saving[ctrl.id]"
+                        @click="counterAction(ctrl, 'increment')"
+                        title="Increment"
+                      >
                         +
                       </button>
-                      <button class="btn btn-sm btn-cancel px-3 text-xs" :disabled="saving[ctrl.id]" @click="counterAction(ctrl, 'reset')" title="Reset">
+                      <button
+                        class="btn btn-sm btn-cancel px-3 text-xs"
+                        :disabled="saving[ctrl.id]"
+                        @click="counterAction(ctrl, 'reset')"
+                        title="Reset"
+                      >
                         <RotateCcwIcon class="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -528,15 +561,27 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <template v-else-if="ctrl.type === 'timer'">
                   <div class="flex items-center gap-3">
                     <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
-                      <span v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-green-400"></span>
-                      <span v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'" class="size-2 mb-0.75 inline-block rounded-full bg-red-400"></span>
+                      <span
+                        v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'"
+                        class="mb-0.75 inline-block size-2 rounded-full bg-green-400"
+                      ></span>
+                      <span
+                        v-if="!isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'"
+                        class="mb-0.75 inline-block size-2 rounded-full bg-red-400"
+                      ></span>
                       {{ timerDisplays[ctrl.id] ?? computeTimerDisplay(ctrl) }}
                     </div>
                     <template v-if="ctrl.config?.mode === 'countto'">
-                      <span class="text-xs text-muted-foreground">Counting to {{ ctrl.config?.target_datetime ? formatCountToTarget(ctrl.config.target_datetime) : 'no target set' }}</span>
+                      <span class="text-xs text-muted-foreground"
+                        >Counting to {{ ctrl.config?.target_datetime ? formatCountToTarget(ctrl.config.target_datetime) : 'no target set' }}</span
+                      >
                     </template>
                     <div v-else class="flex gap-1.5">
-                      <button class="btn btn-sm btn-primary px-3" :disabled="saving[ctrl.id]" @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')">
+                      <button
+                        class="btn btn-sm btn-primary px-3"
+                        :disabled="saving[ctrl.id]"
+                        @click="timerAction(ctrl, isTimerRunning(ctrl) ? 'stop' : 'start')"
+                      >
                         <PauseIcon v-if="isTimerRunning(ctrl)" class="h-3.5 w-3.5" />
                         <PlayIcon v-else class="h-3.5 w-3.5" />
                         <span class="ml-1">{{ isTimerRunning(ctrl) ? 'Stop' : 'Start' }}</span>
@@ -561,8 +606,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       @click="toggleBoolean(ctrl)"
                       :class="[
                         'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 ' +
-                        'border-transparent transition-colors bg-card focus:outline-none ' +
-                        'disabled:cursor-not-allowed disabled:opacity-50',
+                          'border-transparent bg-card transition-colors focus:outline-none' +
+                          'disabled:cursor-not-allowed disabled:opacity-50',
                         ctrl.value === '1' ? 'bg-accent' : 'bg-input',
                       ]"
                     >
@@ -574,7 +619,7 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       />
                     </button>
                     <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">
-                      {{ctrl.value === '1' ? 'On' : 'Off'}}
+                      {{ ctrl.value === '1' ? 'On' : 'Off' }}
                     </span>
                   </div>
                 </template>
@@ -582,7 +627,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
                 <!-- Expression control (read-only, evaluated in overlay) -->
                 <template v-else-if="ctrl.type === 'expression'">
                   <div class="flex items-center gap-3">
-                    <pre class="text-xs bg-card w-full rounded-sm p-2 text-muted-foreground font-mono overflow-hidden">{{ ctrl.config?.expression ?? '' }}</pre>
+                    <pre class="w-full overflow-hidden rounded-sm bg-card p-2 font-mono text-xs text-muted-foreground">{{
+                      ctrl.config?.expression ?? ''
+                    }}</pre>
                   </div>
                 </template>
 
@@ -597,7 +644,11 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       type="datetime-local"
                       class="peer input-border flex-1"
                     />
-                    <button type="submit" class="btn btn-sm rounded-none bg-background rounded-r-none border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" :disabled="saving[ctrl.id]">
+                    <button
+                      type="submit"
+                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
+                      :disabled="saving[ctrl.id]"
+                    >
                       <SaveIcon class="h-3.5 w-3.5" />
                     </button>
                   </form>

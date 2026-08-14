@@ -16,9 +16,7 @@ const page = usePage<AppPageProps>();
 const isAdmin = computed(() => page.props.isAdmin);
 
 const renderedBody = computed(() => marked.parse(props.update.body) as string);
-const renderedExcerpt = computed(() =>
-  props.update.excerpt ? (marked.parse(props.update.excerpt) as string) : ''
-);
+const renderedExcerpt = computed(() => (props.update.excerpt ? (marked.parse(props.update.excerpt) as string) : ''));
 
 // Tailwind v4 only ships utilities that appear in source files. Anything
 // authors write inside markdown (e.g. `bg-yellow-400/10`) is invisible to it,
@@ -63,7 +61,7 @@ const formattedDate = computed(() =>
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(new Date(props.update.published_at))
+  }).format(new Date(props.update.published_at)),
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -82,14 +80,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     <div class="min-h-screen bg-background">
       <div class="mx-auto max-w-4xl p-6">
         <div class="mb-6 flex items-center justify-between gap-4">
-          <Link href="/updates" class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+          <Link href="/updates" class="inline-flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft class="h-4 w-4" />
             All updates
           </Link>
           <Link
             v-if="isAdmin"
             :href="`/admin/updates/${props.update.id}/edit`"
-            class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            class="inline-flex cursor-pointer items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <PencilIcon class="h-4 w-4" />
             Edit
@@ -105,7 +103,7 @@ const breadcrumbs: BreadcrumbItem[] = [
               v-for="tag in props.update.tags"
               :key="tag"
               :href="`/updates?tag=${encodeURIComponent(tag)}`"
-              class="inline-flex items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground hover:bg-sidebar-accent cursor-pointer"
+              class="inline-flex cursor-pointer items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground hover:bg-sidebar-accent"
             >
               {{ tag }}
             </Link>
@@ -118,11 +116,7 @@ const breadcrumbs: BreadcrumbItem[] = [
              from. Everything outside is app chrome and must stay out of reach,
              so do not move the back link, title or tags in here. -->
         <div :id="POST_SCOPE_ID">
-          <div
-            v-if="renderedExcerpt"
-            class="mb-8 prose prose-invert max-w-none text-lg text-foreground"
-            v-html="renderedExcerpt"
-          />
+          <div v-if="renderedExcerpt" class="prose prose-invert mb-8 max-w-none text-lg text-foreground" v-html="renderedExcerpt" />
 
           <article class="prose prose-invert max-w-none text-foreground" v-html="renderedBody" />
         </div>
@@ -144,9 +138,15 @@ const breadcrumbs: BreadcrumbItem[] = [
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
-:deep(.prose h1) { font-size: 2rem; }
-:deep(.prose h2) { font-size: 1.5rem; }
-:deep(.prose h3) { font-size: 1.25rem; }
+:deep(.prose h1) {
+  font-size: 2rem;
+}
+:deep(.prose h2) {
+  font-size: 1.5rem;
+}
+:deep(.prose h3) {
+  font-size: 1.25rem;
+}
 :deep(.prose p) {
   margin-top: 1em;
   margin-bottom: 1em;
@@ -162,9 +162,16 @@ const breadcrumbs: BreadcrumbItem[] = [
   margin-top: 1em;
   margin-bottom: 1em;
 }
-:deep(.prose ul) { list-style: disc; }
-:deep(.prose ol) { list-style: decimal; }
-:deep(.prose li) { margin-top: 0.25em; margin-bottom: 0.25em; }
+:deep(.prose ul) {
+  list-style: disc;
+}
+:deep(.prose ol) {
+  list-style: decimal;
+}
+:deep(.prose li) {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
 :deep(.prose code) {
   background-color: var(--sidebar);
   padding: 0.1em 0.3em;

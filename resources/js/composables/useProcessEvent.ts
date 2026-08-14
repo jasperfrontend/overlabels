@@ -6,12 +6,14 @@ import type { NormalizedEvent } from '@/types';
  */
 function get(obj: any, path: string, defaultValue?: any) {
   if (!obj) return defaultValue;
-  return path.split('.').reduce((acc, key) => {
-    if (acc && Object.prototype.hasOwnProperty.call(acc, key)) {
-      return acc[key];
-    }
-    return undefined;
-  }, obj) ?? defaultValue;
+  return (
+    path.split('.').reduce((acc, key) => {
+      if (acc && Object.prototype.hasOwnProperty.call(acc, key)) {
+        return acc[key];
+      }
+      return undefined;
+    }, obj) ?? defaultValue
+  );
 }
 
 /**
@@ -30,19 +32,13 @@ export function processEvent(event: NormalizedEvent, state: Record<string, any>)
       }
 
       case 'inc': {
-        const incValue =
-          rule.hasOwnProperty('by')
-            ? rule.by
-            : get(event, rule.byPath, 1);
+        const incValue = rule.hasOwnProperty('by') ? rule.by : get(event, rule.byPath, 1);
         state[rule.tag] = (state[rule.tag] ?? 0) + (incValue ?? 0);
         break;
       }
 
       case 'max': {
-        const maxValue =
-          rule.hasOwnProperty('value')
-            ? rule.value
-            : get(event, rule.from, undefined);
+        const maxValue = rule.hasOwnProperty('value') ? rule.value : get(event, rule.from, undefined);
         if (typeof maxValue === 'number') {
           state[rule.tag] = Math.max(state[rule.tag] ?? 0, maxValue);
         }

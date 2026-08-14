@@ -2,14 +2,17 @@
 import Heading from '@/components/Heading.vue';
 import type { HTMLAttributes } from 'vue';
 
-withDefaults(defineProps<{
-  title: string;
-  description?: string;
-  titleClass?: HTMLAttributes['class'];
-}>(), {
-  description: undefined,
-  titleClass: undefined,
-});
+withDefaults(
+  defineProps<{
+    title: string;
+    description?: string;
+    titleClass?: HTMLAttributes['class'];
+  }>(),
+  {
+    description: undefined,
+    titleClass: undefined,
+  },
+);
 </script>
 
 <template>

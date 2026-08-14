@@ -165,5 +165,4 @@ class DefaultTemplateProviderService
 
         return $templateDataMapper->getSampleTemplateData();
     }
-
 }

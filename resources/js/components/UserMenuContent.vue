@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import {
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
 import { Blocks, LogOut, Settings } from '@lucide/vue';
@@ -27,7 +23,7 @@ const handleLogout = () => {
 <template>
   <DropdownMenuGroup>
     <DropdownMenuItem v-for="item in settingsItems" :key="item.label" as-child>
-      <Link :href="item.href" class="flex items-center w-full cursor-pointer">
+      <Link :href="item.href" class="flex w-full cursor-pointer items-center">
         <component :is="item.icon" class="mr-2 h-4 w-4" />
         {{ item.label }}
       </Link>

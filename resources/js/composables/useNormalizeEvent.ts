@@ -84,21 +84,11 @@ export function normalizeEvent(raw: any): NormalizedEvent {
   const from_broadcaster_user_avatar = pick('from_broadcaster_user_avatar');
   const to_broadcaster_user_avatar = pick('to_broadcaster_user_avatar');
 
-  const timestamps = [
-    e?.followed_at,
-    e?.started_at,
-    e?.raided_at,
-    e?.timestamp,
-    e?.redeemed_at,
-    e?.created_at,
-    raw?.timestamp,
-  ].filter(Boolean);
+  const timestamps = [e?.followed_at, e?.started_at, e?.raided_at, e?.timestamp, e?.redeemed_at, e?.created_at, raw?.timestamp].filter(Boolean);
 
   const ts = timestamps.length > 0 ? Date.parse(timestamps[0]) || Date.now() : Date.now();
 
-  const id = pick('id', 'message_id') ??
-    raw?.metadata?.message_id ??
-    `${eventType}-${user_id || 'unknown'}-${ts}`;
+  const id = pick('id', 'message_id') ?? raw?.metadata?.message_id ?? `${eventType}-${user_id || 'unknown'}-${ts}`;
 
   return {
     broadcaster_user_id: broadcaster_user_id ?? undefined,
@@ -121,4 +111,3 @@ export function normalizeEvent(raw: any): NormalizedEvent {
     raw,
   };
 }
-

@@ -14,12 +14,12 @@ const { confirm } = useConfirm();
 const breadcrumbItems: BreadcrumbItem[] = [
   {
     title: 'Dashboard',
-    href: '/dashboard'
+    href: '/dashboard',
   },
   {
     title: 'Account settings',
-    href: '/settings/account'
-  }
+    href: '/settings/account',
+  },
 ];
 
 const FOREACH_CAP_MAX = 50;
@@ -52,11 +52,13 @@ async function submitDeleteAccount() {
     deleteError.value = `You must type ${DELETE_PHRASE} exactly to confirm.`;
     return;
   }
-  if (!(await confirm({
-    title: 'Last chance',
-    message: 'This permanently deletes your account, all your overlays, access tokens, integrations, tags, and history. There is no undo.',
-    confirmLabel: 'Delete my account',
-  }))) {
+  if (
+    !(await confirm({
+      title: 'Last chance',
+      message: 'This permanently deletes your account, all your overlays, access tokens, integrations, tags, and history. There is no undo.',
+      confirmLabel: 'Delete my account',
+    }))
+  ) {
     return;
   }
   deleteSubmitting.value = true;
@@ -80,16 +82,20 @@ const LOCALES = [
   { value: 'es-ES', label: 'Español' },
   { value: 'pt-BR', label: 'Português (Brasil)' },
   { value: 'ja-JP', label: 'Japanese' },
-  { value: 'ko-KR', label: 'Korean' }
+  { value: 'ko-KR', label: 'Korean' },
 ] as const;
 
 function updateLocale(newLocale: string) {
   locale.value = newLocale;
   showConfirmation.value = false; // close any previous confirmation first
   try {
-    router.patch(route('settings.locale'), { locale: newLocale }, {
-      preserveScroll: true
-    });
+    router.patch(
+      route('settings.locale'),
+      { locale: newLocale },
+      {
+        preserveScroll: true,
+      },
+    );
   } catch (error) {
     showConfirmation.value = true;
     confirmationTitle.value = `Locale updated failed. Please try again. If the error: ${error} persists, log out and back in again.`;
@@ -98,7 +104,7 @@ function updateLocale(newLocale: string) {
     confirmationTitle.value = `locale updated to ${newLocale}`;
     setTimeout(() => {
       showConfirmation.value = false;
-    }, 5000)
+    }, 5000);
   }
 }
 
@@ -115,7 +121,7 @@ function exampleCurrency(): string {
   try {
     return new Intl.NumberFormat(locale.value, {
       style: 'currency',
-      currency: getDefaultCurrency(locale.value)
+      currency: getDefaultCurrency(locale.value),
     }).format(42.5);
   } catch {
     return '$42.50';
@@ -127,7 +133,7 @@ function exampleDate(): string {
     return new Intl.DateTimeFormat(locale.value, {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     }).format(new Date());
   } catch {
     return 'Apr 5, 2026';
@@ -155,19 +161,25 @@ function saveForeachCaps() {
   foreachSaving.value = true;
   foreachConfirmation.value = '';
 
-  router.patch(route('settings.foreach-caps'), { ...foreachCaps }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      foreachConfirmation.value = 'Foreach loop limits updated.';
-      setTimeout(() => { foreachConfirmation.value = ''; }, 5000);
+  router.patch(
+    route('settings.foreach-caps'),
+    { ...foreachCaps },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        foreachConfirmation.value = 'Foreach loop limits updated.';
+        setTimeout(() => {
+          foreachConfirmation.value = '';
+        }, 5000);
+      },
+      onError: () => {
+        foreachConfirmation.value = 'Saving failed. Values must be 1 to 50.';
+      },
+      onFinish: () => {
+        foreachSaving.value = false;
+      },
     },
-    onError: () => {
-      foreachConfirmation.value = 'Saving failed. Values must be 1 to 50.';
-    },
-    onFinish: () => {
-      foreachSaving.value = false;
-    },
-  });
+  );
 }
 </script>
 
@@ -195,15 +207,18 @@ function saveForeachCaps() {
             </option>
           </select>
           <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-            <span>Number: <strong class="text-foreground">{{ exampleNumber() }}</strong></span>
-            <span>Currency: <strong class="text-foreground">{{ exampleCurrency() }}</strong></span>
-            <span>Date: <strong class="text-foreground">{{ exampleDate() }}</strong></span>
+            <span
+              >Number: <strong class="text-foreground">{{ exampleNumber() }}</strong></span
+            >
+            <span
+              >Currency: <strong class="text-foreground">{{ exampleCurrency() }}</strong></span
+            >
+            <span
+              >Date: <strong class="text-foreground">{{ exampleDate() }}</strong></span
+            >
           </div>
         </div>
-        <div
-          v-if="showConfirmation"
-          class="w-auto inline-flex p-1 gap-2 items-center rounded-sm"
-        >
+        <div v-if="showConfirmation" class="inline-flex w-auto items-center gap-2 rounded-sm p-1">
           <p class="text-sm text-green-600 dark:text-green-300">{{ confirmationTitle }}</p>
         </div>
       </div>
@@ -214,7 +229,7 @@ function saveForeachCaps() {
           description="How many items each [[[foreach:...]]] loop expands to in your overlays. Hard maximum is 50 per loop."
         />
 
-        <div class="grid gap-4 sm:grid-cols-2 max-w-xl">
+        <div class="grid max-w-xl gap-4 sm:grid-cols-2">
           <div v-for="field in FOREACH_CAP_FIELDS" :key="field.key" class="space-y-1">
             <label :for="`cap-${field.key}`" class="text-sm text-foreground">
               {{ field.label }}
@@ -236,7 +251,7 @@ function saveForeachCaps() {
           <button
             type="button"
             :disabled="foreachSaving"
-            class="cursor-pointer rounded-sm border border-border bg-primary px-4 h-10 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            class="h-10 cursor-pointer rounded-sm border border-border bg-primary px-4 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             @click="saveForeachCaps"
           >
             {{ foreachSaving ? 'Saving...' : 'Save loop limits' }}
@@ -280,7 +295,7 @@ function saveForeachCaps() {
           <button
             type="button"
             :disabled="deleteInput !== DELETE_PHRASE || deleteSubmitting"
-            class="cursor-pointer rounded-sm border border-destructive bg-destructive px-4 h-10 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+            class="h-10 cursor-pointer rounded-sm border border-destructive bg-destructive px-4 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
             @click="submitDeleteAccount"
           >
             {{ deleteSubmitting ? 'Deleting...' : 'I am sure, delete my account and all my data' }}

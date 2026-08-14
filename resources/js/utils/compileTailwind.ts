@@ -19,11 +19,8 @@ let generatorPromise: Promise<UnoGenerator> | null = null;
 async function getGenerator(): Promise<UnoGenerator> {
   if (!generatorPromise) {
     generatorPromise = (async () => {
-      const [{ createGenerator }, { presetWind3 }] = await Promise.all([
-        import('@unocss/core'),
-        import('@unocss/preset-wind3'),
-      ]);
-      return await createGenerator({ presets: [presetWind3()] }) as unknown as UnoGenerator;
+      const [{ createGenerator }, { presetWind3 }] = await Promise.all([import('@unocss/core'), import('@unocss/preset-wind3')]);
+      return (await createGenerator({ presets: [presetWind3()] })) as unknown as UnoGenerator;
     })();
   }
   return generatorPromise;
@@ -36,14 +33,8 @@ async function getGenerator(): Promise<UnoGenerator> {
  * if the compiler trips on something unusual (the user's hand-written `css`
  * field still works). Errors are logged but not thrown.
  */
-export async function compileTailwindCss(sources: {
-  html?: string;
-  head?: string;
-  css?: string;
-}): Promise<string> {
-  const input = [sources.html ?? '', sources.head ?? '', sources.css ?? '']
-    .filter(Boolean)
-    .join('\n');
+export async function compileTailwindCss(sources: { html?: string; head?: string; css?: string }): Promise<string> {
+  const input = [sources.html ?? '', sources.head ?? '', sources.css ?? ''].filter(Boolean).join('\n');
 
   if (!input.trim()) return '';
 

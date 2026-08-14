@@ -19,10 +19,7 @@ const emit = defineEmits<{ 'update:modelValue': [ids: number[]] }>();
 
 function toggle(id: number) {
   if (props.disabled) return;
-  emit(
-    'update:modelValue',
-    props.modelValue.includes(id) ? props.modelValue.filter((x) => x !== id) : [...props.modelValue, id],
-  );
+  emit('update:modelValue', props.modelValue.includes(id) ? props.modelValue.filter((x) => x !== id) : [...props.modelValue, id]);
 }
 
 const groups = computed<FilterableGroup<OverlayOption>[]>(() => [
@@ -47,8 +44,7 @@ function overlaySearchText(overlay: OverlayOption): string {
     flat
   >
     <template #description>
-      Leave all unchecked to show this alert on <strong>all</strong> static overlays. Select one or more to restrict
-      where this alert fires.
+      Leave all unchecked to show this alert on <strong>all</strong> static overlays. Select one or more to restrict where this alert fires.
     </template>
 
     <template #empty>
@@ -84,9 +80,7 @@ function overlaySearchText(overlay: OverlayOption): string {
     <template #footer>
       <div class="flex items-center gap-2 text-xs text-muted-foreground">
         <Target :size="12" class="text-violet-400" />
-        <span v-if="modelValue.length > 0">
-          {{ modelValue.length }} overlay{{ modelValue.length !== 1 ? 's' : '' }} selected
-        </span>
+        <span v-if="modelValue.length > 0"> {{ modelValue.length }} overlay{{ modelValue.length !== 1 ? 's' : '' }} selected </span>
         <span v-else>This alert will fire on all overlays</span>
       </div>
     </template>

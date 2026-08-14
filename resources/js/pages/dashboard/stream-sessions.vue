@@ -3,16 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
-import {
-  TvMinimalPlay,
-  Clock,
-  Swords,
-  PencilLine,
-  Trophy,
-  AlertTriangle,
-  MessageSquareQuote,
-  HandCoins,
-} from '@lucide/vue';
+import { TvMinimalPlay, Clock, Swords, PencilLine, Trophy, AlertTriangle, MessageSquareQuote, HandCoins } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { computed, ref } from 'vue';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
@@ -170,9 +161,7 @@ type TabKey = (typeof TABS)[number]['key'];
 const selectedId = ref<number | null>(props.sessions[0]?.session_id ?? null);
 const activeTab = ref<TabKey>('overview');
 
-const selected = computed<StreamSession | null>(
-  () => props.sessions.find((s) => s.session_id === selectedId.value) ?? null,
-);
+const selected = computed<StreamSession | null>(() => props.sessions.find((s) => s.session_id === selectedId.value) ?? null);
 
 function select(id: number) {
   selectedId.value = id;
@@ -182,9 +171,7 @@ function fmtNum(n: number): string {
   return new Intl.NumberFormat(userLocale.value).format(n);
 }
 
-const decimalFmt = computed(
-  () => new Intl.NumberFormat(userLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-);
+const decimalFmt = computed(() => new Intl.NumberFormat(userLocale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
 function fmtCurrency(amount: number, currency: string | null): string {
   if (currency) {
@@ -325,10 +312,7 @@ function headlineTiles(s: StreamSession): { label: string; value: string; sub?: 
     {
       label: 'Redemptions',
       value: fmtNum(s.stats.channel_point_redemptions.count),
-      sub:
-        s.stats.channel_point_redemptions.total_cost > 0
-          ? `${fmtNum(s.stats.channel_point_redemptions.total_cost)} pts spent`
-          : undefined,
+      sub: s.stats.channel_point_redemptions.total_cost > 0 ? `${fmtNum(s.stats.channel_point_redemptions.total_cost)} pts spent` : undefined,
     },
     { label: 'Donations', value: fmtNum(s.stats.income.count) },
   ];
@@ -365,22 +349,19 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
         />
       </div>
 
-      <div v-if="sessions.length === 0" class="text-foreground text-sm max-w-2xl">
+      <div v-if="sessions.length === 0" class="max-w-2xl text-sm text-foreground">
         <p>No streams have been recorded yet. Once you go live, each stream's events will be aggregated here.</p>
       </div>
 
       <div v-else class="flex flex-col gap-4 lg:flex-row">
         <!-- Selector rail -->
-        <nav
-          class="shrink-0 border border-sidebar-border bg-card lg:w-72"
-          aria-label="Streams"
-        >
+        <nav class="shrink-0 border border-sidebar-border bg-card lg:w-72" aria-label="Streams">
           <ul class="max-h-64 divide-y divide-sidebar-border overflow-y-auto lg:max-h-[72vh]">
             <li v-for="s in sessions" :key="s.session_id">
               <button
                 type="button"
                 class="flex w-full cursor-pointer flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-background/50"
-                :class="s.session_id === selectedId ? 'bg-background/60 border-l-2 border-l-violet-400' : 'border-l-2 border-l-transparent'"
+                :class="s.session_id === selectedId ? 'border-l-2 border-l-violet-400 bg-background/60' : 'border-l-2 border-l-transparent'"
                 @click="select(s.session_id)"
               >
                 <div class="flex items-center justify-between gap-2">
@@ -417,7 +398,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
               <Badge v-else variant="default">Live</Badge>
             </div>
             <div v-if="latestTitleEntry(selected)" class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <PencilLine class="h-3.5 w-3.5 self-center text-foreground/60 shrink-0" />
+              <PencilLine class="h-3.5 w-3.5 shrink-0 self-center text-foreground/60" />
               <span class="font-medium text-foreground">{{ latestTitleEntry(selected)?.title }}</span>
               <span v-if="latestTitleEntry(selected)?.category_name" class="text-sm text-foreground/80">
                 in {{ latestTitleEntry(selected)?.category_name }}
@@ -432,11 +413,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
               :key="tab.key"
               type="button"
               class="cursor-pointer border-b-2 px-3 py-2 text-sm font-medium transition-colors"
-              :class="
-                activeTab === tab.key
-                  ? 'border-b-violet-400 text-foreground'
-                  : 'border-b-transparent text-foreground/60 hover:text-foreground'
-              "
+              :class="activeTab === tab.key ? 'border-b-violet-400 text-foreground' : 'border-b-transparent text-foreground/60 hover:text-foreground'"
               @click="activeTab = tab.key"
             >
               {{ tab.label }}
@@ -451,17 +428,19 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                 v-if="!selected.window.anchored_on_eventsub.online || !selected.window.anchored_on_eventsub.offline"
                 class="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-foreground"
               >
-                <AlertTriangle class="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                 <p>
-                  Capture window is approximate for this session
-                  ({{ !selected.window.anchored_on_eventsub.online ? 'no stream.online event found' : '' }}{{ !selected.window.anchored_on_eventsub.online && !selected.window.anchored_on_eventsub.offline ? ', ' : '' }}{{ !selected.window.anchored_on_eventsub.offline ? 'no stream.offline event found' : '' }}).
-                  Stats fall back to the session's recorded start and end times.
+                  Capture window is approximate for this session ({{
+                    !selected.window.anchored_on_eventsub.online ? 'no stream.online event found' : ''
+                  }}{{ !selected.window.anchored_on_eventsub.online && !selected.window.anchored_on_eventsub.offline ? ', ' : ''
+                  }}{{ !selected.window.anchored_on_eventsub.offline ? 'no stream.offline event found' : '' }}). Stats fall back to the session's
+                  recorded start and end times.
                 </p>
               </div>
 
               <div class="grid grid-cols-2 gap-px border border-sidebar-border bg-sidebar-border sm:grid-cols-4">
-                <div v-for="tile in headlineTiles(selected)" :key="tile.label" class="bg-card p-4 space-y-1">
-                  <p class="text-xs font-medium uppercase tracking-wide text-foreground/60">{{ tile.label }}</p>
+                <div v-for="tile in headlineTiles(selected)" :key="tile.label" class="space-y-1 bg-card p-4">
+                  <p class="text-xs font-medium tracking-wide text-foreground/60 uppercase">{{ tile.label }}</p>
                   <p class="text-2xl font-semibold text-foreground tabular-nums">{{ tile.value }}</p>
                   <p v-if="tile.sub" class="text-xs text-foreground/70">{{ tile.sub }}</p>
                 </div>
@@ -493,15 +472,15 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                     :key="i"
                     class="flex flex-col gap-1 border border-sidebar-border bg-background/40 p-2 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3"
                   >
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                    <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span class="font-medium text-foreground">{{ msg.name }}</span>
                       <Badge variant="secondary" class="text-xs">{{ tierLabel(msg.tier) }}</Badge>
                       <span v-if="msg.cumulative_months" class="text-xs text-foreground/80">
                         {{ msg.cumulative_months }} months<span v-if="msg.streak_months"> · {{ msg.streak_months }} streak</span>
                       </span>
-                      <span v-if="msg.message" class="text-foreground italic min-w-0 truncate">"{{ msg.message }}"</span>
+                      <span v-if="msg.message" class="min-w-0 truncate text-foreground italic">"{{ msg.message }}"</span>
                     </div>
-                    <span class="text-xs text-foreground/70 shrink-0 tabular-nums">{{ formatTime(msg.at) }}</span>
+                    <span class="shrink-0 text-xs text-foreground/70 tabular-nums">{{ formatTime(msg.at) }}</span>
                   </li>
                 </ul>
               </div>
@@ -544,10 +523,10 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                   <table class="w-full text-sm">
                     <thead>
                       <tr class="border-b border-sidebar-border bg-background/40">
-                        <th class="text-left p-2 font-medium text-foreground/80">Reward</th>
-                        <th class="text-right p-2 font-medium text-foreground/80">Count</th>
-                        <th class="text-right p-2 font-medium text-foreground/80">Cost</th>
-                        <th class="text-right p-2 font-medium text-foreground/80">Total</th>
+                        <th class="p-2 text-left font-medium text-foreground/80">Reward</th>
+                        <th class="p-2 text-right font-medium text-foreground/80">Count</th>
+                        <th class="p-2 text-right font-medium text-foreground/80">Cost</th>
+                        <th class="p-2 text-right font-medium text-foreground/80">Total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -559,7 +538,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                         <td class="p-2 text-foreground">{{ reward.title }}</td>
                         <td class="p-2 text-right text-foreground tabular-nums">{{ fmtNum(reward.count) }}</td>
                         <td class="p-2 text-right text-foreground/80 tabular-nums">{{ fmtNum(reward.cost_per) }}</td>
-                        <td class="p-2 text-right text-foreground tabular-nums font-medium">{{ fmtNum(reward.total_cost) }}</td>
+                        <td class="p-2 text-right font-medium text-foreground tabular-nums">{{ fmtNum(reward.total_cost) }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -586,36 +565,30 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
             <!-- Income -->
             <div v-else-if="activeTab === 'income'" class="space-y-6">
               <p v-if="selected.stats.income.count === 0" class="text-sm text-foreground/60">
-                No donations from connected services were recorded for this stream. Ko-fi, StreamLabs,
-                Buy Me a Coffee and Fourthwall donations show up here once they fire during a live stream.
+                No donations from connected services were recorded for this stream. Ko-fi, StreamLabs, Buy Me a Coffee and Fourthwall donations show
+                up here once they fire during a live stream.
               </p>
 
               <template v-else>
                 <!-- Per-service / per-currency totals -->
                 <div class="space-y-2">
                   <h3 :class="sectionHeading">
-                    <span class="inline-flex items-center gap-1.5">
-                      <HandCoins class="h-3.5 w-3.5" /> Totals
-                    </span>
+                    <span class="inline-flex items-center gap-1.5"> <HandCoins class="h-3.5 w-3.5" /> Totals </span>
                   </h3>
                   <div class="overflow-x-auto border border-sidebar-border">
                     <table class="w-full text-sm">
                       <thead>
                         <tr class="border-b border-sidebar-border bg-background/40">
-                          <th class="text-left p-2 font-medium text-foreground/80">Service</th>
-                          <th class="text-right p-2 font-medium text-foreground/80">Count</th>
-                          <th class="text-right p-2 font-medium text-foreground/80">Total</th>
+                          <th class="p-2 text-left font-medium text-foreground/80">Service</th>
+                          <th class="p-2 text-right font-medium text-foreground/80">Count</th>
+                          <th class="p-2 text-right font-medium text-foreground/80">Total</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr
-                          v-for="(row, i) in selected.stats.income.totals"
-                          :key="i"
-                          class="border-b border-sidebar-border last:border-0"
-                        >
+                        <tr v-for="(row, i) in selected.stats.income.totals" :key="i" class="border-b border-sidebar-border last:border-0">
                           <td class="p-2 text-foreground">{{ serviceLabel(row.service) }}</td>
                           <td class="p-2 text-right text-foreground tabular-nums">{{ fmtNum(row.count) }}</td>
-                          <td class="p-2 text-right text-foreground tabular-nums font-medium">{{ fmtCurrency(row.total, row.currency) }}</td>
+                          <td class="p-2 text-right font-medium text-foreground tabular-nums">{{ fmtCurrency(row.total, row.currency) }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -625,22 +598,20 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
 
                 <!-- Individual donations -->
                 <div v-if="selected.stats.income.donations.length > 0" class="space-y-2">
-                  <h3 :class="sectionHeading">
-                    Recent donations ({{ selected.stats.income.donations.length }})
-                  </h3>
+                  <h3 :class="sectionHeading">Recent donations ({{ selected.stats.income.donations.length }})</h3>
                   <ul class="space-y-1.5">
                     <li
                       v-for="(d, i) in selected.stats.income.donations"
                       :key="i"
                       class="flex flex-col gap-1 border border-sidebar-border bg-background/40 p-2 text-sm sm:flex-row sm:items-baseline sm:justify-between sm:gap-3"
                     >
-                      <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 min-w-0">
+                      <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                         <span class="font-medium text-foreground">{{ d.from_name ?? 'Anonymous' }}</span>
                         <span class="font-semibold text-foreground tabular-nums">{{ fmtCurrency(d.amount, d.currency) }}</span>
                         <Badge variant="secondary" class="text-xs">{{ serviceLabel(d.service) }}</Badge>
-                        <span v-if="d.message" class="text-foreground italic min-w-0 truncate">"{{ d.message }}"</span>
+                        <span v-if="d.message" class="min-w-0 truncate text-foreground italic">"{{ d.message }}"</span>
                       </div>
-                      <span class="text-xs text-foreground/70 shrink-0 tabular-nums">{{ formatTime(d.at) }}</span>
+                      <span class="shrink-0 text-xs text-foreground/70 tabular-nums">{{ formatTime(d.at) }}</span>
                     </li>
                   </ul>
                 </div>
@@ -649,18 +620,12 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
 
             <!-- Engagement -->
             <div v-else-if="activeTab === 'engagement'" class="space-y-6">
-              <p v-if="!hasEngagement(selected)" class="text-sm text-foreground/60">
-                No goals, polls or hype trains were recorded for this stream.
-              </p>
+              <p v-if="!hasEngagement(selected)" class="text-sm text-foreground/60">No goals, polls or hype trains were recorded for this stream.</p>
 
               <!-- Goals -->
               <div v-if="selected.stats.goals.length > 0" class="space-y-2">
                 <h3 :class="sectionHeading">Goals</h3>
-                <div
-                  v-for="goal in selected.stats.goals"
-                  :key="goal.type"
-                  class="border border-sidebar-border bg-background/40 p-3 space-y-2"
-                >
+                <div v-for="goal in selected.stats.goals" :key="goal.type" class="space-y-2 border border-sidebar-border bg-background/40 p-3">
                   <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span class="font-medium text-foreground">{{ goalLabel(goal.type) }}</span>
                     <span class="text-foreground tabular-nums">
@@ -668,7 +633,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                       <span class="text-foreground/70">/ {{ fmtNum(goal.target) }}</span>
                     </span>
                   </div>
-                  <div class="h-2 rounded-sm bg-sidebar-accent overflow-hidden">
+                  <div class="h-2 overflow-hidden rounded-sm bg-sidebar-accent">
                     <div class="h-full bg-violet-400" :style="{ width: `${goalPercent(goal)}%` }" />
                   </div>
                   <p class="text-xs text-foreground/80">
@@ -681,11 +646,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
               <!-- Polls -->
               <div v-if="selected.stats.polls.length > 0" class="space-y-2">
                 <h3 :class="sectionHeading">Polls ({{ selected.stats.polls.length }})</h3>
-                <div
-                  v-for="poll in selected.stats.polls"
-                  :key="poll.id"
-                  class="border border-sidebar-border bg-background/40 p-3 space-y-2"
-                >
+                <div v-for="poll in selected.stats.polls" :key="poll.id" class="space-y-2 border border-sidebar-border bg-background/40 p-3">
                   <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm font-medium text-foreground">{{ poll.title }}</p>
                     <div class="flex items-center gap-2">
@@ -703,7 +664,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                         </span>
                         <span class="text-foreground tabular-nums">{{ fmtNum(choice.votes) }}</span>
                       </div>
-                      <div class="h-2 rounded-sm bg-sidebar-accent overflow-hidden">
+                      <div class="h-2 overflow-hidden rounded-sm bg-sidebar-accent">
                         <div
                           class="h-full"
                           :class="isPollWinner(choice, poll.winners) ? 'bg-amber-400' : 'bg-violet-400/70'"
@@ -721,7 +682,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                 <div
                   v-for="(train, i) in selected.stats.hype_trains"
                   :key="train.id ?? i"
-                  class="border border-sidebar-border bg-background/40 p-3 space-y-2"
+                  class="space-y-2 border border-sidebar-border bg-background/40 p-3"
                 >
                   <div class="flex flex-wrap items-baseline gap-3 text-sm">
                     <span class="text-base font-semibold text-foreground">Level {{ train.level }}</span>
@@ -733,11 +694,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                   <div v-if="train.top_contributions.length > 0" class="space-y-1">
                     <p class="text-xs text-foreground/80">Top contributors</p>
                     <ul class="space-y-0.5">
-                      <li
-                        v-for="(c, ci) in train.top_contributions"
-                        :key="ci"
-                        class="flex items-center justify-between text-sm"
-                      >
+                      <li v-for="(c, ci) in train.top_contributions" :key="ci" class="flex items-center justify-between text-sm">
                         <span class="text-foreground">{{ c.user_name }}</span>
                         <span class="text-foreground/80 tabular-nums">{{ fmtNum(c.total) }} {{ c.type }}</span>
                       </li>
@@ -752,12 +709,13 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
               <div class="space-y-1">
                 <h3 :class="sectionHeading">Capture window</h3>
                 <p>
-                  {{ formatDate(selected.window.start) }} {{ formatTime(selected.window.start) }}
-                  -> {{ formatDate(selected.window.end) }} {{ formatTime(selected.window.end) }}
+                  {{ formatDate(selected.window.start) }} {{ formatTime(selected.window.start) }} -> {{ formatDate(selected.window.end) }}
+                  {{ formatTime(selected.window.end) }}
                 </p>
                 <p>
-                  Anchored on EventSub: online={{ selected.window.anchored_on_eventsub.online }},
-                  offline={{ selected.window.anchored_on_eventsub.offline }}
+                  Anchored on EventSub: online={{ selected.window.anchored_on_eventsub.online }}, offline={{
+                    selected.window.anchored_on_eventsub.offline
+                  }}
                 </p>
                 <p v-if="selected.helix_stream_id">Helix stream id: {{ selected.helix_stream_id }}</p>
               </div>
@@ -765,12 +723,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
               <div class="space-y-2">
                 <h3 :class="sectionHeading">Event counts</h3>
                 <div class="flex flex-wrap gap-1.5">
-                  <Badge
-                    v-for="(count, type) in selected.event_counts"
-                    :key="type"
-                    variant="secondary"
-                    class="text-xs font-mono"
-                  >
+                  <Badge v-for="(count, type) in selected.event_counts" :key="type" variant="secondary" class="font-mono text-xs">
                     {{ type }} <span class="ml-1 text-foreground">{{ fmtNum(count) }}</span>
                   </Badge>
                 </div>

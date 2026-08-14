@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Point-in-time snapshot of a List's items array. Auto-created before
@@ -16,10 +17,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $list_id
  * @property array<int, string> $items
- * @property string $reason             'before_clear'|'before_draw'|'before_pop'|'before_restore'|'manual'
+ * @property string $reason 'before_clear'|'before_draw'|'before_pop'|'before_restore'|'manual'
  * @property int|null $triggered_by_user_id
  * @property bool $pinned
- * @property \Illuminate\Support\Carbon $created_at
+ * @property Carbon $created_at
  */
 class ListSnapshot extends Model
 {

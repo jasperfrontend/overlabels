@@ -1,11 +1,11 @@
 import '../../css/app.css';
 
-import { createApp } from 'vue';
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-import type { ChannelAuthorizationCallback } from 'pusher-js';
-import EventsFeed from './EventsFeed.vue';
 import { initializeTheme } from '@/composables/useAppearance';
+import Echo from 'laravel-echo';
+import type { ChannelAuthorizationCallback } from 'pusher-js';
+import Pusher from 'pusher-js';
+import { createApp } from 'vue';
+import EventsFeed from './EventsFeed.vue';
 
 // Echo/Reverb for live feed updates (Reverb uses the Pusher protocol)
 (window as any).Pusher = Pusher;

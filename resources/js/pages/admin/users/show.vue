@@ -76,7 +76,7 @@ const currentUserId = computed(() => page.props.auth.user?.id);
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
   { title: 'Users', href: route('admin.users.index') },
-  { title: props.user.name, href: route('admin.users.show', props.user.id) }
+  { title: props.user.name, href: route('admin.users.show', props.user.id) },
 ];
 
 // Role form
@@ -89,12 +89,10 @@ function submitRole() {
 // Per-service donations_received seed forms. One useForm per integration so
 // each card has its own loading/error state and the inputs don't share v-model.
 const seedForms = reactive(
-  Object.fromEntries(
-    props.integrationSeeds.map((s) => [
-      s.service,
-      useForm({ initial_count: s.seed_value ?? 0 }),
-    ]),
-  ) as Record<string, ReturnType<typeof useForm<{ initial_count: number }>>>,
+  Object.fromEntries(props.integrationSeeds.map((s) => [s.service, useForm({ initial_count: s.seed_value ?? 0 })])) as Record<
+    string,
+    ReturnType<typeof useForm<{ initial_count: number }>>
+  >,
 );
 
 function submitIntegrationSeed(service: string) {
@@ -103,16 +101,14 @@ function submitIntegrationSeed(service: string) {
   form.post(route('admin.users.integration-seed', { user: props.user.id, service }));
 }
 
-const connectedSeedIntegrations = computed(() =>
-  props.integrationSeeds.filter((s) => s.connected),
-);
+const connectedSeedIntegrations = computed(() => props.integrationSeeds.filter((s) => s.connected));
 
 // Ban form
 const banForm = useForm({
   type: 'user' as const,
   user_id: props.user.id,
   comment: '',
-  duration: 'permanent'
+  duration: 'permanent',
 });
 
 function submitBan() {
@@ -131,7 +127,7 @@ const durations = [
   { value: '24h', label: '24 hours' },
   { value: '7d', label: '7 days' },
   { value: '30d', label: '30 days' },
-  { value: 'permanent', label: 'Permanent' }
+  { value: 'permanent', label: 'Permanent' },
 ];
 
 // Delete form
@@ -140,7 +136,7 @@ const showDeleteConfirm = ref(false);
 
 function submitDelete() {
   router.delete(route('admin.users.destroy', props.user.id), {
-    data: { strategy: deleteStrategy.value }
+    data: { strategy: deleteStrategy.value },
   });
 }
 
@@ -151,7 +147,9 @@ function restore() {
 </script>
 
 <template>
-  <Head><title>Admin — {{ user.name }}</title></Head>
+  <Head
+    ><title>Admin — {{ user.name }}</title></Head
+  >
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-6 p-4">
       <!-- Profile header -->
@@ -181,54 +179,53 @@ function restore() {
         </TabsList>
 
         <TabsContent value="templates" class="mt-4">
-          <table class="w-full text-sm border rounded">
+          <table class="w-full rounded border text-sm">
             <thead class="bg-muted text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Name</th>
-              <th class="px-3 py-2">Type</th>
-              <th class="px-3 py-2">Public</th>
-              <th class="px-3 py-2">Created</th>
-            </tr>
+              <tr>
+                <th class="px-3 py-2">Name</th>
+                <th class="px-3 py-2">Type</th>
+                <th class="px-3 py-2">Public</th>
+                <th class="px-3 py-2">Created</th>
+              </tr>
             </thead>
             <tbody>
-            <tr v-for="t in recentTemplates" :key="t.id" class="border-t">
-              <td class="px-3 py-2">
-                <a :href="route('admin.templates.show', t.id)" class="hover:underline">{{ t.name }}</a>
-              </td>
-              <td class="px-3 py-2">
-                <Badge variant="outline">{{ t.type }}</Badge>
-              </td>
-              <td class="px-3 py-2">{{ t.is_public ? 'Yes' : 'No' }}</td>
-              <td class="px-3 py-2 text-muted-foreground">{{ t.created_at }}</td>
-            </tr>
-            <EmptyState v-if="recentTemplates.length === 0" :colspan="4" message="No templates." />
+              <tr v-for="t in recentTemplates" :key="t.id" class="border-t">
+                <td class="px-3 py-2">
+                  <a :href="route('admin.templates.show', t.id)" class="hover:underline">{{ t.name }}</a>
+                </td>
+                <td class="px-3 py-2">
+                  <Badge variant="outline">{{ t.type }}</Badge>
+                </td>
+                <td class="px-3 py-2">{{ t.is_public ? 'Yes' : 'No' }}</td>
+                <td class="px-3 py-2 text-muted-foreground">{{ t.created_at }}</td>
+              </tr>
+              <EmptyState v-if="recentTemplates.length === 0" :colspan="4" message="No templates." />
             </tbody>
           </table>
         </TabsContent>
 
         <TabsContent value="tokens" class="mt-4">
-          <table class="w-full text-sm border rounded">
+          <table class="w-full rounded border text-sm">
             <thead class="bg-muted text-left text-muted-foreground">
-            <tr>
-              <th class="px-3 py-2">Name</th>
-              <th class="px-3 py-2">Prefix</th>
-              <th class="px-3 py-2">Active</th>
-              <th class="px-3 py-2">Uses</th>
-              <th class="px-3 py-2">Expires</th>
-            </tr>
+              <tr>
+                <th class="px-3 py-2">Name</th>
+                <th class="px-3 py-2">Prefix</th>
+                <th class="px-3 py-2">Active</th>
+                <th class="px-3 py-2">Uses</th>
+                <th class="px-3 py-2">Expires</th>
+              </tr>
             </thead>
             <tbody>
-            <tr v-for="t in accessTokens" :key="t.id" class="border-t">
-              <td class="px-3 py-2">{{ t.name }}</td>
-              <td class="px-3 py-2 font-mono text-xs">{{ t.token_prefix }}</td>
-              <td class="px-3 py-2">
-                <Badge :variant="t.is_active ? 'default' : 'secondary'">{{ t.is_active ? 'active' : 'inactive' }}
-                </Badge>
-              </td>
-              <td class="px-3 py-2">{{ t.access_count }}</td>
-              <td class="px-3 py-2 text-muted-foreground">{{ t.expires_at ?? 'Never' }}</td>
-            </tr>
-            <EmptyState v-if="accessTokens.length === 0" :colspan="5" message="No tokens." />
+              <tr v-for="t in accessTokens" :key="t.id" class="border-t">
+                <td class="px-3 py-2">{{ t.name }}</td>
+                <td class="px-3 py-2 font-mono text-xs">{{ t.token_prefix }}</td>
+                <td class="px-3 py-2">
+                  <Badge :variant="t.is_active ? 'default' : 'secondary'">{{ t.is_active ? 'active' : 'inactive' }} </Badge>
+                </td>
+                <td class="px-3 py-2">{{ t.access_count }}</td>
+                <td class="px-3 py-2 text-muted-foreground">{{ t.expires_at ?? 'Never' }}</td>
+              </tr>
+              <EmptyState v-if="accessTokens.length === 0" :colspan="5" message="No tokens." />
             </tbody>
           </table>
         </TabsContent>
@@ -243,15 +240,13 @@ function restore() {
                 </div>
                 <span class="text-xs text-muted-foreground">{{ entry.created_at }}</span>
               </div>
-              <pre v-if="entry.metadata"
-                   class="mt-1 text-xs text-muted-foreground">{{ JSON.stringify(entry.metadata, null, 2) }}</pre>
+              <pre v-if="entry.metadata" class="mt-1 text-xs text-muted-foreground">{{ JSON.stringify(entry.metadata, null, 2) }}</pre>
             </div>
             <EmptyState v-if="recentAuditEntries.length === 0" message="No audit entries." />
           </div>
         </TabsContent>
 
         <TabsContent value="admin" class="mt-4 space-y-6">
-
           <!-- Role -->
           <Card v-if="!user.is_system_user">
             <CardHeader>
@@ -259,16 +254,12 @@ function restore() {
             </CardHeader>
             <CardContent>
               <form @submit.prevent="submitRole" class="flex items-center gap-3">
-                <select v-model="roleForm.role" class="rounded border px-3 py-1.5 text-sm bg-background"
-                        :disabled="user.id === currentUserId">
+                <select v-model="roleForm.role" class="rounded border bg-background px-3 py-1.5 text-sm" :disabled="user.id === currentUserId">
                   <option value="user">user</option>
                   <option value="admin">admin</option>
                 </select>
-                <Button type="submit" class="cursor-pointer" size="sm"
-                        :disabled="roleForm.processing || user.id === currentUserId">Save
-                </Button>
-                <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot change your own
-                  role.</p>
+                <Button type="submit" class="cursor-pointer" size="sm" :disabled="roleForm.processing || user.id === currentUserId">Save </Button>
+                <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot change your own role.</p>
                 <p v-if="roleForm.errors.role" class="text-xs text-destructive">{{ roleForm.errors.role }}</p>
               </form>
             </CardContent>
@@ -281,17 +272,12 @@ function restore() {
             </CardHeader>
             <CardContent>
               <p class="mb-4 text-sm text-muted-foreground">
-                Override the user's <code>total_received</code> seed value for any connected donation-style
-                integration. This is the running monetary total, so decimals are expected. It bypasses the one-time
-                lock the user-facing settings enforce, so use it to correct mistakes after the user has already set
-                their starting total.
+                Override the user's <code>total_received</code> seed value for any connected donation-style integration. This is the running monetary
+                total, so decimals are expected. It bypasses the one-time lock the user-facing settings enforce, so use it to correct mistakes after
+                the user has already set their starting total.
               </p>
               <div class="space-y-4">
-                <div
-                  v-for="seed in connectedSeedIntegrations"
-                  :key="seed.service"
-                  class="rounded border border-sidebar p-3 space-y-2"
-                >
+                <div v-for="seed in connectedSeedIntegrations" :key="seed.service" class="space-y-2 rounded border border-sidebar p-3">
                   <div class="flex items-center justify-between">
                     <p class="text-sm font-medium">{{ seed.label }}</p>
                     <span v-if="seed.seed_set" class="text-xs text-muted-foreground">
@@ -306,16 +292,9 @@ function restore() {
                       min="0"
                       max="9999999"
                       step="0.01"
-                      class="rounded border px-3 py-1.5 text-sm bg-background w-32"
+                      class="w-32 rounded border bg-background px-3 py-1.5 text-sm"
                     />
-                    <Button
-                      type="submit"
-                      class="cursor-pointer"
-                      size="sm"
-                      :disabled="seedForms[seed.service].processing"
-                    >
-                      Save
-                    </Button>
+                    <Button type="submit" class="cursor-pointer" size="sm" :disabled="seedForms[seed.service].processing"> Save </Button>
                     <p v-if="seedForms[seed.service].errors.initial_count" class="text-xs text-destructive">
                       {{ seedForms[seed.service].errors.initial_count }}
                     </p>
@@ -332,15 +311,13 @@ function restore() {
             </CardHeader>
             <CardContent>
               <div v-if="isBanned && activeBan" class="space-y-3">
-                <div class="rounded border border-destructive bg-destructive/5 p-3 text-sm space-y-1">
+                <div class="space-y-1 rounded border border-destructive bg-destructive/5 p-3 text-sm">
                   <div class="font-medium text-destructive">This user is currently banned</div>
                   <div v-if="activeBan.comment" class="text-muted-foreground">Reason: {{ activeBan.comment }}</div>
                   <div class="text-muted-foreground">
-                    {{ activeBan.expired_at ? `Expires: ${new Date(activeBan.expired_at).toLocaleString()}` : 'Permanent ban'
-                    }}
+                    {{ activeBan.expired_at ? `Expires: ${new Date(activeBan.expired_at).toLocaleString()}` : 'Permanent ban' }}
                   </div>
-                  <div class="text-muted-foreground">Banned on: {{ new Date(activeBan.created_at).toLocaleString() }}
-                  </div>
+                  <div class="text-muted-foreground">Banned on: {{ new Date(activeBan.created_at).toLocaleString() }}</div>
                 </div>
                 <Button variant="outline" class="cursor-pointer" size="sm" @click="unban">Remove Ban</Button>
               </div>
@@ -348,11 +325,16 @@ function restore() {
                 <p class="text-sm text-muted-foreground">Ban this user from accessing the application.</p>
                 <form @submit.prevent="submitBan" class="flex flex-wrap items-center gap-3">
                   <Input v-model="banForm.comment" placeholder="Reason (optional)" class="w-64" />
-                  <select v-model="banForm.duration" class="rounded border px-3 py-1.5 text-sm bg-background">
+                  <select v-model="banForm.duration" class="rounded border bg-background px-3 py-1.5 text-sm">
                     <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
                   </select>
-                  <Button type="submit" class="cursor-pointer" variant="destructive" size="sm"
-                          :disabled="banForm.processing || user.id === currentUserId">Ban User
+                  <Button
+                    type="submit"
+                    class="cursor-pointer"
+                    variant="destructive"
+                    size="sm"
+                    :disabled="banForm.processing || user.id === currentUserId"
+                    >Ban User
                   </Button>
                 </form>
                 <p v-if="user.id === currentUserId" class="text-xs text-muted-foreground">Cannot ban yourself.</p>
@@ -367,10 +349,8 @@ function restore() {
               <CardTitle>Impersonate</CardTitle>
             </CardHeader>
             <CardContent>
-              <p class="mb-3 text-sm text-muted-foreground">Log in as this user to debug issues. A banner will appear
-                while impersonating.</p>
-              <Button variant="outline" class="cursor-pointer" size="sm"
-                      @click="router.post(route('admin.impersonate.start', user.id))">
+              <p class="mb-3 text-sm text-muted-foreground">Log in as this user to debug issues. A banner will appear while impersonating.</p>
+              <Button variant="outline" class="cursor-pointer" size="sm" @click="router.post(route('admin.impersonate.start', user.id))">
                 Login as {{ user.name }}
               </Button>
             </CardContent>
@@ -392,47 +372,38 @@ function restore() {
               <CardTitle class="text-destructive">Danger Zone</CardTitle>
             </CardHeader>
             <CardContent class="space-y-3">
-              <p class="text-sm text-muted-foreground">Deleting this user is soft-reversible (they can be restored).
-                Choose a content strategy:</p>
+              <p class="text-sm text-muted-foreground">Deleting this user is soft-reversible (they can be restored). Choose a content strategy:</p>
               <label class="flex items-start gap-2 text-sm">
                 <input type="radio" v-model="deleteStrategy" value="assign_ghost" />
                 <div>
                   <div class="font-medium">Assign to Ghost User</div>
-                  <div class="text-xs text-muted-foreground">Templates, kits, and tags are reassigned. Content is
-                    preserved.
-                  </div>
+                  <div class="text-xs text-muted-foreground">Templates, kits, and tags are reassigned. Content is preserved.</div>
                 </div>
               </label>
               <label class="flex items-start gap-2 text-sm">
                 <input type="radio" v-model="deleteStrategy" value="delete_content" />
                 <div>
                   <div class="font-medium">Keep content in place</div>
-                  <div class="text-xs text-muted-foreground">User is soft-deleted. Content remains owned by them until
-                    purged.
-                  </div>
+                  <div class="text-xs text-muted-foreground">User is soft-deleted. Content remains owned by them until purged.</div>
                 </div>
               </label>
               <label class="flex items-start gap-2 text-sm">
                 <input type="radio" v-model="deleteStrategy" value="delete_all" />
                 <div>
                   <div class="font-medium text-destructive">Delete all content</div>
-                  <div class="text-xs text-muted-foreground">Permanently removes all templates, kits, controls, tags,
-                    and integrations. Cannot be undone.
+                  <div class="text-xs text-muted-foreground">
+                    Permanently removes all templates, kits, controls, tags, and integrations. Cannot be undone.
                   </div>
                 </div>
               </label>
               <div v-if="!showDeleteConfirm">
-                <Button variant="destructive" class="cursor-pointer" size="sm" @click="showDeleteConfirm = true">Delete
-                  User
-                </Button>
+                <Button variant="destructive" class="cursor-pointer" size="sm" @click="showDeleteConfirm = true">Delete User </Button>
               </div>
               <div v-else class="space-y-2">
                 <p class="text-sm font-medium text-destructive">Are you sure? This will delete the user (soft).</p>
                 <div class="flex gap-2">
-                  <Button variant="destructive" class="cursor-pointer" size="sm" @click="submitDelete">Yes, delete
-                  </Button>
-                  <Button variant="outline" class="cursor-pointer" size="sm" @click="showDeleteConfirm = false">Cancel
-                  </Button>
+                  <Button variant="destructive" class="cursor-pointer" size="sm" @click="submitDelete">Yes, delete </Button>
+                  <Button variant="outline" class="cursor-pointer" size="sm" @click="showDeleteConfirm = false">Cancel </Button>
                 </div>
               </div>
             </CardContent>

@@ -1,68 +1,67 @@
 import type { LucideIcon } from '@lucide/vue';
 
 export interface Auth {
-    csrf: string | null | undefined;
-    user: User;
+  csrf: string | null | undefined;
+  user: User;
 }
 
 export interface BreadcrumbItem {
-    title: string;
-    href: string;
+  title: string;
+  href: string;
 }
 
 export interface NavItem {
-    title: string;
-    href: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    target?: string;
+  title: string;
+  href: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  target?: string;
 }
 
 export interface FlashMessage {
-    message?: string;
-    type?: 'info' | 'success' | 'warning' | 'error';
+  message?: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
 }
 
 export interface StreamState {
-    state: 'offline' | 'starting' | 'live' | 'ending';
-    confidence: number;
-    startedAt: string | null;
+  state: 'offline' | 'starting' | 'live' | 'ending';
+  confidence: number;
+  startedAt: string | null;
 }
 
 export interface UsageSummary {
-    /** Broadcasts (overlay updates) counted this month. */
-    broadcasts: number;
-    /** Free-tier monthly ceiling, or null when running observe-only. */
-    limit: number | null;
-    /** The month the count covers, as YYYY-MM. */
-    period: string;
+  /** Broadcasts (overlay updates) counted this month. */
+  broadcasts: number;
+  /** Free-tier monthly ceiling, or null when running observe-only. */
+  limit: number | null;
+  /** The month the count covers, as YYYY-MM. */
+  period: string;
 }
 
 /** A help page that declared the current route in its `context:` frontmatter. */
 export interface HelpLink {
-    slug: string;
-    /** The page's short name, from its `heading` frontmatter. */
-    title: string;
-    /** The page's own opening paragraph, used as the excerpt. */
-    lead: string;
-    url: string;
+  slug: string;
+  /** The page's short name, from its `heading` frontmatter. */
+  title: string;
+  /** The page's own opening paragraph, used as the excerpt. */
+  lead: string;
+  url: string;
 }
 
 export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
-    name: string;
-    quote: { message: string; author: string };
-    auth: Auth;
-    sidebarOpen: boolean;
-    /** Contextual help for the current route, best match first. Often empty. */
-    help: HelpLink[];
-    flash: FlashMessage;
-    isAdmin: boolean;
-    impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
-    lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
-    streamState: StreamState | null;
-    twitchScope: { missing: string[] } | null;
+  name: string;
+  quote: { message: string; author: string };
+  auth: Auth;
+  sidebarOpen: boolean;
+  /** Contextual help for the current route, best match first. Often empty. */
+  help: HelpLink[];
+  flash: FlashMessage;
+  isAdmin: boolean;
+  impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
+  lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
+  streamState: StreamState | null;
+  twitchScope: { missing: string[] } | null;
 };
-
 
 /* Twitch event types.
  * See https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/
@@ -71,9 +70,9 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
  * To get the broadcaster's id, use broadcaster_user_id instead, which is also sent along in the payload.
  */
 export type NormalizedEvent = {
-  id: string;               // Twitch message_id for de-dupe
-  type: string;             // 'channel.subscribe'
-  ts: number;               // Date.now()
+  id: string; // Twitch message_id for de-dupe
+  type: string; // 'channel.subscribe'
+  ts: number; // Date.now()
   broadcaster_user_id: string;
   broadcaster_user_login: string;
   broadcaster_user_name: string;
@@ -83,9 +82,9 @@ export type NormalizedEvent = {
   user_id?: string;
   user_avatar?: string;
   gifter_name: string | undefined;
-  tier?: '1000'|'2000'|'3000' | string | undefined;
+  tier?: '1000' | '2000' | '3000' | string | undefined;
   is_gift?: boolean;
-  gift_count?: number;      // for bombs
+  gift_count?: number; // for bombs
   cumulative_total?: number;
   to_broadcaster_user_id?: string;
   to_broadcaster_user_login?: string;
@@ -96,30 +95,30 @@ export type NormalizedEvent = {
   from_broadcaster_user_name?: string;
   from_broadcaster_user_avatar?: string;
   viewers?: number;
-  raw: any;                 // keep original for debugging
-}
+  raw: any; // keep original for debugging
+};
 
 export interface User {
-    access_token: any;
-    description: any;
-    twitch_data: any;
-    id: number;
-    name: string;
-    avatar?: string;
-    created_at: string;
-    updated_at: string;
-    role: 'user' | 'admin';
-    locale?: string;
-    foreach_caps?: ForeachCaps;
-    is_system_user: boolean;
-    deleted_at: string | null;
+  access_token: any;
+  description: any;
+  twitch_data: any;
+  id: number;
+  name: string;
+  avatar?: string;
+  created_at: string;
+  updated_at: string;
+  role: 'user' | 'admin';
+  locale?: string;
+  foreach_caps?: ForeachCaps;
+  is_system_user: boolean;
+  deleted_at: string | null;
 }
 
 export interface ForeachCaps {
-    subscribers: number;
-    goals: number;
-    followers: number;
-    followed: number;
+  subscribers: number;
+  goals: number;
+  followers: number;
+  followed: number;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

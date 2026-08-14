@@ -1,31 +1,30 @@
-import { EmoteFetcher, EmoteParser } from '@mkody/twitch-emoticons'
-import { ref } from 'vue'
-import { encodeHtml } from '@/utils/tagParser'
+import { encodeHtml } from '@/utils/tagParser';
+import { EmoteFetcher, EmoteParser } from '@mkody/twitch-emoticons';
+import { ref } from 'vue';
 
 interface TwitchEmotePosition {
-  begin: number
-  end: number
-  id: string
+  begin: number;
+  end: number;
+  id: string;
 }
 
 interface TwitchEmoteEntry {
-  code: string
-  url: string
+  code: string;
+  url: string;
 }
 
 export function useEmoteParser() {
-  const isReady = ref(false)
-  let parser: InstanceType<typeof EmoteParser> | null = null
+  const isReady = ref(false);
+  let parser: InstanceType<typeof EmoteParser> | null = null;
   // Twitch emotes fetched from backend proxy (credentials stay server-side)
-  const twitchEmoteMap = new Map<string, string>() // code → CDN URL
+  const twitchEmoteMap = new Map<string, string>(); // code → CDN URL
 
   async function initialize(channelId: number): Promise<void> {
-    const fetcher = new EmoteFetcher() // No Twitch credentials — BTTV/FFZ/7TV only
+    const fetcher = new EmoteFetcher(); // No Twitch credentials — BTTV/FFZ/7TV only
     parser = new EmoteParser(fetcher, {
-      template:
-        '<img class="overlay-emote" alt="{name}" src="{link}" style="display:inline;vertical-align:middle;height:1.5em;">',
+      template: '<img class="overlay-emote" alt="{name}" src="{link}" style="display:inline;vertical-align:middle;height:1.5em;">',
       match: /([a-zA-Z0-9_-]+)/g,
-    })
+    });
 
     await Promise.allSettled([
       fetcher.fetchBTTVEmotes(),
@@ -39,12 +38,12 @@ export function useEmoteParser() {
         .then((r) => r.json())
         .then((entries: TwitchEmoteEntry[]) => {
           for (const { code, url } of entries) {
-            twitchEmoteMap.set(code, url)
+            twitchEmoteMap.set(code, url);
           }
         }),
-    ])
+    ]);
 
-    isReady.value = true
+    isReady.value = true;
   }
 
   /**
@@ -58,12 +57,12 @@ export function useEmoteParser() {
   // replaced with safe `<img>` HTML. The result is a "safe HTML" string the
   // OverlayRenderer can splice in without re-encoding.
   function parseToken(token: string): string {
-    const twitchUrl = twitchEmoteMap.get(token)
+    const twitchUrl = twitchEmoteMap.get(token);
     if (twitchUrl) {
-      return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(token)}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`
+      return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(token)}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`;
     }
-    const encoded = encodeHtml(token)
-    return parser ? parser.parse(encoded) : encoded
+    const encoded = encodeHtml(token);
+    return parser ? parser.parse(encoded) : encoded;
   }
 
   /** Split text on whitespace runs, parse each word token independently. */
@@ -71,18 +70,18 @@ export function useEmoteParser() {
     return text
       .split(/(\s+)/)
       .map((chunk) => (/^\s+$/.test(chunk) ? chunk : parseToken(chunk)))
-      .join('')
+      .join('');
   }
 
   function parseEmotes(text: string, twitchEmotesJson?: string): string {
-    if (!isReady.value) return text
+    if (!isReady.value) return text;
 
     // Parse Twitch emote positions from EventSub payload (resub messages have these)
-    let twitchEmotes: TwitchEmotePosition[] = []
+    let twitchEmotes: TwitchEmotePosition[] = [];
     if (twitchEmotesJson) {
       try {
-        const parsed = JSON.parse(twitchEmotesJson)
-        if (Array.isArray(parsed)) twitchEmotes = parsed
+        const parsed = JSON.parse(twitchEmotesJson);
+        if (Array.isArray(parsed)) twitchEmotes = parsed;
       } catch {
         /* invalid JSON, skip */
       }
@@ -90,33 +89,33 @@ export function useEmoteParser() {
 
     // No position data (e.g., channel points user_input) — use token-based parsing
     if (!twitchEmotes.length) {
-      return parseByTokens(text)
+      return parseByTokens(text);
     }
 
     // Position-based splitting for resub messages: more accurate than code-matching,
     // prevents false positives on partial word matches.
-    const sorted = [...twitchEmotes].sort((a, b) => a.begin - b.begin)
-    const parts: string[] = []
-    let lastIndex = 0
+    const sorted = [...twitchEmotes].sort((a, b) => a.begin - b.begin);
+    const parts: string[] = [];
+    let lastIndex = 0;
 
     for (const emote of sorted) {
       if (emote.begin > lastIndex) {
-        parts.push(parseByTokens(text.slice(lastIndex, emote.begin)))
+        parts.push(parseByTokens(text.slice(lastIndex, emote.begin)));
       }
-      const emoteName = text.slice(emote.begin, emote.end + 1)
-      const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`
+      const emoteName = text.slice(emote.begin, emote.end + 1);
+      const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`;
       parts.push(
         `<img class="overlay-emote twitch-emote" alt="${encodeHtml(emoteName)}" src="${url}" style="display:inline;vertical-align:middle;height:1.5em;">`,
-      )
-      lastIndex = emote.end + 1
+      );
+      lastIndex = emote.end + 1;
     }
 
     if (lastIndex < text.length) {
-      parts.push(parseByTokens(text.slice(lastIndex)))
+      parts.push(parseByTokens(text.slice(lastIndex)));
     }
 
-    return parts.join('')
+    return parts.join('');
   }
 
-  return { initialize, parseEmotes, isReady }
+  return { initialize, parseEmotes, isReady };
 }

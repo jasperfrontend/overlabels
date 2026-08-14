@@ -1,5 +1,5 @@
-import { computed, type Ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { computed, type Ref } from 'vue';
 
 type Options = {
   /** Optional reactive speed unit ('kmh' | 'mph'). Required if you call formatSpeed/formatDistance. */

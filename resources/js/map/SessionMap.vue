@@ -41,16 +41,10 @@ const meta = ref<SessionMeta | null>(null);
 const metaLocale = ref<string | null>(null);
 
 const speedUnitRef = toRef(props, 'speedUnit');
-const {
-  formatDate,
-  formatTime,
-  formatDuration,
-  formatSpeed,
-  formatAltitude,
-  formatDistance,
-  batteryDelta,
-  batteryColor,
-} = useSessionDataFormatter({ speedUnit: speedUnitRef, localeOverride: metaLocale });
+const { formatDate, formatTime, formatDuration, formatSpeed, formatAltitude, formatDistance, batteryDelta, batteryColor } = useSessionDataFormatter({
+  speedUnit: speedUnitRef,
+  localeOverride: metaLocale,
+});
 
 const speedLabel = props.speedUnit === 'mph' ? 'mph' : 'km/h';
 
@@ -105,17 +99,14 @@ onMounted(async () => {
 
     if (route.value.length > 0) {
       // Compute bounding box
-      const lats = route.value.map(p => p[0]);
-      const lngs = route.value.map(p => p[1]);
+      const lats = route.value.map((p) => p[0]);
+      const lngs = route.value.map((p) => p[1]);
       const padding = 0.002; // ~200m padding
       bounds.value = [
         [Math.min(...lats) - padding, Math.min(...lngs) - padding],
         [Math.max(...lats) + padding, Math.max(...lngs) + padding],
       ];
-      center.value = [
-        (Math.min(...lats) + Math.max(...lats)) / 2,
-        (Math.min(...lngs) + Math.max(...lngs)) / 2,
-      ];
+      center.value = [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
     }
   } catch {
     error.value = 'Failed to load session data.';
@@ -152,9 +143,7 @@ function onMapReady() {
       <aside v-if="meta" class="map-stats-card">
         <header class="map-stats-card-header">
           <div class="map-stats-card-title">{{ formatDate(meta.started_at) }}</div>
-          <div class="map-stats-card-time">
-            {{ formatTime(meta.started_at) }} - {{ formatTime(meta.ended_at) }}
-          </div>
+          <div class="map-stats-card-time">{{ formatTime(meta.started_at) }} - {{ formatTime(meta.ended_at) }}</div>
         </header>
         <dl class="map-stats-grid">
           <div class="map-stat">
@@ -201,62 +190,33 @@ function onMapReady() {
         </dl>
       </aside>
 
-      <l-map
-        ref="mapRef"
-        :zoom="zoom"
-        :center="center"
-        :use-global-leaflet="false"
-        class="map-leaflet"
-        @ready="onMapReady"
-      >
-      <l-tile-layer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
-        :max-zoom="19"
-      />
+      <l-map ref="mapRef" :zoom="zoom" :center="center" :use-global-leaflet="false" class="map-leaflet" @ready="onMapReady">
+        <l-tile-layer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
+          :max-zoom="19"
+        />
 
-      <!-- Route polyline -->
-      <l-polyline
-        v-if="route.length > 1"
-        :lat-lngs="route"
-        :color="'#7c3aed'"
-        :weight="4"
-        :opacity="0.8"
-      />
+        <!-- Route polyline -->
+        <l-polyline v-if="route.length > 1" :lat-lngs="route" :color="'#7c3aed'" :weight="4" :opacity="0.8" />
 
-      <!-- Start marker (green) -->
-      <l-circle-marker
-        v-if="startPoint"
-        :lat-lng="startPoint"
-        :radius="8"
-        :color="'#16a34a'"
-        :fill-color="'#22c55e'"
-        :fill-opacity="1"
-        :weight="2"
-      >
-        <l-popup>
-          <div style="font-family: system-ui; font-size: 13px;">
-            <strong>Start</strong>
-          </div>
-        </l-popup>
-      </l-circle-marker>
+        <!-- Start marker (green) -->
+        <l-circle-marker v-if="startPoint" :lat-lng="startPoint" :radius="8" :color="'#16a34a'" :fill-color="'#22c55e'" :fill-opacity="1" :weight="2">
+          <l-popup>
+            <div style="font-family: system-ui; font-size: 13px">
+              <strong>Start</strong>
+            </div>
+          </l-popup>
+        </l-circle-marker>
 
-      <!-- End marker (red) -->
-      <l-circle-marker
-        v-if="endPoint"
-        :lat-lng="endPoint"
-        :radius="8"
-        :color="'#dc2626'"
-        :fill-color="'#ef4444'"
-        :fill-opacity="1"
-        :weight="2"
-      >
-        <l-popup>
-          <div style="font-family: system-ui; font-size: 13px;">
-            <strong>End</strong>
-          </div>
-        </l-popup>
-      </l-circle-marker>
+        <!-- End marker (red) -->
+        <l-circle-marker v-if="endPoint" :lat-lng="endPoint" :radius="8" :color="'#dc2626'" :fill-color="'#ef4444'" :fill-opacity="1" :weight="2">
+          <l-popup>
+            <div style="font-family: system-ui; font-size: 13px">
+              <strong>End</strong>
+            </div>
+          </l-popup>
+        </l-circle-marker>
       </l-map>
     </div>
   </div>
@@ -277,7 +237,10 @@ function onMapReady() {
   padding: 10px 16px;
   background: #171717;
   border-bottom: 1px solid #262626;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #e5e5e5;
   font-size: 14px;
   flex-shrink: 0;
@@ -320,7 +283,10 @@ function onMapReady() {
   border: 1px solid #262626;
   border-radius: 8px;
   padding: 12px 14px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #e5e5e5;
   font-size: 13px;
   min-width: 280px;

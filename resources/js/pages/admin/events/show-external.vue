@@ -25,25 +25,28 @@ const breadcrumbs = [
   { title: 'Events', href: route('admin.events.index', { source: 'external' }) },
   {
     title: `${props.event.service}/${props.event.event_type} #${props.event.id}`,
-    href: route('admin.events.external.show', props.event.id)
-  }
+    href: route('admin.events.external.show', props.event.id),
+  },
 ];
 
 const showRawPayload = ref(false);
 </script>
 
 <template>
-  <Head><title>Admin — External Event #{{ event.id }}</title></Head>
+  <Head
+    ><title>Admin — External Event #{{ event.id }}</title></Head
+  >
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex flex-col gap-6 p-4 max-w-3xl">
+    <div class="flex max-w-3xl flex-col gap-6 p-4">
       <div class="flex items-center gap-3">
         <Badge variant="outline" class="font-mono">{{ event.service }}</Badge>
-        <h1 class="text-2xl font-bold font-mono">{{ event.event_type }} <span
-          class="text-muted-foreground text-lg">#{{ event.id }}</span></h1>
+        <h1 class="font-mono text-2xl font-bold">
+          {{ event.event_type }} <span class="text-lg text-muted-foreground">#{{ event.id }}</span>
+        </h1>
       </div>
 
       <Card>
-        <CardContent class="pt-4 grid grid-cols-2 gap-3 text-sm">
+        <CardContent class="grid grid-cols-2 gap-3 pt-4 text-sm">
           <div>
             <span class="text-muted-foreground">User</span>
             <div>
@@ -85,8 +88,7 @@ const showRawPayload = ref(false);
           <CardTitle>Normalized Payload</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.normalized_payload, null, 2)
-            }}</pre>
+          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.normalized_payload, null, 2) }}</pre>
         </CardContent>
       </Card>
 
@@ -94,22 +96,19 @@ const showRawPayload = ref(false);
         <CardHeader>
           <CardTitle class="flex items-center justify-between">
             Raw Payload
-            <button
-              class="text-sm font-normal text-muted-foreground hover:text-foreground"
-              @click="showRawPayload = !showRawPayload"
-            >{{ showRawPayload ? 'Hide' : 'Show' }}
+            <button class="text-sm font-normal text-muted-foreground hover:text-foreground" @click="showRawPayload = !showRawPayload">
+              {{ showRawPayload ? 'Hide' : 'Show' }}
             </button>
           </CardTitle>
         </CardHeader>
         <CardContent v-if="showRawPayload">
-          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.raw_payload, null, 2)
-            }}</pre>
+          <pre class="overflow-x-auto rounded bg-muted p-4 text-xs">{{ JSON.stringify(event.raw_payload, null, 2) }}</pre>
         </CardContent>
       </Card>
 
       <div>
-        <Link :href="route('admin.events.index', { source: 'external' })"
-              class="text-sm text-muted-foreground hover:text-foreground">← Back to External Events
+        <Link :href="route('admin.events.index', { source: 'external' })" class="text-sm text-muted-foreground hover:text-foreground"
+          >← Back to External Events
         </Link>
       </div>
     </div>

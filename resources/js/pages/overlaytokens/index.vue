@@ -29,9 +29,7 @@ interface Token {
 const { tokens } = defineProps<{ tokens: Token[] }>();
 
 /** UI */
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Overlay Access Tokens', href: '/tokens' }
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Overlay Access Tokens', href: '/tokens' }];
 
 /** Create flow */
 const showCreateModal = ref(false);
@@ -41,21 +39,21 @@ const ipInput = ref<string>(''); // bound to text input
 
 const form = ref<{
   name: string;
-  expires_at: string | null;     // datetime-local string or null
+  expires_at: string | null; // datetime-local string or null
   allowed_ips: string[];
   abilities: TokenAbility[];
 }>({
   name: '',
   expires_at: null,
   allowed_ips: [],
-  abilities: ['read']
+  abilities: ['read'],
 });
 
 /** Keep form.allowed_ips in sync with ipInput */
 watch(ipInput, (v) => {
   form.value.allowed_ips = v
     .split(',')
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean);
 });
 
@@ -109,8 +107,7 @@ const userLocale = computed<string | undefined>(() => {
   return user?.locale || undefined;
 });
 
-const formatDate = (date: string | null | undefined) =>
-  date ? new Date(date).toLocaleString(userLocale.value) : '-';
+const formatDate = (date: string | null | undefined) => (date ? new Date(date).toLocaleString(userLocale.value) : '-');
 </script>
 
 <template>
@@ -127,21 +124,22 @@ const formatDate = (date: string | null | undefined) =>
         <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
           <div class="flex items-start gap-4 justify-self-start">
             <div>
-              <h3 class="text-lg -mt-0.5 mr-1 font-semibold">{{ token.name }}</h3>
+              <h3 class="-mt-0.5 mr-1 text-lg font-semibold">{{ token.name }}</h3>
             </div>
             <div class="mt-0.5">
-              <p
-                class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+              <p class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200">
                 <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Prefix: <code
-                class="bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">{{ token.prefix
-                }}...</code>
+                Prefix:
+                <code class="rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+                  >{{ token.prefix }}...</code
+                >
               </p>
             </div>
             <div class="mt-0.5">
               <p
-                class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition"
-                title="Access Count">
+                class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+                title="Access Count"
+              >
                 <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
                 {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
               </p>
@@ -177,27 +175,32 @@ const formatDate = (date: string | null | undefined) =>
           <div v-if="!token.is_active" class="mt-2 text-sm font-semibold text-red-600">REVOKED</div>
         </div>
       </div>
-      <div class="my-4 text-sm bg-background">
-        <Heading title="Important!" description="Your Overlay Tokens are only shown once during creation. The Prefix you see here is just for reference. Create a new Overlay Token if you lost
-        access to it, or if you think it may have leaked on stream." description-class="text-orange-300" />
+      <div class="my-4 bg-background text-sm">
+        <Heading
+          title="Important!"
+          description="Your Overlay Tokens are only shown once during creation. The Prefix you see here is just for reference. Create a new Overlay Token if you lost
+        access to it, or if you think it may have leaked on stream."
+          description-class="text-orange-300"
+        />
       </div>
-      <div class="my-4 text-sm bg-background">
-        <Heading title="Treat your Overlay Token like a password."
-                 description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone."
-                 description-class="text-orange-300" />
+      <div class="my-4 bg-background text-sm">
+        <Heading
+          title="Treat your Overlay Token like a password."
+          description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone."
+          description-class="text-orange-300"
+        />
       </div>
     </div>
 
     <!-- Create Token Modal -->
-    <Modal :show="showCreateModal" @close="showCreateModal = false" closeable class="z-50 margin-auto">
+    <Modal :show="showCreateModal" @close="showCreateModal = false" closeable class="margin-auto z-50">
       <div class="p-6">
         <h2 class="mb-4 text-lg font-semibold">Create New Access Token</h2>
 
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium" for="token-name">Token Name</label>
-            <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2"
-                   placeholder="My OBS Stream" />
+            <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2" placeholder="My OBS Stream" />
           </div>
 
           <div>
@@ -207,12 +210,7 @@ const formatDate = (date: string | null | undefined) =>
 
           <div>
             <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
-            <input
-              v-model="ipInput"
-              type="text"
-              class="mt-1 block w-full rounded-md border p-2"
-              placeholder="192.168.1.1, 10.0.0.1"
-            />
+            <input v-model="ipInput" type="text" class="mt-1 block w-full rounded-md border p-2" placeholder="192.168.1.1, 10.0.0.1" />
             <p class="mt-1 text-xs text-gray-500">Comma-separated IP addresses</p>
           </div>
 
@@ -232,9 +230,7 @@ const formatDate = (date: string | null | undefined) =>
 
           <div class="flex justify-end space-x-2">
             <button @click="showCreateModal = false" class="btn btn-cancel">Cancel</button>
-            <button @click="createToken" :disabled="!form.name" class="btn btn-primary">
-              Create Token
-            </button>
+            <button @click="createToken" :disabled="!form.name" class="btn btn-primary">Create Token</button>
           </div>
         </div>
       </div>

@@ -4,14 +4,14 @@
       <Link
         v-if="mergedLinks[0].url"
         :href="mergedLinks[0].url"
-        class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted dark:text-foreground dark:bg-background dark:border-border dark:hover:bg-muted"
+        class="relative inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted dark:border-border dark:bg-background dark:text-foreground dark:hover:bg-muted"
       >
         Previous
       </Link>
       <Link
         v-if="mergedLinks[mergedLinks.length - 1].url"
         :href="mergedLinks[mergedLinks.length - 1].url"
-        class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted dark:text-foreground dark:bg-background dark:border-border dark:hover:bg-muted"
+        class="relative ml-3 inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted dark:border-border dark:bg-background dark:text-foreground dark:hover:bg-muted"
       >
         Next
       </Link>
@@ -29,33 +29,34 @@
         </p>
       </div>
       <div>
-        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+        <nav class="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
           <template v-for="(link, index) in mergedLinks" :key="index">
             <Link
               v-if="link.url"
               :href="link.url"
               :class="[
                 link.active
-                  ? 'z-10 bg-primary/10 border-primary text-primary dark:bg-primary/10 dark:border-primary dark:text-primary'
-                  : 'bg-background border-border text-muted-foreground hover:bg-muted dark:bg-background dark:border-border dark:text-muted-foreground dark:hover:bg-muted',
+                  ? 'z-10 border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/10 dark:text-primary'
+                  : 'border-border bg-background text-muted-foreground hover:bg-muted dark:border-border dark:bg-background dark:text-muted-foreground dark:hover:bg-muted',
                 index === 0 ? 'rounded-l-md' : '',
                 index === mergedLinks.length - 1 ? 'rounded-r-md' : '',
-                'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors'
+                'relative inline-flex items-center border px-4 py-2 text-sm font-medium transition-colors',
               ]"
-            ><span v-html="link.label" /></Link>
+              ><span v-html="link.label"
+            /></Link>
             <span
               v-else
               :class="[
-                'relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-not-allowed opacity-50',
+                'relative inline-flex cursor-not-allowed items-center border px-4 py-2 text-sm font-medium opacity-50',
                 link.active
-                  ? 'z-10 bg-primary/10 border-primary text-primary dark:bg-primary/10 dark:border-primary dark:text-primary'
-                  : 'bg-background border-border text-muted-foreground dark:bg-background dark:border-border dark:text-muted-foreground',
+                  ? 'z-10 border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/10 dark:text-primary'
+                  : 'border-border bg-background text-muted-foreground dark:border-border dark:bg-background dark:text-muted-foreground',
                 index === 0 ? 'rounded-l-md' : '',
-                index === mergedLinks.length - 1 ? 'rounded-r-md' : ''
+                index === mergedLinks.length - 1 ? 'rounded-r-md' : '',
               ]"
               v-html="link.label"
             >
-              </span>
+            </span>
           </template>
         </nav>
       </div>
@@ -98,7 +99,7 @@ function mergedUrl(linkUrl: string): string {
 const mergedLinks = computed(() =>
   props.links.map((link) => ({
     ...link,
-    url: link.url ? mergedUrl(link.url) : "#",
+    url: link.url ? mergedUrl(link.url) : '#',
   })),
 );
 </script>

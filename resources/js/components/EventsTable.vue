@@ -177,9 +177,7 @@ function toggleRow(event: UnifiedEvent, covered: UnifiedEvent[]) {
 
 const pageKeys = computed(() => displayRows.value.flatMap((r) => keysFor(r.event, r.covered)));
 
-const allOnPageSelected = computed(
-  () => displayRows.value.length > 0 && displayRows.value.every((r) => isRowSelected(r.event)),
-);
+const allOnPageSelected = computed(() => displayRows.value.length > 0 && displayRows.value.every((r) => isRowSelected(r.event)));
 
 function togglePage() {
   const next = new Set(selectedKeys.value);
@@ -224,9 +222,7 @@ function replay(event: UnifiedEvent) {
     return;
   }
 
-  const url = event.source === 'twitch'
-    ? `/events/${event.id}/replay`
-    : `/external-events/${event.id}/replay`;
+  const url = event.source === 'twitch' ? `/events/${event.id}/replay` : `/external-events/${event.id}/replay`;
   router.post(
     url,
     {},
@@ -240,9 +236,7 @@ function replay(event: UnifiedEvent) {
 }
 
 async function replayViaToken(event: UnifiedEvent, token: string) {
-  const url = event.source === 'twitch'
-    ? `/api/events/${event.id}/replay`
-    : `/api/external-events/${event.id}/replay`;
+  const url = event.source === 'twitch' ? `/api/events/${event.id}/replay` : `/api/external-events/${event.id}/replay`;
   const fallback = { message: 'Could not replay the event. Check your connection and try again.', type: 'error' };
   try {
     const res = await fetch(url, {
@@ -346,7 +340,8 @@ function hypeTrainLabels(event: UnifiedEvent): string {
     event.event_type !== 'channel.hype_train.begin' &&
     event.event_type !== 'channel.hype_train.progress' &&
     event.event_type !== 'channel.hype_train.end'
-  ) return '';
+  )
+    return '';
   const d = event.event_data as Record<string, unknown>;
   const progress = d.progress as number;
   const goal = d.goal as number;
@@ -361,7 +356,6 @@ function hypeTrainLabels(event: UnifiedEvent): string {
     return `Hype Train ended level ${level}.`;
   }
   return '';
-
 }
 
 function who(event: UnifiedEvent): string | null {
@@ -418,107 +412,92 @@ function relativeTime(iso: string): string {
   if (abs < week) return rtf.format(Math.round(diff / day), 'day');
   return rtf.format(Math.round(diff / week), 'week');
 }
-
-
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 mt-4">
-    <label
-      v-if="selectable && displayRows.length > 0"
-      class="mb-1 flex w-fit cursor-pointer items-center gap-2 text-xs text-foreground"
-    >
+  <div class="mt-4 flex flex-col gap-2">
+    <label v-if="selectable && displayRows.length > 0" class="mb-1 flex w-fit cursor-pointer items-center gap-2 text-xs text-foreground">
       <input type="checkbox" class="cursor-pointer" :checked="allOnPageSelected" @change="togglePage" />
       Select everything on this page
     </label>
 
     <div v-for="{ event, recipients, covered } in displayRows" :key="`${event.source}-${event.id}`" class="flex flex-col gap-1">
-    <div class="flex items-start gap-2">
-      <input
-        v-if="selectable"
-        type="checkbox"
-        class="mt-2 shrink-0 cursor-pointer"
-        :checked="isRowSelected(event)"
-        :aria-label="`Select ${who(event) ? who(event) + ' ' : ''}${label(event)}`"
-        @change="toggleRow(event, covered)"
-      />
-    <div class="min-w-0 flex-1">
-    <Popover
-      :open="confirmingId === event.id"
-      @update:open="(open: boolean) => (confirmingId = open && canReplay(event) ? event.id : null)"
-    >
-      <PopoverTrigger as-child>
-        <div
-          :class="[
-            'group flex items-start justify-between gap-4 flex-row px-4 py-2 collection-row',
-            eventHoverBorderClass(event),
-            canReplay(event) && confirmingId !== event.id ? 'cursor-pointer transition-all duration-100' : '',
-            confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
-            confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
-
-          ]"
-          :role="canReplay(event) ? 'button' : undefined"
-          :tabindex="canReplay(event) ? 0 : undefined"
-          @click="canReplay(event) && confirmingId !== event.id ? openConfirm(event) : undefined"
-          @keydown.enter.prevent="openConfirm(event)"
-          @keydown.space.prevent="openConfirm(event)"
-        >
-          <div class="flex flex-col md:flex-row min-w-0 flex-1 gap-0 group text-sm" :id="label(event)">
-            <div class="flex flex-nowrap items-center gap-x-2 gap-y-1 max-w-full">
-              <ProviderIcon :source="event.source"
-                            class="h-4 w-4 shrink-0"
-                            :class="eventDotClass(event)"
-              />
-              <div v-if="who(event)" class="font-bold max-w-40 overflow-hidden whitespace-nowrap text-ellipsis">{{ who(event) }}</div>
-              <div class="group-hover:text-foreground whitespace-nowrap overflow-x-hidden md:max-w-90 text-ellipsis">{{ label(event) }}</div>
-              <span v-if="details(event)" class="whitespace-nowrap max-w-40 overflow-hidden text-ellipsis">{{ details(event) }}</span>
-              <button
-                v-if="recipients.length"
-                type="button"
-                class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-sm border border-sidebar px-1.5 py-0.5 text-xs text-foreground hover:bg-background"
-                :aria-expanded="isExpanded(event.id)"
-                @click.stop="toggleExpanded(event.id)"
-                @keydown.enter.stop
-                @keydown.space.stop
+      <div class="flex items-start gap-2">
+        <input
+          v-if="selectable"
+          type="checkbox"
+          class="mt-2 shrink-0 cursor-pointer"
+          :checked="isRowSelected(event)"
+          :aria-label="`Select ${who(event) ? who(event) + ' ' : ''}${label(event)}`"
+          @change="toggleRow(event, covered)"
+        />
+        <div class="min-w-0 flex-1">
+          <Popover :open="confirmingId === event.id" @update:open="(open: boolean) => (confirmingId = open && canReplay(event) ? event.id : null)">
+            <PopoverTrigger as-child>
+              <div
+                :class="[
+                  'group collection-row flex flex-row items-start justify-between gap-4 px-4 py-2',
+                  eventHoverBorderClass(event),
+                  canReplay(event) && confirmingId !== event.id ? 'cursor-pointer transition-all duration-100' : '',
+                  confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
+                  confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
+                ]"
+                :role="canReplay(event) ? 'button' : undefined"
+                :tabindex="canReplay(event) ? 0 : undefined"
+                @click="canReplay(event) && confirmingId !== event.id ? openConfirm(event) : undefined"
+                @keydown.enter.prevent="openConfirm(event)"
+                @keydown.space.prevent="openConfirm(event)"
               >
-                <Gift class="h-3 w-3" />
-                {{ recipients.length }}
-                <ChevronDown v-if="isExpanded(event.id)" class="h-3 w-3" />
-                <ChevronRight v-else class="h-3 w-3" />
-              </button>
-            </div>
-            <div class="flex items-center gap-2 pl-4 text-xs w-full">
-              <div class="whitespace-nowrap text-ellipsis ml-2 md:ml-auto">{{ relativeTime(event.created_at) }}</div>
-              <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
+                <div class="group flex min-w-0 flex-1 flex-col gap-0 text-sm md:flex-row" :id="label(event)">
+                  <div class="flex max-w-full flex-nowrap items-center gap-x-2 gap-y-1">
+                    <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0" :class="eventDotClass(event)" />
+                    <div v-if="who(event)" class="max-w-40 overflow-hidden font-bold text-ellipsis whitespace-nowrap">{{ who(event) }}</div>
+                    <div class="overflow-x-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground md:max-w-90">{{ label(event) }}</div>
+                    <span v-if="details(event)" class="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{{ details(event) }}</span>
+                    <button
+                      v-if="recipients.length"
+                      type="button"
+                      class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-sm border border-sidebar px-1.5 py-0.5 text-xs text-foreground hover:bg-background"
+                      :aria-expanded="isExpanded(event.id)"
+                      @click.stop="toggleExpanded(event.id)"
+                      @keydown.enter.stop
+                      @keydown.space.stop
+                    >
+                      <Gift class="h-3 w-3" />
+                      {{ recipients.length }}
+                      <ChevronDown v-if="isExpanded(event.id)" class="h-3 w-3" />
+                      <ChevronRight v-else class="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div class="flex w-full items-center gap-2 pl-4 text-xs">
+                    <div class="ml-2 text-ellipsis whitespace-nowrap md:ml-auto">{{ relativeTime(event.created_at) }}</div>
+                    <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
+                  </div>
+                </div>
+              </div>
+            </PopoverTrigger>
+
+            <PopoverContent class="w-auto bg-accent p-3" side="top" :side-offset="-1" align="start">
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
+                <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">
+                  Yes
+                </button>
+                <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <!-- Gift-sub recipients, folded under the gifter's row -->
+          <div v-if="recipients.length && isExpanded(event.id)" class="ml-1 flex flex-col gap-1 border-l border-sidebar pl-4">
+            <div v-for="recipient in recipients" :key="`recipient-${recipient.id}`" class="flex items-center gap-2 text-xs text-foreground">
+              <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"></div>
+              <span class="font-medium">{{ who(recipient) }}</span>
+              <span v-if="details(recipient)" class="text-foreground/70">{{ details(recipient) }}</span>
             </div>
           </div>
         </div>
-      </PopoverTrigger>
-
-      <PopoverContent class="w-auto p-3 bg-accent" side="top" :side-offset="-1" align="start">
-        <div class="flex items-center gap-3">
-          <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
-          <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">Yes</button>
-          <button class="btn btn-chill btn-xs" @click="confirmingId = null">Cancel</button>
-        </div>
-      </PopoverContent>
-    </Popover>
-
-    <!-- Gift-sub recipients, folded under the gifter's row -->
-    <div v-if="recipients.length && isExpanded(event.id)" class="flex flex-col gap-1 border-l border-sidebar pl-4 ml-1">
-      <div
-        v-for="recipient in recipients"
-        :key="`recipient-${recipient.id}`"
-        class="flex items-center gap-2 text-xs text-foreground"
-      >
-        <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"></div>
-        <span class="font-medium">{{ who(recipient) }}</span>
-        <span v-if="details(recipient)" class="text-foreground/70">{{ details(recipient) }}</span>
       </div>
     </div>
-    </div>
-    </div>
-    </div>
-
   </div>
 </template>

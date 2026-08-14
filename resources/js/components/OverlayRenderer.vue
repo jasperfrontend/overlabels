@@ -188,7 +188,7 @@ function startTimerTick(key: string, state: any) {
   stopTimerTick(key);
   timerStates.value[key] = state;
 
-  const runningVal = (state.running || state.mode === 'countto') ? '1' : '0';
+  const runningVal = state.running || state.mode === 'countto' ? '1' : '0';
 
   // Write the current value immediately
   if (data.value) {
@@ -892,10 +892,7 @@ function handleAlertTriggered(event: any) {
 
   for (const { field, emotesField } of EMOTE_TEXT_FIELDS) {
     if (typeof processedData[field] === 'string' && processedData[field]) {
-      processedData[field] = emoteParser.parseEmotes(
-        processedData[field],
-        emotesField ? processedData[emotesField] : undefined,
-      );
+      processedData[field] = emoteParser.parseEmotes(processedData[field], emotesField ? processedData[emotesField] : undefined);
     }
   }
 
@@ -976,7 +973,9 @@ function installAudioPreloadLinks(map: Record<string, string>): void {
   for (const url of urls) {
     try {
       origins.add(new URL(url).origin);
-    } catch { /* malformed URL - skip */ }
+    } catch {
+      /* malformed URL - skip */
+    }
   }
   for (const origin of origins) {
     const preconnect = document.createElement('link');
@@ -1014,9 +1013,7 @@ let ttsAudioPlayer: HTMLAudioElement | null = null;
 let ttsPendingTimer: ReturnType<typeof setTimeout> | null = null;
 
 function rememberPendingTts(alertId: string, delayMsRaw: unknown): void {
-  const delayMs = typeof delayMsRaw === 'number' && delayMsRaw > 0
-    ? Math.min(delayMsRaw, 60_000)
-    : 0;
+  const delayMs = typeof delayMsRaw === 'number' && delayMsRaw > 0 ? Math.min(delayMsRaw, 60_000) : 0;
   pendingTts.set(alertId, { firedAt: Date.now(), delayMs });
 
   // Evict anything older than the max-age cap. Cheap because the map only

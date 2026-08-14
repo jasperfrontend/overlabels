@@ -2,14 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import axios from 'axios';
 import { router } from '@inertiajs/vue3';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -28,17 +21,20 @@ interface SourceControl {
   source_managed?: boolean | null;
 }
 
-const props = withDefaults(defineProps<{
-  open: boolean;
-  forkedTemplateId: number;
-  forkedTemplateSlug: string;
-  sourceControls: SourceControl[];
-  requiredServices?: string[];
-  connectedServices?: string[];
-}>(), {
-  requiredServices: () => [],
-  connectedServices: () => [],
-});
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    forkedTemplateId: number;
+    forkedTemplateSlug: string;
+    sourceControls: SourceControl[];
+    requiredServices?: string[];
+    connectedServices?: string[];
+  }>(),
+  {
+    requiredServices: () => [],
+    connectedServices: () => [],
+  },
+);
 
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
@@ -62,36 +58,37 @@ const rows = ref<WizardRow[]>([]);
 const importing = ref(false);
 const importError = ref('');
 
-const missingServices = computed(() =>
-  props.requiredServices.filter(s => !props.connectedServices.includes(s))
-);
+const missingServices = computed(() => props.requiredServices.filter((s) => !props.connectedServices.includes(s)));
 
 const hasControls = computed(() => props.sourceControls.length > 0);
 
-watch(() => props.open, (open) => {
-  if (open) {
-    importError.value = '';
-    rows.value = props.sourceControls.map(c => ({
-      action: 'create',
-      key: c.key,
-      label: c.label,
-      description: c.description ?? null,
-      type: c.type,
-      value: c.value,
-      config: c.config,
-      sort_order: c.sort_order,
-      source: c.source ?? null,
-      source_managed: !!c.source_managed,
-    }));
-  }
-});
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      importError.value = '';
+      rows.value = props.sourceControls.map((c) => ({
+        action: 'create',
+        key: c.key,
+        label: c.label,
+        description: c.description ?? null,
+        type: c.type,
+        value: c.value,
+        config: c.config,
+        sort_order: c.sort_order,
+        source: c.source ?? null,
+        source_managed: !!c.source_managed,
+      }));
+    }
+  },
+);
 
 async function confirm() {
   importing.value = true;
   importError.value = '';
   try {
     await axios.post(`/templates/${props.forkedTemplateId}/controls/import`, {
-      controls: rows.value.map(r => ({
+      controls: rows.value.map((r) => ({
         action: r.action,
         key: r.key,
         label: r.label,
@@ -127,12 +124,9 @@ function skip() {
       <DialogHeader>
         <DialogTitle>Import Controls from Source</DialogTitle>
         <DialogDescription v-if="hasControls">
-          The original template had controls. Choose which ones to recreate in your copy.
-          You can customize the key before importing.
+          The original template had controls. Choose which ones to recreate in your copy. You can customize the key before importing.
         </DialogDescription>
-        <DialogDescription v-else>
-          The original template uses external integrations.
-        </DialogDescription>
+        <DialogDescription v-else> The original template uses external integrations. </DialogDescription>
       </DialogHeader>
 
       <!-- Missing services warning -->
@@ -153,7 +147,10 @@ function skip() {
       </div>
 
       <!-- All services connected -->
-      <div v-else-if="requiredServices && requiredServices.length > 0" class="flex gap-3 rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-foreground">
+      <div
+        v-else-if="requiredServices && requiredServices.length > 0"
+        class="flex gap-3 rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-foreground"
+      >
         <InfoIcon class="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
         <div>
           <p>
@@ -184,11 +181,11 @@ function skip() {
               <TableRow v-for="(row, idx) in rows" :key="idx">
                 <TableCell>
                   <div class="flex gap-3">
-                    <label class="flex items-center gap-1 cursor-pointer text-sm">
+                    <label class="flex cursor-pointer items-center gap-1 text-sm">
                       <input type="radio" :value="'create'" v-model="row.action" />
                       Create
                     </label>
-                    <label class="flex items-center gap-1 cursor-pointer text-sm text-muted-foreground">
+                    <label class="flex cursor-pointer items-center gap-1 text-sm text-muted-foreground">
                       <input type="radio" :value="'skip'" v-model="row.action" />
                       Skip
                     </label>
@@ -199,17 +196,17 @@ function skip() {
                     v-model="row.key"
                     :disabled="row.action === 'skip' || !!row.source"
                     :title="row.source ? 'Preset key for ' + serviceLabel(row.source) + ' - cannot be renamed' : undefined"
-                    class="h-7 text-sm font-mono"
+                    class="h-7 font-mono text-sm"
                     placeholder="key"
                   />
                 </TableCell>
-                <TableCell class="text-muted-foreground text-sm">{{ row.label || '-' }}</TableCell>
+                <TableCell class="text-sm text-muted-foreground">{{ row.label || '-' }}</TableCell>
                 <TableCell>
                   <Badge v-if="row.source" variant="outline" class="text-xs">{{ serviceLabel(row.source) }}</Badge>
-                  <span v-else class="text-muted-foreground text-xs">-</span>
+                  <span v-else class="text-xs text-muted-foreground">-</span>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" class="capitalize text-xs">{{ row.type }}</Badge>
+                  <Badge variant="secondary" class="text-xs capitalize">{{ row.type }}</Badge>
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -218,13 +215,9 @@ function skip() {
       </template>
 
       <DialogFooter class="gap-2">
-        <button v-if="!hasControls" class="btn btn-primary" @click="skip">
-          Got it, take me to the overlay
-        </button>
+        <button v-if="!hasControls" class="btn btn-primary" @click="skip">Got it, take me to the overlay</button>
         <template v-else>
-          <button class="btn btn-cancel" @click="skip">
-            Skip all, take me to the overlay
-          </button>
+          <button class="btn btn-cancel" @click="skip">Skip all, take me to the overlay</button>
           <button class="btn btn-primary" :disabled="importing" @click="confirm">
             {{ importing ? 'Importing...' : 'Import selected' }}
           </button>

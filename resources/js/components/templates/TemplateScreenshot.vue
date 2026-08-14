@@ -8,7 +8,7 @@ import { VisuallyHidden } from 'reka-ui';
 const props = defineProps<{
   screenshotUrl: string | null;
   templateId: number;
-  name: string
+  name: string;
 }>();
 
 const emit = defineEmits<{
@@ -50,25 +50,17 @@ function onUrlChange(url: string | null) {
   />
 
   <Dialog :open="showPreview" @update:open="showPreview = $event">
-    <DialogContent class="max-w-[95vw] max-h-[95vh] w-auto p-2 sm:max-w-[95vw]">
+    <DialogContent class="max-h-[95vh] w-auto max-w-[95vw] p-2 sm:max-w-[95vw]">
       <VisuallyHidden>
         <DialogTitle>Screenshot preview</DialogTitle>
       </VisuallyHidden>
-      <img
-        v-if="localUrl"
-        :src="localUrl"
-        alt="Screenshot preview"
-        class="max-w-[50vw] rounded object-contain"
-      />
+      <img v-if="localUrl" :src="localUrl" alt="Screenshot preview" class="max-w-[50vw] rounded object-contain" />
       <DialogFooter>
         <div class="flex w-full items-center justify-between gap-2">
-          <div class="text-sm text-muted-foreground">
-            Screenshot: {{props.name}}
-          </div>
-          <button type="button" class="ml-auto btn btn-chill" @click="showPreview = false">Close</button>
+          <div class="text-sm text-muted-foreground">Screenshot: {{ props.name }}</div>
+          <button type="button" class="btn btn-chill ml-auto" @click="showPreview = false">Close</button>
         </div>
       </DialogFooter>
     </DialogContent>
-
   </Dialog>
 </template>

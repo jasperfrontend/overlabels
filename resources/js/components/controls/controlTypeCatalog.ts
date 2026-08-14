@@ -1,6 +1,6 @@
-import type { Component } from 'vue';
-import { CalendarClock, Gauge, Hash, ListPlus, Sigma, Timer, ToggleLeft, Type } from '@lucide/vue';
 import type { OverlayControl } from '@/types';
+import { CalendarClock, Gauge, Hash, ListPlus, Sigma, Timer, ToggleLeft, Type } from '@lucide/vue';
+import type { Component } from 'vue';
 
 /**
  * Everything the "Add a control" picker needs to sell one control type before

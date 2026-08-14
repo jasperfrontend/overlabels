@@ -1,5 +1,5 @@
-import { ref, computed, watch } from 'vue';
 import type { NormalizedEvent } from '@/types';
+import { computed, ref, watch } from 'vue';
 
 export interface QueuedNotification {
   id: string;
@@ -52,10 +52,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
   const getGroupKey = (event: NormalizedEvent): string | undefined => {
     // Only group regular follows and cheers, not gift subscriptions
     // (gift bombs are handled upstream by useGiftBombDetector)
-    const groupableTypes = [
-      'channel.follow',
-      'channel.cheer',
-    ];
+    const groupableTypes = ['channel.follow', 'channel.cheer'];
 
     if (!groupableTypes.includes(event.type)) {
       return undefined;
@@ -71,14 +68,14 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     if (notification.event.type === 'channel.subscription.gift' && notification.event.gift_count) {
       const giftCount = notification.event.gift_count;
       if (giftCount >= 50) return 10000; // 10 seconds for 50+ gifts
-      if (giftCount >= 20) return 8000;  // 8 seconds for 20+ gifts
-      if (giftCount >= 5) return 6000;   // 6 seconds for 5+ gifts
+      if (giftCount >= 20) return 8000; // 8 seconds for 20+ gifts
+      if (giftCount >= 5) return 6000; // 6 seconds for 5+ gifts
       return 5000; // 5 seconds for smaller gift bombs
     }
 
     // Standard grouping duration increase
     if (notification.count && notification.count > 1) {
-      return baseDuration + (notification.count * 200);
+      return baseDuration + notification.count * 200;
     }
 
     const durationMap: Record<string, number> = {
@@ -115,7 +112,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     // Handle live gift bomb updates and finals
     if ((isLiveUpdate || isFinal) && event.type === 'channel.subscription.gift') {
       // Check if this notification is already in queue
-      const existingInQueue = queue.value.find(n => n.id === event.id);
+      const existingInQueue = queue.value.find((n) => n.id === event.id);
       if (existingInQueue) {
         // Update the existing event object to maintain component stability
         Object.assign(existingInQueue.event, {
@@ -127,8 +124,8 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
               total: event.gift_count,
               is_live_update: isLiveUpdate,
               is_final: isFinal,
-            }
-          }
+            },
+          },
         });
         existingInQueue.count = event.gift_count;
         existingInQueue.displayDuration = getDisplayDuration(existingInQueue);
@@ -147,8 +144,8 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
               total: event.gift_count,
               is_live_update: isLiveUpdate,
               is_final: isFinal,
-            }
-          }
+            },
+          },
         });
         currentNotification.value.count = event.gift_count;
 
@@ -172,10 +169,7 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     const groupKey = getGroupKey(event);
 
     if (groupKey && !isLiveUpdate) {
-      const existingGroup = queue.value.find(
-        n => n.groupKey === groupKey &&
-        (now - n.addedAt) < mergedConfig.groupingWindow
-      );
+      const existingGroup = queue.value.find((n) => n.groupKey === groupKey && now - n.addedAt < mergedConfig.groupingWindow);
 
       if (existingGroup && (existingGroup.count || 0) < mergedConfig.maxGroupSize) {
         existingGroup.count = (existingGroup.count || 1) + 1;
@@ -247,11 +241,15 @@ export function useNotificationQueue(config: NotificationQueueConfig = {}) {
     processNextNotification();
   };
 
-  watch(queue, () => {
-    if (!isDisplaying.value && queue.value.length > 0) {
-      processNextNotification();
-    }
-  }, { deep: true });
+  watch(
+    queue,
+    () => {
+      if (!isDisplaying.value && queue.value.length > 0) {
+        processNextNotification();
+      }
+    },
+    { deep: true },
+  );
 
   return {
     queue: computed(() => queue.value),

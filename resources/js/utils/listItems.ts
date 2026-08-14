@@ -20,9 +20,5 @@ export interface ListItem {
  */
 export function listItemValues(items: unknown): string[] {
   if (!Array.isArray(items)) return [];
-  return items.map((item) =>
-    item != null && typeof item === 'object'
-      ? String((item as { value?: unknown }).value ?? '')
-      : String(item ?? ''),
-  );
+  return items.map((item) => (item != null && typeof item === 'object' ? String((item as { value?: unknown }).value ?? '') : String(item ?? '')));
 }

@@ -75,8 +75,7 @@ async function setSeedCount() {
     donationsSeedSet.value = data.donations_seed_set;
     donationsSeedValue.value = data.donations_seed_value;
   } catch (e: any) {
-    seedError.value =
-      e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
+    seedError.value = e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
   } finally {
     seedLoading.value = false;
   }
@@ -132,21 +131,18 @@ function formatDate(iso: string | null): string {
     <SettingsLayout>
       <div class="space-y-6">
         <div class="flex items-center justify-between">
-          <HeadingSmall
-            title="Throne"
-            description="Receive gift and contribution alerts and update overlay controls from Throne."
-          />
+          <HeadingSmall title="Throne" description="Receive gift and contribution alerts and update overlay controls from Throne." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
         <!-- Not connected: one-click connect (no credentials needed) -->
         <div v-if="!integration.connected" class="space-y-4">
-          <div class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
+          <div class="space-y-2 border border-sidebar-border bg-sidebar-accent p-4 text-sm text-muted-foreground">
             <p class="font-medium text-foreground">Connect to Throne</p>
             <p>
-              Click the button below to connect to Throne and generate a unique Webhook URL.
-              You'll need to add this URL into your Throne Webhook settings.
+              Click the button below to connect to Throne and generate a unique Webhook URL. You'll need to add this URL into your Throne Webhook
+              settings.
             </p>
           </div>
           <Button :disabled="connectForm.processing" @click="connect">
@@ -156,19 +152,17 @@ function formatDate(iso: string | null): string {
 
         <template v-else>
           <!-- What to do next -->
-          <div class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-muted-foreground">
+          <div class="space-y-2 border border-sidebar-border bg-sidebar-accent p-4 text-sm text-muted-foreground">
             <p class="font-medium text-foreground">What to do next</p>
             <ol class="list-decimal space-y-1 pl-4">
-              <li>
-                Copy the webhook URL below into your Throne webhook settings and save (there's a button for it right there).
-              </li>
+              <li>Copy the webhook URL below into your Throne webhook settings and save (there's a button for it right there).</li>
               <li>
                 Go to <a href="/triggers" class="font-medium text-violet-400 hover:underline">Triggers</a>
                 to choose which alert template fires for Throne gifts.
               </li>
               <li>
-                Open any <strong>static</strong> overlay template -&gt; <strong>Controls</strong> tab -&gt;
-                <strong>Add control</strong> to add Throne data controls (gift count, latest gifter, item name, etc.).
+                Open any <strong>static</strong> overlay template -&gt; <strong>Controls</strong> tab -&gt; <strong>Add control</strong> to add Throne
+                data controls (gift count, latest gifter, item name, etc.).
               </li>
             </ol>
           </div>
@@ -176,15 +170,9 @@ function formatDate(iso: string | null): string {
           <!-- Webhook URL (read-only) -->
           <div v-if="integration.webhook_url" class="group space-y-2">
             <Label>Your Webhook URL</Label>
-            <p class="text-sm text-muted-foreground">
-              Paste this into the Webhook URL field on your Throne webhook settings page.
-            </p>
+            <p class="text-sm text-muted-foreground">Paste this into the Webhook URL field on your Throne webhook settings page.</p>
             <div class="flex">
-              <input
-                :value="integration.webhook_url ?? ''"
-                readonly
-                class="peer mr-0 w-full input-border font-mono text-sm"
-              />
+              <input :value="integration.webhook_url ?? ''" readonly class="peer input-border mr-0 w-full font-mono text-sm" />
               <button
                 type="button"
                 class="btn btn-chill btn-sm rounded-none rounded-r-sm border border-l-0 border-sidebar-border p-2 px-4 text-sm hover:ring-0"
@@ -196,12 +184,7 @@ function formatDate(iso: string | null): string {
 
             <!-- Manual step: send them straight to Throne's webhook settings page -->
             <div class="mt-2 flex flex-wrap items-center gap-3">
-              <a
-                href="https://throne.com/profile/integrations/webhook"
-                target="_blank"
-                rel="noopener"
-                class="btn btn-primary cursor-pointer"
-              >
+              <a href="https://throne.com/profile/integrations/webhook" target="_blank" rel="noopener" class="btn btn-primary cursor-pointer">
                 Open Throne webhook settings -&gt;
               </a>
               <p class="text-xs" :class="copied ? 'font-medium text-violet-400' : 'text-muted-foreground'">
@@ -212,9 +195,7 @@ function formatDate(iso: string | null): string {
           </div>
 
           <!-- Last received -->
-          <p class="text-sm text-muted-foreground">
-            Last event received: {{ formatDate(integration.last_received_at) }}
-          </p>
+          <p class="text-sm text-muted-foreground">Last event received: {{ formatDate(integration.last_received_at) }}</p>
 
           <!-- Test mode - independent toggle, saves instantly -->
           <Separator />
@@ -225,16 +206,25 @@ function formatDate(iso: string | null): string {
                 role="switch"
                 :aria-checked="testMode"
                 :disabled="testModeLoading"
-                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
                 :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
-                @click="testMode = !testMode; toggleTestMode()"
+                @click="
+                  testMode = !testMode;
+                  toggleTestMode();
+                "
               >
                 <span
                   class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
                   :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
                 />
               </button>
-              <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
+              <Label
+                class="cursor-pointer"
+                @click="
+                  testMode = !testMode;
+                  toggleTestMode();
+                "
+              >
                 Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
                 <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving...</span>
               </Label>
@@ -245,10 +235,7 @@ function formatDate(iso: string | null): string {
                 Turn this off before going live - your gift total will reset to {{ donationsSeedValue ?? 0 }}.
               </span>
             </p>
-            <div
-              v-if="testMode"
-              class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400"
-            >
+            <div v-if="testMode" class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
               Test mode is on. Every incoming webhook fires an alert regardless of duplicate event IDs.
             </div>
           </div>
@@ -258,13 +245,13 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <p class="text-sm font-medium">Starting gift total</p>
             <p v-if="donationsSeedSet" class="text-sm text-muted-foreground">
-              Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong>.
-              Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:throne:total_received]]]</code>
+              Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong
+              >. Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:throne:total_received]]]</code>
               controls started from this value.
             </p>
             <p v-else class="text-sm text-muted-foreground">
-              Had Throne gifts before joining? Set the total you already received so your overlay doesn't begin at
-              zero. Decimals are fine, in whichever notation you write money. All your
+              Had Throne gifts before joining? Set the total you already received so your overlay doesn't begin at zero. Decimals are fine, in
+              whichever notation you write money. All your
               <code class="rounded bg-black/10 px-1 dark:bg-white/10">total_received</code> controls update immediately.
             </p>
             <div class="flex items-start gap-2">
@@ -278,19 +265,11 @@ function formatDate(iso: string | null): string {
                   :disabled="seedLoading"
                   class="input-border"
                 />
-                <p v-if="seedUnreadable" class="text-xs text-destructive">
-                  That doesn't look like an amount. Try {{ seedExample }}.
-                </p>
+                <p v-if="seedUnreadable" class="text-xs text-destructive">That doesn't look like an amount. Try {{ seedExample }}.</p>
                 <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                 <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                class="cursor-pointer"
-                :disabled="seedLoading || seedAmount === null"
-                @click="setSeedCount"
-              >
+              <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                 {{ seedLoading ? 'Saving...' : 'Set starting total' }}
               </Button>
             </div>
@@ -301,12 +280,9 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <p class="text-sm font-medium">Danger zone</p>
             <p class="text-sm text-muted-foreground">
-              Disconnecting Throne will remove all Throne-managed controls (gift counts, latest gifter, etc.) from
-              your overlays.
+              Disconnecting Throne will remove all Throne-managed controls (gift counts, latest gifter, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect">
-              Disconnect Throne
-            </Button>
+            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect Throne </Button>
           </div>
         </template>
 

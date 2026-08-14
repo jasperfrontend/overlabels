@@ -65,22 +65,18 @@ const formatDate = (date: string) => {
 </script>
 
 <template>
-  <Card class="group relative flex h-full pt-0 flex-col overflow-hidden bg-background">
+  <Card class="group relative flex h-full flex-col overflow-hidden bg-background pt-0">
     <!-- Thumbnail -->
-    <div v-if="kit.thumbnail_url" class="aspect-video rounded-sm rounded-b-none w-full overflow-hidden bg-background">
+    <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden rounded-sm rounded-b-none bg-background">
       <Link :href="`/kits/${kit.id}`">
-        <img
-          :src="kit.thumbnail_url"
-          :alt="kit.title"
-          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
       </Link>
     </div>
     <div v-else class="flex aspect-video w-full items-center justify-center">
       <Package class="h-12 w-12 text-primary/40" />
     </div>
 
-    <CardHeader class="px-4 pb-4 py-4">
+    <CardHeader class="px-4 py-4 pb-4">
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
           <CardTitle class="min-w-0 flex-1 text-base">
@@ -111,20 +107,25 @@ const formatDate = (date: string) => {
     <CardContent class="flex flex-1 flex-col justify-between space-y-2">
       <div class="space-y-3">
         <!-- Templates count -->
-        <div v-if="kit.templates" class="flex items-center gap-2 text-sm mb-4">
+        <div v-if="kit.templates" class="mb-4 flex items-center gap-2 text-sm">
           <Package class="size-4" />
           <span>Contains {{ kit.templates.length }} template{{ kit.templates.length !== 1 ? 's' : '' }}</span>
         </div>
 
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4 text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition">
+          <div
+            class="flex items-center gap-4 rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+          >
             <div class="flex items-center gap-1.5" title="Copies">
               <GitFork class="size-4" />
               <span>{{ kit.fork_count || 0 }}</span>
             </div>
           </div>
 
-          <span class="text-sm bg-sidebar p-0.5 px-2 rounded-full text-slate-500 dark:text-slate-400 dark:hover:text-slate-200 transition" title="Last updated">
+          <span
+            class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+            title="Last updated"
+          >
             {{ formatDate(kit.updated_at) }}
           </span>
         </div>
@@ -135,7 +136,7 @@ const formatDate = (date: string) => {
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2 ml-auto">
+      <div class="ml-auto flex gap-2 pt-2">
         <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-primary">
           <Eye class="size-4" />
         </Link>
@@ -144,21 +145,11 @@ const formatDate = (date: string) => {
           <Pencil class="size-4" />
         </Link>
 
-        <button
-          v-if="!isOwnKit || kit.is_public"
-          class="btn btn-sm btn-warning"
-          @click="handleFork"
-          title="Copy kit to your own account"
-        >
+        <button v-if="!isOwnKit || kit.is_public" class="btn btn-sm btn-warning" @click="handleFork" title="Copy kit to your own account">
           <BookCopy class="size-4" />
         </button>
 
-        <button
-          v-if="isOwnKit && allowDelete && kit.fork_count === 0"
-          class="btn btn-sm btn-danger"
-          @click="handleDelete"
-          title="Delete kit"
-        >
+        <button v-if="isOwnKit && allowDelete && kit.fork_count === 0" class="btn btn-sm btn-danger" @click="handleDelete" title="Delete kit">
           <Trash2 class="size-4" />
         </button>
       </div>

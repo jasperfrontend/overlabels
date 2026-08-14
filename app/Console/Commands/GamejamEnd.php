@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Events\GameStateChanged;
+use App\Models\BotChatOutbox;
 use App\Models\Game;
 use App\Models\User;
 use Illuminate\Console\Command;
-use App\Models\BotChatOutbox;
 
 class GamejamEnd extends Command
 {
@@ -41,7 +41,7 @@ class GamejamEnd extends Command
 
         BotChatOutbox::create([
             'user_id' => $user->id,
-            'message' => "Game #$game->id ended! The result: $status."
+            'message' => "Game #$game->id ended! The result: $status.",
         ]);
 
         return self::SUCCESS;

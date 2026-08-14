@@ -26,7 +26,11 @@
     "number": { "args": "optional", "argHint": "decimals", "description": "Locale-aware number formatting." },
     "currency": { "args": "optional", "argHint": "ISO 4217 code", "description": "Locale-aware currency; defaults to the locale's currency." },
     "date": { "args": "optional", "argHint": "preset or pattern", "description": "Locale-aware date/time formatting." },
-    "duration": { "args": "optional", "argHint": "dd:hh:mm:ss pattern", "description": "Seconds to a duration; units overflow into the largest present unit." },
+    "duration": {
+      "args": "optional",
+      "argHint": "dd:hh:mm:ss pattern",
+      "description": "Seconds to a duration; units overflow into the largest present unit."
+    },
     "distance": { "args": "optional", "argHint": "unit", "description": "Locale-aware distance formatting." },
     "speed": { "args": "optional", "argHint": "unit", "description": "Locale-aware speed formatting." },
     "uppercase": { "args": "none", "description": "Uppercase the value." },
@@ -50,7 +54,10 @@
 
   "$comment_reservedKeys": "Keys with meaning independent of any namespace.",
   "reservedKeys": {
-    "raw": { "scope": "foreach", "description": "Dumps the current iteration item as pretty JSON. Brackets are entity-escaped so the dump cannot re-enter tag substitution." }
+    "raw": {
+      "scope": "foreach",
+      "description": "Dumps the current iteration item as pretty JSON. Brackets are entity-escaped so the dump cannot re-enter tag substitution."
+    }
   },
 
   "limits": {

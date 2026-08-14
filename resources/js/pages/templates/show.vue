@@ -12,13 +12,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
 import {
   SplitIcon,
@@ -68,14 +62,14 @@ const props = defineProps<{
 const editorTabs = [
   { key: 'head', label: 'HEAD', icon: FileCode2Icon, color: 'text-pink-500 dark:text-pink-400' },
   { key: 'html', label: 'BODY', icon: CodeIcon, color: 'text-cyan-500 dark:text-cyan-400' },
-  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' }
+  { key: 'css', label: 'CSS', icon: PaletteIcon, color: 'text-lime-500 dark:text-lime-400' },
 ];
 
 const mainTabs = computed(() => {
   const tabs: Array<{ key: string; label: string; icon: any }> = [
     { key: 'overview', label: 'Details', icon: LightbulbIcon },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
-    { key: 'panel', label: 'Values', icon: SquarePenIcon }
+    { key: 'panel', label: 'Values', icon: SquarePenIcon },
   ];
   if (props.template?.screenshot_url) {
     tabs.push({ key: 'screenshot', label: 'Screenshot', icon: ImageIcon });
@@ -114,8 +108,8 @@ function saveTargeting() {
         toastMessage.value = 'Failed to save targeting settings.';
         toastType.value = 'error';
         showToast.value = true;
-      }
-    }
+      },
+    },
   );
 }
 
@@ -124,15 +118,25 @@ const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 const { register } = useKeyboardShortcuts();
 
 onMounted(() => {
-  register('edit-template', 'e', () => {
-    if (props.template?.id) router.visit(route('templates.edit', props.template.id));
-  }, { description: 'Edit this overlay' });
+  register(
+    'edit-template',
+    'e',
+    () => {
+      if (props.template?.id) router.visit(route('templates.edit', props.template.id));
+    },
+    { description: 'Edit this overlay' },
+  );
 
   for (let i = 1; i <= 7; i++) {
-    register(`switch-tab-${i}`, `${i}`, () => {
-      const tab = mainTabs.value[i - 1];
-      if (tab) mainTab.value = tab.key;
-    }, { description: `Switch to tab ${i}` });
+    register(
+      `switch-tab-${i}`,
+      `${i}`,
+      () => {
+        const tab = mainTabs.value[i - 1];
+        if (tab) mainTab.value = tab.key;
+      },
+      { description: `Switch to tab ${i}` },
+    );
   }
 });
 
@@ -192,22 +196,18 @@ const copyToClipboard = (url: string, shownValue: string) => {
 // index is re-filtered or restored via browser back/forward. When there's no
 // recorded navigation (direct URL, fresh tab, straight after create), fall back
 // to a crumb derived from the template's own type + ownership.
-const listContext = captureListContext(
-  props.template?.id,
-  { type: props.template?.type, ownedByMe: props.canEdit },
-);
+const listContext = captureListContext(props.template?.id, { type: props.template?.type, ownedByMe: props.canEdit });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: listContext.title,
-    href: listContext.href
+    href: listContext.href,
   },
   {
     title: props.template?.name || 'Template',
-    href: `/templates/${props.template?.id}`
-  }
+    href: `/templates/${props.template?.id}`,
+  },
 ];
-
 </script>
 
 <template>
@@ -228,7 +228,6 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Header -->
       <div class="mb-5 flex items-start justify-between gap-4">
         <div class="min-w-0">
-
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
 
@@ -240,8 +239,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-
-          <a v-if="canEdit" :href="route('templates.edit', template)" class="btn btn-sm btn-primary" title="Edit this overlay (keyboard shortcut: 'e')">
+          <a
+            v-if="canEdit"
+            :href="route('templates.edit', template)"
+            class="btn btn-sm btn-primary"
+            title="Edit this overlay (keyboard shortcut: 'e')"
+          >
             <PencilIcon class="mr-2 h-4 w-4" />
             Edit
           </a>
@@ -262,33 +265,30 @@ const breadcrumbs: BreadcrumbItem[] = [
                 Copy
               </DropdownMenuItem>
               <DropdownMenuSeparator v-if="canEdit" />
-              <DropdownMenuItem v-if="canEdit && canDelete" class="text-destructive focus:text-destructive"
-                                @click="deleteTemplate">
+              <DropdownMenuItem v-if="canEdit && canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
                 <TrashIcon class="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
-              <DropdownMenuItem v-else-if="canEdit" disabled class="text-muted-foreground text-xs">
-                Part of a kit - cannot delete
-              </DropdownMenuItem>
+              <DropdownMenuItem v-else-if="canEdit" disabled class="text-xs text-muted-foreground"> Part of a kit - cannot delete </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class=" bg-violet-300/20 dark:bg-violet-900/20">
-        <div
-          class="flex max-w-full touch-pan-x lg:touch-none overflow-auto">
+      <div v-if="canEdit" class="bg-violet-300/20 dark:bg-violet-900/20">
+        <div class="flex max-w-full touch-pan-x overflow-auto lg:touch-none">
           <button
             v-for="tab in mainTabs"
             :key="tab.key"
             type="button"
             @click="mainTab = tab.key"
             :class="[
-                'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-                mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
-              ]"
+              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
+              mainTab === tab.key
+                ? 'dark:hover-bg-violet-500 border-t-2 border-t-violet-400 bg-white text-black dark:bg-violet-500/30 dark:text-violet-300'
+                : 'text-accent-foreground',
+            ]"
           >
             <component :is="tab.icon" class="h-4 w-4" />
             {{ tab.label }}
@@ -299,10 +299,14 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="mb-6 border border-sidebar-border bg-card">
         <!-- Controls Manager tab -->
         <div v-if="canEdit && mainTab === 'controls'" class="mb-6 p-4">
-          <ControlsManager :template="template" :initial-controls="localControls"
-                           :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
-                           :user-lists="userLists"
-                           @change="localControls = $event" />
+          <ControlsManager
+            :template="template"
+            :initial-controls="localControls"
+            :connected-services="connectedServices"
+            :user-scoped-controls="userScopedControls"
+            :user-lists="userLists"
+            @change="localControls = $event"
+          />
         </div>
 
         <!-- Control Panel tab -->
@@ -312,34 +316,25 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Screenshot tab -->
         <div v-if="mainTab === 'screenshot'" class="mb-6 p-4">
-          <div class="mt-1 pb-5 flex items-center text-sm gap-2">
-            {{ props.template?.name }} - screenshot
-          </div>
+          <div class="mt-1 flex items-center gap-2 pb-5 text-sm">{{ props.template?.name }} - screenshot</div>
           <img
             :src="template.screenshot_url"
             alt="Overlay screenshot"
-            class="max-h-[70vh] hover:opacity-70 transition-all border border-sidebar-border cursor-pointer"
+            class="max-h-[70vh] cursor-pointer border border-sidebar-border transition-all hover:opacity-70"
             @click="showPreview = true"
           />
         </div>
 
         <Dialog :open="showPreview" @update:open="showPreview = $event">
-          <DialogContent class="max-w-[90vw] max-h-[90vh] w-auto p-2 sm:max-w-[90vw]">
+          <DialogContent class="max-h-[90vh] w-auto max-w-[90vw] p-2 sm:max-w-[90vw]">
             <VisuallyHidden>
               <DialogTitle>Screenshot preview</DialogTitle>
             </VisuallyHidden>
-            <img
-              v-if="template.screenshot_url"
-              :src="template.screenshot_url"
-              alt="Screenshot preview"
-              class="max-w-[50vw] object-contain"
-            />
+            <img v-if="template.screenshot_url" :src="template.screenshot_url" alt="Screenshot preview" class="max-w-[50vw] object-contain" />
             <DialogFooter>
               <div class="flex w-full items-center justify-between gap-2">
-                <div class="text-sm text-muted-foreground">
-                  Screenshot: {{ props.template?.name }}
-                </div>
-                <button type="button" class="ml-auto btn btn-chill" @click="showPreview = false">Close</button>
+                <div class="text-sm text-muted-foreground">Screenshot: {{ props.template?.name }}</div>
+                <button type="button" class="btn btn-chill ml-auto" @click="showPreview = false">Close</button>
               </div>
             </DialogFooter>
           </DialogContent>
@@ -351,17 +346,28 @@ const breadcrumbs: BreadcrumbItem[] = [
             v-if="triggers"
             :template-id="template.id"
             :triggers="triggers"
-            @saved="() => { showToast = false; toastMessage = 'Triggers saved.'; toastType = 'success'; showToast = true; }"
-            @error="(msg: string) => { showToast = false; toastMessage = msg; toastType = 'error'; showToast = true; }"
+            @saved="
+              () => {
+                showToast = false;
+                toastMessage = 'Triggers saved.';
+                toastType = 'success';
+                showToast = true;
+              }
+            "
+            @error="
+              (msg: string) => {
+                showToast = false;
+                toastMessage = msg;
+                toastType = 'error';
+                showToast = true;
+              }
+            "
           />
         </div>
 
         <!-- Targeting tab (alert templates, owner only) -->
-        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 lg:max-w-3xl p-4">
-          <AlertTargetOverlaySelector
-            v-model="localTargetOverlayIds"
-            :static-overlays="staticOverlays ?? []"
-          />
+        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 p-4 lg:max-w-3xl">
+          <AlertTargetOverlaySelector v-model="localTargetOverlayIds" :static-overlays="staticOverlays ?? []" />
           <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
         </div>
 
@@ -380,9 +386,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                 :key="tab.key"
                 @click="activeTab = tab.key"
                 :class="[
-                    'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase',
+                  'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase',
                   activeTab === tab.key
-                    ? 'bg-[#f8f8f8] dark:bg-[#160e21] text-accent-foreground'
+                    ? 'bg-[#f8f8f8] text-accent-foreground dark:bg-[#160e21]'
                     : 'text-sidebar-foreground hover:bg-background/40 hover:text-foreground',
                 ]"
               >
@@ -391,9 +397,11 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
             <!-- Code panel (read-only) -->
-            <div class="relative flex-1 min-w-0 text-gray-700 dark:text-accent-foreground">
-              <div class="h-[50vh] w-full overflow-auto p-4 bg-white dark:bg-[#160e21]">
-                <code class="text-sm whitespace-break-spaces overflow-hidden text-muted-foreground">{{ props.template?.[activeTab] || 'No content' }}</code>
+            <div class="relative min-w-0 flex-1 text-gray-700 dark:text-accent-foreground">
+              <div class="h-[50vh] w-full overflow-auto bg-white p-4 dark:bg-[#160e21]">
+                <code class="overflow-hidden text-sm whitespace-break-spaces text-muted-foreground">{{
+                  props.template?.[activeTab] || 'No content'
+                }}</code>
               </div>
               <button
                 @click="copyToClipboard(props.template?.[activeTab], activeTab.toUpperCase())"

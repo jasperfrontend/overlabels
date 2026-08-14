@@ -3,23 +3,23 @@
 </template>
 
 <script setup lang="ts">
-import { useLinkWarning } from '@/composables/useLinkWarning'
+import { useLinkWarning } from '@/composables/useLinkWarning';
 
 const props = defineProps<{
-  to: string
-  warning: string
-}>()
+  to: string;
+  warning: string;
+}>();
 
-const { triggerLinkWarning } = useLinkWarning()
+const { triggerLinkWarning } = useLinkWarning();
 
 function handleClick() {
   triggerLinkWarning(() => {
     if (props.to.startsWith('http')) {
-      window.open(props.to, '_blank')
+      window.open(props.to, '_blank');
     } else {
       // Assume you're using Vue Router
-      window.location.href = props.to
+      window.location.href = props.to;
     }
-  }, props.warning)
+  }, props.warning);
 }
 </script>

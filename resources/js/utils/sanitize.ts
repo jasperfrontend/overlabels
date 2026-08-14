@@ -28,24 +28,21 @@ const EVENT_HANDLER_PATTERN = /\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 const URI_ATTRS = 'href|action|src|data|formaction|xlink:href';
 
 const JAVASCRIPT_URI_PATTERN = new RegExp(
-    `\\s+(?:${URI_ATTRS})\\s*=\\s*(?:"javascript\\s*:[^"]*"|'javascript\\s*:[^']*'|javascript\\s*:[^\\s>]+)`,
-    'gi',
+  `\\s+(?:${URI_ATTRS})\\s*=\\s*(?:"javascript\\s*:[^"]*"|'javascript\\s*:[^']*'|javascript\\s*:[^\\s>]+)`,
+  'gi',
 );
 
 /**
  * Matches dangerous attributes whose values may contain HTML-entity-encoded
  * javascript: URIs. We decode and check in a callback.
  */
-const ENCODED_URI_PATTERN = new RegExp(
-    `(\\s+(?:${URI_ATTRS})\\s*=\\s*)("[^"]*"|'[^']*')`,
-    'gi',
-);
+const ENCODED_URI_PATTERN = new RegExp(`(\\s+(?:${URI_ATTRS})\\s*=\\s*)("[^"]*"|'[^']*')`, 'gi');
 
 /**
  * Matches <meta http-equiv="refresh"> with javascript: or data: in the URL.
  */
 const META_REFRESH_PATTERN =
-    /<meta\s[^>]*http-equiv\s*=\s*["']?refresh["']?[^>]*content\s*=\s*["'][^"']*url\s*=\s*(?:javascript|data)\s*:[^"']*["'][^>]*>/gi;
+  /<meta\s[^>]*http-equiv\s*=\s*["']?refresh["']?[^>]*content\s*=\s*["'][^"']*url\s*=\s*(?:javascript|data)\s*:[^"']*["'][^>]*>/gi;
 
 /**
  * Matches javascript: inside CSS url() expressions.
@@ -57,8 +54,9 @@ const CSS_JS_URL_PATTERN = /url\s*\(\s*["']?\s*javascript\s*:[^)]*["']?\s*\)/gi;
  * Only handles numeric entities since those are the encoding trick.
  */
 function decodeHtmlEntities(str: string): string {
-    return str.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-        .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)));
+  return str
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)));
 }
 
 /**
@@ -74,54 +72,54 @@ function decodeHtmlEntities(str: string): string {
  * dangerous constructs that were stripped.
  */
 export function sanitizeHtml(value: string): { value: string; removed: number } {
-    let removed = 0;
+  let removed = 0;
 
-    const countAndReplace = (input: string, pattern: RegExp): string => {
-        // Reset lastIndex for stateful global regexes
-        pattern.lastIndex = 0;
-        const matches = input.match(pattern);
-        if (matches) removed += matches.length;
-        // Reset again before replace (match advances lastIndex)
-        pattern.lastIndex = 0;
-        return input.replace(pattern, '');
-    };
+  const countAndReplace = (input: string, pattern: RegExp): string => {
+    // Reset lastIndex for stateful global regexes
+    pattern.lastIndex = 0;
+    const matches = input.match(pattern);
+    if (matches) removed += matches.length;
+    // Reset again before replace (match advances lastIndex)
+    pattern.lastIndex = 0;
+    return input.replace(pattern, '');
+  };
 
-    let result = countAndReplace(value, SCRIPT_TAG_PATTERN);
-    result = countAndReplace(result, FORM_TAG_PATTERN);
-    result = countAndReplace(result, BUTTON_TAG_PATTERN);
-    result = countAndReplace(result, TEXTAREA_TAG_PATTERN);
-    result = countAndReplace(result, OBJECT_TAG_PATTERN);
-    result = countAndReplace(result, SELECT_TAG_PATTERN);
-    result = countAndReplace(result, INPUT_TAG_PATTERN);
-    result = countAndReplace(result, IFRAME_TAG_PATTERN);
-    result = countAndReplace(result, IFRAME_SELFCLOSE_PATTERN);
-    result = countAndReplace(result, EMBED_TAG_PATTERN);
-    result = countAndReplace(result, EVENT_HANDLER_PATTERN);
-    result = countAndReplace(result, JAVASCRIPT_URI_PATTERN);
+  let result = countAndReplace(value, SCRIPT_TAG_PATTERN);
+  result = countAndReplace(result, FORM_TAG_PATTERN);
+  result = countAndReplace(result, BUTTON_TAG_PATTERN);
+  result = countAndReplace(result, TEXTAREA_TAG_PATTERN);
+  result = countAndReplace(result, OBJECT_TAG_PATTERN);
+  result = countAndReplace(result, SELECT_TAG_PATTERN);
+  result = countAndReplace(result, INPUT_TAG_PATTERN);
+  result = countAndReplace(result, IFRAME_TAG_PATTERN);
+  result = countAndReplace(result, IFRAME_SELFCLOSE_PATTERN);
+  result = countAndReplace(result, EMBED_TAG_PATTERN);
+  result = countAndReplace(result, EVENT_HANDLER_PATTERN);
+  result = countAndReplace(result, JAVASCRIPT_URI_PATTERN);
 
-    // Catch HTML-entity-encoded javascript: URIs (e.g. &#106;avascript:)
-    ENCODED_URI_PATTERN.lastIndex = 0;
-    result = result.replace(ENCODED_URI_PATTERN, (match, _prefix, attrValue) => {
-        const decoded = decodeHtmlEntities(attrValue);
-        const inner = decoded.replace(/^['"]|['"]$/g, '').trim();
-        if (/^\s*javascript\s*:/i.test(inner)) {
-            removed++;
-            return '';
-        }
-        return match;
-    });
+  // Catch HTML-entity-encoded javascript: URIs (e.g. &#106;avascript:)
+  ENCODED_URI_PATTERN.lastIndex = 0;
+  result = result.replace(ENCODED_URI_PATTERN, (match, _prefix, attrValue) => {
+    const decoded = decodeHtmlEntities(attrValue);
+    const inner = decoded.replace(/^['"]|['"]$/g, '').trim();
+    if (/^\s*javascript\s*:/i.test(inner)) {
+      removed++;
+      return '';
+    }
+    return match;
+  });
 
-    // Strip <meta http-equiv="refresh"> with javascript:/data: URIs
-    result = countAndReplace(result, META_REFRESH_PATTERN);
+  // Strip <meta http-equiv="refresh"> with javascript:/data: URIs
+  result = countAndReplace(result, META_REFRESH_PATTERN);
 
-    // Strip javascript: inside CSS url()
-    CSS_JS_URL_PATTERN.lastIndex = 0;
-    const cssMatches = result.match(CSS_JS_URL_PATTERN);
-    if (cssMatches) removed += cssMatches.length;
-    CSS_JS_URL_PATTERN.lastIndex = 0;
-    result = result.replace(CSS_JS_URL_PATTERN, 'url(about:blank)');
+  // Strip javascript: inside CSS url()
+  CSS_JS_URL_PATTERN.lastIndex = 0;
+  const cssMatches = result.match(CSS_JS_URL_PATTERN);
+  if (cssMatches) removed += cssMatches.length;
+  CSS_JS_URL_PATTERN.lastIndex = 0;
+  result = result.replace(CSS_JS_URL_PATTERN, 'url(about:blank)');
 
-    return { value: result, removed };
+  return { value: result, removed };
 }
 
 /**
@@ -130,16 +128,16 @@ export function sanitizeHtml(value: string): { value: string; removed: number } 
  * constructs removed.
  */
 export function sanitizeHtmlFields<T extends Record<string, unknown>>(fields: T): { sanitized: T; removed: number } {
-    let removed = 0;
+  let removed = 0;
 
-    const sanitized = Object.fromEntries(
-        Object.entries(fields).map(([key, value]) => {
-            if (typeof value !== 'string') return [key, value];
-            const result = sanitizeHtml(value);
-            removed += result.removed;
-            return [key, result.value];
-        }),
-    ) as T;
+  const sanitized = Object.fromEntries(
+    Object.entries(fields).map(([key, value]) => {
+      if (typeof value !== 'string') return [key, value];
+      const result = sanitizeHtml(value);
+      removed += result.removed;
+      return [key, result.value];
+    }),
+  ) as T;
 
-    return { sanitized, removed };
+  return { sanitized, removed };
 }

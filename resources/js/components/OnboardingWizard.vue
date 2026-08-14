@@ -223,10 +223,14 @@ function dismiss() {
           <Rocket class="h-6 w-6 text-purple-400" />
           <CardTitle class="text-xl">Welcome to Overlabels!</CardTitle>
         </div>
-        <p v-if="pollTimedOut" class="my-2 text-md text-amber-400">Setup is taking longer than expected. You can retry or reload the page.</p>
-        <p v-else-if="loading" class="my-2 text-md text-violet-400">Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.</p>
-        <p v-else-if="setupComplete" class="my-2 text-md text-green-500">We've set up the essentials for you. Click "Create your secure token" to continue!</p>
-        <p v-else class="my-2 text-md text-violet-400">Hang tight, we're still setting things up for you...</p>
+        <p v-if="pollTimedOut" class="text-md my-2 text-amber-400">Setup is taking longer than expected. You can retry or reload the page.</p>
+        <p v-else-if="loading" class="text-md my-2 text-violet-400">
+          Hold on, we're busy setting up the essentials for you. Please wait until all 4 steps are done.
+        </p>
+        <p v-else-if="setupComplete" class="text-md my-2 text-green-500">
+          We've set up the essentials for you. Click "Create your secure token" to continue!
+        </p>
+        <p v-else class="text-md my-2 text-violet-400">Hang tight, we're still setting things up for you...</p>
       </CardHeader>
       <CardContent class="space-y-4">
         <div v-if="pollTimedOut" class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
@@ -234,9 +238,7 @@ function dismiss() {
             <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
             <div class="space-y-1">
               <p class="text-sm font-medium text-amber-300">Setup is taking longer than expected</p>
-              <p class="text-xs text-amber-300/80">
-                The background job may still be processing. Click retry to check again, or reload the page.
-              </p>
+              <p class="text-xs text-amber-300/80">The background job may still be processing. Click retry to check again, or reload the page.</p>
             </div>
           </div>
           <Button variant="outline" size="sm" class="gap-2" @click="retryPolling">
@@ -337,23 +339,26 @@ function dismiss() {
           <div class="flex gap-3">
             <EyeOff class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
-              <strong class="text-amber-300">Shown exactly once.</strong>               <span class="text-amber-300/80"
-            >Your token will appear on screen <strong class="animate-caret-blink">one time</strong>. Once you leave or reload, it is gone forever. There is no recovery option.</span
+              <strong class="text-amber-300">Shown exactly once.</strong>
+              <span class="text-amber-300/80"
+                >Your token will appear on screen <strong class="animate-caret-blink">one time</strong>. Once you leave or reload, it is gone forever.
+                There is no recovery option.</span
               >
             </p>
           </div>
           <div class="flex gap-3">
             <ClipboardCopy class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
-              <strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong> <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span>
+              <strong class="text-amber-300">You'll get a ready-to-use OBS URL.</strong>
+              <span class="text-amber-300/80">Copy it straight into OBS as a Browser Source. Have OBS open before you continue if you can.</span>
             </p>
           </div>
           <div class="flex gap-3">
             <Monitor class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
               <strong class="text-amber-300">Without this, nothing works.</strong>
-              <span class="text-amber-300/80"
-                > Every alert, like follows, subs, raids etc., fires inside this overlay. No overlay in OBS = no alerts on stream.</span
+              <span class="text-amber-300/80">
+                Every alert, like follows, subs, raids etc., fires inside this overlay. No overlay in OBS = no alerts on stream.</span
               >
             </p>
           </div>
@@ -366,7 +371,7 @@ function dismiss() {
           </div>
         </div>
 
-        <Button class="w-full gap-2 cursor-pointer p-8" @click="goToStep3">
+        <Button class="w-full cursor-pointer gap-2 p-8" @click="goToStep3">
           I read all of the above. Generate my token
           <ArrowRight class="h-4 w-4" />
         </Button>
@@ -461,8 +466,7 @@ function dismiss() {
             <!-- Confirmation checkbox -->
             <label class="flex cursor-pointer items-center gap-3">
               <Checkbox v-model="tokenSaved" />
-              <span class="text-sm"
-                >STEP 3: I have copied my token and added the Browser Source to OBS</span>
+              <span class="text-sm">STEP 3: I have copied my token and added the Browser Source to OBS</span>
             </label>
 
             <Button :disabled="!tokenSaved" class="gap-2" @click="completeOnboarding">

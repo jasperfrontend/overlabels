@@ -1,9 +1,8 @@
 @layer components {
   .tooltip-base {
-    @apply p-4 rounded-3xl shadow-lg;
+    @apply rounded-3xl p-4 shadow-lg;
   }
   .tooltip-content {
-    @apply bg-zinc-800 border border-zinc-400/50 text-white text-sm;
-
+    @apply border border-zinc-400/50 bg-zinc-800 text-sm text-white;
   }
 }

@@ -18,21 +18,7 @@ const cells = computed(() => iconCells(icon.value.bits, props.gap));
 </script>
 
 <template>
-  <svg
-    viewBox="0 0 4 4"
-    fill="currentColor"
-    shape-rendering="geometricPrecision"
-    role="img"
-    :aria-label="icon.label"
-  >
-    <rect
-      v-for="(cell, i) in cells"
-      :key="i"
-      :x="cell.x"
-      :y="cell.y"
-      :width="cell.size"
-      :height="cell.size"
-      rx="0.12"
-    />
+  <svg viewBox="0 0 4 4" fill="currentColor" shape-rendering="geometricPrecision" role="img" :aria-label="icon.label">
+    <rect v-for="(cell, i) in cells" :key="i" :x="cell.x" :y="cell.y" :width="cell.size" :height="cell.size" rx="0.12" />
   </svg>
 </template>

@@ -1,5 +1,5 @@
-import { applyFormatter } from '@/utils/formatters';
 import { tagPattern } from '@/utils/dsl';
+import { applyFormatter } from '@/utils/formatters';
 
 // Matches [[[tag]]], [[[tag|formatter]]], [[[tag|formatter:args]]], and an optional
 // trailing `?? default` slot: [[[tag ?? fallback]]] / [[[tag|formatter ?? fallback]]].
@@ -30,40 +30,27 @@ export const TAG_REGEX = tagPattern('g');
 // text context when the result is rendered via v-html. Encodes the five chars that matter for
 // HTML/attribute contexts. CSS output path skips this because style.textContent is not HTML-parsed.
 export function encodeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-export function replaceTagsWithFormatting(
-  source: string,
-  sourceData: Record<string, unknown>,
-  locale: string,
-  encode: boolean = true,
-): string {
-  return source.replace(
-    TAG_REGEX,
-    (_match, key: string, pipe: string | undefined, def: string | undefined) => {
-      const val = sourceData[key];
-      const missing = val === undefined || val === null || typeof val === 'object';
-      const strVal = missing ? '' : String(val);
+export function replaceTagsWithFormatting(source: string, sourceData: Record<string, unknown>, locale: string, encode: boolean = true): string {
+  return source.replace(TAG_REGEX, (_match, key: string, pipe: string | undefined, def: string | undefined) => {
+    const val = sourceData[key];
+    const missing = val === undefined || val === null || typeof val === 'object';
+    const strVal = missing ? '' : String(val);
 
-      // `?? default` backstops ABSENCE only: an empty value renders the literal
-      // default (verbatim, no pipe). A present-but-unexpected value is never
-      // "absent", so the default never fires for it. The default is HTML-encoded
-      // here just like any value, so it can't break out of an HTML/v-html sink.
-      if (strVal === '') {
-        const fallback = def?.trim();
-        return fallback ? (encode ? encodeHtml(fallback) : fallback) : '';
-      }
+    // `?? default` backstops ABSENCE only: an empty value renders the literal
+    // default (verbatim, no pipe). A present-but-unexpected value is never
+    // "absent", so the default never fires for it. The default is HTML-encoded
+    // here just like any value, so it can't break out of an HTML/v-html sink.
+    if (strVal === '') {
+      const fallback = def?.trim();
+      return fallback ? (encode ? encodeHtml(fallback) : fallback) : '';
+    }
 
-      const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
-      return encode ? encodeHtml(formatted) : formatted;
-    },
-  );
+    const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
+    return encode ? encodeHtml(formatted) : formatted;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -83,9 +70,7 @@ export function replaceTagsWithFormatting(
 export type CssBinding = { property: string; pipe?: string; suffix?: string };
 export type CssBindingTable = Map<string, CssBinding[]>;
 
-export type CompiledCssBindings =
-  | { fastPath: true; css: string; bindings: CssBindingTable }
-  | { fastPath: false };
+export type CompiledCssBindings = { fastPath: true; css: string; bindings: CssBindingTable } | { fastPath: false };
 
 // Characters that mark a safe boundary between a placeholder and surrounding
 // CSS. Anything outside this set adjacent to `[[[` on the left would have to
@@ -95,11 +80,7 @@ export type CompiledCssBindings =
 const CSS_BOUNDARY = /[\s;,(){}:/*"'=!]/;
 
 export function compileCssBindings(source: string): CompiledCssBindings {
-  if (
-    source.includes('[[[if:') ||
-    source.includes('[[[elseif:') ||
-    source.includes('[[[foreach:')
-  ) {
+  if (source.includes('[[[if:') || source.includes('[[[elseif:') || source.includes('[[[foreach:')) {
     return { fastPath: false };
   }
 

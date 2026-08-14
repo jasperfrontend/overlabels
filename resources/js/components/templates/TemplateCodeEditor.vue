@@ -51,9 +51,14 @@ function onEscape(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  register('fullscreen-editor', 'ctrl+shift+f', () => {
-    isFullscreen.value = !isFullscreen.value;
-  }, { description: 'Distraction-free editor' });
+  register(
+    'fullscreen-editor',
+    'ctrl+shift+f',
+    () => {
+      isFullscreen.value = !isFullscreen.value;
+    },
+    { description: 'Distraction-free editor' },
+  );
 });
 
 const baseTheme = EditorView.theme({
@@ -88,7 +93,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
             :class="[
               'flex cursor-pointer items-center gap-1.5 px-6 py-3 text-left text-xs uppercase transition-colors',
               codeTab === tab.key
-                ? 'bg-[#f8f8f8] dark:bg-[#160e21] text-accent-foreground'
+                ? 'bg-[#f8f8f8] text-accent-foreground dark:bg-[#160e21]'
                 : 'text-sidebar-foreground hover:bg-background/40 hover:text-foreground',
             ]"
           >
@@ -112,7 +117,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
         <!-- Editor panel -->
         <div class="relative flex-1 bg-background">
           <div v-show="codeTab === 'head'" class="absolute inset-0 flex flex-col">
-            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+            <div class="flex-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground select-none">
               &lt;head&gt;
             </div>
             <div class="relative min-h-0 flex-1">
@@ -126,12 +131,12 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 placeholder="Enter <head> content here… e.g. <link> tags for fonts or icon libraries."
               />
             </div>
-            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+            <div class="flex-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground select-none">
               &lt;/head&gt;
             </div>
           </div>
           <div v-show="codeTab === 'body'" class="absolute inset-0 flex flex-col">
-            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+            <div class="flex-none border-b border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground select-none">
               &lt;body&gt;
             </div>
             <div class="relative min-h-0 flex-1">
@@ -146,14 +151,17 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 placeholder="Enter your <body> contents here. No need to add the body tags, your overlay will render directly under <body>. Tailwind 3 tags are supported."
               />
             </div>
-            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+            <div class="flex-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground select-none">
               &lt;/body&gt;
             </div>
           </div>
           <div v-show="codeTab === 'css'" class="absolute inset-0 flex flex-col">
-            <div class="flex-none select-none border-b border-sidebar-border bg-sidebar font-mono text-xs">
+            <div class="flex-none border-b border-sidebar-border bg-sidebar font-mono text-xs select-none">
               <div class="px-3 pt-1 text-muted-foreground">&lt;style&gt;</div>
-              <div class="px-3 pb-1 italic text-muted-foreground/70">/* Your overlay renders directly as a child of &lt;body&gt; - flex and grid on body flow right through to your top-level elements. No need to dig up 3 wrappers. */</div>
+              <div class="px-3 pb-1 text-muted-foreground/70 italic">
+                /* Your overlay renders directly as a child of &lt;body&gt; - flex and grid on body flow right through to your top-level elements. No
+                need to dig up 3 wrappers. */
+              </div>
             </div>
             <div class="relative min-h-0 flex-1">
               <Codemirror
@@ -166,15 +174,12 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 placeholder="Enter your CSS styles here. Note: your overlay will render directly as a child element of <body>, which makes flexbox styling a breeze"
               />
             </div>
-            <div class="flex-none select-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground">
+            <div class="flex-none border-t border-sidebar-border bg-sidebar px-3 py-1 font-mono text-xs text-muted-foreground select-none">
               &lt;/style&gt;
             </div>
           </div>
           <!-- Tailwind info panel -->
-          <div
-            v-show="codeTab === 'tailwind'"
-            class="absolute inset-0 overflow-auto p-6 text-sm text-foreground"
-          >
+          <div v-show="codeTab === 'tailwind'" class="absolute inset-0 overflow-auto p-6 text-sm text-foreground">
             <div class="mx-auto max-w-2xl space-y-4">
               <div class="flex items-center gap-3">
                 <Wind class="size-6 text-sky-500 dark:text-sky-400" />
@@ -182,55 +187,62 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
               </div>
 
               <p>
-                Overlabels compiles your template's utility classes into a minimal stylesheet when you save.
-                Drop Tailwind 3 classes directly into your BODY HTML and they'll just work on the live overlay.
+                Overlabels compiles your template's utility classes into a minimal stylesheet when you save. Drop Tailwind 3 classes directly into
+                your BODY HTML and they'll just work on the live overlay.
               </p>
 
               <div class="rounded border border-sidebar-border bg-sidebar p-3 font-mono text-xs">
                 &lt;div class="flex items-center gap-3 bg-purple-600 text-white p-4 rounded-lg"&gt;...&lt;/div&gt;
               </div>
-              <h3 class="font-semibold text-lg mb-1 mt-4">How it works</h3>
+              <h3 class="mt-4 mb-1 text-lg font-semibold">How it works</h3>
               <p>
-                The compiler scans your overlay code at save time, emits only the rules your classes actually
-                use, and stores the result with the template. The overlay renderer injects this compiled CSS
+                The compiler scans your overlay code at save time, emits only the rules your classes actually use, and stores the result with the
+                template. The overlay renderer injects this compiled CSS
                 <em>before</em> your own CSS tab - so anything you write by hand in CSS wins on conflicts.
               </p>
 
-              <div class="rounded border-l-4 border-yellow-500 bg-yellow-500/10 p-3 my-6">
+              <div class="my-6 rounded border-l-4 border-yellow-500 bg-yellow-500/10 p-3">
                 <p class="font-semibold text-yellow-700 dark:text-yellow-300">Preview caveat</p>
                 <p class="mt-1 text-yellow-800 dark:text-yellow-200">
                   Tailwind classes do <strong>not</strong> render in the Ctrl+P preview modal or at
-                  <code class="rounded bg-sidebar px-1">/preview/{slug}</code>. Those previews only inline the
-                  CSS tab and sample-substituted HTML - the compile step runs on save, so you only see the
-                  utility classes paint on an authenticated overlay URL
-                  (<code class="rounded bg-sidebar px-1">/overlay/{slug}#token</code>).
+                  <code class="rounded bg-sidebar px-1">/preview/{slug}</code>. Those previews only inline the CSS tab and sample-substituted HTML -
+                  the compile step runs on save, so you only see the utility classes paint on an authenticated overlay URL (<code
+                    class="rounded bg-sidebar px-1"
+                    >/overlay/{slug}#token</code
+                  >).
                 </p>
               </div>
 
               <div class="my-4">
-                <h3 class="font-semibold text-lg">Dynamic class names</h3>
+                <h3 class="text-lg font-semibold">Dynamic class names</h3>
                 <p class="mt-1">
-                  Classes computed at render time via tags
-                  (e.g. <code class="rounded bg-sidebar px-1">class="text-[[[c:color]]]"</code>) won't get CSS
-                  generated, because the compiler only sees the pre-substitution template source. For those,
-                  hand-write the rules in the CSS tab.
+                  Classes computed at render time via tags (e.g. <code class="rounded bg-sidebar px-1">class="text-[[[c:color]]]"</code>) won't get
+                  CSS generated, because the compiler only sees the pre-substitution template source. For those, hand-write the rules in the CSS tab.
                 </p>
               </div>
 
               <div class="h-px w-full bg-sidebar-border" />
 
               <p class="text-muted-foreground">
-                Powered by <a href="https://unocss.dev/" target="_blank" rel="noopener" class="cursor-pointer underline hover:text-foreground">UnoCSS</a>
-                with <code class="rounded bg-sidebar px-1">presetWind3</code>. Most Tailwind v3 utilities,
-                arbitrary values, and gradient helpers compile identically. Found a Tailwind v3 class that doesn't parse? Let me know! Drop an email
-                to <a href="mailto:jasper@emailjasper.com" class="cursor-pointer underline hover:text-foreground">jasper@emailjasper.com</a>. Thanks!
+                Powered by
+                <a href="https://unocss.dev/" target="_blank" rel="noopener" class="cursor-pointer underline hover:text-foreground">UnoCSS</a> with
+                <code class="rounded bg-sidebar px-1">presetWind3</code>. Most Tailwind v3 utilities, arbitrary values, and gradient helpers compile
+                identically. Found a Tailwind v3 class that doesn't parse? Let me know! Drop an email to
+                <a href="mailto:jasper@emailjasper.com" class="cursor-pointer underline hover:text-foreground">jasper@emailjasper.com</a>. Thanks!
               </p>
             </div>
           </div>
 
           <!-- Fullscreen hint bar -->
-          <div v-if="isFullscreen" class="absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground">
-            <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd class="border rounded px-1 py-0.5 text-[10px]">F</kbd> or <kbd class="border rounded px-1 py-0.5 text-[10px] ml-1">Esc</kbd> to exit
+          <div
+            v-if="isFullscreen"
+            class="absolute right-0 bottom-0 left-0 flex items-center justify-center border-t border-border bg-sidebar/80 py-1.5 text-[11px] text-muted-foreground"
+          >
+            <kbd class="rounded border px-1 py-0.5 text-[10px]">Ctrl</kbd>+<kbd class="rounded border px-1 py-0.5 text-[10px]">Shift</kbd>+<kbd
+              class="rounded border px-1 py-0.5 text-[10px]"
+              >F</kbd
+            >
+            or <kbd class="ml-1 rounded border px-1 py-0.5 text-[10px]">Esc</kbd> to exit
           </div>
         </div>
       </div>

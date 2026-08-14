@@ -23,21 +23,16 @@ const SCOPE_LABELS: Record<string, string> = {
 };
 
 const featureList = computed(() => {
-  const labels = missing.value
-    .map((s) => SCOPE_LABELS[s] ?? s)
-    .filter((v, i, arr) => arr.indexOf(v) === i);
+  const labels = missing.value.map((s) => SCOPE_LABELS[s] ?? s).filter((v, i, arr) => arr.indexOf(v) === i);
   return labels.join(', ');
 });
 </script>
 
 <template>
-  <div
-    v-if="missing.length > 0"
-    class="flex items-center justify-between bg-yellow-400 px-4 py-2 text-sm font-medium text-yellow-900"
-  >
+  <div v-if="missing.length > 0" class="flex items-center justify-between bg-yellow-400 px-4 py-2 text-sm font-medium text-yellow-900">
     <span>
-      Twitch needs to re-confirm permissions to unlock new alert types ({{ featureList }}).
-      You'll bounce through Twitch and may need to log in again afterward - your new permissions stick regardless.
+      Twitch needs to re-confirm permissions to unlock new alert types ({{ featureList }}). You'll bounce through Twitch and may need to log in again
+      afterward - your new permissions stick regardless.
     </span>
     <a
       href="/auth/redirect/twitch?reauth=1"

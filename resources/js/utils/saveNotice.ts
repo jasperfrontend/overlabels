@@ -17,16 +17,16 @@
 const KEY = 'overlabels:save-notice';
 
 export interface SaveNotice {
-    message: string;
-    type: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
 }
 
 export function stashSaveNotice(notice: SaveNotice): void {
-    try {
-        sessionStorage.setItem(KEY, JSON.stringify(notice));
-    } catch {
-        // Private browsing and quota failures cost a toast, never a save.
-    }
+  try {
+    sessionStorage.setItem(KEY, JSON.stringify(notice));
+  } catch {
+    // Private browsing and quota failures cost a toast, never a save.
+  }
 }
 
 /**
@@ -34,17 +34,15 @@ export function stashSaveNotice(notice: SaveNotice): void {
  * destination does not repeat it.
  */
 export function takeSaveNotice(): SaveNotice | null {
-    try {
-        const raw = sessionStorage.getItem(KEY);
-        if (!raw) return null;
-        sessionStorage.removeItem(KEY);
+  try {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(KEY);
 
-        const parsed: unknown = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
 
-        return typeof parsed === 'object' && parsed !== null && typeof (parsed as SaveNotice).message === 'string'
-            ? (parsed as SaveNotice)
-            : null;
-    } catch {
-        return null;
-    }
+    return typeof parsed === 'object' && parsed !== null && typeof (parsed as SaveNotice).message === 'string' ? (parsed as SaveNotice) : null;
+  } catch {
+    return null;
+  }
 }

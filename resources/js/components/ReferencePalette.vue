@@ -16,7 +16,10 @@ const results = computed<HelpEntry[]>(() => search(query.value, 40));
 
 // Short snippet from body for preview, with query term bias if present.
 function snippet(entry: HelpEntry): string {
-  const body = entry.body.replace(/^#+\s+.*$/gm, '').replace(/\s+/g, ' ').trim();
+  const body = entry.body
+    .replace(/^#+\s+.*$/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   const q = query.value.trim().toLowerCase();
   if (q.length >= 2) {
     const idx = body.toLowerCase().indexOf(q);
@@ -74,13 +77,20 @@ function scrollToSelected() {
 const { register } = useKeyboardShortcuts();
 
 onMounted(() => {
-  register('reference-palette', 'alt+r', () => { open.value = !open.value; }, { description: 'Tags reference' });
+  register(
+    'reference-palette',
+    'alt+r',
+    () => {
+      open.value = !open.value;
+    },
+    { description: 'Tags reference' },
+  );
 });
 </script>
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-xl gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col bg-sidebar" @interact-outside="open = false">
+    <DialogContent class="flex max-h-[85vh] max-w-xl flex-col gap-0 overflow-hidden bg-sidebar p-0" @interact-outside="open = false">
       <DialogTitle class="sr-only">Help reference search</DialogTitle>
       <div class="flex items-center gap-2 border-b border-sidebar-border px-3">
         <Search class="size-4 shrink-0 text-muted-foreground" />
@@ -92,39 +102,40 @@ onMounted(() => {
           class="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
           @keydown="onKeydown"
         />
-        <kbd class="text-[10px] text-muted-foreground/60 border border-sidebar-border rounded px-1.5 py-0.5">ESC</kbd>
+        <kbd class="rounded border border-sidebar-border px-1.5 py-0.5 text-[10px] text-muted-foreground/60">ESC</kbd>
       </div>
 
-      <div class="flex-1 min-h-0 overflow-y-auto p-1">
-        <div v-if="results.length === 0" class="p-6 text-center text-sm text-muted-foreground">
-          Nothing matched "{{ query }}".
-        </div>
+      <div class="min-h-0 flex-1 overflow-y-auto p-1">
+        <div v-if="results.length === 0" class="p-6 text-center text-sm text-muted-foreground">Nothing matched "{{ query }}".</div>
 
         <button
           v-for="(entry, i) in results"
           :key="`${entry.category}/${entry.slug}`"
           :data-ref-palette-selected="i === selectedIndex"
-          class="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left cursor-pointer transition-colors"
+          class="flex w-full cursor-pointer items-start gap-3 rounded-md px-3 py-2 text-left transition-colors"
           :class="i === selectedIndex ? 'bg-card text-accent-foreground' : 'text-foreground hover:bg-card'"
           @click="navigate(entry)"
           @mouseenter="selectedIndex = i"
         >
-          <BookOpen class="size-4 shrink-0 mt-0.5 text-muted-foreground" />
+          <BookOpen class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-              <span class="font-mono text-sm truncate">{{ entry.title }}</span>
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70 shrink-0">{{ entry.categoryLabel }}</span>
+              <span class="truncate font-mono text-sm">{{ entry.title }}</span>
+              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ entry.categoryLabel }}</span>
             </div>
-            <p class="mt-0.5 text-xs text-muted-foreground line-clamp-2">{{ snippet(entry) }}</p>
-            <div class="text-sm font-mono">{{entry.tag}}</div>
+            <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ snippet(entry) }}</p>
+            <div class="font-mono text-sm">{{ entry.tag }}</div>
           </div>
         </button>
       </div>
 
-      <div class="border-t border-sidebar-border px-3 py-2 text-[11px] text-muted-foreground/60 flex items-center gap-3">
-        <span><kbd class="border border-sidebar-border rounded px-1">&#8593;</kbd> <kbd class="border border-sidebar-border rounded px-1">&#8595;</kbd> navigate</span>
-        <span><kbd class="border border-sidebar-border rounded px-1">Enter</kbd> open</span>
-        <span><kbd class="border border-sidebar-border rounded px-1">Esc</kbd> close</span>
+      <div class="flex items-center gap-3 border-t border-sidebar-border px-3 py-2 text-[11px] text-muted-foreground/60">
+        <span
+          ><kbd class="rounded border border-sidebar-border px-1">&#8593;</kbd>
+          <kbd class="rounded border border-sidebar-border px-1">&#8595;</kbd> navigate</span
+        >
+        <span><kbd class="rounded border border-sidebar-border px-1">Enter</kbd> open</span>
+        <span><kbd class="rounded border border-sidebar-border px-1">Esc</kbd> close</span>
         <span class="ml-auto">{{ results.length }} results</span>
       </div>
     </DialogContent>

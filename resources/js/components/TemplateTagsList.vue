@@ -289,11 +289,16 @@ onMounted(() => {
   <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
   <!-- Header section -->
-  <div class="mb-5 pt-1 space-y-3">
+  <div class="mb-5 space-y-3 pt-1">
     <p class="text-sm leading-relaxed text-foreground">
-      Tags represent live Twitch data you can use in your HTML and CSS templates. Click any tag to copy it to your clipboard, then paste it into your template code.
-      Visit
-      <a class="font-medium text-violet-400 underline decoration-violet-400/30 underline-offset-2 hover:text-violet-300 hover:decoration-violet-300/50" :href="route('help.conditionals')" target="_blank">Help</a>
+      Tags represent live Twitch data you can use in your HTML and CSS templates. Click any tag to copy it to your clipboard, then paste it into your
+      template code. Visit
+      <a
+        class="font-medium text-violet-400 underline decoration-violet-400/30 underline-offset-2 hover:text-violet-300 hover:decoration-violet-300/50"
+        :href="route('help.conditionals')"
+        target="_blank"
+        >Help</a
+      >
       to learn about dynamic and conditional template syntax.
     </p>
 
@@ -303,7 +308,10 @@ onMounted(() => {
       class="flex w-full cursor-pointer items-center gap-2.5 rounded-md border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-left text-sm text-amber-400 transition-colors hover:border-amber-500/50 hover:bg-amber-500/10"
     >
       <Info :size="16" class="shrink-0" />
-      <span><code class="rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-300">user_*</code> tags show the last viewer who triggered an event - not your channel data. <strong>Click to read more!</strong></span>
+      <span
+        ><code class="rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-300">user_*</code> tags show the last viewer who triggered
+        an event - not your channel data. <strong>Click to read more!</strong></span
+      >
     </button>
   </div>
 
@@ -311,11 +319,7 @@ onMounted(() => {
   <div class="mb-4 flex items-center gap-3">
     <div class="relative flex-1">
       <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-      <input
-        v-model="searchQuery"
-        placeholder="Filter tags..."
-        class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
-      />
+      <input v-model="searchQuery" placeholder="Filter tags..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
     </div>
     <button
       @click.prevent="copyAllTags"
@@ -331,9 +335,7 @@ onMounted(() => {
     <span v-if="searchQuery">
       {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ categoryCount }} categor{{ categoryCount !== 1 ? 'ies' : 'y' }}
     </span>
-    <span v-else>
-      {{ tagList.length }} tags across {{ Object.keys(filteredGroupedTags).length }} categories
-    </span>
+    <span v-else> {{ tagList.length }} tags across {{ Object.keys(filteredGroupedTags).length }} categories </span>
     <button
       v-if="categoryCount > 0"
       class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -355,19 +357,16 @@ onMounted(() => {
         @update:open="toggleCategory(String(category))"
       >
         <CollapsibleTrigger
-          class="group flex w-full cursor-pointer bg-sidebar items-center gap-2 rounded-md px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
-          :class="{ 'bg-sidebar-accent/50 rounded-b-none pb-0': isCategoryExpanded(String(category)) }"
+          class="group flex w-full cursor-pointer items-center gap-2 rounded-md bg-sidebar px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
+          :class="{ 'rounded-b-none bg-sidebar-accent/50 pb-0': isCategoryExpanded(String(category)) }"
         >
-          <ChevronRight
-            :size="14"
-            class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
-          />
+          <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
           <span class="text-sm font-medium">{{ category }}</span>
-          <span class="ml-auto text-xs px-2.5 py-1.5 bg-card">{{ tags.length }}</span>
+          <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ tags.length }}</span>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div class="flex flex-wrap bg-sidebar/50 gap-2 p-4">
+          <div class="flex flex-wrap gap-2 bg-sidebar/50 p-4">
             <Tooltip v-for="tag in tags" :key="tag.display_tag">
               <TooltipTrigger as-child>
                 <button
@@ -405,7 +404,8 @@ onMounted(() => {
       </DialogHeader>
       <DialogDescription as="div" class="space-y-3 text-sm text-muted-foreground">
         <p>
-          <code class="rounded bg-muted px-1 py-0.5 text-xs">user_*</code> represents the most recent user who <strong class="text-foreground">triggered an event</strong> on your stream.
+          <code class="rounded bg-muted px-1 py-0.5 text-xs">user_*</code> represents the most recent user who
+          <strong class="text-foreground">triggered an event</strong> on your stream.
           <span class="font-medium text-amber-400">This is not your channel data.</span>
         </p>
         <div>
@@ -416,12 +416,8 @@ onMounted(() => {
             <li>Default - your user account details</li>
           </ul>
         </div>
-        <p>
-          These tags are ideal for a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.
-        </p>
-        <div
-          class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-400"
-        >
+        <p>These tags are ideal for a dynamic, persistent and auto-updating reference to the last viewer who interacted with your stream.</p>
+        <div class="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-400">
           Do not use this tag for your channel username. Use <strong>Channel Information</strong> tags for your own channel info.
         </div>
       </DialogDescription>

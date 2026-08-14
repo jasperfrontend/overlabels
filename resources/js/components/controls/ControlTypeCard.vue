@@ -55,9 +55,7 @@ const demoClock = computed(() => {
     class="relative flex w-full flex-col overflow-hidden border bg-background p-4 text-left transition duration-150"
     :class="[
       selected ? meta.accent.ringSelected : meta.accent.ring,
-      selectable
-        ? ['cursor-pointer', meta.accent.ringHover, meta.accent.ringFocus, 'focus-visible:ring-2 focus-visible:outline-none']
-        : '',
+      selectable ? ['cursor-pointer', meta.accent.ringHover, meta.accent.ringFocus, 'focus-visible:ring-2 focus-visible:outline-none'] : '',
     ]"
   >
     <span
@@ -106,7 +104,7 @@ const demoClock = computed(() => {
       <template v-else-if="meta.demo.kind === 'timer'">
         <div class="flex items-center justify-between gap-3">
           <span class="text-xs tracking-wide text-muted-foreground uppercase">Subathon</span>
-          <span class="font-mono text-lg leading-none font-semibold tabular-nums text-foreground">{{ demoClock }}</span>
+          <span class="font-mono text-lg leading-none font-semibold text-foreground tabular-nums">{{ demoClock }}</span>
         </div>
       </template>
 

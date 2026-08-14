@@ -32,10 +32,18 @@ const emit = defineEmits<{
 
     <div class="flex items-center gap-2">
       <span class="w-12 text-xs text-muted-foreground">Move</span>
-      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move left" @click="emit('move', -1, 0)"><ArrowLeft class="size-4" /></button>
-      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move right" @click="emit('move', 1, 0)"><ArrowRight class="size-4" /></button>
-      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move up" @click="emit('move', 0, -1)"><ArrowUp class="size-4" /></button>
-      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move down" @click="emit('move', 0, 1)"><ArrowDown class="size-4" /></button>
+      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move left" @click="emit('move', -1, 0)">
+        <ArrowLeft class="size-4" />
+      </button>
+      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move right" @click="emit('move', 1, 0)">
+        <ArrowRight class="size-4" />
+      </button>
+      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move up" @click="emit('move', 0, -1)">
+        <ArrowUp class="size-4" />
+      </button>
+      <button type="button" class="btn btn-cancel cursor-pointer px-2 py-1" aria-label="Move down" @click="emit('move', 0, 1)">
+        <ArrowDown class="size-4" />
+      </button>
     </div>
 
     <div class="flex items-center gap-2">

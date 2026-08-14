@@ -1,5 +1,5 @@
-import { normalizeEvent } from './useNormalizeEvent';
 import type { NormalizedEvent } from '@/types';
+import { normalizeEvent } from './useNormalizeEvent';
 
 export interface EventHandlerConfig {
   enableLogging?: boolean;
@@ -51,12 +51,7 @@ export interface EventHandlerConfig {
  * ```
  */
 export function useEventHandler(config: EventHandlerConfig = {}) {
-
-  const {
-    enableLogging = true,
-    enableNotifications = true,
-    enableStatistics = true,
-  } = config;
+  const { enableLogging = true, enableNotifications = true, enableStatistics = true } = config;
 
   const processRawEvent = (rawEvent: any): NormalizedEvent => {
     return normalizeEvent(rawEvent);
@@ -64,20 +59,26 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
 
   const dispatchEvent = (event: NormalizedEvent) => {
     if (enableNotifications) {
-      window.dispatchEvent(new CustomEvent('twitch-event-normalized', {
-        detail: event
-      }));
+      window.dispatchEvent(
+        new CustomEvent('twitch-event-normalized', {
+          detail: event,
+        }),
+      );
     }
 
     if (enableStatistics) {
-      window.dispatchEvent(new CustomEvent('twitch-event-stats', {
-        detail: event
-      }));
+      window.dispatchEvent(
+        new CustomEvent('twitch-event-stats', {
+          detail: event,
+        }),
+      );
     }
     if (enableLogging) {
-      window.dispatchEvent(new CustomEvent('twitch-event-log', {
-        detail: event
-      }))
+      window.dispatchEvent(
+        new CustomEvent('twitch-event-log', {
+          detail: event,
+        }),
+      );
     }
   };
 
@@ -131,9 +132,8 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
         break;
 
       default:
-        Object.keys(event.raw?.event || {}).forEach(key => {
-          if (typeof event.raw.event[key] === 'number' ||
-              typeof event.raw.event[key] === 'string') {
+        Object.keys(event.raw?.event || {}).forEach((key) => {
+          if (typeof event.raw.event[key] === 'number' || typeof event.raw.event[key] === 'string') {
             metadata[key] = event.raw.event[key];
           }
         });
@@ -145,12 +145,7 @@ export function useEventHandler(config: EventHandlerConfig = {}) {
   const shouldGroupEvents = (event1: NormalizedEvent, event2: NormalizedEvent): boolean => {
     if (event1.type !== event2.type) return false;
 
-    const groupableTypes = [
-      'channel.subscription.gift',
-      'channel.subscribe',
-      'channel.follow',
-      'channel.cheer',
-    ];
+    const groupableTypes = ['channel.subscription.gift', 'channel.subscribe', 'channel.follow', 'channel.cheer'];
 
     if (!groupableTypes.includes(event1.type)) return false;
 

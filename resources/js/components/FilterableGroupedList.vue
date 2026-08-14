@@ -103,9 +103,7 @@ function toggleGroup(key: string): void {
   saveExpandedState();
 }
 
-const allExpanded = computed(() =>
-  filteredGroups.value.length > 0 && filteredGroups.value.every((g) => isGroupExpanded(g.key)),
-);
+const allExpanded = computed(() => filteredGroups.value.length > 0 && filteredGroups.value.every((g) => isGroupExpanded(g.key)));
 
 function toggleAll(): void {
   const next = !allExpanded.value;
@@ -133,26 +131,18 @@ const totalNoun = computed(() => (totalItems.value === 1 ? props.itemsLabel.sing
     <!-- Filter bar -->
     <div v-if="totalItems > 0" class="relative">
       <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-      <input
-        v-model="searchQuery"
-        :placeholder="placeholder"
-        class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm"
-      />
+      <input v-model="searchQuery" :placeholder="placeholder" class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
     </div>
 
     <!-- Counter + expand-all -->
     <div v-if="totalItems > 0" class="flex items-center text-xs text-muted-foreground">
       <span v-if="searchQuery">
         Showing {{ visibleItems }} of {{ totalItems }} {{ totalNoun }}
-        <template v-if="!flat">
-          in {{ filteredGroups.length }} group{{ filteredGroups.length !== 1 ? 's' : '' }}
-        </template>
+        <template v-if="!flat"> in {{ filteredGroups.length }} group{{ filteredGroups.length !== 1 ? 's' : '' }} </template>
       </span>
       <span v-else>
         {{ totalItems }} {{ totalNoun }}
-        <template v-if="!flat">
-          across {{ groups.length }} group{{ groups.length !== 1 ? 's' : '' }}
-        </template>
+        <template v-if="!flat"> across {{ groups.length }} group{{ groups.length !== 1 ? 's' : '' }} </template>
       </span>
       <button
         v-if="!flat && filteredGroups.length > 0"
@@ -190,20 +180,12 @@ const totalNoun = computed(() => (totalItems.value === 1 ? props.itemsLabel.sing
 
     <!-- Grouped mode: collapsibles -->
     <div v-else class="space-y-1.5">
-      <Collapsible
-        v-for="group in filteredGroups"
-        :key="group.key"
-        :open="isGroupExpanded(group.key)"
-        @update:open="toggleGroup(group.key)"
-      >
+      <Collapsible v-for="group in filteredGroups" :key="group.key" :open="isGroupExpanded(group.key)" @update:open="toggleGroup(group.key)">
         <CollapsibleTrigger
           class="group flex w-full cursor-pointer items-center gap-2 rounded-md bg-sidebar px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
           :class="{ 'rounded-b-none bg-sidebar-accent/50 pb-0': isGroupExpanded(group.key) }"
         >
-          <ChevronRight
-            :size="14"
-            class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
-          />
+          <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
           <slot name="group-icon" :group="group" />
           <span class="text-sm font-medium">{{ group.label }}</span>
           <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.badge ?? group.items.length }}</span>
@@ -211,12 +193,7 @@ const totalNoun = computed(() => (totalItems.value === 1 ? props.itemsLabel.sing
 
         <CollapsibleContent>
           <div class="flex flex-col gap-2 bg-sidebar/50 p-4">
-            <slot
-              v-for="item in group.items"
-              name="item"
-              :item="item"
-              :group="group"
-            />
+            <slot v-for="item in group.items" name="item" :item="item" :group="group" />
           </div>
         </CollapsibleContent>
       </Collapsible>

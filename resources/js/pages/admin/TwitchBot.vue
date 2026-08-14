@@ -22,9 +22,7 @@ const obtainedAt = computed(() => {
   return new Date(props.obtained_at * 1000).toLocaleString();
 });
 
-const canConnect = computed(
-  () => props.client_id_configured && props.listener_secret_configured,
-);
+const canConnect = computed(() => props.client_id_configured && props.listener_secret_configured);
 </script>
 
 <template>
@@ -50,10 +48,7 @@ const canConnect = computed(
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="flex items-center gap-3">
-            <span
-              :class="props.connected ? 'bg-green-500' : 'bg-red-500'"
-              class="inline-block h-3 w-3 rounded-full"
-            />
+            <span :class="props.connected ? 'bg-green-500' : 'bg-red-500'" class="inline-block h-3 w-3 rounded-full" />
             <span class="font-medium">
               {{ props.connected ? 'Authenticated' : 'Not connected' }}
             </span>
@@ -75,9 +70,8 @@ const canConnect = computed(
           </dl>
 
           <p v-else class="text-sm text-foreground">
-            No tokens stored yet. Click below to authenticate the @overlabels account via Twitch OAuth.
-            You will be prompted to sign into Twitch - make sure you are signed in as @overlabels
-            (use an incognito window if you are currently signed in as another Twitch account).
+            No tokens stored yet. Click below to authenticate the @overlabels account via Twitch OAuth. You will be prompted to sign into Twitch -
+            make sure you are signed in as @overlabels (use an incognito window if you are currently signed in as another Twitch account).
           </p>
         </CardContent>
       </Card>

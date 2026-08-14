@@ -5,12 +5,7 @@ import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-  navigationMenuTriggerStyle
-} from '@/components/ui/navigation-menu';
+import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
@@ -28,7 +23,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  breadcrumbs: () => []
+  breadcrumbs: () => [],
 });
 
 const page = usePage();
@@ -37,28 +32,28 @@ const auth = computed(() => page.props.auth);
 const isCurrentRoute = computed(() => (url: string) => page.url === url);
 
 const activeItemStyles = computed(
-  () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : '')
+  () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
 
 const mainNavItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: LayoutGrid
-  }
+    icon: LayoutGrid,
+  },
 ];
 
 const rightNavItems: NavItem[] = [
   {
     title: 'Repository',
     href: 'https://github.com/laravel/vue-starter-kit',
-    icon: Folder
+    icon: Folder,
   },
   {
     title: 'Documentation',
     href: 'https://laravel.com/docs/starter-kits#vue',
-    icon: BookOpen
-  }
+    icon: BookOpen,
+  },
 ];
 </script>
 
@@ -118,19 +113,12 @@ const rightNavItems: NavItem[] = [
         <div class="hidden h-full lg:flex lg:flex-1">
           <NavigationMenu class="ml-10 flex h-full items-stretch">
             <NavigationMenuList class="flex h-full items-stretch space-x-2">
-              <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index"
-                                  class="relative flex h-full items-center">
-                <Link
-                  :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
-                  :href="item.href"
-                >
+              <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
+                <Link :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']" :href="item.href">
                   <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
                   {{ item.title }}
                 </Link>
-                <div
-                  v-if="isCurrentRoute(item.href)"
-                  class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                ></div>
+                <div v-if="isCurrentRoute(item.href)" class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -173,15 +161,11 @@ const rightNavItems: NavItem[] = [
               >
                 <Avatar class="size-8 overflow-hidden rounded-full">
                   <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
-                  <AvatarFallback
-                    class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
+                  <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
                     {{ getInitials(auth.user?.name) }}
                   </AvatarFallback>
                 </Avatar>
-                <span
-                  v-if="isLive"
-                  class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-green-500 ring-2 ring-background"
-                />
+                <span v-if="isLive" class="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-green-500 ring-2 ring-background" />
                 <span
                   v-else-if="isTransitioning"
                   class="absolute -top-0.5 -right-0.5 size-3 animate-pulse rounded-full bg-orange-400 ring-2 ring-background"

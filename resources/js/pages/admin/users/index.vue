@@ -6,7 +6,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
-import {CheckIcon} from '@lucide/vue';
+import { CheckIcon } from '@lucide/vue';
 
 interface User {
   id: number;
@@ -41,7 +41,7 @@ const props = defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Users', href: route('admin.users.index') }
+  { title: 'Users', href: route('admin.users.index') },
 ];
 
 const search = ref(props.filters.search ?? '');
@@ -51,11 +51,15 @@ const includeDeleted = ref(props.filters.include_deleted ?? false);
 let debounce: ReturnType<typeof setTimeout>;
 
 function applyFilters() {
-  router.get(route('admin.users.index'), {
-    search: search.value || undefined,
-    role: role.value || undefined,
-    include_deleted: includeDeleted.value || undefined
-  }, { preserveState: true, replace: true });
+  router.get(
+    route('admin.users.index'),
+    {
+      search: search.value || undefined,
+      role: role.value || undefined,
+      include_deleted: includeDeleted.value || undefined,
+    },
+    { preserveState: true, replace: true },
+  );
 }
 
 watch([search, role, includeDeleted], () => {
@@ -77,7 +81,7 @@ watch([search, role, includeDeleted], () => {
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
         <Input v-model="search" placeholder="Search name or twitch_id…" class="w-64" />
-        <select v-model="role" class="rounded border border-sidebar px-3 py-1.5 text-sm bg-background">
+        <select v-model="role" class="rounded border border-sidebar bg-background px-3 py-1.5 text-sm">
           <option value="">All roles</option>
           <option value="user">user</option>
           <option value="admin">admin</option>
@@ -89,10 +93,11 @@ watch([search, role, includeDeleted], () => {
       </div>
 
       <!-- Card view (< lg) -->
-      <div class="lg:hidden space-y-2">
+      <div class="space-y-2 lg:hidden">
         <EmptyState v-if="users.data.length === 0" message="No users found." />
         <div
-          v-for="user in users.data" :key="`card-${user.id}`"
+          v-for="user in users.data"
+          :key="`card-${user.id}`"
           class="rounded border border-sidebar p-3 text-sm"
           :class="{ 'opacity-50': user.deleted_at }"
         >
@@ -101,7 +106,7 @@ watch([search, role, includeDeleted], () => {
               <div class="font-medium">{{ user.name }}</div>
               <div v-if="user.twitch_id" class="text-xs text-muted-foreground">Twitch: {{ user.twitch_id }}</div>
             </div>
-            <a :href="route('admin.users.show', user.id)" class="shrink-0 text-primary text-xs hover:underline">View</a>
+            <a :href="route('admin.users.show', user.id)" class="shrink-0 text-xs text-primary hover:underline">View</a>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
@@ -119,46 +124,46 @@ watch([search, role, includeDeleted], () => {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
+      <div class="hidden overflow-x-auto rounded border border-sidebar lg:block">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2">Name</th>
-            <th class="px-3 py-2">Twitch ID</th>
-            <th class="px-3 py-2">Role</th>
-            <th class="px-3 py-2">Templates</th>
-            <th class="px-3 py-2">Tokens</th>
-            <th class="px-3 py-2">Joined</th>
-            <th class="px-3 py-2">Bot</th>
-            <th class="px-3 py-2">View</th>
-          </tr>
+            <tr>
+              <th class="px-3 py-2">Name</th>
+              <th class="px-3 py-2">Twitch ID</th>
+              <th class="px-3 py-2">Role</th>
+              <th class="px-3 py-2">Templates</th>
+              <th class="px-3 py-2">Tokens</th>
+              <th class="px-3 py-2">Joined</th>
+              <th class="px-3 py-2">Bot</th>
+              <th class="px-3 py-2">View</th>
+            </tr>
           </thead>
 
           <tbody>
-          <tr v-for="user in users.data" :key="user.id" class="border-t border-sidebar"
-              :class="{ 'opacity-50': user.deleted_at }">
-            <td class="px-3 py-2">
-              <div class="font-medium"><a :href="route('admin.users.show', user.id)"
-                                          class="hover:underline">{{ user.name }}</a></div>
-            </td>
-            <td class="px-3 py-2 text-muted-foreground">{{ user.twitch_id ?? '—' }}</td>
-            <td class="px-3 py-2">
-              <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
-              <Badge v-if="user.is_system_user" variant="outline" class="ml-1">system</Badge>
-              <Badge v-if="user.deleted_at" variant="destructive" class="ml-1">deleted</Badge>
-            </td>
-            <td class="px-3 py-2">{{ user.overlay_templates_count }}</td>
-            <td class="px-3 py-2">{{ user.overlay_access_tokens_count }}</td>
-            <td class="px-3 py-2 text-xs">{{ user.created_at }}</td>
-            <td class="px-3 py-2">
-              <span v-if="user.bot_enabled"><CheckIcon class="size-5 text-green-400" /></span>
-              <span v-else>-</span>
-            </td>
-            <td class="px-3 py-2">
-              <a :href="route('admin.users.show', user.id)" class="text-primary text-xs hover:underline">View</a>
-            </td>
-          </tr>
-          <EmptyState v-if="users.data.length === 0" :colspan="7" message="No users found." />
+            <tr v-for="user in users.data" :key="user.id" class="border-t border-sidebar" :class="{ 'opacity-50': user.deleted_at }">
+              <td class="px-3 py-2">
+                <div class="font-medium">
+                  <a :href="route('admin.users.show', user.id)" class="hover:underline">{{ user.name }}</a>
+                </div>
+              </td>
+              <td class="px-3 py-2 text-muted-foreground">{{ user.twitch_id ?? '—' }}</td>
+              <td class="px-3 py-2">
+                <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
+                <Badge v-if="user.is_system_user" variant="outline" class="ml-1">system</Badge>
+                <Badge v-if="user.deleted_at" variant="destructive" class="ml-1">deleted</Badge>
+              </td>
+              <td class="px-3 py-2">{{ user.overlay_templates_count }}</td>
+              <td class="px-3 py-2">{{ user.overlay_access_tokens_count }}</td>
+              <td class="px-3 py-2 text-xs">{{ user.created_at }}</td>
+              <td class="px-3 py-2">
+                <span v-if="user.bot_enabled"><CheckIcon class="size-5 text-green-400" /></span>
+                <span v-else>-</span>
+              </td>
+              <td class="px-3 py-2">
+                <a :href="route('admin.users.show', user.id)" class="text-xs text-primary hover:underline">View</a>
+              </td>
+            </tr>
+            <EmptyState v-if="users.data.length === 0" :colspan="7" message="No users found." />
           </tbody>
         </table>
       </div>

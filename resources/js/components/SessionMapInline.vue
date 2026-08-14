@@ -22,7 +22,7 @@ onMounted(async () => {
   try {
     const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
     const res = await fetch(`/api/gps-sessions/${props.sessionId}/geojson`, {
-      headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+      headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken },
       credentials: 'same-origin',
     });
 
@@ -49,17 +49,14 @@ onMounted(async () => {
     }
 
     if (route.value.length > 0) {
-      const lats = route.value.map(p => p[0]);
-      const lngs = route.value.map(p => p[1]);
+      const lats = route.value.map((p) => p[0]);
+      const lngs = route.value.map((p) => p[1]);
       const padding = 0.002;
       bounds.value = [
         [Math.min(...lats) - padding, Math.min(...lngs) - padding],
         [Math.max(...lats) + padding, Math.max(...lngs) + padding],
       ];
-      center.value = [
-        (Math.min(...lats) + Math.max(...lats)) / 2,
-        (Math.min(...lngs) + Math.max(...lngs)) / 2,
-      ];
+      center.value = [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
     }
   } catch {
     error.value = 'Failed to load route data.';
@@ -76,52 +73,20 @@ function onMapReady() {
 </script>
 
 <template>
-  <div class="rounded-lg border overflow-hidden" style="height: 300px;">
-    <div v-if="loading" class="flex items-center justify-center h-full text-muted-foreground text-sm bg-muted/30">
-      Loading map...
-    </div>
-    <div v-else-if="error" class="flex items-center justify-center h-full text-muted-foreground text-sm bg-muted/30">
+  <div class="overflow-hidden rounded-lg border" style="height: 300px">
+    <div v-if="loading" class="flex h-full items-center justify-center bg-muted/30 text-sm text-muted-foreground">Loading map...</div>
+    <div v-else-if="error" class="flex h-full items-center justify-center bg-muted/30 text-sm text-muted-foreground">
       {{ error }}
     </div>
-    <l-map
-      v-else
-      ref="mapRef"
-      :zoom="zoom"
-      :center="center"
-      :use-global-leaflet="false"
-      style="height: 100%; width: 100%;"
-      @ready="onMapReady"
-    >
+    <l-map v-else ref="mapRef" :zoom="zoom" :center="center" :use-global-leaflet="false" style="height: 100%; width: 100%" @ready="onMapReady">
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
         :max-zoom="19"
       />
-      <l-polyline
-        v-if="route.length > 1"
-        :lat-lngs="route"
-        :color="'#7c3aed'"
-        :weight="4"
-        :opacity="0.8"
-      />
-      <l-circle-marker
-        v-if="startPoint"
-        :lat-lng="startPoint"
-        :radius="7"
-        :color="'#16a34a'"
-        :fill-color="'#22c55e'"
-        :fill-opacity="1"
-        :weight="2"
-      />
-      <l-circle-marker
-        v-if="endPoint"
-        :lat-lng="endPoint"
-        :radius="7"
-        :color="'#dc2626'"
-        :fill-color="'#ef4444'"
-        :fill-opacity="1"
-        :weight="2"
-      />
+      <l-polyline v-if="route.length > 1" :lat-lngs="route" :color="'#7c3aed'" :weight="4" :opacity="0.8" />
+      <l-circle-marker v-if="startPoint" :lat-lng="startPoint" :radius="7" :color="'#16a34a'" :fill-color="'#22c55e'" :fill-opacity="1" :weight="2" />
+      <l-circle-marker v-if="endPoint" :lat-lng="endPoint" :radius="7" :color="'#dc2626'" :fill-color="'#ef4444'" :fill-opacity="1" :weight="2" />
     </l-map>
   </div>
 </template>

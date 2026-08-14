@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -34,7 +35,7 @@ return new class extends Migration
         Schema::dropIfExists('game_blockers');
 
         Schema::table('game_hiding_spots', function (Blueprint $table) {
-            $table->json('open_sides')->default(new Illuminate\Database\Query\Expression("'[]'"));
+            $table->json('open_sides')->default(new Expression("'[]'"));
         });
 
         Schema::table('game_doors', function (Blueprint $table) {

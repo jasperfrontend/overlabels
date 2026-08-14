@@ -49,9 +49,7 @@ const props = defineProps<{
   unassignedEventTypes: UnassignedEventType[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Triggers', href: '/triggers' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Triggers', href: '/triggers' }];
 
 const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
 
@@ -134,7 +132,7 @@ function conditionLabel(row: ConditionFields): string | null {
   <Head title="Triggers" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-      <div class="mb-4 mt-1 flex items-center gap-2">
+      <div class="mt-1 mb-4 flex items-center gap-2">
         <Megaphone class="mr-2 size-6" />
         <Heading
           title="Triggers"
@@ -142,19 +140,12 @@ function conditionLabel(row: ConditionFields): string | null {
         />
       </div>
 
-      <p class="mb-6 text-sm text-foreground">
-        {{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.
-      </p>
+      <p class="mb-6 text-sm text-foreground">{{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.</p>
 
       <section v-for="section in sections" :key="section.key" class="mb-8">
-        <h3 class="mb-2 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        <h3 class="mb-2 flex items-center gap-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
           {{ section.label }}
-          <span
-            v-if="section.external"
-            class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"
-          >
-            external
-          </span>
+          <span v-if="section.external" class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"> external </span>
         </h3>
 
         <CollectionList
@@ -182,10 +173,7 @@ function conditionLabel(row: ConditionFields): string | null {
               <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
             </div>
 
-            <div
-              v-if="row.shadowed_by"
-              class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"
-            >
+            <div v-if="row.shadowed_by" class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
               <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
               <span>Never fires - "{{ row.shadowed_by }}" wins this exact trigger. Change or remove this condition.</span>
             </div>
@@ -195,9 +183,7 @@ function conditionLabel(row: ConditionFields): string | null {
 
       <!-- Unassigned twitch events (informational) -->
       <section v-if="unassignedEventTypes.length > 0">
-        <h3 class="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Unassigned Twitch events
-        </h3>
+        <h3 class="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">Unassigned Twitch events</h3>
         <p class="mb-3 text-xs text-muted-foreground">
           These events are not currently bound to any alert template. Bind them from an alert template's Triggers tab.
         </p>

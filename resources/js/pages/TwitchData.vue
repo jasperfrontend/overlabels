@@ -24,19 +24,19 @@ const twitch = 'https://www.twitch.tv/';
 const props = defineProps({
   twitchData: {
     type: Object,
-    required: true
+    required: true,
   },
   error: {
     type: String,
-    required: false
-  }
+    required: false,
+  },
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Your Twitch Data',
-    href: '/twitchdata'
-  }
+    href: '/twitchdata',
+  },
 ];
 
 function getTierStyle(tier: string) {
@@ -51,22 +51,29 @@ function getTierStyle(tier: string) {
 }
 
 const confirmExpensiveApiCall = async () => {
-  if (await confirm({
-    title: 'Attention',
-    message: 'This refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.',
-    confirmLabel: 'Refresh everything',
-  })) {
+  if (
+    await confirm({
+      title: 'Attention',
+      message:
+        'This refreshes all your Twitch data in one big call.\n\nIf you do this too often, Twitch may rate-limit your account, meaning your overlays and alerts will NOT WORK anymore.\n\nOnly do this when the data on this page is wrong and the buttons on top of the page did not fix the error.',
+      confirmLabel: 'Refresh everything',
+    })
+  ) {
     isRefreshing.value = true;
-    router.post(route('twitchdata.refresh.all'), {}, {
-      preserveScroll: true,
-      onFinish: () => {
-        isRefreshing.value = false;
-        lastRefreshTime.value = Date.now();
+    router.post(
+      route('twitchdata.refresh.all'),
+      {},
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          isRefreshing.value = false;
+          lastRefreshTime.value = Date.now();
+        },
+        onError: (errors) => {
+          handleApiError(errors);
+        },
       },
-      onError: (errors) => {
-        handleApiError(errors);
-      }
-    });
+    );
   }
 };
 
@@ -96,20 +103,24 @@ const refreshData = async (endpoint: string, label: string) => {
   isRefreshing.value = true;
   connectionError.value = false;
 
-  router.post(endpoint, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      toastMessage.value = `${label} data refreshed successfully!`;
-      toastType.value = 'success';
-      lastRefreshTime.value = Date.now();
+  router.post(
+    endpoint,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        toastMessage.value = `${label} data refreshed successfully!`;
+        toastType.value = 'success';
+        lastRefreshTime.value = Date.now();
+      },
+      onError: (errors) => {
+        handleApiError(errors);
+      },
+      onFinish: () => {
+        isRefreshing.value = false;
+      },
     },
-    onError: (errors) => {
-      handleApiError(errors);
-    },
-    onFinish: () => {
-      isRefreshing.value = false;
-    }
-  });
+  );
 };
 
 // Auto-refresh mechanism to check token validity
@@ -119,7 +130,7 @@ const checkTokenValidity = () => {
   if (Date.now() - lastRefreshTime.value > thirtyMinutes) {
     // Make a lightweight API call to check token
     router.reload({
-      only: ['twitchData']
+      only: ['twitchData'],
     });
   }
 };
@@ -149,7 +160,7 @@ watch(
       toastType.value = page.props.flash?.type || 'info';
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 watch(
   () => auth.value.user,
@@ -159,10 +170,11 @@ watch(
     } else {
       router.visit('/', {
         replace: true,
-        preserveState: true
+        preserveState: true,
       });
     }
-  }, { immediate: true }
+  },
+  { immediate: true },
 );
 </script>
 
@@ -173,69 +185,41 @@ watch(
       <div class="w-full max-w-4xl">
         <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = ''" />
         <h1 class="mb-6 text-center text-4xl font-extrabold tracking-tight">Your Twitch Data</h1>
-        <div v-if="connectionError"
-             class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-red-800 dark:text-red-200">
+        <div v-if="connectionError" class="mb-4 rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-200">
           <p class="font-semibold">Connection Error</p>
           <p class="text-sm">Unable to connect to Twitch API. Your session may have expired.</p>
-          <button
-            @click="reauthenticate"
-            class="mt-2 rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
-          >
+          <button @click="reauthenticate" class="mt-2 rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">
             Re-authenticate with Twitch
           </button>
         </div>
 
         <div class="mb-4 flex flex-row flex-wrap justify-between gap-2">
-          <button
-            @click="() => refreshData('/twitchdata/refresh/user', 'User')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/user', 'User')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             User
           </button>
 
-          <button
-            @click="() => refreshData('/twitchdata/refresh/info', 'Bio')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/info', 'Bio')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Bio
           </button>
 
-          <button
-            @click="() => refreshData('/twitchdata/refresh/following', 'Following')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/following', 'Following')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Following
           </button>
 
-          <button
-            @click="() => refreshData('/twitchdata/refresh/followers', 'Followers')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/followers', 'Followers')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Followers
           </button>
 
-          <button
-            @click="() => refreshData('/twitchdata/refresh/subscribers', 'Subscribers')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/subscribers', 'Subscribers')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Subscribers
           </button>
 
-          <button
-            @click="() => refreshData('/twitchdata/refresh/goals', 'Goals')"
-            :disabled="isRefreshing"
-            class="btn btn-cancel"
-          >
+          <button @click="() => refreshData('/twitchdata/refresh/goals', 'Goals')" :disabled="isRefreshing" class="btn btn-cancel">
             <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
             Goals
           </button>
@@ -253,10 +237,9 @@ watch(
           </div>
 
           <h2 class="text-center text-2xl font-bold text-accent-foreground">
-            <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" class="hover:text-muted-foreground"
-               target="_blank">{{
-                props.twitchData.channel.broadcaster_name
-              }}</a>
+            <a :href="`${twitch}${props.twitchData.channel.broadcaster_login}`" class="hover:text-muted-foreground" target="_blank">{{
+              props.twitchData.channel.broadcaster_name
+            }}</a>
           </h2>
 
           <div class="text-center text-violet-400">(Twitch Channel ID: {{ props.twitchData.user.id }})</div>
@@ -266,11 +249,8 @@ watch(
           </div>
 
           <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <a v-if="props.twitchData.channel_followers.total"
-               :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
-              <div
-                class="btn btn-cancel flex flex-col items-center justify-center"
-              >
+            <a v-if="props.twitchData.channel_followers.total" :href="`${twitch}${props.twitchData.channel.broadcaster_login}/about`">
+              <div class="btn btn-cancel flex flex-col items-center justify-center">
                 <p class="text-lg font-semibold text-muted-foreground">Your Follower Count</p>
                 <p class="text-2xl font-bold">
                   {{ props.twitchData?.channel_followers?.total }}
@@ -283,9 +263,7 @@ watch(
               :href="`${twitch}${props.twitchData?.channel_followers?.data[0]?.user_login}`"
               target="_blank"
             >
-              <div
-                class="btn btn-cancel flex flex-col items-center justify-center"
-              >
+              <div class="btn btn-cancel flex flex-col items-center justify-center">
                 <p class="text-lg font-semibold text-muted-foreground">Latest Follower</p>
                 <p class="text-xl font-bold">
                   {{ props.twitchData.channel_followers.data[0].user_name }}
@@ -322,9 +300,7 @@ watch(
                   <span class="inline-block font-semibold">{{ sub.user_name }}</span>
                   <span class="inline-block text-sm">
                     {{ sub.plan_name }}
-                    <span v-if="sub.is_gift"
-                          class="text-sm text-muted-foreground italic"> (Gifted by {{ sub.gifter_name || 'N/A'
-                      }}) </span>
+                    <span v-if="sub.is_gift" class="text-sm text-muted-foreground italic"> (Gifted by {{ sub.gifter_name || 'N/A' }}) </span>
                   </span>
                 </a>
               </li>
@@ -333,7 +309,7 @@ watch(
 
           <button
             type="submit"
-            class="btn btn-danger mt-6 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn btn-danger mt-6 w-full disabled:cursor-not-allowed disabled:opacity-50"
             @click="confirmExpensiveApiCall"
             :disabled="isRefreshing"
           >

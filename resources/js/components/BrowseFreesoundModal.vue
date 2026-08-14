@@ -66,20 +66,23 @@ const savingId = ref<number | null>(null);
 // the overlay renderer uses for alert sound playback.
 let auditionPlayer: HTMLAudioElement | null = null;
 
-watch(() => props.show, (visible) => {
-  if (visible) {
-    // Reset state when reopening so users don't see stale results.
-    query.value = '';
-    sort.value = 'score';
-    results.value = [];
-    totalCount.value = 0;
-    currentPage.value = 1;
-    error.value = null;
-    stopAudition();
-  } else {
-    stopAudition();
-  }
-});
+watch(
+  () => props.show,
+  (visible) => {
+    if (visible) {
+      // Reset state when reopening so users don't see stale results.
+      query.value = '';
+      sort.value = 'score';
+      results.value = [];
+      totalCount.value = 0;
+      currentPage.value = 1;
+      error.value = null;
+      stopAudition();
+    } else {
+      stopAudition();
+    }
+  },
+);
 
 // Re-run the current query when the user picks a different sort. No-op if
 // they haven't searched yet.
@@ -188,44 +191,23 @@ function formatDuration(d: number | null): string {
   <Modal :show="show" max-width="3xl" @close="emit('close')">
     <div class="p-6">
       <div class="mb-4 flex items-start justify-between gap-3">
-        <div class="flex-1 min-w-0">
+        <div class="min-w-0 flex-1">
           <h2 class="text-lg font-semibold text-accent-foreground">Browse Freesound</h2>
-          <p class="text-sm text-foreground">
-            Commercial-safe sounds only (CC0 and CC-BY). Library: {{ libraryCount }} / {{ libraryCap }}.
-          </p>
+          <p class="text-sm text-foreground">Commercial-safe sounds only (CC0 and CC-BY). Library: {{ libraryCount }} / {{ libraryCap }}.</p>
         </div>
-        <button
-          type="button"
-          class="cursor-pointer rounded-md p-1.5 text-foreground hover:bg-muted"
-          aria-label="Close"
-          @click="emit('close')"
-        >
+        <button type="button" class="cursor-pointer rounded-md p-1.5 text-foreground hover:bg-muted" aria-label="Close" @click="emit('close')">
           <X class="h-5 w-5" />
         </button>
       </div>
 
       <form @submit.prevent="runSearch(1)" class="mb-4 flex gap-2">
-        <input
-          v-model="query"
-          type="search"
-          placeholder="coin drop, bell, whoosh..."
-          class="input-border flex-1"
-          autofocus
-        />
-        <select
-          v-model="sort"
-          class="input-border cursor-pointer w-44"
-          title="Sort results by"
-        >
+        <input v-model="query" type="search" placeholder="coin drop, bell, whoosh..." class="input-border flex-1" autofocus />
+        <select v-model="sort" class="input-border w-44 cursor-pointer" title="Sort results by">
           <option v-for="opt in SORT_OPTIONS" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
         </select>
-        <button
-          type="submit"
-          :disabled="loading || !query.trim()"
-          class="btn btn-primary cursor-pointer"
-        >
+        <button type="submit" :disabled="loading || !query.trim()" class="btn btn-primary cursor-pointer">
           <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
           <Search v-else class="mr-2 h-4 w-4" />
           Search
@@ -236,16 +218,15 @@ function formatDuration(d: number | null): string {
         {{ error }}
       </div>
 
-      <div v-if="results.length === 0 && !loading && totalCount === 0" class="rounded border border-sidebar-border bg-muted/30 p-6 text-center text-sm text-foreground">
+      <div
+        v-if="results.length === 0 && !loading && totalCount === 0"
+        class="rounded border border-sidebar-border bg-muted/30 p-6 text-center text-sm text-foreground"
+      >
         Search Freesound for an alert sound. Try short, descriptive terms like "coin" or "ding".
       </div>
 
-      <div v-if="results.length > 0" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-        <div
-          v-for="hit in results"
-          :key="hit.id"
-          class="flex items-center gap-3 rounded border border-sidebar-border bg-card p-3"
-        >
+      <div v-if="results.length > 0" class="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+        <div v-for="hit in results" :key="hit.id" class="flex items-center gap-3 rounded border border-sidebar-border bg-card p-3">
           <button
             type="button"
             class="cursor-pointer rounded-full bg-violet-500/20 p-2 text-violet-600 hover:bg-violet-500/30 dark:text-violet-300"
@@ -257,9 +238,9 @@ function formatDuration(d: number | null): string {
             <Play v-else class="h-4 w-4" />
           </button>
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
             <div class="truncate text-sm font-medium text-accent-foreground">{{ hit.name }}</div>
-            <div class="text-xs text-foreground/80 flex items-center gap-2 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-foreground/80">
               <span>by {{ hit.author }}</span>
               <span class="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase">
                 {{ licenseShort(hit.license) }}
@@ -270,7 +251,7 @@ function formatDuration(d: number | null): string {
                 :href="hit.freesound_url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="cursor-pointer inline-flex items-center gap-0.5 text-violet-500 hover:underline"
+                class="inline-flex cursor-pointer items-center gap-0.5 text-violet-500 hover:underline"
               >
                 Page <ExternalLink class="h-3 w-3" />
               </a>
@@ -283,7 +264,9 @@ function formatDuration(d: number | null): string {
                 class="cursor-pointer rounded bg-muted/60 px-1.5 py-0.5 text-[10px] text-foreground hover:bg-violet-500/20 hover:text-violet-700 dark:hover:text-violet-300"
                 :title="`Search for: ${tag}`"
                 @click="searchTag(tag)"
-              >{{ tag }}</button>
+              >
+                {{ tag }}
+              </button>
             </div>
           </div>
 
@@ -321,13 +304,7 @@ function formatDuration(d: number | null): string {
           </button>
         </div>
         <div v-else></div>
-        <button
-          type="button"
-          class="btn btn-secondary cursor-pointer ml-auto"
-          @click="emit('close')"
-        >
-          Close
-        </button>
+        <button type="button" class="btn btn-secondary ml-auto cursor-pointer" @click="emit('close')">Close</button>
       </div>
     </div>
   </Modal>

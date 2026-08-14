@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 
-withDefaults(defineProps<{
-  // Plain-text message. Pass default slot content instead when the copy needs
-  // markup, such as an inline button that undoes whatever emptied the list.
-  message?: string;
-  colspan?: number;
-  icon?: Component;
-  title?: string;
-  dashed?: boolean;
-}>(), {
-  dashed: false,
-});
+withDefaults(
+  defineProps<{
+    // Plain-text message. Pass default slot content instead when the copy needs
+    // markup, such as an inline button that undoes whatever emptied the list.
+    message?: string;
+    colspan?: number;
+    icon?: Component;
+    title?: string;
+    dashed?: boolean;
+  }>(),
+  {
+    dashed: false,
+  },
+);
 </script>
 
 <template>
@@ -26,9 +29,7 @@ withDefaults(defineProps<{
   <div
     v-else
     class="flex flex-col items-center justify-center text-center"
-    :class="dashed
-      ? 'rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 sm:p-12'
-      : 'py-8 sm:py-12'"
+    :class="dashed ? 'rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 sm:p-12' : 'py-8 sm:py-12'"
   >
     <component v-if="icon" :is="icon" class="mb-4 h-12 w-12 text-muted-foreground/50" />
     <h3 v-if="title" class="mb-2 text-lg font-semibold">{{ title }}</h3>

@@ -16,7 +16,7 @@ const props = defineProps({
     type: String as () => 'top' | 'right' | 'bottom' | 'left',
     required: false,
     default: 'top',
-  }
+  },
 });
 </script>
 <template>
