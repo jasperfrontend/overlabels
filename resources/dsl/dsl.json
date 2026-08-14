@@ -44,12 +44,24 @@
   "$comment_operators": "Longest-first. `=` is normalised to `==` at evaluation time; there is no `==` in author-facing syntax.",
   "comparisonOperators": [">=", "<=", "!=", ">", "<", "="],
 
+  "$comment_namespaceScope": "An absent `scope` means every runtime resolves the namespace (overlay renderer, alert renderer, bot resolver). A present `scope` is a DELIBERATE divergence and must list the runtimes that implement it; anywhere else the tag resolves empty per null-over-placeholder. Declare the divergence here rather than letting the runtimes drift apart silently.",
+
   "namespaces": {
     "c": { "resolvesAgainst": "controls", "description": "User and template controls, including namespaced service controls." },
     "c:list": { "resolvesAgainst": "lists", "description": "A user's Lists." },
     "event": { "resolvesAgainst": "alertPayload", "description": "The alert payload in scope." },
     "bot": { "resolvesAgainst": "botContext", "description": "Bot invocation context (args, from_user, channel)." },
-    "loop": { "resolvesAgainst": "foreachScope", "description": "Loop state; valid only inside a foreach body." }
+    "loop": { "resolvesAgainst": "foreachScope", "description": "Loop state; valid only inside a foreach body." },
+    "rand": {
+      "resolvesAgainst": "inline",
+      "scope": ["bot"],
+      "description": "A random whole number, inline: `rand:0-69`. Both bounds are required and non-negative. Bot-only: an overlay re-renders on every event, so a random tag there would reroll unpredictably - overlays use a number control with config.random plus random_interval, which rerolls on a schedule the author chose."
+    },
+    "counter": {
+      "resolvesAgainst": "controls",
+      "scope": ["bot"],
+      "description": "Reads a counter control AND declares that firing this expression increments it by one. The increment happens once per fire in BotExpressionService, never inside the resolver, so the tag itself stays a pure read and preview never mutates. Use `c:<key>` to read the same counter without incrementing. Bot-only: nothing else in the DSL has an effect attached, and a render is not a fire."
+    }
   },
 
   "$comment_reservedKeys": "Keys with meaning independent of any namespace.",

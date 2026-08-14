@@ -4,6 +4,8 @@ namespace App\Services\Bot;
 
 use App\Models\BotCommand;
 use App\Models\BotExpression;
+use App\Models\User;
+use App\Support\BotTags;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +19,10 @@ use Illuminate\Validation\ValidationException;
  */
 class BotExpressionValidator
 {
+    public function __construct(
+        private readonly BotCounterService $counters,
+    ) {}
+
     /**
      * @param  array<string,mixed>  $input  Raw input (command, permission_level, cooldown_seconds, expression, enabled, hidden_from_commands).
      * @param  BotExpression|null  $existing  Set for updates so the duplicate check ignores the row being edited.
@@ -55,6 +61,15 @@ class BotExpressionValidator
             ]);
         }
 
+        // rand: and counter: are the only tags validated at authoring time.
+        // Every other tag family resolves empty when it is wrong, which is the
+        // right default for a read. These two are different: a bad rand range
+        // is a typo the streamer can't see (it just goes blank mid-stream), and
+        // a bad counter key would have us silently not counting. Both are
+        // cheaper to refuse at the point of writing than to debug live.
+        $this->assertRandRangesAreValid($data['expression']);
+        $this->assertCounterKeysAreValid($userId, $data['expression']);
+
         $command = strtolower(ltrim($data['command'], '!'));
 
         $reserved = array_column(BotCommand::DEFAULTS, 'command');
@@ -77,5 +92,57 @@ class BotExpressionValidator
         $data['command'] = $command;
 
         return $data;
+    }
+
+    /**
+     * Every `rand:` tag must carry two non-negative whole bounds.
+     *
+     * Negatives are refused rather than supported. `rand:-5-5` has three
+     * readings and no streamer rolls a negative number, so the ambiguity buys
+     * nothing. Kept to one sentence so it reads under the form field and as a
+     * single relayed chat line.
+     *
+     * @throws ValidationException
+     */
+    private function assertRandRangesAreValid(string $expression): void
+    {
+        foreach (BotTags::randArgs($expression) as $arg) {
+            if (BotTags::parseRange($arg) !== null) {
+                continue;
+            }
+
+            throw ValidationException::withMessages([
+                'expression' => "'[[[rand:$arg]]]' isn't a valid range - write two whole numbers low to high, like [[[rand:0-69]]]. Negative numbers aren't supported.",
+            ]);
+        }
+    }
+
+    /**
+     * Every `counter:` tag must name a usable control key, and must not
+     * collide with an existing control that can't hold a count.
+     *
+     * @throws ValidationException
+     */
+    private function assertCounterKeysAreValid(int $userId, string $expression): void
+    {
+        foreach (BotTags::counterKeys($expression) as $key) {
+            if (! BotTags::isValidCounterKey($key)) {
+                throw ValidationException::withMessages([
+                    'expression' => "'$key' isn't a usable counter name - use lowercase letters, numbers and underscores, starting with a letter, like [[[counter:wins]]].",
+                ]);
+            }
+        }
+
+        $user = User::find($userId);
+
+        if (! $user) {
+            return;
+        }
+
+        foreach ($this->counters->conflictingTypes($user, $expression) as $key => $type) {
+            throw ValidationException::withMessages([
+                'expression' => "You already have a $type control named '$key', which can't hold a count. Pick another name for the counter.",
+            ]);
+        }
     }
 }

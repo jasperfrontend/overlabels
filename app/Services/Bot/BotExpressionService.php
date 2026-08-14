@@ -12,7 +12,8 @@ use Illuminate\Support\Carbon;
  *
  * Lifecycle for one chat command:
  *   canFire()  - permission + cooldown gate, no side effects
- *   fire()     - resolve template, write outbox row, stamp last_fired_at
+ *   fire()     - bump counters, resolve template, write outbox row, stamp
+ *                last_fired_at
  *
  * Both are intentionally thin. Resolution is delegated to BotExpressionResolver
  * so it can be reused (and tested) in isolation by the builder UI's preview.
@@ -21,6 +22,7 @@ class BotExpressionService
 {
     public function __construct(
         private readonly BotExpressionResolver $resolver,
+        private readonly BotCounterService $counters,
     ) {}
 
     /**
@@ -56,6 +58,14 @@ class BotExpressionService
     public function fire(BotExpression $expression, array $botContext): string
     {
         $user = $expression->user;
+
+        // Apply the increments declared by any counter: tags BEFORE resolving,
+        // so the tag reads the post-increment value (matching what streamers
+        // expect from SE's ${count}). This is the only place a bot expression
+        // writes: keeping it out of the resolver is what leaves the dry-run
+        // preview, the validator and every re-resolve free of side effects.
+        $this->counters->bump($user, $expression->expression);
+
         $message = $this->resolver->resolve($user, $expression->expression, $botContext);
 
         if ($message !== '') {

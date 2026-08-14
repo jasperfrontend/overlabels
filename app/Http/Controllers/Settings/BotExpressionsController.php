@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
 use App\Models\OverlayControl;
+use App\Services\Bot\BotCounterService;
 use App\Services\Bot\BotExpressionResolver;
 use App\Services\Bot\BotExpressionValidator;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,7 @@ class BotExpressionsController extends Controller
     public function __construct(
         private readonly BotExpressionResolver $resolver,
         private readonly BotExpressionValidator $validator,
+        private readonly BotCounterService $counters,
     ) {}
 
     public function index(Request $request): Response
@@ -90,6 +92,11 @@ class BotExpressionsController extends Controller
             'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
 
+        // Any counter: tag names a counter control; create the ones that don't
+        // exist yet so they show up in the UI immediately. Idempotent, and
+        // bump() provisions again at fire time, so this is convenience only.
+        $this->counters->provision($user, $data['expression']);
+
         return redirect()->route('settings.bot.expressions.index');
     }
 
@@ -108,6 +115,8 @@ class BotExpressionsController extends Controller
             'hidden_from_commands' => $data['hidden_from_commands'],
             'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
+
+        $this->counters->provision($request->user(), $data['expression']);
 
         return redirect()->route('settings.bot.expressions.index');
     }
