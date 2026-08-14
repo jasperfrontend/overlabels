@@ -7,23 +7,5 @@
     "plugins": ["prettier-plugin-organize-imports", "prettier-plugin-tailwindcss"],
     "tailwindFunctions": ["clsx", "cn"],
     "tailwindStylesheet": "resources/css/app.css",
-    "tabWidth": 4,
-    "overrides": [
-        {
-            "files": "**/*.yml",
-            "options": {
-                "tabWidth": 2
-            }
-        },        {
-            "files": "**/*.vue",
-            "options": {
-                "tabWidth": 2
-            }
-        },        {
-            "files": "**/*.ts",
-            "options": {
-                "tabWidth": 2
-            }
-        }
-    ]
+    "tabWidth": 2
 }
