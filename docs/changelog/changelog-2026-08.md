@@ -2,6 +2,16 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - fix: the Allowed IPs field says what it accepts, and says why it refused
+
+Chasing the README's bogus "IP or CIDR range" claim into the token UI found that the UI never made the claim - but it also never said ranges were unsupported, and refused them with a message that named no field.
+
+- **The claim was only ever in the README.** The create-token form says "Comma-separated IP addresses" with an exact-address placeholder, and `allowed_ips.*` validates with Laravel's `ip` rule, which rejects `203.0.113.0/24`. Nothing user-facing needed correcting. Verified rather than assumed, because the interesting outcome here was "there is no bug".
+- **The real defect was next to it: `createToken()` swallowed the 422.** Every failure became `alert('Failed to create token')`, so a user who typed a range got no field, no reason, and no way to guess. It now surfaces the validation messages, rewriting Laravel's `allowed_ips.0` into "Allowed IPs" - accurate is not the same as useful when the reader is a streamer, not a developer.
+- **The hint text now rules ranges out up front**, and adds the sentence the field was missing: leave it empty unless your connection has a fixed IP. Most home connections do not.
+- **My own help page had it wrong too, one day old.** `/help/tokens` warned that a range "will match nothing at all and lock your own overlay out". It cannot: validation refuses it at save time. Downgraded from `[!WARNING]` to `[!NOTE]` and corrected - overstating a danger that the code already prevents is its own kind of inaccurate.
+- **`OverlayTokenAllowedIpsTest` pins all of it (4 tests).** The CIDR rejection was verified to fail by loosening the rule to `string`, then restored. It also pins the exact-match behaviour against a neighbouring address inside the `/24` a user might expect to work, and pins that the allowlist is skipped entirely when no client IP is passed - which is why the help page calls this a fixed-IP convenience and not a security boundary. Loosening the validation to accept ranges without teaching `isValid()` to understand one now breaks the suite instead of the user's overlay.
+
 ## August 15th, 2026 - docs: three help pages for what the README used to be the only home for
 
 Slimming the README yesterday left four topics with no page to link to. Three now have one: [How an overlay renders](/help/rendering), [Testing your alerts](/help/testing), and [Overlay Access Tokens](/help/tokens). Onboarding stays cut on purpose.
