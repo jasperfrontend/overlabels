@@ -24,14 +24,27 @@ const EVENT_STYLES: Record<string, { dot: string; border: string }> = {
   'channel.poll.begin': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
   'channel.poll.progress': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
   'channel.poll.end': { dot: 'text-indigo-500', border: 'hover:border-l-indigo-500' },
+  'channel.hype_train.begin': { dot: 'text-orange-500', border: 'hover:border-l-orange-500' },
+  'channel.hype_train.progress': { dot: 'text-orange-500', border: 'hover:border-l-orange-500' },
+  'channel.hype_train.end': { dot: 'text-orange-500', border: 'hover:border-l-orange-500' },
+  'channel.goal.begin': { dot: 'text-blue-500', border: 'hover:border-l-blue-500' },
+  'channel.goal.progress': { dot: 'text-blue-500', border: 'hover:border-l-blue-500' },
+  'channel.goal.end': { dot: 'text-blue-500', border: 'hover:border-l-blue-500' },
 };
 
+// Keys must stay in step with SERVICE_LABELS in utils/services.ts - a source
+// missing here falls through to DEFAULT_STYLE and renders grey.
+// The literal hexes are brand colours; throne and gps use Tailwind names
+// because neither has a brand colour we've committed to, and both are picked
+// to sit clear of the five above.
 const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   kofi: { dot: 'text-[#ff5a16]', border: 'hover:border-l-[#ff5a16]' },
   streamlabs: { dot: 'text-[#80f5d2]', border: 'hover:border-l-[#80f5d2]' },
   twitch: { dot: 'text-[#9146ff]', border: 'hover:border-l-[#9146ff]' },
   bmac: { dot: 'text-[#ffdd00]', border: 'hover:border-l-[#ffdd00]' },
   fourthwall: { dot: 'text-[#0b48f9]', border: 'hover:border-l-[#0b48f9]' },
+  throne: { dot: 'text-rose-500', border: 'hover:border-l-rose-500' },
+  gps: { dot: 'text-teal-500', border: 'hover:border-l-teal-500' },
 };
 
 const DEFAULT_STYLE = { dot: 'text-slate-500', border: 'hover:border-l-slate-500' };

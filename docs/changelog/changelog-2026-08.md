@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - feat: the event binding on an alert row now has a shape
+
+`/templates?type=alert` showed which event fires each alert as a bare run of coloured text under the description. It read like an unstyled hyperlink, and colour was doing the identifying on its own. It now carries the same provider icon the events feed has used since July.
+
+- **This is the pairing `EventsTable.vue` already ships, applied to the one other surface that answers "what event is this".** Shape carries the source, colour reinforces the event type. No new component, no new abstraction - `ProviderIcon` and `useEventColors` both existed, they just were not used together here.
+- **`firstEvent()` now returns `source` and `service` as separate fields, and the split is load-bearing.** `source` is always set, including `'twitch'`, because the icon and the colour need it. `service` is set for external bindings only, because it drives the label prefix - reusing `source` there would render "Follow" as "Twitch Follow".
+- **That fixes a fallback that could never fire.** Twitch bindings previously carried no source at all, so an event type missing from `EVENT_STYLES` could not fall back to Twitch purple - it went straight to slate. The source fallback in `resolveStyleByType()` was unreachable for every Twitch event.
+- **Six Twitch event types were named in `EVENT_TYPE_LABELS` but had no colour.** All three `channel.hype_train.*` (now orange) and all three `channel.goal.*` (now blue). Both hues were unused; one label renders per row, so the only real requirement is that they are clear of the other eight.
+- **`SOURCE_STYLES` was two services short of `SERVICE_LABELS`.** Throne and GPS fell through to grey. Both are bindable - Throne exposes `donation`, GPS exposes four event types including `location_update` - so this was reachable, not theoretical. They use Tailwind names rather than invented brand hexes, and a comment now says the two maps have to stay in step.
+- **GPS had no provider icon either, so it drew the fallback block.** Added as `0x6F22`, a map pin, following the procedure in `providerIcons.ts`: 8 filled cells, and a minimum Hamming distance of 6 against all six existing icons *and* the fallback, brute-forced rather than eyeballed. The "Seven distinct gestalts" comment above the map is finally true.
+- **The list stays a three-line row.** Moving the binding up beside the template name was considered and rejected: names here get long, and the third line survives a narrow screen where a second column would not.
+
 ## August 14th, 2026 - ci: the linter now actually says no
 
 Third and last step of the formatting chore. `lint.yml` ran Pint, Prettier and ESLint in write mode for thirteen months: it fixed the code, exited 0, and threw the result away when the runner was destroyed. All three now run in check mode, so the job reports instead of pretending.
