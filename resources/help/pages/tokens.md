@@ -66,11 +66,12 @@ Every token carries a few optional restrictions, all checked on each use:
 | **IP allowlist** | Restricts use to specific client IP addresses                              |
 | **Abilities**  | Comma-separated scope list. Unset means no restriction                        |
 
-> [!WARNING]
-> **The IP allowlist is an exact address match, not a CIDR range.** `203.0.113.7` matches only
-> `203.0.113.7`. Writing `203.0.113.0/24` will match nothing at all and lock your own overlay out. It is
-> also only enforced when the request has a client IP to check. Most home connections get a new address
-> periodically, so this is a feature for fixed-IP setups, not a default worth turning on.
+> [!NOTE]
+> **The IP allowlist is an exact address match, not a range.** `203.0.113.7` matches only `203.0.113.7`.
+> Range notation like `203.0.113.0/24` is rejected when you save the token, so you cannot accidentally
+> create one that matches nothing. The check is also only enforced when the request has a client IP to
+> read. Most home connections get a new address periodically, so this is a feature for fixed-IP setups,
+> not a default worth turning on.
 
 ## Access logging
 

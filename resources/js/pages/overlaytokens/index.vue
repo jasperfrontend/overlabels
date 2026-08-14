@@ -57,6 +57,24 @@ watch(ipInput, (v) => {
     .filter(Boolean);
 });
 
+/**
+ * Pull a readable message out of a 422. Laravel names the offending entry by
+ * its array index ("The allowed_ips.0 field must be a valid IP address"), which
+ * is accurate and useless to a streamer, so the field token is rewritten.
+ */
+const validationMessage = (error: unknown): string | null => {
+  if (!axios.isAxiosError(error) || error.response?.status !== 422) return null;
+
+  const errors = error.response.data?.errors as Record<string, string[]> | undefined;
+  if (!errors) return null;
+
+  const messages = Object.values(errors)
+    .flat()
+    .map((m) => m.replace(/allowed_ips\.\d+/g, 'Allowed IPs').replace(/expires_at/g, 'Expires At'));
+
+  return messages.length > 0 ? messages.join('\n') : null;
+};
+
 const createToken = async () => {
   try {
     const { data } = await axios.post('/tokens', form.value);
@@ -66,7 +84,9 @@ const createToken = async () => {
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to create token:', error);
-    await alert('Failed to create token');
+    // A 422 here is almost always a malformed entry in Allowed IPs, and the
+    // generic message left the user with no idea which field was wrong.
+    await alert(validationMessage(error) ?? 'Failed to create token');
   }
 };
 
@@ -211,7 +231,10 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
           <div>
             <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
             <input v-model="ipInput" type="text" class="mt-1 block w-full rounded-md border p-2" placeholder="192.168.1.1, 10.0.0.1" />
-            <p class="mt-1 text-xs text-gray-500">Comma-separated IP addresses</p>
+            <p class="mt-1 text-xs text-gray-500">
+              Comma-separated IP addresses. Exact addresses only - ranges like <code>192.168.1.0/24</code> are not supported. Leave this empty unless
+              your connection has a fixed IP.
+            </p>
           </div>
 
           <div>
