@@ -273,6 +273,17 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
+// The public overlay as plain markdown, so one URL is enough for a language
+// model to understand a whole overlay: source, controls, required integrations
+// and alert wiring. Same `.md` convention as the help pages above.
+//
+// Kept under `overlay.*` (unlike reports.store) because nothing in the frontend
+// resolves it - the preview page is handed the URL as a prop, so Ziggy's
+// blanket `!overlay.*` deny never comes into it.
+Route::get('/overlay/{slug}/public.md', [OverlayTemplateController::class, 'servePublicMarkdown'])
+    ->name('overlay.public.markdown')
+    ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
+
 Route::get('/overlay/{slug}/public/screenshot', [OverlayTemplateController::class, 'servePublicScreenshot'])
     ->name('overlay.public.screenshot')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');

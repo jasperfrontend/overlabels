@@ -13,6 +13,7 @@ use App\Models\OverlayTemplate;
 use App\Models\UserFreesoundSound;
 use App\Services\CloudinaryUploadService;
 use App\Services\HtmlSanitizationService;
+use App\Services\OverlayShareService;
 use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
@@ -414,7 +415,7 @@ class OverlayTemplateController extends Controller
      * delivery layer only, so the owner's edit screen still sees their raw
      * upload.
      */
-    public function servePublic(string $slug, CloudinaryUploadService $cloudinary)
+    public function servePublic(string $slug, CloudinaryUploadService $cloudinary, OverlayShareService $share)
     {
         $template = OverlayTemplate::where('slug', $slug)
             ->with('owner:id,name,avatar')
@@ -452,7 +453,14 @@ class OverlayTemplateController extends Controller
             'twitter_card' => 'summary_large_image',
         ]);
 
+        // Discovery hint for the markdown twin. `rel="alternate"` is honest
+        // here in a way it would not be for llms.txt (see app.blade.php): the
+        // .md really is the same overlay in another representation.
+        view()->share('alternateMarkdown', route('overlay.public', $template->slug).'.md');
+
         return Inertia::render('overlay/public-preview', [
+            'markdownUrl' => route('overlay.public', $template->slug).'.md',
+            'share' => $share->document($template),
             'template' => [
                 'id' => $template->id,
                 'slug' => $template->slug,
@@ -475,6 +483,38 @@ class OverlayTemplateController extends Controller
             // See OverlayReportController::issueTicket().
             'reportTicket' => OverlayReportController::issueTicket(),
         ]);
+    }
+
+    /**
+     * The same public overlay as one self-contained markdown document.
+     *
+     * Appending `.md` to a URL to get its plain source is an established
+     * convention on this site (see the help pages in routes/web.php, and
+     * llms.txt). This extends it from prose to overlays, which is what makes
+     * "paste this URL into an LLM and it understands my overlay" true: the
+     * document carries the source, the controls, the integrations it needs and
+     * the alert wiring in one fetch.
+     *
+     * Gated on is_public exactly like servePublic - this opens no surface that
+     * the preview page did not already open. A view is deliberately NOT
+     * recorded: view_count is a human-interest metric on the preview page, and
+     * crawlers hitting the .md would drown the signal.
+     */
+    public function servePublicMarkdown(string $slug, OverlayShareService $share)
+    {
+        $template = OverlayTemplate::where('slug', $slug)
+            ->with('owner:id,name')
+            ->firstOrFail();
+
+        if (! $template->is_public) {
+            abort(404, 'This overlay is private');
+        }
+
+        return response(
+            $share->markdown($template, route('overlay.public', $template->slug).'.md'),
+            200,
+            ['Content-Type' => 'text/markdown; charset=utf-8']
+        );
     }
 
     public function servePublicScreenshot(string $slug)
