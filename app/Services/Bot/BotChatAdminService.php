@@ -27,7 +27,23 @@ readonly class BotChatAdminService
     public function __construct(
         private BotExpressionValidator $exprValidator,
         private BotAliasValidator $aliasValidator,
+        private BotCounterService $counters,
     ) {}
+
+    /**
+     * Trailing clause naming any counters a save just created. Empty string
+     * when none, so the caller can concatenate unconditionally.
+     *
+     * @param  array<int,string>  $created
+     */
+    private function describeCounters(array $created): string
+    {
+        if ($created === []) {
+            return '';
+        }
+
+        return ' - started counter'.(count($created) > 1 ? 's' : '').' '.implode(', ', $created).' at 0';
+    }
 
     /**
      * @param  array<string,mixed>  $payload
@@ -77,7 +93,14 @@ readonly class BotChatAdminService
                 ...$data,
             ]);
 
-            return "added !{$data['command']}";
+            // Provisioning here is a convenience, not the guarantee - bump()
+            // provisions too, so the command works even if the control is later
+            // deleted. Doing it now means the counter shows up in the UI right
+            // away and the reply can confirm it, which is the whole reason a
+            // streamer can set this up mid-stream without leaving chat.
+            $created = $this->counters->provision($owner, $data['expression']);
+
+            return "added !{$data['command']}".$this->describeCounters($created);
         } catch (ValidationException $e) {
             return $this->formatValidationError($e);
         }
@@ -107,7 +130,9 @@ readonly class BotChatAdminService
 
             $existing->update($data);
 
-            return "updated !{$existing->command}";
+            $created = $this->counters->provision($owner, $data['expression']);
+
+            return "updated !{$existing->command}".$this->describeCounters($created);
         } catch (ValidationException $e) {
             return $this->formatValidationError($e);
         }
@@ -297,7 +322,8 @@ readonly class BotChatAdminService
             'cmd' => '!ol cmd add|edit|delete|options <name> [payload]. example: !ol cmd add lol HAHA',
             'alias' => '!ol alias add|edit|delete|options <name> [target]. example: !ol alias add w !inc wins {1}',
             'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false | destroy <hours> (0 cancels, cmd only)',
-            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol list ; !ol help <cmd|alias|options>',
+            'tags' => 'random: [[[rand:0-69]]] (two whole numbers, low to high). counting: [[[counter:wins]]] adds 1 each time the command runs and shows the total - use [[[c:wins]]] to show it without adding.',
+            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol list ; !ol help <cmd|alias|options|tags>',
         };
     }
 

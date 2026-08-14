@@ -161,6 +161,22 @@ each is managed from the dashboard, and three of them are also reachable through
 A custom expression can't claim the name of a built-in - `!control`, `!ol`, `!list`, `!ping`, etc. are
 reserved. Validation catches the collision at save time on both the dashboard and `!ol cmd add`.
 
+### Random rolls and counters
+
+Two tags you can write straight into a command: `[[[rand:0-69]]]` rolls a random number, and
+`[[[counter:wins]]]` adds one to a running total and shows it.
+
+```
+!ol cmd add steven your Steven Level is [[[rand:0-69]]]%! Kappa.
+!ol cmd add wins So far, Jasper has won [[[counter:wins]]] times
+```
+
+The counter is created for you on save, and it's an ordinary Control - so `!set`, `!reset` and
+`[[[c:wins]]]` in an overlay all work on it, and the on-screen number moves the moment chat does.
+
+**[Random Rolls and Counters](/help/bot/random-and-counters)** covers both tags properly. `!ol help tags`
+prints a short reminder in chat.
+
 ## Miscellaneous
 
 | Expression | Tier | What it does |

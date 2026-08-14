@@ -9,6 +9,7 @@ use App\Services\Expressions\ExpressionFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
+use App\Support\BotTags;
 use App\Support\Dsl;
 use App\Support\ListItems;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +28,15 @@ use Throwable;
  *   c:<key>            -> own OverlayControl by key
  *   c:<service>:<key>  -> service-managed OverlayControl by broadcastKey
  *   bot:<key>          -> per-invocation context (from_user, args.0, ...)
+ *   rand:<min>-<max>   -> a random whole number, rolled per occurrence
+ *   counter:<key>      -> own counter OverlayControl by key (see below)
  *   <bare>             -> Twitch Helix tag from TemplateDataMapperService
+ *
+ * `counter:` READS HERE AND ONLY READS HERE. It resolves exactly like `c:`;
+ * the increment it declares is applied once by BotCounterService::bump() from
+ * BotExpressionService::fire(), before this runs. That split is what keeps the
+ * dry-run preview and the validator free of side effects and makes a tag used
+ * twice count once. Do not move the increment into lookup().
  *
  * List read tags mirror the overlay render projection (OverlayTemplateController),
  * but chat is a one-shot text sink so every value is a STATIC SNAPSHOT at resolve
@@ -122,6 +131,19 @@ class BotExpressionResolver
      */
     private function lookup(string $key, array $controls, array $lists, array $twitchTags, array $botContext): string
     {
+        // Inline roll. Rolled per occurrence, so two rand tags in one message
+        // give two independent numbers. A malformed range resolves empty; the
+        // validator refuses to save one in the first place.
+        if (str_starts_with($key, 'rand:')) {
+            return BotTags::resolveRand(substr($key, 5));
+        }
+
+        // Same lookup as c:, deliberately. The increment already happened in
+        // fire(), so this reads the post-increment value.
+        if (str_starts_with($key, 'counter:')) {
+            return (string) ($controls[substr($key, 8)] ?? '');
+        }
+
         // List read tags resolve from OptionSets, not OverlayControls. Checked
         // before the generic c: branch, which would otherwise swallow a
         // c:list:... key into a missing-control empty string. Unsupported list
