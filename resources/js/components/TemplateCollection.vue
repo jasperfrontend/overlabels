@@ -10,8 +10,8 @@ import { Check, ChevronRight, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVert
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import CollectionList from '@/components/CollectionList.vue';
-import { useEventColors, EVENT_TYPE_LABELS } from '@/composables/useEventColors';
-import { serviceLabel } from '@/utils/services';
+import ProviderIcon from '@/components/ProviderIcon.vue';
+import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import type { OverlayTemplate } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 
@@ -29,31 +29,25 @@ const props = defineProps<{
 
 const { eventTypeDotClass, eventTypeHoverBorderClass } = useEventColors();
 
-/** { eventType, source? } from the first Twitch or external mapping. */
-function firstEvent(t: OverlayTemplate): { eventType: string; source?: string } | null {
+/**
+ * The first Twitch or external mapping.
+ *
+ * `source` is always set, because the icon and the colour both need to know a
+ * Twitch binding is Twitch - without it, an event type absent from EVENT_STYLES
+ * (a hype train, a goal) can't even fall back to Twitch purple.
+ *
+ * `service` is set for external bindings ONLY, and drives the label prefix.
+ * Keep the two apart: reusing `source` there would turn "Follow" into
+ * "Twitch Follow".
+ */
+function firstEvent(t: OverlayTemplate): { eventType: string; source: string; service?: string } | null {
   const twitch = t.event_mappings?.[0];
-  if (twitch) return { eventType: twitch.event_type };
+  if (twitch) return { eventType: twitch.event_type, source: 'twitch' };
 
   const ext = t.external_event_mappings?.[0];
-  if (ext) return { eventType: ext.event_type, source: ext.service };
+  if (ext) return { eventType: ext.event_type, source: ext.service, service: ext.service };
 
   return null;
-}
-
-/**
- * "Ko-fi Donation", "Throne Gift", "Follow". Derived from SERVICE_LABELS rather
- * than a curated per-service map, which had gone stale at Ko-fi and Streamlabs
- * and left the other three donation services reading "bmac: donation".
- */
-function eventLabel(ev: { eventType: string; source?: string }): string {
-  if (!ev.source) return EVENT_TYPE_LABELS[ev.eventType] ?? ev.eventType;
-
-  const type = ev.eventType
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-  return `${serviceLabel(ev.source)} ${type}`;
 }
 
 function detailsHref(t: OverlayTemplate) {
@@ -137,8 +131,18 @@ async function handleDelete(t: OverlayTemplate) {
           {{ t.description }}
         </span>
 
-        <div v-if="props.showEvent && firstEvent(t)" class="text-xs" :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)">
-          {{ eventLabel(firstEvent(t)!) }}
+        <!--
+          Icon + label, the same pairing as the events feed (EventsTable.vue):
+          shape carries the source, colour reinforces the event type. Colour
+          alone left this line reading as a stray hyperlink.
+        -->
+        <div
+          v-if="props.showEvent && firstEvent(t)"
+          class="mt-0.5 flex items-center gap-1.5 text-xs"
+          :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)"
+        >
+          <ProviderIcon :source="firstEvent(t)!.source" class="h-3.5 w-3.5 shrink-0" />
+          <span>{{ eventLabel(firstEvent(t)!) }}</span>
         </div>
       </div>
     </template>

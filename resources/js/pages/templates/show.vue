@@ -6,7 +6,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import AddToObsPanel from '@/components/templates/AddToObsPanel.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
-import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
+import TriggerManager, { type TriggerData, firstAssignedEvent } from '@/components/TriggerManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
@@ -32,6 +32,9 @@ import {
   VideoIcon,
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
+import Heading from '@/components/Heading.vue';
+import ProviderIcon from '@/components/ProviderIcon.vue';
+import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { takeSaveNotice } from '@/utils/saveNotice';
 import { captureListContext } from '@/composables/useListContext';
@@ -88,6 +91,10 @@ const mainTabs = computed(() => {
 
 const activeTab = ref('html');
 const mainTab = ref<string>('overview');
+
+const { eventTypeDotClass } = useEventColors();
+
+const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -228,14 +235,31 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Header -->
       <div class="mb-5 flex items-start justify-between gap-4">
         <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
+          <Heading
+            :title="template?.name || 'Template'"
+            :description="template?.description || undefined"
+            description-class="text-sm text-muted-foreground"
+          >
+            <template #icon>
+              <ProviderIcon
+                v-if="boundEvent"
+                :source="boundEvent.source"
+                class="h-4 w-4 shrink-0"
+                :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)"
+              />
+            </template>
 
-            <Badge variant="default">
-              {{ template?.is_public ? 'Public' : 'Private' }}
-            </Badge>
-          </div>
-          <p v-if="template?.description" class="mt-1 text-sm text-muted-foreground">{{ template?.description }}</p>
+            <template #afterTitle>
+              <Badge variant="default">
+                {{ template?.is_public ? 'Public' : 'Private' }}
+              </Badge>
+
+              <!-- Which event fires this alert - the detail page never said. -->
+              <span v-if="boundEvent" class="text-sm" :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)">
+                {{ eventLabel(boundEvent) }}
+              </span>
+            </template>
+          </Heading>
         </div>
 
         <div class="flex shrink-0 items-center gap-2">

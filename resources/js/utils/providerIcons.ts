@@ -30,6 +30,7 @@ export const PROVIDER_ICONS: Record<string, ProviderIcon> = {
   bmac: { bits: 0xa5a5, label: 'Buy Me a Coffee' }, // checker
   kofi: { bits: 0x00ff, label: 'Ko-fi' }, // solid base
   throne: { bits: 0xcc00, label: 'Throne' }, // corner block
+  gps: { bits: 0x6f22, label: 'Overlabels GPS' }, // map pin
 };
 
 // Catch-all for any source without a dedicated icon. A small centered block
