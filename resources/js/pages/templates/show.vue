@@ -6,7 +6,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import AddToObsPanel from '@/components/templates/AddToObsPanel.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
-import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
+import TriggerManager, { type TriggerData, firstAssignedEvent } from '@/components/TriggerManager.vue';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
@@ -32,6 +32,7 @@ import {
   VideoIcon,
 } from '@lucide/vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
+import Heading from '@/components/Heading.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import { useTemplateActions } from '@/composables/useTemplateActions';
@@ -93,28 +94,7 @@ const mainTab = ref<string>('overview');
 
 const { eventTypeDotClass } = useEventColors();
 
-/**
- * The first event bound to this alert, for the icon beside the title. Mirrors
- * firstEvent() in TemplateCollection.vue - Twitch mappings win over external
- * ones - so the list and the detail page never disagree about which binding
- * they are showing.
- *
- * `triggers` is built owner-only and alert-only (see buildTriggerData), so this
- * is null for a static overlay and for anyone viewing someone else's template.
- * That matches the list, where mappings are scoped to the current user.
- */
-const boundEvent = computed<{ eventType: string; source: string; service?: string } | null>(() => {
-  const assigned = props.triggers?.assigned;
-  if (!assigned) return null;
-
-  const twitch = assigned.twitch?.[0];
-  if (twitch) return { eventType: twitch.event_type, source: 'twitch' };
-
-  const ext = assigned.external?.[0];
-  if (ext) return { eventType: ext.event_type, source: ext.service, service: ext.service };
-
-  return null;
-});
+const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
 const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
 
@@ -255,29 +235,31 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Header -->
       <div class="mb-5 flex items-start justify-between gap-4">
         <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2">
-            <!--
-              The bound event, as the same icon the alert list and the events
-              feed use. The title sits on the wrapper rather than the SVG
-              because browsers tooltip a `title` child element on SVG, not a
-              `title` attribute.
-            -->
-            <span
-              v-if="boundEvent"
-              class="flex shrink-0 items-center"
-              :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)"
-              :title="eventLabel(boundEvent)"
-            >
-              <ProviderIcon :source="boundEvent.source" class="h-4 w-4" />
-            </span>
+          <Heading
+            :title="template?.name || 'Template'"
+            :description="template?.description || undefined"
+            description-class="text-sm text-muted-foreground"
+          >
+            <template #icon>
+              <ProviderIcon
+                v-if="boundEvent"
+                :source="boundEvent.source"
+                class="h-4 w-4 shrink-0"
+                :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)"
+              />
+            </template>
 
-            <h2 class="text-xl font-semibold tracking-tight">{{ template?.name }}</h2>
+            <template #afterTitle>
+              <Badge variant="default">
+                {{ template?.is_public ? 'Public' : 'Private' }}
+              </Badge>
 
-            <Badge variant="default">
-              {{ template?.is_public ? 'Public' : 'Private' }}
-            </Badge>
-          </div>
-          <p v-if="template?.description" class="mt-1 text-sm text-muted-foreground">{{ template?.description }}</p>
+              <!-- Which event fires this alert - the detail page never said. -->
+              <span v-if="boundEvent" class="text-sm" :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)">
+                {{ eventLabel(boundEvent) }}
+              </span>
+            </template>
+          </Heading>
         </div>
 
         <div class="flex shrink-0 items-center gap-2">

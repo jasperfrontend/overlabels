@@ -17,7 +17,9 @@ import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
-import TriggerManager, { type TriggerData } from '@/components/TriggerManager.vue';
+import TriggerManager, { type TriggerData, firstAssignedEvent } from '@/components/TriggerManager.vue';
+import ProviderIcon from '@/components/ProviderIcon.vue';
+import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import { controlsToPreviewData } from '@/utils/controlPreview';
 import BrowseFreesoundModal from '@/components/BrowseFreesoundModal.vue';
 import BuilderEditor from '@/components/builder/BuilderEditor.vue';
@@ -212,6 +214,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: route('templates.edit', props.template),
   },
 ];
+
+const { eventTypeDotClass } = useEventColors();
+
+const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
 const mainTabs = computed(() => {
   const tabs: Array<{ key: string; label: string; icon: any }> = [
@@ -575,7 +581,23 @@ onMounted(() => {
           :title="template.name"
           :description="template.description || 'No description set.'"
           description-class="text-sm text-muted-foreground"
-        />
+        >
+          <template #icon>
+            <ProviderIcon
+              v-if="boundEvent"
+              :source="boundEvent.source"
+              class="h-4 w-4 shrink-0"
+              :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)"
+            />
+          </template>
+
+          <template #afterTitle>
+            <!-- Which event fires this alert - the edit page never said either. -->
+            <span v-if="boundEvent" class="text-sm" :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)">
+              {{ eventLabel(boundEvent) }}
+            </span>
+          </template>
+        </Heading>
         <div class="flex shrink-0 items-center gap-2">
           <button @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />

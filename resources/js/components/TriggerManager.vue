@@ -1,11 +1,10 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
-import { Save, Zap } from '@lucide/vue';
-import FilterableGroupedList, { type FilterableGroup } from '@/components/FilterableGroupedList.vue';
-import TriggerRow from '@/components/TriggerRow.vue';
-import { SERVICE_LABELS } from '@/utils/services';
-
+<!--
+  A plain <script> block alongside <script setup>: the latter allows type
+  exports but not runtime ones, so firstAssignedEvent() has to live here to be
+  importable. The two blocks share module scope, so <script setup> below uses
+  TriggerData directly.
+-->
+<script lang="ts">
 interface TwitchAssignment {
   event_type: string;
   condition_type: string | null;
@@ -36,6 +35,42 @@ export interface TriggerData {
     external: ExternalAssignment[];
   };
 }
+
+/**
+ * The first event bound to a template, for the icon and label beside its title
+ * on the show and edit pages. Twitch mappings win over external ones, matching
+ * firstEvent() in TemplateCollection.vue, so the list and the two detail pages
+ * never disagree about which binding they are showing.
+ *
+ * `source` is always set - the icon and the colour need to know a Twitch
+ * binding is Twitch. `service` is external-only, because it drives the label
+ * prefix: passing 'twitch' into eventLabel() would render "Follow" as
+ * "Twitch Follow".
+ *
+ * Returns null when `triggers` is null, which buildTriggerData() makes the case
+ * for static overlays and for anyone viewing a template they do not own.
+ */
+export function firstAssignedEvent(triggers?: TriggerData | null): { eventType: string; source: string; service?: string } | null {
+  const assigned = triggers?.assigned;
+  if (!assigned) return null;
+
+  const twitch = assigned.twitch?.[0];
+  if (twitch) return { eventType: twitch.event_type, source: 'twitch' };
+
+  const ext = assigned.external?.[0];
+  if (ext) return { eventType: ext.event_type, source: ext.service, service: ext.service };
+
+  return null;
+}
+</script>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { Save, Zap } from '@lucide/vue';
+import FilterableGroupedList, { type FilterableGroup } from '@/components/FilterableGroupedList.vue';
+import TriggerRow from '@/components/TriggerRow.vue';
+import { SERVICE_LABELS } from '@/utils/services';
 
 const props = defineProps<{
   templateId: number;
